@@ -8,7 +8,6 @@ import {
   ensureDeployContext,
   ensureThemeExtensionDevContext,
   DeployContextOptions,
-  ensureReleaseContext,
   ensureVersionsListContext,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
@@ -1448,41 +1447,6 @@ describe('ensureDeployContext', () => {
     // Then
     expect(developerPlatformClient.activeAppVersion).not.toHaveBeenCalled()
     expect(anotherDeveloperPlatformClient.activeAppVersion).toHaveBeenCalledOnce()
-  })
-})
-
-describe('ensureReleaseContext', () => {
-  test('updates app identifiers', async () => {
-    // Given
-    const app = testApp()
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
-    const developerPlatformClient = buildDeveloperPlatformClient()
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
-    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, appId: 'key2'})
-
-    // When
-    const got = await ensureReleaseContext({
-      app,
-      apiKey: 'key2',
-      reset: false,
-      force: false,
-      developerPlatformClient,
-    })
-
-    // Then
-    expect(updateAppIdentifiers).toBeCalledWith({
-      app,
-      identifiers: {
-        app: APP2.apiKey,
-      },
-      command: 'release',
-      developerPlatformClient,
-    })
-
-    expect(got.app).toEqual(app)
-    expect(got.remoteApp).toEqual(APP2)
-    expect(got.developerPlatformClient).toEqual(developerPlatformClient)
   })
 })
 
