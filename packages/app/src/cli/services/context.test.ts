@@ -9,7 +9,6 @@ import {
   ensureThemeExtensionDevContext,
   DeployContextOptions,
   ensureReleaseContext,
-  ensureVersionsListContext,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -1547,28 +1546,6 @@ describe('ensureThemeExtensionDevContext', () => {
     expect('UUID').toEqual(got.uuid)
     expect('theme app extension').toEqual(got.title)
     expect('THEME_APP_EXTENSION').toEqual(got.type)
-  })
-})
-
-describe('ensureVersionsListContext', () => {
-  test('returns the developer platform client and the app', async () => {
-    // Given
-    const app = testApp()
-    const developerPlatformClient = buildDeveloperPlatformClient()
-
-    // When
-    const got = await ensureVersionsListContext({
-      app,
-      apiKey: APP2.apiKey,
-      reset: false,
-      developerPlatformClient,
-    })
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: APP2,
-      developerPlatformClient,
-    })
   })
 })
 
