@@ -2,13 +2,7 @@ import {fetchOrganizations, fetchOrgFromId, fetchStoreByDomain} from './dev/fetc
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore, convertToTransferDisabledStoreIfNeeded} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {
-  DevContextOptions,
-  ensureDevContext,
-  ensureDeployContext,
-  ensureThemeExtensionDevContext,
-  ensureVersionsListContext,
-} from './context.js'
+import {DevContextOptions, ensureDevContext, ensureDeployContext, ensureThemeExtensionDevContext} from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
@@ -141,6 +135,7 @@ const deployOptions = (app: AppLinkedInterface, reset = false, force = false): D
   return {
     app,
     remoteApp: APP2,
+    organization: ORG1,
     reset,
     force,
     noRelease: false,
@@ -1178,28 +1173,6 @@ describe('ensureThemeExtensionDevContext', () => {
     expect('UUID').toEqual(got.uuid)
     expect('theme app extension').toEqual(got.title)
     expect('THEME_APP_EXTENSION').toEqual(got.type)
-  })
-})
-
-describe('ensureVersionsListContext', () => {
-  test('returns the developer platform client and the app', async () => {
-    // Given
-    const app = testApp()
-    const developerPlatformClient = buildDeveloperPlatformClient()
-
-    // When
-    const got = await ensureVersionsListContext({
-      app,
-      apiKey: APP2.apiKey,
-      reset: false,
-      developerPlatformClient,
-    })
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: APP2,
-      developerPlatformClient,
-    })
   })
 })
 
