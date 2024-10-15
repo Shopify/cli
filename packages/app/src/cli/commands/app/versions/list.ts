@@ -48,7 +48,7 @@ export default class VersionsList extends AppCommand {
     }
     const apiKey = flags['client-id'] || flags['api-key']
 
-    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
+    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: false,
@@ -58,6 +58,7 @@ export default class VersionsList extends AppCommand {
     await versionList({
       app,
       remoteApp,
+      organization,
       developerPlatformClient,
       json: flags.json,
     })

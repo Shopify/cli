@@ -4,7 +4,8 @@ import link from './app/config/link.js'
 import {appFromId} from './context.js'
 
 import * as localStorage from './local-storage.js'
-import {testOrganizationApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
+import {fetchOrgFromId} from './dev/fetch.js'
+import {testOrganizationApp, testDeveloperPlatformClient, testOrganization} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -15,7 +16,7 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
-
+vi.mock('./dev/fetch.js')
 async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
   const packageJsonPath = joinPath(tmp, 'package.json')
@@ -24,6 +25,7 @@ async function writeAppConfig(tmp: string, content: string) {
 }
 
 const mockDeveloperPlatformClient = testDeveloperPlatformClient()
+const mockOrganization = testOrganization()
 const mockRemoteApp = testOrganizationApp({
   apiKey: 'test-api-key',
   title: 'Test App',
@@ -34,6 +36,7 @@ const mockRemoteApp = testOrganizationApp({
 beforeEach(() => {
   vi.mocked(fetchSpecifications).mockResolvedValue([])
   vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
+  vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
 })
 
 describe('linkedAppContext', () => {
@@ -62,6 +65,7 @@ describe('linkedAppContext', () => {
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
         specifications: [],
+        organization: mockOrganization,
       })
       expect(link).not.toHaveBeenCalled()
     })
@@ -105,6 +109,7 @@ describe('linkedAppContext', () => {
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
         specifications: [],
+        organization: mockOrganization,
       })
       expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
     })

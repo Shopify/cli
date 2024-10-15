@@ -1,9 +1,8 @@
 import {renderCurrentlyUsedConfigInfo} from './context.js'
-import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
@@ -84,22 +83,22 @@ async function fetchAppVersions(
 interface VersionListOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
+  organization: Organization
   developerPlatformClient: DeveloperPlatformClient
   json: boolean
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const {remoteApp, developerPlatformClient} = options
+  const {remoteApp, developerPlatformClient, organization} = options
 
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, remoteApp, options.json)
 
-  const {businessName: org} = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
   if (options.json) {
     return outputInfo(JSON.stringify(appVersions, null, 2))
   }
 
   renderCurrentlyUsedConfigInfo({
-    org,
+    org: organization.businessName,
     appName: remoteApp.title,
     configFile: basename(options.app.configuration.path),
   })

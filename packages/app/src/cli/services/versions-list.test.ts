@@ -37,6 +37,7 @@ describe('versions-list', () => {
     await versionList({
       app,
       remoteApp,
+      organization: ORG1,
       developerPlatformClient: buildDeveloperPlatformClient(),
       json: false,
     })
@@ -53,6 +54,7 @@ describe('versions-list', () => {
     await versionList({
       app,
       remoteApp,
+      organization: ORG1,
       developerPlatformClient: buildDeveloperPlatformClient(),
       json: false,
     })
@@ -77,6 +79,7 @@ describe('versions-list', () => {
       app,
       remoteApp,
       json: false,
+      organization: ORG1,
       developerPlatformClient,
     })
 
@@ -134,6 +137,7 @@ describe('versions-list', () => {
       remoteApp,
       json: false,
       developerPlatformClient,
+      organization: ORG1,
     })
 
     // Then
@@ -188,6 +192,7 @@ View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id
       remoteApp,
       json: true,
       developerPlatformClient,
+      organization: ORG1,
     })
 
     // Then
