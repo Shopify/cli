@@ -329,12 +329,10 @@ export async function ensureThemeExtensionDevContext(
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployOptions): Promise<Identifiers> {
-  const {reset, force, noRelease, app, remoteApp, developerPlatformClient} = options
+  const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  const org = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
-
-  await ensureIncludeConfigOnDeploy({org, app, remoteApp, reset, force})
+  await ensureIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force})
 
   const identifiers = await ensureDeploymentIdsPresence({
     app,

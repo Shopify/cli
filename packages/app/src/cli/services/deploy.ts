@@ -5,7 +5,7 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -20,6 +20,9 @@ export interface DeployOptions {
 
   /** The remote app to be deployed */
   remoteApp: OrganizationApp
+
+  /** The organization of the remote app */
+  organization: Organization
 
   /** The API client to send authenticated requests  */
   developerPlatformClient: DeveloperPlatformClient
@@ -49,7 +52,7 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  const {app, remoteApp, developerPlatformClient, noRelease} = options
+  const {app, remoteApp, developerPlatformClient, noRelease, organization} = options
 
   const identifiers = await ensureDeployContext({...options, developerPlatformClient})
   const release = !noRelease

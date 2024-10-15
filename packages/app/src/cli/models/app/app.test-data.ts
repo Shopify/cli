@@ -166,7 +166,7 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): Curre
   }
 }
 
-function testOrganization(): Organization {
+export function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
