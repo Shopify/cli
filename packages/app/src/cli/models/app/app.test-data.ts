@@ -146,14 +146,14 @@ export function testAppWithLegacyConfig({
   return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
-  const app = testApp(options?.app, 'current')
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinkedInterface {
+  const app = testAppLinked(options?.app)
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app as AppInterface<CurrentAppConfiguration>
+  return app
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
