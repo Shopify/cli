@@ -11,6 +11,7 @@ import {
   DEFAULT_CONFIG,
   testDeveloperPlatformClient,
   testAppLinked,
+  testOrganization,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
@@ -540,6 +541,7 @@ async function testDeployBundle({
   await deploy({
     app,
     remoteApp,
+    organization: testOrganization(),
     reset: false,
     force: Boolean(options?.force),
     noRelease: Boolean(options?.noRelease),
