@@ -463,42 +463,6 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   })
 }
 
-interface VersionListContextOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: false
-  developerPlatformClient?: DeveloperPlatformClient
-}
-
-interface VersionsListContextOutput {
-  developerPlatformClient: DeveloperPlatformClient
-  remoteApp: OrganizationApp
-}
-
-/**
- * Make sure there is a valid context to execute `versions list`
- *
- * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
- * If there is no API key (or is invalid), show prompts to select an org and app.
- *
- * @param options - Current dev context options
- * @returns The Developer Platform client and the app
- */
-export async function ensureVersionsListContext(
-  options: VersionListContextOptions,
-): Promise<VersionsListContextOutput> {
-  let developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  const [remoteApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
-  return {
-    developerPlatformClient,
-    remoteApp,
-  }
-}
-
 export async function fetchOrCreateOrganizationApp(
   options: AppCreationDefaultOptions,
   directory?: string,
