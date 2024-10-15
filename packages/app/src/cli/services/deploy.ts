@@ -52,7 +52,7 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  const {app, remoteApp, developerPlatformClient, noRelease, organization} = options
+  const {app, remoteApp, developerPlatformClient, noRelease} = options
 
   const identifiers = await ensureDeployContext({...options, developerPlatformClient})
   const release = !noRelease
