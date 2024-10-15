@@ -4,6 +4,7 @@ import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
+import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -59,17 +60,26 @@ export default class Logs extends AppCommand {
 
     await checkFolderIsValidApp(flags.path)
 
-    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
+    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
+    const primaryStore = await storeContext({
+      app,
+      organization,
+      developerPlatformClient,
+      storeFqdn: flags.store?.[0],
+    })
+
     const logOptions = {
       app,
       remoteApp,
       developerPlatformClient,
+      organization,
+      primaryStore,
       storeFqdns: flags.store,
       sources: flags.source,
       status: flags.status,

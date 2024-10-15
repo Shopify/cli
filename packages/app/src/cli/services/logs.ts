@@ -5,17 +5,20 @@ import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {consoleLog} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export type Format = 'json' | 'text'
 
 interface LogsOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
+  organization: Organization
   developerPlatformClient: DeveloperPlatformClient
+  primaryStore: OrganizationStore
   storeFqdns?: string[]
   sources?: string[]
   status?: string
@@ -89,26 +92,25 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   storeIds: string[]
   storeNameById: Map<string, string>
 }> {
-  const {remoteApp, developerPlatformClient} = commandOptions
-  const primaryStoreFqdn = commandOptions.storeFqdns?.[0]
-  // const devContextOptions: DevContextOptions = {
-  //   ...commandOptions,
-  //   storeFqdn: primaryStoreFqdn,
-  //   developerPlatformClient,
-  //   customInfoBox: true,
-  // }
-  // const {storeId, storeFqdn, remoteApp, localApp, organization, configFile} = await ensureDevContext(devContextOptions)
+  const {app, remoteApp, developerPlatformClient, primaryStore, organization} = commandOptions
+
+  const configFile = basename(app.configuration.path)
   if (commandOptions.format === 'text') {
-    renderAppLogsConfigInfo(remoteApp.title, storeFqdn, commandOptions.storeFqdns, configFile, organization)
+    renderAppLogsConfigInfo(
+      remoteApp.title,
+      primaryStore.shopDomain,
+      commandOptions.storeFqdns,
+      configFile,
+      organization.businessName,
+    )
   }
   const storeNameById = new Map<string, string>()
-  storeNameById.set(storeId, storeFqdn)
+  storeNameById.set(primaryStore.shopId, primaryStore.shopDomain)
   if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
     await Promise.all(
-      commandOptions.storeFqdns?.slice(1).map((storeFqdn) => {
-        return storeFromFqdn(storeFqdn, remoteApp.organizationId, developerPlatformClient).then((store) => {
-          storeNameById.set(store.shopId, storeFqdn)
-        })
+      commandOptions.storeFqdns?.slice(1).map(async (storeFqdn) => {
+        const store = await storeFromFqdn(storeFqdn, remoteApp.organizationId, developerPlatformClient)
+        storeNameById.set(store.shopId, storeFqdn)
       }),
     )
   }
