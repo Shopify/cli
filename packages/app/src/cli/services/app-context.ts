@@ -2,7 +2,8 @@ import {appFromId} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {OrganizationApp} from '../models/organization.js'
+import {fetchOrgFromId} from './dev/fetch.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
@@ -14,6 +15,7 @@ interface LoadedAppContextOutput {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
+  organization: Organization
   specifications: RemoteAwareExtensionSpecification[]
 }
 
@@ -77,6 +79,8 @@ export async function linkedAppContext({
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
+  const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
+
   // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
@@ -96,7 +100,7 @@ export async function linkedAppContext({
 
   await logMetadata(remoteApp)
 
-  return {app: localApp, remoteApp, developerPlatformClient, specifications}
+  return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
 async function logMetadata(app: {organizationId: string; apiKey: string}) {
