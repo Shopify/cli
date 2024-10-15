@@ -120,6 +120,7 @@ describe('ui_extension', async () => {
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
           capabilities: undefined,
+          preloads: {},
         },
       ])
     })
@@ -170,6 +171,7 @@ describe('ui_extension', async () => {
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
           capabilities: undefined,
+          preloads: {},
         },
       ])
     })
@@ -220,6 +222,59 @@ describe('ui_extension', async () => {
           metafields: [],
           default_placement_reference: undefined,
           capabilities: {allow_direct_linking: true},
+          preloads: {},
+        },
+      ])
+    })
+
+    test('targeting object accepts preloads', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            capabilities: {allow_direct_linking: true},
+            preloads: {chat: '/chat', not_supported: '/hello'},
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: {allow_direct_linking: true},
+          preloads: {chat: '/chat'},
         },
       ])
     })
