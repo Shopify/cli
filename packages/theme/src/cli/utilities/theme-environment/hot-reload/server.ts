@@ -274,6 +274,8 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
     hotReloadSections(key, ctx)
   } else if (type === 'assets' && key.endsWith('.css')) {
     emitHotReloadEvent({type: 'css', key})
+  } else if (type === 'assets' && key.endsWith('.css.liquid')) {
+    emitHotReloadEvent({type: 'css', key: key.replace('.css.liquid', '.css')})
   } else {
     emitHotReloadEvent({type: 'full', key})
   }
