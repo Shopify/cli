@@ -1,7 +1,5 @@
 import {appFlags} from '../../../flags.js'
-import {AppInterface} from '../../../models/app/app.js'
-import {loadApp} from '../../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {sources} from '../../../services/app-logs/sources.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -20,12 +18,12 @@ export default class Sources extends AppCommand {
 
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Sources)
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+
+    const {app} = await linkedAppContext({
       directory: flags.path,
+      clientId: undefined,
+      forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
     })
 
     if (app.errors) {

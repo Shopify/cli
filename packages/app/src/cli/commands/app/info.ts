@@ -1,9 +1,7 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
 import {Format, info} from '../../services/info.js'
-import {loadApp} from '../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -38,21 +36,24 @@ export default class AppInfo extends AppCommand {
 
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(AppInfo)
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+
+    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
+      clientId: undefined,
+      forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
+      unsafeReportMode: true,
     })
     outputInfo(
-      await info(app, {
+      await info(app, remoteApp, {
         format: (flags.json ? 'json' : 'text') as Format,
         webEnv: flags['web-env'],
         configName: flags.config,
+        developerPlatformClient,
       }),
     )
     if (app.errors) process.exit(2)
+
     return {app}
   }
 }
