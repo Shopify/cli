@@ -1,10 +1,11 @@
-import {DevContextOptions, ensureDevContext, storeFromFqdn, formInfoBoxBody, resetHelpMessage} from './context.js'
+import {storeFromFqdn, formInfoBoxBody, resetHelpMessage} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
-import {AppInterface} from '../models/app/app.js'
-import {loadAppConfiguration, getAppConfigurationFileName} from '../models/app/loader.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AppLinkedInterface} from '../models/app/app.js'
+import {getAppConfigurationFileName} from '../models/app/loader.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {OrganizationApp} from '../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {consoleLog} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -12,21 +13,20 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 export type Format = 'json' | 'text'
 
 interface LogsOptions {
-  directory: string
-  reset: boolean
-  apiKey?: string
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
   storeFqdns?: string[]
   sources?: string[]
   status?: string
-  configName?: string
-  userProvidedConfigName?: string
   format: Format
 }
 
 export async function logs(commandOptions: LogsOptions) {
+  const {app, remoteApp, developerPlatformClient} = commandOptions
   const logsConfig = await prepareForLogs(commandOptions)
 
-  const validSources = sourcesForApp(logsConfig.localApp)
+  const validSources = sourcesForApp(app)
 
   if (validSources.length === 0) {
     throw new AbortError(
@@ -45,11 +45,11 @@ export async function logs(commandOptions: LogsOptions) {
 
   const variables = {
     shopIds: logsConfig.storeIds,
-    apiKey: logsConfig.apiKey,
+    apiKey: remoteApp.apiKey,
     token: '',
   }
 
-  const jwtToken = await subscribeToAppLogs(logsConfig.developerPlatformClient, variables)
+  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables)
 
   const filters = {
     status: commandOptions.status,
@@ -67,7 +67,7 @@ export async function logs(commandOptions: LogsOptions) {
     await renderJsonLogs({
       options: {
         variables,
-        developerPlatformClient: logsConfig.developerPlatformClient,
+        developerPlatformClient,
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
@@ -77,36 +77,27 @@ export async function logs(commandOptions: LogsOptions) {
     await renderLogs({
       options: {
         variables,
-        developerPlatformClient: logsConfig.developerPlatformClient,
+        developerPlatformClient,
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
     })
   }
-
-  return logsConfig.localApp
 }
 
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   storeIds: string[]
   storeNameById: Map<string, string>
-  developerPlatformClient: DeveloperPlatformClient
-  apiKey: string
-  localApp: AppInterface
 }> {
-  const {configuration} = await loadAppConfiguration({
-    ...commandOptions,
-    userProvidedConfigName: commandOptions.configName,
-  })
-  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
+  const {remoteApp, developerPlatformClient} = commandOptions
   const primaryStoreFqdn = commandOptions.storeFqdns?.[0]
-  const devContextOptions: DevContextOptions = {
-    ...commandOptions,
-    storeFqdn: primaryStoreFqdn,
-    developerPlatformClient,
-    customInfoBox: true,
-  }
-  const {storeId, storeFqdn, remoteApp, localApp, organization, configFile} = await ensureDevContext(devContextOptions)
+  // const devContextOptions: DevContextOptions = {
+  //   ...commandOptions,
+  //   storeFqdn: primaryStoreFqdn,
+  //   developerPlatformClient,
+  //   customInfoBox: true,
+  // }
+  // const {storeId, storeFqdn, remoteApp, localApp, organization, configFile} = await ensureDevContext(devContextOptions)
   if (commandOptions.format === 'text') {
     renderAppLogsConfigInfo(remoteApp.title, storeFqdn, commandOptions.storeFqdns, configFile, organization)
   }
@@ -123,15 +114,7 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   }
   const storeIds = Array.from(storeNameById.keys())
 
-  const apiKey = remoteApp.apiKey
-
-  return {
-    storeIds,
-    storeNameById,
-    developerPlatformClient: remoteApp.developerPlatformClient ?? developerPlatformClient,
-    apiKey,
-    localApp,
-  }
+  return {storeIds, storeNameById}
 }
 
 function renderAppLogsConfigInfo(

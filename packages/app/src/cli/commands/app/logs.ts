@@ -3,6 +3,7 @@ import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -57,18 +58,25 @@ export default class Logs extends AppCommand {
     const apiKey = flags['client-id'] || flags['api-key']
 
     await checkFolderIsValidApp(flags.path)
-    const logOptions = {
-      apiKey,
+
+    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
+    const logOptions = {
+      app,
+      remoteApp,
+      developerPlatformClient,
       storeFqdns: flags.store,
       sources: flags.source,
       status: flags.status,
-      configName: flags.config,
-      reset: flags.reset,
       format: (flags.json ? 'json' : 'text') as Format,
     }
 
-    const app = await logs(logOptions)
+    await logs(logOptions)
     return {app}
   }
 }
