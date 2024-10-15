@@ -24,6 +24,10 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 const versionTag = 'unique-version-tag'
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+const remoteApp = testOrganizationApp({
+  id: 'app-id',
+  organizationId: 'org-id',
+})
 
 vi.mock('../utilities/app/config/webhooks.js', async () => ({
   ...((await vi.importActual('../utilities/app/config/webhooks.js')) as any),
@@ -56,10 +60,6 @@ describe('deploy', () => {
   test('passes release to uploadExtensionsBundle()', async () => {
     // Given
     const app = testAppLinked({allExtensions: []})
-    const remoteApp = testOrganizationApp({
-      id: 'app-id',
-      organizationId: 'org-id',
-    })
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -92,14 +92,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         message: 'Deployed from CLI with flag',
       },
@@ -121,14 +114,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         version: '1.1.0',
       },
@@ -150,21 +136,14 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       developerPlatformClient,
     })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [],
@@ -182,12 +161,12 @@ describe('deploy', () => {
     const app = testAppLinked({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle({app, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
@@ -215,12 +194,12 @@ describe('deploy', () => {
     const app = testAppLinked({allExtensions: [themeExtension]})
 
     // When
-    await testDeployBundle({app, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
@@ -254,7 +233,7 @@ describe('deploy', () => {
       title: functionExtension.configuration.name,
       module_id: moduleId,
       description: functionExtension.configuration.description,
-      app_key: 'app-id',
+      app_key: 'api-key',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
@@ -264,17 +243,14 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: testOrganizationApp({
-        id: 'app-id',
-        organizationId: 'org-id',
-      }),
+      remoteApp,
       developerPlatformClient,
     })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [
@@ -304,12 +280,12 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
@@ -351,12 +327,12 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [
@@ -385,12 +361,12 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [],
@@ -412,14 +388,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: false,
       },
@@ -451,14 +420,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id2',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: false,
         message: 'version message',
@@ -492,14 +454,7 @@ describe('deploy', () => {
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: true,
         message: 'version message',
