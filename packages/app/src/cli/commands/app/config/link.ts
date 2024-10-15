@@ -32,6 +32,7 @@ export default class ConfigLink extends AppCommand {
     const options: LinkOptions = {
       directory: flags.path,
       apiKey: flags['client-id'],
+      configName: flags.config,
     }
 
     await link(options)
