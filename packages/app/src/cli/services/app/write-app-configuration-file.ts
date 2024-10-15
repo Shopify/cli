@@ -10,8 +10,6 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 // so for now, we manually add comments
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
   outputDebug(`Writing app configuration to ${configuration.path}`)
-  const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
-  const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
   // we need to condense the compliance and non-compliance webhooks again
   // so compliance topics and topics with the same uri are under
@@ -21,18 +19,10 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
   const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as {
     [key: string]: string | boolean | object
   }
-  const fileSplit = encodeToml(sorted as JsonMapType).split(/(\r\n|\r|\n)/)
 
-  fileSplit.unshift('\n')
-  fileSplit.unshift(initialComment)
+  const encodedString = encodeToml(sorted as JsonMapType)
 
-  fileSplit.forEach((line, index) => {
-    if (line === '[access_scopes]') {
-      fileSplit.splice(index + 1, 0, scopesComment)
-    }
-  })
-
-  const file = fileSplit.join('')
+  const file = addDefaultCommentsToToml(encodedString)
 
   writeFileSync(configuration.path, file)
 }
@@ -87,6 +77,23 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
     return result
   }
   return config
+}
+
+export function addDefaultCommentsToToml(fileString: string) {
+  const appTomlInitialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
+  const appTomlScopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
+
+  const fileSplit = fileString.split(/(\r\n|\r|\n)/)
+  fileSplit.unshift('\n')
+  fileSplit.unshift(appTomlInitialComment)
+
+  fileSplit.forEach((line, index) => {
+    if (line === '[access_scopes]') {
+      fileSplit.splice(index + 1, 0, appTomlScopesComment)
+    }
+  })
+
+  return fileSplit.join('')
 }
 
 /**

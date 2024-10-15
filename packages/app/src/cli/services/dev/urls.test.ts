@@ -15,7 +15,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
+import {patchTomlConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -25,7 +25,7 @@ import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/nod
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
-vi.mock('../app/write-app-configuration-file.js')
+vi.mock('../app/patch-app-configuration-file.js')
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('@shopify/cli-kit/node/context/spin')
 vi.mock('@shopify/cli-kit/node/context/local')
@@ -91,12 +91,9 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(
+    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
+      appWithConfig.configuration.path,
       {
-        path: appWithConfig.configuration.path,
-        access_scopes: {
-          scopes: 'read_products',
-        },
         application_url: 'https://example.com',
         auth: {
           redirect_urls: [
@@ -105,14 +102,8 @@ describe('updateURLs', () => {
             'https://example.com/api/auth/callback',
           ],
         },
-        client_id: 'api-key',
-        embedded: true,
-        name: 'my app',
-        webhooks: {
-          api_version: '2023-04',
-        },
       },
-      appWithConfig.configSchema,
+      expect.any(Object),
     )
   })
 
@@ -186,12 +177,9 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(
+    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
+      appWithConfig.configuration.path,
       {
-        path: appWithConfig.configuration.path,
-        access_scopes: {
-          scopes: 'read_products',
-        },
         application_url: 'https://example.com',
         auth: {
           redirect_urls: [
@@ -205,14 +193,8 @@ describe('updateURLs', () => {
           subpath: 'subpath',
           prefix: 'prefix',
         },
-        client_id: 'api-key',
-        embedded: true,
-        name: 'my app',
-        webhooks: {
-          api_version: '2023-04',
-        },
       },
-      appWithConfig.configSchema,
+      expect.any(Object),
     )
   })
 })
@@ -338,7 +320,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFile).not.toHaveBeenCalled()
+    expect(patchTomlConfigurationFile).not.toHaveBeenCalled()
   })
 
   test('updates the config file if current config client matches remote', async () => {
@@ -358,7 +340,13 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration, localApp.configSchema)
+    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
+      localApp.configuration.path,
+      {
+        build: {automatically_update_urls_on_dev: true},
+      },
+      expect.any(Object),
+    )
   })
 })
 
