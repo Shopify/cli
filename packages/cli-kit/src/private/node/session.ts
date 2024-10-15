@@ -3,14 +3,12 @@ import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {
   exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
-import {authorize} from './session/authorize.js'
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
@@ -18,7 +16,7 @@ import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, themeToken, useDeviceAuth} from '../../public/node/context/local.js'
+import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -277,7 +275,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   const identityTokenInformation = getIdentityTokenInformation()
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
-  } else if (useDeviceAuth()) {
+  } else {
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
@@ -285,14 +283,6 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     // Poll for the identity token
     outputDebug(outputContent`Starting polling for the identity token...`)
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
-  } else {
-    // Authorize user via browser
-    outputDebug(outputContent`Authorizing through Identity's website...`)
-    const code = await authorize(scopes)
-
-    // Exchange code for identity token
-    outputDebug(outputContent`Authorization code received. Exchanging it for a CLI token...`)
-    identityToken = await exchangeCodeForAccessToken(code)
   }
 
   // Exchange identity token for application tokens

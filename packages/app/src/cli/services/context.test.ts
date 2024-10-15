@@ -7,7 +7,6 @@ import {
   ensureDevContext,
   ensureDeployContext,
   ensureThemeExtensionDevContext,
-  ensureReleaseContext,
   ensureVersionsListContext,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
@@ -23,7 +22,7 @@ import {
   OrganizationSource,
   OrganizationStore,
 } from '../models/organization.js'
-import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
+import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   DEFAULT_CONFIG,
@@ -1115,41 +1114,6 @@ describe('ensureDeployContext', () => {
       headline: 'Using shopify.app.toml for default values:',
     })
     writeAppConfigurationFileSpy.mockRestore()
-  })
-})
-
-describe('ensureReleaseContext', () => {
-  test('updates app identifiers', async () => {
-    // Given
-    const app = testApp()
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
-    const developerPlatformClient = buildDeveloperPlatformClient()
-    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
-    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, appId: 'key2'})
-
-    // When
-    const got = await ensureReleaseContext({
-      app,
-      apiKey: 'key2',
-      reset: false,
-      force: false,
-      developerPlatformClient,
-    })
-
-    // Then
-    expect(updateAppIdentifiers).toBeCalledWith({
-      app,
-      identifiers: {
-        app: APP2.apiKey,
-      },
-      command: 'release',
-      developerPlatformClient,
-    })
-
-    expect(got.app).toEqual(app)
-    expect(got.remoteApp).toEqual(APP2)
-    expect(got.developerPlatformClient).toEqual(developerPlatformClient)
   })
 })
 
