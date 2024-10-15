@@ -204,9 +204,9 @@ Redeploy Paths:
           return onChange()
         })
         .catch((error: Error) => onReloadAndBuildError(error))
-      listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
     }),
   )
+  listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
 }
 
 async function reloadAndbuildIfNecessary(extension: ExtensionInstance, build: boolean, options: ExtensionBuildOptions) {
