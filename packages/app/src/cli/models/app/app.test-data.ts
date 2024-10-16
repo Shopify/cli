@@ -4,6 +4,7 @@ import {
   AppConfigurationSchema,
   AppConfigurationWithoutPath,
   AppInterface,
+  AppLinkedInterface,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
   WebType,
@@ -122,6 +123,10 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
   return newApp
 }
 
+export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
+  return testApp(app, 'current') as AppLinkedInterface
+}
+
 interface TestAppWithConfigOptions {
   app?: Partial<AppInterface>
   config: object
@@ -141,14 +146,14 @@ export function testAppWithLegacyConfig({
   return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
-  const app = testApp(options?.app, 'current')
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinkedInterface {
+  const app = testAppLinked(options?.app)
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app as AppInterface<CurrentAppConfiguration>
+  return app
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -161,7 +166,7 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): Curre
   }
 }
 
-function testOrganization(): Organization {
+export function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
@@ -856,7 +861,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
   },
 ]
 
-export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
+const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
   identifier: 'subscription_ui',
   name: 'Subscription UI',
   defaultName: 'subscription-ui',
@@ -885,6 +890,39 @@ export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
       name: 'TypeScript',
       value: 'typescript',
       path: 'templates/ui-extensions/projects/product_subscription',
+    },
+  ],
+}
+
+export const checkoutUITemplate: ExtensionTemplate = {
+  identifier: 'checkout_ui',
+  name: 'Checkout UI',
+  defaultName: 'checkout-ui',
+  group: 'Discounts and checkout',
+  supportLinks: ['https://shopify.dev/api/checkout-extensions/checkout/configuration'],
+  url: 'https://github.com/Shopify/extensions-templates',
+  type: 'ui_extension',
+  extensionPoints: [],
+  supportedFlavors: [
+    {
+      name: 'JavaScript React',
+      value: 'react',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'JavaScript',
+      value: 'vanilla-js',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'TypeScript React',
+      value: 'typescript-react',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'TypeScript',
+      value: 'typescript',
+      path: 'checkout-extension',
     },
   ],
 }

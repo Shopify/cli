@@ -1,29 +1,42 @@
 import {getOrGenerateSchemaPath, inFunctionContext} from './common.js'
-import {loadApp} from '../../models/app/loader.js'
-import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
-import {AppInterface} from '../../models/app/app.js'
+import {
+  testAppLinked,
+  testDeveloperPlatformClient,
+  testFunctionExtension,
+  testOrganization,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {linkedAppContext} from '../app-context.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
 import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 
-vi.mock('../../models/app/loader.js')
+vi.mock('../app-context.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
 
-let app: AppInterface
+let app: AppLinkedInterface
 let ourFunction: ExtensionInstance
 
 beforeEach(async () => {
   ourFunction = await testFunctionExtension()
-  app = testApp({allExtensions: [ourFunction]})
-  vi.mocked(loadApp).mockResolvedValue(app)
+  app = testAppLinked({allExtensions: [ourFunction]})
+  vi.mocked(linkedAppContext).mockResolvedValue({
+    app,
+    remoteApp: testOrganizationApp(),
+    developerPlatformClient: testDeveloperPlatformClient(),
+    specifications: [],
+    organization: testOrganization(),
+  })
   vi.mocked(renderFatalError).mockReturnValue('')
   vi.mocked(renderAutocompletePrompt).mockResolvedValue(ourFunction)
   vi.mocked(isTerminalInteractive).mockReturnValue(true)
@@ -87,15 +100,16 @@ describe('ensure we are within a function context', () => {
 
 describe('getOrGenerateSchemaPath', () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  let app: AppInterface
-
+  let app: AppLinkedInterface
+  let developerPlatformClient: DeveloperPlatformClient
   beforeEach(() => {
     extension = {
       directory: '/path/to/function',
       configuration: {},
     } as ExtensionInstance<FunctionConfigType>
 
-    app = {} as AppInterface
+    app = testAppLinked()
+    developerPlatformClient = testDeveloperPlatformClient()
   })
 
   test('returns the path if the schema file exists', async () => {
@@ -104,7 +118,7 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValue(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app)
+    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient)
 
     // Then
     expect(result).toBe(expectedPath)
@@ -119,7 +133,7 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValueOnce(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app)
+    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient)
 
     // Then
     expect(result).toBe(expectedPath)

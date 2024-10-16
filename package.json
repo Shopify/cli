@@ -256,6 +256,9 @@
           "**/{commands,hooks}/**/*.ts!",
           "**/public/**/*.{ts,tsx}!"
         ],
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
+        ],
         "project": "**/*.{ts,tsx}!",
         "ignoreBinaries": [
           "bundle",
