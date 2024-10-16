@@ -97,7 +97,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     if (isAsset(fileKey)) {
       if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        onSync(() => triggerHotReload(fileKey, ctx))
+        onSync(() => {
+          triggerHotReload(fileKey, ctx)
+        })
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)

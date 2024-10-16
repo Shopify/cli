@@ -222,6 +222,17 @@ describe('setupDevServer', () => {
       )
     })
 
+    test('serves proxied liquid assets', async () => {
+      const eventPromise = dispatchEvent('/cdn/somepathhere/assets/file3.css.liquid')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/css')
+      expect(body.toString()).toMatchInlineSnapshot('".some-class {}"')
+    })
+
     test('gets the right content for assets with non-breaking spaces', async () => {
       const eventPromise = dispatchEvent('/cdn/somepathhere/assets/file-with-nbsp.js')
       await expect(eventPromise).resolves.not.toThrow()
