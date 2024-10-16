@@ -1,4 +1,4 @@
-function projectFactory(name: string, schemaName: string, project: string = "app") {
+function projectFactory(name: string, schemaName: string, project: string = 'app') {
   return {
     schema: `./packages/${project}/src/cli/api/graphql/${name}/${schemaName}`,
     documents: [`./packages/${project}/src/cli/api/graphql/${name}/queries/**/*.graphql`],
@@ -11,7 +11,7 @@ function projectFactory(name: string, schemaName: string, project: string = "app
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */',
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
             ],
@@ -21,6 +21,8 @@ function projectFactory(name: string, schemaName: string, project: string = "app
                 GlobalID: 'string',
                 PropertyId: 'string',
                 PropertyPublicID: 'string',
+                JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
+                URL: 'string',
               },
             },
           },
@@ -30,7 +32,7 @@ function projectFactory(name: string, schemaName: string, project: string = "app
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types */',
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
               {
@@ -43,13 +45,14 @@ function projectFactory(name: string, schemaName: string, project: string = "app
                     GlobalID: 'string',
                     PropertyId: 'string',
                     PropertyPublicID: 'string',
+                    JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
+                    URL: 'string',
                   },
                 },
               },
               {
                 'typed-document-node': {
                   addTypenameToSelectionSets: true,
-                  nameSuffix: 'Funky',
                 },
               },
             ],
@@ -73,6 +76,7 @@ export default {
     businessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql'),
     businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
+    appManagement: projectFactory('app-management', 'app_management_schema.graphql'),
     admin: projectFactory('admin', 'admin_schema.graphql', 'cli-kit'),
   },
 }

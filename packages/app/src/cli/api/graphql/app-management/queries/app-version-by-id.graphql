@@ -1,0 +1,11 @@
+query AppVersionById($versionId: ID!) {
+  version(id: $versionId) {
+    id
+    metadata {
+      versionTag
+    }
+    appModules {
+      ...ReleasedAppModule
+    }
+  }
+}

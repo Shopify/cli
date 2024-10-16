@@ -103,8 +103,8 @@ interface UploadExtensionValidationError {
 
 export interface UploadExtensionsBundleOutput {
   validationErrors: UploadExtensionValidationError[]
-  versionTag: string
-  message?: string
+  versionTag?: string | null
+  message?: string | null
   location: string
   deployError?: string
 }
@@ -269,7 +269,7 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
 
 function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
   return errors.reduce((sections, error) => {
-    const field = error.field.join('.').replace('extension_points', 'extensions.targeting')
+    const field = (error.field ?? ['unknown']).join('.').replace('extension_points', 'extensions.targeting')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
     const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
@@ -380,7 +380,7 @@ export async function getExtensionUploadURL(
 ) {
   const result: AssetUrlSchema = await handlePartnersErrors(() => developerPlatformClient.generateSignedUploadUrl(app))
 
-  if (result.userErrors?.length > 0) {
+  if (!result.assetUrl || result.userErrors?.length > 0) {
     const errors = result.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
   }

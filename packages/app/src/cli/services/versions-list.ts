@@ -15,7 +15,7 @@ type AppVersionLine = {
   createdAt: string
   createdBy?: string
   message?: string
-  versionTag: string
+  versionTag?: string | null
   status: string
 }
 
@@ -52,7 +52,7 @@ async function fetchAppVersions(
     appVersions.forEach((appVersion) => {
       const combinedLength =
         appVersion.message.length +
-        appVersion.versionTag.length +
+        (appVersion.versionTag?.length ?? 0) +
         unstyled(appVersion.status).length +
         appVersion.createdAt.length +
         appVersion.createdBy.length

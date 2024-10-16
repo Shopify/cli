@@ -1,0 +1,21 @@
+mutation CreateAppVersion($appId: ID!, $appSource: AppSourceInput!, $name: String!, $metadata: VersionMetadataInput) {
+  appVersionCreate(appId: $appId, appSource: $appSource, name: $name, metadata: $metadata) {
+    version {
+      id
+      appModules {
+        ...ReleasedAppModule
+      }
+      metadata {
+        versionTag
+        message
+      }
+    }
+    userErrors {
+      field
+      message
+      category
+      code
+      on
+    }
+  }
+}
