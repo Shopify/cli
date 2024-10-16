@@ -201,7 +201,7 @@ class AppInfo {
 
   webComponentsSection(): string {
     const errors: OutputMessage[] = []
-    const subtitle = [outputContent`${outputToken.subheading('web')}`.value]
+    const subtitle = outputContent`${outputToken.subheading('web')}`.value
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
@@ -222,7 +222,7 @@ class AppInfo {
         if (error) errors.push(error)
       }
     })
-    let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
+    let errorContent = `\n${errors.map((error) => this.formattedError(error)).join('\n')}`
     if (errorContent.trim() === '') errorContent = ''
 
     return `${subtitle}\n${linesToColumns([toplevel, ...sublevels])}${errorContent}`

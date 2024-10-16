@@ -79,7 +79,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     }
 
     if (error.params.type) {
-      const expectedType = error.params.type
+      const expectedType = error.params.type as string
       const actualType = getPathValue(subject, path.join('.'))
       return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
     }

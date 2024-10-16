@@ -26,7 +26,7 @@ export class ShopifyConfig extends Config {
     }
     super(options)
 
-    // eslint-disable-next-line dot-notation
+    // eslint-disable-next-line dot-notation, @typescript-eslint/unbound-method
     this['determinePriority'] = this.customPriority
   }
 

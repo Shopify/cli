@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import {hasGit, isTerminalInteractive} from './context/local.js'
 import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'

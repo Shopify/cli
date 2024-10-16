@@ -140,7 +140,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${input}`)
+    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
   }
 
   async session(): Promise<PartnersSession> {
