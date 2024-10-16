@@ -401,6 +401,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           joinPath(websOfType[1]!.directory, configurationFileNames.web),
         )
       }
@@ -1051,6 +1052,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     outputDebug('Unable to decide project type as no web backend')
     return
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const {directory} = backendWebs[0]!
 
   const nodeConfigFile = joinPath(directory, 'package.json')

@@ -193,6 +193,7 @@ export async function ensureAuthenticated(
   }
 
   const currentSession = (await secureStore.fetch()) || {}
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 

@@ -70,6 +70,7 @@ ${outputToken.json(scopes)}
   if (!tokens) {
     throw new BugError('No App Management token found after ensuring authenticated')
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return {token: tokens.appManagement!, userId: tokens.userId}
 }
 

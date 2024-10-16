@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {

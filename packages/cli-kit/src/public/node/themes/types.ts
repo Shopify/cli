@@ -78,9 +78,7 @@ export interface VirtualFileSystem {
   /**
    * Add callbacks to run after certain events are fired.
    */
-  addEventListener: {
-    <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void): void
-  }
+  addEventListener: <T extends ThemeFSEventName>(eventName: T, cb: (params: ThemeFSEventPayload<T>) => void) => void
 }
 
 /**

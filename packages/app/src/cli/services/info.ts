@@ -129,7 +129,6 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,
       'dev',

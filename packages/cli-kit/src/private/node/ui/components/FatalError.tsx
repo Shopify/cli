@@ -29,6 +29,7 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
       .map((item) => {
         /** We make the paths relative to the packages/ directory */
         const fileShortComponents = item.fileShort.split('packages/')
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         item.fileShort = fileShortComponents.length === 2 ? fileShortComponents[1]! : fileShortComponents[0]!
         return item
       })

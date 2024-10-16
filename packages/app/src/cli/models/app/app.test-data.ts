@@ -109,7 +109,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
   })
@@ -1216,7 +1215,6 @@ const currentAccountInfoResponse: CurrentAccountInfoSchema = {
   currentAccountInfo: {
     __typename: 'UserAccount',
     email: 'user@example.com',
-    orgName: 'org1',
   },
 }
 

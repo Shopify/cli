@@ -31,7 +31,7 @@ export function uploadTheme(
   options: UploadOptions = {},
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
-  const uploadResults: Map<string, Result> = new Map()
+  const uploadResults = new Map<string, Result>()
   const getProgress = (params: {current: number; total: number}) =>
     `[${Math.round((params.current / params.total) * 100)}%]`
 

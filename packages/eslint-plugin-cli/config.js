@@ -1,7 +1,14 @@
 module.exports = {
   settings: {},
   plugins: ['no-catch-all', 'vitest', 'unused-imports', 'eslint-plugin-tsdoc', 'jsdoc', 'import', '@shopify/cli'],
-  extends: ['plugin:@shopify/typescript', 'plugin:@shopify/prettier', 'plugin:@shopify/node', 'prettier'],
+  extends: [
+    'plugin:@shopify/typescript',
+    'plugin:@shopify/prettier',
+    'plugin:@shopify/node',
+    'prettier',
+    'plugin:@typescript-eslint/strict',
+    'plugin:@typescript-eslint/stylistic',
+  ],
   rules: {
     'prettier/prettier': ['error'],
     'import/order': [
@@ -150,16 +157,20 @@ module.exports = {
         ignoreRestSiblings: true,
       },
     ],
+    '@typescript-eslint/no-empty-function': 'off',
   },
   overrides: [
     {
-      files: ['**/*.test.ts'],
+      files: ['**/*.test.ts', '**/*.test.tsx', '**/*.test-data.ts', '**/testing/*.{ts,tsx}'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         'no-restricted-syntax': 'off',
         '@shopify/cli/required-fields-when-loading-app': 'off',
         '@typescript-eslint/ban-types': 'off',
         '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/no-empty-function': 'off',
+        '@typescript-eslint/no-dynamic-delete': 'off',
       },
     },
   ],

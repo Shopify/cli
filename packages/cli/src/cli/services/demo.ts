@@ -295,6 +295,7 @@ async function simulateTyping(text?: string) {
   process.stdout.write('$ ')
   const chars = text.split('')
   while (chars.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const char = chars.shift()!
     process.stdout.write(char)
     // eslint-disable-next-line no-await-in-loop

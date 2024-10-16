@@ -46,7 +46,7 @@ const paymentExtensionSpec = createExtensionSpecification({
   schema: PaymentsAppExtensionSchema,
   appModuleFeatures: (_) => [],
   deployConfig: async (config, _) => {
-    const target = config.targeting[0]!.target
+    const target = config.targeting[0]?.target
     switch (target) {
       case OFFSITE_TARGET:
         return offsitePaymentsAppExtensionDeployConfig(config as OffsitePaymentsAppExtensionConfigType)

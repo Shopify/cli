@@ -78,6 +78,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   }
 
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const extension = themeExtensions[0]!
   let optionsToOverwrite = {}
   if (!theme) {

@@ -270,6 +270,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
 
   /** Updates the fake file system and triggers events */
   const triggerFileEvent = async <T extends ThemeFSEventName>(event: T, fileKey: string, content = 'default-value') => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
     const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
     const contentSpy = vi.fn((fn) => fn(content))
     const syncSpy = vi.fn((fn) => {

@@ -67,6 +67,7 @@ export function buildBulkUploadResults(
 
   return bulkUploadResponse.map((bulkUpload, index) => {
     return {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       key: assets[index]!.key,
       success: bulkUpload.code === 200,
       errors: bulkUpload.body.errors || {},

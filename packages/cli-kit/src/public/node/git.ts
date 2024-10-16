@@ -120,6 +120,7 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       await git(simpleGitOptions).clone(repository!, destination, options)
 
       if (latestTag) {
