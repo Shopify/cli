@@ -77,6 +77,7 @@ async function contextDevServerContext(
   const session = await initializeDevServerSession(theme.id.toString(), adminSession, undefined, storefrontPassword)
 
   return {
+    theme,
     session,
     localThemeFileSystem,
     localThemeExtensionFileSystem,

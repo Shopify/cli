@@ -17,7 +17,7 @@ type ThemeFSEvent =
       payload: {
         fileKey: Key
         onContent: (fn: (content: string) => void) => void
-        onSync: (fn: () => void) => void
+        onSync: (fn: () => Promise<void>) => void
       }
     }
 

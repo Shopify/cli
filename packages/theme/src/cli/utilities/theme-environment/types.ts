@@ -1,5 +1,5 @@
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {Theme, ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 
 /**
  * Defines an authentication session for the theme development server.
@@ -66,6 +66,11 @@ export interface DevServerContext {
    * Path to the local theme directory.
    */
   directory: string
+
+  /**
+   * The target development theme.
+   */
+  theme: Theme
 
   /**
    * Additional options for the development server.

@@ -90,6 +90,7 @@ export async function dev(options: DevOptions) {
     storefrontPassword,
   )
   const ctx: DevServerContext = {
+    theme: options.theme,
     session,
     localThemeFileSystem,
     localThemeExtensionFileSystem,
