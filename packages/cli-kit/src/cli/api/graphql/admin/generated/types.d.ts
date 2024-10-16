@@ -119,3 +119,20 @@ export type Scalars = {
    */
   UtcOffset: {input: any; output: any}
 }
+
+/** Type of a theme file operation result. */
+export type OnlineStoreThemeFileResultType =
+  /** Operation was malformed or invalid. */
+  | 'BAD_REQUEST'
+  /** Operation faced a conflict with the current state of the file. */
+  | 'CONFLICT'
+  /** Operation encountered an error. */
+  | 'ERROR'
+  /** Operation file could not be found. */
+  | 'NOT_FOUND'
+  /** Operation was successful. */
+  | 'SUCCESS'
+  /** Operation timed out. */
+  | 'TIMEOUT'
+  /** Operation could not be processed due to issues with input data. */
+  | 'UNPROCESSABLE_ENTITY'

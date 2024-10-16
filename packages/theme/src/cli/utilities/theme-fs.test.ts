@@ -15,7 +15,7 @@ import {
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
-import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'events'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -503,13 +503,15 @@ describe('theme-fs', () => {
 
     test('deletes file from remote theme', async () => {
       // Given
-      vi.mocked(fetchThemeAsset).mockResolvedValue({
-        key: 'assets/base.css',
-        checksum: '1',
-        value: 'content',
-        attachment: '',
-        stats: {size: 100, mtime: 100},
-      })
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          key: 'assets/base.css',
+          checksum: '1',
+          value: 'content',
+          attachment: '',
+          stats: {size: 100, mtime: 100},
+        },
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -535,12 +537,14 @@ describe('theme-fs', () => {
 
     test('renders a warning to debug if the file deletion fails', async () => {
       // Given
-      vi.mocked(fetchThemeAsset).mockResolvedValue({
-        key: 'assets/base.css',
-        value: 'file content',
-        checksum: '1',
-        stats: {size: 100, mtime: 100},
-      })
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          key: 'assets/base.css',
+          value: 'file content',
+          checksum: '1',
+          stats: {size: 100, mtime: 100},
+        },
+      ])
       vi.mocked(deleteThemeAsset).mockResolvedValue(false)
 
       // When
