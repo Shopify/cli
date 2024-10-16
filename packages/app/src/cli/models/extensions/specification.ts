@@ -21,6 +21,7 @@ export type ExtensionFeature =
   | 'esbuild'
   | 'single_js_entry_path'
   | 'localization'
+  | 'generates_source_maps'
 
 export interface TransformationConfig {
   [key: string]: string
