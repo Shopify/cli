@@ -6,6 +6,7 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
+import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {createTheme, fetchChecksums, publishTheme} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -110,6 +111,12 @@ export interface PushFlags {
  */
 export async function push(flags: PushFlags): Promise<void> {
   const {path} = flags
+
+  configureCLIEnvironment({
+    verbose: flags.verbose,
+    noColor: flags.noColor,
+  })
+
   const force = flags.force ?? false
 
   const store = ensureThemeStore({store: flags.store})
