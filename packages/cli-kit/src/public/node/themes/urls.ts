@@ -24,3 +24,7 @@ export function storeAdminUrl(session: AdminSession) {
   const store = session.storeFqdn
   return `https://${store}/admin`
 }
+
+export function storePasswordPage(store: AdminSession['storeFqdn']) {
+  return `https://${store}/admin/online_store/preferences`
+}

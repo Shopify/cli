@@ -17,12 +17,18 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
  * If the password is correct, SFR will respond with a 302 to redirect to the storefront
  */
 export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
+  const params = new URLSearchParams()
+
+  params.append('form_type', 'storefront_password')
+  params.append('utf8', '✓')
+  params.append('password', password ?? '')
+
   const response = await fetch(`${prependHttps(store)}/password`, {
     headers: {
       'cache-control': 'no-cache',
       'content-type': 'application/x-www-form-urlencoded',
     },
-    body: `form_type=storefront_password&utf8=%E2%9C%93&password=${password}`,
+    body: params.toString(),
     method: 'POST',
     redirect: 'manual',
   })

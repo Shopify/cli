@@ -11,7 +11,7 @@ import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 
 export interface TextPromptProps {
-  message: string
+  message: TokenItem
   onSubmit: (value: string) => void
   defaultValue?: string
   password?: boolean
