@@ -2,6 +2,6 @@
 * @shopify/app-inner-loop
 
 # Theme team or CLI owners can review theme changes
-packages/theme/* @shopify/advanced-edits @shopify/app-inner-loop
+packages/theme/* @shopify/advanced-edits
 
 .changeset/* @shopify/advanced-edits @shopify/app-inner-loop

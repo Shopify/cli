@@ -5,6 +5,7 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 /**
  * An object that contains the flags that
  * are shared across all the theme commands.
+ * This is a change
  */
 export const themeFlags = {
   path: Flags.string({
