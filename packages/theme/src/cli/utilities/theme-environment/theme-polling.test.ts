@@ -1,7 +1,7 @@
 import {PollingOptions, pollRemoteJsonChanges, deleteRemovedAssets} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
@@ -21,7 +21,7 @@ describe('pollRemoteJsonChanges', async () => {
     const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
     const updatedRemoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
     vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
-    vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '2', key: 'templates/asset.json', value: 'content'})
+    vi.mocked(fetchThemeAssets).mockResolvedValue([{checksum: '2', key: 'templates/asset.json', value: 'content'}])
 
     // When
     await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
@@ -40,7 +40,7 @@ describe('pollRemoteJsonChanges', async () => {
     const remoteChecksums: Checksum[] = []
     const updatedRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
     vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
-    vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '1', key: 'templates/asset.json', value: 'content'})
+    vi.mocked(fetchThemeAssets).mockResolvedValue([{checksum: '1', key: 'templates/asset.json', value: 'content'}])
 
     // When
     await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
@@ -88,7 +88,7 @@ describe('pollRemoteJsonChanges', async () => {
     })
 
     // Then
-    expect(fetchThemeAsset).not.toHaveBeenCalled()
+    expect(fetchThemeAssets).not.toHaveBeenCalled()
     expect(themeFileSystem.files.get('templates/asset.json')).toBeUndefined()
   })
 
@@ -106,7 +106,7 @@ describe('pollRemoteJsonChanges', async () => {
     })
 
     // Then
-    expect(fetchThemeAsset).not.toHaveBeenCalled()
+    expect(fetchThemeAssets).not.toHaveBeenCalled()
     expect(themeFileSystem.files.get('templates/asset.json')).toEqual({checksum: '1', key: 'templates/asset.json'})
   })
 
@@ -120,7 +120,7 @@ describe('pollRemoteJsonChanges', async () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
     themeFileSystem.read = async (fileKey: string) => {
       themeFileSystem.files.set(fileKey, {checksum: '3', key: fileKey})
-      return themeFileSystem.files.get(fileKey)?.value || themeFileSystem.files.get(fileKey)?.attachment
+      return themeFileSystem.files.get(fileKey)?.value ?? themeFileSystem.files.get(fileKey)?.attachment
     }
 
     // When
@@ -147,7 +147,7 @@ describe('pollRemoteJsonChanges', async () => {
     await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
 
     // Then
-    expect(fetchThemeAsset).not.toHaveBeenCalled()
+    expect(fetchThemeAssets).not.toHaveBeenCalled()
     expect(spy).not.toHaveBeenCalled()
   })
 
@@ -177,7 +177,7 @@ describe('pollRemoteJsonChanges', async () => {
         {checksum: '2', key: 'templates/asset.json'},
         {checksum: '2', key: 'templates/asset2.json'},
       ]
-      vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '2', key: 'templates/asset.json', value: 'content'})
+      vi.mocked(fetchThemeAssets).mockResolvedValue([{checksum: '2', key: 'templates/asset.json', value: 'content'}])
       vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
 
       // When
@@ -186,8 +186,8 @@ describe('pollRemoteJsonChanges', async () => {
       })
 
       // Then
-      expect(fetchThemeAsset).toHaveBeenCalledOnce()
-      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset.json', adminSession)
+      expect(fetchThemeAssets).toHaveBeenCalledOnce()
+      expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset.json'], adminSession)
       expect(themeFileSystem.files.get('templates/asset.json')).toEqual({
         checksum: '2',
         key: 'templates/asset.json',
@@ -207,7 +207,7 @@ describe('pollRemoteJsonChanges', async () => {
         {checksum: '2', key: 'templates/asset.json'},
         {checksum: '2', key: 'templates/asset2.json'},
       ]
-      vi.mocked(fetchThemeAsset).mockResolvedValue({checksum: '2', key: 'templates/asset2.json', value: 'content'})
+      vi.mocked(fetchThemeAssets).mockResolvedValue([{checksum: '2', key: 'templates/asset2.json', value: 'content'}])
       vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
 
       // When
@@ -216,8 +216,8 @@ describe('pollRemoteJsonChanges', async () => {
       })
 
       // Then
-      expect(fetchThemeAsset).toHaveBeenCalledOnce()
-      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset2.json', adminSession)
+      expect(fetchThemeAssets).toHaveBeenCalledOnce()
+      expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset2.json'], adminSession)
       expect(themeFileSystem.files.get('templates/asset2.json')).toEqual({
         checksum: '2',
         key: 'templates/asset2.json',
@@ -238,11 +238,13 @@ describe('pollRemoteJsonChanges', async () => {
         {checksum: '6', key: 'templates/asset3.json'},
       ]
       vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
-      vi.mocked(fetchThemeAsset).mockImplementation(async (_, key) => ({
-        checksum: '2',
-        key,
-        value: 'content',
-      }))
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          checksum: '2',
+          key: 'templates/asset2.json',
+          value: 'content',
+        },
+      ])
 
       const themeFileSystem = {
         ...fakeThemeFileSystem('tmp', new Map()),
@@ -253,10 +255,8 @@ describe('pollRemoteJsonChanges', async () => {
       await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
 
       // Then
-      expect(fetchThemeAsset).toHaveBeenCalledTimes(2)
-      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset1.json', adminSession)
-      expect(fetchThemeAsset).toHaveBeenCalledWith(1, 'templates/asset3.json', adminSession)
-      expect(fetchThemeAsset).not.toHaveBeenCalledWith(1, 'templates/asset2.json', adminSession)
+      expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset1.json', 'templates/asset3.json'], adminSession)
+      expect(fetchThemeAssets).not.toHaveBeenCalledWith(1, ['templates/asset2.json'], adminSession)
     })
   })
 
