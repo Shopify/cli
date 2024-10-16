@@ -187,7 +187,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   }
 
   const handleFileDelete = (themeId: string, adminSession: AdminSession, fileKey: string) => {
-    if (isFileIgnored(fileKey)) return
+    if (isFileIgnored(fileKey) || options?.noDelete) return
 
     // Optimistically delete the file from the local file system.
     files.delete(fileKey)
