@@ -93,6 +93,7 @@ describe('dev', () => {
           noDelete: false,
           only: [],
         },
+        theme: options.theme,
       })
     })
   })

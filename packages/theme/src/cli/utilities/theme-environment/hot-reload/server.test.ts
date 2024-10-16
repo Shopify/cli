@@ -135,7 +135,9 @@ describe('hot-reload server', () => {
     // We wait for syncing to finish on liquid assets before emitting a full reload event:
     await nextTick()
     expect(unlinkSyncSpy).toHaveBeenCalled()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${liquidAssetKey}"}`)
+    expect(hotReloadEvents.at(-1)).toMatch(
+      `data: {"type":"css","key":"${liquidAssetKey.replace('.css.liquid', '.css')}"}`,
+    )
     // Removes the CSS Liquid file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
 
@@ -178,7 +180,9 @@ describe('hot-reload server', () => {
     // Emits a CSS HotReload event after syncing:
     expect(cssLiquidSyncSpy).toHaveBeenCalled()
     await nextTick()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${cssLiquidFileKey}"}`)
+    expect(hotReloadEvents.at(-1)).toMatch(
+      `data: {"type":"css","key":"${cssLiquidFileKey.replace('.css.liquid', '.css')}"}`,
+    )
 
     // -- Updates other files:
     const jsFileKey = 'assets/something.js'
@@ -264,6 +268,7 @@ function createH3Event(url: string) {
 function createTestContext(options?: {files?: [string, string][]}) {
   /** Waits for an event stream to be flushed, or for the last `onSync` callback to be triggered */
   const nextTick = () => new Promise((resolve) => setTimeout(resolve))
+  const mockTheme = {id: 1, name: 'my-theme', createdAtRuntime: false, processing: false, role: 'main'}
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
@@ -329,6 +334,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
       open: false,
       themeEditorSync: false,
     },
+    theme: {id: 1, name: 'my-theme', createdAtRuntime: false, processing: false, role: 'main'},
   }
 
   /** Handles http events */
