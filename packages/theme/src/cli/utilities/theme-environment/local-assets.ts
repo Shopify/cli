@@ -28,7 +28,6 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     let mimeType = lookupMimeType(fileKey)
 
     if (fileKey.endsWith('.css.liquid')) {
-      console.log('!!!!')
       mimeType = 'text/css'
     }
 

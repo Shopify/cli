@@ -14,6 +14,7 @@ import {
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
+import {fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
@@ -96,10 +97,10 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
     if (isAsset(fileKey)) {
       if (extension === '.liquid') {
-        // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        onSync(() => {
-          console.log('!!! onsync returned')
-          // fetch the asset from the actual admin theme (maybe in CTX to see wait until it's 200 (wihtout liquid extension))
+        // If the asset is a .css.liquid or similar, we wait until it's been synced and then request the file
+        // to trigger a render.
+        onSync(async () => {
+          await fetchThemeAsset(ctx.theme.id, fileKey, ctx.session)
           triggerHotReload(fileKey, ctx)
         })
       } else {
@@ -114,7 +115,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       })
     } else {
       // Unknown files outside of assets. Wait for sync and reload:
-      onSync(() => triggerHotReload(fileKey, ctx))
+      onSync(async () => {
+        triggerHotReload(fileKey, ctx)
+      })
     }
   }
 
@@ -267,7 +270,6 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 }
 
 function triggerHotReload(key: string, ctx: DevServerContext) {
-  console.log('!!! triggerHotReload', key)
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
     return emitHotReloadEvent({type: 'full', key})
@@ -280,7 +282,6 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
   } else if (type === 'assets' && key.endsWith('.css')) {
     emitHotReloadEvent({type: 'css', key})
   } else if (type === 'assets' && key.endsWith('.css.liquid')) {
-    console.log('!!! css.liquid')
     emitHotReloadEvent({type: 'css', key: key.replace('.css.liquid', '.css')})
   } else {
     emitHotReloadEvent({type: 'full', key})
