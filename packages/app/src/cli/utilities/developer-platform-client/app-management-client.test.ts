@@ -7,6 +7,7 @@ import {
   versionDeepLink,
 } from './app-management-client.js'
 import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
+import {AppsQuerySchema} from './app-management-client/graphql/apps.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -14,9 +15,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/api/app-management')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -186,5 +189,97 @@ describe('versionDeepLink', () => {
 
     // Then
     expect(got).toEqual('https://dev.shopify.com/dashboard/1/apps/2/versions/3')
+  })
+})
+
+describe('searching for apps', () => {
+  async function appSearchTest({query, queryVariable}: {query?: string; queryVariable: string}) {
+    // Given
+    const orgId = '1'
+    const appName = 'test-app'
+    const apps = [testOrganizationApp({title: appName})]
+    const mockedFetchAppsResponse: AppsQuerySchema = {
+      apps: {
+        edges: apps.map((app, index) => ({
+          node: {
+            ...app,
+            key: `key-${index}`,
+            activeRelease: {
+              id: 'gid://shopify/Release/1',
+              version: {
+                name: app.title,
+                appModules: [],
+              },
+            },
+          },
+        })),
+        pageInfo: {
+          hasNextPage: false,
+        },
+      },
+    }
+    vi.mocked(appManagementRequest).mockResolvedValueOnce(mockedFetchAppsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const got = await client.appsForOrg(orgId, query)
+
+    // Then
+    expect(vi.mocked(appManagementRequest)).toHaveBeenCalledWith(
+      orgId,
+      `
+  query listApps($query: String) {
+    apps(query: $query, first: 50) {
+      edges {
+        node {
+          id
+          key
+          activeRelease {
+            id
+            version {
+              name
+              appModules {
+                uuid
+                handle
+                config
+                specification {
+                  externalIdentifier
+                }
+              }
+            }
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`,
+      'token',
+      {query: queryVariable},
+    )
+    expect(got).toEqual({
+      apps: apps.map((app, index) => ({
+        apiKey: `key-${index}`,
+        id: app.id,
+        organizationId: app.organizationId,
+        title: app.title,
+      })),
+      hasMorePages: false,
+    })
+  }
+
+  test('passes in a blank search if none is provided', async () => {
+    await appSearchTest({query: undefined, queryVariable: ''})
+  })
+
+  test('searches for apps by name with a single term passed in the query', async () => {
+    await appSearchTest({query: 'test-app', queryVariable: 'title:test-app'})
+  })
+
+  test('searches for apps by name with multiple terms passes in the query', async () => {
+    await appSearchTest({query: 'test app', queryVariable: 'title:test title:app'})
   })
 })

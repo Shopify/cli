@@ -176,7 +176,7 @@ const knownFailures = {
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/app-versions.ts':
     'dc862433d890cb282832c726f1eea45bc73ff013b5d81ddede0c80d7e6ce9922',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/apps.ts':
-    'f35782cdc5ced3259858d3ec17281ca34780e64cb6be627342817a69bfbdb00b',
+    '17e663c0f3847eaf3dd24cc63f37fd4f3c1ed10e37055209ec05386eb7704912',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/create-app-version.ts':
     'ec3aec2eeddaf2a9e9e14db04a8652f0d6fd168b74846e3f9212f357d54a97ff',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/create-app.ts':

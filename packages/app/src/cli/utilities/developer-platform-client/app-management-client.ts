@@ -24,7 +24,7 @@ import {
   ReleaseVersionMutationSchema,
   ReleaseVersionMutationVariables,
 } from './app-management-client/graphql/release-version.js'
-import {AppsQuery, AppsQuerySchema} from './app-management-client/graphql/apps.js'
+import {AppsQuery, AppsQuerySchema, AppsQueryVariables} from './app-management-client/graphql/apps.js'
 import {
   OrganizationQuery,
   OrganizationQuerySchema,
@@ -285,10 +285,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {organization: organization!, apps, hasMorePages}
   }
 
-  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+  async appsForOrg(organizationId: string, term = ''): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
     const query = AppsQuery
-    const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token())
-    const minimalOrganizationApps = result.apps.map((app) => {
+    const variables: AppsQueryVariables = {
+      query: term
+        .split(' ')
+        .filter((word) => word)
+        .map((word) => `title:${word}`)
+        .join(' '),
+    }
+    const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token(), variables)
+    const minimalOrganizationApps = result.apps.edges.map((edge) => {
+      const app = edge.node
       return {
         id: app.id,
         apiKey: app.key,
@@ -298,7 +306,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
     return {
       apps: minimalOrganizationApps,
-      hasMorePages: false,
+      hasMorePages: result.apps.pageInfo.hasNextPage,
     }
   }
 
