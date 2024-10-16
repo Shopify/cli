@@ -48,6 +48,12 @@ export async function bundleAndBuildExtensions(options: BundleOptions, systemEnv
       showTimestamps: false,
     })
 
+    await Promise.all(
+      options.app.allExtensions.map(async (extension) => {
+        await extension.keepBuiltSourcemapsLocally(bundleDirectory)
+      }),
+    )
+
     if (options.bundlePath) {
       await zip({
         inputDirectory: bundleDirectory,
