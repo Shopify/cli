@@ -1,0 +1,13 @@
+mutation themePublish($id: ID!) {
+  themePublish(id: $id) {
+    theme {
+      id
+      name
+      role
+    }
+    userErrors{
+      field
+      message
+    }
+  }
+}
