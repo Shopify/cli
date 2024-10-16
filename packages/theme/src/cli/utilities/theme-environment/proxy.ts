@@ -260,11 +260,6 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
         // Patch Liquid assets like .css.liquid
         const body = await response.text()
-        console.log('???')
-        console.log(response.headers.get('content-type'))
-        console.log(response.status)
-        console.log(response.statusText)
-        console.log(body)
         await send(event, injectCdnProxy(body, ctx))
       }
     },
