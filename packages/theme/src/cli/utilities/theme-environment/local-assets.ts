@@ -25,11 +25,7 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
     const {file, fileKey, isUnsynced} = findLocalFile(event, ctx)
     if (!fileKey) return
 
-    let mimeType = lookupMimeType(fileKey)
-
-    if (fileKey.endsWith('.css.liquid')) {
-      mimeType = 'text/css'
-    }
+    const mimeType = lookupMimeType(fileKey)
 
     if (mimeType.startsWith('image/') && event.path.includes('&') && !isUnsynced) {
       // This is likely a request for an image with filters (e.g. crop),
