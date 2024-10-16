@@ -1,5 +1,7 @@
 # By default, review should come from the app-inner-loop team
 * @shopify/app-inner-loop
 
-# Theme team, or CLI owners can review theme changes
-packages/theme/* @shopify/advanced-edits @shopify/app-inner-loop
+# Theme team can review theme changes
+packages/theme/* @shopify/advanced-edits
+
+.changeset/* @shopify/advanced-edits @shopify/app-inner-loop
