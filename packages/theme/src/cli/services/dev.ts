@@ -225,6 +225,27 @@ export function showDeprecationWarnings(args: string[]) {
       ],
     })
   }
+
+  const legacyFlagPresent = args.find((arg) => arg === '--legacy')
+
+  if (legacyFlagPresent) {
+    renderWarning({
+      headline: ['`SHOPIFY_FLAG_LEGACY` is deprecated.'],
+      body: [
+        'The',
+        {command: 'SHOPIFY_FLAG_LEGACY'},
+        'flag has been deprecated. If this variable is essential to your workflow, please report an issue at',
+        {
+          link: {
+            url: 'https://github.com/Shopify/cli/issues',
+          },
+        },
+        {
+          char: '.',
+        },
+      ],
+    })
+  }
 }
 
 export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
