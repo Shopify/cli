@@ -98,6 +98,8 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
         onSync(() => {
+          console.log('!!! onsync returned')
+          // fetch the asset from the actual admin theme (maybe in CTX to see wait until it's 200 (wihtout liquid extension))
           triggerHotReload(fileKey, ctx)
         })
       } else {
@@ -265,6 +267,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 }
 
 function triggerHotReload(key: string, ctx: DevServerContext) {
+  console.log('!!! triggerHotReload', key)
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
     return emitHotReloadEvent({type: 'full', key})
@@ -277,6 +280,7 @@ function triggerHotReload(key: string, ctx: DevServerContext) {
   } else if (type === 'assets' && key.endsWith('.css')) {
     emitHotReloadEvent({type: 'css', key})
   } else if (type === 'assets' && key.endsWith('.css.liquid')) {
+    console.log('!!! css.liquid')
     emitHotReloadEvent({type: 'css', key: key.replace('.css.liquid', '.css')})
   } else {
     emitHotReloadEvent({type: 'full', key})
