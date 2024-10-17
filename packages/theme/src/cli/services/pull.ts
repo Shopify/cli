@@ -96,6 +96,7 @@ export interface PullFlags {
  * @param flags - All flags are optional.
  */
 export async function pull(flags: PullFlags): Promise<void> {
+  // test 12345
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
   showEmbeddedCLIWarning()
 
