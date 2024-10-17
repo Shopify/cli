@@ -1,9 +1,5 @@
 import {calculateChecksum} from './asset-checksum.js'
-import {
-  applyIgnoreFilters,
-  raiseWarningForNonExplicitGlobPatterns,
-  getPatternsFromShopifyIgnore,
-} from './asset-ignore.js'
+import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
@@ -86,11 +82,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
     .then(([ignoredPatterns]) => {
       filterPatterns.ignoreFromFile.push(...ignoredPatterns)
-      raiseWarningForNonExplicitGlobPatterns([
-        ...filterPatterns.ignoreFromFile,
-        ...filterPatterns.ignore,
-        ...filterPatterns.only,
-      ])
     })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
@@ -397,8 +388,6 @@ function dirPath(filePath: string) {
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
-      `${action} ${fileKey}`,
-    )}`,
+    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
   )
 }
