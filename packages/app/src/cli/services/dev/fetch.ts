@@ -146,8 +146,8 @@ export async function fetchStoreByDomain(
 }
 
 /**
- * Returns the store based on passed domain
- * If a store with that domain doesn't exist the method throws an error
+ * Returns the store based on given domain.
+ * Throws error if a store with that domain doesn't exist in the organization.
  *
  * @param org - Organization
  * @param storeFqdn - store domain fqdn
