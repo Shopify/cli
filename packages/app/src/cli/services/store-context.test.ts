@@ -38,7 +38,11 @@ describe('storeContext', () => {
   test('uses explicitly provided storeFqdn', async () => {
     vi.mocked(fetchStore).mockResolvedValue(mockStore)
 
-    const result = await storeContext({appContextResult, storeFqdn: 'explicit-store.myshopify.com'})
+    const result = await storeContext({
+      appContextResult,
+      storeFqdn: 'explicit-store.myshopify.com',
+      forceReselectStore: false,
+    })
 
     expect(fetchStore).toHaveBeenCalledWith(
       mockOrganization,
@@ -51,7 +55,10 @@ describe('storeContext', () => {
   test('uses cached dev_store_url when no explicit storeFqdn is provided', async () => {
     vi.mocked(fetchStore).mockResolvedValue(mockStore)
 
-    const result = await storeContext({appContextResult})
+    const result = await storeContext({
+      appContextResult,
+      forceReselectStore: false,
+    })
 
     expect(fetchStore).toHaveBeenCalledWith(mockOrganization, 'cached-store.myshopify.com', mockDeveloperPlatformClient)
     expect(result).toEqual(mockStore)
@@ -65,7 +72,26 @@ describe('storeContext', () => {
     vi.mocked(selectStore).mockResolvedValue(mockStore)
 
     const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
-    const result = await storeContext({appContextResult: updatedAppContextResult})
+    const result = await storeContext({
+      appContextResult: updatedAppContextResult,
+      forceReselectStore: false,
+    })
+
+    expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
+    expect(selectStore).toHaveBeenCalledWith(allStores, mockOrganization, mockDeveloperPlatformClient)
+    expect(result).toEqual(mockStore)
+  })
+
+  test('fetches and selects store when forceReselectStore is true', async () => {
+    const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
+
+    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue(allStores)
+    vi.mocked(selectStore).mockResolvedValue(mockStore)
+
+    const result = await storeContext({
+      appContextResult,
+      forceReselectStore: true,
+    })
 
     expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
     expect(selectStore).toHaveBeenCalledWith(allStores, mockOrganization, mockDeveloperPlatformClient)
@@ -75,7 +101,7 @@ describe('storeContext', () => {
   test('throws an error when fetchStore fails', async () => {
     vi.mocked(fetchStore).mockRejectedValue(new Error('Store not found'))
 
-    await expect(storeContext({appContextResult})).rejects.toThrow('Store not found')
+    await expect(storeContext({appContextResult, forceReselectStore: false})).rejects.toThrow('Store not found')
   })
 
   test('throws an error when selectStore fails', async () => {
@@ -85,6 +111,8 @@ describe('storeContext', () => {
     vi.mocked(selectStore).mockRejectedValue(new Error('No stores available'))
     const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
 
-    await expect(storeContext({appContextResult: updatedAppContextResult})).rejects.toThrow('No stores available')
+    await expect(storeContext({appContextResult: updatedAppContextResult, forceReselectStore: false})).rejects.toThrow(
+      'No stores available',
+    )
   })
 })
