@@ -67,7 +67,11 @@ export default class Logs extends AppCommand {
       userProvidedConfigName: flags.config,
     })
 
-    const primaryStore = await storeContext({appContextResult, storeFqdn: flags.store?.[0]})
+    const primaryStore = await storeContext({
+      appContextResult,
+      storeFqdn: flags.store?.[0],
+      forceReselectStore: flags.reset,
+    })
 
     const logOptions = {
       ...appContextResult,

@@ -177,7 +177,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
 
   if (!options.customInfoBox) {
     showReusedDevValues({
-      selectedApp,
+      appName: selectedApp.title,
       selectedStore,
       cachedInfo,
       organization,
@@ -631,7 +631,7 @@ export async function selectOrg(): Promise<Organization> {
 
 interface ReusedValuesOptions {
   organization: Organization
-  selectedApp: OrganizationApp
+  appName: string
   selectedStore: OrganizationStore
   cachedInfo?: CachedAppInfo
 }
@@ -639,7 +639,7 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+export function showReusedDevValues({organization, appName, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
   if (sniffForJson()) return
 
@@ -648,7 +648,7 @@ function showReusedDevValues({organization, selectedApp, selectedStore, cachedIn
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
-    appName: selectedApp.title,
+    appName,
     devStore: selectedStore.shopDomain,
     updateURLs,
     configFile: cachedInfo.configFile,

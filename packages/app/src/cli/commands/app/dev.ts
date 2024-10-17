@@ -164,7 +164,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     await checkFolderIsValidApp(flags.path)
 
-    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+    const appContextResult = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
@@ -172,23 +172,13 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
     })
 
     const store = await storeContext({
-      app,
-      organization,
-      developerPlatformClient,
-      storeFqdn: flags.store,
+      appContextResult,
     })
 
     const devOptions: DevOptions = {
-      app,
-      remoteApp,
-      organization,
-      developerPlatformClient,
+      ...appContextResult,
       store,
       directory: flags.path,
-      configName: flags.config,
-      apiKey,
-      storeFqdn: flags.store,
-      reset: flags.reset,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig,

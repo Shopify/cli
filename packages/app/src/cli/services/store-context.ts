@@ -13,6 +13,7 @@ import {OrganizationStore} from '../models/organization.js'
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
+  forceReselectStore: boolean
   storeFqdn?: string
 }
 
@@ -20,15 +21,20 @@ interface StoreContextOptions {
  * Returns a Store based on the provided options. If a store can't be retrieved, it throws an error.
  *
  * If a storeFqdn is explicitly provided, it has preference over anything else.
- * If not, check if there is a cached storeFqdn in the app toml configuration.
- * If not, fetch all stores for the organization and let the user select one.
+ * If not, check if there is a cached storeFqdn in the app configuration. If forceReselectStore is true, it will be ignored.
+ * If still don't have a store, fetch all stores for the organization and let the user select one.
  */
-export async function storeContext({appContextResult, storeFqdn}: StoreContextOptions): Promise<OrganizationStore> {
+export async function storeContext({
+  appContextResult,
+  storeFqdn,
+  forceReselectStore,
+}: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
 
   // An explicit storeFqdn has preference over anything else.
-  const storeFqdnToUse = storeFqdn || app.configuration.build?.dev_store_url
+  const cachedStoreInToml = forceReselectStore ? undefined : app.configuration.build?.dev_store_url
+  const storeFqdnToUse = storeFqdn || cachedStoreInToml
   if (storeFqdnToUse) {
     selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
   } else {

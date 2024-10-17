@@ -8,7 +8,12 @@ import {
   startTunnelPlugin,
   updateURLs,
 } from './dev/urls.js'
-import {enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
+import {
+  enableDeveloperPreview,
+  disableDeveloperPreview,
+  developerPreviewUpdate,
+  showReusedDevValues,
+} from './context.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
@@ -18,6 +23,7 @@ import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -45,11 +51,6 @@ export interface DevOptions {
   developerPlatformClient: DeveloperPlatformClient
   store: OrganizationStore
   directory: string
-  id?: number
-  configName?: string
-  apiKey?: string
-  storeFqdn?: string
-  reset: boolean
   update: boolean
   commandConfig: Config
   skipDependenciesInstallation: boolean
@@ -83,16 +84,25 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  // const {
-  //   storeFqdn,
-  //   storeId,
-  //   remoteApp,
-  //   remoteAppUpdated,
-  //   updateURLs: cachedUpdateURLs,
-  //   localApp: app,
-  // } = await ensureDevContext(devContextOptions)
+  showReusedDevValues({
+    appName: remoteApp.title,
+    selectedStore: store,
+    cachedInfo: getCachedAppInfo(commandOptions.directory),
+    organization: commandOptions.organization,
+  })
 
-  const apiKey = remoteApp.apiKey
+  // Update the dev_store_url in the app configuration if it doesn't match the store domain
+  if (app.configuration.build?.dev_store_url !== store.shopDomain) {
+    const newConfiguration = {
+      ...app.configuration,
+      build: {
+        ...app.configuration.build,
+        dev_store_url: store.shopDomain,
+      },
+    }
+    app.configuration = newConfiguration
+    await writeAppConfigurationFile(newConfiguration, app.configSchema)
+  }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
     await installAppDependencies(app)
@@ -129,8 +139,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   app.webs = webs
 
   const cachedUpdateURLs = app.configuration.build?.automatically_update_urls_on_dev
-
   const previousAppId = getCachedAppInfo(commandOptions.directory)?.previousAppId
+  const apiKey = remoteApp.apiKey
 
   const partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
     webs,
@@ -422,7 +432,6 @@ async function logMetadataForDev(options: {
     cmd_dev_urls_updated: options.shouldUpdateURLs,
     store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
-    cmd_app_reset_used: options.devOptions.reset,
   }))
 
   await metadata.addSensitiveMetadata(() => ({
