@@ -128,7 +128,7 @@ jobs:
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }} --output-style=stream
 
   pr-platform-agnostic-lint:
-    name: '[PR] Run ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}'
+    name: '[PR] Run lint with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
