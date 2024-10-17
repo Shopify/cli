@@ -1,8 +1,7 @@
 import {fetchStore} from './dev/fetch.js'
 import {selectStore} from './dev/select-store.js'
-import {Organization, OrganizationStore} from '../models/organization.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {AppLinkedInterface} from '../models/app/app.js'
+import {LoadedAppContextOutput} from './app-context.js'
+import {OrganizationStore} from '../models/organization.js'
 
 /**
  * Input options for the `storeContext` function.
@@ -13,9 +12,7 @@ import {AppLinkedInterface} from '../models/app/app.js'
  * @param storeFqdn - The store FQDN, optional, when explicitly provided it has preference over anything else.
  */
 interface StoreContextOptions {
-  app: AppLinkedInterface
-  organization: Organization
-  developerPlatformClient: DeveloperPlatformClient
+  appContextResult: LoadedAppContextOutput
   storeFqdn?: string
 }
 
@@ -26,12 +23,8 @@ interface StoreContextOptions {
  * If not, check if there is a cached storeFqdn in the app toml configuration.
  * If not, fetch all stores for the organization and let the user select one.
  */
-export async function storeContext({
-  app,
-  organization,
-  developerPlatformClient,
-  storeFqdn,
-}: StoreContextOptions): Promise<OrganizationStore> {
+export async function storeContext({appContextResult, storeFqdn}: StoreContextOptions): Promise<OrganizationStore> {
+  const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
 
   // An explicit storeFqdn has preference over anything else.

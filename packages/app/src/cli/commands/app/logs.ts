@@ -60,25 +60,17 @@ export default class Logs extends AppCommand {
 
     await checkFolderIsValidApp(flags.path)
 
-    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+    const appContextResult = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
-    const primaryStore = await storeContext({
-      app,
-      organization,
-      developerPlatformClient,
-      storeFqdn: flags.store?.[0],
-    })
+    const primaryStore = await storeContext({appContextResult, storeFqdn: flags.store?.[0]})
 
     const logOptions = {
-      app,
-      remoteApp,
-      developerPlatformClient,
-      organization,
+      ...appContextResult,
       primaryStore,
       storeFqdns: flags.store,
       sources: flags.source,
@@ -87,6 +79,6 @@ export default class Logs extends AppCommand {
     }
 
     await logs(logOptions)
-    return {app}
+    return {app: appContextResult.app}
   }
 }
