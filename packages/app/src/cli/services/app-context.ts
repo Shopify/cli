@@ -11,7 +11,7 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
-interface LoadedAppContextOutput {
+export interface LoadedAppContextOutput {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
