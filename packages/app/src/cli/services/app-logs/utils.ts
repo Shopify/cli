@@ -32,6 +32,11 @@ export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cac
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)
+
+  const parsedIqvValue =
+    parsedPayload.input_query_variables_metafield_value &&
+    parseJson(parsedPayload.input_query_variables_metafield_value)
+
   return new FunctionRunLog({
     export: parsedPayload.export,
     input: parsedPayload.input,
@@ -43,7 +48,7 @@ export function parseFunctionRunPayload(payload: string): FunctionRunLog {
     fuelConsumed: parsedPayload.fuel_consumed,
     errorMessage: parsedPayload.error_message,
     errorType: parsedPayload.error_type,
-    inputQueryVariablesMetafieldValue: parsedPayload.input_query_variables_metafield_value,
+    inputQueryVariablesMetafieldValue: parsedIqvValue,
     inputQueryVariablesMetafieldNamespace: parsedPayload.input_query_variables_metafield_namespace,
     inputQueryVariablesMetafieldKey: parsedPayload.input_query_variables_metafield_key,
   })
@@ -195,6 +200,12 @@ export const toFormattedAppLogJson = ({
 
   if (appLogPayload instanceof FunctionRunLog) {
     toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
+
+    if (toSaveData.payload.inputQueryVariablesMetafieldValue) {
+      toSaveData.payload.inputQueryVariablesMetafieldValue = parseJson(
+        toSaveData.payload.inputQueryVariablesMetafieldValue,
+      )
+    }
   }
 
   if (prettyPrint) {
@@ -242,17 +253,25 @@ export const subscribeToAppLogs = async (
 }
 
 export function prettyPrintJsonIfPossible(json: unknown) {
-  if (typeof json === 'string') {
-    try {
-      const parsedJson = JSON.parse(json)
-      return JSON.stringify(parsedJson, null, 2)
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
+  try {
+    if (typeof json === 'string') {
+      const jsonObject = JSON.parse(json)
+      return JSON.stringify(jsonObject, null, 2)
+    } else if (typeof json === 'object' && json !== null) {
+      return JSON.stringify(json, null, 2)
+    } else {
       return json
     }
-  } else if (typeof json === 'object' && json !== null) {
-    return JSON.stringify(json, null, 2)
-  } else {
+  } catch (error) {
+    throw new Error(`Error parsing JSON: ${error as string}`)
+  }
+}
+
+const parseJson = (json: string): unknown => {
+  try {
+    return JSON.parse(json)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
     return json
   }
 }
