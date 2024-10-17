@@ -153,6 +153,7 @@ function formatSuccessfulRunMessage(
   }
 
   if (extensionTemplate.type !== 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
       {command: `${formatPackageManagerCommand(depndencyManager, 'shopify app dev')}`},
@@ -160,6 +161,7 @@ function formatSuccessfulRunMessage(
   }
 
   if (extensionTemplate.supportLinks[0]) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     options.reference!.push([
       'For more details, see the',
       {link: {label: 'docs', url: extensionTemplate.supportLinks[0]}},

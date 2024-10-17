@@ -187,7 +187,7 @@ describe('setupDevServer', () => {
     ): Promise<{res: ServerResponse<IncomingMessage>; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node
-      let body: string | Buffer | undefined
+      let body: string
       const resWrite = res.write.bind(res)
       res.write = (chunk) => {
         body ??= ''

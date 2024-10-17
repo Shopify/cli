@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {err, ok, Result} from './result.js'
 import {fetch} from './http.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
@@ -89,6 +90,7 @@ export function parseGitHubRepositoryURL(url: string): Result<ParseRepositoryURL
   const normalizedSite = site === 'github' ? 'github.com' : site
   const user = match[4]!
   const name = match[5]!.replace(/\.git$/, '')
+  // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
   const subDirectory = match[6]?.slice(1)!
   const ref = match[7]!
   const branch = ref ? `#${ref}` : ''

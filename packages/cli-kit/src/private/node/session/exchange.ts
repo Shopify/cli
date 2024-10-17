@@ -79,6 +79,7 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
   const appId = applicationId('partners')
   try {
     const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const accessToken = newToken[appId]!.accessToken
     const userId = nonRandomUUID(token)
     setLastSeenUserIdAfterAuth(userId)
@@ -196,6 +197,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
 }
 
 function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
 
   if (!userId) {

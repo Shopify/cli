@@ -127,7 +127,7 @@ export const pollAppLogs = async ({
   } catch (error) {
     outputWarn(`Error while polling app logs.`)
     outputWarn(`Retrying in ${POLLING_ERROR_RETRY_INTERVAL_MS / 1000} seconds.`)
-    outputDebug(`${error}}\n`)
+    outputDebug(`${error as string}}\n`)
 
     setTimeout(() => {
       pollAppLogs({
@@ -149,9 +149,11 @@ export const pollAppLogs = async ({
 function handleFunctionRunLog(log: AppLogData, payload: {[key: string]: unknown}, stdout: Writable) {
   const fuel = ((payload.fuel_consumed as number) / ONE_MILLION).toFixed(4)
   if (log.status === 'success') {
-    stdout.write(`Function export "${payload.export}" executed successfully using ${fuel}M instructions.`)
+    stdout.write(`Function export "${payload.export as string}" executed successfully using ${fuel}M instructions.`)
   } else if (log.status === 'failure') {
-    stdout.write(`❌ Function export "${payload.export}" failed to execute with error: ${payload.error_type}`)
+    stdout.write(
+      `❌ Function export "${payload.export as string}" failed to execute with error: ${payload.error_type as string}`,
+    )
   }
   const logs = payload.logs as string
   if (logs.length > 0) {
@@ -180,7 +182,7 @@ function handleFunctionNetworkAccessLog(log: AppLogData, payload: {[key: string]
     if (log.status === 'success') {
       stdout.write('Function network access request executed successfully.')
     } else if (log.status === 'failure') {
-      stdout.write(`❌ Function network access request failed to execute with error: ${payload.error}.`)
+      stdout.write(`❌ Function network access request failed to execute with error: ${payload.error as string}.`)
     }
   }
 }

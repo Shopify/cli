@@ -5,6 +5,7 @@ import {hostname} from 'os'
 export const API_NAME_LIMIT = 50
 
 export function generateThemeName(context: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const hostNameWithoutDomain = hostname().split('.')[0]!
   const hash = randomBytes(3).toString('hex')
 

@@ -38,6 +38,7 @@ export async function uploadThemeExtensions(
   await Promise.all(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
       const themeExtensionInput: ExtensionUpdateDraftMutationVariables = {
         apiKey,
@@ -226,7 +227,10 @@ export function deploymentErrorsToCustomSections(
   return customSections
 }
 
-function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors'], flags: {version?: string} = {}) {
+function generalErrorsSection(
+  errors: AppDeploySchema['appDeploy']['userErrors'],
+  flags: {version?: string} = {},
+): ErrorCustomSection[] {
   if (errors.length > 0) {
     if (
       errors.filter(
@@ -248,7 +252,7 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
     if (errors.length === 1) {
       return [
         {
-          body: errors[0]!.message,
+          body: errors[0]?.message ?? '',
         },
       ]
     }

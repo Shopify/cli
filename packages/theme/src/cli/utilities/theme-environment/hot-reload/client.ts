@@ -65,6 +65,7 @@ function hotReloadScript() {
   const refreshHTMLLinkElements = (elements: HTMLLinkElement[]) => {
     for (const element of elements) {
       // The `href` property prepends the host to the pathname. Use attributes instead:
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       element.setAttribute('href', element.getAttribute('href')!.replace(/v=\d+$/, `v=${Date.now()}`))
     }
   }

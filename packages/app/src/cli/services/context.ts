@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
 import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
