@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
+import {logRequestLine} from '../log-request-line.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {
   defineEventHandler,
@@ -25,8 +26,8 @@ import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
 const CART_PREFIX = '/cart/'
-const VANITY_CDN_PREFIX = '/cdn/'
-const EXTENSION_CDN_PREFIX = '/ext/cdn/'
+export const VANITY_CDN_PREFIX = '/cdn/'
+export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
@@ -256,6 +257,8 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       redirect: 'manual',
     },
     async onResponse(event, response) {
+      logRequestLine(event, response)
+
       patchProxiedResponseHeaders(ctx, event, response)
 
       const fileName = url.pathname.split('/').at(-1)

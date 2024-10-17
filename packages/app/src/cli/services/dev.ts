@@ -64,7 +64,6 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
-  devPreview?: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {

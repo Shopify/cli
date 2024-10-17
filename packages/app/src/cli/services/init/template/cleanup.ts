@@ -7,6 +7,7 @@ export default async function cleanup(webOutputDirectory: string) {
       joinPath(webOutputDirectory, '**', '.git'),
       joinPath(webOutputDirectory, '**', '.github'),
       joinPath(webOutputDirectory, '**', '.gitmodules'),
+      joinPath(webOutputDirectory, '**', '.cli-liquid-bypass'),
       joinPath(webOutputDirectory, 'LICENSE*'),
       joinPath(webOutputDirectory, '**', 'frontend/LICENSE*'),
       joinPath(webOutputDirectory, 'package.json.cli2'),

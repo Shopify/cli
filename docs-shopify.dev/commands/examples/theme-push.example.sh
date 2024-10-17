@@ -1,3 +1,3 @@
-theme:push
+theme push
 
-theme:push --unpublished --json
+theme push --unpublished --json

@@ -9,6 +9,7 @@ describe('cleanup', () => {
     await Promise.all([
       // should keep these
       writeFile(joinPath(tmpDir, 'server.js'), 'console.log()'),
+      writeFile(joinPath(tmpDir, 'cli-liquid-bypass'), '*'),
       mkdir(joinPath(tmpDir, 'node_modules')),
 
       // should delete these
@@ -40,6 +41,7 @@ describe('cleanup', () => {
       await expect(fileExists(joinPath(tmpDir, '.git'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, '.github'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, '.gitmodules'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(tmpDir, '.cli-liquid-bypass'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, 'frontend', '.git'))).resolves.toBe(false)
       await expect(fileExists(joinPath(tmpDir, 'package.json.cli2'))).resolves.toBe(false)
     })

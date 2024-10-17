@@ -7,11 +7,7 @@ import {
   partitionThemeFiles,
   readThemeFile,
 } from './theme-fs.js'
-import {
-  getPatternsFromShopifyIgnore,
-  applyIgnoreFilters,
-  raiseWarningForNonExplicitGlobPatterns,
-} from './asset-ignore.js'
+import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
@@ -279,7 +275,6 @@ describe('theme-fs', () => {
       const themeFileSystem = mountThemeFileSystem(root, options)
       await themeFileSystem.ready()
 
-      expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
       expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
       expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
       expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
@@ -510,6 +505,7 @@ describe('theme-fs', () => {
         attachment: '',
         stats: {size: 100, mtime: 100},
       })
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
