@@ -27,6 +27,7 @@ import {
   pnpmLockfile,
   PackageJson,
   pnpmWorkspaceFile,
+  localCLIVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
@@ -36,11 +37,12 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
 
-import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
+import {globalCLIVersion, isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
+vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -322,8 +324,9 @@ wrong = "property"
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
     vi.mocked(isGlobalCLIInstalled).mockResolvedValue(true)
+    vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
+    vi.mocked(localCLIVersion).mockResolvedValue('3.65.0')
     const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
     await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',
@@ -338,11 +341,12 @@ wrong = "property"
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  There are two installations of the CLI: global and as a dependency of the   │
-      │  project.                                                                    │
+      │  Two Shopify CLI installations found – using local dependency                │
       │                                                                              │
-      │  We recommend to remove the @shopify/cli and @shopify/app dependencies from  │
-      │   your package.json.                                                         │
+      │  A global installation (v3.68.0) and a local dependency (v3.65.0) were       │
+      │  detected.                                                                   │
+      │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
+      │  your package.json.                                                          │
       │                                                                              │
       │  For more information, see Shopify CLI documentation [1]                     │
       │                                                                              │
@@ -356,8 +360,8 @@ wrong = "property"
 
   test('doesnt show warning if there is no local dependency', async () => {
     // Given
+    vi.mocked(localCLIVersion).mockResolvedValue(undefined)
     const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
     await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',

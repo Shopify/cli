@@ -734,33 +734,15 @@ export function inferPackageManager(optionsPackageManager: string | undefined, e
 }
 
 /**
- * Returns true if the CLI is installed as a local dependency.
+ * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
- * @param directory - Current directory to look for the package.json file.
- * @returns `true` if the CLI is installed locally.
- */
-export async function isLocalCLIInstalled(directory: string): Promise<boolean> {
-  try {
-    const packageJSONPath = joinPath(directory, 'package.json')
-    const dependencies = await getDependencies(packageJSONPath)
-    return dependencies['@shopify/cli'] !== undefined
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
-  }
-}
-
-/**
- * Returns true if the CLI is installed as a local dependency.
- *
- * @param directory - Current directory to look for the package.json file.
- * @returns `true` if the CLI is installed locally.
+ * @param directory - path of the project to look for the dependency.
+ * @returns the CLI version or undefined if the dependency is not installed.
  */
 export async function localCLIVersion(directory: string): Promise<string | undefined> {
   try {
-    const packageJSONPath = joinPath(directory, 'package.json')
-    const dependencies = await getDependencies(packageJSONPath)
-    return dependencies['@shopify/cli']
+    const output = await captureOutput('npm', ['list', '@shopify/cli'], {cwd: directory})
+    return output.match(/@shopify\/cli@([\w.-]*)/)?.[1]
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return undefined

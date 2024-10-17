@@ -52,6 +52,21 @@ export async function isGlobalCLIInstalled(): Promise<boolean> {
 }
 
 /**
+ * Returns true if the global CLI is installed.
+ *
+ * @returns `true` if the global CLI is installed.
+ */
+export async function globalCLIVersion(): Promise<string | undefined> {
+  try {
+    if (!(await isGlobalCLIInstalled())) return undefined
+    return captureOutput('shopify', ['version'])
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+}
+
+/**
  * Installs the global Shopify CLI, using the provided package manager.
  *
  * @param packageManager - The package manager to use.

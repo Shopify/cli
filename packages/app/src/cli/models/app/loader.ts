@@ -37,6 +37,7 @@ import {
   getPackageManager,
   getPackageName,
   usesWorkspaces as appUsesWorkspaces,
+  localCLIVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -48,7 +49,7 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal, isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
+import {currentProcessIsGlobal, globalCLIVersion} from '@shopify/cli-kit/node/is-global'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -359,22 +360,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
     // - The warning hasn't been shown yet during the current command execution
 
-    const localCLIVersion = await localCLIVersion(directory)
+    const localVersion = await localCLIVersion(directory)
+    const globalVersion = await globalCLIVersion()
 
-    if (
-      (await isGlobalCLIInstalled()) &&
-      (await isLocalCLIInstalled(directory)) &&
-      !sniffForJson() &&
-      !alreadyShownCLIWarning
-    ) {
+    if (localVersion && globalVersion && !sniffForJson() && !alreadyShownCLIWarning) {
       const currentInstallation = currentProcessIsGlobal() ? 'global installation' : 'local dependency'
-      const globalVersion = ''
-      const localVersion = ''
 
       const warningContent = {
         headline: `Two Shopify CLI installations found – using ${currentInstallation}`,
         body: [
-          `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected. We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json.`,
+          `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected.
+We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json.`,
         ],
         link: {
           label: 'For more information, see Shopify CLI documentation',
