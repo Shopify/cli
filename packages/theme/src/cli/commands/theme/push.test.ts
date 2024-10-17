@@ -77,22 +77,10 @@ describe('Push', () => {
       expect(DevelopmentThemeManager.prototype.fetch).not.toHaveBeenCalled()
       expectCLI2ToHaveBeenCalledWith(`theme push ${path} --theme ${theme.id} --development-theme-id ${theme.id}`)
     })
-
-    test('should run the Ruby implementation if the password flag is provided', async () => {
-      // Given
-      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
-
-      // When
-      await runPushCommand(['--password', '123'], path, adminSession)
-
-      // Then
-      expectCLI2ToHaveBeenCalledWith(`theme push ${path} --development-theme-id ${theme.id}`)
-    })
   })
 
   async function run(argv: string[]) {
-    await runPushCommand(['--legacy', ...argv], path, adminSession)
+    await runPushCommand(['--legacy-3.66', ...argv], path, adminSession)
   }
 
   function expectCLI2ToHaveBeenCalledWith(command: string) {
