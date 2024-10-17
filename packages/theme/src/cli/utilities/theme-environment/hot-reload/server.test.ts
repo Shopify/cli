@@ -165,7 +165,8 @@ describe('hot-reload server', () => {
     // Emits a CSS HotReload event after syncing:
     expect(cssLiquidSyncSpy).toHaveBeenCalled()
     await nextTick()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${cssLiquidFileKey}"}`)
+    // Removes the `.liquid` extension before sending it to the browser:
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"css","key":"${cssLiquidFileKey.replace('.liquid', '')}"}`)
 
     // -- Updates other files:
     const jsFileKey = 'assets/something.js'
