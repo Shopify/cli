@@ -3,6 +3,8 @@ import {dev, DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -162,7 +164,26 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     await checkFolderIsValidApp(flags.path)
 
+    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+      directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
+    const store = await storeContext({
+      app,
+      organization,
+      developerPlatformClient,
+      storeFqdn: flags.store,
+    })
+
     const devOptions: DevOptions = {
+      app,
+      remoteApp,
+      organization,
+      developerPlatformClient,
+      store,
       directory: flags.path,
       configName: flags.config,
       apiKey,

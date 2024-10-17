@@ -8,13 +8,7 @@ import {
   startTunnelPlugin,
   updateURLs,
 } from './dev/urls.js'
-import {
-  ensureDevContext,
-  enableDeveloperPreview,
-  disableDeveloperPreview,
-  developerPreviewUpdate,
-  DevContextOptions,
-} from './context.js'
+import {enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
@@ -22,16 +16,15 @@ import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
-import {setCachedAppInfo} from './local-storage.js'
+import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
-import {OrganizationApp} from '../models/organization.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface, AppLinkedInterface} from '../models/app/app.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
-import {loadAppConfiguration} from '../models/app/loader.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -46,6 +39,11 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface DevOptions {
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
+  organization: Organization
+  developerPlatformClient: DeveloperPlatformClient
+  store: OrganizationStore
   directory: string
   id?: number
   configName?: string
@@ -76,6 +74,8 @@ export async function dev(commandOptions: DevOptions) {
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
+  const {app, remoteApp, developerPlatformClient, store} = commandOptions
+
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
   let tunnelClient: TunnelClient | undefined
@@ -83,28 +83,19 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const {configuration} = await loadAppConfiguration({
-    ...commandOptions,
-    userProvidedConfigName: commandOptions.configName,
-  })
-  let developerPlatformClient = selectDeveloperPlatformClient({configuration})
-  const devContextOptions: DevContextOptions = {...commandOptions, developerPlatformClient}
+  // const {
+  //   storeFqdn,
+  //   storeId,
+  //   remoteApp,
+  //   remoteAppUpdated,
+  //   updateURLs: cachedUpdateURLs,
+  //   localApp: app,
+  // } = await ensureDevContext(devContextOptions)
 
-  const {
-    storeFqdn,
-    storeId,
-    remoteApp,
-    remoteAppUpdated,
-    updateURLs: cachedUpdateURLs,
-    localApp: app,
-  } = await ensureDevContext(devContextOptions)
-
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
   const apiKey = remoteApp.apiKey
-  let localApp = app
 
-  if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
-    localApp = await installAppDependencies(localApp)
+  if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
+    await installAppDependencies(app)
   }
 
   const graphiqlPort = commandOptions.graphiqlPort || (await getAvailableTCPPort(ports.graphiql))
@@ -126,7 +117,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const {webs, ...network} = await setupNetworkingOptions(
-    localApp.webs,
+    app.webs,
     graphiqlPort,
     {
       noTunnel: commandOptions.noTunnel,
@@ -135,13 +126,17 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient,
     remoteApp.configuration,
   )
-  localApp.webs = webs
+  app.webs = webs
+
+  const cachedUpdateURLs = app.configuration.build?.automatically_update_urls_on_dev
+
+  const previousAppId = getCachedAppInfo(commandOptions.directory)?.previousAppId
 
   const partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
     webs,
     commandOptions.update,
     network,
-    localApp,
+    app,
     cachedUpdateURLs,
     remoteApp,
     apiKey,
@@ -149,11 +144,11 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   )
 
   return {
-    storeFqdn,
-    storeId,
+    storeFqdn: store.shopDomain,
+    storeId: store.shopId,
     remoteApp,
-    remoteAppUpdated,
-    localApp,
+    remoteAppUpdated: remoteApp.apiKey !== previousAppId,
+    localApp: app,
     developerPlatformClient,
     commandOptions,
     network,
