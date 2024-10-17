@@ -3,8 +3,8 @@ import cleanup from './template/cleanup.js'
 import link from '../app/config/link.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {SelectOrCreateAppResult} from '../../commands/app/init.js'
 import {loadApp} from '../../models/app/loader.js'
+import {SelectAppOrNewAppNameResult} from '../../commands/app/init.js'
 import {
   findUpAndReadPackageJson,
   lockfiles,
@@ -36,7 +36,7 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 interface InitOptions {
   name: string
-  selectAppOrCreateResult: SelectOrCreateAppResult
+  selectedAppOrNameResult: SelectAppOrNewAppNameResult
   directory: string
   template: string
   packageManager: PackageManager
@@ -196,13 +196,13 @@ async function init(options: InitOptions) {
   })
 
   let app: OrganizationApp
-  if (options.selectAppOrCreateResult.result === 'new') {
+  if (options.selectedAppOrNameResult.result === 'new') {
     // Load the local app to get the creation options. No need for specs since we only care about Creation Options.
     const localApp = await loadApp({specifications: [], directory: outputDirectory, userProvidedConfigName: undefined})
-    const org = options.selectAppOrCreateResult.org
+    const org = options.selectedAppOrNameResult.org
     app = await options.developerPlatformClient.createApp(org, options.name, localApp.creationDefaultOptions())
   } else {
-    app = options.selectAppOrCreateResult.app
+    app = options.selectedAppOrNameResult.app
   }
 
   // Link the new project to the selected/created App

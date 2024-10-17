@@ -109,7 +109,7 @@ export default class Init extends AppCommand {
 
     const result = await initService({
       name: appName,
-      selectAppOrCreateResult: selectAppResult,
+      selectedAppOrNameResult: selectAppResult,
       packageManager: inferredPackageManager,
       template: promptAnswers.template,
       local: flags.local,
