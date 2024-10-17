@@ -42,7 +42,10 @@ import {globalCLIVersion, isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-g
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
+  ...((await vi.importActual('@shopify/cli-kit/node/node-package-manager')) as any),
+  localCLIVersion: vi.fn(),
+}))
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
