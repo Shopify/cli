@@ -115,8 +115,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   }
 
   const handleFileDelete = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
-    const extension = extname(fileKey)
-    if (isAsset(fileKey) && extension === '.liquid') {
+    // Liquid assets are proxied, so we need to wait until the file has been deleted on the server before reloading
+    const isLiquidAsset = isAsset(fileKey) && extname(fileKey) === '.liquid'
+    if (isLiquidAsset) {
       onSync?.(() => {
         triggerHotReload(fileKey, ctx)
       })
