@@ -16,6 +16,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {renderText} from '@shopify/cli-kit/node/ui'
 
 export default class Init extends AppCommand {
   static summary?: string | undefined = 'Create a new app project'
@@ -77,11 +78,6 @@ export default class Init extends AppCommand {
     // Authenticate and select organization and app
     let developerPlatformClient = selectDeveloperPlatformClient()
 
-    const promptAnswers = await initPrompt({
-      template: flags.template,
-      flavor: flags.flavor,
-    })
-
     let selectAppResult: SelectAppOrNewAppNameResult
     let appName: string
     if (flags['client-id']) {
@@ -91,12 +87,18 @@ export default class Init extends AppCommand {
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
+      renderText({text: "\nWelcome. Let's get started by linking this new project to an app in your organization."})
       const org = await selectOrg()
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
       selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
+
+    const promptAnswers = await initPrompt({
+      template: flags.template,
+      flavor: flags.flavor,
+    })
 
     if (promptAnswers.globalCLIResult.install) {
       await installGlobalShopifyCLI(inferredPackageManager)
