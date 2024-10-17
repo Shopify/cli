@@ -194,9 +194,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     // Emit 'unlink' event immediately for non-liquid assets
     const isLiquidAsset = fileKey.startsWith('assets/') && extname(fileKey) === '.liquid'
-    if (!isLiquidAsset) {
-      emitEvent('unlink', {fileKey})
-    }
 
     const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
@@ -210,16 +207,20 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         return false
       })
 
-    emitEvent('unlink', {
-      fileKey,
-      onSync: (fn) => {
-        syncPromise
-          .then((didSync) => {
-            if (didSync) fn()
-          })
-          .catch(() => {})
-      },
-    })
+    if (isLiquidAsset) {
+      emitEvent('unlink', {
+        fileKey,
+        onSync: (fn) => {
+          syncPromise
+            .then((didSync) => {
+              if (didSync) fn()
+            })
+            .catch(() => {})
+        },
+      })
+    } else {
+      emitEvent('unlink', {fileKey})
+    }
   }
 
   const directoriesToWatch = new Set(
