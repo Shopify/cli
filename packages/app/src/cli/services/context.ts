@@ -226,7 +226,7 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
   return app
 }
 
-export const storeFromFqdn = async (
+const storeFromFqdn = async (
   storeFqdn: string,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
