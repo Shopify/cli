@@ -1,7 +1,8 @@
-import {storeFromFqdn, formInfoBoxBody, resetHelpMessage} from './context.js'
+import {formInfoBoxBody, resetHelpMessage} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
+import {fetchStore} from './dev/fetch.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -109,7 +110,7 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
     await Promise.all(
       commandOptions.storeFqdns?.slice(1).map(async (storeFqdn) => {
-        const store = await storeFromFqdn(storeFqdn, remoteApp.organizationId, developerPlatformClient)
+        const store = await fetchStore(organization, storeFqdn, developerPlatformClient)
         storeNameById.set(store.shopId, storeFqdn)
       }),
     )
@@ -133,7 +134,7 @@ function renderAppLogsConfigInfo(
     devStores.push(storeFqdn)
   }
   const body = formInfoBoxBody(appName, org, devStores, resetHelpMessage)
-  const fileName = configFile && getAppConfigurationFileName(configFile)
+  const fileName = configFile ? getAppConfigurationFileName(configFile) : undefined
 
   renderInfo({
     headline: `${configFile ? `Using ${fileName} for default values:` : 'Using these settings:'}`,

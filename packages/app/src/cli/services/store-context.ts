@@ -22,7 +22,7 @@ interface StoreContextOptions {
 /**
  * Returns a Store based on the provided options. If a store can't be retrieved, it throws an error.
  *
- * If a storeFqdn is explicitly provided, it has preferences over anything else.
+ * If a storeFqdn is explicitly provided, it has preference over anything else.
  * If not, check if there is a cached storeFqdn in the app toml configuration.
  * If not, fetch all stores for the organization and let the user select one.
  */
