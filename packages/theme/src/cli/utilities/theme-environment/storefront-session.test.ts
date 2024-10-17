@@ -148,10 +148,19 @@ describe('Storefront API', () => {
       )
 
       // When
-      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
+      const result = await isStorefrontPasswordCorrect('correct-password-&', 'store.myshopify.com')
 
       // Then
       expect(result).toBe(true)
+      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+        body: 'form_type=storefront_password&utf8=%E2%9C%93&password=correct-password-%26',
+        headers: {
+          'cache-control': 'no-cache',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        method: 'POST',
+        redirect: 'manual',
+      })
     })
 
     test('returns false when the password is incorrect', async () => {
