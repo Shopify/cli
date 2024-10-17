@@ -5837,6 +5837,14 @@
           "name": "legacy",
           "type": "boolean"
         },
+        "legacy-3.66": {
+          "allowNo": false,
+          "description": "Use the legacy Ruby implementation for the `shopify theme push` command.",
+          "env": "SHOPIFY_FLAG_LEGACY_3_66",
+          "hidden": true,
+          "name": "legacy-3.66",
+          "type": "boolean"
+        },
         "live": {
           "allowNo": false,
           "char": "l",
