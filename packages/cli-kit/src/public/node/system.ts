@@ -75,7 +75,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
     // The aborted flag tell use that we killed it, so we can ignore the error.
     if (aborted) return
     if (options?.externalErrorHandler) {
-      await options?.externalErrorHandler(processError)
+      await options.externalErrorHandler(processError)
     } else {
       const abortError = new ExternalError(processError.message, command, args)
       abortError.stack = processError.stack
@@ -92,7 +92,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
  * @param options - Optional settings for how to run the command.
  * @returns A promise for a result with stdout and stderr properties.
  */
-function buildExec(command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> {
+function buildExec(command: string, args: string[], options?: ExecOptions): ExecaChildProcess {
   const env = options?.env ?? process.env
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'

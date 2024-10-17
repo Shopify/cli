@@ -12,7 +12,7 @@ export const pollAppLogs = async ({jwtToken, cursor, filters}: PollOptions): Pro
     }
     if (response.status === 401 || response.status === 429 || response.status >= 500) {
       return {
-        errors: [{status: response.status, message: `${errorResponse.errors.join(', ')}`}],
+        errors: [{status: response.status, message: errorResponse.errors.join(', ')}],
       }
     } else {
       throw new AbortError(`${errorResponse.errors.join(', ')} while fetching app logs`)

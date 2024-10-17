@@ -125,7 +125,7 @@ async function runFunctionRunnerWithLogInput(
   let functionRunnerOutput = ''
   const customStdout = new Writable({
     write(chunk, _encoding, next) {
-      functionRunnerOutput += chunk
+      functionRunnerOutput += chunk as string
       next()
     },
   })

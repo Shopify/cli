@@ -74,7 +74,7 @@ function devConfigSection(): [string, string] {
     ['Store', store],
     ['Development Theme ID', developmentTheme],
   ]
-  return [title, `${linesToColumns(lines)}`]
+  return [title, linesToColumns(lines)]
 }
 
 async function systemInfoSection(config: {cliVersion: string}): Promise<[string, string]> {
@@ -88,7 +88,7 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<[string,
     ['Node version', process.version],
     ['Ruby version', ruby],
   ]
-  return [title, `${linesToColumns(lines)}`]
+  return [title, linesToColumns(lines)]
 }
 
 async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {

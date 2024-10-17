@@ -11,7 +11,7 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   await reportAnalyticsEvent({config, exitMode: 'ok'})
   deprecationsHook(Command)
 
-  const command = Command?.id?.replace(/:/g, ' ')
+  const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
 }
 

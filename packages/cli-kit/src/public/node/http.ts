@@ -59,7 +59,7 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Promis
 
   outputDebug(outputContent`Sending ${options.method ?? 'GET'} request to URL ${sanitizedUrl}
 With request headers:
-${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
+${sanitizedHeadersOutput((options.headers ?? {}) as {[header: string]: string})}
 `)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     return simpleRequestWithDebugLog({

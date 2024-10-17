@@ -96,21 +96,30 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
   return new Promise<IdentityToken>((resolve, reject) => {
     const onPoll = async () => {
       const result = await exchangeDeviceCodeForAccessToken(code)
-      if (!result.isErr()) return resolve(result.value)
+      if (!result.isErr()) {
+        resolve(result.value)
+        return
+      }
 
       const error = result.error ?? 'unknown_failure'
 
       outputDebug(outputContent`Polling for device authorization... status: ${error}`)
       switch (error) {
-        case 'authorization_pending':
-          return startPolling()
+        case 'authorization_pending': {
+          startPolling()
+          return
+        }
         case 'slow_down':
           currentIntervalInSeconds += 5
-          return startPolling()
+          {
+            startPolling()
+            return
+          }
         case 'access_denied':
         case 'expired_token':
-        case 'unknown_failure':
-          return reject(result)
+        case 'unknown_failure': {
+          reject(result)
+        }
       }
     }
 

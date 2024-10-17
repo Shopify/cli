@@ -13,12 +13,12 @@ interface RowProps<T extends ScalarDict> {
 }
 
 function join<T, TI>(elements: T[], separator: (index: number) => TI): (T | TI)[] {
-  return elements.reduce((elements, element, index) => {
+  return elements.reduce<(T | TI)[]>((elements, element, index) => {
     if (elements.length === 0) {
       return [element]
     }
     return [...elements, separator(index), element]
-  }, [] as (T | TI)[])
+  }, [])
 }
 
 const Row = <T extends ScalarDict>({rowKey, columns, data, fillerChar, ignoreColumnColor}: RowProps<T>) => {

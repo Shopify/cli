@@ -654,7 +654,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         await Promise.all(
           ['index']
             .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .flatMap((fileName) => [`src/${fileName}`, fileName])
             .map((relativePath) => joinPath(directory, relativePath))
             .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
         )

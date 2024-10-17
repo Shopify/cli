@@ -15,7 +15,7 @@ export class ShopifyConfig extends Config {
     if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
       path = execaSync('npm', ['prefix']).stdout.trim()
     }
-    if (fileExistsSync(joinPath(`${path}`, 'package.json'))) {
+    if (fileExistsSync(joinPath(path, 'package.json'))) {
       // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
       // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
       // 2. To allow the Hydrogen team to load a local version for testing.
@@ -26,12 +26,13 @@ export class ShopifyConfig extends Config {
     }
     super(options)
 
-    // eslint-disable-next-line dot-notation, @typescript-eslint/unbound-method
-    this['determinePriority'] = this.customPriority
+    // @ts-expect-error: This is a private method that we are overriding. OCLIF doesn't provide a way to extend it.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    this.determinePriority = this.customPriority
   }
 
   customPriority(commands: Command.Loadable[]): Command.Loadable | undefined {
-    const oclifPlugins = this.pjson.oclif?.plugins ?? []
+    const oclifPlugins = this.pjson.oclif.plugins ?? []
     const commandPlugins = commands.sort((aCommand, bCommand) => {
       // eslint-disable-next-line no-restricted-syntax
       const pluginAliasA = aCommand.pluginAlias ?? 'A-Cannot-Find-This'

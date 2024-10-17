@@ -118,7 +118,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   if (branch) {
-    selectedUrl += `#${branch}`
+    selectedUrl = `${selectedUrl}#${branch}`
   }
 
   answers.template = selectedUrl || answers.template || defaults.template

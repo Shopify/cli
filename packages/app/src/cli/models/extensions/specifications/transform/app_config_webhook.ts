@@ -77,7 +77,7 @@ export function reduceWebhooks(
   subscriptions: WebhookSubscription[],
   property?: keyof Pick<WebhookSubscription, 'topics' | 'compliance_topics'>,
 ) {
-  return subscriptions.reduce((accumulator, subscription) => {
+  return subscriptions.reduce<WebhookSubscription[]>((accumulator, subscription) => {
     const existingSubscription = findSubscription(accumulator, subscription)
     if (existingSubscription) {
       if (property && subscription?.[property]?.length) {
@@ -97,5 +97,5 @@ export function reduceWebhooks(
       accumulator.push(subscription)
     }
     return accumulator
-  }, [] as WebhookSubscription[])
+  }, [])
 }

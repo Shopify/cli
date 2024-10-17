@@ -22,7 +22,9 @@ export function restRequestUrl(
       ? `https://${themeKitAccessDomain}/cli/admin/api/${apiVersion}${path}.json`
       : `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`,
   )
-  Object.entries(searchParams).forEach(([name, value]) => url.searchParams.set(name, value))
+  Object.entries(searchParams).forEach(([name, value]) => {
+    url.searchParams.set(name, value)
+  })
 
   return url.toString()
 }

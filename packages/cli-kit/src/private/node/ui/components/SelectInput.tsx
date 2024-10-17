@@ -226,7 +226,7 @@ function SelectInputInner<T>(
       }
 
       // check that no special modifier (shift, control, etc.) is being pressed
-      if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
+      if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => !value)) {
         handleShortcuts(input)
       } else {
         handleArrows(key)

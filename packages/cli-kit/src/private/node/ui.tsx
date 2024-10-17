@@ -79,7 +79,13 @@ const renderString = (element: ReactElement, renderOptions?: RenderOptions): Ins
   }
 }
 
-export function handleCtrlC(input: string, key: Key, exit = () => treeKill(process.pid, 'SIGINT')) {
+export function handleCtrlC(
+  input: string,
+  key: Key,
+  exit = () => {
+    treeKill(process.pid, 'SIGINT')
+  },
+) {
   if (input === 'c' && key.ctrl) {
     // Exceptions thrown in hooks aren't caught by our errorHandler.
     exit()
