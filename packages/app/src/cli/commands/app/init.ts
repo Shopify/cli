@@ -82,7 +82,7 @@ export default class Init extends AppCommand {
       flavor: flags.flavor,
     })
 
-    let selectAppResult: SelectOrCreateAppResult
+    let selectAppResult: SelectAppOrNewAppNameResult
     let appName: string
     if (flags['client-id']) {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
@@ -94,7 +94,7 @@ export default class Init extends AppCommand {
       const org = await selectOrg()
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-      selectAppResult = await selectOrCreateAppDeferred(name, apps, hasMorePages, organization, developerPlatformClient)
+      selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 
@@ -133,7 +133,7 @@ export default class Init extends AppCommand {
   }
 }
 
-export type SelectOrCreateAppResult =
+export type SelectAppOrNewAppNameResult =
   | {
       result: 'new'
       name: string
@@ -144,13 +144,17 @@ export type SelectOrCreateAppResult =
       app: OrganizationApp
     }
 
-export async function selectOrCreateAppDeferred(
+/**
+ * This method returns either an existing app or a new app name and the data necessary to create it.
+ * But doesn't create the app yet, the app creation is deferred and is responsibility of the caller.
+ */
+async function selectAppOrNewAppName(
   localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
-): Promise<SelectOrCreateAppResult> {
+): Promise<SelectAppOrNewAppNameResult> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()

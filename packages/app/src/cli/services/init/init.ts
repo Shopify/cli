@@ -198,17 +198,9 @@ async function init(options: InitOptions) {
   let app: OrganizationApp
   if (options.selectAppOrCreateResult.result === 'new') {
     // Load the local app to get the creation options. No need for specs since we only care about Creation Options.
-    const localApp = await loadApp({
-      specifications: [],
-      directory: outputDirectory,
-      userProvidedConfigName: undefined,
-    })
-
-    app = await options.developerPlatformClient.createApp(
-      options.selectAppOrCreateResult.org,
-      options.name,
-      localApp.creationDefaultOptions(),
-    )
+    const localApp = await loadApp({specifications: [], directory: outputDirectory, userProvidedConfigName: undefined})
+    const org = options.selectAppOrCreateResult.org
+    app = await options.developerPlatformClient.createApp(org, options.name, localApp.creationDefaultOptions())
   } else {
     app = options.selectAppOrCreateResult.app
   }
