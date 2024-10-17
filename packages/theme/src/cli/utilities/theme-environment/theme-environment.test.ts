@@ -347,5 +347,22 @@ describe('setupDevServer', () => {
       const {body} = await eventPromise
       expect(body).toMatch(`src: url(/cdn/shop/t/img/assets/font.woff2)`)
     })
+
+    test('proxies .js.liquid assets replacing the error query string', async () => {
+      const fetchStub = vi.fn(() => new Response())
+      vi.stubGlobal('fetch', fetchStub)
+      vi.useFakeTimers()
+      const now = Date.now()
+
+      const pathname = '/cdn/shop/t/img/assets/file4.js'
+      const eventPromise = dispatchEvent(`${pathname}?1234`)
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      expect(fetchStub).toHaveBeenCalledWith(
+        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&_fd=0&pb=0`,
+        expect.any(Object),
+      )
+    })
   })
 })
