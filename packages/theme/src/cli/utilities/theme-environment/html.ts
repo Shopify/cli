@@ -2,16 +2,13 @@ import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
-import {timestampDateFormat} from '../../constants.js'
-import {defineEventHandler, getCookie, H3Event, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {logRequestLine} from '../log-request-line.js'
+import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
-
-const CHARACTER_TRUNCATION_LIMIT = 80
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
@@ -66,22 +63,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return errorPageHtml
       })
   })
-}
-
-function logRequestLine(event: H3Event, response: Response) {
-  const truncatedPath =
-    event.path.length > CHARACTER_TRUNCATION_LIMIT
-      ? `${event.path.substring(0, CHARACTER_TRUNCATION_LIMIT)}...`
-      : event.path
-  const serverTiming = response.headers.get('server-timing')
-  const requestDuration = serverTiming?.match(/cfRequestDuration;dur=([\d.]+)/)?.[1]
-  const durationString = requestDuration ? `${Math.round(Number(requestDuration))}ms` : ''
-
-  outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())} Request ${outputToken.raw('»')} ${outputToken.gray(
-      `${event.method} ${truncatedPath} ${durationString}`,
-    )}`,
-  )
 }
 
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
