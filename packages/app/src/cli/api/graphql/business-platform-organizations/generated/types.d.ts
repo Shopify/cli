@@ -38,7 +38,7 @@ export type Scalars = {
   /** The ID for a StoreAdditionRequest. */
   StoreAdditionRequestID: {input: any; output: any}
   /** An RFC 3986 and RFC 3987 compliant URI string. */
-  URL: {input: any; output: any}
+  URL: {input: string; output: string}
 }
 
 export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'PRODUCTION'

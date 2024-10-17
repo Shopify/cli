@@ -1,10 +1,7 @@
 import {calculateChecksum} from './asset-checksum.js'
-import {
-  applyIgnoreFilters,
-  raiseWarningForNonExplicitGlobPatterns,
-  getPatternsFromShopifyIgnore,
-} from './asset-ignore.js'
+import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
+import {createSyncingCatchError} from './errors.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -13,7 +10,6 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -86,11 +82,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
     .then(([ignoredPatterns]) => {
       filterPatterns.ignoreFromFile.push(...ignoredPatterns)
-      raiseWarningForNonExplicitGlobPatterns([
-        ...filterPatterns.ignoreFromFile,
-        ...filterPatterns.ignore,
-        ...filterPatterns.only,
-      ])
     })
 
   const getKey = (filePath: string) => relativePath(root, filePath)
@@ -144,27 +135,26 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       return file.value || file.attachment || ''
     })
 
-    const syncPromise = contentPromise.then(async (content) => {
-      if (!unsyncedFileKeys.has(fileKey)) return false
+    const syncPromise = contentPromise
+      .then(async (content) => {
+        if (!unsyncedFileKeys.has(fileKey)) return false
 
-      const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+        const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
-      if (result?.success) {
+        if (!result?.success) {
+          throw new Error(
+            result?.errors?.asset
+              ? `\n\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+              : 'Response was not successful.',
+          )
+        }
+
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('update', fileKey)
-      } else if (result?.errors?.asset) {
-        const errorMessage = `${fileKey}:\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
 
-        renderError({
-          headline: 'Failed to sync file to remote theme.',
-          body: errorMessage,
-        })
-
-        return false
-      }
-
-      return true
-    })
+        return true
+      })
+      .catch(createSyncingCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
       fileKey,
@@ -195,14 +185,13 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     emitEvent('unlink', {fileKey})
 
     deleteThemeAsset(Number(themeId), fileKey, adminSession)
-      .then(async (success) => {
-        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+      .then((success) => {
+        if (!success) throw new Error(`Response was not successful.`)
+
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
       })
-      .catch((error) => {
-        outputDebug(error.message)
-      })
+      .catch(createSyncingCatchError(fileKey, 'delete'))
   }
 
   const directoriesToWatch = new Set(
@@ -398,8 +387,6 @@ function dirPath(filePath: string) {
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
-      `${action} ${fileKey}`,
-    )}`,
+    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
   )
 }

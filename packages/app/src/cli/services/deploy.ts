@@ -161,7 +161,7 @@ async function outputCompletionMessage({
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 }) {
   const linkAndMessage = [
-    {link: {label: uploadExtensionsBundleResult.versionTag, url: uploadExtensionsBundleResult.location}},
+    {link: {label: uploadExtensionsBundleResult.versionTag ?? 'version', url: uploadExtensionsBundleResult.location}},
     uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
   ]
   if (release) {

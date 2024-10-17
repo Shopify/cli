@@ -6,7 +6,6 @@ import {
   encodedGidFromId,
   versionDeepLink,
 } from './app-management-client.js'
-import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -41,7 +40,7 @@ const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
   minimumCliVersion: '1.0.0',
 }
 
-function moduleFromExtension(extension: ExtensionInstance): AppModule {
+function moduleFromExtension(extension: ExtensionInstance) {
   return {
     uuid: extension.uid,
     handle: extension.handle,
@@ -62,8 +61,8 @@ describe('diffAppModules', () => {
       moduleFromExtension(extensionB),
       moduleFromExtension(extensionC),
     ]
-    const currentModules: AppModule[] = [moduleA, moduleB]
-    const selectedVersionModules: AppModule[] = [moduleB, moduleC]
+    const currentModules = [moduleA, moduleB]
+    const selectedVersionModules = [moduleB, moduleC]
 
     // When
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})

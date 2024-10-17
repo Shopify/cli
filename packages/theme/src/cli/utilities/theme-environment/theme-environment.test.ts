@@ -112,6 +112,7 @@ describe('setupDevServer', () => {
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       nodelete: true,
       deferPartialWork: true,
+      backgroundWorkCatch: expect.any(Function),
     })
   })
 
@@ -161,6 +162,7 @@ describe('setupDevServer', () => {
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       nodelete: true,
       deferPartialWork: true,
+      backgroundWorkCatch: expect.any(Function),
     })
   })
 
@@ -220,6 +222,18 @@ describe('setupDevServer', () => {
       expect(body.toString()).toMatchInlineSnapshot(
         `".some-class { background: url(\\"/cdn/path/to/assets/file2.css\\") }"`,
       )
+    })
+
+    test('serves local assets from the root in a backward compatible way', async () => {
+      // Also serves assets from the root, similar to what the old server did:
+      const eventPromise = dispatchEvent('/assets/file2.css')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/css')
+      expect(body.toString()).toMatchInlineSnapshot(`".another-class {}"`)
     })
 
     test('gets the right content for assets with non-breaking spaces', async () => {

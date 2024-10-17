@@ -13,6 +13,7 @@ import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
 import {deepCompare} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
+import {AsyncResource} from 'async_hooks'
 
 export interface FileWatcherOptions {
   devOptions: ExtensionDevOptions
@@ -170,36 +171,41 @@ Redeploy Paths:
 
   let buildController: AbortController | null
   const allPaths = [...buildPaths, ...configurationPaths]
-  const functionRebuildAndRedeployWatcher = chokidar.watch(allPaths, {ignored: '**/*.test.*'}).on('change', (path) => {
-    outputDebug(`Extension file at path ${path} changed`, stdout)
-    if (buildController) {
-      // terminate any existing builds
-      buildController.abort()
-    }
-    buildController = new AbortController()
-    const buildSignal = buildController.signal
-    const shouldBuild = micromatch.isMatch(path, buildPaths)
+  const functionRebuildAndRedeployWatcher = chokidar.watch(allPaths, {ignored: '**/*.test.*'}).on(
+    'change',
+    // We need to bind the execution context to ensure the event handler can access the correct AsyncLocalStorage
+    // See also: https://nodejs.org/api/async_context.html#integrating-asyncresource-with-eventemitter
+    AsyncResource.bind((path) => {
+      outputDebug(`Extension file at path ${path} changed`, stdout)
+      if (buildController) {
+        // terminate any existing builds
+        buildController.abort()
+      }
+      buildController = new AbortController()
+      const buildSignal = buildController.signal
+      const shouldBuild = micromatch.isMatch(path, buildPaths)
 
-    reloadAndbuildIfNecessary(extension, shouldBuild, {
-      app,
-      stdout,
-      stderr,
-      useTasks: false,
-      signal: buildSignal,
-      environment: 'development',
-      appURL: url,
-    })
-      .then(({newConfig, previousConfig}) => {
-        if (shouldBuild) {
-          if (buildSignal.aborted) return
-          return onChange()
-        }
-
-        if (deepCompare(newConfig, previousConfig)) return
-        return onChange()
+      reloadAndbuildIfNecessary(extension, shouldBuild, {
+        app,
+        stdout,
+        stderr,
+        useTasks: false,
+        signal: buildSignal,
+        environment: 'development',
+        appURL: url,
       })
-      .catch((error: Error) => onReloadAndBuildError(error))
-  })
+        .then(({newConfig, previousConfig}) => {
+          if (shouldBuild) {
+            if (buildSignal.aborted) return
+            return onChange()
+          }
+
+          if (deepCompare(newConfig, previousConfig)) return
+          return onChange()
+        })
+        .catch((error: Error) => onReloadAndBuildError(error))
+    }),
+  )
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
 }
 

@@ -5,6 +5,7 @@ import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
+import {createAbortCatchError} from '../errors.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {createServer} from 'node:http'
@@ -28,22 +29,27 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 }
 
 function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
-  const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
+  const abort = createAbortCatchError('Failed to perform the initial theme synchronization.')
 
-  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
-    handleThemeEditorSync(theme, ctx, remoteChecksums),
-  )
+  const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session).catch(abort)
 
-  const uploadPromise = reconcilePromise.then(async ({updatedRemoteChecksumsPromise}) => {
-    const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
-    return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
-      nodelete: ctx.options.noDelete,
-      deferPartialWork: true,
+  const reconcilePromise = remoteChecksumsPromise
+    .then((remoteChecksums) => handleThemeEditorSync(theme, ctx, remoteChecksums))
+    .catch(abort)
+
+  const uploadPromise = reconcilePromise
+    .then(async ({updatedRemoteChecksumsPromise}) => {
+      const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+      return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
+        nodelete: ctx.options.noDelete,
+        deferPartialWork: true,
+        backgroundWorkCatch: abort,
+      })
     })
-  })
+    .catch(abort)
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise),
+    workPromise: uploadPromise.then((result) => result.workPromise).catch(abort),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise

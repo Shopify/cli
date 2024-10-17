@@ -32,12 +32,12 @@ export interface AppReleaseVariables {
 export interface AppReleaseSchema {
   appRelease: {
     appVersion: {
-      versionTag: string
-      message: string
+      versionTag?: string | null
+      message?: string | null
       location: string
     }
     userErrors: {
-      field: string[]
+      field?: string[] | null
       message: string
       category: string
       details: ErrorDetail[]

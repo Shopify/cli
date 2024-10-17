@@ -179,13 +179,13 @@ export interface DevSessionOptions {
 
 type WithUserErrors<T> = T & {
   userErrors: {
-    field: string[]
+    field?: string[] | null
     message: string
   }[]
 }
 
 export type AssetUrlSchema = WithUserErrors<{
-  assetUrl: string
+  assetUrl?: string | null
 }>
 
 export enum Flag {

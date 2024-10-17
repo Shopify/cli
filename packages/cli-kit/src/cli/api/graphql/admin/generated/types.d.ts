@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax  */
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
@@ -84,7 +86,7 @@ export type Scalars = {
    *   }
    * }`
    */
-  JSON: {input: any; output: any}
+  JSON: {input: JsonMapType | string; output: JsonMapType}
   /** A monetary value string without a currency symbol or code. Example value: `"100.57"`. */
   Money: {input: any; output: any}
   /** A scalar value. */
@@ -103,7 +105,7 @@ export type Scalars = {
    * For example, `"https://example.myshopify.com"` is a valid URL. It includes a scheme (`https`) and a host
    * (`example.myshopify.com`).
    */
-  URL: {input: any; output: any}
+  URL: {input: string; output: string}
   /**
    * An unsigned 64-bit integer. Represents whole numeric values between 0 and 2^64 - 1 encoded as a string of base-10 digits.
    *
