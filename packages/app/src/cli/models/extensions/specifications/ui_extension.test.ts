@@ -235,7 +235,6 @@ describe('ui_extension', async () => {
           {
             target: 'EXTENSION::POINT::A',
             module: './src/ExtensionPointA.js',
-            capabilities: {allow_direct_linking: true},
             preloads: {chat: '/chat', not_supported: '/hello'},
           },
         ],
@@ -273,7 +272,7 @@ describe('ui_extension', async () => {
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
-          capabilities: {allow_direct_linking: true},
+          capabilities: undefined,
           preloads: {chat: '/chat'},
         },
       ])
