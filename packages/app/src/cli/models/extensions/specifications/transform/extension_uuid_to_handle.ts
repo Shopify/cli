@@ -13,7 +13,7 @@ type Config =
 
 export function extensionUuidToHandle(config: Config, allExtensions: ExtensionRegistration[]) {
   const uiExtensionHandle = config.ui_extension_handle
-  if (uiExtensionHandle || 'ui_extension_registration_uuid' in config === false) {
+  if (uiExtensionHandle || !('ui_extension_registration_uuid' in config)) {
     return uiExtensionHandle
   }
 

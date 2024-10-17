@@ -42,8 +42,12 @@ export async function zip(options: ZipOptions): Promise<void> {
     const archive = archiver('zip')
 
     const output = createWriteStream(outputZipPath)
-    output.on('close', () => resolve())
-    archive.on('error', (error) => reject(error))
+    output.on('close', () => {
+      resolve()
+    })
+    archive.on('error', (error) => {
+      reject(error)
+    })
     archive.pipe(output)
 
     for (const filePath of pathsToZip) {

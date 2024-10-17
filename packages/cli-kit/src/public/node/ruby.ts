@@ -258,10 +258,11 @@ async function bundleInstallShopifyCLI() {
  * @returns The absolute path to the directory.
  */
 async function shopifyCLIDirectory(embedded = false): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const embeddedDirectory = (await file.findPathUp('assets/cli-ruby', {
     type: 'directory',
     cwd: dirname(fileURLToPath(import.meta.url)),
-  })) as string
+  }))!
   const bundledDirectory = joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 
   return embedded ? embeddedDirectory : getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory

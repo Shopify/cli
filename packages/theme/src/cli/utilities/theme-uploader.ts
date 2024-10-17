@@ -379,7 +379,7 @@ async function handleBulkUpload(
       .join('\n')}`,
   )
 
-  const failedUploadResults = results.filter((result) => result.success === false)
+  const failedUploadResults = results.filter((result) => !result.success)
   if (failedUploadResults.length > 0) {
     outputDebug(
       `The following files failed to upload:\n${failedUploadResults.map((param) => `-${param.key}`).join('\n')}`,

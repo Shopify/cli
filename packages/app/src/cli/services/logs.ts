@@ -151,7 +151,7 @@ function renderAppLogsConfigInfo(
   const fileName = configFile && getAppConfigurationFileName(configFile)
 
   renderInfo({
-    headline: `${configFile ? `Using ${fileName} for default values:` : 'Using these settings:'}`,
+    headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
     body,
   })
 }

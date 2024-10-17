@@ -54,7 +54,7 @@ describe('app-logs-polling', () => {
       token: TOKEN,
     }
 
-    let subscribeToAppLogs: Mock<any, any>
+    let subscribeToAppLogs: Mock
     let developerPlatformClient: DeveloperPlatformClient
     let stdout: any
     let stderr: any

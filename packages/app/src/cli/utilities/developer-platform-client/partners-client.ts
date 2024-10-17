@@ -174,7 +174,7 @@ function getAppVars(
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
       requestedAccessScopes: scopesArray ?? [],
@@ -183,7 +183,7 @@ function getAppVars(
   } else {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
       requestedAccessScopes: scopesArray ?? [],

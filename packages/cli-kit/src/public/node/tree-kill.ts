@@ -59,7 +59,8 @@ function adaptedTreeKill(
 
   if (Number.isNaN(rootPid)) {
     if (callback) {
-      return callback(new Error('pid must be a number'))
+      callback(new Error('pid must be a number'))
+      return
     } else {
       throw new Error('pid must be a number')
     }
@@ -141,13 +142,14 @@ function killAll(
   } catch (err: unknown) {
     if (callback) {
       // @ts-ignore
-      return callback(err)
+      callback(err)
+      return
     } else {
       throw err
     }
   }
   if (callback) {
-    return callback()
+    callback()
   }
 }
 
@@ -195,7 +197,8 @@ function buildProcessTree(
     if (code !== 0) {
       // no more parent processes
       if (pidsToProcess.size === 0) {
-        return cb()
+        cb()
+        return
       }
       return
     }

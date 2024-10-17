@@ -86,7 +86,7 @@ export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewar
       })
     }
 
-    const buildDirectory = extension.outputPath.replace(`${extension.outputFileName}`, '')
+    const buildDirectory = extension.outputPath.replace(extension.outputFileName, '')
 
     return fileServerMiddleware(request, response, next, {
       filePath: joinPath(buildDirectory, assetPath),

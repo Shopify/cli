@@ -159,7 +159,7 @@ export async function fetchSpinPort(
     }
 
     const match = config.contentPattern.exec(fileContent)
-    if (match && match[1] && !isNaN(parseInt(match[1], 10))) {
+    if (match?.[1] && !isNaN(parseInt(match[1], 10))) {
       return parseInt(match[1], 10)
     }
   }

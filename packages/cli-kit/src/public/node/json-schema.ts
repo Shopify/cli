@@ -5,7 +5,7 @@ import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject} from 'ajv'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
 
-type AjvError = ErrorObject<string, {[key: string]: unknown}, unknown>
+type AjvError = ErrorObject<string, {[key: string]: unknown}>
 
 /**
  * Normalises a JSON Schema by standardising it's internal implementation.

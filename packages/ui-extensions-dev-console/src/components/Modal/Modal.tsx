@@ -2,7 +2,7 @@ import {Dialog, Header, Backdrop} from './components'
 import styles from './Modal.module.scss'
 
 import {TransitionGroup} from 'react-transition-group'
-import React, {JSXElementConstructor, useState} from 'react'
+import React, {useState} from 'react'
 import {createPortal} from 'react-dom'
 import {ModalContainerId} from '@/foundation/ModalContainer'
 
@@ -10,7 +10,7 @@ export interface ModalProps {
   /** Whether the modal is open or not */
   open: boolean
   /** The content for the title of the modal */
-  title: React.ReactElement<any, string | JSXElementConstructor<any>> | string
+  title: React.ReactElement | string
   /** The content to display inside modal */
   children: React.ReactNode
   /** Callback when the modal is closed */

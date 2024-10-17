@@ -334,7 +334,7 @@ export function fileSizeSync(path: string): number {
  * @returns A promise that resolves when the file is unlinked.
  */
 export function unlinkFileSync(path: string): void {
-  return fsUnlinkSync(path)
+  fsUnlinkSync(path)
 }
 
 /**
