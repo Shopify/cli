@@ -349,7 +349,8 @@ wrong = "property"
       │  A global installation (v3.68.0) and a local dependency (v3.65.0) were       │
       │  detected.                                                                   │
       │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
-      │  your package.json.                                                          │
+      │  your package.json, unless you want to use different versions across         │
+      │  multiple apps.                                                              │
       │                                                                              │
       │  For more information, see Shopify CLI documentation [1]                     │
       │                                                                              │

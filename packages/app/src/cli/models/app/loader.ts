@@ -370,7 +370,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         headline: `Two Shopify CLI installations found – using ${currentInstallation}`,
         body: [
           `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected.
-We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json.`,
+We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json, unless you want to use different versions across multiple apps.`,
         ],
         link: {
           label: 'For more information, see Shopify CLI documentation',
