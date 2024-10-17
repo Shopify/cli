@@ -43,7 +43,7 @@ export interface themepush {
   '--no-color'?: ''
 
   /**
-   * Runs the push command without deleting local files.
+   * Prevent deleting remote files that have been removed locally.
    * @environment SHOPIFY_FLAG_NODELETE
    */
   '-n, --nodelete'?: ''
