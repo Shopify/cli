@@ -115,8 +115,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   }
 
   const handleFileDelete = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
-    const extension = extname(fileKey)
-    if (isAsset(fileKey) && extension === '.liquid') {
+    if (isAsset(fileKey) && extname(fileKey) === '.liquid') {
       onSync?.(() => {
         triggerHotReload(fileKey, ctx)
       })

@@ -192,9 +192,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     files.delete(fileKey)
     unsyncedFileKeys.add(fileKey)
 
-    // Emit 'unlink' event immediately for non-liquid assets
-    const isLiquidAsset = fileKey.startsWith('assets/') && extname(fileKey) === '.liquid'
-
     const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
         if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
@@ -207,7 +204,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         return false
       })
 
-    if (isLiquidAsset) {
+    // We pass the syncPromise to the 'unlink' event for liquid assets so we can defer triggering the hot reload
+    // until the file has been deleted on the server
+    if (fileKey.startsWith('assets/') && extname(fileKey) === '.liquid') {
       emitEvent('unlink', {
         fileKey,
         onSync: (fn) => {
