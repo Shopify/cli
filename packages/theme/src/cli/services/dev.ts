@@ -6,7 +6,7 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
-import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -49,8 +49,6 @@ export async function dev(options: DevOptions) {
     await legacyDev(options)
     return
   }
-
-  showNewVersionInfo()
 
   if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
     return
@@ -227,6 +225,27 @@ export function showDeprecationWarnings(args: string[]) {
       ],
     })
   }
+
+  const legacyFlagPresent = args.find((arg) => arg === '--legacy')
+
+  if (legacyFlagPresent) {
+    renderWarning({
+      headline: ['The', {command: '--legacy'}, 'flag is deprecated.'],
+      body: [
+        'The',
+        {command: '--legacy'},
+        'flag has been deprecated. If this variable is essential to your workflow, please report an issue at',
+        {
+          link: {
+            url: 'https://github.com/Shopify/cli/issues',
+          },
+        },
+        {
+          char: '.',
+        },
+      ],
+    })
+  }
 }
 
 export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
@@ -238,11 +257,4 @@ export async function refreshTokens(store: string, password: string | undefined,
   }
 
   return {adminSession, storefrontToken}
-}
-
-function showNewVersionInfo() {
-  renderInfo({
-    headline: [`You're using the new version of`, {command: 'shopify theme dev'}, {char: '.'}],
-    body: ['Run', {command: 'shopify theme dev --legacy'}, 'to switch back to the previous version.'],
-  })
 }
