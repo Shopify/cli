@@ -1,8 +1,4 @@
-import {
-  ensureDownloadedExtensionFlavorExists,
-  ensureExtensionDirectoryExists,
-  ensureLocalExtensionFlavorExists,
-} from './common.js'
+import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from './common.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavor} from '../../models/app/template.js'
 import {describe, expect, test} from 'vitest'
@@ -36,30 +32,6 @@ describe('ensureDownloadedExtensionFlavorExists()', () => {
       // Then
       await expect(result).rejects.toThrow('The extension is not available for vanilla-js')
     })
-  })
-})
-
-describe('ensureLocalExtensionFlavorExists()', () => {
-  test('it returns the full path if it exists', async () => {
-    // Given
-    const extensionFlavor: ExtensionFlavor = {name: 'Javascript', value: 'vanilla-js', path: 'services/extensions'}
-
-    // When
-    const result = await ensureLocalExtensionFlavorExists(extensionFlavor)
-
-    // Then
-    expect(result).toContain('/src/cli/services/extensions')
-  })
-
-  test('it fails if the path does not exist', async () => {
-    // Given
-    const extensionFlavor: ExtensionFlavor = {name: 'Javascript', value: 'vanilla-js', path: 'wrong-path'}
-
-    // When
-    const result = ensureLocalExtensionFlavorExists(extensionFlavor)
-
-    // Then
-    await expect(result).rejects.toThrow('The extension is not available for vanilla-js')
   })
 })
 

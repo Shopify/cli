@@ -1,23 +1,24 @@
-import {ensureReleaseContext} from './context.js'
 import {
   configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
+import {OrganizationApp} from '../models/organization.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
-  app: AppInterface
+  app: AppLinkedInterface
 
-  /** API key of the app in Partners admin */
-  apiKey?: string
+  /** The remote app to be released */
+  remoteApp: OrganizationApp
 
-  /** If true, ignore any cached appId or extensionId */
-  reset: boolean
+  /** The developer platform client */
+  developerPlatformClient: DeveloperPlatformClient
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
@@ -27,7 +28,7 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  const {developerPlatformClient, app, remoteApp} = await ensureReleaseContext(options)
+  const {developerPlatformClient, app, remoteApp} = options
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
     developerPlatformClient,
@@ -77,7 +78,7 @@ export async function release(options: ReleaseOptions) {
   } = await renderTasks<Context>(tasks)
 
   const linkAndMessage: TokenItem = [
-    {link: {label: versionDetails.versionTag, url: versionDetails.location}},
+    {link: {label: versionDetails.versionTag ?? undefined, url: versionDetails.location}},
     versionDetails.message ? `\n${versionDetails.message}` : '',
   ]
 

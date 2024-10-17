@@ -5,8 +5,8 @@ import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
-import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {pushUpdatesForDevSession} from './dev-session.js'
+import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -26,12 +26,15 @@ import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isStorefrontPasswordProtected} from '@shopify/theme'
+import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
-
+vi.mock('@shopify/theme')
+vi.mock('@shopify/cli-kit/node/themes/api')
 beforeEach(() => {
   // mocked for draft extensions
   vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({
@@ -48,6 +51,14 @@ beforeEach(() => {
   })
   vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
   vi.mocked(getEnvironmentVariables).mockReturnValue({})
+  vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+  vi.mocked(fetchTheme).mockResolvedValue({
+    id: 1,
+    name: 'Theme',
+    createdAtRuntime: false,
+    role: 'theme',
+    processing: false,
+  })
 })
 
 describe('setup-dev-processes', () => {
@@ -199,16 +210,19 @@ describe('setup-dev-processes', () => {
       prefix: 'theme-extensions',
       function: runThemeAppExtensionsServer,
       options: {
+        theme: {
+          id: 1,
+          name: 'Theme',
+          createdAtRuntime: false,
+          role: 'theme',
+          processing: false,
+        },
         adminSession: {
           storeFqdn: 'store.myshopify.io',
           token: 'admin-token',
         },
-        themeExtensionServerArgs:
-          './my-extension --api-key api-key --extension-id extension-id --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
-            ' ',
-          ),
-        storefrontToken: 'storefront-token',
-        developerPlatformClient,
+        themeExtensionDirectory: './my-extension',
+        themeExtensionPort: 9293,
       },
     })
     expect(res.processes[5]).toMatchObject({

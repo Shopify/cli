@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax  */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, tsdoc/syntax  */
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
@@ -28,5 +30,5 @@ export type Scalars = {
    *   }
    * }`
    */
-  JSON: {input: any; output: any}
+  JSON: {input: JsonMapType | string; output: JsonMapType}
 }

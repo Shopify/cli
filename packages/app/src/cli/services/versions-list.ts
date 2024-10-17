@@ -1,9 +1,8 @@
-import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
-import {fetchOrgFromId} from './dev/fetch.js'
+import {renderCurrentlyUsedConfigInfo} from './context.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
@@ -16,7 +15,7 @@ type AppVersionLine = {
   createdAt: string
   createdBy?: string
   message?: string
-  versionTag: string
+  versionTag?: string | null
   status: string
 }
 
@@ -53,7 +52,7 @@ async function fetchAppVersions(
     appVersions.forEach((appVersion) => {
       const combinedLength =
         appVersion.message.length +
-        appVersion.versionTag.length +
+        (appVersion.versionTag?.length ?? 0) +
         unstyled(appVersion.status).length +
         appVersion.createdAt.length +
         appVersion.createdBy.length
@@ -82,31 +81,26 @@ async function fetchAppVersions(
 }
 
 interface VersionListOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: false
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
+  organization: Organization
+  developerPlatformClient: DeveloperPlatformClient
   json: boolean
-  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const result = await ensureVersionsListContext(options)
-  const developerPlatformClient = options.developerPlatformClient ?? result.developerPlatformClient
+  const {remoteApp, developerPlatformClient, organization} = options
 
-  const {organizationId, title} = result.remoteApp
-
-  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, result.remoteApp, options.json)
-
-  const {businessName: org} = await fetchOrgFromId(organizationId, developerPlatformClient)
+  const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, remoteApp, options.json)
 
   if (options.json) {
     return outputInfo(JSON.stringify(appVersions, null, 2))
   }
 
   renderCurrentlyUsedConfigInfo({
-    org,
-    appName: title,
-    configFile: isCurrentAppSchema(options.app.configuration) ? basename(options.app.configuration.path) : undefined,
+    org: organization.businessName,
+    appName: remoteApp.title,
+    configFile: basename(options.app.configuration.path),
   })
 
   if (appVersions.length === 0) {
@@ -127,7 +121,7 @@ export default async function versionList(options: VersionListOptions) {
 
   const link = outputToken.link(
     developerPlatformClient.webUiName,
-    [await developerPlatformClient.appDeepLink(result.remoteApp), 'versions'].join('/'),
+    [await developerPlatformClient.appDeepLink(remoteApp), 'versions'].join('/'),
   )
 
   outputInfo(outputContent`\nView all ${String(totalResults)} app versions in the ${link}`)

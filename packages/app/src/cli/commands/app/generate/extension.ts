@@ -4,6 +4,7 @@ import generate from '../../../services/generate.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
@@ -87,7 +88,6 @@ export default class AppGenerateExtension extends AppCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
 
     await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
@@ -105,17 +105,26 @@ export default class AppGenerateExtension extends AppCommand {
 
     await checkFolderIsValidApp(flags.path)
 
-    const result = await generate({
+    const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
+      directory: flags.path,
+      clientId: flags['client-id'] || flags['api-key'],
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
+    await generate({
       directory: flags.path,
       reset: flags.reset,
-      apiKey,
       name: flags.name,
       cloneUrl: flags['clone-url'],
       template: flags.template,
       flavor: flags.flavor,
-      configName: flags.config,
+      app,
+      specifications,
+      remoteApp,
+      developerPlatformClient,
     })
 
-    return {app: result.app}
+    return {app}
   }
 }
