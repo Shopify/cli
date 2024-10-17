@@ -205,7 +205,7 @@ async function init(options: InitOptions) {
     app = options.selectAppOrCreateResult.app
   }
 
-  // Link the new project to the selected App
+  // Link the new project to the selected/created App
   await link(
     {
       directory: outputDirectory,
