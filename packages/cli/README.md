@@ -52,6 +52,7 @@
 * [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
 * [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
 * [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
+* [`shopify include-demo`](#shopify-include-demo)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins install PLUGIN`](#shopify-plugins-install-plugin)
@@ -1410,6 +1411,18 @@ FLAGS
 
 DESCRIPTION
   Upgrade Remix and Hydrogen npm dependencies.
+```
+
+## `shopify include-demo`
+
+Demo command for showing how config files can be composed through directives.
+
+```
+USAGE
+  $ shopify include-demo
+
+DESCRIPTION
+  Demo command for showing how config files can be composed through directives.
 ```
 
 ## `shopify plugins add PLUGIN`
