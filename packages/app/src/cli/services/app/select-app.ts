@@ -1,31 +1,13 @@
-import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
-import {selectAppPrompt} from '../../prompts/dev.js'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 import {
   Flag,
   AppModuleVersion,
   DeveloperPlatformClient,
-  selectDeveloperPlatformClient,
   ActiveAppVersion,
 } from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
-import {selectOrg} from '../context.js'
-import {searchForAppsByNameFactory} from '../dev/prompt-helpers.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
-
-export async function selectApp(): Promise<OrganizationApp> {
-  const org = await selectOrg()
-  const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
-  const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
-  const selectedApp = await selectAppPrompt(
-    searchForAppsByNameFactory(developerPlatformClient, org.id),
-    apps,
-    hasMorePages,
-  )
-  const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return fullSelectedApp!
-}
 
 export function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
   if (!type) return
