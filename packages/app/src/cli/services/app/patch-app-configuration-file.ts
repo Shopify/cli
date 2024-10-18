@@ -22,7 +22,10 @@ export interface PatchTomlOptions {
 export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
-  const updatedConfig = deepMergeObjects(configuration, patch)
+
+  // Deep merge the configuration with the patch.
+  // Use replaceArrayStrategy to replace the destination array with the source array. (Arrays are not merged)
+  const updatedConfig = deepMergeObjects(configuration, patch, replaceArrayStrategy)
 
   // Re-parse the config with the schema to validate the patch and keep the same order in the file
   // Make every field optional to not crash on invalid tomls that are missing fields.
@@ -32,4 +35,8 @@ export async function patchAppConfigurationFile({path, patch, schema}: PatchToml
 
   encodedString = addDefaultCommentsToToml(encodedString)
   await writeFile(path, encodedString)
+}
+
+export function replaceArrayStrategy(_: unknown[], newArray: unknown[]): unknown[] {
+  return newArray
 }
