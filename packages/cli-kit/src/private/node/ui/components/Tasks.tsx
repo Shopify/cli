@@ -12,6 +12,7 @@ const loadingBarChar = '▀'
 
 export interface Task<TContext = unknown> {
   title: string
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   task: (ctx: TContext, task: Task<TContext>) => Promise<void | Task<TContext>[]>
   retry?: number
   retryCount?: number
@@ -67,6 +68,7 @@ function Tasks<TContext>({
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
 import {versionDiffByVersion} from '../release/version-diff.js'

@@ -4564,7 +4564,7 @@
         "tabs": [
           {
             "title": "theme console",
-            "code": "theme:console\n\ntheme:console --url /products/classic-leather-jacket",
+            "code": "theme console\n\ntheme console --url /products/classic-leather-jacket",
             "language": "bash"
           }
         ],
@@ -5085,7 +5085,7 @@
         "tabs": [
           {
             "title": "theme init",
-            "code": "theme:init [name]",
+            "code": "theme init [name]",
             "language": "bash"
           }
         ],
@@ -5774,7 +5774,7 @@
         "tabs": [
           {
             "title": "theme push",
-            "code": "theme:push\n\ntheme:push --unpublished --json",
+            "code": "theme push\n\ntheme push --unpublished --json",
             "language": "bash"
           }
         ],

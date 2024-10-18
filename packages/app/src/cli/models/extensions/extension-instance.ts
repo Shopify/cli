@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'

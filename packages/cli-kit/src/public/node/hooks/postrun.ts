@@ -28,6 +28,7 @@ async function detectStopCommand(commandClass: Command.Class | typeof BaseComman
       const {commandStartOptions} = metadata.getAllSensitiveMetadata()
       await metadata.addSensitiveMetadata(() => ({
         commandStartOptions: {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...commandStartOptions!,
           startTime: currentTime,
           startCommand: stopCommand,

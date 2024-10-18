@@ -149,6 +149,7 @@ export function outputContent(
     if (i >= keys.length) {
       return
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const token = keys[i]!
 
     if (typeof token === 'string') {

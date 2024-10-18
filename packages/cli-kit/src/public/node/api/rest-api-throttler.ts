@@ -269,6 +269,7 @@ if (import.meta.vitest) {
 
       // When
       const callLimit = extractApiCallLimitFromResponse(response)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const [used, limit] = callLimit!
 
       // Then

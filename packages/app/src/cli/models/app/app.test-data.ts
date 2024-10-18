@@ -109,7 +109,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
   })
@@ -614,6 +613,23 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+    },
+    features: {
+      argo: {
+        surface: 'admin',
+      },
+    },
+  },
+  {
+    name: 'Data Extension',
+    externalName: 'Data Extension',
+    identifier: 'data_extension',
+    externalIdentifier: 'data_extension_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 50,
     },
     features: {
       argo: {
@@ -1216,7 +1232,6 @@ const currentAccountInfoResponse: CurrentAccountInfoSchema = {
   currentAccountInfo: {
     __typename: 'UserAccount',
     email: 'user@example.com',
-    orgName: 'org1',
   },
 }
 

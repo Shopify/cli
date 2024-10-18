@@ -13,7 +13,9 @@ export const WebhookSubscriptionSchema = zod.object({
       invalid_type_error: 'Value must be string[]',
     })
     .optional(),
-  uri: zod.preprocess(removeTrailingSlash, WebhookSubscriptionUriValidation, {required_error: 'Missing value at'}),
+  uri: zod.preprocess((arg) => removeTrailingSlash(arg as string), WebhookSubscriptionUriValidation, {
+    required_error: 'Missing value at',
+  }),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   compliance_topics: zod

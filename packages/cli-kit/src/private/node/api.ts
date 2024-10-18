@@ -122,7 +122,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
   const result = await makeVerboseRequest({request, url})
 
@@ -161,7 +161,7 @@ ${result.sanitizedHeaders}
 
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
   retryOptions: {
     limitRetriesTo?: number
     defaultDelayMs?: number
