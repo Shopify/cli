@@ -1,17 +1,4 @@
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
-export interface WebhookTriggerFlags {
-  topic?: string
-  apiVersion?: string
-  deliveryMethod?: string
-  address?: string
-  clientId?: string
-  clientSecret?: string
-  developerPlatformClient?: DeveloperPlatformClient
-  path: string
-  config?: string
-}
 
 export const DELIVERY_METHOD = {
   LOCALHOST: 'localhost',
