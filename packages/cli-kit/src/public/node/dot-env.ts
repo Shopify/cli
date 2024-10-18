@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AbortError} from './error.js'
 import {fileExists, readFile, writeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'

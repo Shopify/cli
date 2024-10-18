@@ -129,8 +129,8 @@ function getProxyServerRequestListener(
       })
     }
 
-    outputDebug(`
-Reverse HTTP proxy error - Invalid path: ${req.url}
+    outputDebug(outputContent`
+Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
 These are the allowed paths:
 ${outputToken.json(JSON.stringify(rules))}
 `)

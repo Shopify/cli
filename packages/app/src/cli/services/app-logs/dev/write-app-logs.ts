@@ -1,4 +1,4 @@
-import {AppLogData, AppLogPayload} from '../types.js'
+import {AppLogData} from '../types.js'
 import {toFormattedAppLogJson} from '../utils.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
@@ -19,7 +19,7 @@ export const writeAppLogsToFile = async ({
 }: {
   appLog: AppLogData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  appLogPayload: AppLogPayload | any
+  appLogPayload: any
   apiKey: string
   stdout: Writable
   storeName: string
@@ -38,7 +38,7 @@ export const writeAppLogsToFile = async ({
       identifier,
     }
   } catch (error) {
-    stdout.write(`Error while writing log to file: ${error}\n`)
+    stdout.write(`Error while writing log to file: ${error as string}\n`)
     throw error
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
@@ -78,7 +79,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     }
 
     if (error.params.type) {
-      const expectedType = error.params.type
+      const expectedType = error.params.type as string
       const actualType = getPathValue(subject, path.join('.'))
       return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
     }

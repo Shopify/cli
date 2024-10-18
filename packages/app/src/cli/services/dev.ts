@@ -23,8 +23,8 @@ import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
-import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
+import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -105,15 +105,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   // Update the dev_store_url in the app configuration if it doesn't match the store domain
   if (app.configuration.build?.dev_store_url !== store.shopDomain) {
-    const newConfiguration = {
-      ...app.configuration,
-      build: {
-        ...app.configuration.build,
-        dev_store_url: store.shopDomain,
-      },
+    app.configuration.build = {
+      ...app.configuration.build,
+      dev_store_url: store.shopDomain,
     }
-    app.configuration = newConfiguration
-    await writeAppConfigurationFile(newConfiguration, app.configSchema)
+    const patch = {build: {dev_store_url: store.shopDomain}}
+    await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
@@ -468,6 +465,7 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   }
   await Promise.all([
     ...allPorts.map(async (port) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const portAvailable = await checkPortAvailability(port!)
       if (!portAvailable) {
         throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)

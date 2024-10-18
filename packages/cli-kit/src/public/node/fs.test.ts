@@ -239,7 +239,7 @@ describe('createFileReadStream', () => {
       const stream = createFileReadStream(filePath)
       let data = ''
       stream.on('data', (chunk) => {
-        data += chunk
+        data += chunk as string
       })
       stream.on('end', () => {
         expect(data).toBe(content)
@@ -257,7 +257,7 @@ describe('createFileReadStream', () => {
       const stream = createFileReadStream(filePath, {start: 1, end: 7})
       let data = ''
       stream.on('data', (chunk) => {
-        data += chunk
+        data += chunk as string
       })
       stream.on('end', () => {
         expect(data).toBe('est-con')
