@@ -529,7 +529,7 @@ describe('theme-fs', () => {
       expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
     })
 
-    test('renders a warning to debug if the file deletion fails', async () => {
+    test('renders a warning to debug if the file deletion fails and the file is still present on the remote theme', async () => {
       // Given
       vi.mocked(fetchThemeAsset).mockResolvedValue({
         key: 'assets/base.css',
@@ -563,6 +563,34 @@ describe('theme-fs', () => {
         headline: 'Failed to delete file "assets/base.css" from remote theme.',
         body: expect.any(String),
       })
+    })
+
+    test('does not render a warning if the remote file deletion fails but the file is not present on the remote theme', async () => {
+      // Given
+      vi.mocked(fetchThemeAsset).mockResolvedValue(undefined)
+      vi.mocked(deleteThemeAsset).mockResolvedValue(false)
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      const deleteOperationPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Explicitly emit the 'unlink' event
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/assets/base.css`)
+
+      await deleteOperationPromise
+
+      // Then
+      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+      expect(renderError).not.toHaveBeenCalled()
     })
   })
 
