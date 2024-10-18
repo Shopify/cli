@@ -119,7 +119,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     const isLiquidAsset = isAsset(fileKey) && extname(fileKey) === '.liquid'
     if (isLiquidAsset) {
       onSync?.(() => {
-        triggerHotReload(fileKey, ctx)
+        triggerHotReload(fileKey.replace('.liquid', ''), ctx)
       })
     } else {
       sectionNamesByFile.delete(fileKey)
