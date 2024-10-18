@@ -1,6 +1,6 @@
 import {storeContext} from './store-context.js'
 import {fetchStore} from './dev/fetch.js'
-import {selectStore} from './dev/select-store.js'
+import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {
   testAppLinked,
@@ -48,6 +48,12 @@ describe('storeContext', () => {
       mockOrganization,
       'explicit-store.myshopify.com',
       mockDeveloperPlatformClient,
+    )
+    expect(convertToTransferDisabledStoreIfNeeded).toHaveBeenCalledWith(
+      mockStore,
+      mockOrganization.id,
+      mockDeveloperPlatformClient,
+      'never',
     )
     expect(result).toEqual(mockStore)
   })

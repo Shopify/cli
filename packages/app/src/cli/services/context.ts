@@ -1,33 +1,24 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
-import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
+import {fetchOrgFromId, fetchOrganizations} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
-import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
+import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
-import {fetchAppRemoteConfiguration} from './app/select-app.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
-  AppConfiguration,
   AppInterface,
   isCurrentAppSchema,
   CurrentAppConfiguration,
   AppCreationDefaultOptions,
+  AppLinkedInterface,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {
-  getAppConfigurationFileName,
-  getAppConfigurationShorthand,
-  loadApp,
-  loadAppConfiguration,
-  loadAppName,
-} from '../models/app/loader.js'
+import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -38,10 +29,8 @@ import {
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
-import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath, sniffForJson} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 
@@ -50,149 +39,6 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
     message: outputContent`Invalid Client ID: ${apiKey}`,
     tryMessage: outputContent`You can find the Client ID in the app settings in the Partners Dashboard.`,
   }
-}
-
-export interface DevContextOptions {
-  directory: string
-  apiKey?: string
-  storeFqdn?: string
-  reset: boolean
-  developerPlatformClient: DeveloperPlatformClient
-  customInfoBox?: boolean
-}
-
-interface DevContextOutput {
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
-  remoteAppUpdated: boolean
-  storeFqdn: string
-  storeId: string
-  updateURLs: boolean | undefined
-  localApp: AppInterface
-  organization?: string
-  configFile?: string
-}
-
-/**
- * Make sure there is a valid context to execute `dev`
- * That means we have a valid organization, app and dev store selected.
- *
- * If there are app/store from flags, we check if they are valid. If they are not, throw an error.
- * If there is info in the cache or current configuration, check if it is still valid and return it.
- * If there is no info (or is invalid):
- *  - Show prompts to select an org, app and dev store
- *  - The info will be updated in the cache or current configuration
- *
- * @param options - Current dev context options
- * @returns The selected org, app and dev store
- */
-export async function ensureDevContext(options: DevContextOptions): Promise<DevContextOutput> {
-  let developerPlatformClient = options.developerPlatformClient
-  const {configuration, cachedInfo, remoteApp} = await getAppContext({
-    ...options,
-    enableLinkingPrompt: !options.apiKey,
-  })
-  developerPlatformClient = remoteApp?.developerPlatformClient ?? developerPlatformClient
-
-  let orgId = getOrganization() || cachedInfo?.orgId
-  if (!orgId) {
-    const org = await selectOrg()
-    developerPlatformClient = selectDeveloperPlatformClient({organization: org})
-    orgId = org.id
-  }
-
-  const organization = await fetchOrgFromId(orgId, developerPlatformClient)
-
-  // we select an app or a dev store from a command flag
-  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
-
-  // if no stores or apps were selected previously from a command,
-  // we try to load the app or the dev store from the current config or cache
-  // if that's not available, we prompt the user to choose an existing one or create a new one
-  if (!selectedApp || !selectedStore) {
-    const [cachedApp, cachedStore] = await Promise.all([
-      selectedApp ||
-        remoteApp ||
-        (cachedInfo?.appId &&
-          appFromId({id: cachedInfo.appGid, apiKey: cachedInfo.appId, organizationId: orgId, developerPlatformClient})),
-      selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
-    ])
-
-    if (cachedApp) {
-      selectedApp = cachedApp
-    } else {
-      const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(orgId)
-      // get toml names somewhere close to here
-      const localAppName = await loadAppName(options.directory)
-      selectedApp = await selectOrCreateApp(localAppName, apps, hasMorePages, organization, developerPlatformClient)
-    }
-
-    if (cachedStore) {
-      selectedStore = cachedStore
-    } else {
-      const allStores = await developerPlatformClient.devStoresForOrg(orgId)
-      selectedStore = await selectStore(allStores, organization, developerPlatformClient)
-    }
-  }
-
-  const specifications = await fetchSpecifications({developerPlatformClient, app: selectedApp})
-
-  selectedApp = {
-    ...selectedApp,
-    configuration: await fetchAppRemoteConfiguration(
-      selectedApp,
-      developerPlatformClient,
-      specifications,
-      selectedApp.flags,
-    ),
-  }
-
-  const localApp = await loadApp({
-    directory: options.directory,
-    specifications,
-    userProvidedConfigName: getAppConfigurationShorthand(configuration.path),
-    remoteFlags: selectedApp.flags,
-  })
-
-  // We only update the cache or config if the current app is the right one
-  const rightApp = selectedApp.apiKey === cachedInfo?.appId
-  if (isCurrentAppSchema(configuration) && rightApp) {
-    if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const newConfiguration = {
-      ...configuration,
-      build: {
-        ...configuration.build,
-        dev_store_url: selectedStore?.shopDomain,
-      },
-    }
-    localApp.configuration = newConfiguration
-
-    const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
-    await patchAppConfigurationFile({path: configuration.path, patch, schema: localApp.configSchema})
-  } else if (!cachedInfo || rightApp) {
-    setCachedAppInfo({
-      appId: selectedApp.apiKey,
-      title: selectedApp.title,
-      directory: options.directory,
-      storeFqdn: selectedStore?.shopDomain,
-      orgId,
-    })
-  }
-
-  if (!options.customInfoBox) {
-    showReusedDevValues({
-      selectedApp,
-      selectedStore,
-      cachedInfo,
-      organization,
-    })
-  }
-
-  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo, organization.businessName)
-  await logMetadataForLoadedContext({
-    organizationId: result.remoteApp.organizationId,
-    apiKey: result.remoteApp.apiKey,
-  })
-  return result
 }
 
 export const resetHelpMessage: Token[] = [
@@ -226,43 +72,6 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
   })
   if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: options.apiKey}], resetHelpMessage)
   return app
-}
-
-const storeFromFqdn = async (
-  storeFqdn: string,
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<OrganizationStore> => {
-  const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
-  if (result?.store) {
-    // never automatically convert a store provided via the cache
-    await convertToTransferDisabledStoreIfNeeded(result.store, orgId, developerPlatformClient, 'never')
-    return result.store
-  } else {
-    throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
-  }
-}
-
-function buildOutput(
-  app: OrganizationApp,
-  store: OrganizationStore,
-  localApp: AppInterface,
-  cachedInfo?: CachedAppInfo,
-  organization?: string,
-): DevContextOutput {
-  return {
-    remoteApp: {
-      ...app,
-      apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
-    },
-    remoteAppUpdated: app.apiKey !== cachedInfo?.previousAppId,
-    storeFqdn: store.shopDomain,
-    storeId: store.shopId,
-    updateURLs: cachedInfo?.updateURLs,
-    localApp,
-    organization,
-    configFile: cachedInfo?.configFile,
-  }
 }
 
 /**
@@ -483,123 +292,6 @@ export async function fetchAppAndIdentifiers(
   return [remoteApp, envIdentifiers]
 }
 
-/**
- * Any data sent via input flags takes precedence and needs to be validated.
- * If any of the inputs is invalid, we must throw an error and stop the execution.
- */
-async function fetchDevDataFromOptions(
-  options: DevContextOptions,
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
-  const [selectedApp, orgWithStore] = await Promise.all([
-    (async () => {
-      let selectedApp: OrganizationApp | undefined
-      if (options.apiKey) {
-        selectedApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
-        if (!selectedApp) {
-          const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
-          throw new AbortError(errorMessage.message, errorMessage.tryMessage)
-        }
-        return selectedApp
-      }
-    })(),
-    (async () => {
-      if (options.storeFqdn) {
-        const orgWithStore = await fetchStoreByDomain(orgId, options.storeFqdn, developerPlatformClient)
-        if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
-        if (!orgWithStore.store) {
-          const partners = await partnersFqdn()
-          const org = orgWithStore.organization
-          throw new AbortError(
-            `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
-            `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
-          )
-        }
-        return orgWithStore as {store: OrganizationStore; organization: Organization}
-      }
-    })(),
-  ])
-  let selectedStore: OrganizationStore | undefined
-
-  if (options.storeFqdn) {
-    selectedStore = orgWithStore!.store
-    // never automatically convert a store provided via the command line
-    await convertToTransferDisabledStoreIfNeeded(
-      selectedStore,
-      orgWithStore!.organization.id,
-      developerPlatformClient,
-      'never',
-    )
-  }
-
-  return {app: selectedApp, store: selectedStore}
-}
-
-interface AppContext {
-  configuration: AppConfiguration
-  cachedInfo?: CachedAppInfo
-  remoteApp?: OrganizationApp
-}
-
-/**
- * Retrieve app info from the cache or the current configuration.
- *
- * @param reset - Whether to reset the cache or not.
- * @param directory - The directory containing the app.
- * @param developerPlatformClient - The client to access the platform API
- */
-async function getAppContext({
-  reset,
-  directory,
-  configName,
-  enableLinkingPrompt = true,
-}: {
-  reset: boolean
-  directory: string
-  configName?: string
-  enableLinkingPrompt?: boolean
-}): Promise<AppContext> {
-  await linkIfNecessary(directory, reset, enableLinkingPrompt)
-
-  let cachedInfo = getCachedAppInfo(directory)
-
-  const {configuration} = await loadAppConfiguration({
-    directory,
-    userProvidedConfigName: configName,
-  })
-
-  const developerPlatformClient = selectDeveloperPlatformClient({configuration})
-
-  let remoteApp
-  if (isCurrentAppSchema(configuration)) {
-    remoteApp = await appFromId({
-      apiKey: configuration.client_id,
-      id: configuration.app_id,
-      organizationId: configuration.organization_id,
-      developerPlatformClient,
-    })
-    cachedInfo = {
-      ...cachedInfo,
-      directory,
-      configFile: basename(configuration.path),
-      orgId: remoteApp.organizationId,
-      appId: remoteApp.apiKey,
-      title: remoteApp.title,
-      storeFqdn: configuration.build?.dev_store_url,
-      updateURLs: configuration.build?.automatically_update_urls_on_dev,
-    }
-
-    await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
-  }
-
-  return {
-    configuration,
-    cachedInfo,
-    remoteApp,
-  }
-}
-
 async function linkIfNecessary(
   directory: string,
   reset: boolean,
@@ -634,7 +326,8 @@ export async function selectOrg(): Promise<Organization> {
 
 interface ReusedValuesOptions {
   organization: Organization
-  selectedApp: OrganizationApp
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   selectedStore: OrganizationStore
   cachedInfo?: CachedAppInfo
 }
@@ -642,16 +335,17 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+export function showReusedDevValues({organization, app, remoteApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
   if (sniffForJson()) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
+  const updateURLsValue = app.configuration.build?.automatically_update_urls_on_dev
+  if (updateURLsValue !== undefined) updateURLs = updateURLsValue ? 'Yes' : 'No'
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
-    appName: selectedApp.title,
+    appName: remoteApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
     configFile: cachedInfo.configFile,

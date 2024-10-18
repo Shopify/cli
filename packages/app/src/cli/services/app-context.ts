@@ -98,14 +98,15 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  await logMetadata(remoteApp)
+  await logMetadata(remoteApp, forceRelink)
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
-async function logMetadata(app: {organizationId: string; apiKey: string}) {
+async function logMetadata(app: {organizationId: string; apiKey: string}, resetUsed: boolean) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(app.organizationId),
     api_key: app.apiKey,
+    cmd_app_reset_used: resetUsed,
   }))
 }
