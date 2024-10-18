@@ -6,10 +6,9 @@ import {OrganizationStore} from '../models/organization.js'
 /**
  * Input options for the `storeContext` function.
  *
- * @param app - The local app, used to get the dev store url from the toml configuration.
- * @param organization - The organization to get the store from.
- * @param developerPlatformClient - The developer platform client to use to fetch the store.
- * @param storeFqdn - The store FQDN, optional, when explicitly provided it has preference over anything else.
+ * @param appContextResult - The result of the app context function.
+ * @param forceReselectStore - Whether to force reselecting the store.
+ * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
@@ -32,8 +31,10 @@ export async function storeContext({
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
 
-  // An explicit storeFqdn has preference over anything else.
+  // If forceReselectStore is true, ignore the cached storeFqdn in the app configuration.
   const cachedStoreInToml = forceReselectStore ? undefined : app.configuration.build?.dev_store_url
+
+  // An explicit storeFqdn has preference over anything else.
   const storeFqdnToUse = storeFqdn || cachedStoreInToml
   if (storeFqdnToUse) {
     selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
