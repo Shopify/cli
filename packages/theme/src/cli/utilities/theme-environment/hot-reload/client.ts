@@ -67,7 +67,10 @@ function hotReloadScript() {
       // The `href` property prepends the host to the pathname. Use attributes instead.
       // Note: when a .liquid asset is requested but not found in SFR, it will be rendered as
       // `.../assets/file.css?1234` instead of `.../assets/file.css?v=1234`. Ensure we target both.
-      element.setAttribute('href', element.getAttribute('href')!.replace(/(\?|&)(?:v=)?\d+$/, `$1v=${Date.now()}`))
+      element.setAttribute(
+        'href',
+        (element.getAttribute('href') ?? '').replace(/(\?|&)(?:v=)?\d+$/, `$1v=${Date.now()}`),
+      )
     }
   }
 
