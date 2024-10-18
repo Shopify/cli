@@ -6,10 +6,9 @@ import {OrganizationStore} from '../models/organization.js'
 /**
  * Input options for the `storeContext` function.
  *
- * @param app - The local app, used to get the dev store url from the toml configuration.
- * @param organization - The organization to get the store from.
- * @param developerPlatformClient - The developer platform client to use to fetch the store.
- * @param storeFqdn - The store FQDN, optional, when explicitly provided it has preference over anything else.
+ * @param appContextResult - The result of the app context function.
+ * @param forceReselectStore - Whether to force reselecting the store.
+ * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
