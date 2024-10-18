@@ -142,7 +142,8 @@ export function createRuntimeMetadataContainer<
 
           // The top of the stack is the total time for all nested timers
           const wallClockDuration = Math.max(end - start, 0)
-          const childDurations = durationStack.pop() as number
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const childDurations = durationStack.pop()!
           const duration = Math.max(wallClockDuration - childDurations, 0)
 
           // If this is the topmost timer, the stack will be empty.

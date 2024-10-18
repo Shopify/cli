@@ -91,7 +91,7 @@ describe('ConcurrentOutput', () => {
 
     // Then
     const logColumns = renderInstance.lastFrame()!.split('│')
-    expect(logColumns?.length).toBe(3)
+    expect(logColumns.length).toBe(3)
     expect(logColumns[2]?.trim()).toEqual(output)
   })
 
@@ -119,7 +119,7 @@ describe('ConcurrentOutput', () => {
 
     // Then
     const logColumns = renderInstance.lastFrame()!.split('│')
-    expect(logColumns?.length).toBe(3)
+    expect(logColumns.length).toBe(3)
     expect(logColumns[2]?.trim()).toEqual(output)
   })
 
@@ -154,7 +154,7 @@ describe('ConcurrentOutput', () => {
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
-    expect(logColumns?.length).toBe(3)
+    expect(logColumns.length).toBe(3)
     expect(logColumns[1]?.trim()).toEqual(extensionName)
   })
 
@@ -193,10 +193,10 @@ describe('ConcurrentOutput', () => {
 
     // Then
     const logLines = unstyled(renderInstance.lastFrame()!).split('\n').filter(Boolean)
-    expect(logLines?.length).toBe(2)
+    expect(logLines.length).toBe(2)
     logLines.forEach((line) => {
       const logColumns = line.split('│')
-      expect(logColumns?.length).toBe(3)
+      expect(logColumns.length).toBe(3)
       // Including spacing
       expect(logColumns[1]?.length).toBe(columnSize + 2)
     })
@@ -224,7 +224,7 @@ describe('ConcurrentOutput', () => {
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
-    expect(logColumns?.length).toBe(3)
+    expect(logColumns.length).toBe(3)
     // 4 is largest prefix, plus spacing
     expect(logColumns[1]?.length).toBe(4 + 2)
   })
@@ -249,7 +249,7 @@ describe('ConcurrentOutput', () => {
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
-    expect(logColumns?.length).toBe(3)
+    expect(logColumns.length).toBe(3)
     // 25 is largest column allowed, plus spacing
     expect(logColumns[1]?.length).toBe(25 + 2)
   })

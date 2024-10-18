@@ -129,11 +129,11 @@ function equivalentTopic(passedTopic: string, availableTopics: string[]): string
 export function deliveryMethodForAddress(address: string | undefined): string | undefined {
   if (!address) return undefined
 
-  if (PROTOCOL.PUBSUB.test(address)) {
+  if (address.startsWith('pubsub:')) {
     return DELIVERY_METHOD.PUBSUB
   }
 
-  if (PROTOCOL.EVENTBRIDGE.test(address)) {
+  if (address.startsWith('arn:aws:events:')) {
     return DELIVERY_METHOD.EVENTBRIDGE
   }
 

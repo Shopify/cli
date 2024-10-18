@@ -77,7 +77,7 @@ async function init(options: InitOptions) {
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
     await mkdir(templateDownloadDir)
-    const tasks: Task<unknown>[] = [
+    const tasks: Task[] = [
       {
         title: `Downloading template from ${repoUrl}`,
         task: async () => {
@@ -229,7 +229,7 @@ async function init(options: InitOptions) {
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
       [
         'For an overview of commands, run',
-        {command: `${formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
+        {command: formatPackageManagerCommand(packageManager, 'shopify app', '--help')},
       ],
     ],
   })

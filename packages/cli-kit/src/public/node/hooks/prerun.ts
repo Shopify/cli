@@ -51,7 +51,7 @@ function parseNormalCommand(id: string, aliases: string[]): CommandContent {
  * @returns Command content with the name of the command or undefined otherwise
  */
 function parseCreateCommand(pluginAlias?: string): CommandContent | undefined {
-  if (!pluginAlias || !pluginAlias.startsWith('@shopify/create-')) {
+  if (!pluginAlias?.startsWith('@shopify/create-')) {
     return undefined
   }
 

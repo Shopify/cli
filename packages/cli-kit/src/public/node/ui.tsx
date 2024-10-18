@@ -448,9 +448,7 @@ export async function renderAutocompletePrompt<T>(
       const lowerTerm = term.toLowerCase()
       return Promise.resolve({
         data: props.choices.filter((item) => {
-          return (
-            item.label.toLowerCase().includes(lowerTerm) || (item.group && item.group.toLowerCase().includes(lowerTerm))
-          )
+          return item.label.toLowerCase().includes(lowerTerm) || item.group?.toLowerCase().includes(lowerTerm)
         }),
       })
     },
@@ -528,7 +526,9 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
       ...renderOptions,
       exitOnCtrlC: false,
     })
-      .then(() => resetRecordedSleep())
+      .then(() => {
+        resetRecordedSleep()
+      })
       .catch(reject)
   })
 }

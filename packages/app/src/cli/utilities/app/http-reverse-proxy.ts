@@ -120,7 +120,7 @@ function getProxyServerWebsocketUpgradeListener(
 function getProxyServerRequestListener(
   rules: {[key: string]: string},
   proxy: Server,
-): http.RequestListener<typeof http.IncomingMessage, typeof http.ServerResponse> | undefined {
+): http.RequestListener | undefined {
   return function (req, res) {
     const target = match(rules, req)
     if (target) {

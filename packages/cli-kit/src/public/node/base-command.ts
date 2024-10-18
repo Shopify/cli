@@ -265,7 +265,7 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
       noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
       if (typeof value === 'boolean') {
-        if (value === true) {
+        if (value) {
           args.push(`--${label}`)
         } else {
           throw new AbortError(
