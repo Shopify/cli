@@ -1,11 +1,12 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
 import {
   AppConfigurationInterface,
-  AppLinkedInterface,
+  AppInterface,
   CurrentAppConfiguration,
   isCurrentAppSchema,
 } from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
@@ -242,7 +243,7 @@ interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
-  localApp: AppLinkedInterface
+  localApp?: AppInterface
   apiKey: string
 }
 
@@ -257,14 +258,18 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.redirectUrlWhitelist,
     )
 
-    const localConfiguration = options.localApp.configuration
-    localConfiguration.build = {
-      ...localConfiguration.build,
-      automatically_update_urls_on_dev: shouldUpdateURLs,
+    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
+      const localConfiguration = options.localApp.configuration
+      localConfiguration.build = {
+        ...localConfiguration.build,
+        automatically_update_urls_on_dev: shouldUpdateURLs,
+      }
+      const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
+      const path = options.localApp.configuration.path
+      await patchAppConfigurationFile({path, patch, schema: options.localApp.configSchema})
+    } else {
+      setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }
-    const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
-    const path = options.localApp.configuration.path
-    await patchAppConfigurationFile({path, patch, schema: options.localApp.configSchema})
   }
   return shouldUpdateURLs
 }
