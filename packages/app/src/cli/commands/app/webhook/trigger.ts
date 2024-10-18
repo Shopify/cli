@@ -3,6 +3,7 @@ import {webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -107,7 +108,14 @@ export default class WebhookTrigger extends AppCommand {
       })
     }
 
-    const result = await webhookTriggerService(usedFlags)
-    return {app: result.app}
+    const appContextResult = await linkedAppContext({
+      directory: flags.path,
+      clientId: flags['client-id'],
+      forceRelink: false,
+      userProvidedConfigName: flags.config,
+    })
+
+    await webhookTriggerService(usedFlags)
+    return {app: appContextResult.app}
   }
 }
