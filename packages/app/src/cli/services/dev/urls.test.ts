@@ -10,11 +10,11 @@ import {
 import {
   DEFAULT_CONFIG,
   testApp,
+  testAppLinked,
   testAppWithConfig,
   testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {setCachedAppInfo} from '../local-storage.js'
 import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -216,6 +216,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       appDirectory: '/path',
       newApp: true,
       apiKey: 'api-key',
+      localApp: testAppLinked({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}}),
     }
 
     // When
@@ -223,38 +224,6 @@ describe('shouldOrPromptUpdateURLs', () => {
 
     // Then
     expect(got).toEqual(true)
-  })
-
-  test('returns true if the cached value is true (always)', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-      cachedUpdateURLs: true,
-      apiKey: 'api-key',
-    }
-
-    // When
-    const got = await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(got).toEqual(true)
-  })
-
-  test('returns false if the cached value is false (never)', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-      cachedUpdateURLs: false,
-      apiKey: 'api-key',
-    }
-
-    // When
-    const got = await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(got).toEqual(false)
   })
 
   test('returns true when the user selects yes', async () => {
@@ -263,6 +232,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
+      localApp: testAppLinked({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}}),
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -279,6 +249,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
+      localApp: testAppLinked({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}}),
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
@@ -289,32 +260,13 @@ describe('shouldOrPromptUpdateURLs', () => {
     expect(got).toEqual(false)
   })
 
-  test('saves the response for the next time', async () => {
+  test('does not update config file if current config client does not match remote', async () => {
     // Given
     const options = {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
-    }
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-
-    // When
-    await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
-      directory: '/path',
-      updateURLs: true,
-    })
-  })
-
-  test('does not update config file or cache if current config client does not match remote', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-      apiKey: 'api-key',
-      localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}, 'current'),
+      localApp: testAppLinked({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}),
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -323,13 +275,12 @@ describe('shouldOrPromptUpdateURLs', () => {
 
     // Then
     expect(result).toBe(true)
-    expect(setCachedAppInfo).not.toHaveBeenCalled()
     expect(patchAppConfigurationFile).not.toHaveBeenCalled()
   })
 
   test('updates the config file if current config client matches remote', async () => {
     // Given
-    const localApp = testApp({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}}, 'current')
+    const localApp = testAppLinked({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}})
     const options = {
       currentURLs,
       appDirectory: '/path',
@@ -343,7 +294,6 @@ describe('shouldOrPromptUpdateURLs', () => {
 
     // Then
     expect(result).toBe(true)
-    expect(setCachedAppInfo).not.toHaveBeenCalled()
     expect(patchAppConfigurationFile).toHaveBeenCalledWith(
       expect.objectContaining({
         path: localApp.configuration.path,
@@ -439,7 +389,6 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
-    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -457,7 +406,6 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -477,7 +425,6 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -497,7 +444,6 @@ describe('generateFrontendURL', () => {
       frontendPort: 1234,
       usingLocalhost: false,
     })
-    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -518,7 +464,6 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
