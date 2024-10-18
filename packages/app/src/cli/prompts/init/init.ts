@@ -40,6 +40,7 @@ export const templates = {
       options: {
         javascript: {branch: 'javascript', label: 'JavaScript'},
         typescript: {branch: 'main', label: 'TypeScript'},
+        custom: {branch: 'cdarne/no-webhooks', label: 'Custom'},
       },
     },
   } as Template,
