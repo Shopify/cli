@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/use-unknown-in-catch-callback-variable */
+/* eslint-disable @typescript-eslint/no-confusing-void-expression */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
@@ -125,7 +129,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const file = files.get(fileKey)!
 
       if (file.checksum !== previousChecksum) {
@@ -183,12 +186,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     // Optimistically delete the file from the local file system.
     files.delete(fileKey)
     unsyncedFileKeys.add(fileKey)
-
-    // Emit 'unlink' event immediately for non-liquid assets
-    const isLiquidAsset = fileKey.startsWith('assets/') && extname(fileKey) === '.liquid'
-    if (!isLiquidAsset) {
-      emitEvent('unlink', {fileKey})
-    }
 
     const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
