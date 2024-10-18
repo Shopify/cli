@@ -18,7 +18,6 @@ export interface PatchTomlOptions {
  * @param path - The path to the app/extension configuration file.
  * @param patch - The patch to apply to the app/extension configuration file.
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
- * @param includeAppDefaultComments - Include the default comments at the top of the app config file. Only relevant for app config files.
  */
 export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
   const tomlContents = await readFile(path)
