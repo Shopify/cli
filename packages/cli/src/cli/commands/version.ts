@@ -6,5 +6,8 @@ export default class Version extends Command {
 
   async run(): Promise<void> {
     await versionService()
+
+    // await exec('node', ['script.js'], {background: true})
+    console.log('done!')
   }
 }

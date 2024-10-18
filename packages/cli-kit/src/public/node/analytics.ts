@@ -4,6 +4,8 @@ import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
 
+import {writeFileSync} from './fs.js'
+import {sleep} from './system.js'
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -25,6 +27,14 @@ interface ReportAnalyticsEventOptions {
   config: Interfaces.Config
   errorMessage?: string
   exitMode: CommandExitMode
+}
+
+export async function saveTime(): Promise<void> {
+  console.log('saving time...')
+  await sleep(5)
+  const timestamp = new Date().toLocaleString()
+  writeFileSync('./tmp.txt', timestamp)
+  console.log('saved!')
 }
 
 /**
@@ -193,3 +203,6 @@ function sanitizePayload<T>(payload: T): T {
   const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
   return JSON.parse(sanitizedPayloadString)
 }
+
+console.log('holaaaa')
+console.log(process.argv)

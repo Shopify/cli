@@ -3,12 +3,14 @@ import {reportAnalyticsEvent} from '../analytics.js'
 import {outputDebug} from '../../../public/node/output.js'
 import BaseCommand from '../base-command.js'
 import * as metadata from '../../../public/node/metadata.js'
+import {exec} from '../system.js'
 import {Command, Hook} from '@oclif/core'
 
 // This hook is called after each successful command run. More info: https://oclif.io/docs/hooks
 export const hook: Hook.Postrun = async ({config, Command}) => {
   await detectStopCommand(Command as unknown as typeof Command)
   await reportAnalyticsEvent({config, exitMode: 'ok'})
+  await exec('../analytics.js', [JSON.stringify(config)], {background: false})
   deprecationsHook(Command)
 
   const command = Command.id.replace(/:/g, ' ')
@@ -28,7 +30,6 @@ async function detectStopCommand(commandClass: Command.Class | typeof BaseComman
       const {commandStartOptions} = metadata.getAllSensitiveMetadata()
       await metadata.addSensitiveMetadata(() => ({
         commandStartOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           ...commandStartOptions!,
           startTime: currentTime,
           startCommand: stopCommand,
