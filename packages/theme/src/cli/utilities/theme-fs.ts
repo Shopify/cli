@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable @typescript-eslint/use-unknown-in-catch-callback-variable */
 /* eslint-disable @typescript-eslint/no-confusing-void-expression */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
@@ -129,7 +128,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(async () => {
-      const file = files.get(fileKey)!
+      const file = files.get(fileKey)
+
+      if (!file) return ''
 
       if (file.checksum !== previousChecksum) {
         // Sync only if the file has changed
