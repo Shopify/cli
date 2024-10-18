@@ -125,14 +125,19 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const file = files.get(fileKey)!
+      const file = files.get(fileKey)
+
+      if (!file) {
+        return ''
+      }
 
       if (file.checksum !== previousChecksum) {
         // Sync only if the file has changed
         unsyncedFileKeys.add(fileKey)
       }
 
+      // file.value has a fallback value of '', so we want to ignore this eslint rule
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return file.value || file.attachment || ''
     })
 
