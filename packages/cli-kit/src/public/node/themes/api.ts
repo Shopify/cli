@@ -51,7 +51,7 @@ export async function deleteThemeAsset(id: number, key: Key, session: AdminSessi
   const response = await request('DELETE', `/themes/${id}/assets`, session, undefined, {
     'asset[key]': key,
   })
-  return Boolean(response.json.message)
+  return response.status === 200
 }
 
 export async function bulkUploadThemeAssets(
