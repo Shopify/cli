@@ -16,6 +16,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class Init extends AppCommand {
   static summary?: string | undefined = 'Create a new app project'
@@ -167,6 +168,7 @@ async function selectAppOrNewAppName(
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)
 
     const fullSelectedApp = await developerPlatformClient.appFromId(app)
-    return {result: 'existing', app: fullSelectedApp!}
+    if (!fullSelectedApp) throw new AbortError(`App with id ${app.id} not found`)
+    return {result: 'existing', app: fullSelectedApp}
   }
 }
