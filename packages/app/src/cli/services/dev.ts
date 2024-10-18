@@ -24,6 +24,7 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
+import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -31,6 +32,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -48,6 +50,7 @@ export interface DevOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   organization: Organization
+  specifications: RemoteAwareExtensionSpecification[]
   developerPlatformClient: DeveloperPlatformClient
   store: OrganizationStore
   directory: string
@@ -75,7 +78,7 @@ export async function dev(commandOptions: DevOptions) {
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
-  const {app, remoteApp, developerPlatformClient, store} = commandOptions
+  const {app, remoteApp, developerPlatformClient, store, specifications} = commandOptions
 
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
@@ -83,6 +86,14 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
+
+  const remoteConfiguration = await fetchAppRemoteConfiguration(
+    remoteApp,
+    developerPlatformClient,
+    specifications,
+    remoteApp.flags,
+  )
+  remoteApp.configuration = remoteConfiguration
 
   showReusedDevValues({
     appName: remoteApp.title,
