@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-confusing-void-expression */
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/use-unknown-in-catch-callback-variable */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
@@ -55,7 +59,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
-    ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
+    ? `${joinPath('templates', currentRoute.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
   const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
 
@@ -97,7 +101,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     if (isAsset(fileKey)) {
       if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        onSync(() => triggerHotReload(fileKey.replace(extension, ''), ctx))
+        onSync(() => {
+          triggerHotReload(fileKey.replace(extension, ''), ctx)
+        })
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)
@@ -110,7 +116,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       })
     } else {
       // Unknown files outside of assets. Wait for sync and reload:
-      onSync(() => triggerHotReload(fileKey, ctx))
+      onSync(() => {
+        triggerHotReload(fileKey, ctx)
+      })
     }
   }
 
@@ -167,7 +175,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
         eventStream.push(JSON.stringify(event)).catch((error: Error) => {
-          renderWarning({headline: 'Failed to send HotReload event.', body: error?.stack})
+          renderWarning({headline: 'Failed to send HotReload event.', body: error.stack})
         })
       })
 
@@ -266,7 +274,8 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 function triggerHotReload(key: string, ctx: DevServerContext) {
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
-    return emitHotReloadEvent({type: 'full', key})
+    emitHotReloadEvent({type: 'full', key})
+    return
   }
 
   const [type] = key.split('/')
