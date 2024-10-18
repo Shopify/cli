@@ -1,7 +1,7 @@
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths: ['packages/*/src/**', 'packages/cli-kit/assets/cli-ruby/**']
+    paths: ['packages/*/src/**']
 name: Changelog Reminder
 jobs:
   remind:
@@ -14,5 +14,5 @@ jobs:
         with:
           changelogRegex: \.changeset
           message: |
-            We detected some changes at either packages/*/src or packages/cli-kit/assets/cli-ruby/** and there are no updates in the .changeset.
+            We detected some changes at packages/*/src and there are no updates in the .changeset.
             If the changes are user-facing, run "pnpm changeset add" to track your changes and include them in the next release CHANGELOG.
