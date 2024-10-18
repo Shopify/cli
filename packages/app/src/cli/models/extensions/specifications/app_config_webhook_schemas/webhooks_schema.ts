@@ -23,5 +23,5 @@ const WebhooksConfigSchema = zod.object({
 export type SingleWebhookSubscriptionType = zod.infer<typeof SingleWebhookSubscriptionSchema>
 
 export const WebhooksSchema = zod.object({
-  webhooks: WebhooksConfigSchema.superRefine(webhookValidator),
+  webhooks: WebhooksConfigSchema.superRefine(webhookValidator).optional(),
 })
