@@ -63,19 +63,45 @@ const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, r
               {appLog instanceof FunctionRunLog && (
                 <>
                   <Text>{appLog.logs}</Text>
+                  {appLog.inputQueryVariablesMetafieldKey && appLog.inputQueryVariablesMetafieldNamespace && (
+                    <Box flexDirection="column" marginTop={1}>
+                      <Text bold>Input Query Variables:</Text>
+                      <Box flexDirection="row" marginLeft={1} marginTop={1}>
+                        <Text dimColor>Namespace:</Text>
+                        <Text> {appLog.inputQueryVariablesMetafieldNamespace}</Text>
+                      </Box>
+                      <Box flexDirection="row" marginLeft={1}>
+                        <Text dimColor>Key:</Text>
+                        <Text> {appLog.inputQueryVariablesMetafieldKey}</Text>
+                      </Box>
+                      <Box marginLeft={1} marginTop={1}>
+                        <Text>
+                          {prettyPrintJsonIfPossible(appLog.inputQueryVariablesMetafieldValue) || (
+                            <Text color="red">Metafield is not set</Text>
+                          )}
+                        </Text>
+                      </Box>
+                    </Box>
+                  )}
                   {appLog.input && (
-                    <>
-                      <Text>Input ({appLog.inputBytes} bytes): </Text>
-                      <Text>{prettyPrintJsonIfPossible(appLog.input)}</Text>
-                    </>
+                    <Box flexDirection="column" marginTop={1}>
+                      <Text bold>
+                        Input <Text dimColor>({appLog.inputBytes} bytes):</Text>
+                      </Text>
+                      <Box marginLeft={1} marginTop={1}>
+                        <Text>{prettyPrintJsonIfPossible(appLog.input)}</Text>
+                      </Box>
+                    </Box>
                   )}
                   {appLog.output && (
-                    <>
-                      <Text>
-                        {'\n'}Output ({appLog.outputBytes} bytes):
+                    <Box flexDirection="column" marginTop={1}>
+                      <Text bold>
+                        Output <Text dimColor>({appLog.outputBytes} bytes):</Text>
                       </Text>
-                      <Text>{prettyPrintJsonIfPossible(appLog.output)}</Text>
-                    </>
+                      <Box marginLeft={1} marginTop={1}>
+                        <Text>{prettyPrintJsonIfPossible(appLog.output)}</Text>
+                      </Box>
+                    </Box>
                   )}
                 </>
               )}
