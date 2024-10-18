@@ -1,5 +1,5 @@
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
@@ -12,8 +12,6 @@ export function applyIgnoreFilters<T extends {key: string}>(
   const shopifyIgnore = options.ignoreFromFile ?? []
   const ignoreOptions = options.ignore ?? []
   const onlyOptions = options.only ?? []
-
-  raiseWarningForNonExplicitGlobPatterns([...shopifyIgnore, ...ignoreOptions, ...onlyOptions])
 
   return files
     .filter(filterBy(shopifyIgnore, '.shopifyignore'))
@@ -71,20 +69,6 @@ function matchGlob(key: string, pattern: string) {
   }
 
   return false
-}
-
-export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
-  const allPatterns = new Set(patterns)
-  allPatterns.forEach((pattern) => {
-    if (shouldReplaceGlobPattern(pattern)) {
-      outputWarn(
-        `Warning: The pattern '${pattern}' does not include subdirectories. To maintain backwards compatibility, we have modified your pattern to ${pattern.replace(
-          templatesRegex,
-          'templates/**/*$1',
-        )} to explicitly include subdirectories.`,
-      )
-    }
-  })
 }
 
 function shouldReplaceGlobPattern(pattern: string): boolean {

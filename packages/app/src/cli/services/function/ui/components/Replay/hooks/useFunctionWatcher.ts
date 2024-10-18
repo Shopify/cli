@@ -84,6 +84,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
         },
         onReloadAndBuildError: async (error) => {
           if (error instanceof FatalError) {
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             setError(`Fatal error while reloading and building extension: ${error.formattedMessage || error.message}`)
           } else {
             setError(`Error while reloading and building extension: ${error.message}`)

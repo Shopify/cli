@@ -143,6 +143,7 @@ export function setupGraphiQLServer({
       throw err
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const apiVersion = apiVersions.sort().reverse()[0]!
 
     const query = req.query.query ? decodeURIComponent(req.query.query as string).replace(/\n/g, '\\n') : undefined

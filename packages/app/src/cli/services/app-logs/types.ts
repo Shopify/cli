@@ -119,7 +119,7 @@ export class NetworkAccessRequestExecutedLog {
   connectTimeMs: number | null
   writeReadTimeMs: number | null
   httpRequest: unknown
-  httpResponse: unknown | null
+  httpResponse: unknown
   error: string | null
 
   constructor({
@@ -134,7 +134,7 @@ export class NetworkAccessRequestExecutedLog {
     connectTimeMs: number | null
     writeReadTimeMs: number | null
     httpRequest: unknown
-    httpResponse: unknown | null
+    httpResponse: unknown
     error: string | null
   }) {
     this.attempt = attempt

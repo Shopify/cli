@@ -175,6 +175,7 @@ export async function resolveFramework(rootDirectory: string): Promise<string> {
 function matchDetector(detector: FrameworkDetectionPattern, fwConfigFiles: {[key: string]: string | undefined} = {}) {
   if (!fwConfigFiles[detector.path]) return false
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return !detector.matchContent || new RegExp(detector.matchContent).test(fwConfigFiles[detector.path]!)
 }
 
