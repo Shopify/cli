@@ -10,6 +10,8 @@ import {
   buildThemeAsset,
 } from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
@@ -109,6 +111,7 @@ async function request<T>(
   session: AdminSession,
   params?: T,
   searchParams: {[name: string]: string} = {},
+  retries = 1,
 ): Promise<RestResponse> {
   const response = await throttler.throttle(() => restRequest(method, path, session, params, searchParams))
 
@@ -129,13 +132,33 @@ async function request<T>(
     case status === 403:
       return handleForbiddenError(response, session)
     case status === 401:
-      throw new AbortError(`[${status}] API request unauthorized error`)
+      // Retry 401 errors to be resilient to authentication errors.
+      return handleRetriableError({
+        path,
+        retries,
+        retry: () => {
+          return request(method, path, session, params, searchParams, retries + 1)
+        },
+        fail: () => {
+          throw new AbortError(`[${status}] API request unauthorized error`)
+        },
+      })
     case status === 422:
       throw new AbortError(`[${status}] API request unprocessable content: ${errors(response)}`)
     case status >= 400 && status <= 499:
       throw new AbortError(`[${status}] API request client error`)
     case status >= 500 && status <= 599:
-      throw new AbortError(`[${status}] API request server error`)
+      // Retry 500-family of errors as that may solve the issue (especially in 503 errors)
+      return handleRetriableError({
+        path,
+        retries,
+        retry: () => {
+          return request(method, path, session, params, searchParams, retries + 1)
+        },
+        fail: () => {
+          throw new AbortError(`[${status}] API request server error`)
+        },
+      })
     default:
       throw new AbortError(`[${status}] API request unexpected error`)
   }
@@ -175,4 +198,22 @@ function errorMessage(response: RestResponse): string {
   }
 
   return ''
+}
+
+interface RetriableErrorOptions {
+  path: string
+  retries: number
+  retry: () => Promise<RestResponse>
+  fail: () => never
+}
+
+async function handleRetriableError({path, retries, retry, fail}: RetriableErrorOptions): Promise<RestResponse> {
+  if (retries >= 3) {
+    fail()
+  }
+
+  outputDebug(`[${retries}] Retrying '${path}' request...`)
+
+  await sleep(0.2)
+  return retry()
 }
