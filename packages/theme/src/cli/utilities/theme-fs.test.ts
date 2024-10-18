@@ -293,7 +293,7 @@ describe('theme-fs', () => {
 
       // When
       const content = await readThemeFile(root, key)
-      const contentJson = JSON.parse(content?.toString() || '')
+      const contentJson = JSON.parse(content?.toString() ?? '')
 
       // Then
       expect(contentJson).toEqual({
