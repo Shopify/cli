@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable @typescript-eslint/use-unknown-in-catch-callback-variable */
+/* eslint-disable @typescript-eslint/no-confusing-void-expression */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
@@ -9,7 +13,7 @@ import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -125,7 +129,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const file = files.get(fileKey)!
 
       if (file.checksum !== previousChecksum) {
@@ -192,7 +195,14 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
       .then(async (success) => {
-        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+        if (!success) {
+          if (await fetchThemeAsset(Number(themeId), fileKey, adminSession)) {
+            throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+          } else {
+            return false
+          }
+        }
+
         unsyncedFileKeys.delete(fileKey)
         outputSyncResult('delete', fileKey)
         return true
