@@ -10,8 +10,6 @@ env:
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
   PNPM_VERSION: '8.15.7'
-  RUBY_VERSION: '3.1.2'
-  BUNDLER_VERSION: '2.3.18'
 
 jobs:
   type-diff:
