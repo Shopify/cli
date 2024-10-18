@@ -60,6 +60,9 @@
           "**/bin/*.js"
         ],
         "parser": "espree",
+        "extends": [
+          "plugin:@typescript-eslint/disable-type-checked"
+        ],
         "rules": {
           "@typescript-eslint/naming-convention": "off",
           "@typescript-eslint/no-floating-promises": "off",
@@ -77,21 +80,7 @@
               ]
             }
           ],
-          "@typescript-eslint/consistent-type-assertions": "off",
-          "@typescript-eslint/no-base-to-string": "off",
-          "@typescript-eslint/no-duplicate-type-constituents": "off",
-          "@typescript-eslint/no-implied-eval": "off",
-          "@typescript-eslint/no-redundant-type-constituents": "off",
-          "@typescript-eslint/restrict-plus-operands": "off",
-          "@typescript-eslint/no-unsafe-argument": "off",
-          "@typescript-eslint/no-unsafe-assignment": "off",
-          "@typescript-eslint/no-unsafe-call": "off",
-          "@typescript-eslint/no-unsafe-member-access": "off",
-          "@typescript-eslint/no-unsafe-return": "off",
-          "@typescript-eslint/no-unsafe-enum-comparison": "off",
-          "@typescript-eslint/no-unsafe-nullish-coalescing": "off",
-          "@typescript-eslint/no-unsafe-optional-chain": "off",
-          "@typescript-eslint/unbound-method": "off"
+          "@typescript-eslint/consistent-type-assertions": "off"
         }
       },
       {
@@ -126,6 +115,7 @@
     "@shopify/theme": "3.68.0",
     "@shopify/cli-hydrogen": "8.4.6",
     "@types/node": "18.19.3",
+    "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1",

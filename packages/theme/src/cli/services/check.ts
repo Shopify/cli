@@ -115,15 +115,9 @@ export function formatOffenses(offenses: Offense[]) {
     const codeSnippet = getSnippet(absolutePath, start.line, end.line)
 
     // Ensure enough padding between offenses
-    const offensePadding = `${index === offenses.length - 1 ? '' : '\n\n'}`
+    const offensePadding = index === offenses.length - 1 ? '' : '\n\n'
 
-    return [
-      severityToToken(severity),
-      {bold: `${check}`},
-      {subdued: `\n${message}`},
-      `\n\n${codeSnippet}`,
-      offensePadding,
-    ]
+    return [severityToToken(severity), {bold: check}, {subdued: `\n${message}`}, `\n\n${codeSnippet}`, offensePadding]
   })
 
   return offenseBodies.flat()

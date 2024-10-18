@@ -184,7 +184,7 @@ describe('setupDevServer', () => {
     const dispatchEvent = async (
       url: string,
       headers?: {[key: string]: string},
-    ): Promise<{res: ServerResponse<IncomingMessage>; status: number; body: string | Buffer}> => {
+    ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node
       let body: string

@@ -8,7 +8,7 @@ import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
+import {build as esBuild, BuildResult} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -192,10 +192,7 @@ export async function installJavy(app: AppInterface) {
 }
 
 export interface JavyBuilder {
-  bundle(
-    fun: ExtensionInstance<FunctionConfigType>,
-    options: JSFunctionBuildOptions,
-  ): Promise<BuildResult<BuildOptions>>
+  bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<BuildResult>
   compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<void>
 }
 

@@ -36,7 +36,7 @@ enum TasksState {
 async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
   task.retryCount = 0
   task.errors = []
-  const retry = task?.retry && task?.retry > 0 ? task.retry + 1 : 1
+  const retry = task.retry && task.retry > 0 ? task.retry + 1 : 1
 
   for (let retries = 1; retries <= retry; retries++) {
     try {

@@ -100,7 +100,7 @@ Please check the module path for ${target}`.value,
       )
     }
 
-    if (uniqueTargets.indexOf(target) === -1) {
+    if (!uniqueTargets.includes(target)) {
       uniqueTargets.push(target)
     } else {
       duplicateTargets.push(target)
