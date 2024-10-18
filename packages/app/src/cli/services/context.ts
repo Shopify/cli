@@ -16,6 +16,7 @@ import {
   isCurrentAppSchema,
   CurrentAppConfiguration,
   AppCreationDefaultOptions,
+  AppLinkedInterface,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -175,14 +176,14 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     })
   }
 
-  if (!options.customInfoBox) {
-    showReusedDevValues({
-      appName: selectedApp.title,
-      selectedStore,
-      cachedInfo,
-      organization,
-    })
-  }
+  // if (!options.customInfoBox) {
+  //   showReusedDevValues({
+  //     appName: selectedApp.title,
+  //     selectedStore,
+  //     cachedInfo,
+  //     organization,
+  //   })
+  // }
 
   const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo, organization.businessName)
   await logMetadataForLoadedContext({
@@ -631,7 +632,8 @@ export async function selectOrg(): Promise<Organization> {
 
 interface ReusedValuesOptions {
   organization: Organization
-  appName: string
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   selectedStore: OrganizationStore
   cachedInfo?: CachedAppInfo
 }
@@ -639,16 +641,17 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-export function showReusedDevValues({organization, appName, selectedStore, cachedInfo}: ReusedValuesOptions) {
+export function showReusedDevValues({organization, app, remoteApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
   if (sniffForJson()) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
+  const updateURLsValue = app.configuration.build?.automatically_update_urls_on_dev
+  if (updateURLsValue !== undefined) updateURLs = updateURLsValue ? 'Yes' : 'No'
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
-    appName,
+    appName: remoteApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
     configFile: cachedInfo.configFile,

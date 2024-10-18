@@ -26,7 +26,7 @@ import {canEnablePreviewMode} from './extensions/common.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface, AppLinkedInterface} from '../models/app/app.js'
+import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
@@ -96,7 +96,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   remoteApp.configuration = remoteConfiguration
 
   showReusedDevValues({
-    appName: remoteApp.title,
+    app,
+    remoteApp,
     selectedStore: store,
     cachedInfo: getCachedAppInfo(commandOptions.directory),
     organization: commandOptions.organization,
@@ -254,7 +255,7 @@ async function handleUpdatingOfPartnerUrls(
     proxyUrl: string
     currentUrls: PartnersURLs
   },
-  localApp: AppInterface,
+  localApp: AppLinkedInterface,
   cachedUpdateURLs: boolean | undefined,
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string | undefined},
   apiKey: string,

@@ -1,12 +1,11 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
 import {
   AppConfigurationInterface,
-  AppInterface,
+  AppLinkedInterface,
   CurrentAppConfiguration,
   isCurrentAppSchema,
 } from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -246,7 +245,7 @@ interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
-  localApp?: AppInterface
+  localApp: AppLinkedInterface
   apiKey: string
 }
 
@@ -261,17 +260,13 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.redirectUrlWhitelist,
     )
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
-      const localConfiguration = options.localApp.configuration
-      localConfiguration.build = {
-        ...localConfiguration.build,
-        automatically_update_urls_on_dev: shouldUpdateURLs,
-      }
-
-      await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
-    } else {
-      setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
+    const localConfiguration = options.localApp.configuration
+    localConfiguration.build = {
+      ...localConfiguration.build,
+      automatically_update_urls_on_dev: shouldUpdateURLs,
     }
+
+    await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
   }
   return shouldUpdateURLs
 }
