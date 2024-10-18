@@ -33,7 +33,6 @@ vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
 vi.mock('./trigger-local-webhook.js')
 vi.mock('./find-app-info.js')
-vi.mock('../app/fetch-app-from-config-or-select.js')
 vi.mock('../../models/app/loader.js')
 
 const emptyJson = '{}'

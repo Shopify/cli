@@ -11,7 +11,6 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 vi.mock('../../prompts/webhook/trigger.js')
 vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
-vi.mock('../app/fetch-app-from-config-or-select.js')
 
 const DELIVERY_METHOD = 'http'
 const SECRET = 'A_SECRET'
