@@ -33,7 +33,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     }),
     nodelete: Flags.boolean({
       char: 'n',
-      description: 'Runs the pull command without deleting local files.',
+      description: `Prevent deleting local files that don't exist remotely.`,
       env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({

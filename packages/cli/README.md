@@ -2076,7 +2076,7 @@ FLAGS
   -d, --development          Pull theme files from your remote development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Pull theme files from your remote live theme.
-  -n, --nodelete             Runs the pull command without deleting local files.
+  -n, --nodelete             Prevent deleting local files that don't exist remotely.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
                              (example.myshopify.com, https://example.myshopify.com).
@@ -2110,7 +2110,7 @@ FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -j, --json                 Output JSON instead of a UI.
   -l, --live                 Push theme files from your remote live theme.
-  -n, --nodelete             Runs the push command without deleting local files.
+  -n, --nodelete             Prevent deleting remote files that don't exist locally.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
   -p, --publish              Publish as the live theme after uploading.
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
