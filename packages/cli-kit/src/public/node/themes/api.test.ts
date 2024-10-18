@@ -261,7 +261,7 @@ describe('deleteThemeAsset', () => {
     expect(output).toBe(true)
   })
 
-  test('returns empty object when attemping to delete an nonexistent asset', async () => {
+  test('returns true when attemping to delete an nonexistent asset', async () => {
     // Given
     const id = 123
     const key = 'snippets/product-variant-picker.liquid'
@@ -277,7 +277,7 @@ describe('deleteThemeAsset', () => {
 
     // Then
     expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
-    expect(output).toBe(false)
+    expect(output).toBe(true)
   })
 })
 
