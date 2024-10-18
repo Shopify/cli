@@ -1,5 +1,5 @@
 import {fetchStore} from './dev/fetch.js'
-import {selectStore} from './dev/select-store.js'
+import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
 
@@ -38,6 +38,8 @@ export async function storeContext({
   const storeFqdnToUse = storeFqdn || cachedStoreInToml
   if (storeFqdnToUse) {
     selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
+    // never automatically convert a store provided via the command line
+    await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
     const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
