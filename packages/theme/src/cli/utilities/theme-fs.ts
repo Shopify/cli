@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
@@ -138,6 +137,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.add(fileKey)
       }
 
+      // file.value has a default of '' when empty, so we need to use || so we evaluate the fallback
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return file.value || file.attachment || ''
     })
 
