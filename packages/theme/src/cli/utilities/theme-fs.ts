@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/use-unknown-in-catch-callback-variable */
-/* eslint-disable @typescript-eslint/no-confusing-void-expression */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
@@ -103,13 +99,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       .then(() => {
         switch (eventName) {
           case 'add':
-          case 'change':
-            return handleFileUpdate(eventName, themeId, adminSession, fileKey)
-          case 'unlink':
-            return handleFileDelete(themeId, adminSession, fileKey)
+          case 'change': {
+            handleFileUpdate(eventName, themeId, adminSession, fileKey)
+            return
+          }
+          case 'unlink': {
+            handleFileDelete(themeId, adminSession, fileKey)
+          }
         }
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         outputWarn(`Error handling file event for ${fileKey}: ${error}`)
       })
   }
@@ -129,13 +128,17 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     const previousChecksum = files.get(fileKey)?.checksum
 
     const contentPromise = read(fileKey).then(async () => {
-      const file = files.get(fileKey)!
+      const file = files.get(fileKey)
+
+      if (!file) return ''
 
       if (file.checksum !== previousChecksum) {
         // Sync only if the file has changed
         unsyncedFileKeys.add(fileKey)
       }
 
+      // file.value has a default of '' when empty, so we need to use || so we evaluate the fallback
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return file.value || file.attachment || ''
     })
 
@@ -158,6 +161,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         return true
       })
+      // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
       .catch(createSyncingCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
@@ -207,8 +211,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         outputSyncResult('delete', fileKey)
         return true
       })
-      .catch((error) => {
-        createSyncingCatchError(fileKey, 'delete')(error)
+      .catch((error: unknown) => {
+        createSyncingCatchError(fileKey, 'delete')(error as Error)
         return false
       })
 
