@@ -1,14 +1,11 @@
 import {pullEnv} from './pull.js'
 import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
-import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
-
-vi.mock('../fetch-app-from-config-or-select')
 
 describe('env pull', () => {
   let app: AppLinkedInterface
@@ -17,7 +14,6 @@ describe('env pull', () => {
   beforeEach(async () => {
     app = mockApp() as AppLinkedInterface
     remoteApp = testOrganizationApp()
-    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(testOrganizationApp())
   })
 
   test('creates a new environment file when there is no .env', async () => {

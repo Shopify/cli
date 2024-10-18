@@ -1,8 +1,7 @@
 import {importExtensions} from './import-extensions.js'
-import {fetchAppAndIdentifiers} from './context.js'
 import {getExtensions} from './fetch-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
-import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
+import {testAppLinked, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -63,16 +62,16 @@ describe('import-extensions', () => {
 
   test('importing an extension creates a folder and toml file', async () => {
     // Given
-    vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB, marketingActivityExtension])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {
-      const app = testApp({directory: tmpDir})
+      const app = testAppLinked({directory: tmpDir})
 
       await importExtensions({
         app,
+        remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
         buildTomlObject,
@@ -97,16 +96,16 @@ describe('import-extensions', () => {
 
   test('selecting All imports all extensions', async () => {
     // Given
-    vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB, marketingActivityExtension])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {
-      const app = testApp({directory: tmpDir})
+      const app = testAppLinked({directory: tmpDir})
 
       await importExtensions({
         app,
+        remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
         buildTomlObject,
@@ -131,14 +130,14 @@ describe('import-extensions', () => {
 
   test('Show message if there are not extensions to migrate', async () => {
     // Given
-    vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getExtensions).mockResolvedValue([])
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {
-      const app = testApp({directory: tmpDir})
+      const app = testAppLinked({directory: tmpDir})
       await importExtensions({
         app,
+        remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
         buildTomlObject,

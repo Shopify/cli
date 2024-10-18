@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchOrgFromId, fetchOrganizations} from './dev/fetch.js'
+import {fetchOrganizations} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
-import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo} from './local-storage.js'
-import link from './app/config/link.js'
+import {CachedAppInfo} from './local-storage.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
-import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
+import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppInterface,
   isCurrentAppSchema,
@@ -15,7 +14,7 @@ import {
   AppCreationDefaultOptions,
   AppLinkedInterface,
 } from '../models/app/app.js'
-import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
+import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
@@ -31,8 +30,7 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
-import {basename, joinPath, sniffForJson} from '@shopify/cli-kit/node/path'
-import {glob} from '@shopify/cli-kit/node/fs'
+import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -72,37 +70,6 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
   })
   if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: options.apiKey}], resetHelpMessage)
   return app
-}
-
-/**
- * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
- * @param app - The local app object
- * @param developerPlatformClient - The client to access the platform API
- * @returns
- * OrganizationApp if a cached value is valid.
- * undefined if there is no cached value or the user doesn't want to use it.
- */
-async function fetchDevAppAndPrompt(
-  app: AppInterface,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<OrganizationApp | undefined> {
-  const cachedInfo = getCachedAppInfo(app.directory)
-  const devAppId = cachedInfo?.appId
-  if (!devAppId) return undefined
-
-  const remoteApp = await appFromId({
-    apiKey: devAppId,
-    id: cachedInfo.appGid,
-    organizationId: cachedInfo.orgId ?? '0',
-    developerPlatformClient,
-  })
-  if (!remoteApp) return undefined
-
-  const org = await fetchOrgFromId(remoteApp.organizationId, remoteApp.developerPlatformClient!)
-
-  showDevValues(org.businessName ?? 'unknown', remoteApp.title)
-  const reuse = await reuseDevConfigPrompt()
-  return reuse ? remoteApp : undefined
 }
 
 export async function ensureThemeExtensionDevContext(
@@ -242,77 +209,6 @@ export async function fetchOrCreateOrganizationApp(
   return remoteApp
 }
 
-export async function fetchAppAndIdentifiers(
-  options: {
-    app: AppInterface
-    reset: boolean
-    apiKey?: string
-  },
-  initialDeveloperPlatformClient: DeveloperPlatformClient,
-  reuseFromDev = true,
-  enableLinkingPrompt = false,
-): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
-  let developerPlatformClient = initialDeveloperPlatformClient
-  const app = options.app
-  let reuseDevCache = reuseFromDev
-  let envIdentifiers = getAppIdentifiers({app}, developerPlatformClient)
-  let remoteApp: OrganizationApp | undefined
-
-  const configuration = await linkIfNecessary(app.directory, options.reset, enableLinkingPrompt)
-  if (configuration !== undefined) {
-    envIdentifiers = {app: undefined, extensions: {}}
-    reuseDevCache = false
-    app.configuration = configuration
-    developerPlatformClient = selectDeveloperPlatformClient({configuration})
-  }
-
-  if (isCurrentAppSchema(app.configuration)) {
-    const apiKey = options.apiKey ?? app.configuration.client_id
-    const appGid = app.configuration.app_id
-    remoteApp = await appFromId({
-      id: appGid,
-      apiKey,
-      organizationId: app.configuration.organization_id,
-      developerPlatformClient,
-    })
-  } else if (options.apiKey) {
-    remoteApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
-  } else if (envIdentifiers.app) {
-    remoteApp = await appFromId({apiKey: envIdentifiers.app, developerPlatformClient})
-  } else if (reuseDevCache) {
-    remoteApp = await fetchDevAppAndPrompt(app, developerPlatformClient)
-  }
-
-  if (!remoteApp) {
-    remoteApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
-  }
-
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
-
-  return [remoteApp, envIdentifiers]
-}
-
-async function linkIfNecessary(
-  directory: string,
-  reset: boolean,
-  enableLinkingPrompt: boolean,
-): Promise<CurrentAppConfiguration | undefined> {
-  const previousCachedInfo = getCachedAppInfo(directory)
-
-  if (reset) clearCachedAppInfo(directory)
-
-  const firstTimeSetup = previousCachedInfo === undefined
-  const usingConfigWithNoTomls: boolean =
-    previousCachedInfo?.configFile !== undefined && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
-  const unlinked = firstTimeSetup || usingConfigWithNoTomls
-  const performAppLink = reset || (enableLinkingPrompt && unlinked)
-
-  if (performAppLink) {
-    const {configuration} = await link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
-    return configuration
-  }
-}
-
 /**
  * Fetch all orgs the user belongs to and show a prompt to select one of them
  * @param developerPlatformClient - The client to access the platform API
@@ -404,23 +300,6 @@ export function renderCurrentlyUsedConfigInfo({
   renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
     body,
-  })
-}
-
-/**
- * Message shown to the user in case we are reusing a previous configuration
- * @param org - Organization name
- * @param app - App name
- * @param store - Store domain
- */
-function showDevValues(org: string, appName: string) {
-  renderInfo({
-    headline: 'Your configs for dev were:',
-    body: {
-      list: {
-        items: [`Org:        ${org}`, `App:        ${appName}`],
-      },
-    },
   })
 }
 
