@@ -27,8 +27,8 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
@@ -110,6 +110,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isESBuildExtension() {
     return this.features.includes('esbuild')
+  }
+
+  get isSourceMapGeneratingExtension() {
+    return this.features.includes('generates_source_maps')
   }
 
   get isAppConfigExtension() {
@@ -217,6 +221,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   buildValidation(): Promise<void> {
     if (!this.specification.buildValidation) return Promise.resolve()
     return this.specification.buildValidation(this)
+  }
+
+  async keepBuiltSourcemapsLocally(bundleDirectory: string): Promise<void> {
+    if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
+
+    const pathsToMove = await glob(`**/${this.handle}*.map`, {
+      cwd: bundleDirectory,
+      absolute: true,
+      followSymbolicLinks: false,
+    })
+
+    await Promise.all(
+      pathsToMove.map(async (filePath) => {
+        const outputPath = joinPath(this.directory, 'dist', basename(filePath))
+        await moveFile(filePath, outputPath, {overwrite: true})
+      }),
+    )
   }
 
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
