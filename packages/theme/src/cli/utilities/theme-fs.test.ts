@@ -505,6 +505,7 @@ describe('theme-fs', () => {
         attachment: '',
         stats: {size: 100, mtime: 100},
       })
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
