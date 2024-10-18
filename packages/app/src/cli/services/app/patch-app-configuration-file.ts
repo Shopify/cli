@@ -8,7 +8,6 @@ export interface PatchTomlOptions {
   path: string
   patch: {[key: string]: unknown}
   schema?: zod.AnyZodObject
-  includeAppDefaultComments?: boolean
 }
 
 /**
@@ -21,7 +20,7 @@ export interface PatchTomlOptions {
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  * @param includeAppDefaultComments - Include the default comments at the top of the app config file. Only relevant for app config files.
  */
-export async function patchTomlConfigurationFile({path, patch, schema, includeAppDefaultComments}: PatchTomlOptions) {
+export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
   const updatedConfig = deepMergeObjects(configuration, patch)
@@ -32,7 +31,6 @@ export async function patchTomlConfigurationFile({path, patch, schema, includeAp
   const validatedConfig = validSchema.partial().parse(updatedConfig)
   let encodedString = encodeToml(validatedConfig)
 
-  // Only for app config files
-  if (includeAppDefaultComments) encodedString = addDefaultCommentsToToml(encodedString)
+  encodedString = addDefaultCommentsToToml(encodedString)
   await writeFile(path, encodedString)
 }

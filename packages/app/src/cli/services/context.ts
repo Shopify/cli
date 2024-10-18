@@ -8,7 +8,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {patchTomlConfigurationFile} from './app/patch-app-configuration-file.js'
+import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -167,7 +167,7 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
     localApp.configuration = newConfiguration
 
     const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
-    await patchTomlConfigurationFile({
+    await patchAppConfigurationFile({
       path: configuration.path,
       patch,
       schema: localApp.configSchema,
@@ -406,7 +406,7 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   }
 
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchTomlConfigurationFile({
+  await patchAppConfigurationFile({
     path: localConfiguration.path,
     patch,
     schema: options.localApp.configSchema,

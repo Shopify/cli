@@ -9,7 +9,7 @@ import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_ur
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {patchTomlConfigurationFile} from '../app/patch-app-configuration-file.js'
+import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -219,7 +219,7 @@ export async function updateURLs(
         : {}),
     }
 
-    await patchTomlConfigurationFile({
+    await patchAppConfigurationFile({
       path: localApp.configuration.path,
       patch,
       schema: localApp.configSchema,
@@ -270,7 +270,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
       const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
-      await patchTomlConfigurationFile({
+      await patchAppConfigurationFile({
         path: options.localApp.configuration.path,
         patch,
         schema: options.localApp.configSchema,

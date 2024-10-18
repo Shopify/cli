@@ -15,7 +15,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {patchTomlConfigurationFile} from '../app/patch-app-configuration-file.js'
+import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -91,19 +91,21 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
-      appWithConfig.configuration.path,
-      {
-        application_url: 'https://example.com',
-        auth: {
-          redirect_urls: [
-            'https://example.com/auth/callback',
-            'https://example.com/auth/shopify/callback',
-            'https://example.com/api/auth/callback',
-          ],
+    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: appWithConfig.configuration.path,
+        patch: {
+          application_url: 'https://example.com',
+          auth: {
+            redirect_urls: [
+              'https://example.com/auth/callback',
+              'https://example.com/auth/shopify/callback',
+              'https://example.com/api/auth/callback',
+            ],
+          },
         },
-      },
-      expect.any(Object),
+        schema: expect.any(Object),
+      }),
     )
   })
 
@@ -177,24 +179,26 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
-      appWithConfig.configuration.path,
-      {
-        application_url: 'https://example.com',
-        auth: {
-          redirect_urls: [
-            'https://example.com/auth/callback',
-            'https://example.com/auth/shopify/callback',
-            'https://example.com/api/auth/callback',
-          ],
+    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: appWithConfig.configuration.path,
+        patch: {
+          application_url: 'https://example.com',
+          auth: {
+            redirect_urls: [
+              'https://example.com/auth/callback',
+              'https://example.com/auth/shopify/callback',
+              'https://example.com/api/auth/callback',
+            ],
+          },
+          app_proxy: {
+            url: 'https://example.com',
+            subpath: 'subpath',
+            prefix: 'prefix',
+          },
         },
-        app_proxy: {
-          url: 'https://example.com',
-          subpath: 'subpath',
-          prefix: 'prefix',
-        },
-      },
-      expect.any(Object),
+        schema: expect.any(Object),
+      }),
     )
   })
 })
@@ -320,7 +324,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchTomlConfigurationFile).not.toHaveBeenCalled()
+    expect(patchAppConfigurationFile).not.toHaveBeenCalled()
   })
 
   test('updates the config file if current config client matches remote', async () => {
@@ -340,12 +344,14 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchTomlConfigurationFile).toHaveBeenCalledWith(
-      localApp.configuration.path,
-      {
-        build: {automatically_update_urls_on_dev: true},
-      },
-      expect.any(Object),
+    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: localApp.configuration.path,
+        patch: {
+          build: {automatically_update_urls_on_dev: true},
+        },
+        schema: expect.any(Object),
+      }),
     )
   })
 })

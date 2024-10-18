@@ -242,7 +242,7 @@ describe('ensureDevContext', async () => {
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(buildDeveloperPlatformClient())
       vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       const patchAppConfigurationFileSpy = vi
-        .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+        .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
         .mockResolvedValue()
       vi.mocked(loadAppConfiguration).mockReset()
       const {schema: configSchema} = await buildVersionedAppSchema()
@@ -848,7 +848,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
 
     const patchAppConfigurationFileSpy = vi
-      .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
@@ -861,11 +861,13 @@ describe('ensureDeployContext', () => {
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
     expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      {
-        build: {include_config_on_deploy: true},
-      },
-      expect.any(Object),
+      expect.objectContaining({
+        path: app.configuration.path,
+        patch: {
+          build: {include_config_on_deploy: true},
+        },
+        schema: expect.any(Object),
+      }),
     )
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
@@ -899,7 +901,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const patchAppConfigurationFileSpy = vi
-      .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     // When
@@ -908,11 +910,13 @@ describe('ensureDeployContext', () => {
     // Then
     expect(renderConfirmationPrompt).toHaveBeenCalled()
     expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      {
-        build: {include_config_on_deploy: false},
-      },
-      expect.any(Object),
+      expect.objectContaining({
+        path: app.configuration.path,
+        patch: {
+          build: {include_config_on_deploy: false},
+        },
+        schema: expect.any(Object),
+      }),
     )
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
@@ -949,7 +953,7 @@ describe('ensureDeployContext', () => {
     // vi.mocked(selectDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const patchAppConfigurationFileSpy = vi
-      .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
@@ -996,7 +1000,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const patchAppConfigurationFileSpy = vi
-      .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
@@ -1011,11 +1015,13 @@ describe('ensureDeployContext', () => {
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
     expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      {
-        build: {include_config_on_deploy: false},
-      },
-      expect.any(Object),
+      expect.objectContaining({
+        path: app.configuration.path,
+        patch: {
+          build: {include_config_on_deploy: false},
+        },
+        schema: expect.any(Object),
+      }),
     )
 
     expect(renderInfo).toHaveBeenCalledWith({
@@ -1050,7 +1056,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const patchAppConfigurationFileSpy = vi
-      .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     const options = deployOptions(app, false, true)
@@ -1094,7 +1100,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     const patchAppConfigurationFileSpy = vi
-      .spyOn(patchAppConfigurationFile, 'patchTomlConfigurationFile')
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
       .mockResolvedValue()
 
     // When

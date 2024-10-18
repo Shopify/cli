@@ -1,4 +1,4 @@
-import {patchTomlConfigurationFile} from './patch-app-configuration-file.js'
+import {patchAppConfigurationFile} from './patch-app-configuration-file.js'
 import {getAppVersionedSchema} from '../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -44,7 +44,7 @@ describe('patchAppConfigurationFile', () => {
         },
       }
 
-      await patchTomlConfigurationFile({path: configPath, patch, schema, includeAppDefaultComments: true})
+      await patchAppConfigurationFile({path: configPath, patch, schema})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -81,7 +81,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchTomlConfigurationFile({path: configPath, patch, schema, includeAppDefaultComments: true})
+      await patchAppConfigurationFile({path: configPath, patch, schema})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -121,7 +121,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchTomlConfigurationFile({path: configPath, patch, schema, includeAppDefaultComments: true})
+      await patchAppConfigurationFile({path: configPath, patch, schema})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -160,10 +160,13 @@ random_toml_field = "random_value"
       )
       const patch = {name: 123}
 
-      await patchTomlConfigurationFile({path: configPath, patch, schema: undefined, includeAppDefaultComments: false})
+      await patchAppConfigurationFile({path: configPath, patch, schema: undefined})
 
       const updatedTomlFile = await readFile(configPath)
-      expect(updatedTomlFile).toEqual(`random_toml_field = "random_value"
+      expect(updatedTomlFile)
+        .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+random_toml_field = "random_value"
 name = 123
 `)
     })
