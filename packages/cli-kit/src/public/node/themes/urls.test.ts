@@ -1,4 +1,4 @@
-import {codeEditorUrl, storeAdminUrl, themeEditorUrl, themePreviewUrl} from './urls.js'
+import {codeEditorUrl, storeAdminUrl, storePasswordPage, themeEditorUrl, themePreviewUrl} from './urls.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect} from 'vitest'
 
@@ -39,6 +39,14 @@ describe('storeAdminUrl', () => {
     const url = storeAdminUrl(session)
 
     expect(url).toEqual('https://my-shop.myshopify.com/admin')
+  })
+})
+
+describe('storePasswordPage', () => {
+  test('returns the store password page', async () => {
+    const url = storePasswordPage(session.storeFqdn)
+
+    expect(url).toEqual('https://my-shop.myshopify.com/admin/online_store/preferences')
   })
 })
 

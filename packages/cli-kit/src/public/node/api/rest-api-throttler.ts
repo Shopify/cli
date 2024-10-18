@@ -33,7 +33,9 @@ export async function throttle<T>(request: () => T): Promise<T> {
      */
     const throttleByHeader = () => {
       if (isReachingApiLimit()) {
-        setTimeout(() => throttleByParallelCounter(performRequest), DELAY_FOR_TOO_CLOSE_TO_API_LIMIT)
+        setTimeout(() => {
+          throttleByParallelCounter(performRequest)
+        }, DELAY_FOR_TOO_CLOSE_TO_API_LIMIT)
       } else {
         throttleByParallelCounter(performRequest)
       }
@@ -50,7 +52,9 @@ export async function throttle<T>(request: () => T): Promise<T> {
      */
     const throttleByParallelCounter = (command: () => void) => {
       if (hasTooManyRequests()) {
-        setTimeout(() => throttleByParallelCounter(throttleByHeader), DELAY_FOR_TOO_MANY_PARALLEL_REQUESTS)
+        setTimeout(() => {
+          throttleByParallelCounter(throttleByHeader)
+        }, DELAY_FOR_TOO_MANY_PARALLEL_REQUESTS)
       } else {
         command()
       }
@@ -166,7 +170,9 @@ export async function delayAwareRetry(
 ): Promise<RestResponse> {
   const retryDelay = extractRetryDelayMsFromResponse(response)
   return new Promise((resolve, _reject) => {
-    setTimeout(() => resolve(operation()), retryDelay)
+    setTimeout(() => {
+      resolve(operation())
+    }, retryDelay)
   })
 }
 

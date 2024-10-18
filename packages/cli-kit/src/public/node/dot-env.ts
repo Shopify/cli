@@ -134,7 +134,7 @@ export function createDotEnvFileLine(key: string, value?: string, quote?: string
   if (quote) {
     return `${key}=${quote}${value}${quote}`
   }
-  if (value && value.includes('\n')) {
+  if (value?.includes('\n')) {
     const quoteCharacter = ['"', "'", '`'].find((char) => !value.includes(char))
 
     if (!quoteCharacter) {

@@ -320,7 +320,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
 
   files.forEach((file) => {
     const fileKey = file.key
-    if (THEME_PARTITION_REGEX.liquidRegex.test(fileKey)) {
+    if (fileKey.endsWith('.liquid')) {
       if (THEME_PARTITION_REGEX.sectionLiquidRegex.test(fileKey)) {
         sectionLiquidFiles.push(file)
       } else {

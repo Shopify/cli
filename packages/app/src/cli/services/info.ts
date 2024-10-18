@@ -181,7 +181,7 @@ class AppInfo {
         if (relevantExtensions[0]) {
           body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
-            body += `${outputFormatter(extension)}`
+            body += outputFormatter(extension)
           })
         }
       })
@@ -193,7 +193,7 @@ class AppInfo {
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
       supportedExtensions.forEach((extension) => {
-        body += `${this.invalidExtensionSubSection(extension)}`
+        body += this.invalidExtensionSubSection(extension)
       })
     }
     return [title, body]
@@ -268,6 +268,6 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    return [title, `${linesToColumns(lines)}`]
+    return [title, linesToColumns(lines)]
   }
 }

@@ -417,7 +417,7 @@ export function outputWhereAppropriate(
     } else {
       logger(message, logLevel)
     }
-    if (!options?.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
+    if (!options.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }
 }
 

@@ -112,13 +112,13 @@ export async function prompts() {
     [
       'first theme',
       {
-        subdued: `(#${1})`,
+        subdued: `(#1)`,
       },
     ],
     [
       'second theme',
       {
-        subdued: `(#${2})`,
+        subdued: `(#2)`,
       },
     ],
   ]
