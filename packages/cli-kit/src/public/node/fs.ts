@@ -89,7 +89,7 @@ export type ReadOptions =
   | undefined
   | {flag?: string | undefined}
   | {
-      encoding: BufferEncoding | string
+      encoding: string
       flag?: string | undefined
     }
 export async function readFile(path: string, options?: ReadOptions): Promise<string>

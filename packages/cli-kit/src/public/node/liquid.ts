@@ -1,4 +1,15 @@
-import {mkdir, readFile, copyFile, chmod, isDirectory, writeFile, fileHasExecutablePermissions, glob} from './fs.js'
+import {
+  mkdir,
+  readFile,
+  copyFile,
+  chmod,
+  isDirectory,
+  writeFile,
+  fileHasExecutablePermissions,
+  glob,
+  fileExists,
+  matchGlob,
+} from './fs.js'
 import {joinPath, dirname, relativePath} from './path.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {Liquid} from 'liquidjs'
@@ -29,6 +40,12 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
   outputDebug(outputContent`Copying template from directory ${outputToken.path(from)} to ${outputToken.path(to)}`)
   const templateFiles: string[] = await glob(joinPath(from, '**/*'), {dot: true})
 
+  const bypassPaths = joinPath(from, '.cli-liquid-bypass')
+  let bypassPatterns: string[] = []
+  if (await fileExists(bypassPaths)) {
+    bypassPatterns = (await readFile(bypassPaths)).split('\n').filter((line) => line.trim().length > 0)
+  }
+
   const sortedTemplateFiles = templateFiles
     .map((path) => path.split('/'))
     .sort((lhs, rhs) => (lhs.length < rhs.length ? 1 : -1))
@@ -36,9 +53,16 @@ export async function recursiveLiquidTemplateCopy(from: string, to: string, data
   await Promise.all(
     sortedTemplateFiles.map(async (templateItemPath) => {
       const outputPath = await renderLiquidTemplate(joinPath(to, relativePath(from, templateItemPath)), data)
+      const bypass = bypassPatterns.some((pattern) => {
+        const path = relativePath(from, templateItemPath)
+        const cleanPattern = pattern.replace(/^\.\//, '')
+
+        return matchGlob(path, cleanPattern) || path.startsWith(cleanPattern)
+      })
+
       if (await isDirectory(templateItemPath)) {
         await mkdir(outputPath)
-      } else if (templateItemPath.endsWith('.liquid')) {
+      } else if (templateItemPath.endsWith('.liquid') && !bypass) {
         await mkdir(dirname(outputPath))
         const content = await readFile(templateItemPath)
         const contentOutput = await renderLiquidTemplate(content, data)

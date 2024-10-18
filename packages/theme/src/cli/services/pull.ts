@@ -6,6 +6,7 @@ import {showEmbeddedCLIWarning} from '../utilities/embedded-cli-warning.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
+import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
@@ -95,6 +96,7 @@ export interface PullFlags {
  * @param flags - All flags are optional.
  */
 export async function pull(flags: PullFlags): Promise<void> {
+  configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
   showEmbeddedCLIWarning()
 
   const store = ensureThemeStore({store: flags.store})

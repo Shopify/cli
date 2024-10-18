@@ -80,6 +80,7 @@ function matchByUID(
 
   local.forEach((localSource) => {
     const possibleMatch = remote.find((remoteSource) => remoteSource.uid === localSource.uid)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uid!
   })
 
@@ -121,6 +122,7 @@ function migrateLegacyFunctions(
 
       const remoteId = pendingMigrations[localId]
       if (remoteId) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete pendingMigrations[functionExtension.localIdentifier]
         migrated[functionExtension.localIdentifier] = remoteId
       }

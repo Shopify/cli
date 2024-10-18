@@ -9,12 +9,14 @@ export function sources(app: AppInterface) {
     const tokens = source.split('.')
 
     if (tokens.length >= 2) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const sourceNamespace = tokens[0]!
 
       if (!sourcesByNamespace.has(sourceNamespace)) {
         sourcesByNamespace.set(sourceNamespace, [])
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       sourcesByNamespace.set(sourceNamespace, [...sourcesByNamespace.get(sourceNamespace)!, source])
     }
   })

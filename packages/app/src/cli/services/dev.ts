@@ -64,7 +64,6 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
-  devPreview?: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -453,6 +452,7 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   }
   await Promise.all([
     ...allPorts.map(async (port) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const portAvailable = await checkPortAvailability(port!)
       if (!portAvailable) {
         throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)

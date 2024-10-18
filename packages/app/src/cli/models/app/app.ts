@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
@@ -225,6 +226,8 @@ export interface AppConfigurationInterface<
   specifications: TModuleSpec[]
   remoteFlags: Flag[]
 }
+
+export type AppLinkedInterface = AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
 
 export interface AppInterface<
   TConfig extends AppConfiguration = AppConfiguration,

@@ -27,6 +27,7 @@ export async function selectRemoteSourcePrompt(
     message: `How would you like to deploy your "${localSource.handle}"?`,
     choices: remoteOptions,
   })
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return remoteSourcesOfSameType.find((remote) => remote.uuid === uuid)!
 }
 

@@ -500,7 +500,6 @@ describe('Dev', () => {
     // Given
     vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce({
       developmentStorePreviewEnabled: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
     let backendPromiseResolve: () => void

@@ -37,11 +37,11 @@ export interface AppVersionsQuerySchema {
       nodes: {
         createdAt: string
         createdBy?: {
-          displayName?: string
+          displayName?: string | null
         }
-        message?: string
+        message?: string | null
         status: string
-        versionTag: string
+        versionTag?: string | null
       }[]
       pageInfo: {
         totalResults: number

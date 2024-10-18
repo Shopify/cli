@@ -93,12 +93,11 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
-    const isAsset = fileKey.startsWith('assets/')
 
-    if (isAsset) {
+    if (isAsset(fileKey)) {
       if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        onSync(() => triggerHotReload(fileKey, ctx))
+        onSync(() => triggerHotReload(fileKey.replace(extension, ''), ctx))
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)
@@ -115,12 +114,21 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
     }
   }
 
+  const handleFileUnlink = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
+    const extension = extname(fileKey)
+    if (isAsset(fileKey) && extension === '.liquid') {
+      onSync?.(() => {
+        triggerHotReload(fileKey, ctx)
+      })
+    } else {
+      sectionNamesByFile.delete(fileKey)
+      triggerHotReload(fileKey, ctx)
+    }
+  }
+
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
-    sectionNamesByFile.delete(fileKey)
-    triggerHotReload(fileKey, ctx)
-  })
+  ctx.localThemeFileSystem.addEventListener('unlink', handleFileUnlink)
 
   // Once the initial files are loaded, read all the JSON files so that
   // we gather the existing section names early. This way, when a section
@@ -310,4 +318,8 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
  */
 export function injectHotReloadScript(html: string) {
   return html.replace(/<\/head>/, `${getClientScripts()}</head>`)
+}
+
+function isAsset(key: string) {
+  return key.startsWith('assets/')
 }

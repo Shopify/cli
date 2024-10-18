@@ -1,50 +1,25 @@
-import {fetchOrCreateOrganizationApp} from './context.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {AppInterface} from '../models/app/app.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
 import {TargetSchemaDefinitionQueryVariables} from '../api/graphql/functions/target_schema_definition.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
+import {AppLinkedInterface} from '../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface GenerateSchemaOptions {
-  app: AppInterface
+  app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
-  apiKey?: string
   stdout: boolean
   path: string
-  developerPlatformClient?: DeveloperPlatformClient
-}
-
-export async function ensureConnectedAppFunctionContext(
-  options: Pick<GenerateSchemaOptions, 'developerPlatformClient' | 'app' | 'apiKey'>,
-): Promise<{apiKey: string; developerPlatformClient: DeveloperPlatformClient}> {
-  const {app} = options
-  const developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
-
-  if (!apiKey) {
-    if (!isTerminalInteractive()) {
-      throw new AbortError(
-        outputContent`No Client ID was provided.`,
-        outputContent`Provide a Client ID with the --client-id flag.`,
-      )
-    }
-
-    apiKey = (await fetchOrCreateOrganizationApp(app.creationDefaultOptions())).apiKey
-  }
-  return {apiKey, developerPlatformClient}
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, stdout} = options
-  const {apiKey, developerPlatformClient} = await ensureConnectedAppFunctionContext(options)
+  const {extension, stdout, developerPlatformClient, app} = options
+  const apiKey = app.configuration.client_id
 
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
@@ -53,6 +28,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
         apiKey,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         target: targeting![0]!.target,
         version,
       })

@@ -1,10 +1,12 @@
-import {graphqlRequest, GraphQLVariables} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc, GraphQLResponseOptions, GraphQLVariables} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
 import {fetch} from '../http.js'
-import {ClientError, gql} from 'graphql-request'
+import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
+import {ClientError, Variables} from 'graphql-request'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 /**
  * Executes a GraphQL query against the Admin API.
@@ -22,6 +24,36 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
 }
 
 /**
+ * Executes a GraphQL query against the Admin API. Uses typed documents.
+ *
+ * @param query - GraphQL query to execute.
+ * @param session - Shopify admin session including token and Store FQDN.
+ * @param variables - GraphQL variables to pass to the query.
+ * @param version - API version.
+ * @param responseOptions - Control how API responses will be handled.
+ * @returns The response of the query of generic type <TResult>.
+ */
+export async function adminRequestDoc<TResult, TVariables extends Variables>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  session: AdminSession,
+  variables?: TVariables,
+  version?: string,
+  responseOptions?: GraphQLResponseOptions<TResult>,
+): Promise<TResult> {
+  let apiVersion = version
+  if (!version) {
+    apiVersion = await fetchLatestSupportedApiVersion(session)
+  }
+  const opts = {
+    url: adminUrl(session.storeFqdn, apiVersion),
+    api: 'Admin',
+    token: session.token,
+  }
+  const result = graphqlRequestDoc<TResult, TVariables>({...opts, query, variables, responseOptions})
+  return result
+}
+
+/**
  * GraphQL query to retrieve the latest supported API version.
  *
  * @param session - Shopify admin session including token and Store FQDN.
@@ -29,6 +61,7 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
  */
 async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<string> {
   const apiVersions = await supportedApiVersions(session)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return apiVersions.reverse()[0]!
 }
 
@@ -53,19 +86,9 @@ export async function supportedApiVersions(session: AdminSession): Promise<strin
  * @returns - An array of supported and unsupported API versions.
  */
 async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
-  const url = adminUrl(session.storeFqdn, 'unstable')
-  const query = apiVersionQuery()
   try {
-    const data: ApiVersionResponse = await graphqlRequest({
-      query,
-      api: 'Admin',
-      url,
-      token: session.token,
-      variables: {},
-      responseOptions: {handleErrors: false},
-    })
-
-    return data.publicApiVersions
+    const response = await adminRequestDoc(PublicApiVersions, session, {}, 'unstable', {handleErrors: false})
+    return response.publicApiVersions
   } catch (error) {
     if (error instanceof ClientError && error.response.status === 403) {
       const storeName = session.storeFqdn.replace('.myshopify.com', '')
@@ -96,26 +119,6 @@ export function adminUrl(store: string, version: string | undefined): string {
 interface ApiVersion {
   handle: string
   supported: boolean
-}
-
-interface ApiVersionResponse {
-  publicApiVersions: ApiVersion[]
-}
-
-/**
- * GraphQL query string to retrieve the latest supported API version.
- *
- * @returns - A query string.
- */
-function apiVersionQuery(): string {
-  return gql`
-    query {
-      publicApiVersions {
-        handle
-        supported
-      }
-    }
-  `
 }
 
 /**

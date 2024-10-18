@@ -98,6 +98,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
       throw new AbortError(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
     }
     frontendPort = Number(matches[2])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     frontendUrl = matches[1]!
     return {frontendUrl, frontendPort, usingLocalhost}
   }

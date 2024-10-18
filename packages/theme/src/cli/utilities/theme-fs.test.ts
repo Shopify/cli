@@ -7,16 +7,12 @@ import {
   partitionThemeFiles,
   readThemeFile,
 } from './theme-fs.js'
-import {
-  getPatternsFromShopifyIgnore,
-  applyIgnoreFilters,
-  raiseWarningForNonExplicitGlobPatterns,
-} from './asset-ignore.js'
+import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'events'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
@@ -279,7 +275,6 @@ describe('theme-fs', () => {
       const themeFileSystem = mountThemeFileSystem(root, options)
       await themeFileSystem.ready()
 
-      expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
       expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
       expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
       expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
@@ -510,6 +505,7 @@ describe('theme-fs', () => {
         attachment: '',
         stats: {size: 100, mtime: 100},
       })
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -563,7 +559,10 @@ describe('theme-fs', () => {
 
       // Then
       expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
-      expect(outputDebug).toHaveBeenCalledWith('Failed to delete file "assets/base.css" from remote theme.')
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Failed to delete file "assets/base.css" from remote theme.',
+        body: expect.any(String),
+      })
     })
   })
 

@@ -71,7 +71,7 @@ describe('theme-downloader', () => {
 
     test('downloads missing remote files', async () => {
       // Given
-      const downloadOptions = {nodelete: false, only: ['release'], ignore: ['release/ignoreme']}
+      const downloadOptions = {nodelete: false, only: ['/release/'], ignore: ['release/ignoreme']}
       const fileToDownload = {key: 'release/downloadme', checksum: '1'}
       const files = new Map<string, ThemeAsset>([
         ['release/alreadyexists', {checksum: '2', value: 'content', key: 'release/alreadyexists'}],

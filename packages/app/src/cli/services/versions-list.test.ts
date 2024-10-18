@@ -1,10 +1,10 @@
 import versionList from './versions-list.js'
-import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
-import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
+import {renderCurrentlyUsedConfigInfo} from './context.js'
+import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {Organization} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../models/app/identifiers.js')
@@ -19,6 +19,8 @@ const ORG1: Organization = {
   businessName: 'name of org 1',
 }
 
+const remoteApp = testOrganizationApp({organizationId: ORG1.id, apiKey: 'api-key', title: 'app-title', id: 'app-id'})
+
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     orgFromId: (_orgId: string) => Promise.resolve(ORG1),
@@ -26,50 +28,17 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 describe('versions-list', () => {
-  beforeEach(() => {
-    vi.mocked(ensureVersionsListContext).mockResolvedValue({
-      developerPlatformClient: buildDeveloperPlatformClient(),
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'app-api-key',
-        title: 'app-title',
-        organizationId: ORG1.id,
-        apiSecretKeys: [],
-        grantedScopes: [],
-        flags: [],
-      },
-    })
-    // vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
-  })
-
-  test('ensures there is a valid context to execute `versions list`', async () => {
-    // Given
-    const app = testApp({})
-
-    // When
-    await versionList({
-      app,
-      reset: false,
-      json: false,
-    })
-
-    // Then
-    expect(ensureVersionsListContext).toHaveBeenCalledWith({
-      app,
-      reset: false,
-      json: false,
-    })
-  })
-
   test('show a message when there are no app versions', async () => {
     // Given
-    const app = testApp({})
+    const app = testAppLinked({})
     const outputMock = mockAndCaptureOutput()
 
     // When
     await versionList({
       app,
-      reset: false,
+      remoteApp,
+      organization: ORG1,
+      developerPlatformClient: buildDeveloperPlatformClient(),
       json: false,
     })
 
@@ -79,12 +48,14 @@ describe('versions-list', () => {
 
   test('show currently used config info', async () => {
     // Given
-    const app = testApp({})
+    const app = testAppLinked({})
 
     // When
     await versionList({
       app,
-      reset: false,
+      remoteApp,
+      organization: ORG1,
+      developerPlatformClient: buildDeveloperPlatformClient(),
       json: false,
     })
 
@@ -92,13 +63,13 @@ describe('versions-list', () => {
     expect(renderCurrentlyUsedConfigInfo).toHaveBeenCalledWith({
       org: 'name of org 1',
       appName: 'app-title',
-      configFile: undefined,
+      configFile: 'shopify.app.toml',
     })
   })
 
   test('throw error when there is no app', async () => {
     // Given
-    const app = testApp({})
+    const app = testAppLinked({})
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
       appVersions: (_appId) => Promise.resolve({app: null}),
     })
@@ -106,13 +77,14 @@ describe('versions-list', () => {
     // When
     const output = versionList({
       app,
-      reset: false,
+      remoteApp,
       json: false,
+      organization: ORG1,
       developerPlatformClient,
     })
 
     // Then
-    await expect(output).rejects.toThrow('Invalid API Key: app-api-key')
+    await expect(output).rejects.toThrow('Invalid API Key: api-key')
   })
 
   // asserting the exact format of the table is hard to do consistently across different environments
@@ -120,7 +92,7 @@ describe('versions-list', () => {
 
   test.skipIf(terminalWidth !== undefined)('render table when there are app versions', async () => {
     // Given
-    const app = testApp({})
+    const app = testAppLinked({})
     const mockOutput = mockAndCaptureOutput()
     const appVersionsResult: AppVersionsQuerySchema = {
       app: {
@@ -162,10 +134,10 @@ describe('versions-list', () => {
     // When
     await versionList({
       app,
-      apiKey: 'apiKey',
-      reset: false,
+      remoteApp,
       json: false,
       developerPlatformClient,
+      organization: ORG1,
     })
 
     // Then
@@ -181,7 +153,7 @@ View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id
 
   test('render json when there are app versions', async () => {
     // Given
-    const app = testApp({})
+    const app = testAppLinked({})
 
     const mockOutput = mockAndCaptureOutput()
     const appVersionsResult: AppVersionsQuerySchema = {
@@ -217,10 +189,10 @@ View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id
     // When
     await versionList({
       app,
-      apiKey: 'apiKey',
-      reset: false,
+      remoteApp,
       json: true,
       developerPlatformClient,
+      organization: ORG1,
     })
 
     // Then
