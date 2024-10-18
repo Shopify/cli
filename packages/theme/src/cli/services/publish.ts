@@ -1,6 +1,6 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
-import {publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {themePublish} from '@shopify/cli-kit/node/themes/api'
 import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -39,7 +39,7 @@ export async function publish(adminSession: AdminSession, themeId: string | unde
     if (!accept) return
   }
 
-  await publishTheme(theme.id, adminSession)
+  await themePublish(theme.id, adminSession)
 
   renderSuccess({
     body: [

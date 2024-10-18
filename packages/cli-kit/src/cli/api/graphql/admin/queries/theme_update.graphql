@@ -1,0 +1,13 @@
+mutation themeUpdate($id: ID!, $input: OnlineStoreThemeInput!) {
+  themeUpdate(id: $id, input: $input ) {
+    theme {
+      id
+      name
+      role
+    }
+    userErrors{
+      field
+      message
+    }
+  }
+}
