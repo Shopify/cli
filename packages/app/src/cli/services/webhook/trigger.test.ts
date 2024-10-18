@@ -1,12 +1,15 @@
-import {webhookTriggerService} from './trigger.js'
+import {WebhookTriggerInput, webhookTriggerService} from './trigger.js'
 import {SendSampleWebhookVariables, getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
-import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
-import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {
+  testApp,
+  testAppLinked,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
 import {loadApp} from '../../models/app/loader.js'
-import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
 import {outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
@@ -48,6 +51,12 @@ const successEmptyResponse = {
 }
 const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 const developerPlatformClient = testDeveloperPlatformClient()
+
+const appContextResult = {
+  app: testAppLinked(),
+  remoteApp: testOrganizationApp(),
+  developerPlatformClient,
+}
 
 beforeEach(() => {
   const app = testApp()
@@ -126,13 +135,10 @@ describe('webhookTriggerService', () => {
   test('retrieves the api-key when missing for event-bridge', async () => {
     // Given
     mockLists(aVersion, aTopic)
-    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(testOrganizationApp())
     vi.mocked(getWebhookSample).mockResolvedValue(successEmptyResponse)
 
     // When
     await webhookTriggerService(eventBridgeFlags())
-
-    expect(fetchAppFromConfigOrSelect).toHaveBeenCalled()
   })
 
   test('uses the passed api-key for event-bridge', async () => {
@@ -146,8 +152,6 @@ describe('webhookTriggerService', () => {
 
     // When
     await webhookTriggerService(flags)
-
-    expect(fetchAppFromConfigOrSelect).not.toHaveBeenCalled()
   })
 
   test('notifies about real event-bridge delivery being sent', async () => {
@@ -234,8 +238,9 @@ describe('webhookTriggerService', () => {
     expect(requestTopics).toHaveBeenCalledWith(developerPlatformClient, version)
   }
 
-  function sampleFlags(): WebhookTriggerFlags {
-    const flags: WebhookTriggerFlags = {
+  function sampleFlags(): WebhookTriggerInput {
+    const flags: WebhookTriggerInput = {
+      ...appContextResult,
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'http',
@@ -248,8 +253,9 @@ describe('webhookTriggerService', () => {
     return flags
   }
 
-  function eventBridgeFlags(): WebhookTriggerFlags {
-    const flags: WebhookTriggerFlags = {
+  function eventBridgeFlags(): WebhookTriggerInput {
+    const flags: WebhookTriggerInput = {
+      ...appContextResult,
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'event-bridge',
@@ -262,8 +268,9 @@ describe('webhookTriggerService', () => {
     return flags
   }
 
-  function sampleLocalhostFlags(): WebhookTriggerFlags {
-    const flags: WebhookTriggerFlags = {
+  function sampleLocalhostFlags(): WebhookTriggerInput {
+    const flags: WebhookTriggerInput = {
+      ...appContextResult,
       topic: aTopic,
       apiVersion: aVersion,
       deliveryMethod: 'http',

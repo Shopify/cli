@@ -31,7 +31,10 @@ interface AppCredentials {
  * @param secret - secret flag
  * @returns a pair with client-secret, api-key (possibly empty)
  */
-export async function collectCredentials(input: WebhookTriggerInput, deliveryMethod: string): Promise<AppCredentials> {
+export async function collectCredentials(
+  input: Pick<WebhookTriggerInput, 'clientSecret' | 'clientId' | 'remoteApp' | 'app'>,
+  deliveryMethod: string,
+): Promise<AppCredentials> {
   const {clientSecret: secret, clientId, remoteApp, app} = input
   if (secret && (clientId || deliveryMethod !== DELIVERY_METHOD.EVENTBRIDGE)) {
     const credentials: AppCredentials = {clientSecret: secret, apiKey: clientId}
