@@ -194,7 +194,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       graphiqlKey: flags['graphiql-key'],
     }
 
-    const result = await dev(devOptions)
-    return {app: result.app}
+    await dev(devOptions)
+    return {app: appContextResult.app}
   }
 }
