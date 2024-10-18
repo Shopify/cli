@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/use-unknown-in-catch-callback-variable */
-/* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
@@ -102,13 +100,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       .then(() => {
         switch (eventName) {
           case 'add':
-          case 'change':
-            return handleFileUpdate(eventName, themeId, adminSession, fileKey)
-          case 'unlink':
-            return handleFileDelete(themeId, adminSession, fileKey)
+          case 'change': {
+            handleFileUpdate(eventName, themeId, adminSession, fileKey)
+            return
+          }
+          case 'unlink': {
+            handleFileDelete(themeId, adminSession, fileKey)
+          }
         }
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         outputWarn(`Error handling file event for ${fileKey}: ${error}`)
       })
   }
@@ -159,6 +160,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         return true
       })
+      // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
       .catch(createSyncingCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
@@ -208,8 +210,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         outputSyncResult('delete', fileKey)
         return true
       })
-      .catch((error) => {
-        createSyncingCatchError(fileKey, 'delete')(error)
+      .catch((error: unknown) => {
+        createSyncingCatchError(fileKey, 'delete')(error as Error)
         return false
       })
 
