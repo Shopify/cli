@@ -3073,7 +3073,13 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
+  test('accepts an undefined/empty webhook config', async () => {
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, undefined)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toBeUndefined()
+  })
+
+  async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides?: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
     const expectedFormatted = outputContent`\n${outputToken.errorText(
       'Validation errors',
