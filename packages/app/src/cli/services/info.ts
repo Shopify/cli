@@ -107,9 +107,9 @@ const UNKNOWN_TEXT = outputContent`${outputToken.italic('unknown')}`.value
 const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
 
 class AppInfo {
-  private app: AppLinkedInterface
-  private remoteApp: OrganizationApp
-  private options: InfoOptions
+  private readonly app: AppLinkedInterface
+  private readonly remoteApp: OrganizationApp
+  private readonly options: InfoOptions
 
   constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, options: InfoOptions) {
     this.app = app

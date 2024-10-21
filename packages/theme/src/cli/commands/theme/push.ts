@@ -12,6 +12,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -109,6 +110,11 @@ export default class Push extends ThemeCommand {
       description: 'Use the legacy Ruby implementation for the `shopify theme push` command.',
       env: 'SHOPIFY_FLAG_LEGACY',
     }),
+    'legacy-3.66': Flags.boolean({
+      hidden: true,
+      description: 'Use the legacy Ruby implementation for the `shopify theme push` command.',
+      env: 'SHOPIFY_FLAG_LEGACY_3_66',
+    }),
     force: Flags.boolean({
       hidden: true,
       char: 'f',
@@ -135,7 +141,26 @@ export default class Push extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
-    if (flags.password || flags.legacy) {
+    if (flags.legacy) {
+      renderWarning({
+        headline: ['The', {command: '--legacy'}, 'flag is deprecated.'],
+        body: [
+          'The',
+          {command: '--legacy'},
+          'flag has been deprecated. If this variable is essential to your workflow, please report an issue at',
+          {
+            link: {
+              url: 'https://github.com/Shopify/cli/issues',
+            },
+          },
+          {
+            char: '.',
+          },
+        ],
+      })
+    }
+
+    if (flags['legacy-3.66']) {
       await this.execLegacyPush()
       return
     }

@@ -203,11 +203,11 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
 }
 
 export interface DeveloperPlatformClient {
-  clientName: string
-  webUiName: string
-  supportsAtomicDeployments: boolean
-  requiresOrganization: boolean
-  supportsDevSessions: boolean
+  readonly clientName: string
+  readonly webUiName: string
+  readonly supportsAtomicDeployments: boolean
+  readonly requiresOrganization: boolean
+  readonly supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>

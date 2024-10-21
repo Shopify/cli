@@ -154,13 +154,16 @@ describe('initialize a extension', async () => {
   )
 
   test.each(
-    allUITemplates.reduce((accumulator, specification) => {
-      accumulator.push({extensionTemplate: specification, flavor: 'vanilla-js'})
-      accumulator.push({extensionTemplate: specification, flavor: 'react'})
-      accumulator.push({extensionTemplate: specification, flavor: 'typescript'})
+    allUITemplates.reduce<{extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue}[]>(
+      (accumulator, specification) => {
+        accumulator.push({extensionTemplate: specification, flavor: 'vanilla-js'})
+        accumulator.push({extensionTemplate: specification, flavor: 'react'})
+        accumulator.push({extensionTemplate: specification, flavor: 'typescript'})
 
-      return accumulator
-    }, [] as {extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue}[]),
+        return accumulator
+      },
+      [],
+    ),
   )(
     `doesn't add deps for $specification.identifier extension when flavor is $flavor`,
 
@@ -182,14 +185,16 @@ describe('initialize a extension', async () => {
     },
   )
 
-  const allUITemplatesWithAllFlavors = allUITemplates.reduce((accumulator, specification) => {
+  const allUITemplatesWithAllFlavors = allUITemplates.reduce<
+    {extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue; ext: FileExtension}[]
+  >((accumulator, specification) => {
     accumulator.push({extensionTemplate: specification, flavor: 'vanilla-js', ext: 'js'})
     accumulator.push({extensionTemplate: specification, flavor: 'react', ext: 'jsx'})
     accumulator.push({extensionTemplate: specification, flavor: 'typescript', ext: 'ts'})
     accumulator.push({extensionTemplate: specification, flavor: 'typescript-react', ext: 'tsx'})
 
     return accumulator
-  }, [] as {extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue; ext: FileExtension}[])
+  }, [])
 
   test.each(allUITemplatesWithAllFlavors)(
     'creates $specification.identifier for $flavor with .$ext files',
