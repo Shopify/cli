@@ -278,11 +278,11 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
 let alreadyShownCLIWarning = false
 
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
-  private mode: AppLoaderMode
-  private errors: AppErrors = new AppErrors()
-  private specifications: TModuleSpec[]
-  private remoteFlags: Flag[]
-  private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  private readonly mode: AppLoaderMode
+  private readonly errors: AppErrors = new AppErrors()
+  private readonly specifications: TModuleSpec[]
+  private readonly remoteFlags: Flag[]
+  private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 
   constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'

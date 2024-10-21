@@ -42,7 +42,7 @@ export async function getExtensionsPayloadStoreRawPayload(
 }
 
 export class ExtensionsPayloadStore extends EventEmitter {
-  private options: ExtensionsPayloadStoreOptions
+  private readonly options: ExtensionsPayloadStoreOptions
   private rawPayload: ExtensionsEndpointPayload
 
   constructor(rawPayload: ExtensionsEndpointPayload, options: ExtensionsPayloadStoreOptions) {
