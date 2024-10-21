@@ -9,7 +9,6 @@ import {DeployOptions} from './deploy.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppInterface,
-  isCurrentAppSchema,
   CurrentAppConfiguration,
   AppCreationDefaultOptions,
   AppLinkedInterface,
@@ -156,7 +155,7 @@ async function ensureIncludeConfigOnDeploy({
     org: org.businessName,
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+    configFile: app.configuration.path,
     resetMessage: resetHelpMessage,
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })

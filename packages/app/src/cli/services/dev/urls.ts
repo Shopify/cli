@@ -1,10 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {
-  AppConfigurationInterface,
-  AppInterface,
-  CurrentAppConfiguration,
-  isCurrentAppSchema,
-} from '../../models/app/app.js'
+import {AppLinkedInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
@@ -193,7 +188,7 @@ export async function updateURLs(
   urls: PartnersURLs,
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
-  localApp?: AppConfigurationInterface,
+  localApp?: AppLinkedInterface,
 ): Promise<void> {
   const variables: UpdateURLsVariables = {apiKey, ...urls}
   const result: UpdateURLsSchema = await developerPlatformClient.updateURLs(variables)
@@ -202,7 +197,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
+  if (localApp && localApp.configuration.client_id === apiKey) {
     const patch = {
       application_url: urls.applicationUrl,
       auth: {
@@ -243,13 +238,13 @@ interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
-  localApp?: AppInterface
+  localApp?: AppLinkedInterface
   apiKey: string
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
   if (options.localApp && options.localApp.configuration.client_id !== options.apiKey) return true
-  if (options.newApp || !terminalSupportsPrompting()) return true
+  if (options.newApp ?? !terminalSupportsPrompting()) return true
   let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
 
   if (options.cachedUpdateURLs === undefined) {
@@ -258,7 +253,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.redirectUrlWhitelist,
     )
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
+    if (options.localApp) {
       const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,

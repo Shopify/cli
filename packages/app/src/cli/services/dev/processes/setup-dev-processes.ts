@@ -8,7 +8,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
+import {AppLinkedInterface, WebType, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -46,7 +46,7 @@ interface DevNetworkOptions {
 }
 
 export interface DevConfig {
-  localApp: AppInterface
+  localApp: AppLinkedInterface
   remoteAppUpdated: boolean
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {
     apiSecret?: string | undefined

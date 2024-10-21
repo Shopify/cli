@@ -46,7 +46,7 @@ import {
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphql/subscribe_to_app_logs.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
-import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {AppConfiguration} from '../models/app/app.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {
   ExtensionUpdateDraftMutation,
@@ -131,8 +131,7 @@ function selectDeveloperPlatformClientByOrg(organization: Organization): Develop
 }
 
 function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
-  if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
-    return new AppManagementClient()
+  if (!configuration || 'organization_id' in configuration) return new AppManagementClient()
   return new PartnersClient()
 }
 

@@ -161,12 +161,6 @@ export function getAppScopesArray(config: AppConfiguration) {
   return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
 }
 
-export function usesLegacyScopesBehavior(config: AppConfiguration) {
-  if (isLegacyAppSchema(config)) return true
-  if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
-  return false
-}
-
 /**
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */

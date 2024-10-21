@@ -721,12 +721,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
  */
 export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
-): Promise<AppConfigurationInterface> {
+): Promise<AppConfigurationInterface & {configurationState: AppConfigurationState}> {
   const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
   const result = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
-  return result
+  return {...result, configurationState: state}
 }
 
 interface AppConfigurationLoaderConstructorArgs {

@@ -189,12 +189,8 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       userProvidedConfigName: options.baseConfigName,
       remoteFlags: undefined,
     })
-    const configuration = app.configuration
 
-    if (!isCurrentAppSchema(configuration)) {
-      return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
-    }
-    return {creationOptions: appCreationDefaults}
+    return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {creationOptions: appCreationDefaults}
@@ -411,7 +407,7 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
   // Always output using the canonical schema
   const schema = getAppVersionedSchema(specifications)
   await writeAppConfigurationFile(mergedAppConfiguration, schema)
-  setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
+  setCurrentConfigPreference({configFileName, directory: appDirectory})
 
   return mergedAppConfiguration
 }

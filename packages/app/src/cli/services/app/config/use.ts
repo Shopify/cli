@@ -1,8 +1,6 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {AppConfiguration, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
-import {logMetadataForLoadedContext} from '../../context.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -48,19 +46,22 @@ export default async function use({
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
-  const {configuration} = await loadAppConfiguration({
+  const result = await loadAppConfiguration({
     userProvidedConfigName: configFileName,
     directory,
   })
-  setCurrentConfigPreference(configuration, {configFileName, directory})
+
+  if (result.configurationState.state === 'template-only') {
+    throw new AbortError(`Configuration file ${configFileName} is not a valid app configuration file.`)
+  }
+
+  setCurrentConfigPreference({configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccess({
       headline: `Using configuration file ${configFileName}`,
     })
   }
-
-  await logMetadata(configuration)
 
   return configFileName
 }
@@ -71,22 +72,12 @@ export default async function use({
  * @param configuration - The configuration taken from this file. Used to ensure we're not remembering a malformed or incomplete configuration.
  * @returns - Nothing, but does confirm that the configuration is an up to date one (and not fresh from a template).
  */
-export function setCurrentConfigPreference(
-  configuration: AppConfiguration,
-  options: {
-    configFileName: string
-    directory: string
-  },
-): asserts configuration is CurrentAppConfiguration {
+export function setCurrentConfigPreference(options: {configFileName: string; directory: string}) {
   const {configFileName, directory} = options
-  if (isCurrentAppSchema(configuration) && configuration.client_id) {
-    setCachedAppInfo({
-      directory,
-      configFile: configFileName,
-    })
-  } else {
-    throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
-  }
+  setCachedAppInfo({
+    directory,
+    configFile: configFileName,
+  })
 }
 
 async function getConfigFileName(directory: string, configName?: string): Promise<Result<string, string>> {
@@ -99,11 +90,4 @@ async function getConfigFileName(directory: string, configName?: string): Promis
     }
   }
   return selectConfigFile(directory)
-}
-
-async function logMetadata(configuration: CurrentAppConfiguration) {
-  await logMetadataForLoadedContext({
-    organizationId: configuration.organization_id || '0',
-    apiKey: configuration.client_id,
-  })
 }
