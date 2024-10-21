@@ -5,8 +5,19 @@
       ],
       "args": {
       },
-      "enableJsonFlag": false,
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "flavor": {
           "description": "Which flavor of the given template to use.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",
@@ -86,18 +97,12 @@
       "hiddenAliases": [
       ],
       "id": "init",
-      "isESM": true,
       "pluginAlias": "@shopify/create-app",
       "pluginName": "@shopify/create-app",
       "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "commands",
-        "init.js"
-      ],
       "strict": true,
       "summary": "Create a new app project"
     }
   },
-  "version": "3.67.0"
+  "version": "3.68.0"
 }

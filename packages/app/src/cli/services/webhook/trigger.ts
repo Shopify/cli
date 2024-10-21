@@ -36,6 +36,7 @@ export async function webhookTriggerService(flags: WebhookTriggerFlags) {
   const options: WebhookTriggerOptions = await validateAndCollectFlags(flags, developerPlatformClient, app)
 
   await sendSample(options)
+  return {app}
 }
 
 async function validateAndCollectFlags(

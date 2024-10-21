@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
+import {logRequestLine} from '../log-request-line.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {
   defineEventHandler,
   clearResponseHeaders,
   sendProxy,
-  getProxyRequestHeaders,
+  getRequestHeaders,
   getRequestWebStream,
   getRequestIP,
   type H3Event,
@@ -14,6 +17,7 @@ import {
   setResponseHeader,
   removeResponseHeader,
   setResponseStatus,
+  send,
 } from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
@@ -21,8 +25,9 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
-const VANITY_CDN_PREFIX = '/cdn/'
-const EXTENSION_CDN_PREFIX = '/ext/cdn/'
+const CART_PREFIX = '/cart/'
+export const VANITY_CDN_PREFIX = '/cdn/'
+export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
@@ -62,13 +67,15 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
  * | /cdn/...          |                    | Proxy    |
  * | /ext/cdn/...      |                    | Proxy    |
  * | /.../file.js      |                    | Proxy    |
+ * | /cart/...         |                    | Proxy    |
  * | /payments/config  | application/json   | Proxy    |
  * | /search/suggest   | * / *              | No proxy |
  * | /.../index.html   |                    | No Proxy |
  *
  */
-function canProxyRequest(event: H3Event) {
+export function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
+  if (event.path.startsWith(CART_PREFIX)) return true
   if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
   if (event.path.startsWith(EXTENSION_CDN_PREFIX)) return true
 
@@ -98,8 +105,8 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   content = content.replace(vanityCdnRE, VANITY_CDN_PREFIX)
 
   // -- Only redirect usages of the main CDN for known local theme and theme extension assets to the local server:
-  const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?">]+)(?:\?|"|>|$))/g
-  const filterAssets = (key: string) => key.startsWith('assets')
+  const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?#"'`>\s]+))/g
+  const filterAssets = (key: string) => key.startsWith('assets/')
   const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter(filterAssets))
   const existingExtAssets = new Set([...ctx.localThemeExtensionFileSystem.files.keys()].filter(filterAssets))
 
@@ -148,6 +155,8 @@ export async function patchRenderingResponse(ctx: DevServerContext, event: H3Eve
   // We are decoding the payload here, remove the header:
   let html = await response.text()
   removeResponseHeader(event, 'content-encoding')
+  // Ensure the content type indicates UTF-8 charset:
+  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8')
 
   html = injectCdnProxy(html, ctx)
   html = patchBaseUrlAttributes(html, ctx)
@@ -167,7 +176,9 @@ const HOP_BY_HOP_HEADERS = [
   'trailer',
   'transfer-encoding',
   'upgrade',
+  'expect',
   'content-security-policy',
+  'host',
 ]
 
 function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
@@ -203,10 +214,8 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
  * Filters headers to forward to SFR.
  */
 export function getProxyStorefrontHeaders(event: H3Event) {
-  const proxyRequestHeaders = getProxyRequestHeaders(event) as {[key: string]: string}
+  const proxyRequestHeaders = getRequestHeaders(event) as {[key: string]: string}
 
-  // H3 already removes most hop-by-hop request headers:
-  // https://github.com/unjs/h3/blob/ac6d83de2abe5411d4eaea8ecf2165ace16a65f3/src/utils/proxy.ts#L25
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
   }
@@ -226,6 +235,15 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
+
+  // When a .css.liquid or .js.liquid file is requested but it doesn't exist in SFR,
+  // it will be rendered with a query string like `assets/file.css?1234`.
+  // For some reason, after refreshing, this rendered URL keeps the wrong `?1234`
+  // query string for a while. We replace it with a proper timestamp here to fix it.
+  if (/\/assets\/[^/]+\.(css|js)$/.test(url.pathname) && /\?\d+$/.test(url.search)) {
+    url.search = `?v=${Date.now()}`
+  }
+
   url.searchParams.set('_fd', '0')
   url.searchParams.set('pb', '0')
   const headers = getProxyStorefrontHeaders(event)
@@ -247,7 +265,18 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       // Important to return 3xx responses to the client
       redirect: 'manual',
     },
-    onResponse: patchProxiedResponseHeaders.bind(null, ctx),
+    async onResponse(event, response) {
+      logRequestLine(event, response)
+
+      patchProxiedResponseHeaders(ctx, event, response)
+
+      const fileName = url.pathname.split('/').at(-1)
+      if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
+        // Patch Liquid assets like .css.liquid
+        const body = await response.text()
+        await send(event, injectCdnProxy(body, ctx))
+      }
+    },
   }).catch(async (error: H3Error) => {
     const pathname = event.path.split('?')[0]!
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {

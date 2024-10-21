@@ -32,6 +32,26 @@ describe('theme-downloader', () => {
       expect(spy).toHaveBeenCalledWith('assets/deleteme.css')
     })
 
+    test('does not delete files when filters are passed', async () => {
+      // Given
+      const remote: Checksum[] = []
+      const files = new Map<string, ThemeAsset>([
+        ['assets/keepme.css', {key: 'assets/keepme.css', checksum: '1', value: 'content'}],
+      ])
+      const fileSystem = fakeThemeFileSystem(root, files, {
+        filters: {
+          only: ['templates/*'],
+        },
+      })
+      const spy = vi.spyOn(fileSystem, 'delete')
+
+      // When
+      await downloadTheme(remoteTheme, adminSession, remote, fileSystem, downloadOptions)
+
+      // Then
+      expect(spy).not.toHaveBeenCalled()
+    })
+
     test('does not delete files when nodelete is set', async () => {
       // Given
       const downloadOptions = {nodelete: true}
@@ -51,7 +71,7 @@ describe('theme-downloader', () => {
 
     test('downloads missing remote files', async () => {
       // Given
-      const downloadOptions = {nodelete: false, only: ['release'], ignore: ['release/ignoreme']}
+      const downloadOptions = {nodelete: false, only: ['/release/'], ignore: ['release/ignoreme']}
       const fileToDownload = {key: 'release/downloadme', checksum: '1'}
       const files = new Map<string, ThemeAsset>([
         ['release/alreadyexists', {checksum: '2', value: 'content', key: 'release/alreadyexists'}],

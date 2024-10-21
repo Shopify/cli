@@ -1,4 +1,5 @@
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -142,7 +143,6 @@ describe('deployConfig', async () => {
     const extensionInstance = await testThemeExtensions()
 
     const got = await extensionInstance.deployConfig({
-      developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
     })
@@ -154,7 +154,6 @@ describe('deployConfig', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
     const got = await extensionInstance.deployConfig({
-      developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
     })
@@ -166,7 +165,6 @@ describe('deployConfig', async () => {
     const extensionInstance = await testAppConfigExtensions(true)
 
     const got = await extensionInstance.deployConfig({
-      developerPlatformClient,
       apiKey: 'apiKey',
       appConfiguration: placeholderAppConfiguration,
     })
@@ -363,7 +361,10 @@ describe('draftMessages', async () => {
       const subscription = extensionInstance.configuration as unknown as SingleWebhookSubscriptionType
       let result = ''
       if (subscription) {
-        result = hashString(subscription.topic + subscription.uri + subscription.filter).substring(0, 30)
+        result = hashString(subscription.topic + subscription.uri + subscription.filter).substring(
+          0,
+          MAX_EXTENSION_HANDLE_LENGTH,
+        )
       }
 
       // Then

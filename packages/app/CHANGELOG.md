@@ -1,5 +1,24 @@
 # @shopify/app
 
+## 3.68.0
+
+### Patch Changes
+
+- 5548552e2: Updates Javy to version 3.1.1
+- 53459a23f: Fixes a bug where some users were unable to intialize their app dev command with theme app extensions
+- Updated dependencies [fc7d5ce58]
+- Updated dependencies [cce54b10b]
+- Updated dependencies [53459a23f]
+- Updated dependencies [4d89691ad]
+- Updated dependencies [492225c47]
+- Updated dependencies [dc30dca87]
+- Updated dependencies [a2f31c249]
+- Updated dependencies [a1887fc14]
+- Updated dependencies [d6c661f06]
+  - @shopify/theme@3.68.0
+  - @shopify/cli-kit@3.68.0
+  - @shopify/plugin-cloudflare@3.68.0
+
 ## 3.67.0
 
 ### Minor Changes

@@ -81,6 +81,38 @@ describe('privacy_compliance_webhooks', () => {
       // Then
       expect(isEmpty(result)).toBeTruthy()
     })
+
+    test('should transform with relative URIs', () => {
+      // Given
+      const object = {
+        webhooks: {
+          api_version: '2024-07',
+          subscriptions: [
+            {
+              compliance_topics: ['customers/redact', 'customers/data_request'],
+              uri: '/customers_webhooks',
+            },
+            {
+              compliance_topics: ['shop/redact'],
+              uri: '/shop_webhooks',
+            },
+          ],
+        },
+      }
+      const privacyComplianceSpec = spec
+      const appConfiguration = {application_url: 'https://example.com/', scopes: ''}
+
+      // When
+      const result = privacyComplianceSpec.transformLocalToRemote!(object, appConfiguration)
+
+      // Then
+      expect(result).toMatchObject({
+        api_version: '2024-07',
+        customers_redact_url: 'https://example.com/customers_webhooks',
+        customers_data_request_url: 'https://example.com/customers_webhooks',
+        shop_redact_url: 'https://example.com/shop_webhooks',
+      })
+    })
   })
 
   describe('reverseTransform with declarative_webhooks flag', () => {

@@ -1,13 +1,13 @@
 import {outputEnv} from './app/env/show.js'
-import {getAppContext} from './context.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
-import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {AppInterface, getAppScopes} from '../models/app/app.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {OrganizationApp} from '../models/organization.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
-import {relativePath} from '@shopify/cli-kit/node/path'
+import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {OutputMessage, outputContent, outputToken, formatSection, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
@@ -17,28 +17,38 @@ export interface InfoOptions {
   configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
-  developerPlatformClient?: DeveloperPlatformClient
+  developerPlatformClient: DeveloperPlatformClient
 }
 interface Configurable {
   type: string
   externalType: string
 }
 
-export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
-  options.developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
+export async function info(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  options: InfoOptions,
+): Promise<OutputMessage> {
   if (options.webEnv) {
-    return infoWeb(app, options)
+    return infoWeb(app, remoteApp, options)
   } else {
-    return infoApp(app, options)
+    return infoApp(app, remoteApp, options)
   }
 }
 
-async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
-  return outputEnv(app, format)
+async function infoWeb(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  {format}: InfoOptions,
+): Promise<OutputMessage> {
+  return outputEnv(app, remoteApp, format)
 }
 
-async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+async function infoApp(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  options: InfoOptions,
+): Promise<OutputMessage> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -68,7 +78,7 @@ async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputM
       2,
     )}`
   } else {
-    const appInfo = new AppInfo(app, options)
+    const appInfo = new AppInfo(app, remoteApp, options)
     return appInfo.output()
   }
 }
@@ -97,11 +107,13 @@ const UNKNOWN_TEXT = outputContent`${outputToken.italic('unknown')}`.value
 const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
 
 class AppInfo {
-  private app: AppInterface
+  private app: AppLinkedInterface
+  private remoteApp: OrganizationApp
   private options: InfoOptions
 
-  constructor(app: AppInterface, options: InfoOptions) {
+  constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, options: InfoOptions) {
     this.app = app
+    this.remoteApp = remoteApp
     this.options = options
   }
 
@@ -117,29 +129,19 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const {cachedInfo, remoteApp} = await getAppContext({
-      directory: this.app.directory,
-      reset: false,
-      configName: this.options.configName,
-      enableLinkingPrompt: false,
-    })
-    const developerPlatformClient = remoteApp?.developerPlatformClient ?? this.options.developerPlatformClient!
-
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,
       'dev',
       '--reset',
     )}`.value
 
-    let updateUrls
-    if (cachedInfo?.updateURLs === undefined) {
-      updateUrls = NOT_CONFIGURED_TEXT
-    } else {
-      updateUrls = cachedInfo.updateURLs ? 'Yes' : 'No'
+    let updateUrls = NOT_CONFIGURED_TEXT
+    if (this.app.configuration.build?.automatically_update_urls_on_dev !== undefined) {
+      updateUrls = this.app.configuration.build.automatically_update_urls_on_dev ? 'Yes' : 'No'
     }
 
     let partnersAccountInfo = ['Partners account', 'unknown']
-    const retrievedAccountInfo = await developerPlatformClient.accountInfo()
+    const retrievedAccountInfo = await this.options.developerPlatformClient.accountInfo()
     if (isServiceAccount(retrievedAccountInfo)) {
       partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
     } else if (isUserAccount(retrievedAccountInfo)) {
@@ -147,11 +149,11 @@ class AppInfo {
     }
 
     const lines = [
-      ['Configuration file', cachedInfo?.configFile || configurationFileNames.app],
-      ['App name', cachedInfo?.title || NOT_CONFIGURED_TEXT],
-      ['Client ID', cachedInfo?.appId || NOT_CONFIGURED_TEXT],
+      ['Configuration file', basename(this.app.configuration.path) || configurationFileNames.app],
+      ['App name', this.remoteApp.title || NOT_CONFIGURED_TEXT],
+      ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TEXT],
       ['Access scopes', getAppScopes(this.app.configuration)],
-      ['Dev store', cachedInfo?.storeFqdn || NOT_CONFIGURED_TEXT],
+      ['Dev store', this.app.configuration.build?.dev_store_url || NOT_CONFIGURED_TEXT],
       ['Update URLs', updateUrls],
       partnersAccountInfo,
     ]
@@ -179,7 +181,7 @@ class AppInfo {
         if (relevantExtensions[0]) {
           body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
-            body += `${outputFormatter(extension)}`
+            body += outputFormatter(extension)
           })
         }
       })
@@ -191,7 +193,7 @@ class AppInfo {
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
       supportedExtensions.forEach((extension) => {
-        body += `${this.invalidExtensionSubSection(extension)}`
+        body += this.invalidExtensionSubSection(extension)
       })
     }
     return [title, body]
@@ -199,7 +201,7 @@ class AppInfo {
 
   webComponentsSection(): string {
     const errors: OutputMessage[] = []
-    const subtitle = [outputContent`${outputToken.subheading('web')}`.value]
+    const subtitle = outputContent`${outputToken.subheading('web')}`.value
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
@@ -220,7 +222,7 @@ class AppInfo {
         if (error) errors.push(error)
       }
     })
-    let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
+    let errorContent = `\n${errors.map((error) => this.formattedError(error)).join('\n')}`
     if (errorContent.trim() === '') errorContent = ''
 
     return `${subtitle}\n${linesToColumns([toplevel, ...sublevels])}${errorContent}`
@@ -266,6 +268,6 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    return [title, `${linesToColumns(lines)}`]
+    return [title, linesToColumns(lines)]
   }
 }

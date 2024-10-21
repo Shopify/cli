@@ -1,12 +1,10 @@
 import {AbortSignal} from './abort.js'
-import {AbortError, ExternalError} from './error.js'
-import {cwd, dirname} from './path.js'
+import {ExternalError} from './error.js'
+import {cwd} from './path.js'
 import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
-import {renderWarning} from './ui.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
-import which from 'which'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -77,7 +75,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
     // The aborted flag tell use that we killed it, so we can ignore the error.
     if (aborted) return
     if (options?.externalErrorHandler) {
-      await options?.externalErrorHandler(processError)
+      await options.externalErrorHandler(processError)
     } else {
       const abortError = new ExternalError(processError.message, command, args)
       abortError.stack = processError.stack
@@ -94,12 +92,11 @@ export async function exec(command: string, args: string[], options?: ExecOption
  * @param options - Optional settings for how to run the command.
  * @returns A promise for a result with stdout and stderr properties.
  */
-function buildExec(command: string, args: string[], options?: ExecOptions): ExecaChildProcess<string> {
+function buildExec(command: string, args: string[], options?: ExecOptions): ExecaChildProcess {
   const env = options?.env ?? process.env
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
   }
-  checkCommandSafety(command)
   const commandProcess = execa(command, args, {
     env,
     cwd: options?.cwd,
@@ -118,16 +115,6 @@ Running system process:
   · Working directory: ${options?.cwd ?? cwd()}
 `)
   return commandProcess
-}
-
-function checkCommandSafety(command: string) {
-  const commandDirectory = dirname(which.sync(command))
-  if (commandDirectory === cwd()) {
-    const headline = ['Skipped run of unsecure binary', {command}, 'found in the current directory.']
-    const body = 'Please remove that file or review your current PATH.'
-    renderWarning({headline, body})
-    throw new AbortError(headline, body)
-  }
 }
 
 /**

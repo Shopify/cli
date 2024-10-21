@@ -12,7 +12,8 @@ interface RemoteThemeResponse {
 interface RemoteAssetResponse {
   key: string
   checksum: string
-  attachment: string
+  attachment: string | undefined
+  // value is an empty string ('') when the file is empty
   value: string
 }
 
@@ -52,8 +53,7 @@ export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undef
 
   const {key, checksum, attachment, value} = asset
   // Note: for attachments, this is the size of the base64 string, not the real length of the file
-  const stats = {size: (value || attachment).length, mtime: Date.now()}
-
+  const stats = {size: (value || attachment || '').length, mtime: Date.now()}
   return {key, checksum, attachment, value, stats}
 }
 
@@ -67,6 +67,7 @@ export function buildBulkUploadResults(
 
   return bulkUploadResponse.map((bulkUpload, index) => {
     return {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       key: assets[index]!.key,
       success: bulkUpload.code === 200,
       errors: bulkUpload.body.errors || {},

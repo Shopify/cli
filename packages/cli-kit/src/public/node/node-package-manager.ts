@@ -4,6 +4,7 @@ import {captureOutput, exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
+import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
@@ -705,4 +706,29 @@ export async function writePackageJSON(directory: string, packageJSON: PackageJs
   outputDebug(outputContent`JSON-encoding and writing content to package.json at ${outputToken.path(directory)}...`)
   const packagePath = joinPath(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
+}
+
+/**
+ * Infers the package manager to be used based on the provided options and environment.
+ *
+ * This function determines the package manager in the following order of precedence:
+ * 1. Uses the package manager specified in the options, if valid.
+ * 2. Infers the package manager from the user agent string.
+ * 3. Infers the package manager used for the global CLI installation.
+ * 4. Defaults to 'npm' if no other method succeeds.
+ *
+ * @param optionsPackageManager - The package manager specified in the options (if any).
+ * @returns The inferred package manager as a PackageManager type.
+ */
+export function inferPackageManager(optionsPackageManager: string | undefined, env = process.env): PackageManager {
+  if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
+    return optionsPackageManager as PackageManager
+  }
+  const usedPackageManager = packageManagerFromUserAgent(env)
+  if (usedPackageManager !== 'unknown') return usedPackageManager
+
+  const globalPackageManager = inferPackageManagerForGlobalCLI()
+  if (globalPackageManager !== 'unknown') return globalPackageManager
+
+  return 'npm'
 }

@@ -16,7 +16,6 @@ export const environmentVariables = {
   alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
   alwaysLogMetrics: 'SHOPIFY_CLI_ALWAYS_LOG_METRICS',
   deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
-  accessCodeAuth: 'SHOPIFY_CLI_ACCESS_CODE_AUTH',
   enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
   env: 'SHOPIFY_CLI_ENV',
   firstPartyDev: 'SHOPIFY_CLI_1P_DEV',

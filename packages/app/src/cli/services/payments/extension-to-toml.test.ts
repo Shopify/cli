@@ -98,12 +98,12 @@ supports_installments = true
 `)
   })
 
-  test('truncates the handle if the title has >30 characters', () => {
+  test('truncates the handle if the title has >50 characters', () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
       uuid: '626ab61a-e494-4e16-b511-e8721ec011a4',
-      title: 'Bogus Pay Bogus Pay Bogus Pay Bogus',
+      title: 'Bogus Pay Bogus Pay Bogus Pay Bogus Pay Bogus Pay Bogus Pay Bogus',
       type: 'payments_extension',
       draftVersion: {
         context: 'payments.offsite.render',
@@ -119,9 +119,9 @@ supports_installments = true
     expect(got).toEqual(`api_version = "2023-10"
 
 [[extensions]]
-name = "Bogus Pay Bogus Pay Bogus Pay Bogus"
+name = "Bogus Pay Bogus Pay Bogus Pay Bogus Pay Bogus Pay Bogus Pay Bogus"
 type = "payments_extension"
-handle = "bogus-pay-bogus-pay-bogus-pay"
+handle = "bogus-pay-bogus-pay-bogus-pay-bogus-pay-bogus-pay"
 payment_session_url = "https://bogus-app/payment-sessions/start"
 refund_session_url = "https://bogus-app/payment-sessions/refund"
 capture_session_url = "https://bogus-app/payment-sessions/capture"

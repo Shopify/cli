@@ -153,7 +153,7 @@ function stripHTMLContent(result: string): undefined | string {
 }
 
 function hasLiquidError(body: string): boolean {
-  return /Liquid syntax error/.test(body)
+  return body.includes('Liquid syntax error')
 }
 
 function isStandardAssignment(input: string): boolean {

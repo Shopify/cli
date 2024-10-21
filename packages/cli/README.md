@@ -63,18 +63,18 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify theme:console`](#shopify-themeconsole)
+* [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
-* [`shopify theme:init [name]`](#shopify-themeinit-name)
+* [`shopify theme init [name]`](#shopify-theme-init-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify theme:push`](#shopify-themepush)
+* [`shopify theme push`](#shopify-theme-push)
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
@@ -233,6 +233,9 @@ DESCRIPTION
   "Builds the app" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a "development
   store" (https://shopify.dev/docs/apps/tools/development-stores) or "Plus sandbox store"
   (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).
+
+  > Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your
+  app.
 
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps.
   If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these
@@ -524,13 +527,15 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [-d npm|yarn|pnpm|bun] [-p <value>]
-    [--template <value>] [--verbose]
+  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [-d
+    npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
   -n, --name=<value>
   -p, --path=<value>              [default: .]
+      --client-id=<value>         The Client ID of your app. Use this to automatically link your new project to an
+                                  existing app. Using this flag avoids the app selection prompt.
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
       --template=<value>          The app template. Accepts one of the following:
@@ -1697,7 +1702,7 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-## `shopify theme:console`
+## `shopify theme console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
 
@@ -1887,7 +1892,7 @@ DESCRIPTION
   specific theme.
 ```
 
-## `shopify theme:init [name]`
+## `shopify theme init [name]`
 
 Clones a Git repository to use as a starting point for building a new theme.
 
@@ -2090,7 +2095,7 @@ DESCRIPTION
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
 
-## `shopify theme:push`
+## `shopify theme push`
 
 Uploads your local theme files to the connected store, overwriting the remote version if specified.
 

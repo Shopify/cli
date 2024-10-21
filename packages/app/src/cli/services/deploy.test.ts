@@ -1,9 +1,8 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {uploadWasmBlob, uploadExtensionsBundle} from './deploy/upload.js'
+import {uploadExtensionsBundle} from './deploy/upload.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {
-  testApp,
   testFunctionExtension,
   testThemeExtensions,
   testUIExtension,
@@ -11,18 +10,25 @@ import {
   testAppConfigExtensions,
   DEFAULT_CONFIG,
   testDeveloperPlatformClient,
+  testAppLinked,
+  testOrganization,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 const versionTag = 'unique-version-tag'
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+const remoteApp = testOrganizationApp({
+  id: 'app-id',
+  organizationId: 'org-id',
+})
 
 vi.mock('../utilities/app/config/webhooks.js', async () => ({
   ...((await vi.importActual('../utilities/app/config/webhooks.js')) as any),
@@ -35,6 +41,7 @@ vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
 
@@ -53,20 +60,13 @@ beforeEach(() => {
 describe('deploy', () => {
   test('passes release to uploadExtensionsBundle()', async () => {
     // Given
-    const app = testApp({allExtensions: []})
+    const app = testAppLinked({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: false,
       },
@@ -76,7 +76,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [],
@@ -88,19 +88,12 @@ describe('deploy', () => {
 
   test('passes a message to uploadExtensionsBundle() when a message arg is present', async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         message: 'Deployed from CLI with flag',
       },
@@ -117,19 +110,12 @@ describe('deploy', () => {
 
   test('passes a version to uploadExtensionsBundle() when a version arg is present', async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         version: '1.1.0',
       },
@@ -145,27 +131,20 @@ describe('deploy', () => {
   })
 
   test('deploys the app with no extensions', async () => {
-    const app = testApp({allExtensions: []})
+    const app = testAppLinked({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       developerPlatformClient,
     })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [],
@@ -180,15 +159,15 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testAppLinked({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle({app, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
@@ -213,15 +192,15 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    const app = testApp({allExtensions: [themeExtension]})
+    const app = testAppLinked({allExtensions: [themeExtension]})
 
     // When
-    await testDeployBundle({app, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
@@ -243,39 +222,36 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 function', async () => {
+  test('uploads the extension bundle with 1 function extension', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
-    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
-
-    const app = testApp({allExtensions: [functionExtension]})
     const moduleId = 'module-id'
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
+    vi.mocked(randomUUID).mockReturnValue(moduleId)
+
+    const app = testAppLinked({allExtensions: [functionExtension]})
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
       module_id: moduleId,
       description: functionExtension.configuration.description,
-      app_key: 'app-id',
+      app_key: 'api-key',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
       localization: {},
     }
-    vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: testOrganizationApp({
-        id: 'app-id',
-        organizationId: 'org-id',
-      }),
+      remoteApp,
       developerPlatformClient,
     })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [
@@ -290,7 +266,7 @@ describe('deploy', () => {
       ],
       developerPlatformClient,
       extensionIds: {},
-      bundlePath: undefined,
+      bundlePath: expect.stringMatching(/bundle.zip$/),
       release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
@@ -301,16 +277,16 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
-    const app = testApp({allExtensions: [uiExtension, themeExtension]})
+    const app = testAppLinked({allExtensions: [uiExtension, themeExtension]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
@@ -348,16 +324,16 @@ describe('deploy', () => {
       allExtensions: [extensionNonUuidManaged],
       configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
     }
-    const app = testApp(localApp)
+    const app = testAppLinked(localApp)
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [
@@ -382,16 +358,16 @@ describe('deploy', () => {
   test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
-    const app = testApp({allExtensions: [extensionNonUuidManaged]})
+    const app = testAppLinked({allExtensions: [extensionNonUuidManaged]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
+    await testDeployBundle({app, remoteApp, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       appId: 'app-id',
-      apiKey: 'app-id',
+      apiKey: 'api-key',
       name: app.name,
       organizationId: 'org-id',
       appModules: [],
@@ -407,20 +383,13 @@ describe('deploy', () => {
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testAppLinked({allExtensions: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: false,
       },
@@ -446,20 +415,13 @@ describe('deploy', () => {
   test('shows a specific success message when there is an error with the release', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testAppLinked({allExtensions: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id2',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: false,
         message: 'version message',
@@ -487,20 +449,13 @@ describe('deploy', () => {
   test('shows a specific success message when deploying --no-release', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testAppLinked({allExtensions: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
     await testDeployBundle({
       app,
-      remoteApp: {
-        id: 'app-id',
-        apiKey: 'api-key',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        flags: [],
-      },
+      remoteApp,
       options: {
         noRelease: true,
         message: 'version message',
@@ -532,8 +487,8 @@ describe('deploy', () => {
 })
 
 interface TestDeployBundleInput {
-  app: AppInterface
-  remoteApp?: Omit<OrganizationApp, 'apiSecretKeys'>
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   options?: {
     force?: boolean
     noRelease?: boolean
@@ -571,17 +526,7 @@ async function testDeployBundle({
     extensionsNonUuidManaged: extensionsNonUuidPayload,
   }
 
-  vi.mocked(ensureDeployContext).mockResolvedValue({
-    app: appToDeploy ?? app,
-    identifiers,
-    remoteApp:
-      remoteApp ??
-      testOrganizationApp({
-        id: 'app-id',
-        organizationId: 'org-id',
-      }),
-    release: !options?.noRelease,
-  })
+  vi.mocked(ensureDeployContext).mockResolvedValue(identifiers)
 
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
@@ -595,6 +540,8 @@ async function testDeployBundle({
 
   await deploy({
     app,
+    remoteApp,
+    organization: testOrganization(),
     reset: false,
     force: Boolean(options?.force),
     noRelease: Boolean(options?.noRelease),

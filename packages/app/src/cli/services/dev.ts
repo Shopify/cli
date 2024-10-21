@@ -64,7 +64,6 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
-  devPreview?: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -73,6 +72,7 @@ export async function dev(commandOptions: DevOptions) {
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
+  return {app: config.localApp}
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -163,32 +163,58 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 }
 
-async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp, developerPlatformClient}: DevConfig) {
-  if (developerPlatformClient.supportsDevSessions) return
-  if (
-    isCurrentAppSchema(localApp.configuration) &&
-    !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    localApp.configuration.access_scopes?.scopes !== remoteApp.configuration?.access_scopes?.scopes
-  ) {
-    const nextSteps = [
-      [
-        'Run',
-        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
-        'to push your scopes to the Partner Dashboard',
-      ],
-    ]
+async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
+  await warnIfScopesDifferBeforeDev(devConfig)
+}
 
-    renderWarning({
-      headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
-      body: [
-        `Scopes in ${basename(localApp.configuration.path)}:`,
-        scopesMessage(getAppScopesArray(localApp.configuration)),
-        '\n',
-        'Scopes in Partner Dashboard:',
-        scopesMessage(remoteApp.configuration?.access_scopes?.scopes?.split(',') || []),
-      ],
-      nextSteps,
-    })
+/**
+ * Show a warning if the scopes in the local app configuration do not match the scopes in the remote app configuration.
+ *
+ * This is to flag that the developer may wish to run `shopify app deploy` to push the latest scopes.
+ *
+ */
+export async function warnIfScopesDifferBeforeDev({
+  localApp,
+  remoteApp,
+  developerPlatformClient,
+}: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient'>) {
+  if (developerPlatformClient.supportsDevSessions) return
+  if (isCurrentAppSchema(localApp.configuration)) {
+    const localAccess = localApp.configuration.access_scopes
+    const remoteAccess = remoteApp.configuration?.access_scopes
+
+    const rationaliseScopes = (scopeString: string | undefined) => {
+      if (!scopeString) return scopeString
+      return scopeString
+        .split(',')
+        .map((scope) => scope.trim())
+        .sort()
+        .join(',')
+    }
+    const localScopes = rationaliseScopes(localAccess?.scopes)
+    const remoteScopes = rationaliseScopes(remoteAccess?.scopes)
+
+    if (!localAccess?.use_legacy_install_flow && localScopes !== remoteScopes) {
+      const nextSteps = [
+        [
+          'Run',
+          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
+          'to push your scopes to the Partner Dashboard',
+        ],
+      ]
+
+      renderWarning({
+        headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
+        body: [
+          `Scopes in ${basename(localApp.configuration.path)}:`,
+          scopesMessage(getAppScopesArray(localApp.configuration)),
+          '\n',
+          'Scopes in Partner Dashboard:',
+          scopesMessage(remoteAccess?.scopes?.split(',') || []),
+        ],
+        nextSteps,
+      })
+    }
   }
 }
 
@@ -426,6 +452,7 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   }
   await Promise.all([
     ...allPorts.map(async (port) => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const portAvailable = await checkPortAvailability(port!)
       if (!portAvailable) {
         throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)

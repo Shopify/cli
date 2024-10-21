@@ -5,7 +5,17 @@ import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {ensureAuthenticated} from '../../private/node/session.js'
+import {
+  AdminAPIScope,
+  AppManagementAPIScope,
+  BusinessPlatformScope,
+  PartnersAPIScope,
+  StorefrontRendererScope,
+  ensureAuthenticated,
+  setLastSeenAuthMethod,
+  setLastSeenUserIdAfterAuth,
+} from '../../private/node/session.js'
+import {isThemeAccessSession} from '../../private/node/api/rest.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -30,7 +40,7 @@ interface EnsureAuthenticatedAdditionalOptions {
  * @returns The access token for the Partners API.
  */
 export async function ensureAuthenticatedPartners(
-  scopes: string[] = [],
+  scopes: PartnersAPIScope[] = [],
   env = process.env,
   options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<{token: string; userId: string}> {
@@ -39,7 +49,8 @@ ${outputToken.json(scopes)}
 `)
   const envToken = getPartnersToken()
   if (envToken) {
-    return {token: (await exchangeCustomPartnerToken(envToken)).accessToken, userId: nonRandomUUID(envToken)}
+    const result = await exchangeCustomPartnerToken(envToken)
+    return {token: result.accessToken, userId: result.userId}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
   if (!tokens.partners) {
@@ -57,7 +68,7 @@ ${outputToken.json(scopes)}
  * @returns The access token for the App Management API.
  */
 export async function ensureAuthenticatedAppManagement(
-  scopes: string[] = [],
+  scopes: AppManagementAPIScope[] = [],
   env = process.env,
   options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<{token: string; userId: string}> {
@@ -68,6 +79,7 @@ ${outputToken.json(scopes)}
   if (!tokens) {
     throw new BugError('No App Management token found after ensuring authenticated')
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return {token: tokens.appManagement!, userId: tokens.userId}
 }
 
@@ -80,11 +92,17 @@ ${outputToken.json(scopes)}
  * @returns The access token for the Storefront API.
  */
 export async function ensureAuthenticatedStorefront(
-  scopes: string[] = [],
+  scopes: StorefrontRendererScope[] = [],
   password: string | undefined = undefined,
   forceRefresh = false,
 ): Promise<string> {
-  if (password) return password
+  if (password) {
+    const session = {token: password, storeFqdn: ''}
+    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
+    setLastSeenAuthMethod(authMethod)
+    setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    return password
+  }
 
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
@@ -107,7 +125,7 @@ ${outputToken.json(scopes)}
  */
 export async function ensureAuthenticatedAdmin(
   store: string,
-  scopes: string[] = [],
+  scopes: AdminAPIScope[] = [],
   forceRefresh = false,
   options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<AdminSession> {
@@ -140,13 +158,19 @@ ${outputToken.json(scopes)}
 export async function ensureAuthenticatedThemes(
   store: string,
   password: string | undefined,
-  scopes: string[] = [],
+  scopes: AdminAPIScope[] = [],
   forceRefresh = false,
 ): Promise<AdminSession> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  if (password) return {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+  if (password) {
+    const session = {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
+    setLastSeenAuthMethod(authMethod)
+    setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    return session
+  }
   return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
 }
 
@@ -156,7 +180,7 @@ ${outputToken.json(scopes)}
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @returns The access token for the Business Platform API.
  */
-export async function ensureAuthenticatedBusinessPlatform(scopes: string[] = []): Promise<string> {
+export async function ensureAuthenticatedBusinessPlatform(scopes: BusinessPlatformScope[] = []): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)

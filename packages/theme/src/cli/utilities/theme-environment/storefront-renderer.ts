@@ -34,6 +34,13 @@ export async function render(session: DevServerSession, context: DevServerRender
   const requestId = response.headers.get('x-request-id')
   outputDebug(`← ${response.status} (request_id: ${requestId})`)
 
+  /**
+   * Theme Access app requests return the 'application/json' content type.
+   * However, patched renderings will never patch JSON requests; so we're
+   * consistently discarding the content type.
+   */
+  response.headers.delete('Content-Type')
+
   return response
 }
 

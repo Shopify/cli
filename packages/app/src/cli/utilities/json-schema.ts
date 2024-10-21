@@ -1,9 +1,10 @@
 import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {BaseConfigType} from '../models/extensions/schemas.js'
-import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {configWithoutFirstClassFields, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
 import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 import {isEmpty} from '@shopify/cli-kit/common/object'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 /**
  * Factory returning a function that can parse a configuration object against a locally defined zod schema, and a remotely defined JSON schema based contract
@@ -25,8 +26,10 @@ export async function unifiedConfigurationParserFactory(
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
-    const subjectForAjv = zodValidatedData ?? config
-    const jsonSchemaParse = jsonSchemaValidate(subjectForAjv, contract)
+    const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
+
+    const subjectForAjvWithoutFirstClassFields = configWithoutFirstClassFields(subjectForAjv)
+    const jsonSchemaParse = jsonSchemaValidate(subjectForAjvWithoutFirstClassFields, contract)
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
     let errors = zodParse.errors || []

@@ -28,6 +28,7 @@ export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunne
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
+export {push, pull, fetchStoreThemes} from '@shopify/theme'
 
 export const HydrogenInitHook = HydrogenHooks.init
 
@@ -83,7 +84,7 @@ PluginPluginsCommands['plugins:install'].description = ''
 const appCommands = Object.keys(AppCommands) as (keyof typeof AppCommands)[]
 appCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(AppCommands[command] as any).customPluginName = '@shopify/app'
+  ;(AppCommands[command] as unknown as any).customPluginName = '@shopify/app'
 })
 
 const themeCommands = Object.keys(ThemeCommands) as (keyof typeof ThemeCommands)[]

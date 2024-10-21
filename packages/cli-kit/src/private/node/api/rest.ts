@@ -22,7 +22,9 @@ export function restRequestUrl(
       ? `https://${themeKitAccessDomain}/cli/admin/api/${apiVersion}${path}.json`
       : `https://${session.storeFqdn}/admin/api/${apiVersion}${path}.json`,
   )
-  Object.entries(searchParams).forEach(([name, value]) => url.searchParams.set(name, value))
+  Object.entries(searchParams).forEach(([name, value]) => {
+    url.searchParams.set(name, value)
+  })
 
   return url.toString()
 }
@@ -40,6 +42,6 @@ export function restRequestHeaders(session: AdminSession) {
   return headers
 }
 
-function isThemeAccessSession(session: AdminSession) {
+export function isThemeAccessSession(session: AdminSession) {
   return session.token.startsWith('shptka_')
 }

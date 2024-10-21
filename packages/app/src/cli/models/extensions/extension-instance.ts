@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
-import {BaseConfigType} from './schemas.js'
+import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -20,7 +21,6 @@ import {
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
-import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
@@ -28,9 +28,9 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 
 export const CONFIG_EXTENSION_IDS = [
   AppAccessSpecIdentifier,
@@ -129,7 +129,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    return `${this.handle}.js`
+    return this.isFunctionExtension ? 'index.wasm' : `${this.handle}.js`
   }
 
   constructor(options: {
@@ -152,7 +152,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.uid = this.configuration.uid ?? randomUUID()
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
-      this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
+      this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
     }
 
     if (this.isFunctionExtension) {
@@ -194,25 +194,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async deployConfig({
     apiKey,
-    developerPlatformClient,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient, appConfiguration})
-    return this.commonDeployConfig(apiKey, appConfiguration)
-  }
-
-  async functionDeployConfig({
-    apiKey,
-    developerPlatformClient,
-  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, developerPlatformClient)
-    return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
-  }
-
-  async commonDeployConfig(
-    apiKey: string,
-    appConfiguration: AppConfigurationWithoutPath,
-  ): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
@@ -338,7 +321,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     await this.build(options)
-
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }
@@ -350,7 +332,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, extensionId?: string) {
     const id = this.getOutputFolderId(extensionId)
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
 
@@ -372,7 +354,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
-    const configValue = await this.deployConfig({apiKey, developerPlatformClient, appConfiguration})
+    const configValue = await this.deployConfig({apiKey, appConfiguration})
     if (!configValue) return undefined
 
     const result = {
@@ -404,14 +386,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
         const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
-        return hashString(handle).substring(0, 30)
+        return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
     }
   }
 }
 
 interface ExtensionDeployConfigOptions {
   apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
   appConfiguration: AppConfigurationWithoutPath
 }
 

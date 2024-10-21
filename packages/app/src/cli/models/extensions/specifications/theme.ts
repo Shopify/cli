@@ -111,6 +111,7 @@ function validateFile(filepath: string, dirname: string): void {
       `Make sure all theme app extension files are in the supported directories: ${SUPPORTED_BUCKETS.join(', ')}`,
     )
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const filenameValidation = SUPPORTED_EXTS[dirname]!
   if (!filepath.match(filenameValidation.validator)) {
     throw new AbortError(`Invalid filename in your theme app extension: ${filepath}

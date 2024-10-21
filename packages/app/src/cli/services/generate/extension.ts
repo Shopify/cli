@@ -3,11 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
-import {
-  ensureDownloadedExtensionFlavorExists,
-  ensureExtensionDirectoryExists,
-  ensureLocalExtensionFlavorExists,
-} from '../extensions/common.js'
+import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from '../extensions/common.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   addNPMDependenciesIfNeeded,
@@ -30,6 +26,9 @@ export interface GenerateExtensionTemplateOptions {
   extensionChoices: GenerateExtensionContentOutput
   extensionTemplate: ExtensionTemplate
   developerPlatformClient: DeveloperPlatformClient
+
+  // Override the default git clone behavior
+  onGetTemplateRepository?: (url: string, destination: string) => Promise<void>
 }
 
 export type ExtensionFlavorValue =
@@ -71,6 +70,7 @@ interface ExtensionInitOptions {
   name: string
   extensionFlavor: ExtensionFlavor | undefined
   uid: string | undefined
+  onGetTemplateRepository: (url: string, destination: string) => Promise<void>
 }
 
 export async function generateExtensionTemplate(
@@ -92,6 +92,11 @@ export async function generateExtensionTemplate(
     name: extensionName,
     extensionFlavor,
     uid,
+    onGetTemplateRepository:
+      options.onGetTemplateRepository ??
+      (async (url, destination) => {
+        await downloadGitRepository({repoUrl: url, destination, shallow: true})
+      }),
   }
   await extensionInit(initOptions)
   return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
@@ -118,14 +123,35 @@ async function extensionInit(options: ExtensionInitOptions) {
   }
 }
 
-async function themeExtensionInit({directory, url, type, name, extensionFlavor, uid}: ExtensionInitOptions) {
+async function themeExtensionInit({
+  directory,
+  url,
+  type,
+  name,
+  extensionFlavor,
+  uid,
+  onGetTemplateRepository,
+}: ExtensionInitOptions) {
   return inTemporaryDirectory(async (tmpDir) => {
-    const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
+    const templateDirectory = await downloadOrFindTemplateDirectory(
+      url,
+      extensionFlavor,
+      tmpDir,
+      onGetTemplateRepository,
+    )
     await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type, uid})
   })
 }
 
-async function functionExtensionInit({directory, url, app, name, extensionFlavor, uid}: ExtensionInitOptions) {
+async function functionExtensionInit({
+  directory,
+  url,
+  app,
+  name,
+  extensionFlavor,
+  uid,
+  onGetTemplateRepository,
+}: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
   const taskList = []
 
@@ -133,7 +159,12 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
     title: `Generating function extension`,
     task: async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
+        const templateDirectory = await downloadOrFindTemplateDirectory(
+          url,
+          extensionFlavor,
+          tmpDir,
+          onGetTemplateRepository,
+        )
         await recursiveLiquidTemplateCopy(templateDirectory, directory, {
           name,
           handle: slugify(name),
@@ -180,7 +211,15 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
   await renderTasks(taskList)
 }
 
-async function uiExtensionInit({directory, url, app, name, extensionFlavor, uid}: ExtensionInitOptions) {
+async function uiExtensionInit({
+  directory,
+  url,
+  app,
+  name,
+  extensionFlavor,
+  uid,
+  onGetTemplateRepository,
+}: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
 
   const tasks = [
@@ -190,7 +229,12 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor, uid}
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
 
         await inTemporaryDirectory(async (tmpDir) => {
-          const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
+          const templateDirectory = await downloadOrFindTemplateDirectory(
+            url,
+            extensionFlavor,
+            tmpDir,
+            onGetTemplateRepository,
+          )
           await recursiveLiquidTemplateCopy(templateDirectory, directory, {
             srcFileExtension,
             name,
@@ -202,6 +246,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor, uid}
 
         if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
         }
       },
@@ -295,17 +340,10 @@ async function downloadOrFindTemplateDirectory(
   url: string,
   extensionFlavor: ExtensionFlavor | undefined,
   tmpDir: string,
+  onGetTemplateRepository: (url: string, destination: string) => Promise<void>,
 ) {
-  if (url === 'https://github.com/Shopify/cli') {
-    return ensureLocalExtensionFlavorExists(extensionFlavor)
-  } else {
-    const templateDownloadDir = joinPath(tmpDir, 'download')
-    await mkdir(templateDownloadDir)
-    await downloadGitRepository({
-      repoUrl: url,
-      destination: templateDownloadDir,
-      shallow: true,
-    })
-    return ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
-  }
+  const templateDownloadDir = joinPath(tmpDir, 'download')
+  await mkdir(templateDownloadDir)
+  await onGetTemplateRepository(url, templateDownloadDir)
+  return ensureDownloadedExtensionFlavorExists(extensionFlavor, templateDownloadDir)
 }

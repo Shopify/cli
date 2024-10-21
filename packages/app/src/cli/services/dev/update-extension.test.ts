@@ -1,6 +1,7 @@
 import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {
   placeholderAppConfiguration,
+  testFunctionExtension,
   testDeveloperPlatformClient,
   testPaymentExtensions,
   testThemeExtensions,
@@ -14,7 +15,9 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
+vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
@@ -181,6 +184,50 @@ describe('updateExtensionDraft()', () => {
           theme_extension: {
             files: {[filepath]: base64Content},
           },
+        }),
+      })
+    })
+  })
+
+  test('updates draft successfully for function app extension', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testFunctionExtension({dir: tmpDir})
+      const moduleId = 'moduleId'
+
+      vi.mocked(randomUUID).mockReturnValue(moduleId)
+
+      const filepath = 'index.wasm'
+      const content = 'test content'
+      const base64Content = Buffer.from(content).toString('base64')
+      await mkdir(joinPath(mockExtension.directory, 'dist'))
+      await writeFile(joinPath(mockExtension.directory, 'dist', filepath), content)
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+      })
+
+      expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
+        apiKey,
+        context: '',
+        handle: mockExtension.handle,
+        registrationId,
+        config: JSON.stringify({
+          title: 'test function extension',
+          module_id: moduleId,
+          description: 'description',
+          app_key: 'mock-api-key',
+          api_type: 'product_discounts',
+          api_version: '2022-07',
+          enable_creation_ui: true,
+          localization: {},
+          uploaded_files: {'dist/index.wasm': base64Content},
         }),
       })
     })

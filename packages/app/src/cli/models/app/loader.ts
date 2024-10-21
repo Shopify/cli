@@ -20,7 +20,7 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
@@ -233,6 +233,27 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
   return loader.loaded()
 }
 
+export async function loadAppUsingConfigurationState<TConfig extends AppConfigurationState>(
+  configState: TConfig,
+  {
+    specifications,
+    remoteFlags,
+    mode,
+  }: {
+    specifications: RemoteAwareExtensionSpecification[]
+    remoteFlags?: Flag[]
+    mode: AppLoaderMode
+  },
+): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
+  const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
+
+  const loader = new AppLoader({
+    mode,
+    loadedConfiguration,
+  })
+  return loader.loaded()
+}
+
 /**
  * Given basic information about an app's configuration state, what should the validated configuration type be?
  */
@@ -380,6 +401,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           joinPath(websOfType[1]!.directory, configurationFileNames.web),
         )
       }
@@ -506,20 +528,21 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
-          const {extensions, ...restConfig} = mergedConfig
-          if (!restConfig.handle) {
+
+          // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
+          if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+              outputContent`Missing handle for extension "${mergedConfig.name}" at ${relativePath(
                 appDirectory,
                 configurationPath,
               )}`,
               undefined,
               configurationPath,
             )
-            restConfig.handle = 'unknown-handle'
+            mergedConfig.handle = 'unknown-handle'
           }
-          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
+          return this.createExtensionInstance(mergedConfig.type, mergedConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
@@ -620,7 +643,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   ) {
     if (!extensionInstance) return
 
-    const configContent = await extensionInstance.commonDeployConfig(apiKey, appConfiguration)
+    const configContent = await extensionInstance.deployConfig({apiKey, appConfiguration})
     return configContent ? extensionInstance : undefined
   }
 
@@ -631,7 +654,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         await Promise.all(
           ['index']
             .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .flatMap((fileName) => [`src/${fileName}`, fileName])
             .map((relativePath) => joinPath(directory, relativePath))
             .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
         )
@@ -748,7 +771,7 @@ interface AppConfigurationStateBasics {
   configurationFileName: AppConfigurationFileName
 }
 
-type AppConfigurationStateLinked = AppConfigurationStateBasics & {
+export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
   state: 'connected-app'
   basicConfiguration: BasicAppConfigurationWithoutModules
 }
@@ -1029,6 +1052,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     outputDebug('Unable to decide project type as no web backend')
     return
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const {directory} = backendWebs[0]!
 
   const nodeConfigFile = joinPath(directory, 'package.json')

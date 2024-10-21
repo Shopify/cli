@@ -7,16 +7,12 @@ import {
   partitionThemeFiles,
   readThemeFile,
 } from './theme-fs.js'
-import {
-  getPatternsFromShopifyIgnore,
-  applyIgnoreFilters,
-  raiseWarningForNonExplicitGlobPatterns,
-} from './asset-ignore.js'
+import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
 import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'events'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
@@ -57,10 +53,10 @@ describe('theme-fs', () => {
           fsEntry({checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'}),
           fsEntry({checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'}),
           fsEntry({checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'}),
-          fsEntry({checksum: '94d575574a070397f297a2e9bb32ce7d', key: 'locales/en.default.json'}),
+          fsEntry({checksum: '0b2f0aa705a4eb2b4740e2ed68bc043f', key: 'locales/en.default.json'}),
           fsEntry({checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'}),
           fsEntry({checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'}),
-          fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
+          fsEntry({checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'}),
         ]),
         unsyncedFileKeys: new Set(),
         ready: expect.any(Function),
@@ -240,7 +236,7 @@ describe('theme-fs', () => {
   })
 
   describe('themeFileSystem.read', async () => {
-    test('"read" returns returns the content from the local disk and updates the file map', async () => {
+    test('"read" returns the content from the local disk and updates the file map', async () => {
       // Given
       const root = 'src/cli/utilities/fixtures/theme'
       const key = 'templates/404.json'
@@ -249,7 +245,7 @@ describe('theme-fs', () => {
       const file = themeFileSystem.files.get(key)
       expect(file).toEqual({
         key: 'templates/404.json',
-        checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+        checksum: '64caf742bd427adcf497bffab63df30c',
         value: expect.any(String),
         attachment: '',
         stats: {size: expect.any(Number), mtime: expect.any(Number)},
@@ -262,7 +258,7 @@ describe('theme-fs', () => {
       // Then
       expect(themeFileSystem.files.get(key)).toEqual({
         key: 'templates/404.json',
-        checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+        checksum: '64caf742bd427adcf497bffab63df30c',
         value: content,
         attachment: '',
         stats: {size: content?.length, mtime: expect.any(Number)},
@@ -279,7 +275,6 @@ describe('theme-fs', () => {
       const themeFileSystem = mountThemeFileSystem(root, options)
       await themeFileSystem.ready()
 
-      expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
       expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
       expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
       expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
@@ -451,6 +446,7 @@ describe('theme-fs', () => {
       expect(isTextFile('assets/style1.css')).toBeTruthy()
       expect(isTextFile('assets/style2.scss')).toBeTruthy()
       expect(isTextFile('assets/style3.sass')).toBeTruthy()
+      expect(isTextFile('assets/icon.svg')).toBeTruthy()
       expect(isTextFile('sections/template.liquid')).toBeTruthy()
       expect(isTextFile('templates/cart.json')).toBeTruthy()
     })
@@ -509,6 +505,7 @@ describe('theme-fs', () => {
         attachment: '',
         stats: {size: 100, mtime: 100},
       })
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -562,7 +559,10 @@ describe('theme-fs', () => {
 
       // Then
       expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
-      expect(outputDebug).toHaveBeenCalledWith('Failed to delete file "assets/base.css" from remote theme.')
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Failed to delete file "assets/base.css" from remote theme.',
+        body: expect.any(String),
+      })
     })
   })
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
   ActiveAppVersion,
@@ -151,10 +152,6 @@ import {
   DevStoresByOrgQuery,
   DevStoresByOrgQueryVariables,
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
-import {
-  FunctionUploadUrlGenerate,
-  FunctionUploadUrlGenerateMutation,
-} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -177,7 +174,7 @@ function getAppVars(
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
       requestedAccessScopes: scopesArray ?? [],
@@ -186,7 +183,7 @@ function getAppVars(
   } else {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
       requestedAccessScopes: scopesArray ?? [],
@@ -405,10 +402,6 @@ export class PartnersClient implements DeveloperPlatformClient {
         }
       }),
     }
-  }
-
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
-    return this.requestDoc(FunctionUploadUrlGenerate)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {

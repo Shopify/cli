@@ -25,11 +25,15 @@ describe('hot-reload server', () => {
     const testSectionType = 'my-test'
     const testSectionFileKey = `sections/${testSectionType}.liquid`
     const assetJsonKey = 'templates/asset.json'
+    const liquidAssetKey = 'assets/style.css.liquid'
     const assetJsonValue = {
       sections: {first: {type: testSectionType}, second: {type: testSectionType}, third: {type: 'something-else'}},
     }
     const {ctx, addEventListenerSpy, triggerFileEvent, nextTick, hotReloadHandler} = createTestContext({
-      files: [[assetJsonKey, JSON.stringify(assetJsonValue)]],
+      files: [
+        [assetJsonKey, JSON.stringify(assetJsonValue)],
+        [liquidAssetKey, ''],
+      ],
     })
 
     await setupInMemoryTemplateWatcher(ctx)
@@ -125,10 +129,19 @@ describe('hot-reload server', () => {
     // Removes the JSON file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
     await nextTick()
-    const hotReloadEventsLengthBeforeChange = hotReloadEvents.length
+
+    // -- Unlinks CSS Liquid files
+    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', liquidAssetKey)
+    // We wait for syncing to finish on liquid assets before emitting a full reload event:
+    await nextTick()
+    expect(unlinkSyncSpy).toHaveBeenCalled()
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${liquidAssetKey}"}`)
+    // Removes the CSS Liquid file from memory:
+    expect(getInMemoryTemplates(ctx)).toEqual({})
+
     // Since the JSON file was removed, the section file is not referenced anymore:
     await triggerFileEvent('change', testSectionFileKey)
-    expect(hotReloadEvents).toHaveLength(hotReloadEventsLengthBeforeChange)
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${testSectionFileKey}"}`)
     await nextTick()
 
     // -- Updates section groups:
@@ -165,7 +178,8 @@ describe('hot-reload server', () => {
     // Emits a CSS HotReload event after syncing:
     expect(cssLiquidSyncSpy).toHaveBeenCalled()
     await nextTick()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${cssLiquidFileKey}"}`)
+    // Removes the `.liquid` extension before sending it to the browser:
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"css","key":"${cssLiquidFileKey.replace('.liquid', '')}"}`)
 
     // -- Updates other files:
     const jsFileKey = 'assets/something.js'
@@ -270,6 +284,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
 
   /** Updates the fake file system and triggers events */
   const triggerFileEvent = async <T extends ThemeFSEventName>(event: T, fileKey: string, content = 'default-value') => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
     const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
     const contentSpy = vi.fn((fn) => fn(content))
     const syncSpy = vi.fn((fn) => {
@@ -287,13 +302,13 @@ function createTestContext(options?: {files?: [string, string][]}) {
       upsertFile(fileKey, content)
     }
 
-    handler(isUnlink ? {fileKey} : {fileKey, onContent: contentSpy, onSync: syncSpy})
+    handler(isUnlink ? {fileKey, onSync: syncSpy} : {fileKey, onContent: contentSpy, onSync: syncSpy})
 
     // Waits for the event to be processed. Since we are using a tick here,
     // the previous async operations need to be deferred by at least 2 ticks.
     await nextTick()
 
-    return isUnlink ? {} : {contentSpy, syncSpy}
+    return isUnlink ? {syncSpy} : {contentSpy, syncSpy}
   }
 
   const ctx: DevServerContext = {

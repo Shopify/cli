@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {Command} from './Command.js'
 import {Link} from './Link.js'
 import {List} from './List.js'

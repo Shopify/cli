@@ -7,6 +7,7 @@ import {
 } from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
+import {configWithoutFirstClassFields} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -47,15 +48,20 @@ export async function updateExtensionDraft({
     // When updating just the theme extension draft, upload the files as part of the config.
     config = await themeExtensionConfig(extension)
   } else {
-    config = (await extension.deployConfig({apiKey, developerPlatformClient, appConfiguration})) || {}
+    config = (await extension.deployConfig({apiKey, appConfiguration})) || {}
   }
 
+  const draftableConfig: {[key: string]: unknown} = {
+    ...config,
+    serialized_script: encodedFile,
+  }
+  if (extension.isFunctionExtension) {
+    const compiledFiles = await readFile(extension.outputPath, {encoding: 'base64'})
+    draftableConfig.uploaded_files = {'dist/index.wasm': compiledFiles}
+  }
   const extensionInput: ExtensionUpdateDraftMutationVariables = {
     apiKey,
-    config: JSON.stringify({
-      ...config,
-      serialized_script: encodedFile,
-    }),
+    config: JSON.stringify(draftableConfig),
     handle: extension.handle,
     context: extension.contextValue,
     registrationId,
@@ -105,7 +111,8 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
       )
     }
 
-    configObject = {...configuration, ...extensionConfig}
+    const mergedConfig = {...configuration, ...extensionConfig}
+    configObject = configWithoutFirstClassFields(mergedConfig)
   }
 
   const newConfig = await parseConfigurationObjectAgainstSpecification(

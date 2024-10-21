@@ -84,6 +84,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
         },
         onReloadAndBuildError: async (error) => {
           if (error instanceof FatalError) {
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             setError(`Fatal error while reloading and building extension: ${error.formattedMessage || error.message}`)
           } else {
             setError(`Error while reloading and building extension: ${error.message}`)
@@ -124,7 +125,7 @@ async function runFunctionRunnerWithLogInput(
   let functionRunnerOutput = ''
   const customStdout = new Writable({
     write(chunk, _encoding, next) {
-      functionRunnerOutput += chunk
+      functionRunnerOutput += chunk as string
       next()
     },
   })

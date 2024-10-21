@@ -1,12 +1,19 @@
 import {ensureValidPassword} from './storefront-password-prompt.js'
 import {isStorefrontPasswordProtected, isStorefrontPasswordCorrect} from './storefront-session.js'
-import {getStorefrontPassword, removeStorefrontPassword, setStorefrontPassword} from '../../services/local-storage.js'
+import {
+  getStorefrontPassword,
+  getThemeStore,
+  removeStorefrontPassword,
+  setStorefrontPassword,
+} from '../../services/local-storage.js'
+import {ensureThemeStore} from '../theme-store.js'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, beforeEach, vi, test, expect} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../theme-environment/storefront-session.js')
 vi.mock('../../services/local-storage.js')
+vi.mock('../theme-store.js')
 vi.mock('../utilities/repl-theme-manager.js', () => {
   const REPLThemeManager = vi.fn()
   REPLThemeManager.prototype.findOrCreate = () => ({
@@ -90,5 +97,18 @@ describe('ensureValidPassword', () => {
     expect(renderTextPrompt).toHaveBeenCalled()
     expect(setStorefrontPassword).toHaveBeenCalledWith('correctPassword')
     expect(removeStorefrontPassword).toHaveBeenCalled()
+  })
+
+  test('should call ensureThemeStore with the store URL', async () => {
+    // Given
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
+    vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
+    vi.mocked(getThemeStore).mockReturnValue(undefined as any)
+
+    // When
+    await ensureValidPassword('testPassword', 'test-store')
+
+    // Then
+    expect(ensureThemeStore).toHaveBeenCalledWith({store: 'test-store'})
   })
 })

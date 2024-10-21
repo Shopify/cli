@@ -18,10 +18,13 @@ import {
   PackageJsonNotFoundError,
   UnknownPackageManagerError,
   checkForCachedNewVersion,
+  inferPackageManager,
+  PackageManager,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
+import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
@@ -29,6 +32,7 @@ import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 vi.mock('../../version.js')
 vi.mock('./system.js')
 vi.mock('latest-version')
+vi.mock('./is-global')
 
 const mockedExec = vi.mocked(exec)
 const mockedCaptureOutput = vi.mocked(captureOutput)
@@ -990,5 +994,36 @@ describe('addNPMDependencies', () => {
         }),
       ).rejects.toThrowError(UnknownPackageManagerError)
     })
+  })
+})
+
+describe('inferPackageManager', () => {
+  test('returns the package manager when a valid one is provided in options', () => {
+    expect(inferPackageManager('yarn')).toBe('yarn')
+    expect(inferPackageManager('npm')).toBe('npm')
+    expect(inferPackageManager('pnpm')).toBe('pnpm')
+    expect(inferPackageManager('bun')).toBe('bun')
+  })
+
+  test('ignores invalid package manager in options', () => {
+    const mockEnv = {npm_config_user_agent: 'npm/1.0.0'}
+    expect(inferPackageManager('invalid' as PackageManager, mockEnv)).toBe('npm')
+  })
+
+  test('infers package manager from user agent when not provided in options', () => {
+    const mockEnv = {npm_config_user_agent: 'yarn/1.22.0'}
+    expect(inferPackageManager(undefined, mockEnv)).toBe('yarn')
+  })
+
+  test('infers package manager from global CLI when not in options or user agent', () => {
+    const mockEnv = {}
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
+    expect(inferPackageManager(undefined, mockEnv)).toBe('pnpm')
+  })
+
+  test('defaults to npm when no other method succeeds', () => {
+    const mockEnv = {}
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
+    expect(inferPackageManager(undefined, mockEnv)).toBe('npm')
   })
 })

@@ -158,7 +158,8 @@
           "pin-github-action",
           "react",
           "@graphql-codegen/near-operation-file-preset",
-          "graphql-codegen-typescript-operation-types"
+          "graphql-codegen-typescript-operation-types",
+          "esbuild"
         ],
         "ignore": [
           "configurations/vite.config.ts"
@@ -191,8 +192,7 @@
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
-          "@ast-grep/napi",
-          "@parcel/watcher"
+          "@ast-grep/napi"
         ],
         "vite": {
           "config": [
@@ -255,6 +255,9 @@
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
           "**/public/**/*.{ts,tsx}!"
+        ],
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreBinaries": [

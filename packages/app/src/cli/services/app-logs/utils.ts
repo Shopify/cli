@@ -5,7 +5,6 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
   ErrorResponse,
-  AppLogPayload,
   AppLogData,
 } from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -175,7 +174,7 @@ export const toFormattedAppLogJson = ({
   prettyPrint = true,
 }: {
   appLog: AppLogData
-  appLogPayload: AppLogPayload | unknown
+  appLogPayload: unknown
   prettyPrint: boolean
   storeName: string
 }): string => {
@@ -203,7 +202,7 @@ export const toFormattedAppLogJson = ({
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const parseAppLogPayload = (payload: string, logType: string): AppLogPayload | any => {
+export const parseAppLogPayload = (payload: string, logType: string): any => {
   const parsedPayload = camelcaseKeys(JSON.parse(payload), {deep: true})
 
   if (logType === LOG_TYPE_FUNCTION_RUN) {
@@ -233,7 +232,7 @@ export const subscribeToAppLogs = async (
     outputWarn('App log streaming is not available in this session.')
     throw new AbortError(errorOutput)
   } else {
-    outputDebug(`Subscribed to App Events for shop ID(s) ${variables.shopIds}`)
+    outputDebug(`Subscribed to App Events for shop ID(s) ${variables.shopIds.join(', ')}`)
     outputDebug(`Success: ${success}\n`)
   }
   return jwtToken
@@ -250,6 +249,6 @@ export function prettyPrintJsonIfPossible(json: unknown) {
       return json
     }
   } catch (error) {
-    throw new Error(`Error parsing JSON: ${error}`)
+    throw new Error(`Error parsing JSON: ${error as string}`)
   }
 }

@@ -23,6 +23,7 @@ export async function selectApp(): Promise<OrganizationApp> {
     hasMorePages,
   )
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedApp)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return fullSelectedApp!
 }
 

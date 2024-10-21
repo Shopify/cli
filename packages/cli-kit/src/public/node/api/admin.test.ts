@@ -1,5 +1,5 @@
 import * as admin from './admin.js'
-import {graphqlRequest} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../../../public/node/http.js'
@@ -34,17 +34,20 @@ describe('admin-graphql-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {
     // Given
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequestDoc).mockResolvedValue(mockedResult)
 
     // When
     await admin.adminRequest('query', Session, {})
 
     // Then
-    expect(graphqlRequest).toHaveBeenCalledTimes(2)
+    expect(graphqlRequest).toHaveBeenCalledTimes(1)
+    expect(graphqlRequestDoc).toHaveBeenCalledTimes(1)
   })
 
   test('request is called with correct parameters', async () => {
     // Given
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequestDoc).mockResolvedValue(mockedResult)
 
     // When
     await admin.adminRequest('query', Session, {variables: 'variables'})

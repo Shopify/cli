@@ -43,7 +43,7 @@ describe('extension-to-toml', () => {
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "marketing_activity"
-name = "test mae"
+name = "mae @ test! 123"
 handle = "mae-test-123"
 title = "test mae"
 description = "test mae description"
@@ -69,12 +69,12 @@ is_automation = false
 `)
   })
 
-  test('truncates the handle if the title has >30 characters', () => {
+  test('truncates the handle if the title has >50 characters', () => {
     // Given
     const extension: ExtensionRegistration = {
       id: '26237698049',
       uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
-      title: 'mae @ test! 12345555555554444447777778888888',
+      title: 'mae @ test! 1234555555555444444777777888888812345555555554444447777778888888',
       type: 'marketing_activity_extension',
       draftVersion: {
         config: JSON.stringify(defaultDashboardConfig),
@@ -85,7 +85,7 @@ is_automation = false
     const got = buildTomlObject(extension)
 
     // Then
-    expect(got).toContain('handle = "mae-test-123455555555544444"')
+    expect(got).toContain('handle = "mae-test-12345555555554444447777778888888123455"')
   })
 
   test('sets the channel and referring domain to empty string if no platform mapping is found', () => {

@@ -89,7 +89,7 @@ export type ReadOptions =
   | undefined
   | {flag?: string | undefined}
   | {
-      encoding: BufferEncoding | string
+      encoding: string
       flag?: string | undefined
     }
 export async function readFile(path: string, options?: ReadOptions): Promise<string>
@@ -334,7 +334,7 @@ export function fileSizeSync(path: string): number {
  * @returns A promise that resolves when the file is unlinked.
  */
 export function unlinkFileSync(path: string): void {
-  return fsUnlinkSync(path)
+  fsUnlinkSync(path)
 }
 
 /**
@@ -522,6 +522,7 @@ export async function findPathUp(
 
 export interface MatchGlobOptions {
   matchBase: boolean
+  noglobstar: boolean
 }
 
 /**
@@ -531,6 +532,6 @@ export interface MatchGlobOptions {
  * @param options - The options to refine the matching approach.
  * @returns true if the key matches the pattern, false otherwise.
  */
-export function matchGlob(key: string, pattern: string, options: MatchGlobOptions = {matchBase: true}): boolean {
+export function matchGlob(key: string, pattern: string, options?: MatchGlobOptions): boolean {
   return minimatch(key, pattern, options)
 }

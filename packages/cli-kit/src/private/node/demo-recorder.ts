@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {isTruthy} from '../../public/node/context/utilities.js'
 
 interface Event {

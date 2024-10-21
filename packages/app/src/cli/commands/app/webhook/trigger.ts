@@ -2,11 +2,11 @@ import {DELIVERY_METHOD, WebhookTriggerFlags} from '../../../services/webhook/tr
 import {webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Flags} from '@oclif/core'
-import Command from '@shopify/cli-kit/node/base-command'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class WebhookTrigger extends Command {
+export default class WebhookTrigger extends AppCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
 
   static descriptionWithMarkdown = `
@@ -85,7 +85,7 @@ export default class WebhookTrigger extends Command {
     }),
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(WebhookTrigger)
 
     const usedFlags: WebhookTriggerFlags = {
@@ -107,6 +107,7 @@ export default class WebhookTrigger extends Command {
       })
     }
 
-    await webhookTriggerService(usedFlags)
+    const result = await webhookTriggerService(usedFlags)
+    return {app: result.app}
   }
 }

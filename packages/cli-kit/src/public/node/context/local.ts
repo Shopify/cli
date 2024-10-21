@@ -114,22 +114,6 @@ export function firstPartyDev(env = process.env): boolean {
 }
 
 /**
- * Returns true if the CLI should use device auth.
- *
- * Device auth can be opted out by using SHOPIFY_CLI_ACCESS_CODE_AUTH.
- *
- * @param env - The environment variables from the environment of the current process.
- * @returns True if SHOPIFY_CLI_DEVICE_AUTH is truthy or the CLI is run from a cloud environment.
- */
-export function useDeviceAuth(env = process.env): boolean {
-  return (
-    !isTruthy(env[environmentVariables.accessCodeAuth]) ||
-    isTruthy(env[environmentVariables.deviceAuth]) ||
-    isCloudEnvironment(env)
-  )
-}
-
-/**
  * Returns true if the CLI should use theme bundling.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -190,6 +174,16 @@ export function codespacePortForwardingDomain(env = process.env): string | undef
  */
 export function isCloudEnvironment(env: NodeJS.ProcessEnv = process.env): boolean {
   return cloudEnvironment(env).platform !== 'localhost'
+}
+
+/**
+ * The token used to run a theme command with a custom password.
+ *
+ * @param env - Environment variables used when the cli is launched.
+ * @returns A string with the token.
+ */
+export function themeToken(env = process.env): string | undefined {
+  return env[environmentVariables.themeToken]
 }
 
 /**

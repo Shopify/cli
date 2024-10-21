@@ -1,6 +1,6 @@
 import {
   exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
+  exchangeCustomPartnerToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -9,6 +9,7 @@ import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import {getLastSeenUserIdAfterAuth} from '../session.js'
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -47,42 +48,6 @@ beforeEach(() => {
 afterAll(() => {
   // Restore Date mock
   vi.useRealTimers()
-})
-
-describe('exchange code for identity token', () => {
-  const code = {code: 'code', codeVerifier: 'verifier'}
-
-  test('obtains an identity token from a authorization code', async () => {
-    // Given
-    const response = new Response(JSON.stringify(data))
-    vi.mocked(shopifyFetch).mockResolvedValue(response)
-
-    // When
-    const got = await exchangeCodeForAccessToken(code)
-
-    // Then
-    expect(shopifyFetch).toBeCalledWith(
-      'https://fqdn.com/oauth/token?grant_type=authorization_code&code=code&redirect_uri=http%3A%2F%2F127.0.0.1%3A3456&client_id=clientId&code_verifier=verifier',
-      {method: 'POST'},
-    )
-    expect(got).toEqual(identityToken)
-  })
-
-  test('Throws HTTP error if the request fails', () => {
-    // Given
-    const responseBody = {
-      error: 'invalid_grant',
-      error_description: 'Invalid grant',
-    }
-    const response = new Response(JSON.stringify(responseBody), {status: 500})
-    vi.mocked(shopifyFetch).mockResolvedValue(response)
-
-    // When
-    const got = () => exchangeCodeForAccessToken(code)
-
-    // Then
-    return expect(got).rejects.toThrowError()
-  })
 })
 
 describe('exchange identity token for application tokens', () => {
@@ -226,5 +191,33 @@ describe('refresh access tokens', () => {
 
     // Then
     return expect(got).rejects.toThrowError(AbortError)
+  })
+})
+
+describe('exchangeCustomPartnerToken', () => {
+  const token = 'customToken'
+
+  // Generated from `customToken` using `nonRandomUUID()`
+  const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
+
+  test('returns access token and user ID for a valid token', async () => {
+    // Given
+    const data = {
+      access_token: 'access_token',
+      expires_in: 300,
+      scope: 'scope,scope2',
+    }
+    // Given
+    const response = new Response(JSON.stringify(data))
+
+    // Need to do it 3 times because a Response can only be used once
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const result = await exchangeCustomPartnerToken(token)
+
+    // Then
+    expect(result).toEqual({accessToken: 'access_token', userId})
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(userId)
   })
 })
