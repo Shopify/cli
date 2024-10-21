@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
@@ -398,6 +399,7 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
       result[key] = defaultAppConfigReverseTransform(innerSchema, content)
     } else {
       if (content[key] !== undefined) result[key] = content[key]
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete content[key]
     }
     return result

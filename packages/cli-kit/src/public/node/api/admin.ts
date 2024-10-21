@@ -61,6 +61,7 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
  */
 async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<string> {
   const apiVersions = await supportedApiVersions(session)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return apiVersions.reverse()[0]!
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrgFromId, fetchOrganizations, fetchStoreByDomain} from './dev/fetch.js'
 import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
@@ -5,9 +6,9 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
-import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -164,7 +165,9 @@ export async function ensureDevContext(options: DevContextOptions): Promise<DevC
       },
     }
     localApp.configuration = newConfiguration
-    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
+
+    const patch = {build: {dev_store_url: selectedStore?.shopDomain}}
+    await patchAppConfigurationFile({path: configuration.path, patch, schema: localApp.configSchema})
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -225,7 +228,7 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
   return app
 }
 
-export const storeFromFqdn = async (
+const storeFromFqdn = async (
   storeFqdn: string,
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
@@ -397,8 +400,8 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
 
-  await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
-
+  const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
+  await patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 

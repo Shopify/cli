@@ -54,7 +54,7 @@ const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, r
               <Text>
                 <Text color="green">{prefix.logTimestamp} </Text>
                 <Text color="blueBright">{`${prefix.storeName.split('.')[0]}`} </Text>
-                <Text color="blueBright">{`${prefix.source}`} </Text>
+                <Text color="blueBright">{prefix.source} </Text>
                 <Text color={prefix.status === 'Success' ? 'green' : 'red'}>{prefix.status} </Text>
                 <Text>{prefix.description}</Text>
               </Text>

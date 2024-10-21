@@ -33,7 +33,7 @@ import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 /**
  * A scope supported by the Shopify Admin API.
  */
-type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
+export type AdminAPIScope = 'graphql' | 'themes' | 'collaborator'
 
 /**
  * It represents the options to authenticate against the Shopify Admin API.
@@ -49,7 +49,7 @@ interface AdminAPIOAuthOptions {
 /**
  * A scope supported by the Partners API.
  */
-type PartnersAPIScope = 'cli' | string
+export type PartnersAPIScope = 'cli'
 interface PartnersAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: PartnersAPIScope[]
@@ -58,7 +58,7 @@ interface PartnersAPIOAuthOptions {
 /**
  * A scope supported by the Developer Platform API.
  */
-type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage' | string
+export type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage'
 interface AppManagementAPIOauthOptions {
   /** List of scopes to request permissions for. */
   scopes: AppManagementAPIScope[]
@@ -67,13 +67,13 @@ interface AppManagementAPIOauthOptions {
 /**
  * A scope supported by the Storefront Renderer API.
  */
-type StorefrontRendererScope = 'devtools' | string
+export type StorefrontRendererScope = 'devtools'
 interface StorefrontRendererAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: StorefrontRendererScope[]
 }
 
-type BusinessPlatformScope = 'destinations' | string
+export type BusinessPlatformScope = 'destinations'
 interface BusinessPlatformAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: BusinessPlatformScope[]
@@ -193,6 +193,7 @@ export async function ensureAuthenticated(
   }
 
   const currentSession = (await secureStore.fetch()) || {}
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 

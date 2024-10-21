@@ -41,6 +41,7 @@ export async function setupPreviewThemeAppExtensionsProcess(
     return
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const themeExtension = themeExtensions[0]!
   const themeExtensionDirectory = themeExtension.directory
   const themeExtensionPort = options.themeExtensionPort ?? 9293

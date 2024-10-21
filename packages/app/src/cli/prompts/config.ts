@@ -50,6 +50,7 @@ export async function selectConfigFile(directory: string): Promise<Result<string
   const files = (await findConfigFiles(directory)).map((path) => basename(path))
 
   if (files.length === 0) return err('Could not find any shopify.app.toml file in the directory.')
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   if (files.length === 1) return ok(files[0]!)
 
   const chosen = await renderSelectPrompt({

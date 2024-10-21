@@ -17,6 +17,7 @@ import {restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('@shopify/cli-kit/node/system')
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
 
@@ -261,7 +262,7 @@ describe('deleteThemeAsset', () => {
     expect(output).toBe(true)
   })
 
-  test('returns empty object when attemping to delete an nonexistent asset', async () => {
+  test('returns true when attemping to delete an nonexistent asset', async () => {
     // Given
     const id = 123
     const key = 'snippets/product-variant-picker.liquid'
@@ -277,7 +278,7 @@ describe('deleteThemeAsset', () => {
 
     // Then
     expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
-    expect(output).toBe(false)
+    expect(output).toBe(true)
   })
 })
 
@@ -305,9 +306,14 @@ describe('deleteTheme', () => {
 })
 
 describe('request errors', () => {
-  const httpErrors = [401, 403, 500, 999]
+  const httpResponses = [
+    {httpError: 401, expectedRetries: 3},
+    {httpError: 403, expectedRetries: 1},
+    {httpError: 500, expectedRetries: 3},
+    {httpError: 999, expectedRetries: 1},
+  ]
 
-  httpErrors.forEach((httpError) => {
+  httpResponses.forEach(({httpError, expectedRetries}) => {
     test(`${httpError} errors`, async () => {
       // Given
       vi.mocked(restRequest).mockResolvedValue({
@@ -316,12 +322,12 @@ describe('request errors', () => {
         headers: {},
       })
 
-      await expect(async () => {
-        // When
-        return deleteTheme(1, session)
+      // When
+      const deletePromise = async () => deleteTheme(1, session)
 
-        // Then
-      }).rejects.toThrowError(AbortError)
+      // Then
+      await expect(deletePromise).rejects.toThrowError(AbortError)
+      expect(restRequest).toBeCalledTimes(expectedRetries)
     })
   })
 })

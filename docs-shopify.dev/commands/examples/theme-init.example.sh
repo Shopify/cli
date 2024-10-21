@@ -1,1 +1,1 @@
-theme:init [name]
+theme init [name]

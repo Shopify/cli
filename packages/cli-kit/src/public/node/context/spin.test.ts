@@ -342,7 +342,7 @@ describe('fetchSpinPort', () => {
   ) {
     const portPath =
       spinVersion === '2' ? joinPath(tmpDir, 'ports2', service, 'custom') : joinPath(tmpDir, 'ports', service, 'proc')
-    const content = spinVersion === '2' ? `[{"internal":${port}}]` : `${port}`
+    const content = spinVersion === '2' ? `[{"internal":${port}}]` : port
     return mkdir(portPath).then(() => writeFile(joinPath(portPath, portName), content))
   }
 })

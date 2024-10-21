@@ -49,12 +49,9 @@
     },
     "lint": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "lint:js"
-      ],
       "options": {
-        "cwd": "packages/cli-kit",
-        "commands": []
+        "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
+        "cwd": "packages/cli-kit"
       }
     },
     "lint:ruby": {
@@ -64,24 +61,7 @@
         "cwd": "packages/cli-kit/assets/cli-ruby"
       }
     },
-    "lint:js": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
-        "cwd": "packages/cli-kit"
-      }
-    },
     "lint:fix": {
-      "executor": "nx:run-commands",
-      "dependsOn": [
-        "lint:js:fix"
-      ],
-      "options": {
-        "cwd": "packages/cli-kit",
-        "commands": []
-      }
-    },
-    "lint:js:fix": {
       "executor": "nx:run-commands",
       "options": {
         "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",

@@ -144,3 +144,24 @@ export async function fetchStoreByDomain(
 
   return {organization: parsedOrg, store}
 }
+
+/**
+ * Returns the store based on given domain.
+ * Throws error if a store with that domain doesn't exist in the organization.
+ *
+ * @param org - Organization
+ * @param storeFqdn - store domain fqdn
+ * @param developerPlatformClient - The client to access the platform API
+ */
+export async function fetchStore(
+  org: Organization,
+  storeFqdn: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<OrganizationStore> {
+  const result: FindStoreByDomainSchema = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
+  const store = result.organizations.nodes[0]?.stores.nodes[0]
+
+  if (!store) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
+
+  return store
+}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -111,7 +112,7 @@ export function getAppVersionedSchema(
   allowDynamicallySpecifiedConfigs = false,
 ): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const schema = specs.reduce((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema as any)
+  const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
 
   if (allowDynamicallySpecifiedConfigs) {
     return schema.passthrough()

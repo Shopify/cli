@@ -409,6 +409,7 @@ We recommend removing the @shopify/cli and @shopify/app dependencies from your p
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           joinPath(websOfType[1]!.directory, configurationFileNames.web),
         )
       }
@@ -661,7 +662,7 @@ We recommend removing the @shopify/cli and @shopify/app dependencies from your p
         await Promise.all(
           ['index']
             .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .flatMap((fileName) => [`src/${fileName}`, fileName])
             .map((relativePath) => joinPath(directory, relativePath))
             .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
         )
@@ -1059,6 +1060,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     outputDebug('Unable to decide project type as no web backend')
     return
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const {directory} = backendWebs[0]!
 
   const nodeConfigFile = joinPath(directory, 'package.json')

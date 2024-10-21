@@ -63,14 +63,14 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
     duration = Math.round(t1 - t0)
 
     if (err instanceof ClientError) {
-      if (err.response?.headers) {
-        for (const [key, value] of err.response?.headers as Iterable<[string, string]>) {
+      if (err.response.headers) {
+        for (const [key, value] of err.response.headers as Iterable<[string, string]>) {
           if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
         }
       }
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
-      if (err.response.errors?.some((error) => error.extensions?.code === '429') || err.response.status === 429) {
+      if (err.response.errors?.some((error) => error.extensions.code === '429') || err.response.status === 429) {
         let delayMs: number | undefined
 
         try {
@@ -122,7 +122,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
   const result = await makeVerboseRequest({request, url})
 
@@ -161,7 +161,7 @@ ${result.sanitizedHeaders}
 
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
   retryOptions: {
     limitRetriesTo?: number
     defaultDelayMs?: number
@@ -215,10 +215,10 @@ ${result.sanitizedHeaders}
     outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${retryDelayMs} ms`)
 
     // eslint-disable-next-line no-await-in-loop
-    result = await new Promise<VerboseResponse<T>>((resolve) =>
+    result = await new Promise<VerboseResponse<T>>((resolve) => {
       retryOptions.scheduleDelay(() => {
         resolve(makeVerboseRequest({request, url}))
-      }, retryDelayMs),
-    )
+      }, retryDelayMs)
+    })
   }
 }

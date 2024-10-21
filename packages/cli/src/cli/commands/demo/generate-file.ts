@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {demoStepsSchema, DemoStep} from '../../services/demo.js'
 import zodToJsonSchema from 'zod-to-json-schema'
 import {Flags} from '@oclif/core'

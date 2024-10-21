@@ -166,3 +166,6 @@ testing.mjs
 
 # NX
 .nx
+
+# ESLint reports
+eslint-report.json

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {renderReplay} from './ui.js'
 import {runFunction} from './runner.js'
 import {AppLinkedInterface} from '../../models/app/app.js'

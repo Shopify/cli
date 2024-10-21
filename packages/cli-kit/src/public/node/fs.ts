@@ -89,7 +89,7 @@ export type ReadOptions =
   | undefined
   | {flag?: string | undefined}
   | {
-      encoding: BufferEncoding | string
+      encoding: string
       flag?: string | undefined
     }
 export async function readFile(path: string, options?: ReadOptions): Promise<string>
@@ -334,7 +334,7 @@ export function fileSizeSync(path: string): number {
  * @returns A promise that resolves when the file is unlinked.
  */
 export function unlinkFileSync(path: string): void {
-  return fsUnlinkSync(path)
+  fsUnlinkSync(path)
 }
 
 /**

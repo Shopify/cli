@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
@@ -151,7 +152,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.uid = this.configuration.uid ?? randomUUID()
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
-      this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
+      this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
     }
 
     if (this.isFunctionExtension) {
@@ -313,7 +314,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
     const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.configuration.uid ?? this.handle
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory

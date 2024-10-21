@@ -31,7 +31,7 @@ export function uploadTheme(
   options: UploadOptions = {},
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
-  const uploadResults: Map<string, Result> = new Map()
+  const uploadResults = new Map<string, Result>()
   const getProgress = (params: {current: number; total: number}) =>
     `[${Math.round((params.current / params.total) * 100)}%]`
 
@@ -379,7 +379,7 @@ async function handleBulkUpload(
       .join('\n')}`,
   )
 
-  const failedUploadResults = results.filter((result) => result.success === false)
+  const failedUploadResults = results.filter((result) => !result.success)
   if (failedUploadResults.length > 0) {
     outputDebug(
       `The following files failed to upload:\n${failedUploadResults.map((param) => `-${param.key}`).join('\n')}`,

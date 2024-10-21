@@ -51,6 +51,7 @@ export async function collectCredentials(
       configFile: basename(app.configuration.path),
     })
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const clientSecret = orgApp.apiSecretKeys.find((elm) => elm.secret)!.secret
   return {
     clientSecret,

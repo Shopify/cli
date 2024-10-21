@@ -295,6 +295,9 @@ importers:
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
+      '@typescript-eslint/eslint-plugin':
+        specifier: 7.13.1
+        version: 7.13.1(@typescript-eslint/parser@7.13.1)(eslint@8.57.0)(typescript@5.2.2)
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)

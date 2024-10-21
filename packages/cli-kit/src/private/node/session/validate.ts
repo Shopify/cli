@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
 import {validateIdentityToken} from './identity-token-validation.js'
