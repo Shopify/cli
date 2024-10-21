@@ -107,7 +107,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
 export class AppEventWatcher extends EventEmitter {
   buildOutputPath: string
   private app: AppInterface
-  private options: OutputContextOptions
+  private readonly options: OutputContextOptions
   private appURL?: string
   private esbuildManager: ESBuildContextManager
 
