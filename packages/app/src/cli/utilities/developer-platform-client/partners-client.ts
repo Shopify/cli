@@ -206,11 +206,11 @@ interface OrgAndAppsResponse {
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
-  public clientName = ClientName.Partners
-  public webUiName = 'Partner Dashboard'
-  public supportsAtomicDeployments = false
-  public requiresOrganization = false
-  public supportsDevSessions = false
+  public readonly clientName = ClientName.Partners
+  public readonly webUiName = 'Partner Dashboard'
+  public readonly supportsAtomicDeployments = false
+  public readonly requiresOrganization = false
+  public readonly supportsDevSessions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {

@@ -127,11 +127,11 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
-  public clientName = ClientName.AppManagement
-  public webUiName = 'Developer Dashboard'
-  public requiresOrganization = true
-  public supportsAtomicDeployments = true
-  public supportsDevSessions = true
+  public readonly clientName = ClientName.AppManagement
+  public readonly webUiName = 'Developer Dashboard'
+  public readonly requiresOrganization = true
+  public readonly supportsAtomicDeployments = true
+  public readonly supportsDevSessions = true
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
