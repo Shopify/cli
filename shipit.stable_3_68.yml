@@ -14,11 +14,9 @@ deploy:
     - bash -i -c "npm_config_loglevel=verbose pnpm clean"
     - bash -i -c "npm_config_loglevel=verbose NODE_ENV=production pnpm bundle"
     - bash -i -c "npm_config_loglevel=verbose node bin/create-cli-duplicate-package.js"
-    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag stable-3.68"
     # When this is no longer the latest stable version, do 2 things:
     # 1. Replace the previous line with this, replacing 3.x with the actual version:
     #    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag stable-3.x"
     #    This will prevent publishes from being tagged as latest.
     # 2. Remove the following 2 lines, which update Homebrew and Shopify.dev docs
-    - bash -i -c "./bin/package.js"
-    - bash -i -c "./bin/create-doc-pr.js"
