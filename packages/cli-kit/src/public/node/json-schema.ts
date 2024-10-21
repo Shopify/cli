@@ -1,7 +1,8 @@
 import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
-import {Ajv, ErrorObject, SchemaObject} from 'ajv'
+import {ErrorObject, SchemaObject} from 'ajv'
+import {Ajv2019} from 'ajv/dist/2019.js'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
 
 type AjvError = ErrorObject<string, {[key: string]: unknown}, unknown>
@@ -34,7 +35,7 @@ export function jsonSchemaValidate(
   subject: object,
   schema: SchemaObject,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
-  const ajv = new Ajv({allowUnionTypes: true})
+  const ajv = new Ajv2019({allowUnionTypes: true})
   const validator = ajv.compile(schema)
   validator(subject)
 
@@ -152,7 +153,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
  * @returns A simplified list of errors.
  */
 function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: SchemaObject): AjvError[] {
-  const ajv = new Ajv()
+  const ajv = new Ajv2019()
   let errors = rawErrors
 
   const resolvedUnionErrors = new Set()
@@ -184,7 +185,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
           candidateSchemaValidator(subjectValue)
 
           let score = 0
-          if (candidateSchemaFromUnion.type === 'object') {
+          if (candidateSchemaFromUnion.type === 'object' && candidateSchemaFromUnion.properties != null) {
             // provided the schema is an object, we can measure how many properties are good
             const candidatesObjectProperties = Object.keys(candidateSchemaFromUnion.properties)
             score = candidatesObjectProperties.reduce((acc, propertyName) => {
