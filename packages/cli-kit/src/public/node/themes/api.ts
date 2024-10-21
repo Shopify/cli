@@ -45,7 +45,7 @@ export async function fetchThemeAsset(id: number, key: Key, session: AdminSessio
   const response = await request('GET', `/themes/${id}/assets`, session, undefined, {
     'asset[key]': key,
   })
-  // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+
   return buildThemeAsset(response.json.asset)
 }
 
