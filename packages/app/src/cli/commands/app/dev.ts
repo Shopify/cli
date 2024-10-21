@@ -156,7 +156,6 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
-      cmd_app_reset_used: flags.reset,
       cmd_dev_tunnel_type: flags['tunnel-url'] ? 'custom' : 'cloudflare',
     }))
 

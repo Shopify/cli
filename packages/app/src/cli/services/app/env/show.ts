@@ -1,6 +1,5 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
-import {logMetadataForLoadedContext} from '../../context.js'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 type Format = 'json' | 'text'
@@ -10,8 +9,6 @@ export async function showEnv(app: AppInterface, remoteApp: OrganizationApp): Pr
 }
 
 export async function outputEnv(app: AppInterface, remoteApp: OrganizationApp, format: Format): Promise<OutputMessage> {
-  await logMetadataForLoadedContext(remoteApp)
-
   if (format === 'json') {
     return outputContent`${outputToken.json({
       SHOPIFY_API_KEY: remoteApp.apiKey,

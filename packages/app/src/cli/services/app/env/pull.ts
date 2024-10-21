@@ -1,7 +1,5 @@
 import {AppLinkedInterface, getAppScopes} from '../../../models/app/app.js'
 
-import {logMetadataForLoadedContext} from '../../context.js'
-
 import {OrganizationApp} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
@@ -15,8 +13,6 @@ interface PullEnvOptions {
 }
 
 export async function pullEnv({app, remoteApp, envFile}: PullEnvOptions): Promise<OutputMessage> {
-  await logMetadataForLoadedContext(remoteApp)
-
   const updatedValues = {
     SHOPIFY_API_KEY: remoteApp.apiKey,
     SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0]?.secret,

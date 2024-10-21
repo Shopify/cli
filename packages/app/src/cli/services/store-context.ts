@@ -2,6 +2,8 @@ import {fetchStore} from './dev/fetch.js'
 import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
+import metadata from '../metadata.js'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
 /**
  * Input options for the `storeContext` function.
@@ -46,5 +48,19 @@ export async function storeContext({
     selectedStore = await selectStore(allStores, organization, developerPlatformClient)
   }
 
+  await logMetadata(selectedStore, forceReselectStore)
+
   return selectedStore
+}
+
+async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean) {
+  await metadata.addPublicMetadata(() => ({
+    cmd_app_reset_used: resetUsed,
+    store_fqdn_hash: hashString(selectedStore.shopDomain),
+  }))
+
+  await metadata.addSensitiveMetadata(() => ({
+    store_fqdn: selectedStore.shopDomain,
+    cmd_dev_tunnel_custom: 'cus',
+  }))
 }

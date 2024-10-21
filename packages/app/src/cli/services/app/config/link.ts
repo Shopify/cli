@@ -17,12 +17,7 @@ import {
   getAppConfigurationFileName,
   loadApp,
 } from '../../../models/app/loader.js'
-import {
-  fetchOrCreateOrganizationApp,
-  logMetadataForLoadedContext,
-  appFromId,
-  InvalidApiKeyErrorMessage,
-} from '../../context.js'
+import {fetchOrCreateOrganizationApp, appFromId, InvalidApiKeyErrorMessage} from '../../context.js'
 import {
   Flag,
   DeveloperPlatformClient,
@@ -85,8 +80,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     appDirectory: localAppOptions.appDirectory,
     format: localAppOptions.configFormat,
   })
-
-  await logMetadataForLoadedContext(remoteApp)
 
   // Finally, merge the remote app's configuration with the local app's configuration, and write it to the filesystem
   const mergedAppConfiguration = await overwriteLocalConfigFileWithRemoteAppConfiguration({

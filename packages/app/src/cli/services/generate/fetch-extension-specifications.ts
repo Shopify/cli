@@ -1,6 +1,10 @@
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
+import {
+  createContractBasedModuleSpecification,
+  ExtensionSpecification,
+  RemoteAwareExtensionSpecification,
+} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
@@ -101,5 +105,13 @@ async function mergeLocalAndRemoteSpecs(
     )
   }
 
-  return result
+  const newSpecs = getArrayRejectingUndefined(
+    presentRemoteMissingLocal
+      .filter((ext) => ext.validationSchema)
+      .map((ext) => {
+        return createContractBasedModuleSpecification(ext.identifier)
+      }),
+  )
+
+  return [...result, ...newSpecs]
 }

@@ -9,7 +9,6 @@ import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Deploy extends AppCommand {
   static summary = 'Deploy your Shopify app.'
@@ -94,10 +93,6 @@ export default class Deploy extends AppCommand {
       flags['api-key'] = process.env.SHOPIFY_API_KEY
     }
     const apiKey = flags['client-id'] || flags['api-key']
-
-    await addPublicMetadata(() => ({
-      cmd_app_reset_used: flags.reset,
-    }))
 
     const requiredNonTTYFlags = ['force']
     const configurationState = await getAppConfigurationState(flags.path, flags.config)

@@ -26,7 +26,6 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -204,8 +203,6 @@ export async function fetchOrCreateOrganizationApp(
   })
   remoteApp.developerPlatformClient = developerPlatformClient
 
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
-
   return remoteApp
 }
 
@@ -301,13 +298,6 @@ export function renderCurrentlyUsedConfigInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
     body,
   })
-}
-
-export async function logMetadataForLoadedContext(app: {organizationId: string; apiKey: string}) {
-  await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(app.organizationId),
-    api_key: app.apiKey,
-  }))
 }
 
 export async function enableDeveloperPreview({

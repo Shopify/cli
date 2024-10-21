@@ -438,12 +438,10 @@ async function logMetadataForDev(options: {
     cmd_dev_tunnel_type: tunnelType,
     cmd_dev_tunnel_custom_hash: tunnelType === 'custom' ? hashString(options.tunnelUrl) : undefined,
     cmd_dev_urls_updated: options.shouldUpdateURLs,
-    store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
   }))
 
   await metadata.addSensitiveMetadata(() => ({
-    store_fqdn: options.storeFqdn,
     cmd_dev_tunnel_custom: tunnelType === 'custom' ? options.tunnelUrl : undefined,
   }))
 }

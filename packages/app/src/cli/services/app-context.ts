@@ -9,7 +9,6 @@ import {getAppConfigurationState, loadAppUsingConfigurationState} from '../model
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {tryParseInt} from '@shopify/cli-kit/common/string'
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -105,8 +104,8 @@ export async function linkedAppContext({
 
 async function logMetadata(app: {organizationId: string; apiKey: string}, resetUsed: boolean) {
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(app.organizationId),
-    api_key: app.apiKey,
+    // partner_id: tryParseInt(app.organizationId),
+    // api_key: app.apiKey,
     cmd_app_reset_used: resetUsed,
   }))
 }

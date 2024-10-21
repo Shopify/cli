@@ -6,7 +6,6 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {getAppConfigurationState} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Release extends AppCommand {
   static summary = 'Release an app version.'
@@ -57,11 +56,7 @@ export default class Release extends AppCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
-
-    await addPublicMetadata(() => ({
-      cmd_app_reset_used: flags.reset,
-    }))
+    const apiKey = flags['client-id'] ?? flags['api-key']
 
     const requiredNonTTYFlags = ['force']
     const configurationState = await getAppConfigurationState(flags.path, flags.config)
