@@ -1,7 +1,7 @@
 import {AppEvent, EventType} from './app-event-watcher.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {getESBuildOptions} from '../../extensions/bundle.js'
-import {BuildContext, BuildOptions, context as esContext} from 'esbuild'
+import {BuildContext, context as esContext} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
@@ -19,7 +19,7 @@ export interface DevAppWatcherOptions {
  * Has a list of all active contexts and methods to create, update and delete them.
  */
 export class ESBuildContextManager {
-  contexts: {[key: string]: BuildContext<BuildOptions>}
+  contexts: {[key: string]: BuildContext}
   outputPath: string
   dotEnvVariables: {[key: string]: string}
   url: string

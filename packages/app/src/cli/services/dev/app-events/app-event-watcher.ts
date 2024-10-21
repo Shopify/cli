@@ -108,8 +108,8 @@ export class AppEventWatcher extends EventEmitter {
   buildOutputPath: string
   private app: AppInterface
   private readonly options: OutputContextOptions
-  private appURL?: string
-  private esbuildManager: ESBuildContextManager
+  private readonly appURL?: string
+  private readonly esbuildManager: ESBuildContextManager
 
   constructor(
     app: AppInterface,
