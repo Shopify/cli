@@ -352,7 +352,7 @@ wrong = "property"
       │  your package.json, unless you want to use different versions across         │
       │  multiple apps.                                                              │
       │                                                                              │
-      │  For more information, see Shopify CLI documentation [1]                     │
+      │  See Shopify CLI documentation [1]                                           │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executab
