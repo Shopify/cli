@@ -244,19 +244,19 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
         await flushPromises()
 
         // Wait until emitSpy has been called at least once
-        // We need this because there are i/o operations that make the test finish before the event is emitted
+        // We need this because there are I/O operations that make the test finish before the event is emitted
         await new Promise<void>((resolve, reject) => {
-          const interval = setInterval(() => {
+          const initialTime = Date.now()
+          const checkEmitSpy = () => {
             if (emitSpy.mock.calls.length > 0) {
-              clearInterval(interval)
               resolve()
+            } else if (Date.now() - initialTime < 3000) {
+              setTimeout(checkEmitSpy, 100)
+            } else {
+              reject(new Error('Timeout waiting for emitSpy to be called'))
             }
-          }, 100)
-          // Wait max 3 seconds, if not resolved, reject.
-          setTimeout(() => {
-            clearInterval(interval)
-            reject(new Error('Timeout waiting for emitSpy to be called'))
-          }, 3000)
+          }
+          checkEmitSpy()
         })
 
         expect(emitSpy).toHaveBeenCalledWith('all', {

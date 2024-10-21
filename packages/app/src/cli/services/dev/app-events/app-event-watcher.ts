@@ -11,7 +11,7 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
-import {fileExistsSync, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
+import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'events'
 
 /**
@@ -135,7 +135,7 @@ export class AppEventWatcher extends EventEmitter {
 
   async start() {
     // If there is a previous build folder, delete it
-    if (fileExistsSync(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
+    if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
     await mkdir(this.buildOutputPath)
 
     // Start the esbuild bundler for extensions that require it
