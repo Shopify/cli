@@ -1,5 +1,7 @@
 # @shopify/cli-kit
 
+## 3.69.1
+
 ## 3.69.0
 
 ### Minor Changes
