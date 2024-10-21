@@ -22,6 +22,7 @@ import posUISpec from './specifications/pos_ui_extension.js'
 import productSubscriptionSpec from './specifications/product_subscription.js'
 import taxCalculationSpec from './specifications/tax_calculation.js'
 import marketingActivitySpec from './specifications/marketing_activity.js'
+import newTriggerDiscoveryWebhookSpec from './specifications/new_trigger_discovery_webhook.js'
 import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
@@ -68,6 +69,7 @@ function loadSpecifications() {
     flowActionSpecification,
     flowTemplateSpec,
     flowTriggerSpecification,
+    newTriggerDiscoveryWebhookSpec,
     functionSpec,
     paymentExtensionSpec,
     posUISpec,
