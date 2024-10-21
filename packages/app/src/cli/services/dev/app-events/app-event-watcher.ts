@@ -159,14 +159,17 @@ export class AppEventWatcher extends EventEmitter {
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
-          const extensions = appEvent.extensionEvents
+          const createdOrUpdatedExtensions = appEvent.extensionEvents
             .filter((extEvent) => extEvent.type !== EventType.Deleted)
             .map((extEvent) => extEvent.extension)
 
-          await this.buildExtensions(extensions)
+          await this.buildExtensions(createdOrUpdatedExtensions)
 
-          const deletedExtensions = appEvent.extensionEvents.filter((extEvent) => extEvent.type === EventType.Deleted)
-          await this.deleteExtensionsBuildOutput(deletedExtensions.map((extEvent) => extEvent.extension))
+          // Find deleted extensions and delete their previous build output
+          const deletedExtensions = appEvent.extensionEvents
+            .filter((extEvent) => extEvent.type === EventType.Deleted)
+            .map((extEvent) => extEvent.extension)
+          await this.deleteExtensionsBuildOutput(deletedExtensions)
 
           this.emit('all', appEvent)
         })
