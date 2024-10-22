@@ -126,12 +126,12 @@ export async function push(flags: PushFlags): Promise<void> {
 
   await executePush(selectedTheme, adminSession, {
     path: workingDirectory,
-    nodelete: flags.nodelete || false,
-    publish: flags.publish || false,
-    json: flags.json || false,
+    nodelete: flags.nodelete ?? false,
+    publish: flags.publish ?? false,
+    json: flags.json ?? false,
     force,
-    ignore: flags.ignore || [],
-    only: flags.only || [],
+    ignore: flags.ignore ?? [],
+    only: flags.only ?? [],
   })
 }
 
@@ -290,7 +290,7 @@ export async function createOrSelectTheme(adminSession: AdminSession, flags: Pus
     const themeManager = new DevelopmentThemeManager(adminSession)
     return themeManager.findOrCreate()
   } else if (unpublished) {
-    const themeName = theme || (await promptThemeName('Name of the new theme'))
+    const themeName = theme ?? (await promptThemeName('Name of the new theme'))
     return createTheme(
       {
         name: themeName,
