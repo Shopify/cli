@@ -305,7 +305,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(directory)
-    await this.showMultipleCLIWarningIfNeeded(directory)
+    await this.showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -353,14 +353,14 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
-  private async showMultipleCLIWarningIfNeeded(directory: string) {
+  private async showMultipleCLIWarningIfNeeded(directory: string, dependencies: {[key: string]: string}) {
     // Show the warning if:
     // - There is a global installation
     // - The project has a local CLI dependency
     // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
     // - The warning hasn't been shown yet during the current command execution
 
-    const localVersion = await localCLIVersion(directory)
+    const localVersion = dependencies['@shopify/cli'] && (await localCLIVersion(directory))
     const globalVersion = await globalCLIVersion()
 
     if (localVersion && globalVersion && !sniffForJson() && !alreadyShownCLIWarning) {
