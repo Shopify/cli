@@ -99,10 +99,13 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       .then(() => {
         switch (eventName) {
           case 'add':
-          case 'change':
-            return handleFileUpdate(eventName, themeId, adminSession, fileKey)
-          case 'unlink':
-            return handleFileDelete(themeId, adminSession, fileKey)
+          case 'change': {
+            handleFileUpdate(eventName, themeId, adminSession, fileKey)
+            return
+          }
+          case 'unlink': {
+            handleFileDelete(themeId, adminSession, fileKey)
+          }
         }
       })
       .catch((error) => {
@@ -133,6 +136,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.add(fileKey)
       }
 
+      // file.value has a default of '' when empty, so we need to use || so we evaluate the fallback
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return file.value || file.attachment || ''
     })
 
