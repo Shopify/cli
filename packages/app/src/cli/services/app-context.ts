@@ -2,31 +2,39 @@ import {appFromId} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
-import {OrganizationApp} from '../models/organization.js'
+import {fetchOrgFromId} from './dev/fetch.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {AppLinkedInterface} from '../models/app/app.js'
+import metadata from '../metadata.js'
+import {tryParseInt} from '@shopify/cli-kit/common/string'
 
-interface LoadedAppContextOutput {
-  app: AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+export interface LoadedAppContextOutput {
+  app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
+  organization: Organization
+  specifications: RemoteAwareExtensionSpecification[]
 }
 
 /**
  * Input options for the `linkedAppContext` function.
  *
  * @param directory - The directory containing the app.
- * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
- * @param configName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param clientId - The client ID to use when linking the app or when fetching the remote app.
+ * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
+ * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
  */
 interface LoadedAppContextOptions {
   directory: string
   forceRelink: boolean
   clientId: string | undefined
-  configName: string | undefined
+  userProvidedConfigName: string | undefined
+  unsafeReportMode?: boolean
 }
 
 /**
@@ -35,21 +43,22 @@ interface LoadedAppContextOptions {
  * You can use a custom configName to load a specific config file.
  * In any case, if the selected config file is not linked, this function will force a link.
  *
- * @returns The local app, the remote app, and the developer platform client.
+ * @returns The local app, the remote app, the correct developer platform client, and the remote specifications list.
  */
 export async function linkedAppContext({
   directory,
   clientId,
   forceRelink,
-  configName,
+  userProvidedConfigName,
+  unsafeReportMode = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   // Get current app configuration state
-  let configState = await getAppConfigurationState(directory, configName)
+  let configState = await getAppConfigurationState(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 
   // If the app is not linked, force a link.
   if (configState.state === 'template-only' || forceRelink) {
-    const result = await link({directory, apiKey: clientId, configName})
+    const result = await link({directory, apiKey: clientId, configName: userProvidedConfigName})
     remoteApp = result.remoteApp
     configState = result.state
   }
@@ -70,6 +79,8 @@ export async function linkedAppContext({
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
+  const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
+
   // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
@@ -77,7 +88,7 @@ export async function linkedAppContext({
   const localApp = await loadAppUsingConfigurationState(configState, {
     specifications,
     remoteFlags: remoteApp.flags,
-    mode: 'strict',
+    mode: unsafeReportMode ? 'report' : 'strict',
   })
 
   // If the remoteApp is the same as the linked one, update the cached info.
@@ -87,5 +98,14 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient}
+  await logMetadata(remoteApp)
+
+  return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+}
+
+async function logMetadata(app: {organizationId: string; apiKey: string}) {
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(app.organizationId),
+    api_key: app.apiKey,
+  }))
 }

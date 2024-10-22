@@ -9,7 +9,7 @@ import {Flags} from '@oclif/core'
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
 
-  static usage = ['theme:console', 'theme:console --url /products/classic-leather-jacket']
+  static usage = ['theme console', 'theme console --url /products/classic-leather-jacket']
 
   static descriptionWithMarkdown = `Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.
 

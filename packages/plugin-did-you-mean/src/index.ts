@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {isAutocorrectEnabled} from './services/conf.js'
 import AutocorrectOff from './commands/config/autocorrect/off.js'
 import AutocorrectStatus from './commands/config/autocorrect/status.js'

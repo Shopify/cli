@@ -1,0 +1,15 @@
+query listApps {
+  apps {
+    id
+    key
+    activeRelease {
+      id
+      version {
+        name
+        appModules {
+          ...ReleasedAppModule
+        }
+      }
+    }
+  }
+}

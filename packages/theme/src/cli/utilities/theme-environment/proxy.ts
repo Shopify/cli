@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
+import {logRequestLine} from '../log-request-line.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {
   defineEventHandler,
@@ -23,8 +26,8 @@ import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
 const CART_PREFIX = '/cart/'
-const VANITY_CDN_PREFIX = '/cdn/'
-const EXTENSION_CDN_PREFIX = '/ext/cdn/'
+export const VANITY_CDN_PREFIX = '/cdn/'
+export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
@@ -232,6 +235,15 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
+
+  // When a .css.liquid or .js.liquid file is requested but it doesn't exist in SFR,
+  // it will be rendered with a query string like `assets/file.css?1234`.
+  // For some reason, after refreshing, this rendered URL keeps the wrong `?1234`
+  // query string for a while. We replace it with a proper timestamp here to fix it.
+  if (/\/assets\/[^/]+\.(css|js)$/.test(url.pathname) && /\?\d+$/.test(url.search)) {
+    url.search = `?v=${Date.now()}`
+  }
+
   url.searchParams.set('_fd', '0')
   url.searchParams.set('pb', '0')
   const headers = getProxyStorefrontHeaders(event)
@@ -254,6 +266,8 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       redirect: 'manual',
     },
     async onResponse(event, response) {
+      logRequestLine(event, response)
+
       patchProxiedResponseHeaders(ctx, event, response)
 
       const fileName = url.pathname.split('/').at(-1)

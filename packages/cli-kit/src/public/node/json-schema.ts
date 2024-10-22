@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
@@ -5,7 +6,7 @@ import {ErrorObject, SchemaObject} from 'ajv'
 import {Ajv2019} from 'ajv/dist/2019.js'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
 
-type AjvError = ErrorObject<string, {[key: string]: unknown}, unknown>
+type AjvError = ErrorObject<string, {[key: string]: unknown}>
 
 /**
  * Normalises a JSON Schema by standardising it's internal implementation.
@@ -79,7 +80,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     }
 
     if (error.params.type) {
-      const expectedType = error.params.type
+      const expectedType = error.params.type as string
       const actualType = getPathValue(subject, path.join('.'))
       return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
     }

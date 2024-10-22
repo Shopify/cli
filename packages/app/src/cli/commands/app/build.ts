@@ -54,7 +54,7 @@ export default class Build extends AppCommand {
       directory: flags.path,
       clientId: flags['client-id'],
       forceRelink: false,
-      configName: flags.config,
+      userProvidedConfigName: flags.config,
     })
 
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})

@@ -179,13 +179,13 @@ export interface DevSessionOptions {
 
 type WithUserErrors<T> = T & {
   userErrors: {
-    field: string[]
+    field?: string[] | null
     message: string
   }[]
 }
 
 export type AssetUrlSchema = WithUserErrors<{
-  assetUrl: string
+  assetUrl?: string | null
 }>
 
 export enum Flag {
@@ -203,11 +203,11 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
 }
 
 export interface DeveloperPlatformClient {
-  clientName: string
-  webUiName: string
-  supportsAtomicDeployments: boolean
-  requiresOrganization: boolean
-  supportsDevSessions: boolean
+  readonly clientName: string
+  readonly webUiName: string
+  readonly supportsAtomicDeployments: boolean
+  readonly requiresOrganization: boolean
+  readonly supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>

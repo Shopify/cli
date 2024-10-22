@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
   ActiveAppVersion,
@@ -173,7 +174,7 @@ function getAppVars(
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
       requestedAccessScopes: scopesArray ?? [],
@@ -182,7 +183,7 @@ function getAppVars(
   } else {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
       requestedAccessScopes: scopesArray ?? [],
@@ -205,11 +206,11 @@ interface OrgAndAppsResponse {
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
-  public clientName = ClientName.Partners
-  public webUiName = 'Partner Dashboard'
-  public supportsAtomicDeployments = false
-  public requiresOrganization = false
-  public supportsDevSessions = false
+  public readonly clientName = ClientName.Partners
+  public readonly webUiName = 'Partner Dashboard'
+  public readonly supportsAtomicDeployments = false
+  public readonly requiresOrganization = false
+  public readonly supportsDevSessions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {

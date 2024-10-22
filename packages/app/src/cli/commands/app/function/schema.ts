@@ -49,12 +49,13 @@ export default class FetchSchema extends AppCommand {
 
     const app = await inFunctionContext({
       path: flags.path,
+      apiKey,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
+      callback: async (app, developerPlatformClient, ourFunction) => {
         await generateSchemaService({
           app,
           extension: ourFunction,
-          apiKey,
+          developerPlatformClient,
           stdout: flags.stdout,
           path: flags.path,
         })

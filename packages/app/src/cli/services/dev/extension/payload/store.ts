@@ -42,7 +42,7 @@ export async function getExtensionsPayloadStoreRawPayload(
 }
 
 export class ExtensionsPayloadStore extends EventEmitter {
-  private options: ExtensionsPayloadStoreOptions
+  private readonly options: ExtensionsPayloadStoreOptions
   private rawPayload: ExtensionsEndpointPayload
 
   constructor(rawPayload: ExtensionsEndpointPayload, options: ExtensionsPayloadStoreOptions) {
@@ -90,9 +90,11 @@ export class ExtensionsPayloadStore extends EventEmitter {
           isNewExtensionPointsSchema(foundExtension.extensionPoints) &&
           isNewExtensionPointsSchema(rawPayloadExtension.extensionPoints)
         ) {
-          const foundExtensionPointsPayloadMap = foundExtension.extensionPoints.reduce((acc, ex) => {
+          const foundExtensionPointsPayloadMap = foundExtension.extensionPoints.reduce<{
+            [key: string]: DevNewExtensionPointSchema
+          }>((acc, ex) => {
             return {...acc, [ex.target]: ex}
-          }, {} as {[key: string]: DevNewExtensionPointSchema})
+          }, {})
 
           rawPayloadExtension.extensionPoints = deepMergeObjects(
             rawPayloadExtension.extensionPoints,

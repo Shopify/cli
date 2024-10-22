@@ -1,0 +1,20 @@
+mutation ReleaseVersion($appId: ID!, $versionId: ID!) {
+  appReleaseCreate(appId: $appId, versionId: $versionId) {
+    release {
+      version {
+        id
+        metadata {
+          message
+          versionTag
+        }
+      }
+    }
+    userErrors {
+      field
+      message
+      category
+      code
+      on
+    }
+  }
+}

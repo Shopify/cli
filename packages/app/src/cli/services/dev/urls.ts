@@ -7,9 +7,9 @@ import {
 } from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -98,6 +98,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
       throw new AbortError(`Invalid tunnel URL: ${options.tunnelUrl}`, 'Valid format: "https://my-tunnel-url:port"')
     }
     frontendPort = Number(matches[2])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     frontendUrl = matches[1]!
     return {frontendUrl, frontendPort, usingLocalhost}
   }
@@ -202,27 +203,23 @@ export async function updateURLs(
   }
 
   if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
-    let localConfiguration: CurrentAppConfiguration = {
-      ...localApp.configuration,
+    const patch = {
       application_url: urls.applicationUrl,
       auth: {
-        ...(localApp.configuration.auth ?? {}),
         redirect_urls: urls.redirectUrlWhitelist,
       },
+      ...(urls.appProxy
+        ? {
+            app_proxy: {
+              url: urls.appProxy.proxyUrl,
+              subpath: urls.appProxy.proxySubPath,
+              prefix: urls.appProxy.proxySubPathPrefix,
+            },
+          }
+        : {}),
     }
 
-    if (urls.appProxy) {
-      localConfiguration = {
-        ...localConfiguration,
-        app_proxy: {
-          url: urls.appProxy.proxyUrl,
-          subpath: urls.appProxy.proxySubPath,
-          prefix: urls.appProxy.proxySubPathPrefix,
-        },
-      }
-    }
-
-    await writeAppConfigurationFile(localConfiguration, localApp.configSchema)
+    await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
   }
 }
 
@@ -267,8 +264,9 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
-
-      await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
+      const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
+      const path = options.localApp.configuration.path
+      await patchAppConfigurationFile({path, patch, schema: options.localApp.configSchema})
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

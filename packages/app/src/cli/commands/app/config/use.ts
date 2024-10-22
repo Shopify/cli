@@ -1,6 +1,6 @@
 import {appFlags} from '../../../flags.js'
-import {checkFolderIsValidApp, loadApp} from '../../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {checkFolderIsValidApp} from '../../../models/app/loader.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import use from '../../../services/app/config/use.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
@@ -42,12 +42,11 @@ export default class ConfigUse extends AppCommand {
     await checkFolderIsValidApp(flags.path)
     await use({directory: flags.path, configName: args.config, reset: flags.reset})
 
-    const specifications = await loadLocalExtensionsSpecifications()
-
-    const app = await loadApp({
-      specifications,
+    const {app} = await linkedAppContext({
       directory: flags.path,
-      userProvidedConfigName: undefined,
+      clientId: undefined,
+      forceRelink: false,
+      userProvidedConfigName: args.config,
     })
 
     return {app}

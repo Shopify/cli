@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AbortError} from './error.js'
 import {fileExists, readFile, writeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
@@ -133,7 +134,7 @@ export function createDotEnvFileLine(key: string, value?: string, quote?: string
   if (quote) {
     return `${key}=${quote}${value}${quote}`
   }
-  if (value && value.includes('\n')) {
+  if (value?.includes('\n')) {
     const quoteCharacter = ['"', "'", '`'].find((char) => !value.includes(char))
 
     if (!quoteCharacter) {

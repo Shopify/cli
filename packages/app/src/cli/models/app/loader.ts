@@ -278,11 +278,11 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
 let alreadyShownCLIWarning = false
 
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
-  private mode: AppLoaderMode
-  private errors: AppErrors = new AppErrors()
-  private specifications: TModuleSpec[]
-  private remoteFlags: Flag[]
-  private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  private readonly mode: AppLoaderMode
+  private readonly errors: AppErrors = new AppErrors()
+  private readonly specifications: TModuleSpec[]
+  private readonly remoteFlags: Flag[]
+  private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
 
   constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'
@@ -401,6 +401,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           joinPath(websOfType[1]!.directory, configurationFileNames.web),
         )
       }
@@ -653,7 +654,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         await Promise.all(
           ['index']
             .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .flatMap((fileName) => [`src/${fileName}`, fileName])
             .map((relativePath) => joinPath(directory, relativePath))
             .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
         )
@@ -1051,6 +1052,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     outputDebug('Unable to decide project type as no web backend')
     return
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const {directory} = backendWebs[0]!
 
   const nodeConfigFile = joinPath(directory, 'package.json')

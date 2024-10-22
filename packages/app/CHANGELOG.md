@@ -1,5 +1,38 @@
 # @shopify/app
 
+## 3.69.0
+
+### Minor Changes
+
+- 371d53d3e: Remove `legacy` flag and `Ruby` implementation for configuring `theme app extensions` via the `shopify app dev` command
+
+### Patch Changes
+
+- 0b297075f: Removed deprecated extension templates
+- Updated dependencies [a7f7dc300]
+- Updated dependencies [82dd1daf8]
+- Updated dependencies [1fe7024e6]
+- Updated dependencies [371d53d3e]
+- Updated dependencies [c75c8e201]
+- Updated dependencies [87b52747d]
+- Updated dependencies [8c6906c06]
+- Updated dependencies [283aa815c]
+- Updated dependencies [3b6159e8a]
+- Updated dependencies [265d3e178]
+- Updated dependencies [a38952cd6]
+- Updated dependencies [df7b178da]
+- Updated dependencies [707b901a7]
+- Updated dependencies [3f10612f0]
+- Updated dependencies [41bfd221f]
+- Updated dependencies [a6abeb289]
+- Updated dependencies [d9fff2c30]
+- Updated dependencies [89250c301]
+- Updated dependencies [1f5d13cf1]
+- Updated dependencies [51178f2f6]
+  - @shopify/theme@3.69.0
+  - @shopify/cli-kit@3.69.0
+  - @shopify/plugin-cloudflare@3.69.0
+
 ## 3.68.0
 
 ### Patch Changes

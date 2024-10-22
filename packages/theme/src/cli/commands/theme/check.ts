@@ -93,6 +93,7 @@ export default class Check extends ThemeCommand {
     const path = flags.path
     // To support backwards compatibility for legacy configs
     const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const config = isLegacyConfig ? LegacyIdentifiers.get(flags.config!.slice(1)) : flags.config
 
     if (flags.init) {

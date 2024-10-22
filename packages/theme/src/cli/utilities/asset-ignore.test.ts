@@ -1,6 +1,5 @@
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => {
@@ -74,7 +73,7 @@ describe('asset-ignore', () => {
   describe('applyIgnoreFilters', () => {
     test(`returns entire list of checksums when there's no filter to apply`, async () => {
       // Given/When
-      const actualChecksums = await applyIgnoreFilters(checksums, {})
+      const actualChecksums = applyIgnoreFilters(checksums, {})
 
       // Then
       expect(actualChecksums).toEqual(checksums)
@@ -89,12 +88,12 @@ describe('asset-ignore', () => {
           'sections/*',
           'templates/*',
           'config/*_data.json',
-          '.*settings_schema.json',
+          '/settings_schema/',
         ],
       }
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([{key: 'assets/basic.css', checksum: '00000000000000000000000000000000'}])
@@ -105,7 +104,7 @@ describe('asset-ignore', () => {
       const options = {ignore: ['config/*', 'templates/*', 'assets/image.png']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -120,7 +119,7 @@ describe('asset-ignore', () => {
       const options = {only: ['config/*', 'assets/image.png']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -135,7 +134,7 @@ describe('asset-ignore', () => {
       const options = {ignore: ['*.css']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -153,7 +152,7 @@ describe('asset-ignore', () => {
       const options = {only: ['templates/*.json']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -167,43 +166,12 @@ describe('asset-ignore', () => {
       const options = {only: ['templates/**/*.json']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
         {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
       ])
-    })
-
-    test(`only outputs glob pattern subdirectory warnings for the templates folder`, async () => {
-      // Given
-      const options = {only: ['assets/*.json', 'config/*.json', 'sections/*.json']}
-      // When
-      await applyIgnoreFilters(checksums, options)
-      // Then
-      expect(vi.mocked(outputWarn)).not.toHaveBeenCalled()
-    })
-
-    test(`outputs warnings when there are glob pattern modifications required for subdirectories`, async () => {
-      // Given
-      const options = {only: ['templates/*.json']}
-
-      // When
-      await applyIgnoreFilters(checksums, options)
-
-      // Then
-      expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
-    })
-
-    test('only outputs a single warning for duplicated glob patterns', async () => {
-      // Given
-      const options = {only: ['templates/*.json'], ignore: ['templates/*.json']}
-
-      // When
-      await applyIgnoreFilters(checksums, options)
-
-      // Then
-      expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
     })
   })
 })

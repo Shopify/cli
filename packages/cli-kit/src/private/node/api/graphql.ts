@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
@@ -25,7 +26,7 @@ function sanitizeVariables(variables: Variables): string {
   return JSON.stringify(result, null, 2)
 }
 
-export function errorHandler(api: string): (error: unknown, requestId?: string) => Error | unknown {
+export function errorHandler(api: string): (error: unknown, requestId?: string) => unknown {
   return (error: unknown, requestId?: string) => {
     if (error instanceof ClientError) {
       const {status} = error.response

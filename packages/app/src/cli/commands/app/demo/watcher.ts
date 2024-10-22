@@ -1,9 +1,7 @@
 import {appFlags} from '../../../flags.js'
-import {AppInterface} from '../../../models/app/app.js'
-import {loadApp} from '../../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppEventWatcher, EventType} from '../../../services/dev/app-events/app-event-watcher.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -20,12 +18,12 @@ export default class DemoWatcher extends AppCommand {
 
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(DemoWatcher)
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+
+    const {app} = await linkedAppContext({
       directory: flags.path,
+      clientId: undefined,
+      forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
     })
 
     const watcher = new AppEventWatcher(app)

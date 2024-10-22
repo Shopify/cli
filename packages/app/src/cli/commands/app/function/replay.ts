@@ -60,12 +60,12 @@ export default class FunctionReplay extends AppCommand {
 
     const app = await inFunctionContext({
       path: flags.path,
+      apiKey,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
+      callback: async (app, _, ourFunction) => {
         await replay({
           app,
           extension: ourFunction,
-          apiKey,
           path: flags.path,
           log: flags.log,
           json: flags.json,

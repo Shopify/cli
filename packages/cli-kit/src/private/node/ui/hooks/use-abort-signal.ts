@@ -10,7 +10,7 @@ export default function useAbortSignal(abortSignal?: AbortSignal, onAbort: (erro
 
   useLayoutEffect(() => {
     abortSignal?.addEventListener('abort', () => {
-      const abortWithError = abortSignal?.reason.message === 'AbortError' ? undefined : abortSignal?.reason
+      const abortWithError = abortSignal.reason.message === 'AbortError' ? undefined : abortSignal.reason
       onAbort(abortWithError)
         .then(() => {
           setIsAborted(true)

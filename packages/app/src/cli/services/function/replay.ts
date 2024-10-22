@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {renderReplay} from './ui.js'
 import {runFunction} from './runner.js'
-import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
@@ -17,9 +17,8 @@ import {readdirSync} from 'fs'
 const LOG_SELECTOR_LIMIT = 100
 
 interface ReplayOptions {
-  app: AppInterface
+  app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
-  apiKey?: string
   stdout?: boolean
   path: string
   json: boolean
@@ -54,7 +53,7 @@ export async function replay(options: ReplayOptions) {
   const abortController = new AbortController()
 
   try {
-    const {apiKey} = await ensureConnectedAppFunctionContext(options)
+    const apiKey = options.app.configuration.client_id
     const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
     const selectedRun = options.log
