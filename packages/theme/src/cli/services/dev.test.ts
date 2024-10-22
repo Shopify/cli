@@ -1,4 +1,4 @@
-import {showDeprecationWarnings, dev, DevOptions} from './dev.js'
+import {dev, DevOptions} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
@@ -8,7 +8,6 @@ import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {DevServerSession} from '../utilities/theme-environment/types.js'
 import {describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
@@ -91,51 +90,5 @@ describe('dev', () => {
         },
       })
     })
-  })
-})
-
-describe('showDeprecationWarnings', () => {
-  test('does nothing when the -e flag includes a value', async () => {
-    // Given
-    const outputMock = mockAndCaptureOutput()
-
-    // When
-    showDeprecationWarnings(['-e', 'whatever'])
-
-    // Then
-    expect(outputMock.output()).toMatch('')
-  })
-
-  test('shows a warning message when the -e flag does not include a value', async () => {
-    // Given
-    const outputMock = mockAndCaptureOutput()
-
-    // When
-    showDeprecationWarnings(['-e'])
-
-    // Then
-    expect(outputMock.output()).toMatch(/reserved for environments/)
-  })
-
-  test('shows a warning message when the -e flag is followed by another flag', async () => {
-    // Given
-    const outputMock = mockAndCaptureOutput()
-
-    // When
-    showDeprecationWarnings(['-e', '--verbose'])
-
-    // Then
-    expect(outputMock.output()).toMatch(/reserved for environments/)
-  })
-
-  test('shows a warning message when the --poll flag is used', () => {
-    // Given
-    const outputMock = mockAndCaptureOutput()
-
-    // When
-    showDeprecationWarnings(['--poll'])
-
-    // Then
-    expect(outputMock.output()).toMatch(/The CLI flag --poll is now deprecated/)
   })
 })

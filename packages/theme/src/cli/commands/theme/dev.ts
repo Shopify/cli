@@ -1,7 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
-import {dev, showDeprecationWarnings} from '../../services/dev.js'
+import {dev} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
@@ -115,8 +115,6 @@ You can run this command only in a directory that matches the [default Shopify t
   }
 
   async run(): Promise<void> {
-    showDeprecationWarnings(this.argv)
-
     const parsed = await this.parse(Dev)
     let flags = parsed.flags as typeof parsed.flags & FlagValues
     const {ignore = [], only = []} = flags
