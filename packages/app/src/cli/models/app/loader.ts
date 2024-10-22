@@ -405,12 +405,12 @@ We recommend removing the @shopify/cli and @shopify/app dependencies from your p
   private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
-      if (websOfType.length > 1) {
+      if (websOfType[1]) {
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
 
-          joinPath(websOfType[1]!.directory, configurationFileNames.web),
+          joinPath(websOfType[1].directory, configurationFileNames.web),
         )
       }
     })
@@ -1056,12 +1056,12 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     return
   } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
     return 'frontend'
-  } else if (backendWebs.length === 0) {
+  } else if (!backendWebs[0]) {
     outputDebug('Unable to decide project type as no web backend')
     return
   }
 
-  const {directory} = backendWebs[0]!
+  const {directory} = backendWebs[0]
 
   const nodeConfigFile = joinPath(directory, 'package.json')
   const rubyConfigFile = joinPath(directory, 'Gemfile')
