@@ -5,6 +5,7 @@ import {BugError, AbortError} from '../error.js'
 import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
 import {fetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
+import {normalizeStoreFqdn} from '../context/fqdn.js'
 import {ClientError, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
@@ -19,7 +20,8 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
   const api = 'Admin'
   const version = await fetchLatestSupportedApiVersion(session)
-  const url = adminUrl(session.storeFqdn, version)
+  const store = await normalizeStoreFqdn(session.storeFqdn)
+  const url = adminUrl(store, version)
   return graphqlRequest({query, api, url, token: session.token, variables})
 }
 
@@ -44,8 +46,9 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
   if (!version) {
     apiVersion = await fetchLatestSupportedApiVersion(session)
   }
+  const store = await normalizeStoreFqdn(session.storeFqdn)
   const opts = {
-    url: adminUrl(session.storeFqdn, apiVersion),
+    url: adminUrl(store, apiVersion),
     api: 'Admin',
     token: session.token,
   }
@@ -99,8 +102,17 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
         )})`,
         outputContent`If you're not the owner, create a dev store staff account for yourself`,
       )
+    } else if (error instanceof ClientError) {
+      throw new BugError(
+        `Unknown client error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
+      )
+    } else {
+      throw new BugError(
+        `Unknown error connecting to your store ${session.storeFqdn}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
     }
-    throw new BugError(`Unknown error connecting to your store`)
   }
 }
 
@@ -112,7 +124,7 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
  * @returns - Admin API URL.
  */
 export function adminUrl(store: string, version: string | undefined): string {
-  const realVersion = version || 'unstable'
+  const realVersion = version ?? 'unstable'
   return `https://${store}/admin/api/${realVersion}/graphql.json`
 }
 
