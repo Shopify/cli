@@ -105,7 +105,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
  */
 export class AppEventWatcher extends EventEmitter {
   private app: AppInterface
-  private options: OutputContextOptions
+  private readonly options: OutputContextOptions
 
   constructor(app: AppInterface, options?: OutputContextOptions) {
     super()
