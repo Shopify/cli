@@ -2,10 +2,16 @@ import {graphqlRequest, graphqlRequestDoc, GraphQLResponseOptions, GraphQLVariab
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
 import {BugError, AbortError} from '../error.js'
-import {restRequestBody, restRequestHeaders, restRequestUrl} from '../../../private/node/api/rest.js'
+import {
+  restRequestBody,
+  restRequestHeaders,
+  restRequestUrl,
+  isThemeAccessSession,
+} from '../../../private/node/api/rest.js'
 import {fetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {normalizeStoreFqdn} from '../context/fqdn.js'
+import {defaultThemeKitAccessDomain, environmentVariables} from '../../../private/node/constants.js'
 import {ClientError, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
@@ -21,8 +27,9 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
   const api = 'Admin'
   const version = await fetchLatestSupportedApiVersion(session)
   const store = await normalizeStoreFqdn(session.storeFqdn)
-  const url = adminUrl(store, version)
-  return graphqlRequest({query, api, url, token: session.token, variables})
+  const url = adminUrl(store, version, session)
+  const addedHeaders = headers(session)
+  return graphqlRequest({query, api, addedHeaders, url, token: session.token, variables})
 }
 
 /**
@@ -47,13 +54,21 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
     apiVersion = await fetchLatestSupportedApiVersion(session)
   }
   const store = await normalizeStoreFqdn(session.storeFqdn)
+  const addedHeaders = headers(session)
   const opts = {
-    url: adminUrl(store, apiVersion),
+    url: adminUrl(store, apiVersion, session),
     api: 'Admin',
     token: session.token,
+    addedHeaders,
   }
   const result = graphqlRequestDoc<TResult, TVariables>({...opts, query, variables, responseOptions})
   return result
+}
+
+function headers(session: AdminSession): {[header: string]: string} {
+  return isThemeAccessSession(session)
+    ? {'X-Shopify-Shop': session.storeFqdn, 'X-Shopify-Access-Token': session.token}
+    : {}
 }
 
 /**
@@ -121,11 +136,18 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
  *
  * @param store - Store FQDN.
  * @param version - API version.
+ * @param session - User session.
  * @returns - Admin API URL.
  */
-export function adminUrl(store: string, version: string | undefined): string {
+export function adminUrl(store: string, version: string | undefined, session?: AdminSession): string {
   const realVersion = version ?? 'unstable'
-  return `https://${store}/admin/api/${realVersion}/graphql.json`
+  const themeKitAccessDomain = process.env[environmentVariables.themeKitAccessDomain] ?? defaultThemeKitAccessDomain
+
+  const url =
+    session && isThemeAccessSession(session)
+      ? `https://${themeKitAccessDomain}/cli/admin/api/${realVersion}/graphql.json`
+      : `https://${store}/admin/api/${realVersion}/graphql.json`
+  return url
 }
 
 interface ApiVersion {

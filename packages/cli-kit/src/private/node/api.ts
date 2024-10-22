@@ -70,7 +70,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
       }
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
-      if (err.response.errors?.some((error) => error.extensions.code === '429') || err.response.status === 429) {
+      if (errorsIncludeStatus429(err)) {
         let delayMs: number | undefined
 
         try {
@@ -118,6 +118,18 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
     sanitizedUrl,
     requestId: responseHeaders['x-request-id'],
   }
+}
+
+function errorsIncludeStatus429(error: ClientError): boolean {
+  if (error.response.status === 429) {
+    return true
+  }
+
+  // More so checking if type of error.response.errors is not GraphQLError[]
+  if (typeof error.response.errors === 'string') {
+    return false
+  }
+  return error.response.errors?.some((error) => error.extensions?.code === '429') ?? false
 }
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
