@@ -71,14 +71,14 @@ export async function dev(options: DevOptions) {
     notify: options.notify,
   })
 
-  const host = options.host || DEFAULT_HOST
+  const host = options.host ?? DEFAULT_HOST
   if (options.port && !(await checkPortAvailability(Number(options.port)))) {
     throw new AbortError(
       `Port ${options.port} is not available. Try a different port or remove the --port flag to use an available port.`,
     )
   }
 
-  const port = options.port || String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
+  const port = options.port ?? String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
   const storefrontPassword = await storefrontPasswordPromise
   const session = await initializeDevServerSession(
