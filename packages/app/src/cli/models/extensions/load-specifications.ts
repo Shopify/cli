@@ -13,7 +13,6 @@ import appPrivacyComplienceSpec, {
 } from './specifications/app_config_privacy_compliance_webhooks.js'
 import checkoutPostPurchaseSpec from './specifications/checkout_post_purchase.js'
 import checkoutSpec from './specifications/checkout_ui_extension.js'
-import dataExtensionSpec from './specifications/data_extension.js'
 import flowActionSpecification from './specifications/flow_action.js'
 import flowTemplateSpec from './specifications/flow_template.js'
 import flowTriggerSpecification from './specifications/flow_trigger.js'
@@ -22,7 +21,6 @@ import paymentExtensionSpec from './specifications/payments_app_extension.js'
 import posUISpec from './specifications/pos_ui_extension.js'
 import productSubscriptionSpec from './specifications/product_subscription.js'
 import taxCalculationSpec from './specifications/tax_calculation.js'
-import marketingActivitySpec from './specifications/marketing_activity.js'
 import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
@@ -66,7 +64,6 @@ function loadSpecifications() {
   const moduleSpecs = [
     checkoutPostPurchaseSpec,
     checkoutSpec,
-    dataExtensionSpec,
     flowActionSpecification,
     flowTemplateSpec,
     flowTriggerSpecification,
@@ -75,7 +72,6 @@ function loadSpecifications() {
     posUISpec,
     productSubscriptionSpec,
     taxCalculationSpec,
-    marketingActivitySpec,
     themeSpec,
     uiExtensionSpec,
     webPixelSpec,
