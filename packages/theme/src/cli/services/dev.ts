@@ -99,7 +99,6 @@ export async function dev(options: DevOptions) {
 
   renderLinks(options.store, String(options.theme.id), host, port)
   if (options.open) {
-    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
     openURL(`http://${host}:${port}`).catch((error: Error) => {
       renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
     })
