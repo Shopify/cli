@@ -10,6 +10,7 @@ import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -64,8 +65,10 @@ async function mergeLocalAndRemoteSpecs(
   // If the local spec is missing, and the remote one has a validation schema, create a new local spec using contracts
   const updated = remote.map(async (remoteSpec) => {
     let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
-    if (!localSpec && remoteSpec.validationSchema) {
-      localSpec = createContractBasedModuleSpecification(remoteSpec.identifier)
+    if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
+      const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
+      const hasLocalization = normalisedSchema.properties?.localization !== undefined
+      localSpec = createContractBasedModuleSpecification(remoteSpec.identifier, hasLocalization ? ['localization'] : [])
     }
     if (!localSpec) return undefined
 
