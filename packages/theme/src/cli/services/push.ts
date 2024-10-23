@@ -21,14 +21,6 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
-export interface ThemeSelectionOptions {
-  live?: boolean
-  development?: boolean
-  unpublished?: boolean
-  theme?: string
-  'allow-live'?: boolean
-}
-
 interface PushOptions {
   path: string
   nodelete?: boolean
@@ -134,12 +126,12 @@ export async function push(flags: PushFlags): Promise<void> {
 
   await executePush(selectedTheme, adminSession, {
     path: workingDirectory,
-    nodelete: flags.nodelete || false,
-    publish: flags.publish || false,
-    json: flags.json || false,
+    nodelete: flags.nodelete ?? false,
+    publish: flags.publish ?? false,
+    json: flags.json ?? false,
     force,
-    ignore: flags.ignore || [],
-    only: flags.only || [],
+    ignore: flags.ignore ?? [],
+    only: flags.only ?? [],
   })
 }
 
@@ -291,17 +283,14 @@ function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
   }
 }
 
-export async function createOrSelectTheme(
-  adminSession: AdminSession,
-  flags: ThemeSelectionOptions,
-): Promise<Theme | undefined> {
+export async function createOrSelectTheme(adminSession: AdminSession, flags: PushFlags): Promise<Theme | undefined> {
   const {live, development, unpublished, theme} = flags
 
   if (development) {
     const themeManager = new DevelopmentThemeManager(adminSession)
     return themeManager.findOrCreate()
   } else if (unpublished) {
-    const themeName = theme || (await promptThemeName('Name of the new theme'))
+    const themeName = theme ?? (await promptThemeName('Name of the new theme'))
     return createTheme(
       {
         name: themeName,
@@ -319,7 +308,7 @@ export async function createOrSelectTheme(
       },
     })
 
-    if (await confirmPushToTheme(selectedTheme.role as Role, flags['allow-live'], adminSession.storeFqdn)) {
+    if (await confirmPushToTheme(selectedTheme.role as Role, flags.allowLive, adminSession.storeFqdn)) {
       return selectedTheme
     }
   }
