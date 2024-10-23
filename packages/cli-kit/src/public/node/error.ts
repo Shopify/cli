@@ -191,7 +191,7 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
     // this means its not one of the CLI wrapped errors
     if (error instanceof Error) {
       const message = error.message
-      return !errorMessageImpliesEnvironmentIssue(message)
+      return !errorMessageImpliesEnvironmentIssue(message, error.stack ?? '')
     }
     return true
   }
@@ -217,20 +217,29 @@ export function cleanSingleStackTracePath(filePath: string): string {
  * There are certain errors that we know are not due to a CLI bug, but are environmental/user error.
  *
  * @param message - The error message to check.
+ * @param stack - The stack trace to check.
  * @returns A boolean indicating if the error message implies an environment issue.
  */
-function errorMessageImpliesEnvironmentIssue(message: string): boolean {
+function errorMessageImpliesEnvironmentIssue(message: string, stack: string): boolean {
   const environmentIssueMessages = [
     'EPERM: operation not permitted, scandir',
     'EACCES: permission denied',
     'EPERM: operation not permitted, symlink',
     'This version of npm supports the following node versions',
-    'EBUSY: resource busy or locked, rmdir',
+    'EBUSY: resource busy or locked',
     'getaddrinfo ENOTFOUND',
     'Client network socket disconnected before secure TLS connection was established',
     'spawn EPERM',
     'socket hang up',
-  ]
-  const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
+    'ENOSPC: no space left on device',
+    ['Maximum call stack size exceeded', /stubborn-fs.*retryify/],
+  ] as const
+  const anyMatches = environmentIssueMessages.some((issueMessage) => {
+    if (typeof issueMessage === 'string') {
+      return message.includes(issueMessage)
+    }
+    const [messageCheck, stackCheck] = issueMessage
+    return message.includes(messageCheck) && stackCheck.test(stack)
+  })
   return anyMatches
 }

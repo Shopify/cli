@@ -70,4 +70,12 @@ describe('shouldReportErrorAsUnexpected helper', () => {
   test('returns false for errors that imply environment issues', () => {
     expect(shouldReportErrorAsUnexpected(new Error('EPERM: operation not permitted, scandir'))).toBe(false)
   })
+
+  test('checks errors that have stack dependent environment issues', () => {
+    const error = new Error('Maximum call stack size exceeded')
+    expect(shouldReportErrorAsUnexpected(error)).toBe(true)
+    error.stack = `Error: Maximum call stack size exceeded
+at node_modules/.pnpm/stubborn-fs@1.2.5/node_modules/stubborn-fs/dist/retryify.js:33:26 attempt`
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+  })
 })
