@@ -6,7 +6,7 @@ import {
   AbortSilentError,
   CancelExecution,
   errorMapper,
-  shouldReportError,
+  shouldReportErrorAsUnexpected,
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
@@ -46,7 +46,7 @@ export async function errorHandler(
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   // categorise the error first
   let exitMode: CommandExitMode = 'expected_error'
-  if (shouldReportError(error)) exitMode = 'unexpected_error'
+  if (shouldReportErrorAsUnexpected(error)) exitMode = 'unexpected_error'
 
   if (config !== undefined) {
     // Log an analytics event when there's an error
