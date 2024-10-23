@@ -7,10 +7,7 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -19,12 +16,8 @@ import {openURL} from '@shopify/cli-kit/node/system'
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
 
-// Tokens are valid for 120 min, better to be safe and refresh every 110 min
-const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
-
 export interface DevOptions {
   adminSession: AdminSession
-  storefrontToken: string
   directory: string
   store: string
   password?: string
@@ -34,8 +27,6 @@ export interface DevOptions {
   host?: string
   port?: string
   force: boolean
-  flagsToPass: string[]
-  legacy: boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
   noDelete: boolean
@@ -45,11 +36,6 @@ export interface DevOptions {
 }
 
 export async function dev(options: DevOptions) {
-  if (options.legacy) {
-    await legacyDev(options)
-    return
-  }
-
   if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
     return
   }
@@ -58,12 +44,6 @@ export async function dev(options: DevOptions) {
     (needsPassword) =>
       needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
   )
-
-  if (options.flagsToPass.includes('--poll')) {
-    renderWarning({
-      body: 'The CLI flag --pull is now deprecated and will be removed in future releases. It is no longer necessary with the new implementation. Please update your usage accordingly.',
-    })
-  }
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
@@ -125,44 +105,9 @@ export async function dev(options: DevOptions) {
   }
 }
 
-async function legacyDev(options: DevOptions) {
-  if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
-    return
-  }
-
-  let adminToken: string | undefined = options.adminSession.token
-  let storefrontToken: string | undefined = options.storefrontToken
-
-  renderLinks(options.store, options.theme.id.toString(), options.host, options.port)
-
-  const command = ['theme', 'serve', options.directory, ...options.flagsToPass]
-
-  if (options.open && useEmbeddedThemeCLI()) {
-    command.push('--open')
-  }
-
-  if (!options.password && useEmbeddedThemeCLI()) {
-    adminToken = undefined
-    storefrontToken = undefined
-
-    /**
-     * Executes the theme serve command.
-     * Every 110 minutes, it will refresh the session token.
-     */
-    setInterval(() => {
-      outputDebug('Refreshing theme session tokens...')
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      refreshTokens(options.store, options.password)
-    }, THEME_REFRESH_TIMEOUT_IN_MS)
-  }
-
-  await execCLI2(command, {store: options.store, adminToken, storefrontToken})
-}
-
 function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
   const remoteUrl = `https://${store}`
   const localUrl = `http://${host}:${port}`
-
   renderSuccess({
     body: [
       {
@@ -179,14 +124,6 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
       },
     ],
     nextSteps: [
-      [
-        {
-          link: {
-            label: 'Preview your gift cards',
-            url: `${localUrl}/gift_cards/[store_id]/preview`,
-          },
-        },
-      ],
       [
         {
           link: {
@@ -208,53 +145,4 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
       ],
     ],
   })
-}
-
-export function showDeprecationWarnings(args: string[]) {
-  const eFlagIndex = args.findIndex((arg) => arg === '-e')
-  const wrongEnvFlag = eFlagIndex >= 0 && (!args[eFlagIndex + 1] || args[eFlagIndex + 1]?.startsWith('-'))
-  if (wrongEnvFlag) {
-    renderWarning({
-      body: [
-        'If you want to enable synchronization with Theme Editor, please use',
-        {command: '--theme-editor-sync'},
-        {char: '.'},
-        'The shortcut',
-        {command: '-e'},
-        'is now reserved for environments.',
-      ],
-    })
-  }
-
-  const legacyFlagPresent = args.find((arg) => arg === '--legacy')
-
-  if (legacyFlagPresent) {
-    renderWarning({
-      headline: ['The', {command: '--legacy'}, 'flag is deprecated.'],
-      body: [
-        'The',
-        {command: '--legacy'},
-        'flag has been deprecated. If this variable is essential to your workflow, please report an issue at',
-        {
-          link: {
-            url: 'https://github.com/Shopify/cli/issues',
-          },
-        },
-        {
-          char: '.',
-        },
-      ],
-    })
-  }
-}
-
-export async function refreshTokens(store: string, password: string | undefined, refreshRubyCLI = true) {
-  const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-  const storefrontToken = await ensureAuthenticatedStorefront([], password)
-
-  if (refreshRubyCLI && useEmbeddedThemeCLI()) {
-    await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
-  }
-
-  return {adminSession, storefrontToken}
 }
