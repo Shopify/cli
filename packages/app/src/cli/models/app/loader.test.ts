@@ -27,7 +27,6 @@ import {
   pnpmLockfile,
   PackageJson,
   pnpmWorkspaceFile,
-  localCLIVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
@@ -37,7 +36,8 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
 
-import {globalCLIVersion, isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
+import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
+import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
@@ -45,7 +45,9 @@ vi.mock('@shopify/cli-kit/node/is-global')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
   ...((await vi.importActual('@shopify/cli-kit/node/node-package-manager')) as any),
   localCLIVersion: vi.fn(),
+  globalCLIVersion: vi.fn(),
 }))
+vi.mock('@shopify/cli-kit/node/version')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []

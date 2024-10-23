@@ -1,5 +1,5 @@
 import {isUnitTest} from './context/local.js'
-import {PackageManager, versionSatisfies} from './node-package-manager.js'
+import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {cwd, sniffForPath} from './path.js'
 import {captureOutput, exec, terminalSupportsPrompting} from './system.js'
@@ -48,24 +48,6 @@ export async function isGlobalCLIInstalled(): Promise<boolean> {
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
-  }
-}
-
-/**
- * Returns the version of the globally installed CLI, only if it's greater than 3.59.0 (when the global CLI was introduced).
- *
- * @returns The version of the CLI if it is globally installed or undefined.
- */
-export async function globalCLIVersion(): Promise<string | undefined> {
-  try {
-    const version = await captureOutput('shopify', ['version'])
-    if (versionSatisfies(version, `>=3.59.0`)) {
-      return version
-    }
-    return undefined
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return undefined
   }
 }
 

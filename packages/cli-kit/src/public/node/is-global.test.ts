@@ -1,6 +1,5 @@
 import {
   currentProcessIsGlobal,
-  globalCLIVersion,
   inferPackageManagerForGlobalCLI,
   installGlobalCLIPrompt,
   isGlobalCLIInstalled,
@@ -128,41 +127,6 @@ describe('isGlobalCLIInstalled', () => {
 
     // Then
     expect(got).toBeFalsy()
-  })
-})
-
-describe('globalCLIVersion', () => {
-  test('returns the version when a recent CLI is installed globally', async () => {
-    // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('3.65.0'))
-
-    // When
-    const got = await globalCLIVersion()
-
-    // Then
-    expect(got).toBe('3.65.0')
-  })
-
-  test('returns undefined when the global version is older than 3.59', async () => {
-    // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('3.55.0'))
-
-    // When
-    const got = await globalCLIVersion()
-
-    // Then
-    expect(got).toBeUndefined()
-  })
-
-  test('returns undefined when the global version is not installed', async () => {
-    // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('command not found: shopify'))
-
-    // When
-    const got = await globalCLIVersion()
-
-    // Then
-    expect(got).toBeUndefined()
   })
 })
 

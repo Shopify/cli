@@ -732,19 +732,3 @@ export function inferPackageManager(optionsPackageManager: string | undefined, e
 
   return 'npm'
 }
-
-/**
- * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
- *
- * @param directory - path of the project to look for the dependency.
- * @returns the CLI version or undefined if the dependency is not installed.
- */
-export async function localCLIVersion(directory: string): Promise<string | undefined> {
-  try {
-    const output = await captureOutput('npm', ['list', '@shopify/cli'], {cwd: directory})
-    return output.match(/@shopify\/cli@([\w.-]*)/)?.[1]
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return undefined
-  }
-}

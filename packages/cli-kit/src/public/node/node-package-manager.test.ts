@@ -20,7 +20,6 @@ import {
   checkForCachedNewVersion,
   inferPackageManager,
   PackageManager,
-  localCLIVersion,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -30,7 +29,7 @@ import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
-vi.mock('../../version.js')
+vi.mock('./version.js')
 vi.mock('./system.js')
 vi.mock('latest-version')
 vi.mock('./is-global')
@@ -1026,35 +1025,5 @@ describe('inferPackageManager', () => {
     const mockEnv = {}
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
     expect(inferPackageManager(undefined, mockEnv)).toBe('npm')
-  })
-})
-
-describe('localCLIVersion', () => {
-  test('returns the version of the local CLI', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      vi.mocked(captureOutput).mockResolvedValueOnce(`folder@ ${tmpDir}
-└── @shopify/cli@3.68.0`)
-
-      // When
-      const got = await localCLIVersion(tmpDir)
-
-      // Then
-      expect(got).toEqual('3.68.0')
-    })
-  })
-
-  test('returns undefined when the dependency is not installed', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      vi.mocked(captureOutput).mockResolvedValueOnce(`folder@ ${tmpDir}
-        └── (empty)`)
-
-      // When
-      const got = await localCLIVersion(tmpDir)
-
-      // Then
-      expect(got).toBeUndefined()
-    })
   })
 })

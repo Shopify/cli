@@ -37,7 +37,6 @@ import {
   getPackageManager,
   getPackageName,
   usesWorkspaces as appUsesWorkspaces,
-  localCLIVersion,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -49,7 +48,8 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal, globalCLIVersion} from '@shopify/cli-kit/node/is-global'
+import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 
 const defaultExtensionDirectory = 'extensions/*'
 
