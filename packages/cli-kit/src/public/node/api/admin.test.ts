@@ -56,7 +56,7 @@ describe('admin-graphql-api', () => {
     expect(graphqlRequest).toHaveBeenLastCalledWith({
       query: 'query',
       api: 'Admin',
-      url: 'https://store/admin/api/2022-01/graphql.json',
+      url: 'https://store.myshopify.com/admin/api/2022-01/graphql.json',
       token,
       variables: {variables: 'variables'},
     })
