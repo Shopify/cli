@@ -103,21 +103,6 @@ export default class Push extends ThemeCommand {
     }),
   }
 
-  static cli2Flags = [
-    'theme',
-    'development',
-    'live',
-    'unpublished',
-    'nodelete',
-    'only',
-    'ignore',
-    'json',
-    'allow-live',
-    'publish',
-    'force',
-    'development-theme-id',
-  ]
-
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
