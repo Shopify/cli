@@ -24,7 +24,8 @@ export async function localCLIVersion(directory: string): Promise<string | undef
  */
 export async function globalCLIVersion(): Promise<string | undefined> {
   try {
-    const version = await captureOutput('shopify', ['version'])
+    const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
+    const version = await captureOutput('shopify', ['version'], {env})
     if (versionSatisfies(version, `>=3.59.0`)) {
       return version
     }

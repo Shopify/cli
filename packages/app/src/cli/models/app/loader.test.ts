@@ -36,7 +36,6 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
 
-import {isGlobalCLIInstalled} from '@shopify/cli-kit/node/is-global'
 import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 
 vi.mock('../../services/local-storage.js')
@@ -328,7 +327,6 @@ wrong = "property"
 
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
-    vi.mocked(isGlobalCLIInstalled).mockResolvedValue(true)
     vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
     vi.mocked(localCLIVersion).mockResolvedValue('3.65.0')
     const mockOutput = mockAndCaptureOutput()
