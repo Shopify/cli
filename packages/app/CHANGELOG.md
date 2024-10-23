@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.69.2
+
+### Patch Changes
+
+- fc587221cf: Fix issue with dev crashing after making a change in an extension
+  - @shopify/cli-kit@3.69.2
+  - @shopify/theme@3.69.2
+  - @shopify/plugin-cloudflare@3.69.2
+
 ## 3.69.1
 
 ### Patch Changes
