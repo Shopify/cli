@@ -293,6 +293,7 @@ describe('theme-fs', () => {
 
       // When
       const content = await readThemeFile(root, key)
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       const contentJson = JSON.parse(content?.toString() || '')
 
       // Then
