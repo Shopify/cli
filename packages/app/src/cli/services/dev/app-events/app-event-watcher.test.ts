@@ -227,7 +227,7 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       // Given
       await inTemporaryDirectory(async (tmpDir) => {
         vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
-        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
+        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
 
