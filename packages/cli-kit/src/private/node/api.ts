@@ -125,7 +125,8 @@ function errorsIncludeStatus429(error: ClientError): boolean {
     return true
   }
 
-  // More so checking if type of error.response.errors is not GraphQLError[]
+  // GraphQL returns a 401 with a string error message when auth fails
+  // Therefore error.response.errros can be a string or GraphQLError[]
   if (typeof error.response.errors === 'string') {
     return false
   }

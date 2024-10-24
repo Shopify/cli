@@ -1,4 +1,5 @@
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
+import {sanitizeURL} from './urls.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, Variables} from 'graphql-request'
@@ -15,7 +16,7 @@ export function debugLogRequestInfo(
 ${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
 With request headers:
 ${sanitizedHeadersOutput(headers)}\n
-to ${url}`)
+to ${sanitizeURL(url)}`)
 }
 
 function sanitizeVariables(variables: Variables): string {
