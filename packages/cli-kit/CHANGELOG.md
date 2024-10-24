@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 4.0.0
+
+### Patch Changes
+
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+
 ## 3.69.0
 
 ### Minor Changes
