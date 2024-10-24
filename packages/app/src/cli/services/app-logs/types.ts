@@ -37,6 +37,9 @@ export class FunctionRunLog {
   fuelConsumed: number
   errorMessage: string | null
   errorType: string | null
+  inputQueryVariablesMetafieldValue: unknown
+  inputQueryVariablesMetafieldNamespace: string | null
+  inputQueryVariablesMetafieldKey: string | null
 
   constructor({
     export: exportValue,
@@ -49,6 +52,9 @@ export class FunctionRunLog {
     fuelConsumed,
     errorMessage,
     errorType,
+    inputQueryVariablesMetafieldValue,
+    inputQueryVariablesMetafieldNamespace,
+    inputQueryVariablesMetafieldKey,
   }: {
     export: string
     input: unknown
@@ -60,6 +66,9 @@ export class FunctionRunLog {
     fuelConsumed: number
     errorMessage: string | null
     errorType: string | null
+    inputQueryVariablesMetafieldValue: unknown
+    inputQueryVariablesMetafieldNamespace: string | null
+    inputQueryVariablesMetafieldKey: string | null
   }) {
     this.export = exportValue
     this.input = input
@@ -71,6 +80,9 @@ export class FunctionRunLog {
     this.fuelConsumed = fuelConsumed
     this.errorMessage = errorMessage
     this.errorType = errorType
+    this.inputQueryVariablesMetafieldValue = inputQueryVariablesMetafieldValue
+    this.inputQueryVariablesMetafieldNamespace = inputQueryVariablesMetafieldNamespace
+    this.inputQueryVariablesMetafieldKey = inputQueryVariablesMetafieldKey
   }
 }
 

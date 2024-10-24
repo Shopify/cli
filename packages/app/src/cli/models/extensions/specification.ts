@@ -5,6 +5,7 @@ import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
+import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
@@ -19,6 +20,7 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
+  | 'localization'
 
 export interface TransformationConfig {
   [key: string]: string
@@ -273,8 +275,13 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
-    deployConfig: async (config, _) => {
-      return configWithoutFirstClassFields(config)
+    deployConfig: async (config, directory) => {
+      let parsedConfig = configWithoutFirstClassFields(config)
+      if (appModuleFeatures?.includes('localization')) {
+        const localization = await loadLocalesConfig(directory, identifier)
+        parsedConfig = {...parsedConfig, localization}
+      }
+      return parsedConfig
     },
   })
 }

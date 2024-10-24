@@ -49,6 +49,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -304,7 +305,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(directory)
-    this.showGlobalCLIWarningIfNeeded(nodeDependencies, packageManager)
+    await this.showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -352,21 +353,28 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
-  private showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
-    const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
-    // Show the warning IFF:
-    // - The current process is global
-    // - The project has a local CLI
+  private async showMultipleCLIWarningIfNeeded(directory: string, dependencies: {[key: string]: string}) {
+    // Show the warning if:
+    // - There is a global installation
+    // - The project has a local CLI dependency
     // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
-    if (currentProcessIsGlobal() && hasLocalCLI && !sniffForJson() && !alreadyShownCLIWarning) {
+    // - The warning hasn't been shown yet during the current command execution
+
+    const localVersion = dependencies['@shopify/cli'] && (await localCLIVersion(directory))
+    const globalVersion = await globalCLIVersion()
+
+    if (localVersion && globalVersion && !sniffForJson() && !alreadyShownCLIWarning) {
+      const currentInstallation = currentProcessIsGlobal() ? 'global installation' : 'local dependency'
+
       const warningContent = {
-        headline: 'You are running a global installation of Shopify CLI',
+        headline: `Two Shopify CLI installations found – using ${currentInstallation}`,
         body: [
-          `This project has Shopify CLI as a local dependency in package.json. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
+          `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected.
+We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json, unless you want to use different versions across multiple apps.`,
         ],
         link: {
-          label: 'For more information, see Shopify CLI documentation',
-          url: 'https://shopify.dev/docs/apps/tools/cli',
+          label: 'See Shopify CLI documentation.',
+          url: 'https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency',
         },
       }
       renderInfo(warningContent)
@@ -397,12 +405,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
-      if (websOfType.length > 1) {
+      if (websOfType[1]) {
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          joinPath(websOfType[1]!.directory, configurationFileNames.web),
+
+          joinPath(websOfType[1].directory, configurationFileNames.web),
         )
       }
     })
@@ -1048,12 +1056,12 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     return
   } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
     return 'frontend'
-  } else if (backendWebs.length === 0) {
+  } else if (!backendWebs[0]) {
     outputDebug('Unable to decide project type as no web backend')
     return
   }
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const {directory} = backendWebs[0]!
+
+  const {directory} = backendWebs[0]
 
   const nodeConfigFile = joinPath(directory, 'package.json')
   const rubyConfigFile = joinPath(directory, 'Gemfile')
