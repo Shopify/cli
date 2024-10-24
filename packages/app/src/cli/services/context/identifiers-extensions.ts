@@ -17,6 +17,7 @@ import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
+import { getAdminLinkExtensionsToMigrate } from '../dev/migrate-admin-link-extension.js'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -41,6 +42,11 @@ export async function ensureExtensionsIds(
     ? getMarketingActivtyExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
     : []
   const paymentsExtensionsToMigrate = getPaymentsExtensionsToMigrate(
+    localExtensions,
+    dashboardOnlyExtensions,
+    validIdentifiers,
+  )
+  const adminLinkExtensionsToMigrate = getAdminLinkExtensionsToMigrate(
     localExtensions,
     dashboardOnlyExtensions,
     validIdentifiers,
@@ -89,6 +95,19 @@ export async function ensureExtensionsIds(
       paymentsExtensionsToMigrate,
       options.appId,
       'payments_extension',
+      dashboardOnlyExtensions,
+      options.developerPlatformClient,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+  }
+
+  if (adminLinkExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(adminLinkExtensionsToMigrate, false)
+    if (!confirmedMigration) throw new AbortSilentError()
+    const newRemoteExtensions = await migrateAppModules(
+      adminLinkExtensionsToMigrate,
+      options.appId,
+      'admin_link',
       dashboardOnlyExtensions,
       options.developerPlatformClient,
     )

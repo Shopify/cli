@@ -1,5 +1,6 @@
 import {buildTomlObject as buildPaymentsTomlObject} from '../../services/payments/extension-to-toml.js'
 import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extension-to-toml.js'
+import {buildTomlObject as buildAdminLinkTomlObject} from '../../services/admin-link/extension-to-toml.js'
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
@@ -48,6 +49,12 @@ const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
           value: 'marketing activity',
           extensionTypes: ['marketing_activity_extension'],
           buildTomlObject: buildMarketingActivityTomlObject,
+        },
+        {
+          label: 'Admin Link extensions',
+          value: 'link extension',
+          extensionTypes: ['app_link', 'bulk_action'],
+          buildTomlObject: buildAdminLinkTomlObject,
         },
       ]
     : []),
