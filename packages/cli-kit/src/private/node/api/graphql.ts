@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
+import {sanitizeURL} from './urls.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
-import {ClientError, RequestDocument, Variables} from 'graphql-request'
+import {ClientError, Variables} from 'graphql-request'
 
 export function debugLogRequestInfo(
   api: string,
-  query: RequestDocument,
+  query: string,
+  url: string,
   variables?: Variables,
   headers: {[key: string]: string} = {},
 ) {
@@ -14,8 +15,8 @@ export function debugLogRequestInfo(
   ${outputToken.raw(query.toString().trim())}
 ${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
 With request headers:
-${sanitizedHeadersOutput(headers)}
-`)
+${sanitizedHeadersOutput(headers)}\n
+to ${sanitizeURL(url)}`)
 }
 
 function sanitizeVariables(variables: Variables): string {
