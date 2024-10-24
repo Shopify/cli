@@ -19,3 +19,7 @@ export async function promptThemeName(message: string) {
     defaultValue: defaultName,
   })
 }
+
+export function themeGid(id: number): string {
+  return `gid://shopify/OnlineStoreTheme/${id}`
+}

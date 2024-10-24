@@ -1,7 +1,7 @@
 function projectFactory(name: string, schemaName: string, project: string = 'app') {
   return {
     schema: `./packages/${project}/src/cli/api/graphql/${name}/${schemaName}`,
-    documents: [`./packages/${project}/src/cli/api/graphql/${name}/queries/**/*.graphql`],
+    documents: [`./packages/${project}/src/cli/api/graphql/${name}/queries/**/*.graphql`,`./packages/${project}/src/cli/api/graphql/${name}/mutations/**/*.graphql`],
     extensions: {
       codegen: {
         generates: {
