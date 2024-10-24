@@ -42,6 +42,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions, systemEnv
               bundleDirectory,
               options.identifiers,
             )
+            await extension.keepBuiltSourcemapsLocally(bundleDirectory)
           },
         }
       }),
