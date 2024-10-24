@@ -11,12 +11,15 @@ export interface PatchTomlOptions {
 }
 
 /**
- * Updates an app/extension configuration file with the given patch.
+ * Updates an app configuration file with the given patch.
  *
  * Only updates the given fields in the patch and leaves the rest of the file unchanged.
+ * Keeps the same order of the keys as the original file.
  *
- * @param path - The path to the app/extension configuration file.
- * @param patch - The patch to apply to the app/extension configuration file.
+ * New keys are always added at the end of the file.
+ *
+ * @param path - The path to the app configuration file.
+ * @param patch - The patch to apply to the app configuration file.
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  */
 export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
@@ -24,12 +27,12 @@ export async function patchAppConfigurationFile({path, patch, schema}: PatchToml
   const configuration = decodeToml(tomlContents)
   const updatedConfig = deepMergeObjects(configuration, patch)
 
-  // Re-parse the config with the schema to validate the patch and keep the same order in the file
-  // Make every field optional to not crash on invalid tomls that are missing fields.
+  // Re-parse the config with the schema to validate the patch
+  // Make every field optional to not crash on tomls that are missing fields.
   const validSchema = schema ?? zod.object({}).passthrough()
-  const validatedConfig = validSchema.partial().parse(updatedConfig)
-  let encodedString = encodeToml(validatedConfig)
+  validSchema.partial().parse(updatedConfig)
 
+  let encodedString = encodeToml(updatedConfig)
   encodedString = addDefaultCommentsToToml(encodedString)
   await writeFile(path, encodedString)
 }
