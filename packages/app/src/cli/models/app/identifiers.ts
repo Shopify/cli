@@ -33,7 +33,7 @@ export interface Identifiers {
   extensionsNonUuidManaged: IdentifiersExtensions
 }
 
-export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
+type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
 type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface

@@ -37,9 +37,6 @@ import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vite
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {renderConfirmationPrompt, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {Config} from '@oclif/core'
-
-const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
 const APP1: OrganizationApp = testOrganizationApp({
   id: '1',
@@ -66,7 +63,6 @@ const ORG2: Organization = {
 }
 
 const CACHED1: CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
-const CACHED1_WITH_CONFIG: CachedAppInfo = {...CACHED1, configFile: 'shopify.app.toml'}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -74,27 +70,6 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: true,
   convertableToPartnerTest: true,
-}
-const STORE2: OrganizationStore = {
-  shopId: '2',
-  link: 'link2',
-  shopDomain: 'domain2',
-  shopName: 'store2',
-  transferDisabled: false,
-  convertableToPartnerTest: false,
-}
-
-const ORG_AND_APPS_RESPONSE = {
-  organization: ORG1,
-  apps: [APP1, APP2],
-  hasMorePages: false,
-  developerPlatformClient: buildDeveloperPlatformClient(),
-}
-
-const DEFAULT_SELECT_APP_OPTIONS = {
-  directory: undefined,
-  isLaunchable: true,
-  scopesArray: [],
 }
 
 const state: AppConfigurationStateLinked = {
@@ -109,8 +84,6 @@ const state: AppConfigurationStateLinked = {
   configSource: 'flag',
   configurationFileName: 'shopify.app.toml',
 }
-
-const remoteApp: OrganizationApp = APP1
 
 const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployOptions => {
   return {
