@@ -34,7 +34,7 @@ function writeDefaulToml(tmpDir: string) {
 }
 
 describe('patchAppConfigurationFile', () => {
-  test('updates existing configuration with new values and adds new top-levelfields', async () => {
+  test('updates existing configuration with new values and adds new top-levelfields, replaces arrays', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
       const patch = {
@@ -42,6 +42,9 @@ describe('patchAppConfigurationFile', () => {
         application_url: 'https://example.com',
         access_scopes: {
           use_legacy_install_flow: false,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/redirect3', 'https://example.com/redirect4'],
         },
       }
 
@@ -62,8 +65,8 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://example.com/redirect",
-  "https://example.com/redirect2"
+  "https://example.com/redirect3",
+  "https://example.com/redirect4"
 ]
 
 [webhooks]
