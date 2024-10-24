@@ -67,7 +67,16 @@ export async function startFileWatcher(
 
   let currentEvents: WatcherEvent[] = []
 
+  /**
+   * Debounced function to emit the accumulated events.
+   * This function will be called at most once every 500ms to avoid emitting too many events in a short period.
+   */
   const debouncedEmit = debounce(emitEvents, 500)
+
+  /**
+   * Emits the accumulated events and resets the current events list.
+   * It also logs the number of events emitted and their paths for debugging purposes.
+   */
   function emitEvents() {
     const events = currentEvents
     currentEvents = []
@@ -76,6 +85,12 @@ export async function startFileWatcher(
     onChange(events)
   }
 
+  /**
+   * Adds a new event to the current events list and schedules the debounced emit function.
+   * If the event is already in the list, it will not be added again.
+   *
+   * @param event - The event to be added
+   */
   function pushEvent(event: WatcherEvent) {
     // If the event is already in the list, don't push it again
     if (currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
@@ -96,6 +111,7 @@ export async function startFileWatcher(
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
+  // PENDING: Use .gitgnore from app and extensions to ignore files.
   const watcher = chokidar.watch(watchPaths, {
     ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
     persistent: true,

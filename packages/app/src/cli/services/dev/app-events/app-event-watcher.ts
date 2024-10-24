@@ -1,16 +1,13 @@
 /* eslint-disable tsdoc/syntax */
-import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
-import {appDiff} from './app-diffing.js'
+import {OutputContextOptions, startFileWatcher} from './file-watcher.js'
 import {ESBuildContextManager} from './app-watcher-esbuild.js'
+import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {loadApp} from '../../../models/app/loader.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'events'
 
@@ -81,27 +78,7 @@ export interface AppEvent {
   startTime: [number, number]
 }
 
-interface HandlerInput {
-  event: WatcherEvent
-  app: AppInterface
-  extensions: ExtensionInstance[]
-  options: OutputContextOptions
-}
-
-type Handler = (input: HandlerInput) => Promise<AppEvent>
 type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
-
-const handlers: {[key in WatcherEvent['type']]: Handler} = {
-  extension_folder_deleted: ExtensionFolderDeletedHandler,
-  file_created: FileChangeHandler,
-  file_deleted: FileChangeHandler,
-  file_updated: FileChangeHandler,
-  extension_folder_created: ReloadAppHandler,
-  extensions_config_updated: ReloadAppHandler,
-  app_config_deleted: AppConfigDeletedHandler,
-}
-
-const eventsThatRequireReload: WatcherEvent['type'][] = ['extensions_config_updated', 'extension_folder_created']
 
 /**
  * App event watcher will emit events when changes are detected in the file system.
@@ -113,51 +90,18 @@ export class AppEventWatcher extends EventEmitter {
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
 
-  constructor(
-    app: AppInterface,
-    appURL?: string,
-    options?: OutputContextOptions,
-    buildOutputPath?: string,
-    contextManager?: ESBuildContextManager,
-  ) {
+  constructor(app: AppInterface, appURL?: string, options?: OutputContextOptions, buildOutputPath?: string) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'bundle')
     this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-    this.esbuildManager =
-      contextManager ??
-      new ESBuildContextManager({
-        outputPath: this.buildOutputPath,
-        dotEnvVariables: this.app.dotenv?.variables ?? {},
-        url: this.appURL ?? '',
-        ...this.options,
-      })
-  }
-
-  async handleEvents(events: WatcherEvent[]): Promise<AppEvent | undefined> {
-    if (events[0] === undefined) return undefined
-    const appReloadNeeded = events.some((event) => eventsThatRequireReload.includes(event.type))
-    const otherEvents = events.filter((event) => !eventsThatRequireReload.includes(event.type))
-
-    let appEvent: AppEvent = {app: this.app, extensionEvents: [], path: events[0].path, startTime: events[0].startTime}
-    if (appReloadNeeded) {
-      appEvent = await ReloadAppHandler({
-        event: events[0],
-        app: this.app,
-        options: this.options,
-        extensions: this.app.realExtensions,
-      })
-    }
-
-    for (const event of otherEvents) {
-      const extensions = this.app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
-      // eslint-disable-next-line no-await-in-loop
-      const newEvent = await handlers[event.type]({event, app: appEvent.app, extensions, options: this.options})
-      appEvent.extensionEvents.push(...newEvent.extensionEvents)
-    }
-
-    return appEvent
+    this.esbuildManager = new ESBuildContextManager({
+      outputPath: this.buildOutputPath,
+      dotEnvVariables: this.app.dotenv?.variables ?? {},
+      url: this.appURL ?? '',
+      ...this.options,
+    })
   }
 
   async start() {
@@ -173,7 +117,7 @@ export class AppEventWatcher extends EventEmitter {
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (events) => {
-      this.handleEvents(events)
+      handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (!appEvent) return
           this.app = appEvent.app
@@ -203,18 +147,29 @@ export class AppEventWatcher extends EventEmitter {
     })
   }
 
-  async deleteExtensionsBuildOutput(extensions: ExtensionInstance[]) {
+  /**
+   * Register as a listener for AppEvents.
+   *
+   * @param listener - The listener function to add
+   * @returns The AppEventWatcher instance
+   */
+  onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.addListener('all', listener)
+    return this
+  }
+
+  /**
+   * Deletes the build output for the given extensions.
+   *
+   * This is just a cleanup function after detecting that an extension has been deleted.
+   */
+  private async deleteExtensionsBuildOutput(extensions: ExtensionInstance[]) {
     const promises = extensions.map(async (ext) => {
       const outputPath = joinPath(this.buildOutputPath, ext.getOutputFolderId())
       return rmdir(outputPath, {force: true})
     })
     await Promise.all(promises)
-  }
-
-  onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    this.addListener('all', listener)
-    return this
   }
 
   /**
@@ -237,10 +192,8 @@ export class AppEventWatcher extends EventEmitter {
         return {status: 'error', error: error.message, handle: ext.handle} as const
       }
     })
-    const output = await Promise.all(promises)
-    // For now, do nothing with the output, but we could log the errors or something
     // ESBuild errors are already logged by the ESBuild bundler
-    return output
+    return Promise.all(promises)
   }
 
   /**
@@ -257,77 +210,5 @@ export class AppEventWatcher extends EventEmitter {
       appURL: this.appURL,
     }
     await extension.buildForBundle(buildOptions, this.buildOutputPath)
-  }
-}
-
-/**
- * When an extension folder is deleted:
- * Remove the extension from the app and return the updated app and the deleted extension in the event.
- *
- * An extension folder can contain multiple extensions, the event will include all of them.
- */
-async function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput): Promise<AppEvent> {
-  const events = extensions.map((ext) => {
-    app.removeExtension(ext.handle)
-    return {type: EventType.Deleted, extension: ext}
-  })
-  return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
-}
-
-/**
- * When a file is created, updated or deleted:
- * Return the same app and the updated extension(s) in the event.
- *
- * A file can be shared between multiple extensions in the same folder. The event will include all of the affected ones.
- */
-async function FileChangeHandler({event, app, extensions}: HandlerInput): Promise<AppEvent> {
-  const events: ExtensionEvent[] = extensions.map((ext) => ({type: EventType.Updated, extension: ext}))
-  return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
-}
-
-/**
- * Handler for events that requiere a full reload of the app:
- * - When a new extension folder is created
- * - When the app.toml is updated
- * - When an extension toml is updated
- */
-async function ReloadAppHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
-  const diff = appDiff(app, newApp, true)
-  const createdEvents = diff.created.map((ext) => ({type: EventType.Created, extension: ext}))
-  const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
-  const updatedEvents = diff.updated.map((ext) => ({type: EventType.Updated, extension: ext}))
-  const extensionEvents = [...createdEvents, ...deletedEvents, ...updatedEvents]
-  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path}
-}
-
-/**
- * When the app.toml is deleted:
- * Throw an error to exit the process.
- */
-async function AppConfigDeletedHandler(_input: HandlerInput): Promise<AppEvent> {
-  // The user deleted the active app.toml, why would they do that? :(
-  throw new AbortError('The active app.toml was deleted, exiting')
-}
-
-/*
- * Reload the app and returns it
- * Prints the time to reload the app to stdout
- */
-async function reloadApp(app: AppInterface, options: OutputContextOptions): Promise<AppInterface> {
-  const start = startHRTime()
-  try {
-    const newApp = await loadApp({
-      specifications: app.specifications,
-      directory: app.directory,
-      userProvidedConfigName: basename(app.configuration.path),
-      remoteFlags: app.remoteFlags,
-    })
-    outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)
-    return newApp
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    outputWarn(`Error reloading app: ${error.message}`, options.stderr)
-    return app
   }
 }
