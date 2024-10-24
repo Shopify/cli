@@ -9,7 +9,9 @@ import {
   testOrganizationApp,
   testOrganizationStore,
 } from '../models/app/app.test-data.js'
+import metadata from '../metadata.js'
 import {vi, describe, test, expect} from 'vitest'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')
@@ -119,6 +121,29 @@ describe('storeContext', () => {
 
     await expect(storeContext({appContextResult: updatedAppContextResult, forceReselectStore: false})).rejects.toThrow(
       'No stores available',
+    )
+  })
+
+  test('calls logMetadata', async () => {
+    // Given
+    vi.mocked(fetchStore).mockResolvedValue(mockStore)
+
+    // When
+    await storeContext({appContextResult, forceReselectStore: false})
+
+    // Then
+    const meta = metadata.getAllPublicMetadata()
+    expect(meta).toEqual(
+      expect.objectContaining({
+        store_fqdn_hash: hashString(mockStore.shopDomain),
+      }),
+    )
+
+    const sensitiveMeta = metadata.getAllSensitiveMetadata()
+    expect(sensitiveMeta).toEqual(
+      expect.objectContaining({
+        store_fqdn: mockStore.shopDomain,
+      }),
     )
   })
 })
