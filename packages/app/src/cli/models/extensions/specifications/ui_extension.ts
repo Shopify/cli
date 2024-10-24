@@ -101,10 +101,10 @@ Please check the module path for ${target}`.value,
       )
     }
 
-    if (!uniqueTargets.includes(target)) {
-      uniqueTargets.push(target)
-    } else {
+    if (uniqueTargets.includes(target)) {
       duplicateTargets.push(target)
+    } else {
+      uniqueTargets.push(target)
     }
   }
 

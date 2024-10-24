@@ -1,11 +1,10 @@
-/* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {fileExistsSync, mkdir, readFileSync, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -66,17 +65,13 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     return developerPlatformClient.refreshToken()
   }
 
-  const bundlePath = joinPath(app.directory, '.shopify', 'bundle')
-  if (fileExistsSync(bundlePath)) await rmdir(bundlePath, {force: true})
-  await mkdir(bundlePath)
+  const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
 
-  const processOptions = {...options, stderr, stdout, signal, bundlePath}
-  const appWatcher = new AppEventWatcher(app, processOptions)
+  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
   outputWarn('-----> Using DEV SESSIONS <-----')
   processOptions.stdout.write('Preparing dev session...')
 
-  await initialBuild(processOptions)
   await bundleExtensionsAndUpload(processOptions, false)
 
   appWatcher.onEvent(async (event) => {
@@ -85,32 +80,19 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     // Remove aborted controllers from array:
     bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
 
-    const promises = event.extensionEvents.map(async (eve) => {
+    event.extensionEvents.map((eve) => {
       switch (eve.type) {
         case EventType.Created:
-        case EventType.UpdatedSourceFile:
-          const message = eve.type === EventType.Created ? '✅ Extension created ' : '🔄 Extension Updated'
-          processOptions.stdout.write(`${message} ->> ${eve.extension.handle}`)
-          return eve.extension.buildForBundle(
-            {...processOptions, app: event.app, environment: 'development'},
-            processOptions.bundlePath,
-            undefined,
-          )
+          processOptions.stdout.write(`✅ Extension created ->> ${eve.extension.handle}`)
+          break
         case EventType.Deleted:
           processOptions.stdout.write(`❌ Extension deleted ->> ${eve.extension.handle}`)
-          return rmdir(joinPath(processOptions.bundlePath, eve.extension.handle), {force: true})
+          break
         case EventType.Updated:
           processOptions.stdout.write(`🔄 Extension Updated ->> ${eve.extension.handle}`)
           break
       }
     })
-    try {
-      await Promise.all(promises)
-      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      processOptions.stderr.write('Error building extensions')
-      processOptions.stderr.write(error.message)
-    }
 
     const networkStartTime = startHRTime()
     await performActionWithRetryAfterRecovery(async () => {
@@ -130,23 +112,6 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   // Start watching for changes in the app
   await appWatcher.start()
   processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
-}
-
-/**
- * Build all extensions for the initial bundle
- * All subsequent changes in extensions will trigger individual builds
- *
- * @param options - The options for the process
- */
-async function initialBuild(options: DevSessionProcessOptions) {
-  const allPromises = options.app.realExtensions.map((extension) => {
-    return extension.buildForBundle(
-      {...options, app: options.app, environment: 'development'},
-      options.bundlePath,
-      undefined,
-    )
-  })
-  await Promise.all(allPromises)
 }
 
 /**
@@ -210,7 +175,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     }
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    options.stderr.write('❌ Dev Session Error')
+    options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
     options.stderr.write(error.message)
   }
   return true
