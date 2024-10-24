@@ -13,10 +13,23 @@ export function applyIgnoreFilters<T extends {key: string}>(
   const ignoreOptions = options.ignore ?? []
   const onlyOptions = options.only ?? []
 
-  return files
-    .filter(filterBy(shopifyIgnore, '.shopifyignore'))
+  const negatedPatterns = shopifyIgnore.filter((pattern) => pattern.startsWith('!')).map((pattern) => pattern.slice(1))
+  const normalPatterns = shopifyIgnore.filter((pattern) => !pattern.startsWith('!'))
+
+  let filteredFiles = files.filter(filterBy(normalPatterns, '.shopifyignore'))
+
+  if (negatedPatterns.length > 0) {
+    filteredFiles = filteredFiles.concat(files.filter(filterBy(negatedPatterns, '.shopifyignore', true)))
+  }
+
+  filteredFiles = filteredFiles
     .filter(filterBy(ignoreOptions, '--ignore'))
     .filter(filterBy(onlyOptions, '--only', true))
+
+  const uniqueFiles = Array.from(new Set(filteredFiles.map((file) => file.key))).map((key) =>
+    filteredFiles.find((file) => file.key === key),
+  )
+  return uniqueFiles
 }
 
 function filterBy(patterns: string[], type: string, invertMatch = false) {

@@ -18,10 +18,11 @@ export function fakeThemeFileSystem(
       files.set(asset.key, asset)
     },
     read: async (fileKey: string) => {
-      return files.get(fileKey)?.value || files.get(fileKey)?.attachment
+      return files.get(fileKey)?.value ?? files.get(fileKey)?.attachment
     },
     addEventListener: () => {},
-    applyIgnoreFilters: (files) => applyIgnoreFilters(files, options?.filters),
+    applyIgnoreFilters: <T extends {key: string}>(files: T[]) =>
+      applyIgnoreFilters(files, options?.filters).filter((file): file is T => file !== undefined),
     startWatcher: async () => {},
   }
 }

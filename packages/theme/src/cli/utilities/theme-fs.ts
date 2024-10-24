@@ -133,7 +133,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.add(fileKey)
       }
 
-      return file.value || file.attachment || ''
+      return file.value ?? file.attachment ?? ''
     })
 
     const syncPromise = contentPromise
@@ -240,7 +240,8 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       await writeThemeFile(root, asset)
     },
     read,
-    applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
+    applyIgnoreFilters: <T extends {key: string}>(files: T[]): T[] =>
+      applyIgnoreFilters(files, filterPatterns).filter((file): file is T => file !== undefined),
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },
