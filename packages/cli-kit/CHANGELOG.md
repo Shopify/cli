@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.69.0
+
+### Minor Changes
+
+- 283aa815c: Remove support for access_code based Shopify authentication within the CLI
+
 ## 3.68.0
 
 ### Patch Changes

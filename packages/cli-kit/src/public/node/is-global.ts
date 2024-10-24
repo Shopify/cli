@@ -42,7 +42,8 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
  */
 export async function isGlobalCLIInstalled(): Promise<boolean> {
   try {
-    const output = await captureOutput('shopify', ['app'])
+    const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
+    const output = await captureOutput('shopify', ['app'], {env})
     // Installed if `app dev` is available globally
     return output.includes('app dev')
     // eslint-disable-next-line no-catch-all/no-catch-all

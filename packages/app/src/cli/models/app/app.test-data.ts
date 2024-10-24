@@ -878,6 +878,50 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       registrationLimit: 1,
     },
   },
+  {
+    name: 'Remote Extension Without Schema and Without local spec',
+    externalName: 'Extension Test 1',
+    identifier: 'remote_only_extension_without_schema',
+    externalIdentifier: 'remote_only_extension_without_schema_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, without localization',
+    externalName: 'Extension Test 2',
+    identifier: 'remote_only_extension_schema',
+    externalIdentifier: 'remote_only_extension_schema_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, with localization',
+    externalName: 'Extension Test 3',
+    identifier: 'remote_only_extension_schema_with_localization',
+    externalIdentifier: 'remote_only_extension_schema_with_localization_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
+    },
+  },
 ]
 
 const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {

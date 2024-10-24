@@ -181,13 +181,18 @@ function isFatal(error: unknown): error is FatalError {
 }
 
 /**
- * A function that checks if an error should be reported as unhandled.
+ * A function that checks if an error should be reported as unexpected.
  *
  * @param error - Error to be checked.
- * @returns A boolean indicating if the error should be reported.
+ * @returns A boolean indicating if the error should be reported as unexpected.
  */
-export function shouldReportError(error: unknown): boolean {
+export function shouldReportErrorAsUnexpected(error: unknown): boolean {
   if (!isFatal(error)) {
+    // this means its not one of the CLI wrapped errors
+    if (error instanceof Error) {
+      const message = error.message
+      return !errorMessageImpliesEnvironmentIssue(message)
+    }
     return true
   }
   if (error.type === FatalErrorType.Bug) {
@@ -206,4 +211,26 @@ export function cleanSingleStackTracePath(filePath: string): string {
   return normalizePath(filePath)
     .replace('file:/', '/')
     .replace(/^\/?[A-Z]:/, '')
+}
+
+/**
+ * There are certain errors that we know are not due to a CLI bug, but are environmental/user error.
+ *
+ * @param message - The error message to check.
+ * @returns A boolean indicating if the error message implies an environment issue.
+ */
+function errorMessageImpliesEnvironmentIssue(message: string): boolean {
+  const environmentIssueMessages = [
+    'EPERM: operation not permitted, scandir',
+    'EACCES: permission denied',
+    'EPERM: operation not permitted, symlink',
+    'This version of npm supports the following node versions',
+    'EBUSY: resource busy or locked, rmdir',
+    'getaddrinfo ENOTFOUND',
+    'Client network socket disconnected before secure TLS connection was established',
+    'spawn EPERM',
+    'socket hang up',
+  ]
+  const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
+  return anyMatches
 }
