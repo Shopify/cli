@@ -133,7 +133,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.add(fileKey)
       }
 
-      return file.value || file.attachment || ''
+      return file.value ?? file.attachment ?? ''
     })
 
     const syncPromise = contentPromise

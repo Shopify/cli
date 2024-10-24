@@ -15,6 +15,8 @@ import {themeKitAccessDomain} from '../../../private/node/constants.js'
 import {ClientError, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
+const LatestApiVersionByFQDN = new Map<string, string>()
+
 /**
  * Executes a GraphQL query against the Admin API.
  *
@@ -49,8 +51,8 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
   version?: string,
   responseOptions?: GraphQLResponseOptions<TResult>,
 ): Promise<TResult> {
-  let apiVersion = version
-  if (!version) {
+  let apiVersion = version ?? LatestApiVersionByFQDN.get(session.storeFqdn)
+  if (!apiVersion) {
     apiVersion = await fetchLatestSupportedApiVersion(session)
   }
   const store = await normalizeStoreFqdn(session.storeFqdn)
@@ -80,7 +82,9 @@ function themeAccessHeaders(session: AdminSession): {[header: string]: string} {
 async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<string> {
   const apiVersions = await supportedApiVersions(session)
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return apiVersions.reverse()[0]!
+  const latest = apiVersions.reverse()[0]!
+  LatestApiVersionByFQDN.set(session.storeFqdn, latest)
+  return latest
 }
 
 /**
