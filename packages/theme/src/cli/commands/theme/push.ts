@@ -65,7 +65,7 @@ export default class Push extends ThemeCommand {
     }),
     nodelete: Flags.boolean({
       char: 'n',
-      description: 'Runs the push command without deleting local files.',
+      description: `Prevent deleting remote files that don't exist locally.`,
       env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({

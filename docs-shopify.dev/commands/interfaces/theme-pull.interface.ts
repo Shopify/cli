@@ -31,7 +31,7 @@ export interface themepull {
   '--no-color'?: ''
 
   /**
-   * Runs the pull command without deleting local files.
+   * Prevent deleting local files that don't exist remotely.
    * @environment SHOPIFY_FLAG_NODELETE
    */
   '-n, --nodelete'?: ''
