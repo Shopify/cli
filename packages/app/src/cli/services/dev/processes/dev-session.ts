@@ -175,7 +175,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     }
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    options.stderr.write('❌ Dev Session Error')
+    options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
     options.stderr.write(error.message)
   }
   return true

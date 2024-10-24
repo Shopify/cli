@@ -101,6 +101,8 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
   app_config_deleted: AppConfigDeletedHandler,
 }
 
+const eventsThatRequireReload: WatcherEvent['type'][] = ['extensions_config_updated', 'extension_folder_created']
+
 /**
  * App event watcher will emit events when changes are detected in the file system.
  */
@@ -133,6 +135,31 @@ export class AppEventWatcher extends EventEmitter {
       })
   }
 
+  async handleEvents(events: WatcherEvent[]): Promise<AppEvent | undefined> {
+    if (events[0] === undefined) return undefined
+    const appReloadNeeded = events.some((event) => eventsThatRequireReload.includes(event.type))
+    const otherEvents = events.filter((event) => !eventsThatRequireReload.includes(event.type))
+
+    let appEvent: AppEvent = {app: this.app, extensionEvents: [], path: events[0].path, startTime: events[0].startTime}
+    if (appReloadNeeded) {
+      appEvent = await ReloadAppHandler({
+        event: events[0],
+        app: this.app,
+        options: this.options,
+        extensions: this.app.realExtensions,
+      })
+    }
+
+    for (const event of otherEvents) {
+      const extensions = this.app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
+      // eslint-disable-next-line no-await-in-loop
+      const newEvent = await handlers[event.type]({event, app: appEvent.app, extensions, options: this.options})
+      appEvent.extensionEvents.push(...newEvent.extensionEvents)
+    }
+
+    return appEvent
+  }
+
   async start() {
     // If there is a previous build folder, delete it
     if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
@@ -145,12 +172,10 @@ export class AppEventWatcher extends EventEmitter {
     await this.buildExtensions(this.app.realExtensions)
 
     // Start the file system watcher
-    await startFileWatcher(this.app, this.options, (event) => {
-      // A file/folder can contain multiple extensions, this is the list of extensions possibly affected by the change
-      const extensions = this.app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
-
-      handlers[event.type]({event, app: this.app, extensions, options: this.options})
+    await startFileWatcher(this.app, this.options, (events) => {
+      this.handleEvents(events)
         .then(async (appEvent) => {
+          if (!appEvent) return
           this.app = appEvent.app
           if (appEvent.extensionEvents.length === 0) {
             outputDebug('Change detected, but no extensions were affected', this.options.stdout)
@@ -170,7 +195,6 @@ export class AppEventWatcher extends EventEmitter {
             .filter((extEvent) => extEvent.type === EventType.Deleted)
             .map((extEvent) => extEvent.extension)
           await this.deleteExtensionsBuildOutput(deletedExtensions)
-
           this.emit('all', appEvent)
         })
         .catch((error) => {
