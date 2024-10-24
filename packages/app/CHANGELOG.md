@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 4.0.0
+
+### Patch Changes
+
+- 851867cbb2: adding optional preloads to ui extension targets
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+- Updated dependencies [ade20307dc]
+- Updated dependencies [eccb52dccd]
+- Updated dependencies [03b39a67b3]
+- Updated dependencies [b981aea41c]
+  - @shopify/theme@4.0.0
+  - @shopify/cli-kit@4.0.0
+  - @shopify/plugin-cloudflare@4.0.0
+
 ## 3.69.0
 
 ### Minor Changes

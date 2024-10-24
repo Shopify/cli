@@ -1,5 +1,21 @@
 # @shopify/theme
 
+## 4.0.0
+
+### Major Changes
+
+- b981aea41c: Removes the Ruby implementation of the `theme push` command
+
+### Minor Changes
+
+- ade20307dc: Removes Ruby implementation of the `theme push` command
+
+### Patch Changes
+
+- eccb52dccd: Fixes an issue in the `theme push` command where a confirmation prompt is rendered to users who provide the `--allow-live` flag
+- Updated dependencies [03b39a67b3]
+  - @shopify/cli-kit@4.0.0
+
 ## 3.69.0
 
 ### Minor Changes
