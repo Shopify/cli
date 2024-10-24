@@ -529,6 +529,39 @@ describe('theme-fs', () => {
       expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
     })
 
+    test('does not delete file from remote when options.noDelete is true', async () => {
+      // Given
+      vi.mocked(fetchThemeAsset).mockResolvedValue({
+        key: 'assets/base.css',
+        checksum: '1',
+        value: 'content',
+        attachment: '',
+        stats: {size: 100, mtime: 100},
+      })
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root, {noDelete: true})
+      await themeFileSystem.ready()
+
+      const deleteOperationPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Explicitly emit the 'unlink' event
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/assets/base.css`)
+
+      await deleteOperationPromise
+
+      // Then
+      expect(deleteThemeAsset).not.toHaveBeenCalled()
+    })
+
     test('renders a warning to debug if the file deletion fails', async () => {
       // Given
       vi.mocked(fetchThemeAsset).mockResolvedValue({

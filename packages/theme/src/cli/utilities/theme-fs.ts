@@ -133,7 +133,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.add(fileKey)
       }
 
-      return file.value || file.attachment || ''
+      return file.value ?? file.attachment ?? ''
     })
 
     const syncPromise = contentPromise
@@ -190,17 +190,19 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       emitEvent('unlink', {fileKey})
     }
 
-    const syncPromise = deleteThemeAsset(Number(themeId), fileKey, adminSession)
-      .then(async (success) => {
-        if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
-        unsyncedFileKeys.delete(fileKey)
-        outputSyncResult('delete', fileKey)
-        return true
-      })
-      .catch((error) => {
-        createSyncingCatchError(fileKey, 'delete')(error)
-        return false
-      })
+    const syncPromise = options?.noDelete
+      ? Promise.resolve()
+      : deleteThemeAsset(Number(themeId), fileKey, adminSession)
+          .then(async (success) => {
+            if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+            unsyncedFileKeys.delete(fileKey)
+            outputSyncResult('delete', fileKey)
+            return true
+          })
+          .catch((error) => {
+            createSyncingCatchError(fileKey, 'delete')(error)
+            return false
+          })
 
     emitEvent('unlink', {
       fileKey,
