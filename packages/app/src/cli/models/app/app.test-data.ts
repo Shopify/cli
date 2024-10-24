@@ -621,23 +621,6 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     },
   },
   {
-    name: 'Data Extension',
-    externalName: 'Data Extension',
-    identifier: 'data_extension',
-    externalIdentifier: 'data_extension_external',
-    gated: false,
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 50,
-    },
-    features: {
-      argo: {
-        surface: 'admin',
-      },
-    },
-  },
-  {
     name: 'UI Extension',
     externalName: 'UI Extension',
     identifier: 'ui_extension',
