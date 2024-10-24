@@ -10,7 +10,7 @@ import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {basename} from '@shopify/cli-kit/node/path'
 
 /**
- * Transforms an array of WatcherEvents into a processed AppEvent.
+ * Transforms an array of WatcherEvents from the file system into a processed AppEvent.
  *
  * An AppEvent contains the updated App, and the list of updates that happened to the extensions. (created, deleted, updated)
  *
@@ -48,6 +48,13 @@ interface HandlerInput {
 
 const eventsThatRequireReload: WatcherEvent['type'][] = ['extensions_config_updated', 'extension_folder_created']
 
+/**
+ * Handlers for the different types of events that can be emitted by the file watcher.
+ *
+ * Each handler returns an AppEvent, which contains the updated app and the list of extensions that were affected by the event.
+ *
+ * Events that require a full app reload are ignored here and handled manually before calling the handlers.
+ */
 const handlers: {[key in WatcherEvent['type']]: Handler} = {
   extension_folder_deleted: ExtensionFolderDeletedHandler,
   file_created: FileChangeHandler,
