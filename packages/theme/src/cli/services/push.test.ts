@@ -6,7 +6,7 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
-import {createTheme, fetchTheme, publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {createTheme, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
   DEVELOPMENT_THEME_ROLE,
@@ -48,7 +48,7 @@ describe('push', () => {
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
   })
 
-  test('should call publishTheme if publish flag is provided', async () => {
+  test('should call themePublish if publish flag is provided', async () => {
     // Given
     const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
@@ -57,7 +57,7 @@ describe('push', () => {
     await push({...defaultFlags, publish: true})
 
     // Then
-    expect(publishTheme).toHaveBeenCalledWith(theme.id, adminSession)
+    expect(themePublish).toHaveBeenCalledWith(theme.id, adminSession)
   })
 })
 
