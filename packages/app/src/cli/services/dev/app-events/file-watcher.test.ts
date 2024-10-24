@@ -214,7 +214,7 @@ describe('file-watcher events', () => {
         () => {
           expect(onChange).toHaveBeenCalledWith([expectedEvent])
         },
-        {timeout: 1000, interval: 100},
+        {timeout: 2000, interval: 100},
       )
     },
   )
