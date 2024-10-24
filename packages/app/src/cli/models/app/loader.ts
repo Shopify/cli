@@ -577,6 +577,7 @@ We recommend removing the @shopify/cli and @shopify/app dependencies from your p
       appConfiguration,
       this.abortOrReport.bind(this),
     )
+    if (!specConfiguration.webhooks) return []
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const {api_version, subscriptions = []} = specConfiguration.webhooks
     // Find all unique subscriptions
