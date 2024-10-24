@@ -2,6 +2,9 @@ import {fetchStore} from './dev/fetch.js'
 import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
+import metadata from '../metadata.js'
+import {hashString} from '@shopify/cli-kit/node/crypto'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 /**
  * Input options for the `storeContext` function.
@@ -35,7 +38,8 @@ export async function storeContext({
   const cachedStoreInToml = forceReselectStore ? undefined : app.configuration.build?.dev_store_url
 
   // An explicit storeFqdn has preference over anything else.
-  const storeFqdnToUse = storeFqdn || cachedStoreInToml
+  const storeFqdnToUse = storeFqdn ?? cachedStoreInToml
+
   if (storeFqdnToUse) {
     selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
     // never automatically convert a store provided via the command line
@@ -46,5 +50,19 @@ export async function storeContext({
     selectedStore = await selectStore(allStores, organization, developerPlatformClient)
   }
 
+  await logMetadata(selectedStore, forceReselectStore)
+  selectedStore.shopDomain = await normalizeStoreFqdn(selectedStore.shopDomain)
+
   return selectedStore
+}
+
+async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean) {
+  await metadata.addPublicMetadata(() => ({
+    cmd_app_reset_used: resetUsed,
+    store_fqdn_hash: hashString(selectedStore.shopDomain),
+  }))
+
+  await metadata.addSensitiveMetadata(() => ({
+    store_fqdn: selectedStore.shopDomain,
+  }))
 }

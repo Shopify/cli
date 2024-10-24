@@ -173,6 +173,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     const store = await storeContext({
       appContextResult,
+      storeFqdn: flags.store,
       forceReselectStore: flags.reset,
     })
 
