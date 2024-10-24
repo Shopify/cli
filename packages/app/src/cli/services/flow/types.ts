@@ -4,6 +4,8 @@ export interface ConfigField {
   key?: string
   name?: string
   description?: string
+  marketingActivityCreateUrl?: string
+  marketingActivityDeleteUrl?: string
 }
 
 export interface SerializedField {
@@ -13,6 +15,8 @@ export interface SerializedField {
   required?: boolean
   uiType: string
   typeRefName?: string
+  marketingActivityCreateUrl?: string
+  marketingActivityDeleteUrl?: string
 }
 
 export type FlowExtensionTypes = 'flow_action' | 'flow_trigger'
