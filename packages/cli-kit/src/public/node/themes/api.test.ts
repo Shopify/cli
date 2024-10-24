@@ -280,6 +280,26 @@ describe('deleteThemeAsset', () => {
     expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
     expect(output).toBe(true)
   })
+
+  test('throws an AbortError when the server responds with a 403', async () => {
+    // Given
+    const id = 123
+    const key = 'config/settings_data.json'
+    const message = 'You are not authorized to edit themes on "my-shop.myshopify.com".'
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {message},
+      status: 403,
+      headers: {},
+    })
+
+    // When
+    const deletePromise = () => deleteThemeAsset(id, key, session)
+
+    // Then
+    await expect(deletePromise).rejects.toThrow(new AbortError(message))
+    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
+  })
 })
 
 describe('deleteTheme', () => {
