@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.69.3
+
+### Patch Changes
+
+- 1aed352f46: Fix redirect_urls being appended instead of replaced during app dev
+  - @shopify/cli-kit@3.69.3
+  - @shopify/theme@3.69.3
+  - @shopify/plugin-cloudflare@3.69.3
+
 ## 3.69.2
 
 ### Patch Changes
