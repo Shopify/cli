@@ -42,6 +42,9 @@ describe('patchAppConfigurationFile', () => {
         access_scopes: {
           use_legacy_install_flow: false,
         },
+        auth: {
+          redirect_urls: ['https://example.com/redirect3', 'https://example.com/redirect4'],
+        },
       }
 
       await patchAppConfigurationFile({path: configPath, patch, schema})
@@ -61,8 +64,8 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://example.com/redirect",
-  "https://example.com/redirect2"
+  "https://example.com/redirect3",
+  "https://example.com/redirect4"
 ]
 
 [webhooks]
