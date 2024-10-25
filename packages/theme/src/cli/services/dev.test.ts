@@ -1,4 +1,4 @@
-import {dev, DevOptions} from './dev.js'
+import {dev, DevOptions, renderLinks} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
@@ -11,8 +11,9 @@ import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
-vi.mock('@shopify/cli-kit/node/ruby')
+vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-environment/dev-server-session.js')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
@@ -22,12 +23,14 @@ vi.mock('../utilities/theme-fs-empty.js')
 vi.mock('../utilities/theme-fs.js')
 
 describe('dev', () => {
-  const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
+  const store = 'my-store.myshopify.com'
+  const adminSession = {storeFqdn: store, token: 'my-token'}
+  const theme = buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!
   const options: DevOptions = {
     adminSession,
     directory: 'my-directory',
-    store: 'my-store',
-    theme: buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!,
+    store,
+    theme,
     force: false,
     open: false,
     password: 'my-token',
@@ -88,6 +91,65 @@ describe('dev', () => {
           noDelete: false,
           only: [],
         },
+      })
+    })
+  })
+
+  describe('renderLinks', async () => {
+    test('renders "dev" command links', async () => {
+      // Given
+      const themeId = theme.id.toString()
+
+      // When
+      renderLinks(store, themeId)
+
+      // Then
+      expect(renderSuccess).toHaveBeenCalledWith({
+        body: [
+          {
+            list: {
+              items: [
+                {
+                  link: {
+                    url: 'http://127.0.0.1:9292',
+                  },
+                },
+              ],
+              title: {
+                bold: 'Preview your theme',
+              },
+            },
+          },
+        ],
+        nextSteps: [
+          [
+            {
+              link: {
+                label: 'Preview your gift cards',
+                url: 'http://127.0.0.1:9292/gift_cards/[store_id]/preview',
+              },
+            },
+          ],
+          [
+            {
+              link: {
+                label: 'Customize your theme at the theme editor',
+                url: 'https://my-store.myshopify.com/admin/themes/123/editor',
+              },
+            },
+          ],
+          [
+            {
+              link: {
+                label: 'Share your theme preview',
+                url: 'https://my-store.myshopify.com/?preview_theme_id=123',
+              },
+            },
+            {
+              subdued: '(https://my-store.myshopify.com/?preview_theme_id=123)',
+            },
+          ],
+        ],
       })
     })
   })
