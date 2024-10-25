@@ -230,6 +230,7 @@ describe('linkedAppContext', () => {
         expect.objectContaining({
           partner_id: tryParseInt(mockRemoteApp.organizationId),
           api_key: mockRemoteApp.apiKey,
+          cmd_app_reset_used: false,
         }),
       )
     })
