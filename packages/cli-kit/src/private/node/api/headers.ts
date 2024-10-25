@@ -56,7 +56,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
-    const authString = token.match(/^shp(at|ua|ca)/) ? token : `Bearer ${token}`
+    const authString = token.match(/^shp(at|ua|ca|tka)/) ? token : `Bearer ${token}`
 
     headers.authorization = authString
     headers['X-Shopify-Access-Token'] = authString

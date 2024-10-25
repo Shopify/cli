@@ -5657,7 +5657,7 @@
         "nodelete": {
           "allowNo": false,
           "char": "n",
-          "description": "Runs the pull command without deleting local files.",
+          "description": "Prevent deleting local files that don't exist remotely.",
           "env": "SHOPIFY_FLAG_NODELETE",
           "name": "nodelete",
           "type": "boolean"
@@ -5730,20 +5730,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "theme",
-        "development",
-        "live",
-        "unpublished",
-        "nodelete",
-        "only",
-        "ignore",
-        "json",
-        "allow-live",
-        "publish",
-        "force",
-        "development-theme-id"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
@@ -5799,22 +5785,6 @@
           "name": "json",
           "type": "boolean"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme push` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
-        "legacy-3.66": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme push` command.",
-          "env": "SHOPIFY_FLAG_LEGACY_3_66",
-          "hidden": true,
-          "name": "legacy-3.66",
-          "type": "boolean"
-        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -5834,7 +5804,7 @@
         "nodelete": {
           "allowNo": false,
           "char": "n",
-          "description": "Runs the push command without deleting local files.",
+          "description": "Prevent deleting remote files that don't exist locally.",
           "env": "SHOPIFY_FLAG_NODELETE",
           "name": "nodelete",
           "type": "boolean"
