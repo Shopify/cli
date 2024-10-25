@@ -3,11 +3,9 @@ import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extens
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
-import {loadApp} from '../../models/app/loader.js'
-import {AppInterface} from '../../models/app/app.js'
 import {importExtensions} from '../../services/import-extensions.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -69,12 +67,13 @@ export default class ImportExtensions extends AppCommand {
 
   async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(ImportExtensions)
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+    const appContext = await linkedAppContext({
       directory: flags.path,
+      clientId: flags['client-id'],
+      forceRelink: false,
       userProvidedConfigName: flags.config,
     })
+
     const isShopifolk = await isShopify()
     const migrationChoices = getMigrationChoices(isShopifolk)
     const choices = migrationChoices.map((choice) => {
@@ -84,15 +83,14 @@ export default class ImportExtensions extends AppCommand {
     const migrationChoice = migrationChoices.find((choice) => choice.value === promptAnswer)
     if (migrationChoice === undefined) {
       renderFatalError(new AbortError('Invalid migration choice'))
-      return {app}
+      process.exit(1)
     }
     await importExtensions({
-      app,
-      apiKey: flags['client-id'],
+      ...appContext,
       extensionTypes: migrationChoice.extensionTypes,
       buildTomlObject: migrationChoice.buildTomlObject,
     })
 
-    return {app}
+    return {app: appContext.app}
   }
 }
