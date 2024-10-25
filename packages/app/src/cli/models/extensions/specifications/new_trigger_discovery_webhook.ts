@@ -1,5 +1,5 @@
 import {createContractBasedModuleSpecification} from '../specification.js'
 
-const spec = createContractBasedModuleSpecification('new_trigger_discovery_webhook')
+const spec = createContractBasedModuleSpecification('flow_trigger_lifecycle_callback')
 
 export default spec

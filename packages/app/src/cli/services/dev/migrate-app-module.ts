@@ -6,6 +6,7 @@ import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graph
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {renderSelectPrompt, renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export function getPaymentsExtensionsToMigrate(
   localSources: LocalSource[],
@@ -62,6 +63,8 @@ export async function migrateAppModules(
   const migratedIDs = await Promise.all(
     extensionsToMigrate.map(({remote}) => migrateAppModule(appId, remote.id, type, developerPlatformClient)),
   )
+
+  renderSuccess({headline: ['Hello from migrateAppModules.']})
 
   return remoteExtensions
     .filter((extension) => migratedIDs.includes(extension.id))

@@ -8,6 +8,7 @@ import {
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export function getFlowExtensionsToMigrate(
   localSources: LocalSource[],
@@ -15,12 +16,19 @@ export function getFlowExtensionsToMigrate(
   identifiers: IdentifiersExtensions,
 ) {
   const ids = getExtensionIds(localSources, identifiers)
-  const localExtensionTypesToMigrate = ['flow_action', 'flow_trigger']
-  const remoteExtensionTypesToMigrate = ['flow_action_definition', 'flow_trigger_definition']
+  const localExtensionTypesToMigrate = ['flow_action', 'flow_trigger', 'flow_trigger_lifecycle_callback']
+  const remoteExtensionTypesToMigrate = [
+    'flow_action_definition',
+    'flow_trigger_definition',
+    'flow_trigger_discovery_webhook',
+  ]
   const typesMap = new Map<string, string>([
     ['flow_action', 'flow_action_definition'],
     ['flow_trigger', 'flow_trigger_definition'],
+    ['flow_trigger_lifecycle_callback', 'flow_trigger_discovery_webhook'],
   ])
+
+  renderSuccess({headline: ['Hello from getFlowExtensionsToMigrate.']})
 
   const local = localSources.filter((source) => localExtensionTypesToMigrate.includes(source.type))
   const remote = remoteSources.filter((source) => remoteExtensionTypesToMigrate.includes(source.type))
@@ -44,7 +52,7 @@ export function getFlowExtensionsToMigrate(
   }, [])
 }
 
-export async function migrateFlowExtensions(
+export async function migrateFlowTriggerDisoveryWebhookExtension(
   extensionsToMigrate: LocalRemoteSource[],
   appId: string,
   remoteExtensions: RemoteSource[],
@@ -58,6 +66,8 @@ export async function migrateFlowExtensions(
     ['flow_action_definition', 'FLOW_ACTION'],
     ['flow_trigger_definition', 'FLOW_TRIGGER'],
   ])
+
+  renderSuccess({headline: ['Hello from migrateFlowTriggerDisoveryWebhookExtension.']})
 
   return remoteExtensions
     .filter((extension) => migratedIDs.includes(extension.id))
@@ -79,6 +89,8 @@ async function migrateFlowExtension(
     registrationId,
   }
 
+  renderSuccess({headline: [`Hello from migrateFlowExtension. ${JSON.stringify(variables)}`]})
+
   const result: MigrateFlowExtensionSchema = await developerPlatformClient.migrateFlowExtension(variables)
 
   if (result?.migrateFlowExtension?.userErrors?.length > 0) {
@@ -92,3 +104,7 @@ async function migrateFlowExtension(
 
   return registrationId
 }
+
+// export async function migrateFlowTriggerDisoveryWebhookExtension() {
+//   renderInfo({headline: ['Hello from migrateFlowExtensions.']})
+// }

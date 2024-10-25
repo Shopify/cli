@@ -5,7 +5,7 @@ import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
-import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
+import {getFlowExtensionsToMigrate, migrateFlowTriggerDisoveryWebhookExtension} from '../dev/migrate-flow-extension.js'
 import {getMarketingActivtyExtensionsToMigrate} from '../dev/migrate-marketing-activity-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -17,6 +17,7 @@ import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -57,10 +58,13 @@ export async function ensureExtensionsIds(
     )
   }
 
+  renderInfo({headline: [`Hello from ensureExtensionsIds. ${JSON.stringify(flowExtensionsToMigrate)}`]})
+
   if (flowExtensionsToMigrate.length > 0) {
+    renderInfo({headline: [`Hello from ensureExtensionsIds. Pre prompt`]})
     const confirmedMigration = await extensionMigrationPrompt(flowExtensionsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateFlowExtensions(
+    const newRemoteExtensions = await migrateFlowTriggerDisoveryWebhookExtension(
       flowExtensionsToMigrate,
       options.appId,
       dashboardOnlyExtensions,
