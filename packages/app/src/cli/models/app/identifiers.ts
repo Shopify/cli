@@ -5,7 +5,7 @@ import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {deepCompare, getPathValue} from '@shopify/cli-kit/common/object'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import type {AppInterface} from './app.js'
 
@@ -79,8 +79,8 @@ export async function updateAppIdentifiers(
     }
   })
 
-  const contentHasChanged = JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables)
-  const writeToFile = contentHasChanged && (command === 'deploy' || command === 'release')
+  const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
+  const writeToFile = !contentIsEqual && (command === 'deploy' || command === 'release')
   dotenvFile.variables = updatedVariables
 
   if (writeToFile) {
