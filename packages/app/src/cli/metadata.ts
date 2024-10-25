@@ -9,10 +9,12 @@ type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_'
   PickByPrefix<MonorailEventPublic, 'cmd_deploy_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_release_'> &
   PickByPrefix<MonorailEventPublic, 'app_'> &
-  PickByPrefix<MonorailEventPublic, 'env_'>
+  PickByPrefix<MonorailEventPublic, 'env_'> &
+  PickByPrefix<MonorailEventPublic, 'store_'>
 
 type CmdSensitiveFieldsFromMonorail = PickByPrefix<MonorailEventSensitive, 'app_'> &
-  PickByPrefix<MonorailEventSensitive, 'cmd_dev_'>
+  PickByPrefix<MonorailEventSensitive, 'cmd_dev_'> &
+  PickByPrefix<MonorailEventSensitive, 'store_'>
 
 const metadata = createRuntimeMetadataContainer<
   {

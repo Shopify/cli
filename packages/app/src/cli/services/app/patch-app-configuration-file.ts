@@ -25,6 +25,9 @@ export interface PatchTomlOptions {
 export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
+
+  // Deep merge the configuration with the patch.
+  // Use replaceArrayStrategy to replace the destination array with the source array. (Arrays are not merged)
   const updatedConfig = deepMergeObjects(configuration, patch, replaceArrayStrategy)
 
   // Re-parse the config with the schema to validate the patch
