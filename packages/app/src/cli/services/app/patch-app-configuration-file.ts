@@ -27,9 +27,9 @@ export async function patchAppConfigurationFile({path, patch, schema}: PatchToml
   // Re-parse the config with the schema to validate the patch and keep the same order in the file
   // Make every field optional to not crash on invalid tomls that are missing fields.
   const validSchema = schema ?? zod.object({}).passthrough()
-  const validatedConfig = validSchema.partial().parse(updatedConfig)
-  let encodedString = encodeToml(validatedConfig)
+  validSchema.partial().parse(updatedConfig)
 
+  let encodedString = encodeToml(updatedConfig)
   encodedString = addDefaultCommentsToToml(encodedString)
   await writeFile(path, encodedString)
 }
