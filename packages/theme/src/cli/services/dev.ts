@@ -49,6 +49,7 @@ export async function dev(options: DevOptions) {
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
     filters: options,
     notify: options.notify,
+    noDelete: options.noDelete,
   })
 
   const host = options.host ?? DEFAULT_HOST
