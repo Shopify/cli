@@ -49,7 +49,7 @@ export function getFlowExtensionsToMigrate(
   }, [])
 }
 
-export async function migrateFlowTriggerDisoveryWebhookExtension(
+export async function migrateFlowExtensions(
   extensionsToMigrate: LocalRemoteSource[],
   appId: string,
   remoteExtensions: RemoteSource[],

@@ -1,4 +1,4 @@
-import {getFlowExtensionsToMigrate, migrateFlowTriggerDisoveryWebhookExtension} from './migrate-flow-extension.js'
+import {getFlowExtensionsToMigrate, migrateFlowExtensions} from './migrate-flow-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
@@ -123,12 +123,7 @@ describe('migrateExtensions()', () => {
     const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    await migrateFlowTriggerDisoveryWebhookExtension(
-      extensionsToMigrate,
-      appId,
-      remoteExtensions,
-      developerPlatformClient,
-    )
+    await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
 
     // Then
     expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledTimes(extensionsToMigrate.length)
@@ -152,7 +147,7 @@ describe('migrateExtensions()', () => {
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
     // When
-    const result = await migrateFlowTriggerDisoveryWebhookExtension(
+    const result = await migrateFlowExtensions(
       extensionsToMigrate,
       appId,
       remoteExtensions,
