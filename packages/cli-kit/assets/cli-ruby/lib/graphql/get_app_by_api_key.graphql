@@ -1,9 +1,0 @@
-query getApp($api_key: String!) {
-  app(apiKey: $api_key) {
-    title
-    apiKey
-    apiSecretKeys{
-      secret
-    }
-  }
-}
