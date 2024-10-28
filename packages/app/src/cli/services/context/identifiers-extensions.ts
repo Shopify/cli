@@ -4,12 +4,17 @@ import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './i
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
-import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
-import {getMarketingActivtyExtensionsToMigrate} from '../dev/migrate-marketing-activity-extension.js'
+import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
+import {migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {getPaymentsExtensionsToMigrate, migrateAppModules} from '../dev/migrate-app-module.js'
+import {
+  getFlowExtensionsToMigrate,
+  getMarketingActivityExtensionsToMigrate,
+  getPaymentModulesToMigrate,
+  getUIExtensionsToMigrate,
+  migrateAppModules,
+} from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {SingleWebhookSubscriptionType} from '../../models/extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -32,19 +37,15 @@ export async function ensureExtensionsIds(
 ) {
   const isShopifolk = await isShopify()
   let remoteExtensions = initialRemoteExtensions
-  const validIdentifiers = options.envIdentifiers.extensions ?? {}
+  const identifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
 
-  const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
-  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
-  const marketingActivityExtensionsToMigrate = isShopifolk
-    ? getMarketingActivtyExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
+  const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, identifiers)
+  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, remoteExtensions, identifiers)
+  const paymentsToMigrate = getPaymentModulesToMigrate(localExtensions, remoteExtensions, identifiers)
+  const marketingToMigrate = isShopifolk
+    ? getMarketingActivityExtensionsToMigrate(localExtensions, remoteExtensions, identifiers)
     : []
-  const paymentsExtensionsToMigrate = getPaymentsExtensionsToMigrate(
-    localExtensions,
-    dashboardOnlyExtensions,
-    validIdentifiers,
-  )
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
@@ -69,11 +70,11 @@ export async function ensureExtensionsIds(
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }
 
-  if (marketingActivityExtensionsToMigrate.length > 0) {
-    const confirmedMigration = await extensionMigrationPrompt(marketingActivityExtensionsToMigrate, false)
+  if (marketingToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(marketingToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
     const newRemoteExtensions = await migrateAppModules(
-      marketingActivityExtensionsToMigrate,
+      marketingToMigrate,
       options.appId,
       'marketing_activity',
       dashboardOnlyExtensions,
@@ -82,11 +83,11 @@ export async function ensureExtensionsIds(
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }
 
-  if (paymentsExtensionsToMigrate.length > 0) {
-    const confirmedMigration = await extensionMigrationPrompt(paymentsExtensionsToMigrate, false)
+  if (paymentsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(paymentsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
     const newRemoteExtensions = await migrateAppModules(
-      paymentsExtensionsToMigrate,
+      paymentsToMigrate,
       options.appId,
       'payments_extension',
       dashboardOnlyExtensions,
@@ -98,7 +99,7 @@ export async function ensureExtensionsIds(
   const matchExtensions = await automaticMatchmaking(
     localExtensions,
     remoteExtensions,
-    validIdentifiers,
+    identifiers,
     options.developerPlatformClient,
   )
 

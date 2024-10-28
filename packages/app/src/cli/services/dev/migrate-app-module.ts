@@ -7,28 +7,78 @@ import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
-export function getPaymentsExtensionsToMigrate(
+export function getPaymentModulesToMigrate(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,
 ) {
-  const ids = getExtensionIds(localSources, identifiers)
-  const localExtensionTypesToMigrate = ['payments_extension']
-  const remoteExtensionTypesToMigrate = [
-    'payments_app',
-    'payments_app_credit_card',
-    'payments_app_custom_credit_card',
-    'payments_app_custom_onsite',
-    'payments_app_redeemable',
-  ]
-  const typesMap = new Map<string, string[]>()
-  typesMap.set('payments_extension', [
-    'payments_app',
-    'payments_app_credit_card',
-    'payments_app_custom_credit_card',
-    'payments_app_custom_onsite',
-    'payments_app_redeemable',
+  const paymentsMap = new Map<string, string[]>([
+    [
+      'payments_extension',
+      [
+        'payments_app',
+        'payments_app_credit_card',
+        'payments_app_custom_credit_card',
+        'payments_app_custom_onsite',
+        'payments_app_redeemable',
+      ],
+    ],
   ])
+
+  return getModulesToMigrate(localSources, remoteSources, identifiers, paymentsMap)
+}
+
+export function getFlowExtensionsToMigrate(
+  localSources: LocalSource[],
+  remoteSources: RemoteSource[],
+  identifiers: IdentifiersExtensions,
+) {
+  const flowMap = new Map<string, string[]>([
+    ['flow_action', ['flow_action_definition']],
+    ['flow_trigger', ['flow_trigger_definition']],
+  ])
+
+  return getModulesToMigrate(localSources, remoteSources, identifiers, flowMap)
+}
+
+export function getUIExtensionsToMigrate(
+  localSources: LocalSource[],
+  remoteSources: RemoteSource[],
+  identifiers: IdentifiersExtensions,
+) {
+  const uiMap = new Map<string, string[]>([['ui_extension', ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION']]])
+  return getModulesToMigrate(localSources, remoteSources, identifiers, uiMap)
+}
+
+export function getMarketingActivityExtensionsToMigrate(
+  localSources: LocalSource[],
+  remoteSources: RemoteSource[],
+  identifiers: IdentifiersExtensions,
+) {
+  const marketingMap = new Map<string, string[]>([['marketing_activity', ['marketing_activity_extension']]])
+  return getModulesToMigrate(localSources, remoteSources, identifiers, marketingMap)
+}
+
+/**
+ * Returns a list of local and remote extensions that need to be migrated.
+ *
+ * Generic method not be used directly, create a specific method for each type of extension above.
+ *
+ * @param localSources - The local extensions to migrate.
+ * @param remoteSources - The remote extensions to migrate.
+ * @param identifiers - The identifiers for the extensions.
+ * @param typesMap - A map of extension types to migrate.
+ * @returns A list of local and remote extensions that need to be migrated.
+ */
+function getModulesToMigrate(
+  localSources: LocalSource[],
+  remoteSources: RemoteSource[],
+  identifiers: IdentifiersExtensions,
+  typesMap: Map<string, string[]>,
+) {
+  const ids = getExtensionIds(localSources, identifiers)
+  const localExtensionTypesToMigrate = Array.from(typesMap.keys())
+  const remoteExtensionTypesToMigrate = Array.from(typesMap.values()).flat()
 
   const local = localSources.filter((source) => localExtensionTypesToMigrate.includes(source.type))
   const remote = remoteSources.filter((source) => remoteExtensionTypesToMigrate.includes(source.type))
@@ -42,7 +92,7 @@ export function getPaymentsExtensionsToMigrate(
 
   return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
     const localSourceId = ids[localSource.localIdentifier] ?? 'unknown'
-    const remoteSource = remoteSourcesMap.get(localSourceId) || remoteSourcesMap.get(localSource.localIdentifier)
+    const remoteSource = remoteSourcesMap.get(localSourceId) ?? remoteSourcesMap.get(localSource.localIdentifier)
     const typeMatch = typesMap.get(localSource.type)?.includes(remoteSource?.type ?? 'undefined')
 
     if (remoteSource && typeMatch) {
