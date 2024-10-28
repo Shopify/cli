@@ -48,9 +48,7 @@ interface DevNetworkOptions {
 export interface DevConfig {
   localApp: AppInterface
   remoteAppUpdated: boolean
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {
-    apiSecret?: string | undefined
-  }
+  remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
@@ -78,7 +76,7 @@ export async function setupDevProcesses({
   graphiqlUrl: string | undefined
 }> {
   const apiKey = remoteApp.apiKey
-  const apiSecret = (remoteApp.apiSecret as string) ?? ''
+  const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
   const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
