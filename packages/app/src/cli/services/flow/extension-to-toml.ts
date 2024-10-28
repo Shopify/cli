@@ -7,7 +7,7 @@ import {slugify} from '@shopify/cli-kit/common/string'
 
 interface FlowConfig {
   title: string
-  description: string
+  description?: string
   url: string
   fields?: {
     id: string
@@ -35,20 +35,36 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
 
   const defaultURL = extension.type === 'flow_action_definition' ? 'https://url.com/api/execute' : undefined
 
-  const localExtensionRepresentation = {
-    extensions: [
-      {
-        type: extension.type.replace('_definition', ''),
-        name: config.title,
-        handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
-        description: config.description,
-        runtime_url: config.url ?? defaultURL,
-        config_page_url: config.custom_configuration_page_url,
-        config_page_preview_url: config.custom_configuration_page_preview_url,
-        validation_url: config.validation_url,
-      },
-    ],
-    settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
+  let localExtensionRepresentation
+
+  if (extension.type === 'flow_trigger_discovery_webhook') {
+    localExtensionRepresentation = {
+      extensions: [
+        {
+          type: 'flow_trigger_lifecycle_callback',
+          name: extension.title,
+          handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
+          url: config.url ?? defaultURL,
+        },
+      ],
+      settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
+    }
+  } else {
+    localExtensionRepresentation = {
+      extensions: [
+        {
+          type: extension.type.replace('_definition', ''),
+          name: config.title,
+          handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
+          description: config.description,
+          runtime_url: config.url ?? defaultURL,
+          config_page_url: config.custom_configuration_page_url,
+          config_page_preview_url: config.custom_configuration_page_preview_url,
+          validation_url: config.validation_url,
+        },
+      ],
+      settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
+    }
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return encodeToml(localExtensionRepresentation as any)

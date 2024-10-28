@@ -15,11 +15,16 @@ export function getFlowExtensionsToMigrate(
   identifiers: IdentifiersExtensions,
 ) {
   const ids = getExtensionIds(localSources, identifiers)
-  const localExtensionTypesToMigrate = ['flow_action', 'flow_trigger']
-  const remoteExtensionTypesToMigrate = ['flow_action_definition', 'flow_trigger_definition']
+  const localExtensionTypesToMigrate = ['flow_action', 'flow_trigger', 'flow_trigger_lifecycle_callback']
+  const remoteExtensionTypesToMigrate = [
+    'flow_action_definition',
+    'flow_trigger_definition',
+    'flow_trigger_discovery_webhook',
+  ]
   const typesMap = new Map<string, string>([
     ['flow_action', 'flow_action_definition'],
     ['flow_trigger', 'flow_trigger_definition'],
+    ['flow_trigger_lifecycle_callback', 'flow_trigger_discovery_webhook'],
   ])
 
   const local = localSources.filter((source) => localExtensionTypesToMigrate.includes(source.type))
@@ -44,7 +49,7 @@ export function getFlowExtensionsToMigrate(
   }, [])
 }
 
-export async function migrateFlowExtensions(
+export async function migrateFlowTriggerDisoveryWebhookExtension(
   extensionsToMigrate: LocalRemoteSource[],
   appId: string,
   remoteExtensions: RemoteSource[],

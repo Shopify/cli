@@ -5,7 +5,7 @@ import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
-import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
+import {getFlowExtensionsToMigrate, migrateFlowTriggerDisoveryWebhookExtension} from '../dev/migrate-flow-extension.js'
 import {getMarketingActivtyExtensionsToMigrate} from '../dev/migrate-marketing-activity-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -60,7 +60,7 @@ export async function ensureExtensionsIds(
   if (flowExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(flowExtensionsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateFlowExtensions(
+    const newRemoteExtensions = await migrateFlowTriggerDisoveryWebhookExtension(
       flowExtensionsToMigrate,
       options.appId,
       dashboardOnlyExtensions,
