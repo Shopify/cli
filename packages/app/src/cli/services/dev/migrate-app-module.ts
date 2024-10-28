@@ -7,62 +7,38 @@ import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
-export function getPaymentModulesToMigrate(
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-  identifiers: IdentifiersExtensions,
-) {
-  const paymentsMap = new Map<string, string[]>([
-    [
-      'payments_extension',
-      [
-        'payments_app',
-        'payments_app_credit_card',
-        'payments_app_custom_credit_card',
-        'payments_app_custom_onsite',
-        'payments_app_redeemable',
-      ],
-    ],
-  ])
-
-  return getModulesToMigrate(localSources, remoteSources, identifiers, paymentsMap)
+/**
+ * All ***ModulesMap define the migration mapping between local and remote extension types.
+ *
+ * When adding new mappings, follow this rule in the mapping object:
+ * - The key is the NEW type
+ * - The value is an array of OLD types that can be migrated to the new type
+ */
+export const PaymentModulesMap = {
+  payments_extension: [
+    'payments_app',
+    'payments_app_credit_card',
+    'payments_app_custom_credit_card',
+    'payments_app_custom_onsite',
+    'payments_app_redeemable',
+  ],
 }
 
-export function getFlowExtensionsToMigrate(
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-  identifiers: IdentifiersExtensions,
-) {
-  const flowMap = new Map<string, string[]>([
-    ['flow_action', ['flow_action_definition']],
-    ['flow_trigger', ['flow_trigger_definition']],
-  ])
-
-  return getModulesToMigrate(localSources, remoteSources, identifiers, flowMap)
+export const MarketingActivityModulesMap = {
+  marketing_activity: ['marketing_activity_extension'],
 }
 
-export function getUIExtensionsToMigrate(
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-  identifiers: IdentifiersExtensions,
-) {
-  const uiMap = new Map<string, string[]>([['ui_extension', ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION']]])
-  return getModulesToMigrate(localSources, remoteSources, identifiers, uiMap)
+export const FlowModulesMap = {
+  flow_action: ['flow_action_definition'],
+  flow_trigger: ['flow_trigger_definition'],
 }
 
-export function getMarketingActivityExtensionsToMigrate(
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-  identifiers: IdentifiersExtensions,
-) {
-  const marketingMap = new Map<string, string[]>([['marketing_activity', ['marketing_activity_extension']]])
-  return getModulesToMigrate(localSources, remoteSources, identifiers, marketingMap)
+export const UIModulesMap = {
+  ui_extension: ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION'],
 }
 
 /**
  * Returns a list of local and remote extensions that need to be migrated.
- *
- * Generic method not be used directly, create a specific method for each type of extension above.
  *
  * @param localSources - The local extensions to migrate.
  * @param remoteSources - The remote extensions to migrate.
@@ -70,15 +46,15 @@ export function getMarketingActivityExtensionsToMigrate(
  * @param typesMap - A map of extension types to migrate.
  * @returns A list of local and remote extensions that need to be migrated.
  */
-function getModulesToMigrate(
+export function getModulesToMigrate(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,
-  typesMap: Map<string, string[]>,
+  typesMap: {[key: string]: string[]},
 ) {
   const ids = getExtensionIds(localSources, identifiers)
-  const localExtensionTypesToMigrate = Array.from(typesMap.keys())
-  const remoteExtensionTypesToMigrate = Array.from(typesMap.values()).flat()
+  const localExtensionTypesToMigrate = Object.keys(typesMap)
+  const remoteExtensionTypesToMigrate = Object.values(typesMap).flat()
 
   const local = localSources.filter((source) => localExtensionTypesToMigrate.includes(source.type))
   const remote = remoteSources.filter((source) => remoteExtensionTypesToMigrate.includes(source.type))
@@ -92,8 +68,9 @@ function getModulesToMigrate(
 
   return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
     const localSourceId = ids[localSource.localIdentifier] ?? 'unknown'
-    const remoteSource = remoteSourcesMap.get(localSourceId) ?? remoteSourcesMap.get(localSource.localIdentifier)
-    const typeMatch = typesMap.get(localSource.type)?.includes(remoteSource?.type ?? 'undefined')
+    const remoteSource =
+      remoteSourcesMap.get(localSourceId) ?? remoteSourcesMap.get(localSource.localIdentifier.toLowerCase())
+    const typeMatch = typesMap[localSource.type]?.includes(remoteSource?.type ?? 'undefined')
 
     if (remoteSource && typeMatch) {
       accumulator.push({local: localSource, remote: remoteSource})

@@ -1,10 +1,4 @@
-import {
-  getFlowExtensionsToMigrate,
-  getMarketingActivityExtensionsToMigrate,
-  getPaymentModulesToMigrate,
-  getUIExtensionsToMigrate,
-  migrateAppModules,
-} from './migrate-app-module.js'
+import {getModulesToMigrate, migrateAppModules} from './migrate-app-module.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
@@ -26,25 +20,51 @@ function getRemoteExtension(attributes: Partial<RemoteSource> = {}) {
     ...attributes,
   } as unknown as RemoteSource
 }
+const defaultMap = {
+  payments_extension: [
+    'payments_app',
+    'payments_app_credit_card',
+    'payments_app_custom_credit_card',
+    'payments_app_custom_onsite',
+    'payments_app_redeemable',
+  ],
+  marketing_activity: ['marketing_activity_extension'],
+}
 
-describe('getPaymentsExtensionsToMigrate()', () => {
-  const defaultIds = {
-    'my-action': '1234',
-  }
+const defaultIdentifiers = {
+  'module-A': '1234',
+  'module-B': '',
+}
 
-  test('matching my remote title and localIdentifier', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'my-action'})
-    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'my-action', uuid: 'yy'})
-
-    // When
-    const toMigrate = getPaymentModulesToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
+describe('getModulesToMigrate()', () => {
+  test('returns an empty array if no extensions are provided', () => {
+    const toMigrate = getModulesToMigrate([], [], {}, defaultMap)
+    expect(toMigrate).toStrictEqual([])
   })
 
-  test('matching my remote title and localIdentifier by truncating the title', () => {
+  test('matching by remote title and localIdentifier, without defaultIdentifiers', () => {
+    // Given
+    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
+    const localExtensionB = getLocalExtension({type: 'marketing_activity', localIdentifier: 'module-B'})
+    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'module-A', uuid: 'yy'})
+    const remoteExtensionB = getRemoteExtension({type: 'marketing_activity_extension', title: 'module-B', uuid: 'xx'})
+
+    // When
+    const toMigrate = getModulesToMigrate(
+      [localExtension, localExtensionB],
+      [remoteExtension, remoteExtensionB],
+      {},
+      defaultMap,
+    )
+
+    // Then
+    expect(toMigrate).toStrictEqual([
+      {local: localExtension, remote: remoteExtension},
+      {local: localExtensionB, remote: remoteExtensionB},
+    ])
+  })
+
+  test('matching my remote title by truncating the title', () => {
     // Given
     const localExtension = getLocalExtension({
       type: 'payments_extension',
@@ -53,47 +73,46 @@ describe('getPaymentsExtensionsToMigrate()', () => {
     const remoteExtension = getRemoteExtension({
       type: 'payments_app_credit_card',
       title: 'Ten Chars Ten Chars Ten Chars Ten Chars Ten 123456789',
-      uuid: 'yy',
     })
 
     // When
-    const toMigrate = getPaymentModulesToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], {}, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
   })
 
-  test('matching my local and remote IDs', () => {
+  test('matching different title and localIdentifier, using uuid', () => {
     // Given
-    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'my-action'})
-    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'remote', uuid: '1234'})
+    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
+    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'random-title', uuid: '1234'})
 
     // When
-    const toMigrate = getPaymentModulesToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
   })
 
-  test('does not return extensions where local.type is not payments_extension', () => {
+  test('does not return modules where local.type is not included in defaultMap', () => {
     // Given
     const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
     const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card'})
 
     // When
-    const toMigrate = getPaymentModulesToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([])
   })
 
-  test('does not return extensions where remote.type is not payments_app_credit_card', () => {
+  test('does not return modules where remote.type is not included in defaultMap', () => {
     // Given
     const localExtension = getLocalExtension({type: 'payments_extension'})
-    const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'})
+    const remoteExtension = getRemoteExtension({type: 'marketing_activity_extension'})
 
     // When
-    const toMigrate = getPaymentModulesToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([])
@@ -101,296 +120,14 @@ describe('getPaymentsExtensionsToMigrate()', () => {
 
   test('if neither title/name or ids match, does not return any extensions', () => {
     // Given
-    const localExtension = getLocalExtension({type: 'payments_extension'})
-    const remoteExtension = getRemoteExtension({
-      type: 'payments_app_credit_card',
-      uuid: '5678',
-    })
+    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
+    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'doesnt-match', uuid: '0000'})
 
     // When
-    const toMigrate = getPaymentModulesToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([])
-  })
-})
-
-describe('getMarketingActivityExtensionsToMigrate()', () => {
-  const defaultIds = {
-    'test-marketing': '1234',
-  }
-
-  test('matching my remote title and localIdentifier', () => {
-    // Given
-    const title = 'test123'
-    const localExtension = getLocalExtension({
-      type: 'marketing_activity',
-      localIdentifier: title,
-    })
-    const remoteExtension = getRemoteExtension({
-      type: 'marketing_activity_extension',
-      title,
-      uuid: 'yy',
-    })
-
-    // When
-    const toMigrate = getMarketingActivityExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
-  })
-
-  test('matching my local and remote IDs', () => {
-    // Given
-    const localExtension = getLocalExtension({
-      type: 'marketing_activity',
-      localIdentifier: 'test-marketing',
-    })
-    const remoteExtension = getRemoteExtension({type: 'marketing_activity_extension', title: 'remote', uuid: '1234'})
-
-    // When
-    const toMigrate = getMarketingActivityExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
-  })
-
-  test('does not return extensions where local.type is not marketing_activity', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition'})
-
-    // When
-    const toMigrate = getMarketingActivityExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-
-  test('does not return extensions where remote.type is not marketing_activity_extension', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'})
-    const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'})
-
-    // When
-    const toMigrate = getMarketingActivityExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-
-  test('if neither title/name or ids match, does not return any extensions', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action'})
-    const remoteExtension = getRemoteExtension({
-      type: 'flow_action_definition',
-      uuid: '5678',
-    })
-
-    // When
-    const toMigrate = getMarketingActivityExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-})
-
-describe('getFlowExtensionsToMigrate()', () => {
-  const defaultIds = {
-    'my-action': '1234',
-    'my-trigger': '5678',
-  }
-
-  test('matching my remote title and localIdentifier', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action', localIdentifier: 'my-action'})
-    const localExtensionB = getLocalExtension({type: 'flow_trigger', localIdentifier: 'my-trigger'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition', title: 'my-action', uuid: 'yy'})
-    const remoteExtensionB = getRemoteExtension({type: 'flow_trigger_definition', title: 'my-trigger', uuid: 'xx'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate(
-      [localExtension, localExtensionB],
-      [remoteExtension, remoteExtensionB],
-      defaultIds,
-    )
-
-    // Then
-    expect(toMigrate).toStrictEqual([
-      {local: localExtension, remote: remoteExtension},
-      {local: localExtensionB, remote: remoteExtensionB},
-    ])
-  })
-
-  test('matching my local and remote IDs', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action', localIdentifier: 'my-action'})
-    const localExtensionB = getLocalExtension({type: 'flow_trigger', localIdentifier: 'my-trigger'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition', title: 'remote', uuid: '1234'})
-    const remoteExtensionB = getRemoteExtension({type: 'flow_trigger_definition', title: 'remote', uuid: '5678'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate(
-      [localExtension, localExtensionB],
-      [remoteExtension, remoteExtensionB],
-      defaultIds,
-    )
-
-    // Then
-    expect(toMigrate).toStrictEqual([
-      {local: localExtension, remote: remoteExtension},
-      {local: localExtensionB, remote: remoteExtensionB},
-    ])
-  })
-
-  test('does not return extensions where local.type is not flow_action or flow_trigger', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-
-  test('does not return extensions where remote.type is not flow_action_definition', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action'})
-    const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-
-  test('if neither title/name or ids match, does not return any extensions', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action'})
-    const remoteExtension = getRemoteExtension({
-      type: 'flow_action_definition',
-      uuid: '5678',
-    })
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-})
-
-describe('getExtensionsToMigrate()', () => {
-  const defaultIds = {
-    'my-action': '1234',
-  }
-
-  describe('if local.id matches remote.id', () => {
-    test('returns extensions where local.type is ui_extension but remote.type is POS_UI_EXTENSION', () => {
-      // Given
-      const localExtension = getLocalExtension({type: 'ui_extension'})
-      const remoteExtension = getRemoteExtension({type: 'POS_UI_EXTENSION'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
-    })
-
-    test('returns extensions where local.type is ui_extension but remote.type is CHECKOUT_UI_EXTENSION', () => {
-      // Given
-      const localExtension = getLocalExtension({type: 'ui_extension'})
-      const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
-    })
-
-    test('does not return extensions where local.type is not ui_extension', () => {
-      // Given
-      const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
-      const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([])
-    })
-
-    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION or POS_UI_EXTENSION', () => {
-      // Given
-      const localExtension = {...getLocalExtension(), type: 'ui_extension'}
-      const remoteExtension = {...getRemoteExtension(), type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'}
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([])
-    })
-  })
-
-  describe('if local.configuration.name matches remote.title', () => {
-    test('returns extensions where local.type is ui_extension but remote.type is CHECKOUT_UI_EXTENSION', () => {
-      // Given
-      const localExtension = getLocalExtension({type: 'ui_extension'})
-      const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'my-extension'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
-    })
-
-    test('does not return extensions where local.type is not ui_extension', () => {
-      // Given
-      const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
-      const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'my-extension'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([])
-    })
-
-    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
-      // Given
-      const localExtension = getLocalExtension({type: 'ui_extension'})
-      const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION', title: 'my-extension'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([])
-    })
-  })
-
-  describe('if neither title/name or ids match', () => {
-    test('does not return any extensions', () => {
-      // Given
-      const localExtension = getLocalExtension({
-        type: 'ui_extension',
-        handle: 'a-different-extension',
-      })
-      const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'does-not-match', uuid: '5678'})
-
-      // When
-      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-      // Then
-      expect(toMigrate).toStrictEqual([])
-    })
   })
 })
 

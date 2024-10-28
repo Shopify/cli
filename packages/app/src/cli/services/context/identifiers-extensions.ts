@@ -9,11 +9,12 @@ import {migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
-  getFlowExtensionsToMigrate,
-  getMarketingActivityExtensionsToMigrate,
-  getPaymentModulesToMigrate,
-  getUIExtensionsToMigrate,
+  FlowModulesMap,
+  getModulesToMigrate,
+  MarketingActivityModulesMap,
   migrateAppModules,
+  PaymentModulesMap,
+  UIModulesMap,
 } from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -40,11 +41,11 @@ export async function ensureExtensionsIds(
   const identifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
 
-  const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, identifiers)
-  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, remoteExtensions, identifiers)
-  const paymentsToMigrate = getPaymentModulesToMigrate(localExtensions, remoteExtensions, identifiers)
+  const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, UIModulesMap)
+  const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, FlowModulesMap)
+  const paymentsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, PaymentModulesMap)
   const marketingToMigrate = isShopifolk
-    ? getMarketingActivityExtensionsToMigrate(localExtensions, remoteExtensions, identifiers)
+    ? getModulesToMigrate(localExtensions, remoteExtensions, identifiers, MarketingActivityModulesMap)
     : []
 
   if (uiExtensionsToMigrate.length > 0) {
