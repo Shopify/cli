@@ -253,13 +253,13 @@ async function handleUpdatingOfPartnerUrls(
   },
   localApp: AppLinkedInterface,
   cachedUpdateURLs: boolean | undefined,
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string | undefined},
+  remoteApp: OrganizationApp,
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   let shouldUpdateURLs = false
-  if (frontendConfig || backendConfig) {
+  if (frontendConfig ?? backendConfig) {
     if (commandSpecifiedToUpdate) {
       const newURLs = generatePartnersURLs(
         network.proxyUrl,

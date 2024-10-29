@@ -20,7 +20,7 @@ interface ThemeAppExtensionServerOptions {
 }
 
 interface HostThemeSetupOptions {
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>
+  remoteApp: OrganizationApp
   localApp: AppInterface
   storeFqdn: string
   theme?: string
@@ -145,7 +145,7 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
   return hostTheme
 }
 
-async function buildAppUrl(remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>) {
+async function buildAppUrl(remoteApp: OrganizationApp) {
   const fqdn = await partnersFqdn()
 
   return `https://${fqdn}/${remoteApp.organizationId}/apps/${remoteApp.id}/test`

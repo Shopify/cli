@@ -127,7 +127,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -300,7 +300,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -393,7 +393,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -487,7 +487,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -580,7 +580,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
