@@ -283,5 +283,17 @@ describe('dev proxy', () => {
       const event = createH3Event('GET', '/account/login')
       expect(canProxyRequest(event)).toBeFalsy()
     })
+
+    test('should proxy /account/login/multipass and /account/login/multipass/ requests', () => {
+      const event = createH3Event('GET', '/account/login/multipass')
+      const event2 = createH3Event('GET', '/account/login/multipass/')
+      expect(canProxyRequest(event)).toBeTruthy()
+      expect(canProxyRequest(event2)).toBeTruthy()
+    })
+
+    test('should proxy /account/login/multipass/<token> requests', () => {
+      const event = createH3Event('GET', '/account/login/multipass/<token>')
+      expect(canProxyRequest(event)).toBeTruthy()
+    })
   })
 })
