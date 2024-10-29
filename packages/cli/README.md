@@ -1000,7 +1000,7 @@ FLAGS
       --no-verify                           Skip the routability verification step after deployment.
       --path=<value>                        The path to the directory of the Hydrogen storefront. Defaults to the
                                             current directory where the command is run.
-      --preview                             Deploys to the Preview environment. Overrides --env-branch and Git metadata.
+      --preview                             Deploys to the Preview environment.
 
 DESCRIPTION
   Builds and deploys a Hydrogen storefront to Oxygen.
