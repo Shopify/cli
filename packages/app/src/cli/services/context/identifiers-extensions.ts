@@ -16,7 +16,6 @@ import {SingleWebhookSubscriptionType} from '../../models/extensions/specificati
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -30,16 +29,17 @@ export async function ensureExtensionsIds(
     dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
   }: AppWithExtensions,
 ) {
-  const isShopifolk = await isShopify()
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
-  const marketingActivityExtensionsToMigrate = isShopifolk
-    ? getMarketingActivtyExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
-    : []
+  const marketingActivityExtensionsToMigrate = getMarketingActivtyExtensionsToMigrate(
+    localExtensions,
+    dashboardOnlyExtensions,
+    validIdentifiers,
+  )
   const paymentsExtensionsToMigrate = getPaymentsExtensionsToMigrate(
     localExtensions,
     dashboardOnlyExtensions,
