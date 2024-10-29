@@ -6064,7 +6064,6 @@ packages:
       ts-morph: 20.0.0
       use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
     transitivePeerDependencies:
-      - '@shopify/cli-kit'
       - react
       - react-dom
     dev: true
