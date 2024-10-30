@@ -278,8 +278,8 @@ importers:
         specifier: 3.69.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 9.0.1
-        version: 9.0.1(@graphql-codegen/cli@5.0.2)(@shopify/cli-kit@packages+cli-kit)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.2
+        version: 9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.69.0
         version: link:../cli-kit
@@ -6018,8 +6018,8 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@9.0.1(@graphql-codegen/cli@5.0.2)(@shopify/cli-kit@packages+cli-kit)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-aKu95NOXtv3QqTRV1wMN0FK4zTWg43Sn65K2Q5ks7EBCnbPlZxl8oVantX65erqJif9dRDo+k7LylHqVD+1yJg==}
+  /@shopify/cli-hydrogen@9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-KRlBmgik6fdzIw8z9Xj31swE2dIgTFavCSTS/tonumlu2RX5DrT2M+OTjiQv8s6wLJn5a4Nn6/+5Ds/hKGaKEQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
@@ -6046,7 +6046,7 @@ packages:
       '@ast-grep/napi': 0.11.0
       '@graphql-codegen/cli': 5.0.2(@types/node@18.19.3)(graphql@16.8.1)(typescript@5.2.2)
       '@oclif/core': 3.26.5
-      '@shopify/cli': 3.69.3
+      '@shopify/cli-kit': link:packages/cli-kit
       '@shopify/oxygen-cli': 4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.0
@@ -6064,19 +6064,8 @@ packages:
       ts-morph: 20.0.0
       use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
     transitivePeerDependencies:
-      - '@shopify/cli-kit'
       - react
       - react-dom
-    dev: true
-
-  /@shopify/cli@3.69.3:
-    resolution: {integrity: sha512-tc7gH5EOgDvAuSGazTP4zl0Yj4547gwypyDzmUfxb15PExMpj7lMyIQujKyAGwEfu1+LRF3K13Hfgib1sqvUUQ==}
-    engines: {node: ^18.20.0 || >=20.10.0}
-    os: [darwin, linux, win32]
-    hasBin: true
-    dependencies:
-      '@ast-grep/napi': 0.11.0
-      esbuild: 0.19.8
     dev: true
 
   /@shopify/dates@1.1.5:

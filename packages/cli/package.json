@@ -113,7 +113,7 @@
     "@shopify/plugin-cloudflare": "3.69.0",
     "@shopify/plugin-did-you-mean": "3.69.0",
     "@shopify/theme": "3.69.0",
-    "@shopify/cli-hydrogen": "9.0.1",
+    "@shopify/cli-hydrogen": "9.0.2",
     "@types/node": "18.19.3",
     "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^1.6.0",
