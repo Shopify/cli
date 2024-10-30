@@ -16,6 +16,8 @@ export type Scalars = {
   /** The ID for a AccessRole. */
   AccessRoleID: {input: any; output: any}
   AccessRoleRecordId: {input: any; output: any}
+  /** The ID for a ActionAudit. */
+  ActionAuditID: {input: any; output: any}
   GlobalID: {input: string; output: string}
   /** The ID for a Group. */
   GroupID: {input: any; output: any}
