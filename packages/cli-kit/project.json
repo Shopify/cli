@@ -54,25 +54,11 @@
         "cwd": "packages/cli-kit"
       }
     },
-    "lint:ruby": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bundle exec rake rubocop",
-        "cwd": "packages/cli-kit/assets/cli-ruby"
-      }
-    },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
         "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
         "cwd": "packages/cli-kit"
-      }
-    },
-    "lint:ruby:fix": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bundle exec rake rubocop -a",
-        "cwd": "packages/cli-kit/assets/cli-ruby"
       }
     },
     "test": {
@@ -83,14 +69,6 @@
       "options": {
         "commands": [],
         "cwd": "packages/cli-kit"
-      }
-    },
-    "test:ruby": {
-      "executor": "nx:run-commands",
-      "dependsOn": [],
-      "options": {
-        "command": "bundle exec rake test",
-        "cwd": "packages/cli-kit/assets/cli-ruby"
       }
     },
     "test:js": {
