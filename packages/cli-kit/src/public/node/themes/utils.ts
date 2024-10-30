@@ -2,6 +2,8 @@ import {renderTextPrompt} from '../ui.js'
 import {getRandomName} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 
+const GID_REGEXP = /gid:\/\/shopify\/\w*\/(\d+)/
+
 export const DEVELOPMENT_THEME_ROLE = 'development'
 export const LIVE_THEME_ROLE = 'live'
 export const UNPUBLISHED_THEME_ROLE = 'unpublished'
@@ -18,4 +20,16 @@ export async function promptThemeName(message: string) {
     message,
     defaultValue: defaultName,
   })
+}
+
+export function composeThemeGid(id: number): string {
+  return `gid://shopify/OnlineStoreTheme/${id}`
+}
+
+export function parseGid(gid: string): number {
+  const matches = GID_REGEXP.exec(gid)
+  if (matches && matches[1] !== undefined) {
+    return parseInt(matches[1], 10)
+  }
+  throw new Error(`Invalid GID: ${gid}`)
 }

@@ -1,6 +1,10 @@
 import {storeAdminUrl} from './urls.js'
+import {composeThemeGid, parseGid} from './utils.js'
 import * as throttler from '../api/rest-api-throttler.js'
-import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
+import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
+import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
+import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -77,32 +81,81 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
   return []
 }
 
-interface UpgradeThemeOptions {
-  fromTheme: number
-  toTheme: number
-  script?: string
-  session: AdminSession
+export async function themeUpdate(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
+  const name = params.name
+  const input: {[key: string]: string} = {}
+  if (name) {
+    input.name = name
+  }
+
+  const {themeUpdate} = await adminRequestDoc(ThemeUpdate, session, {id: composeThemeGid(id), input})
+  if (!themeUpdate) {
+    // An unexpected error occurred during the GraphQL request execution
+    unexpectedGraphQLError('Failed to update theme')
+  }
+
+  const {theme, userErrors} = themeUpdate
+  if (userErrors.length) {
+    const userErrors = themeUpdate.userErrors.map((error) => error.message).join(', ')
+    throw new AbortError(userErrors)
+  }
+
+  if (!theme) {
+    // An unexpected error if neither theme nor userErrors are returned
+    unexpectedGraphQLError('Failed to update theme')
+  }
+
+  return buildTheme({
+    id: parseGid(theme.id),
+    name: theme.name,
+    role: theme.role.toLowerCase(),
+  })
 }
 
-export async function upgradeTheme(upgradeOptions: UpgradeThemeOptions): Promise<Theme | undefined> {
-  const {fromTheme, toTheme, session, script} = upgradeOptions
-  const params = {from_theme: fromTheme, to_theme: toTheme, ...(script && {script})}
-  const response = await request('POST', `/themes`, session, params)
-  return buildTheme(response.json.theme)
+export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
+  const {themePublish} = await adminRequestDoc(ThemePublish, session, {id: composeThemeGid(id)})
+  if (!themePublish) {
+    // An unexpected error occurred during the GraphQL request execution
+    unexpectedGraphQLError('Failed to update theme')
+  }
+
+  const {theme, userErrors} = themePublish
+  if (userErrors.length) {
+    const userErrors = themePublish.userErrors.map((error) => error.message).join(', ')
+    throw new AbortError(userErrors)
+  }
+
+  if (!theme) {
+    // An unexpected error if neither theme nor userErrors are returned
+    unexpectedGraphQLError('Failed to update theme')
+  }
+
+  return buildTheme({
+    id: parseGid(theme.id),
+    name: theme.name,
+    role: theme.role.toLowerCase(),
+  })
 }
 
-export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('PUT', `/themes/${id}`, session, {theme: {id, ...params}})
-  return buildTheme(response.json.theme)
-}
+export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
+  const {themeDelete} = await adminRequestDoc(ThemeDelete, session, {id: composeThemeGid(id)})
+  if (!themeDelete) {
+    // An unexpected error occurred during the GraphQL request execution
+    unexpectedGraphQLError('Failed to update theme')
+  }
 
-export async function publishTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  return updateTheme(id, {role: 'main'}, session)
-}
+  const {deletedThemeId, userErrors} = themeDelete
+  if (userErrors.length) {
+    const userErrors = themeDelete.userErrors.map((error) => error.message).join(', ')
+    throw new AbortError(userErrors)
+  }
 
-export async function deleteTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('DELETE', `/themes/${id}`, session)
-  return buildTheme(response.json.theme)
+  if (!deletedThemeId) {
+    // An unexpected error if neither theme nor userErrors are returned
+    unexpectedGraphQLError('Failed to update theme')
+  }
+
+  return true
 }
 
 async function request<T>(
@@ -198,6 +251,10 @@ function errorMessage(response: RestResponse): string {
   }
 
   return ''
+}
+
+function unexpectedGraphQLError(message: string): never {
+  throw new AbortError(message)
 }
 
 interface RetriableErrorOptions {

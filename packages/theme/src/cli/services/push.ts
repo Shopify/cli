@@ -8,7 +8,7 @@ import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {createTheme, fetchChecksums, publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
@@ -157,7 +157,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   await renderThemeSyncProgress()
 
   if (options.publish) {
-    await publishTheme(theme.id, session)
+    await themePublish(theme.id, session)
   }
 
   await handlePushOutput(uploadResults, theme, session, options)
