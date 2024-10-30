@@ -946,8 +946,8 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
 
 function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
   return {
-    registrationId: mod.uuid,
-    registrationUuid: mod.uuid,
+    registrationId: mod.userIdentifier,
+    registrationUuid: mod.userIdentifier,
     registrationTitle: mod.handle,
     type: mod.specification.externalIdentifier,
     config: mod.config,

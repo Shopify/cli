@@ -23,6 +23,7 @@ query activeAppRelease($appId: ID!) {
 
 fragment ReleasedAppModule on AppModule {
   uuid
+  userIdentifier
   handle
   config
   specification {
