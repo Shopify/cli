@@ -2,6 +2,7 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
@@ -104,6 +105,13 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
 
+  if (!shopifyEssential) {
+    outputDebug(
+      `Failed to obtain _shopify_essential cookie.\n
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}`,
+    )
+  }
+
   return shopifyEssential
 }
 
@@ -128,6 +136,14 @@ async function enrichSessionWithStorefrontPassword(
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
+  const requestId = response.headers.get('x-request-id') ?? 'unknown'
+
+  if (!storefrontDigest) {
+    outputDebug(
+      `Failed to obtain storefront_digest cookie.\n
+       -Request ID: ${requestId}`,
+    )
+  }
 
   return storefrontDigest
 }
