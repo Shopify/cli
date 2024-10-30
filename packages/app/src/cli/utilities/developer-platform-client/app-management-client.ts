@@ -532,9 +532,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
         return {
-          registrationId: mod.uuid,
-          registrationUid: mod.uuid,
-          registrationUuid: mod.uuid,
+          registrationId: mod.userIdentifier,
+          registrationUid: mod.userIdentifier,
+          registrationUuid: mod.userIdentifier,
           registrationTitle: mod.handle,
           type: mod.specification.externalIdentifier,
           config: mod.config,

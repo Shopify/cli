@@ -14,6 +14,7 @@ export type AppVersionByIdQuery = {
     metadata: {versionTag?: string | null}
     appModules: {
       uuid: string
+      userIdentifier: string
       handle: string
       config: JsonMapType
       specification: {identifier: string; externalIdentifier: string; name: string}
@@ -89,6 +90,7 @@ export const AppVersionById = {
         kind: 'SelectionSet',
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
           {
