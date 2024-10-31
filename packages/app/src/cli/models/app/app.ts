@@ -260,7 +260,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): AppCreationDefaultOptions
-  manifest: () => Promise<JsonMapType>
+  manifest: () => Promise<AppManifest>
   removeExtension: (extensionHandle: string) => void
 }
 
@@ -278,6 +278,21 @@ type AppConstructor<
   errors?: AppErrors
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
+}
+
+interface AppManifest {
+  name: string
+  handle: string
+  modules: AppManifestModule[]
+}
+
+interface AppManifestModule {
+  type: string
+  handle: string
+  uid: string
+  assets: string
+  target: string
+  config: JsonMapType
 }
 
 export class App<
@@ -345,7 +360,7 @@ export class App<
     )
   }
 
-  async manifest(): Promise<JsonMapType> {
+  async manifest(): Promise<AppManifest> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
         const config = await module.deployConfig({
