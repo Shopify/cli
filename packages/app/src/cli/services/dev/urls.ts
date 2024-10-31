@@ -1,5 +1,10 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppInterface, AppLinkedInterface, CurrentAppConfiguration, isCurrentAppSchema} from '../../models/app/app.js'
+import {
+  AppConfigurationInterface,
+  AppInterface,
+  CurrentAppConfiguration,
+  isCurrentAppSchema,
+} from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
@@ -188,7 +193,7 @@ export async function updateURLs(
   urls: PartnersURLs,
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
-  localApp?: AppLinkedInterface,
+  localApp?: AppConfigurationInterface,
 ): Promise<void> {
   const variables: UpdateURLsVariables = {apiKey, ...urls}
   const result: UpdateURLsSchema = await developerPlatformClient.updateURLs(variables)
@@ -197,22 +202,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && localApp.configuration.client_id === apiKey) {
-    // Update in-memory configuration
-    localApp.configuration.application_url = urls.applicationUrl
-    if (localApp.configuration.auth) {
-      localApp.configuration.auth.redirect_urls = urls.redirectUrlWhitelist
-    }
-
-    if (urls.appProxy) {
-      localApp.configuration.app_proxy = {
-        url: urls.appProxy.proxyUrl,
-        subpath: urls.appProxy.proxySubPath,
-        prefix: urls.appProxy.proxySubPathPrefix,
-      }
-    }
-
-    // Path to apply to toml
+  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
     const patch = {
       application_url: urls.applicationUrl,
       auth: {
