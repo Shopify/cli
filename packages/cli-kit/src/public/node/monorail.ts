@@ -39,6 +39,7 @@ export interface Schemas {
       api_key?: Optional<string>
       cli_version: string
       uname: string
+      ruby_version: string
       node_version: string
       is_employee: boolean
       store_fqdn_hash?: Optional<string>

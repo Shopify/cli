@@ -145,6 +145,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       total_time: wallClockElapsed,
       success: exitMode === 'ok' && errorMessage === undefined,
       cli_version: CLI_KIT_VERSION,
+      ruby_version: '',
       node_version: process.version.replace('v', ''),
       is_employee: await isShopify(),
       ...environmentData,
