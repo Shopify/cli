@@ -108,7 +108,8 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
   if (!shopifyEssential) {
     outputDebug(
       `Failed to obtain _shopify_essential cookie.\n
-       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}`,
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
+       -Body: ${await response.text()}`,
     )
   }
 
@@ -136,12 +137,12 @@ async function enrichSessionWithStorefrontPassword(
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
-  const requestId = response.headers.get('x-request-id') ?? 'unknown'
 
   if (!storefrontDigest) {
     outputDebug(
       `Failed to obtain storefront_digest cookie.\n
-       -Request ID: ${requestId}`,
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
+       -Body: ${await response.text()}`,
     )
   }
 
