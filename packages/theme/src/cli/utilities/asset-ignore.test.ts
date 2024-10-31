@@ -174,4 +174,114 @@ describe('asset-ignore', () => {
       ])
     })
   })
+
+  describe('applyIgnoreFilters with negated patterns', () => {
+    test(`only negating a file does not produce side effects of other ignored files`, () => {
+      const options = {
+        ignoreFromFile: ['!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+        {key: 'assets/complex.css', checksum: '11111111111111111111111111111111'},
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+      ])
+    })
+    test(`negating a specific file overrides ignoring one`, () => {
+      // Given
+      const options = {
+        ignoreFromFile: ['assets/*.css', '!assets/basic.css'],
+      }
+
+      // When
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      // Then
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+      ])
+    })
+
+    test('should not ignore files matching a negated pattern', () => {
+      const ignorePatterns = [
+        'assets/basic.css',
+        'sections/*.json',
+        'templates/*.json',
+        'templates/**/*.json',
+        'config/*.json',
+        '!config/*_schema.json',
+      ]
+
+      const actualChecksums = applyIgnoreFilters(checksums, {ignoreFromFile: ignorePatterns})
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/complex.css', checksum: '11111111111111111111111111111111'},
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+      ])
+    })
+  })
+  describe('applyIgnoreFilters with negated ignore and only options', () => {
+    test(`negating a specific file in ignore option overrides ignoring one`, () => {
+      const options = {
+        ignore: ['assets/*.css', '!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+      ])
+    })
+
+    test(`negating a specific file in only option properly overrides and ignores it`, () => {
+      const options = {
+        only: ['assets/*.css', '!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([{key: 'assets/complex.css', checksum: '11111111111111111111111111111111'}])
+    })
+  })
+  describe('applyIgnoreFilters do not return duplicates', () => {
+    test(`should not return duplicates when negated patterns are used`, () => {
+      const options = {
+        ignoreFromFile: ['assets/*.css', '!assets/basic.css'],
+        ignore: ['!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+      ])
+    })
+  })
 })
