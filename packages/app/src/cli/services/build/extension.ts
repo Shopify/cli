@@ -8,9 +8,9 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {readFile, touchFile, writeFile, fileExistsSync, glob, copyFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -90,6 +90,23 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   if (options.appURL) {
     env.APP_URL = options.appURL
   }
+
+  const includedFilePatterns = ['*.ts', '*.js', '*.json', '*.toml']
+
+  const include = includedFilePatterns.map((pattern) => joinPath('**', pattern))
+  const files = await glob(include, {
+    absolute: true,
+    cwd: extension.directory,
+  })
+
+  await Promise.all(
+    files.map(function (filepath) {
+      const relativePathName = relativePath(extension.directory, filepath)
+      const outputFile = joinPath(extension.outputPath, relativePathName)
+      // console.log({outputFile})
+      return copyFile(filepath, outputFile)
+    }),
+  )
 
   try {
     await bundleExtension({
@@ -192,7 +209,7 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,
