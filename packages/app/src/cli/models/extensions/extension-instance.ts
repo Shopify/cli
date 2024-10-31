@@ -255,7 +255,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const config = this.configuration as unknown as FunctionConfigType
     if (!config.build || !config.build.watch) return undefined
 
-    const watchPaths = [config.build.watch].flat()
+    const watchPaths = [config.build.watch].flat().map((path) => joinPath(this.directory, path))
 
     watchPaths.push(joinPath(this.directory, 'locales', '**.json'))
     watchPaths.push(joinPath(this.directory, '**', '!(.)*.graphql'))

@@ -93,7 +93,7 @@ export async function startFileWatcher(
    */
   function pushEvent(event: WatcherEvent) {
     const extension = app.realExtensions.find((ext) => ext.directory === event.extensionPath)
-    const watchPaths = extension?.watchBuildPaths
+    const watchPaths = extension?.devSessionWatchPaths
     // If the affected extension defines custom watch paths, ignore the event if it's not in the list
     if (watchPaths) {
       const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
