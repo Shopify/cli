@@ -8,7 +8,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
@@ -91,12 +91,14 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     env.APP_URL = options.appURL
   }
 
+  const {targets, conditions} = extension.getBundleExtensionStdinContent()
+
   try {
     await bundleExtension({
       minify: true,
       outputPath: extension.outputPath,
       stdin: {
-        contents: extension.getBundleExtensionStdinContent(),
+        contents: targets,
         resolveDir: extension.directory,
         loader: 'tsx',
       },
@@ -105,6 +107,24 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       stderr: options.stderr,
       stdout: options.stdout,
     })
+    if (conditions) {
+      const outputDirectory = dirname(extension.outputPath)
+      const conditionsPath = joinPath(outputDirectory, 'conditions.js')
+
+      await bundleExtension({
+        minify: true,
+        outputPath: conditionsPath,
+        stdin: {
+          contents: conditions,
+          resolveDir: extension.directory,
+          loader: 'ts',
+        },
+        environment: options.environment,
+        env,
+        stderr: options.stderr,
+        stdout: options.stdout,
+      })
+    }
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
     throw new AbortError(

@@ -39,6 +39,7 @@ const TargetCapabilitiesSchema = zod.object({
 const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
+  condition: zod.string().optional(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
   capabilities: TargetCapabilitiesSchema.optional(),

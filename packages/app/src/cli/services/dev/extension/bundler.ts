@@ -40,7 +40,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
           APP_URL: options.devOptions.url,
         },
         stdin: {
-          contents: extension.getBundleExtensionStdinContent(),
+          contents: extension.getBundleExtensionStdinContent().targets,
           resolveDir: extension.directory,
           loader: 'tsx',
         },

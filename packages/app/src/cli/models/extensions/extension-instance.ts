@@ -226,12 +226,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   // UI Specific properties
-  getBundleExtensionStdinContent() {
+  getBundleExtensionStdinContent(): {targets: string; conditions?: string} {
     if (this.specification.getBundleExtensionStdinContent) {
       return this.specification.getBundleExtensionStdinContent(this.configuration)
     }
     const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
-    return `import '.${relativeImportPath}';`
+    return {targets: `import '.${relativeImportPath}';`}
   }
 
   shouldFetchCartUrl(): boolean {

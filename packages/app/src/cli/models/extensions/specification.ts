@@ -49,7 +49,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
-  getBundleExtensionStdinContent?: (config: TConfiguration) => string
+  getBundleExtensionStdinContent?: (config: TConfiguration) => {targets: string; conditions?: string}
   deployConfig?: (
     config: TConfiguration,
     directory: string,

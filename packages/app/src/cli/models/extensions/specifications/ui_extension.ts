@@ -32,6 +32,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         default_placement_reference: targeting.default_placement,
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
+        condition: targeting.condition,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -64,7 +65,24 @@ const uiExtensionSpec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
-    return config.extension_points.map(({module}) => `import '${module}';`).join('\n')
+    const targets = config.extension_points
+      .map(({module}) => {
+        return `import '${module}'; `
+      })
+      .join('\n')
+
+    // TODO: we need to split conditions into separate files
+    const conditions = config.extension_points
+      .map(({condition}) => {
+        return condition ? `import '${condition}';` : ''
+      })
+      .join('\n')
+
+    if (conditions.trim().length === 0) {
+      return {targets}
+    }
+
+    return {targets, conditions}
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
