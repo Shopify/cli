@@ -270,7 +270,11 @@ describe('dev proxy', () => {
       expect(canProxyRequest(event)).toBeFalsy()
     })
 
-    test('should proxy the /account requests as it may result on 302 (for users with "Sign in with Shop"), and rendering via the the SFR API would result in a broken 200', () => {
+    /*
+     * "Sign in with Shop" users face an error if the rendering happens via the
+     * SFR API (as it results in a broken 200, instead of a 302)
+     */
+    test('should proxy the /account requests as it may result on a 302 that must be followd', () => {
       const event = createH3Event('GET', '/account')
       expect(canProxyRequest(event)).toBeTruthy()
     })
