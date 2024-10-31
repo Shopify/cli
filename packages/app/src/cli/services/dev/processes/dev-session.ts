@@ -1,9 +1,9 @@
 /* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
-import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
+import {AppEventWatcher, EventType, reloadApp} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {fileExistsSync, mkdir, readFileSync, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -19,12 +19,13 @@ interface DevSessionOptions {
   storeFqdn: string
   apiKey: string
   url: string
-  app: AppInterface
+  app: AppLinkedInterface
   organizationId: string
   appId: string
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
+  url: string
   bundlePath: string
   stdout: Writable
   stderr: Writable
@@ -60,7 +61,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient, app} = options
+  const {developerPlatformClient} = options
+
+  // Reload the app before starting the dev session, at this point the configuration has changed (e.g. application_url)
+  const app = await reloadApp(options.app, {stderr, stdout, signal})
 
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
@@ -70,7 +74,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   if (fileExistsSync(bundlePath)) await rmdir(bundlePath, {force: true})
   await mkdir(bundlePath)
 
-  const processOptions = {...options, stderr, stdout, signal, bundlePath}
+  const processOptions = {...options, stderr, stdout, signal, bundlePath, app}
   const appWatcher = new AppEventWatcher(app, processOptions)
 
   outputWarn('-----> Using DEV SESSIONS <-----')

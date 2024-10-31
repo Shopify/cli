@@ -4,6 +4,7 @@ import {
   testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
+  testAppLinked,
   testSingleWebhookSubscriptionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
@@ -226,7 +227,7 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
 
       // When
-      const app = testApp({
+      const app = testAppLinked({
         allExtensions: initialExtensions,
         configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
       })
