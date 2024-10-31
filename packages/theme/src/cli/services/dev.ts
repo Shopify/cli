@@ -49,6 +49,7 @@ export async function dev(options: DevOptions) {
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
     filters: options,
     notify: options.notify,
+    noDelete: options.noDelete,
   })
 
   const host = options.host ?? DEFAULT_HOST
@@ -105,7 +106,7 @@ export async function dev(options: DevOptions) {
   }
 }
 
-function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
+export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
   const remoteUrl = `https://${store}`
   const localUrl = `http://${host}:${port}`
   renderSuccess({
@@ -124,6 +125,14 @@ function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port =
       },
     ],
     nextSteps: [
+      [
+        {
+          link: {
+            label: 'Preview your gift cards',
+            url: `${localUrl}/gift_cards/[store_id]/preview`,
+          },
+        },
+      ],
       [
         {
           link: {

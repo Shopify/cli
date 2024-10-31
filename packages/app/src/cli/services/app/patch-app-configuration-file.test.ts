@@ -8,6 +8,7 @@ import {describe, expect, test} from 'vitest'
 const defaultToml = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 client_id = "12345"
 name = "app1"
+application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
@@ -33,7 +34,7 @@ function writeDefaulToml(tmpDir: string) {
 }
 
 describe('patchAppConfigurationFile', () => {
-  test('updates existing configuration with new values and adds new top-levelfields', async () => {
+  test('updates existing configuration with new values and adds new top-levelfields, replaces arrays', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
       const patch = {
@@ -41,6 +42,9 @@ describe('patchAppConfigurationFile', () => {
         application_url: 'https://example.com',
         access_scopes: {
           use_legacy_install_flow: false,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/redirect3', 'https://example.com/redirect4'],
         },
       }
 
@@ -61,8 +65,8 @@ use_legacy_install_flow = false
 
 [auth]
 redirect_urls = [
-  "https://example.com/redirect",
-  "https://example.com/redirect2"
+  "https://example.com/redirect3",
+  "https://example.com/redirect4"
 ]
 
 [webhooks]
@@ -92,9 +96,6 @@ name = "app1"
 application_url = "https://example.com"
 embedded = true
 
-[build]
-dev_store_url = "example.myshopify.com"
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
@@ -107,6 +108,9 @@ redirect_urls = [
 
 [webhooks]
 api_version = "2023-04"
+
+[build]
+dev_store_url = "example.myshopify.com"
 `)
     })
   })
@@ -134,8 +138,8 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
 use_legacy_install_flow = true
+scopes = "read_products"
 
 [auth]
 redirect_urls = [

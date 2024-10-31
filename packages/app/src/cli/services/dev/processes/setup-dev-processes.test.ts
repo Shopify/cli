@@ -18,6 +18,10 @@ import {
   testUIExtension,
   testFunctionExtension,
   testWebhookExtensions,
+  testOrganizationApp,
+  testAppLinked,
+  testOrganization,
+  testOrganizationStore,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -61,6 +65,15 @@ beforeEach(() => {
   })
 })
 
+const appContextResult = {
+  app: testAppLinked(),
+  remoteApp: testOrganizationApp(),
+  developerPlatformClient: testDeveloperPlatformClient(),
+  organization: testOrganization(),
+  store: testOrganizationStore({}),
+  specifications: [],
+}
+
 describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -69,11 +82,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -114,7 +127,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -266,8 +279,8 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -287,7 +300,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -334,11 +347,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -380,7 +393,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -428,11 +441,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -474,7 +487,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -510,11 +523,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -567,7 +580,7 @@ describe('setup-dev-processes', () => {
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',

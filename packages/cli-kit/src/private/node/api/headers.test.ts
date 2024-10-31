@@ -52,25 +52,28 @@ describe('common API methods', () => {
     })
   })
 
-  test.each(['shpat', 'shpua', 'shpca'])(`when custom app token starts with %s, do not prepend 'Bearer'`, (prefix) => {
-    // Given
-    vi.mocked(randomUUID).mockReturnValue('random-uuid')
-    vi.mocked(firstPartyDev).mockReturnValue(false)
-    const token = `${prefix}_my_token`
-    // When
-    const headers = buildHeaders(token)
+  test.each(['shpat', 'shpua', 'shpca', 'shptka'])(
+    `when custom app token starts with %s, do not prepend 'Bearer'`,
+    (prefix) => {
+      // Given
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      vi.mocked(firstPartyDev).mockReturnValue(false)
+      const token = `${prefix}_my_token`
+      // When
+      const headers = buildHeaders(token)
 
-    // Then
-    const version = CLI_KIT_VERSION
-    expect(headers).toEqual({
-      'Content-Type': 'application/json',
-      'Keep-Alive': 'timeout=30',
-      'X-Shopify-Access-Token': token,
-      'User-Agent': `Shopify CLI; v=${version}`,
-      authorization: token,
-      'Sec-CH-UA-PLATFORM': process.platform,
-    })
-  })
+      // Then
+      const version = CLI_KIT_VERSION
+      expect(headers).toEqual({
+        'Content-Type': 'application/json',
+        'Keep-Alive': 'timeout=30',
+        'X-Shopify-Access-Token': token,
+        'User-Agent': `Shopify CLI; v=${version}`,
+        authorization: token,
+        'Sec-CH-UA-PLATFORM': process.platform,
+      })
+    },
+  )
 
   test('sanitizedHeadersOutput removes the headers that include the token', () => {
     // Given

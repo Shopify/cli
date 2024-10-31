@@ -11,25 +11,35 @@ export interface PatchTomlOptions {
 }
 
 /**
- * Updates an app/extension configuration file with the given patch.
+ * Updates an app configuration file with the given patch.
  *
  * Only updates the given fields in the patch and leaves the rest of the file unchanged.
+ * Keeps the same order of the keys as the original file.
  *
- * @param path - The path to the app/extension configuration file.
- * @param patch - The patch to apply to the app/extension configuration file.
+ * New keys are always added at the end of the file.
+ *
+ * @param path - The path to the app configuration file.
+ * @param patch - The patch to apply to the app configuration file.
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  */
 export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
-  const updatedConfig = deepMergeObjects(configuration, patch)
 
-  // Re-parse the config with the schema to validate the patch and keep the same order in the file
-  // Make every field optional to not crash on invalid tomls that are missing fields.
+  // Deep merge the configuration with the patch.
+  // Use replaceArrayStrategy to replace the destination array with the source array. (Arrays are not merged)
+  const updatedConfig = deepMergeObjects(configuration, patch, replaceArrayStrategy)
+
+  // Re-parse the config with the schema to validate the patch
+  // Make every field optional to not crash on tomls that are missing fields.
   const validSchema = schema ?? zod.object({}).passthrough()
-  const validatedConfig = validSchema.partial().parse(updatedConfig)
-  let encodedString = encodeToml(validatedConfig)
+  validSchema.partial().parse(updatedConfig)
 
+  let encodedString = encodeToml(updatedConfig)
   encodedString = addDefaultCommentsToToml(encodedString)
   await writeFile(path, encodedString)
+}
+
+export function replaceArrayStrategy(_: unknown[], newArray: unknown[]): unknown[] {
+  return newArray
 }

@@ -135,7 +135,7 @@ describe('hot-reload server', () => {
     // We wait for syncing to finish on liquid assets before emitting a full reload event:
     await nextTick()
     expect(unlinkSyncSpy).toHaveBeenCalled()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${liquidAssetKey}"}`)
+    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"css","key":"${liquidAssetKey.replace('.liquid', '')}"}`)
     // Removes the CSS Liquid file from memory:
     expect(getInMemoryTemplates(ctx)).toEqual({})
 

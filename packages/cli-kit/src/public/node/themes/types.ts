@@ -26,6 +26,7 @@ export type ThemeFSEventPayload<T extends ThemeFSEventName = 'add'> = (ThemeFSEv
 export interface ThemeFileSystemOptions {
   filters?: {ignore?: string[]; only?: string[]}
   notify?: string
+  noDelete?: boolean
 }
 
 /**

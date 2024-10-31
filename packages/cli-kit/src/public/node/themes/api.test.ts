@@ -1,25 +1,29 @@
 import {
   createTheme,
-  deleteTheme,
+  themeDelete,
   fetchThemes,
   ThemeParams,
-  updateTheme,
-  publishTheme,
-  upgradeTheme,
+  themeUpdate,
+  themePublish,
   fetchChecksums,
   bulkUploadThemeAssets,
   AssetParams,
   deleteThemeAsset,
 } from './api.js'
 import {RemoteBulkUploadResponse} from './factories.js'
+import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
+import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {test, vi, expect, describe} from 'vitest'
-import {restRequest} from '@shopify/cli-kit/node/api/admin'
+import {adminRequestDoc, restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/system')
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
+const themeAccessSession = {...session, token: 'shptka_token'}
+const sessions = {CLI: session, 'Theme Access': themeAccessSession}
 
 describe('fetchThemes', () => {
   test('returns store themes', async () => {
@@ -132,58 +136,66 @@ describe('createTheme', () => {
   })
 })
 
-describe('upgradeTheme', () => {
-  test('upgrades a theme with a script', async () => {
+describe('themeUpdate', () => {
+  for (const [sessionType, session] of Object.entries(sessions)) {
+    test(`updates a theme with graphql with a ${sessionType} session`, async () => {
+      // Given
+      const id = 123
+      const name = 'updated theme'
+      const role = 'unpublished'
+      const params: ThemeParams = {name, role}
+
+      vi.mocked(adminRequestDoc).mockResolvedValue({
+        themeUpdate: {
+          theme: {
+            id: `gid://shopify/OnlineStoreTheme/${id}`,
+            name,
+            role,
+          },
+          userErrors: [],
+        },
+      })
+
+      // When
+      const theme = await themeUpdate(id, params, session)
+
+      // Then
+      expect(adminRequestDoc).toHaveBeenCalledWith(ThemeUpdate, session, {
+        id: `gid://shopify/OnlineStoreTheme/${id}`,
+        input: {name},
+      })
+      expect(theme).not.toBeNull()
+      expect(theme!.id).toEqual(id)
+      expect(theme!.name).toEqual(name)
+      expect(theme!.role).toEqual(role)
+    })
+  }
+
+  test('no-ops when input hash is empty', async () => {
     // Given
-    const fromTheme = 123
-    const toTheme = 456
-    const id = 789
-    const name = 'updated-theme'
+    const id = 123
+    const name = 'theme'
     const role = 'unpublished'
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
-      status: 200,
-      headers: {},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeUpdate: {
+        theme: {
+          id: `gid://shopify/OnlineStoreTheme/${id}`,
+          name,
+          role,
+        },
+        userErrors: [],
+      },
     })
 
     // When
-    const theme = await upgradeTheme({fromTheme, toTheme, session})
+    const theme = await themeUpdate(id, {}, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {from_theme: fromTheme, to_theme: toTheme}, {})
-    expect(theme).not.toBeNull()
-    expect(theme!.id).toEqual(id)
-    expect(theme!.name).toEqual(name)
-    expect(theme!.role).toEqual(role)
-  })
-
-  test('upgrades a theme without a script', async () => {
-    // Given
-    const fromTheme = 123
-    const toTheme = 456
-    const script = 'update_extension.json contents'
-    const id = 789
-    const name = 'updated-theme'
-    const role = 'unpublished'
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
-      status: 200,
-      headers: {},
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeUpdate, session, {
+      id: `gid://shopify/OnlineStoreTheme/${id}`,
+      input: {},
     })
-
-    // When
-    const theme = await upgradeTheme({fromTheme, toTheme, script, session})
-
-    // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'POST',
-      `/themes`,
-      session,
-      {from_theme: fromTheme, to_theme: toTheme, script},
-      {},
-    )
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -191,55 +203,36 @@ describe('upgradeTheme', () => {
   })
 })
 
-describe('updateTheme', () => {
-  test('updates a theme', async () => {
-    // Given
-    const id = 123
-    const name = 'updated theme'
-    const role = 'unpublished'
-    const params: ThemeParams = {name, role}
+describe('themePublish', () => {
+  for (const [sessionType, session] of Object.entries(sessions)) {
+    test(`publish a theme with graphql with a ${sessionType} session`, async () => {
+      // Given
+      const id = 123
+      const name = 'updated theme'
+      const role = 'live'
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
-      status: 200,
-      headers: {},
+      vi.mocked(adminRequestDoc).mockResolvedValue({
+        themePublish: {
+          theme: {
+            id: `gid://shopify/OnlineStoreTheme/${id}`,
+            name,
+            role,
+          },
+          userErrors: [],
+        },
+      })
+
+      // When
+      const theme = await themePublish(id, session)
+
+      // Then
+      expect(adminRequestDoc).toHaveBeenCalledWith(ThemePublish, session, {id: `gid://shopify/OnlineStoreTheme/${id}`})
+      expect(theme).not.toBeNull()
+      expect(theme!.id).toEqual(id)
+      expect(theme!.name).toEqual(name)
+      expect(theme!.role).toEqual(role)
     })
-
-    // When
-    const theme = await updateTheme(id, params, session)
-
-    // Then
-    expect(restRequest).toHaveBeenCalledWith('PUT', `/themes/${id}`, session, {theme: {id, ...params}}, {})
-    expect(theme).not.toBeNull()
-    expect(theme!.id).toEqual(id)
-    expect(theme!.name).toEqual(name)
-    expect(theme!.role).toEqual(role)
-  })
-})
-
-describe('publishTheme', () => {
-  test('publish a theme', async () => {
-    // Given
-    const id = 123
-    const name = 'updated theme'
-    const role = 'live'
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
-      status: 200,
-      headers: {},
-    })
-
-    // When
-    const theme = await publishTheme(id, session)
-
-    // Then
-    expect(restRequest).toHaveBeenCalledWith('PUT', `/themes/${id}`, session, {theme: {id, role: 'main'}}, {})
-    expect(theme).not.toBeNull()
-    expect(theme!.id).toEqual(id)
-    expect(theme!.name).toEqual(name)
-    expect(theme!.role).toEqual(role)
-  })
+  }
 })
 
 describe('deleteThemeAsset', () => {
@@ -280,55 +273,69 @@ describe('deleteThemeAsset', () => {
     expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
     expect(output).toBe(true)
   })
-})
 
-describe('deleteTheme', () => {
-  test('deletes a theme', async () => {
+  test('throws an AbortError when the server responds with a 403', async () => {
     // Given
     const id = 123
-    const name = 'store theme'
+    const key = 'config/settings_data.json'
+    const message = 'You are not authorized to edit themes on "my-shop.myshopify.com".'
 
     vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name}},
-      status: 200,
+      json: {message},
+      status: 403,
       headers: {},
     })
 
     // When
-    const theme = await deleteTheme(id, session)
+    const deletePromise = () => deleteThemeAsset(id, key, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}`, session, undefined, {})
-    expect(theme).not.toBeNull()
-    expect(theme!.id).toEqual(id)
-    expect(theme!.name).toEqual('store theme')
+    await expect(deletePromise).rejects.toThrow(new AbortError(message))
+    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
   })
 })
 
-describe('request errors', () => {
-  const httpResponses = [
-    {httpError: 401, expectedRetries: 3},
-    {httpError: 403, expectedRetries: 1},
-    {httpError: 500, expectedRetries: 3},
-    {httpError: 999, expectedRetries: 1},
-  ]
-
-  httpResponses.forEach(({httpError, expectedRetries}) => {
-    test(`${httpError} errors`, async () => {
+describe('themeDelete', () => {
+  for (const [sessionType, session] of Object.entries(sessions)) {
+    test(`deletes a theme with graphql with a ${sessionType} session`, async () => {
       // Given
-      vi.mocked(restRequest).mockResolvedValue({
-        json: {},
-        status: httpError,
-        headers: {},
+      const id = 123
+      const name = 'store theme'
+
+      vi.mocked(adminRequestDoc).mockResolvedValue({
+        themeDelete: {
+          deletedThemeId: 'gid://shopify/OnlineStoreTheme/123',
+          userErrors: [],
+        },
       })
 
       // When
-      const deletePromise = async () => deleteTheme(1, session)
+      const response = await themeDelete(id, session)
 
       // Then
-      await expect(deletePromise).rejects.toThrowError(AbortError)
-      expect(restRequest).toBeCalledTimes(expectedRetries)
+      expect(adminRequestDoc).toHaveBeenCalledWith(ThemeDelete, session, {id: `gid://shopify/OnlineStoreTheme/${id}`})
+      expect(response).toBe(true)
     })
+  }
+})
+
+describe('request errors', () => {
+  test(`returns AbortError when graphql returns user error`, async () => {
+    // Given
+
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeDelete: {
+        deletedThemeId: null,
+        userErrors: [{message: 'Could not delete theme'}],
+      },
+    })
+
+    await expect(async () => {
+      // When
+      return themeDelete(1, session)
+
+      // Then
+    }).rejects.toThrowError(AbortError)
   })
 })
 

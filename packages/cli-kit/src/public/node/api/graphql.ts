@@ -55,7 +55,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     ...buildHeaders(token),
   }
 
-  debugLogRequestInfo(api, queryAsString, variables, headers)
+  debugLogRequestInfo(api, queryAsString, url, variables, headers)
   const clientOptions = {agent: await httpsAgent(), headers}
   const client = new GraphQLClient(url, clientOptions)
 
