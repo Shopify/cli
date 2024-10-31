@@ -25,9 +25,14 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
-const CART_PREFIX = '/cart/'
 export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
+
+const CART_PATTERN = /^\/cart\//
+const ACCOUNT_PATTERN = /^\/account\/?$/
+const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
+const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
+
 const IGNORED_ENDPOINTS = [
   '/.well-known',
   '/shopify/monorail',
@@ -75,9 +80,10 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
  */
 export function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
-  if (event.path.startsWith(CART_PREFIX)) return true
-  if (event.path.startsWith(VANITY_CDN_PREFIX)) return true
-  if (event.path.startsWith(EXTENSION_CDN_PREFIX)) return true
+  if (event.path.match(CART_PATTERN)) return true
+  if (event.path.match(ACCOUNT_PATTERN)) return true
+  if (event.path.match(VANITY_CDN_PATTERN)) return true
+  if (event.path.match(EXTENSION_CDN_PATTERN)) return true
 
   const [pathname] = event.path.split('?') as [string]
   const extension = extname(pathname)
