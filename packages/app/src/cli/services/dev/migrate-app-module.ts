@@ -24,7 +24,7 @@ export const PaymentModulesMap = {
   ],
 }
 
-export const MarketingActivityModulesMap = {
+export const MarketingModulesMap = {
   marketing_activity: ['marketing_activity_extension'],
 }
 

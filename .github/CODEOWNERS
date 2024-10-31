@@ -8,5 +8,6 @@ packages/theme/** @shopify/advanced-edits @shopify/app-inner-loop
 .changeset/* @shopify/advanced-edits @shopify/app-inner-loop
 .github/CODEOWNERS @shopify/advanced-edits @shopify/app-inner-loop
 packages/cli/oclif.manifest.json @shopify/advanced-edits @shopify/app-inner-loop
+packages/cli-kit/src/{private,public}/themes/* @shopify/advanced-edits @shopify/app-inner-loop
 docs-shopify.dev/*  @shopify/advanced-edits @shopify/app-inner-loop
 

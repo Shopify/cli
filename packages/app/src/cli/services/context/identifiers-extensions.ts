@@ -11,7 +11,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {
   FlowModulesMap,
   getModulesToMigrate,
-  MarketingActivityModulesMap,
+  MarketingModulesMap,
   migrateAppModules,
   PaymentModulesMap,
   UIModulesMap,
@@ -22,7 +22,6 @@ import {SingleWebhookSubscriptionType} from '../../models/extensions/specificati
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -36,7 +35,6 @@ export async function ensureExtensionsIds(
     dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
   }: AppWithExtensions,
 ) {
-  const isShopifolk = await isShopify()
   let remoteExtensions = initialRemoteExtensions
   const identifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
@@ -44,9 +42,7 @@ export async function ensureExtensionsIds(
   const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, UIModulesMap)
   const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, FlowModulesMap)
   const paymentsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, PaymentModulesMap)
-  const marketingToMigrate = isShopifolk
-    ? getModulesToMigrate(localExtensions, remoteExtensions, identifiers, MarketingActivityModulesMap)
-    : []
+  const marketingToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, MarketingModulesMap)
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)

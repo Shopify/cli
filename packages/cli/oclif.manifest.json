@@ -2966,7 +2966,7 @@
         },
         "preview": {
           "allowNo": false,
-          "description": "Deploys to the Preview environment. Overrides --env-branch and Git metadata.",
+          "description": "Deploys to the Preview environment.",
           "name": "preview",
           "required": false,
           "type": "boolean"
@@ -3164,11 +3164,6 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_VERBOSE",
           "name": "verbose",
           "required": false,
-          "type": "boolean"
-        },
-        "worker": {
-          "hidden": true,
-          "name": "worker",
           "type": "boolean"
         }
       },
@@ -3882,11 +3877,6 @@
           ],
           "description": "Watches for changes and rebuilds the project.",
           "name": "watch",
-          "type": "boolean"
-        },
-        "worker": {
-          "hidden": true,
-          "name": "worker",
           "type": "boolean"
         }
       },

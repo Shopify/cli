@@ -15,7 +15,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 export async function outputUpdateURLsResult(
   updated: boolean,
   urls: PartnersURLs,
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
+  remoteApp: OrganizationApp,
   localApp: AppInterface,
 ) {
   const dashboardURL = await partnersURL(remoteApp.organizationId, remoteApp.id)
