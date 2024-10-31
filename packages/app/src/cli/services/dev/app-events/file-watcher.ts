@@ -6,7 +6,7 @@ import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, readFileSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 /**
@@ -76,9 +76,31 @@ export async function startFileWatcher(
   // Watch the extensions root directories and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
+  // Read .gitignore files from extension directories and add the patterns to the ignored list
+  const customGitIgnoredPatterns = extensionPaths
+    .map((dir) => {
+      const gitIgnorePath = joinPath(dir, '.gitignore')
+      if (!fileExistsSync(gitIgnorePath)) return []
+      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+      return gitIgnoreContent
+        .split('\n')
+        .map((pattern) => pattern.trim())
+        .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
+        .map((pattern) => joinPath(dir, pattern))
+    })
+    .flat()
+
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   const watcher = chokidar.watch(watchPaths, {
-    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
+    ignored: [
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/*.test.*',
+      '**/dist/**',
+      '**/*.swp',
+      '**/generated/**',
+      ...customGitIgnoredPatterns,
+    ],
     persistent: true,
     ignoreInitial: true,
   })
