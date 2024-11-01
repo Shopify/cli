@@ -12,6 +12,8 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {openURL} from '@shopify/cli-kit/node/system'
+import chalk from '@shopify/cli-kit/node/colors'
+import readline from 'readline'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -61,6 +63,13 @@ export async function dev(options: DevOptions) {
 
   const port = options.port ?? String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
+  const urls = {
+    local: `http://${host}:${port}`,
+    giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
+    themeEditor: `https://${options.store}/admin/themes/${options.theme.id}/editor`,
+    preview: `https://${options.store}/?preview_theme_id=${options.theme.id}`,
+  }
+
   const storefrontPassword = await storefrontPasswordPromise
   const session = await initializeDevServerSession(
     options.theme.id.toString(),
@@ -98,23 +107,64 @@ export async function dev(options: DevOptions) {
   await renderDevSetupProgress()
   await serverStart()
 
-  renderLinks(options.store, String(options.theme.id), host, port)
+  renderLinks(urls)
   if (options.open) {
-    openURL(`http://${host}:${port}`).catch((error: Error) => {
-      renderWarning({headline: 'Failed to open the development server.', body: error.stack ?? error.message})
+    openURLSafely(urls.local, 'development server')
+  }
+
+  readline.emitKeypressEvents(process.stdin)
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true)
+  }
+
+  process.stdin.on('keypress', (_str, key) => {
+    if (key.ctrl && key.name === 'c') {
+      process.exit()
+    }
+
+    switch (key.name) {
+      case 't':
+        openURLSafely(urls.local, 'localhost')
+        break
+      case 'p':
+        openURLSafely(urls.preview, 'theme preview')
+        break
+      case 'e':
+        openURLSafely(urls.themeEditor, 'theme editor')
+        break
+      case 'g':
+        openURLSafely(urls.giftCard, 'gift card preview')
+        break
+    }
+  })
+}
+
+export function openURLSafely(url: string, label: string) {
+  openURL(url).catch(handleOpenURLError(label))
+}
+
+function handleOpenURLError(message: string) {
+  return (error: Error) => {
+    renderWarning({
+      headline: `Failed to open ${message}.`,
+      body: error.stack ?? error.message,
     })
   }
 }
 
-export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
-  const remoteUrl = `https://${store}`
-  const localUrl = `http://${host}:${port}`
+export function renderLinks(urls: {local: string; giftCard: string; themeEditor: string; preview: string}) {
   renderSuccess({
     body: [
       {
         list: {
-          title: {bold: 'Preview your theme'},
-          items: [localUrl],
+          title: chalk.bold('Preview your theme ') + chalk.cyan('(t)'),
+          items: [
+            {
+              link: {
+                url: urls.local,
+              },
+            },
+          ],
         },
       },
     ],
@@ -122,23 +172,28 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
       [
         {
           link: {
-            label: 'Preview your gift cards',
-            url: `${localUrl}/gift_cards/[store_id]/preview`,
+            label: `Share your theme preview ${chalk.cyan('(p)')}`,
+            url: urls.preview,
+          },
+        },
+        {
+          subdued: urls.preview,
+        },
+      ],
+      [
+        {
+          link: {
+            label: `Customize your theme at the theme editor ${chalk.cyan('(e)')}`,
+            url: urls.themeEditor,
           },
         },
       ],
       [
         {
           link: {
-            label: 'Customize your theme at the theme editor',
-            url: `${remoteUrl}/admin/themes/${themeId}/editor`,
+            label: `Preview your gift cards ${chalk.cyan('(g)')}`,
+            url: urls.giftCard,
           },
-        },
-      ],
-      [
-        'Share your theme preview',
-        {
-          subdued: `\n${remoteUrl}/?preview_theme_id=${themeId}`,
         },
       ],
     ],
