@@ -48,7 +48,7 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
           type: 'flow_trigger_lifecycle_callback',
           name: extension.title,
           handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
-          url: config.url ?? defaultURL,
+          url: config.url,
         },
       ],
     }
