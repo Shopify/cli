@@ -1986,7 +1986,7 @@ wrong = "property"
     await writeConfig(appConfigurationWithWebhooks)
 
     // When
-    const app = await loadTestingApp({remoteFlags: [Flag.DeclarativeWebhooks]})
+    const app = await loadTestingApp({remoteFlags: []})
 
     // Then
     expect(app.allExtensions).toHaveLength(6)

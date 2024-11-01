@@ -20,7 +20,6 @@ import {
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -387,7 +386,7 @@ describe('allExtensions', () => {
       {
         configuration: CORRECT_CURRENT_APP_SCHEMA,
         allExtensions: webhookExtensions,
-        remoteFlags: [Flag.DeclarativeWebhooks],
+        remoteFlags: [],
       },
       'current',
     )
