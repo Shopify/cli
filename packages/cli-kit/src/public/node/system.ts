@@ -16,6 +16,7 @@ export interface ExecOptions {
   stdio?: 'inherit'
   input?: string
   signal?: AbortSignal
+  detached?: boolean
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
 }
@@ -105,6 +106,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
+    detached: options?.detached,
     // Setting this to false makes it possible to kill the main process
     // and all its sub-processes with Ctrl+C on Windows
     windowsHide: false,

@@ -286,3 +286,14 @@ export function opentelemetryDomain(env = process.env): string | undefined {
 }
 
 export type CIMetadata = Metadata
+
+/**
+ * Returns whether auto-updates are enabled.
+ * It can be overridden via the SHOPIFY_CLI_DISABLE_AUTO_UPDATES environment variable.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns Whether auto-updates are enabled.
+ */
+export function autoUpdatesEnabled(env = process.env): boolean {
+  return !isTruthy(env[environmentVariables.disableAutoUpdate])
+}

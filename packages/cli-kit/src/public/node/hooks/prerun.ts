@@ -1,11 +1,14 @@
 import {CLI_KIT_VERSION} from '../../common/version.js'
-import {checkForNewVersion, checkForCachedNewVersion} from '../node-package-manager.js'
+import {checkForNewVersion, checkForCachedNewVersion, safeToAutoUpgrade} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
-import {outputDebug, outputWarn} from '../../../public/node/output.js'
-import {getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
+import {outputDebug, outputInfo, outputWarn} from '../../../public/node/output.js'
+import {cliInstallCommand, getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
+import {exec} from '../system.js'
+import {autoUpdatesEnabled} from '../context/local.js'
+import {environmentVariables} from '../../../private/node/constants.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -107,6 +110,21 @@ export async function warnOnAvailableUpgrade(): Promise<void> {
     const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
     if (newerVersion) {
       outputWarn(getOutputUpdateCLIReminder(newerVersion))
+
+      // Attempt to upgrade automatically in the background
+      await autoUpdateCli(currentVersion, newerVersion)
     }
   })
+}
+
+async function autoUpdateCli(currentVersion: string, newerVersion: string): Promise<void> {
+  if (!autoUpdatesEnabled()) return
+
+  if (safeToAutoUpgrade(currentVersion, newerVersion)) {
+    outputInfo(
+      `(Attempting to upgrade the CLI in the background. To prevent auto-updates, set the environment variable ${environmentVariables.disableAutoUpdate}=1)`,
+    )
+    const [command, ...args] = cliInstallCommand().split(' ')
+    void exec(command!, args, {detached: true})
+  }
 }

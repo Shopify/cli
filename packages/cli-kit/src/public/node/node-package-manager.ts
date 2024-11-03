@@ -298,6 +298,24 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
 }
 
 /**
+ * Given a current version and a new version, it returns true if it's safe to auto-upgrade the dependency.
+ * It's considered safe if the major version is the same.
+ * @param currentVersion - The current version.
+ * @param newVersion - The new version.
+ * @returns Boolean Whether it's safe to auto-upgrade the dependency.
+ * @example
+ * safeToAutoUpgrade('1.2.3', '1.3.0') // true
+ * safeToAutoUpgrade('1.2.3', '2.0.0') // false
+ */
+export function safeToAutoUpgrade(currentVersion: string, newVersion: string): boolean {
+  const currentSemVer = new SemVer(currentVersion)
+  const currentMajor = currentSemVer.major
+  const newSemVer = new SemVer(newVersion)
+  const newMajor = newSemVer.major
+  return currentMajor === newMajor
+}
+
+/**
  * Utility function used to check whether a package version satisfies some requirements
  * @param version - The version to check
  * @param requirements - The requirements to check against, e.g. "\>=1.0.0" - see https://www.npmjs.com/package/semver#ranges
