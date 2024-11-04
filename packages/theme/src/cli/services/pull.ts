@@ -34,11 +34,6 @@ export interface PullFlags {
   password?: string
 
   /**
-   * The environment to apply to the current command.
-   */
-  environment?: string
-
-  /**
    * Store URL. It can be the store prefix (example.myshopify.com) or the full myshopify.com URL (https://example.myshopify.com).
    */
   store?: string
@@ -116,11 +111,11 @@ export async function pull(flags: PullFlags): Promise<void> {
   })
 
   await executePull(theme, adminSession, {
-    path: path || cwd(),
-    nodelete: nodelete || false,
-    only: only || [],
-    ignore: ignore || [],
-    force: force || false,
+    path: path ?? cwd(),
+    nodelete: nodelete ?? false,
+    only: only ?? [],
+    ignore: ignore ?? [],
+    force: force ?? false,
   })
 }
 
