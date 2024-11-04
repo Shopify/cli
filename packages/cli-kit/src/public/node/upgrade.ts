@@ -9,6 +9,16 @@ import {outputContent, outputToken} from './output.js'
  * @returns A string with the command to run.
  */
 export function cliInstallCommand(): string {
+  return cliInstallCommandAsArray().join(' ')
+}
+
+/**
+ * Utility function for generating an install command for the user to run
+ * to install an updated version of Shopify CLI. Returns as an array of strings.
+ *
+ * @returns A string array with the command to run.
+ */
+export function cliInstallCommandAsArray(): [string, ...string[]] {
   const isGlobal = currentProcessIsGlobal()
   let packageManager = packageManagerFromUserAgent()
   // packageManagerFromUserAgent() will return 'unknown' if it can't determine the package manager
@@ -19,10 +29,19 @@ export function cliInstallCommand(): string {
   if (packageManager === 'unknown') packageManager = 'npm'
 
   if (packageManager === 'yarn') {
-    return `${packageManager} ${isGlobal ? 'global ' : ''}add @shopify/cli@latest`
+    return [
+      packageManager,
+      ...(isGlobal ? ['global'] : []),
+      'add',
+      '@shopify/cli@latest',
+    ]
   } else {
-    const verb = packageManager === 'pnpm' ? 'add' : 'install'
-    return `${packageManager} ${verb} ${isGlobal ? '-g ' : ''}@shopify/cli@latest`
+    return [
+      packageManager,
+      packageManager === 'pnpm' ? 'add' : 'install',
+      ...(isGlobal ? ['-g'] : []),
+      '@shopify/cli@latest',
+    ]
   }
 }
 

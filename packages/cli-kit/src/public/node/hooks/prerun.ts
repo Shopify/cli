@@ -2,7 +2,7 @@ import {CLI_KIT_VERSION} from '../../common/version.js'
 import {checkForNewVersion, checkForCachedNewVersion, safeToAutoUpgrade} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
 import {outputDebug, outputInfo, outputWarn} from '../../../public/node/output.js'
-import {cliInstallCommand, getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
+import {cliInstallCommandAsArray, getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
 import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
@@ -124,7 +124,8 @@ async function autoUpdateCli(currentVersion: string, newerVersion: string): Prom
     outputInfo(
       `(Attempting to upgrade the CLI in the background. To prevent auto-updates, set the environment variable ${environmentVariables.disableAutoUpdate}=1)`,
     )
-    const [command, ...args] = cliInstallCommand().split(' ')
-    void exec(command!, args, {detached: true})
+    const [command, ...args] = cliInstallCommandAsArray()
+    // eslint-disable-next-line no-void
+    void exec(command, args, {detached: true})
   }
 }
