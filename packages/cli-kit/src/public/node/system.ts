@@ -17,6 +17,7 @@ export interface ExecOptions {
   input?: string
   signal?: AbortSignal
   detached?: boolean
+  unref?: boolean
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
 }
@@ -68,6 +69,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
       treeKill(pid, 'SIGTERM')
     }
   })
+  if (options?.unref) commandProcess.unref()
   try {
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

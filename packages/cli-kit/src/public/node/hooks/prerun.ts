@@ -128,5 +128,5 @@ export async function autoUpdateCli(currentVersion: string, newerVersion: string
   )
   const [command, ...args] = cliInstallCommandAsArray()
   // eslint-disable-next-line no-void
-  void exec(command, args, {detached: true})
+  void exec(command, args, {detached: true, unref: true})
 }

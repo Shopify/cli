@@ -104,7 +104,7 @@ describe('autoUpdateCli', () => {
     await autoUpdateCli('3.70.0', '3.70.2')
 
     // Then
-    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {detached: true})
+    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {detached: true, unref: true})
   })
 })
 
