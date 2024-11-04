@@ -232,7 +232,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   const miscData = {} as {[key: string]: unknown}
   const appKeys = ['api_key', 'partner_id', 'project_type']
   const commandKeys = ['command']
-  const environmentKeys = ['cli_version', 'node_version', 'ruby_version', 'uname']
+  const environmentKeys = ['cli_version', 'node_version', 'uname']
 
   Object.entries(allMetadata).forEach(([key, value]) => {
     if (key.startsWith('app_') || appKeys.includes(key)) {
