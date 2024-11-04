@@ -6,11 +6,19 @@ import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
+import {
+  ThemeFilesUpsert,
+  ThemeFilesUpsertMutation,
+} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
+import {
+  OnlineStoreThemeFileBodyInputType,
+  OnlineStoreThemeFilesUpsertFileInput,
+} from '../../../cli/api/graphql/admin/generated/types.js'
 import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {buildBulkUploadResults, buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Result, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
 
@@ -59,7 +67,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
 
     if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
       const userErrors = response.theme?.files?.userErrors.map((error) => error.filename).join(', ')
-      throw new AbortError(`Error fetching assets: ${userErrors}`)
+      unexpectedGraphQLError(`Error fetching assets: ${userErrors}`)
     }
 
     const {nodes, pageInfo} = response.theme.files
@@ -98,11 +106,81 @@ export async function bulkUploadThemeAssets(
   assets: AssetParams[],
   session: AdminSession,
 ): Promise<Result[]> {
-  const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
-  if (response.status !== 207) {
-    throw new AbortError('Upload failed, could not reach the server')
+  const results: Result[] = []
+  for (let i = 0; i < assets.length; i += 50) {
+    const chunk = assets.slice(i, i + 50)
+    const files = prepareFilesForUpload(chunk)
+    // eslint-disable-next-line no-await-in-loop
+    const uploadResults = await uploadFiles(id, files, session)
+    results.push(...processUploadResults(uploadResults))
   }
-  return buildBulkUploadResults(response.json.results, assets)
+  return results
+}
+
+function prepareFilesForUpload(assets: AssetParams[]): OnlineStoreThemeFilesUpsertFileInput[] {
+  return assets.map((asset) => {
+    if (asset.value) {
+      return {
+        filename: asset.key,
+        body: {
+          type: 'TEXT' as const,
+          value: asset.value,
+        },
+      }
+    } else if (asset.attachment) {
+      return {
+        filename: asset.key,
+        body: {
+          type: 'BASE64' as const,
+          value: asset.attachment,
+        },
+      }
+    } else {
+      unexpectedGraphQLError('Asset must have a value or attachment')
+    }
+  })
+}
+
+async function uploadFiles(
+  themeId: number,
+  files: {filename: string; body: {type: OnlineStoreThemeFileBodyInputType; value: string}}[],
+  session: AdminSession,
+): Promise<ThemeFilesUpsertMutation> {
+  return adminRequestDoc(ThemeFilesUpsert, session, {themeId: themeGid(themeId), files})
+}
+
+function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[] {
+  const {themeFilesUpsert} = uploadResults
+
+  if (!themeFilesUpsert) {
+    unexpectedGraphQLError('Failed to upload theme files')
+  }
+
+  const {upsertedThemeFiles, userErrors} = themeFilesUpsert
+
+  const results: Result[] = []
+
+  upsertedThemeFiles?.forEach((file) => {
+    results.push({
+      key: file.filename,
+      success: true,
+      operation: Operation.Upload,
+    })
+  })
+
+  userErrors.forEach((error) => {
+    if (!error.filename) {
+      unexpectedGraphQLError(`Error uploading theme files: ${error.message}`)
+    }
+    results.push({
+      key: error.filename,
+      success: false,
+      operation: Operation.Upload,
+      errors: {asset: [error.message]},
+    })
+  })
+
+  return results
 }
 
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
@@ -354,10 +432,8 @@ async function parseThemeFileContent(body: OnlineStoreThemeFileBody): Promise<st
   switch (body.__typename) {
     case 'OnlineStoreThemeFileBodyText':
       return body.content
-      break
     case 'OnlineStoreThemeFileBodyBase64':
       return Buffer.from(body.contentBase64, 'base64').toString()
-      break
     case 'OnlineStoreThemeFileBodyUrl':
       try {
         const response = await fetch(body.url)

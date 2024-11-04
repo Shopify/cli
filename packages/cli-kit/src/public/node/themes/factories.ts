@@ -1,5 +1,4 @@
-import {AssetParams} from './api.js'
-import {Result, Checksum, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
+import {Checksum, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 interface RemoteThemeResponse {
   id: number
@@ -55,24 +54,4 @@ export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undef
   // Note: for attachments, this is the size of the base64 string, not the real length of the file
   const stats = {size: (value || attachment || '').length, mtime: Date.now()}
   return {key, checksum, attachment, value, stats}
-}
-
-export function buildBulkUploadResults(
-  bulkUploadResponse: RemoteBulkUploadResponse[],
-  assets: AssetParams[],
-): Result[] {
-  if (!bulkUploadResponse) {
-    return []
-  }
-
-  return bulkUploadResponse.map((bulkUpload, index) => {
-    return {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      key: assets[index]!.key,
-      success: bulkUpload.code === 200,
-      errors: bulkUpload.body.errors || {},
-      asset: bulkUpload.body.asset,
-      operation: Operation.Upload,
-    }
-  })
 }
