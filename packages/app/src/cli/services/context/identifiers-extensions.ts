@@ -32,19 +32,17 @@ export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
   {
     extensionRegistrations: initialRemoteExtensions,
-    dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
+    dashboardManagedExtensionRegistrations: dashboardExtensions,
   }: AppWithExtensions,
 ) {
   let remoteExtensions = initialRemoteExtensions
   const identifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
 
-  const allRemoteExtensions = remoteExtensions.concat(dashboardOnlyExtensions)
-
-  const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, UIModulesMap)
-  const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, FlowModulesMap)
-  const paymentsToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, PaymentModulesMap)
-  const marketingToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, MarketingModulesMap)
+  const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, UIModulesMap)
+  const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, FlowModulesMap)
+  const paymentsToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, PaymentModulesMap)
+  const marketingToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, MarketingModulesMap)
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
@@ -63,7 +61,7 @@ export async function ensureExtensionsIds(
     const newRemoteExtensions = await migrateFlowExtensions(
       flowExtensionsToMigrate,
       options.appId,
-      dashboardOnlyExtensions,
+      dashboardExtensions,
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
@@ -76,7 +74,7 @@ export async function ensureExtensionsIds(
       marketingToMigrate,
       options.appId,
       'marketing_activity',
-      dashboardOnlyExtensions,
+      dashboardExtensions,
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
@@ -89,7 +87,7 @@ export async function ensureExtensionsIds(
       paymentsToMigrate,
       options.appId,
       'payments_extension',
-      dashboardOnlyExtensions,
+      dashboardExtensions,
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
@@ -124,7 +122,7 @@ export async function ensureExtensionsIds(
   return {
     validMatches,
     extensionsToCreate,
-    dashboardOnlyExtensions,
+    dashboardOnlyExtensions: dashboardExtensions,
   }
 }
 
