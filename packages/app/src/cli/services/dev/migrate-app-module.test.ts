@@ -1,11 +1,10 @@
-import {getPaymentsExtensionsToMigrate, migrateAppModules} from './migrate-app-module.js'
+import {getModulesToMigrate, migrateAppModules} from './migrate-app-module.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
-    type: 'payments_extension',
     localIdentifier: 'my-action',
     configuration: {
       name: 'my-action',
@@ -17,30 +16,55 @@ function getLocalExtension(attributes: Partial<LocalSource> = {}) {
 function getRemoteExtension(attributes: Partial<RemoteSource> = {}) {
   return {
     uuid: '1234',
-    type: 'payments_app_credit_card',
     title: 'a-different-extension',
     ...attributes,
   } as unknown as RemoteSource
 }
+const defaultMap = {
+  payments_extension: [
+    'payments_app',
+    'payments_app_credit_card',
+    'payments_app_custom_credit_card',
+    'payments_app_custom_onsite',
+    'payments_app_redeemable',
+  ],
+  marketing_activity: ['marketing_activity_extension'],
+}
 
-describe('getPaymentsExtensionsToMigrate()', () => {
-  const defaultIds = {
-    'my-action': '1234',
-  }
+const defaultIdentifiers = {
+  'module-A': '1234',
+  'module-B': '',
+}
 
-  test('matching my remote title and localIdentifier', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'my-action'})
-    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'my-action', uuid: 'yy'})
-
-    // When
-    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
+describe('getModulesToMigrate()', () => {
+  test('returns an empty array if no extensions are provided', () => {
+    const toMigrate = getModulesToMigrate([], [], {}, defaultMap)
+    expect(toMigrate).toStrictEqual([])
   })
 
-  test('matching my remote title and localIdentifier by truncating the title', () => {
+  test('matching by remote title and localIdentifier, without defaultIdentifiers', () => {
+    // Given
+    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
+    const localExtensionB = getLocalExtension({type: 'marketing_activity', localIdentifier: 'module-B'})
+    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'module-A', uuid: 'yy'})
+    const remoteExtensionB = getRemoteExtension({type: 'marketing_activity_extension', title: 'module-B', uuid: 'xx'})
+
+    // When
+    const toMigrate = getModulesToMigrate(
+      [localExtension, localExtensionB],
+      [remoteExtension, remoteExtensionB],
+      {},
+      defaultMap,
+    )
+
+    // Then
+    expect(toMigrate).toStrictEqual([
+      {local: localExtension, remote: remoteExtension},
+      {local: localExtensionB, remote: remoteExtensionB},
+    ])
+  })
+
+  test('matching by truncated remote title and localIdentifier, without defaultIdentifiers', () => {
     // Given
     const localExtension = getLocalExtension({
       type: 'payments_extension',
@@ -49,47 +73,50 @@ describe('getPaymentsExtensionsToMigrate()', () => {
     const remoteExtension = getRemoteExtension({
       type: 'payments_app_credit_card',
       title: 'Ten Chars Ten Chars Ten Chars Ten Chars Ten 123456789',
-      uuid: 'yy',
     })
 
     // When
-    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], {}, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
   })
 
-  test('matching my local and remote IDs', () => {
+  test('matching different title and localIdentifier, using uuid', () => {
     // Given
-    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'my-action'})
-    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'remote', uuid: '1234'})
+    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
+    const remoteExtension = getRemoteExtension({
+      type: 'payments_app_credit_card',
+      title: 'random-title',
+      uuid: defaultIdentifiers['module-A'],
+    })
 
     // When
-    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
   })
 
-  test('does not return extensions where local.type is not payments_extension', () => {
+  test('does not return modules where local.type is not included in defaultMap', () => {
     // Given
     const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
     const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card'})
 
     // When
-    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([])
   })
 
-  test('does not return extensions where remote.type is not payments_app_credit_card', () => {
+  test('does not return modules where remote.type is not included in defaultMap', () => {
     // Given
     const localExtension = getLocalExtension({type: 'payments_extension'})
-    const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'})
+    const remoteExtension = getRemoteExtension({type: 'marketing_activity_extension'})
 
     // When
-    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([])
@@ -97,14 +124,11 @@ describe('getPaymentsExtensionsToMigrate()', () => {
 
   test('if neither title/name or ids match, does not return any extensions', () => {
     // Given
-    const localExtension = getLocalExtension({type: 'payments_extension'})
-    const remoteExtension = getRemoteExtension({
-      type: 'payments_app_credit_card',
-      uuid: '5678',
-    })
+    const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
+    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'doesnt-match', uuid: '0000'})
 
     // When
-    const toMigrate = getPaymentsExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+    const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
 
     // Then
     expect(toMigrate).toStrictEqual([])
