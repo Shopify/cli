@@ -7,6 +7,7 @@ import Command from '../../../public/node/base-command.js'
 import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {exec} from '../system.js'
+import {currentProcessIsGlobal} from '../is-global.js'
 import {autoUpdatesEnabled} from '../context/local.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {Hook} from '@oclif/core'
@@ -120,7 +121,7 @@ export async function warnOnAvailableUpgrade(): Promise<void> {
 async function autoUpdateCli(currentVersion: string, newerVersion: string): Promise<void> {
   if (!autoUpdatesEnabled()) return
 
-  if (safeToAutoUpgrade(currentVersion, newerVersion)) {
+  if (safeToAutoUpgrade(currentVersion, newerVersion) && currentProcessIsGlobal()) {
     outputInfo(
       `(Attempting to upgrade the CLI in the background. To prevent auto-updates, set the environment variable ${environmentVariables.disableAutoUpdate}=1)`,
     )
