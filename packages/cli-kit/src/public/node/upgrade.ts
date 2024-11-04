@@ -29,12 +29,7 @@ export function cliInstallCommandAsArray(): [string, ...string[]] {
   if (packageManager === 'unknown') packageManager = 'npm'
 
   if (packageManager === 'yarn') {
-    return [
-      packageManager,
-      ...(isGlobal ? ['global'] : []),
-      'add',
-      '@shopify/cli@latest',
-    ]
+    return [packageManager, ...(isGlobal ? ['global'] : []), 'add', '@shopify/cli@latest']
   } else {
     return [
       packageManager,

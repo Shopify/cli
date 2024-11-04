@@ -19,7 +19,7 @@ function asCommandString(command: string | string[], name: string): string {
 
 ;[
   {name: 'cliInstallCommand', func: cliInstallCommand},
-  {name: 'cliInstallCommandAsArray', func: cliInstallCommandAsArray}
+  {name: 'cliInstallCommandAsArray', func: cliInstallCommandAsArray},
 ].forEach(({name, func}) => {
   describe(name, () => {
     test('says to install globally via npm if the current process is globally installed and no package manager is provided', () => {

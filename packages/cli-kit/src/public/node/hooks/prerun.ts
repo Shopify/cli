@@ -118,15 +118,15 @@ export async function warnOnAvailableUpgrade(): Promise<void> {
   })
 }
 
-async function autoUpdateCli(currentVersion: string, newerVersion: string): Promise<void> {
+export async function autoUpdateCli(currentVersion: string, newerVersion: string): Promise<void> {
   if (!autoUpdatesEnabled()) return
+  if (!safeToAutoUpgrade(currentVersion, newerVersion)) return
+  if (!currentProcessIsGlobal()) return
 
-  if (safeToAutoUpgrade(currentVersion, newerVersion) && currentProcessIsGlobal()) {
-    outputInfo(
-      `(Attempting to upgrade the CLI in the background. To prevent auto-updates, set the environment variable ${environmentVariables.disableAutoUpdate}=1)`,
-    )
-    const [command, ...args] = cliInstallCommandAsArray()
-    // eslint-disable-next-line no-void
-    void exec(command, args, {detached: true})
-  }
+  outputInfo(
+    `(Attempting to upgrade the CLI in the background. To prevent auto-updates, set the environment variable ${environmentVariables.disableAutoUpdate}=1)`,
+  )
+  const [command, ...args] = cliInstallCommandAsArray()
+  // eslint-disable-next-line no-void
+  void exec(command, args, {detached: true})
 }
