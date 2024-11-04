@@ -53,6 +53,17 @@ describe('Storefront API', () => {
       // Then
       await expect(isProtected).rejects.toThrow(AbortError)
     })
+
+    test('returns false when store redirects via 301 to a non-password page / different domain', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValue(response({status: 301, headers: {location: 'https://store.myshopify.se'}}))
+
+      // When
+      const isProtected = isStorefrontPasswordProtected('store.myshopify.com')
+
+      // Then
+      await expect(isProtected).rejects.toThrow(AbortError)
+    })
   })
 
   describe('getStorefrontSessionCookies', () => {
