@@ -5,12 +5,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(prependHttps(storeURL), {
+  const response = await fetch(`${prependHttps(storeURL)}/password`, {
     method: 'GET',
     redirect: 'manual',
   })
+  const passwordPageRedirects = response.status === 302
 
-  return response.status === 302
+  return !passwordPageRedirects
 }
 
 /**

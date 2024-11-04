@@ -12,24 +12,32 @@ describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {
     test('returns true when the store is password protected', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 302}))
+      vi.mocked(fetch).mockResolvedValue(response({status: 200}))
 
       // When
-      const isProtected = await isStorefrontPasswordProtected('https://store.myshopify.com')
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
       expect(isProtected).toBe(true)
+      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+        method: 'GET',
+        redirect: 'manual',
+      })
     })
 
     test('returns false when the store is not password protected', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 200}))
+      vi.mocked(fetch).mockResolvedValue(response({status: 302}))
 
       // When
-      const isProtected = await isStorefrontPasswordProtected('https://store.myshopify.com')
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
       expect(isProtected).toBe(false)
+      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+        method: 'GET',
+        redirect: 'manual',
+      })
     })
   })
 
