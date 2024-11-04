@@ -12,14 +12,16 @@ describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {
     test('returns true when the store is password protected', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 200}))
+      vi.mocked(fetch).mockResolvedValue(
+        response({status: 302, headers: {location: 'https://store.myshopify.com/password'}}),
+      )
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
       expect(isProtected).toBe(true)
-      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+      expect(fetch).toBeCalledWith('https://store.myshopify.com', {
         method: 'GET',
         redirect: 'manual',
       })
@@ -27,17 +29,29 @@ describe('Storefront API', () => {
 
     test('returns false when the store is not password protected', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 302}))
+      vi.mocked(fetch).mockResolvedValue(response({status: 302, headers: {location: 'https://store.myshopify.com/'}}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
       expect(isProtected).toBe(false)
-      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+      expect(fetch).toBeCalledWith('https://store.myshopify.com', {
         method: 'GET',
         redirect: 'manual',
       })
+    })
+
+    // returns false when store redirects to a non-password page
+    test('returns false when store redirects to a non-password page', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValue(response({status: 302, headers: {location: 'https://store.myshopify.se'}}))
+
+      // When
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
+
+      // Then
+      expect(isProtected).toBe(false)
     })
   })
 

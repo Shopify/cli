@@ -4,14 +4,23 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+// !!! ding ding ding I think it's here but like honestly not sure
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(`${prependHttps(storeURL)}/password`, {
+  const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
     redirect: 'manual',
   })
-  const passwordPageRedirects = response.status === 302
 
-  return !passwordPageRedirects
+  const redirectsToPasswordPage =
+    response.status === 302 && response.headers.get('location') === `${prependHttps(storeURL)}/password`
+
+  outputDebug(
+    `checking if store is password protected: ${redirectsToPasswordPage}\n
+    - status: ${response.status}\n
+    - location: ${response.headers.get('location')}`,
+  )
+
+  return redirectsToPasswordPage
 }
 
 /**
