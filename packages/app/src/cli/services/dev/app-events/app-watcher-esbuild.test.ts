@@ -1,6 +1,6 @@
 import {DevAppWatcherOptions, ESBuildContextManager} from './app-watcher-esbuild.js'
 import {AppEvent, EventType} from './app-event-watcher.js'
-import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
+import {testAppLinked, testUIExtension} from '../../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
@@ -63,7 +63,7 @@ describe('app-watcher-esbuild', () => {
     await manager.createContexts([extension2])
 
     const appEvent: AppEvent = {
-      app: testApp(),
+      app: testAppLinked(),
       path: '',
       startTime: [0, 0],
       extensionEvents: [

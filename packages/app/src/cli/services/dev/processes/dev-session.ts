@@ -2,8 +2,8 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
-import {AppEventWatcher, EventType, reloadApp} from '../app-events/app-event-watcher.js'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
+import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
+import {reloadApp} from '../app-events/app-event-watcher-handler.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -11,6 +11,7 @@ import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -71,12 +72,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
 
-<<<<<<< HEAD
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
-=======
-  const processOptions = {...options, stderr, stdout, signal, bundlePath, app}
-  const appWatcher = new AppEventWatcher(app, processOptions)
->>>>>>> main
 
   outputWarn('-----> Using DEV SESSIONS <-----')
   processOptions.stdout.write('Preparing dev session...')
