@@ -185,7 +185,7 @@ describe('file-watcher events', () => {
 
     // Then
     expect(watchSpy).toHaveBeenCalledWith(['/shopify.app.toml', '/extensions'], {
-      ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
+      ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
       ignoreInitial: true,
       persistent: true,
     })
@@ -212,9 +212,9 @@ describe('file-watcher events', () => {
       // use waitFor to so that we can test the debouncers and timeouts
       await vi.waitFor(
         () => {
-          expect(onChange).toHaveBeenCalledWith(expectedEvent)
+          expect(onChange).toHaveBeenCalledWith([expectedEvent])
         },
-        {timeout: 1000, interval: 100},
+        {timeout: 2000, interval: 100},
       )
     },
   )
@@ -241,7 +241,7 @@ describe('file-watcher events', () => {
       await vi.waitFor(
         () => {
           expect(onChange).toHaveBeenCalledOnce()
-          expect(onChange).toHaveBeenCalledWith(expectedEvent)
+          expect(onChange).toHaveBeenCalledWith([expectedEvent])
         },
         {timeout: 1000, interval: 100},
       )
