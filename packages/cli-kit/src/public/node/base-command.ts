@@ -47,7 +47,7 @@ abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async init(): Promise<any> {
     this.exitWithTimestampWhenEnvVariablePresent()
-    setCurrentCommandId(this.id!)
+    setCurrentCommandId(this.id || '')
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
