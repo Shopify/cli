@@ -29,15 +29,19 @@ export async function initializeDevServerSession(
 ) {
   const session = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
 
+  session.refresh = async () => {
+    outputDebug('Refreshing theme session...')
+    const newSession = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
+    Object.assign(session, newSession)
+  }
+
   setInterval(() => {
-    fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
-      .then((newSession) => {
-        outputDebug('Refreshing theme session...')
-        Object.assign(session, newSession)
-      })
-      .catch(() => {
-        outputDebug('Session could not be refreshed.')
-      })
+    if (!session.refresh) return
+
+    session
+      .refresh()
+      .then(() => outputDebug('Refreshed theme session via auto-refresher...'))
+      .catch(() => outputDebug('Session could not be refreshed.'))
   }, SESSION_TIMEOUT_IN_MS)
 
   return session

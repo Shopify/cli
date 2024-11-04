@@ -239,6 +239,18 @@ async function request<T>(
     case status === 403:
       return handleForbiddenError(response, session)
     case status === 401:
+      /**
+       * We need to resolve the call to the refresh function at runtime to
+       * avoid a circular reference.
+       *
+       * This won't be necessary when https://github.com/Shopify/cli/issues/4769
+       * gets resolved, and this condition must be removed then.
+       */
+      if ('refresh' in session) {
+        const refresh = session.refresh as () => Promise<void>
+        await refresh()
+      }
+
       // Retry 401 errors to be resilient to authentication errors.
       return handleRetriableError({
         path,
