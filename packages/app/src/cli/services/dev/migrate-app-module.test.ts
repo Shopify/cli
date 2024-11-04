@@ -64,7 +64,7 @@ describe('getModulesToMigrate()', () => {
     ])
   })
 
-  test('matching my remote title by truncating the title', () => {
+  test('matching by truncated remote title and localIdentifier, without defaultIdentifiers', () => {
     // Given
     const localExtension = getLocalExtension({
       type: 'payments_extension',
