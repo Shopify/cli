@@ -85,7 +85,11 @@ describe('getModulesToMigrate()', () => {
   test('matching different title and localIdentifier, using uuid', () => {
     // Given
     const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
-    const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'random-title', uuid: defaultIdentifiers['moduleA']})
+    const remoteExtension = getRemoteExtension({
+      type: 'payments_app_credit_card',
+      title: 'random-title',
+      uuid: defaultIdentifiers['module-A'],
+    })
 
     // When
     const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], defaultIdentifiers, defaultMap)
