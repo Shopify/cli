@@ -1,12 +1,13 @@
-import {DELIVERY_METHOD, WebhookTriggerFlags} from '../../../services/webhook/trigger-flags.js'
-import {webhookTriggerService} from '../../../services/webhook/trigger.js'
+import {DELIVERY_METHOD} from '../../../services/webhook/trigger-flags.js'
+import {WebhookTriggerInput, webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import Command from '@shopify/cli-kit/node/base-command'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class WebhookTrigger extends Command {
+export default class WebhookTrigger extends AppCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
 
   static descriptionWithMarkdown = `
@@ -85,19 +86,9 @@ export default class WebhookTrigger extends Command {
     }),
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(WebhookTrigger)
 
-    const usedFlags: WebhookTriggerFlags = {
-      topic: flags.topic,
-      apiVersion: flags['api-version'],
-      deliveryMethod: flags['delivery-method'],
-      address: flags.address,
-      clientId: flags['client-id'],
-      clientSecret: flags['client-secret'] || flags['shared-secret'],
-      path: flags.path,
-      config: flags.config,
-    }
     if (flags['shared-secret']) {
       renderWarning({
         headline: [
@@ -107,6 +98,26 @@ export default class WebhookTrigger extends Command {
       })
     }
 
+    const appContextResult = await linkedAppContext({
+      directory: flags.path,
+      clientId: flags['client-id'],
+      forceRelink: false,
+      userProvidedConfigName: flags.config,
+    })
+
+    const usedFlags: WebhookTriggerInput = {
+      ...appContextResult,
+      topic: flags.topic,
+      apiVersion: flags['api-version'],
+      deliveryMethod: flags['delivery-method'],
+      address: flags.address,
+      clientId: flags['client-id'],
+      clientSecret: flags['client-secret'] || flags['shared-secret'],
+      path: flags.path,
+      config: flags.config,
+    }
+
     await webhookTriggerService(usedFlags)
+    return {app: appContextResult.app}
   }
 }

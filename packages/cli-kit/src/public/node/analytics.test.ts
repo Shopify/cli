@@ -18,7 +18,7 @@ import {addPublicMetadata} from './metadata.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 vi.mock('./context/local.js')
@@ -67,6 +67,8 @@ describe('event tracking', () => {
       // Given
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+      setLastSeenAuthMethod('partners_token')
+      setLastSeenUserIdAfterAuth('cached-user-id')
 
       // Log some timings from the command, confirm that submitted timings are always rounded down
       await addPublicMetadata(() => ({
@@ -106,7 +108,8 @@ describe('event tracking', () => {
         cmd_all_timing_active_ms: 49,
         cmd_all_timing_network_ms: 30,
         cmd_all_timing_prompts_ms: 20,
-        user_id: 'unknown',
+        user_id: 'cached-user-id',
+        env_auth_method: 'partners_token',
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),

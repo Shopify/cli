@@ -102,7 +102,7 @@ export function setupGraphiQLServer({
     res.sendFile(faviconPath)
   })
 
-  const stylePath = require.resolve('@shopify/cli-kit/assets/style.css')
+  const stylePath = require.resolve('@shopify/app/assets/graphiql/style.css')
   app.get('/graphiql/simple.css', (_req, res) => {
     res.sendFile(stylePath)
   })
@@ -143,6 +143,7 @@ export function setupGraphiQLServer({
       throw err
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const apiVersion = apiVersions.sort().reverse()[0]!
 
     const query = req.query.query ? decodeURIComponent(req.query.query as string).replace(/\n/g, '\\n') : undefined

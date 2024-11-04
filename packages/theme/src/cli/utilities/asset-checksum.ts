@@ -1,28 +1,42 @@
-import {isThemeAsset, isJson, isTextFile} from './theme-fs.js'
+import {isTextFile} from './theme-fs.js'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {fileHash} from '@shopify/cli-kit/node/crypto'
 
 export function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
+  if (!fileContent) {
+    return ''
+  }
+
+  if (Buffer.isBuffer(fileContent)) {
+    return md5(fileContent)
+  }
+
+  /**
+   * Settings data files are always minified before persistence, so their
+   * checksum calculation accounts for that minification.
+   */
+  if (isSettingsData(fileKey)) {
+    return minifiedJSONFileChecksum(fileContent)
+  }
+
+  return regularFileChecksum(fileKey, fileContent)
+}
+
+function minifiedJSONFileChecksum(fileContent: string) {
   let content = fileContent
 
-  if (!content) return ''
+  content = content.replace(/\r\n/g, '\n')
+  content = content.replace(/\/\*[\s\S]*?\*\//, '')
+  content = normalizeJson(content)
 
-  if (Buffer.isBuffer(content)) return md5(content)
+  return md5(content)
+}
 
-  if (isTextFile(fileKey)) content = content.replace(/\r\n/g, '\n')
+function regularFileChecksum(fileKey: string, fileContent: string) {
+  let content = fileContent
 
-  if (isJson(fileKey) && !isThemeAsset(fileKey) && !isSettingsSchema(fileKey)) {
-    content = normalizeJson(content)
-
-    /**
-     * The backend (Assets API) escapes forward slashes for internal JSON
-     * assets such as templates/*.json, sections/*.json, config/*.json.
-     *
-     * To maintain consistency in checksum calculation, we follow the same
-     * approach here (note that already escaped forward slashes are not
-     * re-escaped).
-     */
-    content = content.replace(/(?<!\\)\//g, '\\/')
+  if (isTextFile(fileKey)) {
+    content = content.replace(/\r\n/g, '\n')
   }
 
   return md5(content)
@@ -92,6 +106,6 @@ function hasLiquidSource(checksums: Checksum[], key: string) {
   return checksums.some((checksum) => checksum.key === `${key}.liquid`)
 }
 
-function isSettingsSchema(path: string) {
-  return path.endsWith('/settings_schema.json')
+function isSettingsData(path: string) {
+  return path.endsWith('/settings_data.json')
 }

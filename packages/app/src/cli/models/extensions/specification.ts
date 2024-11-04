@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
+import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -17,6 +20,7 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
+  | 'localization'
 
 export interface TransformationConfig {
   [key: string]: string
@@ -271,8 +275,13 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
-    deployConfig: async (config, _) => {
-      return config
+    deployConfig: async (config, directory) => {
+      let parsedConfig = configWithoutFirstClassFields(config)
+      if (appModuleFeatures?.includes('localization')) {
+        const localization = await loadLocalesConfig(directory, identifier)
+        parsedConfig = {...parsedConfig, localization}
+      }
+      return parsedConfig
     },
   })
 }
@@ -397,8 +406,25 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
       result[key] = defaultAppConfigReverseTransform(innerSchema, content)
     } else {
       if (content[key] !== undefined) result[key] = content[key]
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete content[key]
     }
     return result
   }, {})
+}
+
+/**
+ * Remove the first class fields from the config.
+ *
+ * These are the fields that are not part of the specific extension contract, but are added automatically to all modules tomls.
+ * So it must be cleaned before validation or deployment.
+ * (this was initially done automatically by zod, but is not supported by JSON Schema & contracts)
+ *
+ * @param config - The config to remove the first class fields from
+ *
+ * @returns The config without the first class fields
+ */
+export function configWithoutFirstClassFields(config: JsonMapType): JsonMapType {
+  const {type, handle, uid, path, extensions, ...configWithoutFirstClassFields} = config
+  return configWithoutFirstClassFields
 }

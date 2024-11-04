@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.69.0
+
+### Minor Changes
+
+- 283aa815c: Remove support for access_code based Shopify authentication within the CLI
+
+## 3.68.0
+
+### Patch Changes
+
+- 4d89691ad: Fix a bug when building empty theme assets
+
 ## 3.67.0
 
 ### Minor Changes

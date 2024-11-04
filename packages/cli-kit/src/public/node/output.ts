@@ -149,11 +149,12 @@ export function outputContent(
     if (i >= keys.length) {
       return
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const token = keys[i]!
 
     if (typeof token === 'string') {
       output += token
-    } else {
+    } else if (token) {
       const enumTokenOutput = token.output()
 
       if (Array.isArray(enumTokenOutput)) {
@@ -416,7 +417,7 @@ export function outputWhereAppropriate(
     } else {
       logger(message, logLevel)
     }
-    if (!options?.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
+    if (!options.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }
 }
 

@@ -2,10 +2,19 @@ import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stack
 import {build as esBuild} from 'esbuild'
 import glob from 'fast-glob'
 import {copy} from 'esbuild-plugin-copy'
+import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
+import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
+import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-kit.js'
+import {createRequire} from 'module'
+
+const require = createRequire(import.meta.url)
 
 const external = [
   // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
   'react-devtools-core',
+  // esbuild can't be bundled per design
+  'esbuild',
+  'lightningcss',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -29,7 +38,10 @@ esBuild({
   minifyIdentifiers: false,
 
   plugins: [
+    ShopifyVSCodePlugin,
+    GraphiQLImportsPlugin,
     ShopifyStacktraceyPlugin,
+    CliKitDedupPlugin({require}),
     copy({
       // this is equal to process.cwd(), which means we use cwd path as base path to resolve `to` path
       resolveFrom: 'cwd',

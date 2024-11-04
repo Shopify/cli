@@ -113,7 +113,7 @@ jobs:
       matrix:
         os: ['ubuntu-latest']
         node: ['18.20.3']
-        target: ['build', 'type-check', 'lint']
+        target: ['build', 'type-check']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -126,6 +126,34 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }} --output-style=stream
+
+  pr-platform-agnostic-lint:
+    name: '[PR] Run lint with Node ${{ matrix.node }} in ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: ['18.20.3']
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Lint
+        run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream --format=json -o eslint-report.json
+        continue-on-error: true
+      - name: Annotate Code Linting Results
+        uses: ataylorme/eslint-annotate-action@21a1ba0738d8b732639999029c4ff40b6e121bb4 # pin@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          report-json: "packages/*/eslint-report.json"
 
   pr-platform-agnostic-bundle:
     name: '[PR] Run bundle with Node ${{ matrix.node }} in ${{ matrix.os }}'

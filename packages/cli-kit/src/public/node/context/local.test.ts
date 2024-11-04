@@ -5,7 +5,6 @@ import {
   isShopify,
   isUnitTest,
   analyticsDisabled,
-  useDeviceAuth,
   cloudEnvironment,
   macAddress,
 } from './local.js'
@@ -129,87 +128,6 @@ describe('analitycsDisabled', () => {
 
     // When
     const got = analyticsDisabled(env)
-
-    // Then
-    expect(got).toBe(false)
-  })
-})
-
-describe('useDeviceAuth', () => {
-  test('returns true if SHOPIFY_CLI_DEVICE_AUTH is truthy', () => {
-    // Given
-    const env = {SHOPIFY_CLI_DEVICE_AUTH: '1'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns true if SPIN is truthy', () => {
-    // Given
-    const env = {SPIN: '1'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns true if CODESPACES is truthy', () => {
-    // Given
-    const env = {CODESPACES: '1'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns true if GITPOD_WORKSPACE_URL is set', () => {
-    // Given
-    const env = {GITPOD_WORKSPACE_URL: 'http://custom.gitpod.io'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns true if CLOUD_SHELL is truthy', () => {
-    // Given
-    const env = {CLOUD_SHELL: 'true'}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns true by default', () => {
-    // Given
-    const env = {}
-
-    // When
-    const got = useDeviceAuth(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns false if opted-out', () => {
-    // Given
-    const env = {
-      SHOPIFY_CLI_ACCESS_CODE_AUTH: '1',
-    }
-
-    // When
-    const got = useDeviceAuth(env)
 
     // Then
     expect(got).toBe(false)

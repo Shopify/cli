@@ -25,8 +25,12 @@ import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
 import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
+import AppCommand from './utilities/app-command.js'
 
-export const commands = {
+/**
+ * All app commands should extend AppCommand.
+ */
+export const commands: {[key: string]: typeof AppCommand} = {
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,

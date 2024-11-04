@@ -64,7 +64,7 @@ describe('link, with minimal mocking', () => {
         directory: tmp,
         developerPlatformClient,
       }
-      const configuration = await link(options)
+      const {configuration} = await link(options)
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
 
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration

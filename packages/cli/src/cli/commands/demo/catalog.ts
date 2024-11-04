@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {demo, DemoStep} from '../../services/demo.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {readFile} from '@shopify/cli-kit/node/fs'

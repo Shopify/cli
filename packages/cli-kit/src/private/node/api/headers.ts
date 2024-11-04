@@ -33,6 +33,7 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
   const keywords = ['token', 'authorization', 'subject_token']
   Object.keys(headers).forEach((header) => {
     if (keywords.find((keyword) => header.toLocaleLowerCase().includes(keyword)) === undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       sanitized[header] = headers[header]!
     }
   })
@@ -55,9 +56,9 @@ export function buildHeaders(token?: string): {[key: string]: string} {
     ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
-    const authString = token.match(/^shp(at|ua|ca)/) ? token : `Bearer ${token}`
-    // eslint-disable-next-line dot-notation
-    headers['authorization'] = authString
+    const authString = token.match(/^shp(at|ua|ca|tka)/) ? token : `Bearer ${token}`
+
+    headers.authorization = authString
     headers['X-Shopify-Access-Token'] = authString
   }
 

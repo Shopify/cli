@@ -348,8 +348,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a \"development store\" (https://shopify.dev/docs/apps/tools/development-stores) or \"Plus sandbox store\" (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving \"GraphiQL for the Admin API\" (https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: \"Set up your Laravel app\" (https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: \"Set up your Rails app\" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a \"staff account\" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
-      "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving [GraphiQL for the Admin API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
+      "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a \"development store\" (https://shopify.dev/docs/apps/tools/development-stores) or \"Plus sandbox store\" (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your app.\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving \"GraphiQL for the Admin API\" (https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: \"Set up your Laravel app\" (https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: \"Set up your Rails app\" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a \"staff account\" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
+      "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your app.\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving [GraphiQL for the Admin API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
       "flags": {
         "api-key": {
           "description": "The API key of your app.",
@@ -411,14 +411,6 @@
           "multiple": false,
           "name": "graphiql-port",
           "type": "option"
-        },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -681,7 +673,6 @@
       "customPluginName": "@shopify/app",
       "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "descriptionWithMarkdown": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
-      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -738,7 +729,6 @@
       "customPluginName": "@shopify/app",
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
-      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "Application's API key",
@@ -846,7 +836,6 @@
       "customPluginName": "@shopify/app",
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
-      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -931,7 +920,6 @@
       "customPluginName": "@shopify/app",
       "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
-      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "The API key to fetch the schema with.",
@@ -1020,7 +1008,6 @@
       "customPluginName": "@shopify/app",
       "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
-      "enableJsonFlag": false,
       "flags": {
         "config": {
           "char": "c",
@@ -1230,7 +1217,6 @@
       "customPluginName": "@shopify/app",
       "description": "\"DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "[DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
-      "enableJsonFlag": false,
       "flags": {
         "api-key": {
           "description": "The API key to fetch the schema with.",
@@ -1309,7 +1295,6 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
       "summary": "Fetch the latest GraphQL schema for a function."
     },
     "app:import-extensions": {
@@ -1454,8 +1439,19 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "enableJsonFlag": false,
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "flavor": {
           "description": "Which flavor of the given template to use.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",
@@ -1930,7 +1926,6 @@
       "customPluginName": "@shopify/app",
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
-      "enableJsonFlag": false,
       "flags": {
         "address": {
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
@@ -2990,7 +2985,7 @@
         },
         "preview": {
           "allowNo": false,
-          "description": "Deploys to the Preview environment. Overrides --env-branch and Git metadata.",
+          "description": "Deploys to the Preview environment.",
           "name": "preview",
           "required": false,
           "type": "boolean"
@@ -3188,11 +3183,6 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_VERBOSE",
           "name": "verbose",
           "required": false,
-          "type": "boolean"
-        },
-        "worker": {
-          "hidden": true,
-          "name": "worker",
           "type": "boolean"
         }
       },
@@ -3906,11 +3896,6 @@
           ],
           "description": "Watches for changes and rebuilds the project.",
           "name": "watch",
-          "type": "boolean"
-        },
-        "worker": {
-          "hidden": true,
-          "name": "worker",
           "type": "boolean"
         }
       },
@@ -4809,14 +4794,6 @@
           "name": "environment",
           "type": "option"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme console` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -4831,15 +4808,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
-          "type": "option"
-        },
-        "port": {
-          "description": "Local port to serve authentication service.",
-          "env": "SHOPIFY_FLAG_PORT",
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "port",
           "type": "option"
         },
         "store": {
@@ -4887,8 +4855,8 @@
       "strict": true,
       "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
       "usage": [
-        "theme:console",
-        "theme:console --url /products/classic-leather-jacket"
+        "theme console",
+        "theme console --url /products/classic-leather-jacket"
       ]
     },
     "theme:delete": {
@@ -4991,20 +4959,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "host",
-        "live-reload",
-        "poll",
-        "theme-editor-sync",
-        "overwrite-json",
-        "port",
-        "theme",
-        "nodelete",
-        "only",
-        "ignore",
-        "force",
-        "notify"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
@@ -5043,14 +4997,6 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
-        },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -5342,7 +5288,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Clones a Git repository to use as a starting point for building a new theme.",
-      "usage": "theme:init [name]"
+      "usage": "theme init [name]"
     },
     "theme:language-server": {
       "aliases": [
@@ -5700,16 +5646,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "theme",
-        "development",
-        "live",
-        "nodelete",
-        "only",
-        "ignore",
-        "force",
-        "development-theme-id"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
@@ -5749,14 +5685,6 @@
           "name": "ignore",
           "type": "option"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme pull` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -5776,7 +5704,7 @@
         "nodelete": {
           "allowNo": false,
           "char": "n",
-          "description": "Runs the pull command without deleting local files.",
+          "description": "Prevent deleting local files that don't exist remotely.",
           "env": "SHOPIFY_FLAG_NODELETE",
           "name": "nodelete",
           "type": "boolean"
@@ -5849,20 +5777,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "theme",
-        "development",
-        "live",
-        "unpublished",
-        "nodelete",
-        "only",
-        "ignore",
-        "json",
-        "allow-live",
-        "publish",
-        "force",
-        "development-theme-id"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
@@ -5918,14 +5832,6 @@
           "name": "json",
           "type": "boolean"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme push` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -5945,7 +5851,7 @@
         "nodelete": {
           "allowNo": false,
           "char": "n",
-          "description": "Runs the push command without deleting local files.",
+          "description": "Prevent deleting remote files that don't exist locally.",
           "env": "SHOPIFY_FLAG_NODELETE",
           "name": "nodelete",
           "type": "boolean"
@@ -6029,8 +5935,8 @@
       "strict": true,
       "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
       "usage": [
-        "theme:push",
-        "theme:push --unpublished --json"
+        "theme push",
+        "theme push --unpublished --json"
       ]
     },
     "theme:rename": {
@@ -6135,20 +6041,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "host",
-        "live-reload",
-        "poll",
-        "theme-editor-sync",
-        "overwrite-json",
-        "port",
-        "theme",
-        "nodelete",
-        "only",
-        "ignore",
-        "force",
-        "notify"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
@@ -6187,14 +6079,6 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
-        },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -6464,7 +6348,6 @@
       "customPluginName": "@shopify/app",
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
-      "enableJsonFlag": false,
       "flags": {
         "address": {
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
@@ -6580,9 +6463,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.67.0"
+  "version": "3.69.0"
 }

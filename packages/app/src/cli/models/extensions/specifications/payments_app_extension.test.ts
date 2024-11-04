@@ -1,20 +1,10 @@
 import {PaymentsAppExtensionConfigType} from './payments_app_extension.js'
 import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
-import {
-  placeholderAppConfiguration,
-  testDeveloperPlatformClient,
-  testPaymentsAppExtension,
-} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration, testPaymentsAppExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import * as upload from '../../../services/deploy/upload.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-
-vi.mock('../../../services/deploy/upload.js')
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+import {beforeEach, describe, expect, test} from 'vitest'
 
 describe('PaymentsAppExtension', () => {
   let extension: ExtensionInstance<PaymentsAppExtensionConfigType>
@@ -51,11 +41,6 @@ describe('PaymentsAppExtension', () => {
   }
 
   beforeEach(async () => {
-    vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
-      url: 'http://foo.bar',
-      moduleId,
-    })
-
     extension = await testPaymentsAppExtension({
       dir: '/payments_app_extensions',
       config,
@@ -71,7 +56,6 @@ describe('PaymentsAppExtension', () => {
       // When
       const result = await extension.deployConfig({
         apiKey,
-        developerPlatformClient,
         appConfiguration: placeholderAppConfiguration,
       })
       const extensionConfiguration = extension.configuration as OffsitePaymentsAppExtensionConfigType

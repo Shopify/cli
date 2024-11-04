@@ -1,12 +1,11 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
-import {CodeAuthResult} from './authorize.js'
 import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
-import {setLastSeenUserIdAfterAuth} from '../session.js'
+import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import * as jose from 'jose'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -21,26 +20,6 @@ export interface ExchangeScopes {
   storefront: string[]
   businessPlatform: string[]
   appManagement: string[]
-}
-/**
- * Given a valid authorization code, request an identity access token.
- * This token can then be used to get API specific tokens.
- * @param codeData - code and codeVerifier from the authorize endpoint
- * @returns An instance with the identity access tokens.
- */
-export async function exchangeCodeForAccessToken(codeData: CodeAuthResult): Promise<IdentityToken> {
-  const clientId = await getIdentityClientId()
-  const params = {
-    grant_type: 'authorization_code',
-    code: codeData.code,
-    redirect_uri: 'http://127.0.0.1:3456',
-    client_id: clientId,
-    code_verifier: codeData.codeVerifier,
-  }
-
-  const tokenResult = await tokenRequest(params)
-  const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  return buildIdentityToken(value)
 }
 
 /**
@@ -100,9 +79,11 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
   const appId = applicationId('partners')
   try {
     const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const accessToken = newToken[appId]!.accessToken
     const userId = nonRandomUUID(token)
     setLastSeenUserIdAfterAuth(userId)
+    setLastSeenAuthMethod('partners_token')
     return {accessToken, userId}
   } catch (error) {
     throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
@@ -216,6 +197,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
 }
 
 function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
 
   if (!userId) {

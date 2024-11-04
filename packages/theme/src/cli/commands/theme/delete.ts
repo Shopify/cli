@@ -1,7 +1,7 @@
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
-import {deleteThemes, renderDeprecatedArgsWarning} from '../../services/delete.js'
+import {themesDelete, renderDeprecatedArgsWarning} from '../../services/delete.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -61,7 +61,7 @@ export default class Delete extends ThemeCommand {
       renderDeprecatedArgsWarning(argv)
     }
 
-    await deleteThemes(adminSession, {
+    await themesDelete(adminSession, {
       selectTheme: flags['show-all'],
       development,
       themes,

@@ -1,5 +1,22 @@
 # @shopify/cli
 
+## 3.69.0
+
+### Minor Changes
+
+- 0b587dff5: Improve user logging for render requests
+
+### Patch Changes
+
+- 581abd8d4: Improve user logging by adding status codes and event methods
+- 8df131c3e: Fix syntax for theme command documentation
+
+## 3.68.0
+
+### Minor Changes
+
+- 2200be0ae: force a minor CLI 3.68.0 release from patch changes
+
 ## 3.67.0
 
 ### Minor Changes

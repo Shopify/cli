@@ -1,9 +1,10 @@
+import {BugError} from '@shopify/cli-kit/node/error'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
 type DevelopmentThemeId = string
 
-interface ThemeLocalStorageSchema {
+export interface ThemeLocalStorageSchema {
   themeStore: string
 }
 
@@ -54,58 +55,92 @@ function themeStorePasswordStorage() {
   return _themeStorePasswordStorageInstance
 }
 
-export function getThemeStore() {
-  return themeLocalStorage().get('themeStore')
+export function getThemeStore(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
+  return storage.get('themeStore')
 }
 
-export function setThemeStore(store: string) {
-  themeLocalStorage().set('themeStore', store)
+export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
+  storage.set('themeStore', store)
 }
 
-export function getDevelopmentTheme(): string | undefined {
+export function getDevelopmentTheme(
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeLocalStorage().get(getThemeStore())
+  return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
 }
 
-export function setDevelopmentTheme(theme: string): void {
+export function setDevelopmentTheme(
+  theme: string,
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): void {
   outputDebug(outputContent`Setting development theme...`)
-  developmentThemeLocalStorage().set(getThemeStore(), theme)
+  developmentThemeLocalStorage().set(assertThemeStoreExists(themeStorage), theme)
 }
 
-export function removeDevelopmentTheme(): void {
+export function removeDevelopmentTheme(
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): void {
   outputDebug(outputContent`Removing development theme...`)
-  developmentThemeLocalStorage().delete(getThemeStore())
+  developmentThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
 }
 
-export function getREPLTheme(): string | undefined {
+export function getREPLTheme(
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): string | undefined {
   outputDebug(outputContent`Getting REPL theme...`)
-  return replThemeLocalStorage().get(getThemeStore())
+  return replThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
 }
 
-export function setREPLTheme(theme: string): void {
+export function setREPLTheme(
+  theme: string,
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): void {
   outputDebug(outputContent`Setting REPL theme to ${theme}...`)
-  replThemeLocalStorage().set(getThemeStore(), theme)
+  replThemeLocalStorage().set(assertThemeStoreExists(themeStorage), theme)
 }
 
-export function removeREPLTheme(): void {
+export function removeREPLTheme(themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()): void {
   outputDebug(outputContent`Removing REPL theme...`)
-  replThemeLocalStorage().delete(getThemeStore())
+  replThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
 }
 
-export function getStorefrontPassword(): string | undefined {
-  const themeStore = getThemeStore()
+export function getStorefrontPassword(
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): string | undefined {
+  const themeStore = assertThemeStoreExists(themeStorage)
   outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
-  return themeStorePasswordStorage().get(getThemeStore())
+  return themeStorePasswordStorage().get(themeStore)
 }
 
-export function setStorefrontPassword(password: string): void {
-  const themeStore = getThemeStore()
+export function setStorefrontPassword(
+  password: string,
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): void {
+  const themeStore = assertThemeStoreExists(themeStorage)
   outputDebug(outputContent`Setting storefront password for shop ${themeStore}...`)
   themeStorePasswordStorage().set(themeStore, password)
 }
 
-export function removeStorefrontPassword(): void {
-  const themeStore = getThemeStore()
+export function removeStorefrontPassword(
+  themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
+): void {
+  const themeStore = assertThemeStoreExists(themeStorage)
   outputDebug(outputContent`Removing storefront password for ${themeStore}...`)
   themeStorePasswordStorage().delete(themeStore)
+}
+
+function assertThemeStoreExists(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()): string {
+  const themeStore = getThemeStore(storage)
+  if (!themeStore) {
+    throw new BugError(
+      'Theme store is not set. This indicates an unexpected issue with the CLI. Please report this to the Shopify CLI team.',
+      [
+        'It may be possible to recover by running',
+        {command: 'shopify theme list --store <store>'},
+        '(setting the store flag to the store you wish to use) and then running the command again.',
+      ],
+    )
+  }
+  return themeStore
 }

@@ -1,12 +1,6 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
-import {ensureGenerateContext} from './context.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {
-  DeveloperPlatformClient,
-  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
-} from '../utilities/developer-platform-client.js'
-import {AppInterface} from '../models/app/app.js'
-import {loadApp} from '../models/app/loader.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
@@ -19,7 +13,8 @@ import {
   ExtensionFlavorValue,
 } from '../services/generate/extension.js'
 import {ExtensionTemplate} from '../models/app/template.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {OrganizationApp} from '../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -29,34 +24,28 @@ import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface GenerateOptions {
+  app: AppLinkedInterface
+  specifications: RemoteAwareExtensionSpecification[]
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
   directory: string
   reset: boolean
-  apiKey?: string
   template?: string
   flavor?: string
   name?: string
   cloneUrl?: string
-  configName?: string
-  developerPlatformClient?: DeveloperPlatformClient
 }
 
 async function generate(options: GenerateOptions) {
-  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
-  const remoteApp = await ensureGenerateContext({...options, developerPlatformClient})
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
-  const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
-  const app: AppInterface = await loadApp({
-    directory: options.directory,
-    userProvidedConfigName: options.configName,
-    specifications,
-  })
+  const {app, developerPlatformClient, remoteApp, specifications, template} = options
+
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
-  await saveAnalyticsMetadata(promptAnswers, options.template)
+  await saveAnalyticsMetadata(promptAnswers, template)
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
@@ -164,13 +153,15 @@ function formatSuccessfulRunMessage(
   }
 
   if (extensionTemplate.type !== 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
-      {command: `${formatPackageManagerCommand(depndencyManager, 'shopify app dev')}`},
+      {command: formatPackageManagerCommand(depndencyManager, 'shopify app dev')},
     ])
   }
 
   if (extensionTemplate.supportLinks[0]) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     options.reference!.push([
       'For more details, see the',
       {link: {label: 'docs', url: extensionTemplate.supportLinks[0]}},

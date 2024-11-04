@@ -6,6 +6,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 interface UI {
   app_bridge?: {
@@ -76,9 +77,10 @@ const functionSpec = createExtensionSpecification({
     'pickup_point_delivery_option_generator',
   ],
   schema: FunctionExtensionSchema,
-  appModuleFeatures: (_) => ['function'],
-  deployConfig: async (config, directory, apiKey, moduleId) => {
+  appModuleFeatures: (_) => ['function', 'bundling'],
+  deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined
+    const moduleId = randomUUID()
     const inputQueryPath = joinPath(directory, 'input.graphql')
     if (await fileExists(inputQueryPath)) {
       inputQuery = await readFile(inputQueryPath)

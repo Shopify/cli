@@ -37,6 +37,11 @@ const serializeCommerceObjectField = (field: SerializedField, type: FlowPartners
     serializedField.required = field.required
   }
 
+  if (field.uiType === 'marketing-activity-id') {
+    serializedField.marketingActivityCreateUrl = field.marketingActivityCreateUrl
+    serializedField.marketingActivityDeleteUrl = field.marketingActivityDeleteUrl
+  }
+
   return serializedField
 }
 
@@ -44,7 +49,11 @@ export const configFromSerializedFields = (type: FlowPartnersExtensionTypes, fie
   if (!fields) return []
 
   const serializedFields = fields.map((field) => {
-    if (field.uiType === 'commerce-object-id' || PARTNERS_COMMERCE_OBJECTS.includes(field.uiType)) {
+    if (
+      field.uiType === 'commerce-object-id' ||
+      field.uiType === 'marketing-activity-id' ||
+      PARTNERS_COMMERCE_OBJECTS.includes(field.uiType)
+    ) {
       return serializeCommerceObjectField(field, type)
     }
 

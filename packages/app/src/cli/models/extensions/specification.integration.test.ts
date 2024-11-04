@@ -1,5 +1,5 @@
 import {loadLocalExtensionsSpecifications} from './load-specifications.js'
-import {createContractBasedModuleSpecification} from './specification.js'
+import {configWithoutFirstClassFields, createContractBasedModuleSpecification} from './specification.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
 
@@ -42,5 +42,30 @@ describe('createContractBasedModuleSpecification', () => {
       }),
     )
     expect(got.appModuleFeatures()).toEqual(['bundling'])
+  })
+})
+
+describe('configWithoutFirstClassFields', () => {
+  test('removes the first class fields from the config', () => {
+    // When
+    const got = configWithoutFirstClassFields({
+      type: 'test',
+      handle: 'test',
+      uid: 'test',
+      path: 'test',
+      extensions: [{type: 'test', handle: 'test', uid: 'test', path: 'test'}],
+      config: {
+        test: 'test',
+      },
+      other: 'other',
+    })
+
+    // Then
+    expect(got).toEqual({
+      config: {
+        test: 'test',
+      },
+      other: 'other',
+    })
   })
 })

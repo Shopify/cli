@@ -17,7 +17,7 @@ describe('theme-ext-fs', () => {
         root,
         files: new Map([
           fsEntry({checksum: 'd8ceb73ce5faa4ac22713071d2f0a6bd', key: 'blocks/star_rating.liquid'}),
-          fsEntry({checksum: 'dc9c03a6294d7fd8611ddf148e1f7e6e', key: 'locales/en.default.json'}),
+          fsEntry({checksum: '02054e661bbc326a68bf7be83427d7ed', key: 'locales/en.default.json'}),
           fsEntry({checksum: '8a1dd937b2cfe9e669b26e41dc1de5e8', key: 'assets/thumbs-up.png'}),
           fsEntry({checksum: '28fa42561b59f04fc32e98feb3b994ac', key: 'snippets/stars.liquid'}),
         ]),

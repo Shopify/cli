@@ -3,7 +3,7 @@ import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {renderSuccess, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {test, describe, expect, vi} from 'vitest'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {themePublish} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -29,7 +29,7 @@ describe('publish', () => {
   test('prompts for confirmation, publishes the theme and renders the theme link', async () => {
     // Given
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-    vi.mocked(publishTheme).mockResolvedValue(theme)
+    vi.mocked(themePublish).mockResolvedValue(theme)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
@@ -62,7 +62,7 @@ describe('publish', () => {
   test('prompts for confirmation, does not publish when cancelled', async () => {
     // Given
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-    vi.mocked(publishTheme).mockResolvedValue(theme)
+    vi.mocked(themePublish).mockResolvedValue(theme)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When
@@ -80,7 +80,7 @@ describe('publish', () => {
   test('when using --force, does not prompt for confirmation and publishes', async () => {
     // Given
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-    vi.mocked(publishTheme).mockResolvedValue(theme)
+    vi.mocked(themePublish).mockResolvedValue(theme)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When

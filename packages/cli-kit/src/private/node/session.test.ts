@@ -1,29 +1,31 @@
 import {
   ensureAuthenticated,
+  getLastSeenAuthMethod,
   getLastSeenUserIdAfterAuth,
   OAuthApplications,
   OAuthSession,
+  setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from './session.js'
 import {
   exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   refreshAccessToken,
   InvalidGrantError,
 } from './session/exchange.js'
-import {authorize} from './session/authorize.js'
 import {allDefaultScopes} from './session/scopes.js'
 import {store as secureStore, fetch as secureFetch} from './session/store.js'
 
 import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
+import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
-import {useDeviceAuth} from '../../public/node/context/local.js'
+import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {getPartnersToken} from '../../public/node/environment.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
@@ -101,12 +103,10 @@ vi.mock('./session/validate')
 vi.mock('../../public/node/api/partners.js')
 vi.mock('../../store')
 vi.mock('../../public/node/environment.js')
+vi.mock('./session/device-authorization')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
-  vi.mocked(useDeviceAuth).mockReturnValue(false)
-  vi.mocked(authorize).mockResolvedValue(code)
-  vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(applicationId).mockImplementation((app) => app)
@@ -117,6 +117,17 @@ beforeEach(() => {
   vi.mocked(partnersRequest).mockResolvedValue(undefined)
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
   setLastSeenUserIdAfterAuth(undefined as any)
+  setLastSeenAuthMethod('none')
+
+  vi.mocked(requestDeviceAuthorization).mockResolvedValue({
+    deviceCode: 'device_code',
+    userCode: 'user_code',
+    verificationUri: 'verification_uri',
+    expiresIn: 3600,
+    verificationUriComplete: 'verification_uri_complete',
+    interval: 5,
+  })
+  vi.mocked(pollForDeviceAuthorization).mockResolvedValue(validIdentityToken)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -129,8 +140,6 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
@@ -138,6 +147,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
     // The userID is cached in memory and the secureStore is not accessed again
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -155,7 +165,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     )
 
     // Then
-    expect(authorize).not.toHaveBeenCalled()
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('none')
 
     // If there never was an auth event, the userId is 'unknown'
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('unknown')
@@ -171,13 +181,12 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(newSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -190,13 +199,12 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
@@ -211,12 +219,11 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).not.toHaveBeenCalled()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -231,12 +238,11 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).not.toHaveBeenCalled()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('partners_token')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -249,13 +255,12 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications, process.env, {forceRefresh: true})
 
     // Then
-    expect(authorize).not.toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
@@ -270,13 +275,12 @@ describe('when existing session is expired', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).not.toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 
@@ -292,13 +296,12 @@ describe('when existing session is expired', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(secureFetch).toHaveBeenCalledOnce()
   })
 })
@@ -349,5 +352,107 @@ describe('getLastSeenUserIdAfterAuth', () => {
     // Then
     expect(userId).toBe('unknown')
     expect(secureFetch).toHaveBeenCalled()
+  })
+
+  test('returns UUID based on theme token if present in environment', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+    vi.mocked(themeToken).mockReturnValue('theme-token-123')
+    // When
+    const userId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    expect(userId).toBe(nonRandomUUID('theme-token-123'))
+  })
+
+  test('returns UUID based on partners token if present in environment', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+    vi.mocked(getPartnersToken).mockReturnValue('partners-token-456')
+
+    // When
+    const userId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    expect(userId).not.toBe('unknown')
+    expect(userId).toBe(nonRandomUUID('partners-token-456'))
+  })
+})
+
+describe('getLastSeenAuthMethod', () => {
+  beforeEach(() => {
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+    vi.mocked(getPartnersToken).mockReturnValue(undefined)
+    vi.mocked(themeToken).mockReturnValue(undefined)
+    setLastSeenAuthMethod('none')
+  })
+
+  test('returns the existing authMethod if set', async () => {
+    // Given
+    setLastSeenAuthMethod('device_auth')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('device_auth')
+    expect(secureFetch).not.toHaveBeenCalled()
+  })
+
+  test('returns device_auth if there is a cached session', async () => {
+    // Given
+    vi.mocked(secureFetch).mockResolvedValue(validSession)
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('device_auth')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns partners_token if there is a partners token in the environment', async () => {
+    // Given
+    vi.mocked(getPartnersToken).mockReturnValue('partners-token-456')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('partners_token')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns custom_app_token if there is a theme token in the environment and doesnt start with shptka_', async () => {
+    // Given
+    vi.mocked(themeToken).mockReturnValue('theme-token-123')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('custom_app_token')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns theme_access_token if there is a theme token in the environment and starts with shptka_', async () => {
+    // Given
+    vi.mocked(themeToken).mockReturnValue('shptka_theme-token-123')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('theme_access_token')
+    expect(secureFetch).toHaveBeenCalledOnce()
+  })
+
+  test('returns none if no auth method is detected', async () => {
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('none')
+    expect(secureFetch).toHaveBeenCalledOnce()
   })
 })

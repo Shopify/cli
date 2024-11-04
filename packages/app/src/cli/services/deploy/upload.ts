@@ -6,15 +6,14 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppDeployOptions, AssetUrlSchema, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
-import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand, outputContent} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {cwd} from '@shopify/cli-kit/node/path'
-import {assertStringMap} from '@shopify/cli-kit/common/ts/json-narrowing'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -39,6 +38,7 @@ export async function uploadThemeExtensions(
   await Promise.all(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
       const themeExtensionInput: ExtensionUpdateDraftMutationVariables = {
         apiKey,
@@ -94,7 +94,7 @@ interface UploadExtensionsBundleOptions {
   commitReference?: string
 }
 
-export interface UploadExtensionValidationError {
+interface UploadExtensionValidationError {
   uuid: string
   errors: {
     message: string
@@ -104,8 +104,8 @@ export interface UploadExtensionValidationError {
 
 export interface UploadExtensionsBundleOutput {
   validationErrors: UploadExtensionValidationError[]
-  versionTag: string
-  message?: string
+  versionTag?: string | null
+  message?: string | null
   location: string
   deployError?: string
 }
@@ -227,7 +227,10 @@ export function deploymentErrorsToCustomSections(
   return customSections
 }
 
-function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors'], flags: {version?: string} = {}) {
+function generalErrorsSection(
+  errors: AppDeploySchema['appDeploy']['userErrors'],
+  flags: {version?: string} = {},
+): ErrorCustomSection[] {
   if (errors.length > 0) {
     if (
       errors.filter(
@@ -249,7 +252,7 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
     if (errors.length === 1) {
       return [
         {
-          body: errors[0]!.message,
+          body: errors[0]?.message ?? '',
         },
       ]
     }
@@ -269,8 +272,8 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
 }
 
 function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
-  return errors.reduce((sections, error) => {
-    const field = error.field.join('.').replace('extension_points', 'extensions.targeting')
+  return errors.reduce<ErrorCustomSection[]>((sections, error) => {
+    const field = (error.field ?? ['unknown']).join('.').replace('extension_points', 'extensions.targeting')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
     const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
@@ -340,12 +343,12 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
     })
 
     return sections
-  }, [] as ErrorCustomSection[])
+  }, [])
 }
 
 function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
   return errors
-    .reduce((sections, error) => {
+    .reduce<{title: string | undefined; errorCount: number}[]>((sections, error) => {
       const extensionIdentifier = error.details.find(
         (detail) => typeof detail.extension_title !== 'undefined',
       )?.extension_title
@@ -362,7 +365,7 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
       }
 
       return sections
-    }, [] as {title: string | undefined; errorCount: number}[])
+    }, [])
     .map((section) => ({
       title: section.title,
       body: `\n${section.errorCount} error${
@@ -381,62 +384,12 @@ export async function getExtensionUploadURL(
 ) {
   const result: AssetUrlSchema = await handlePartnersErrors(() => developerPlatformClient.generateSignedUploadUrl(app))
 
-  if (result.userErrors?.length > 0) {
+  if (!result.assetUrl || result.userErrors?.length > 0) {
     const errors = result.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
   }
 
   return result.assetUrl
-}
-
-export async function uploadWasmBlob(
-  extensionIdentifier: string,
-  wasmPath: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<{url: string; moduleId: string}> {
-  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadUrlFromPartners(developerPlatformClient)
-  headers['Content-Type'] = 'application/wasm'
-
-  const functionContent = await readFile(wasmPath, {})
-  const res = await fetch(url, {body: functionContent, headers, method: 'PUT'})
-  const resBody = res.body?.read()?.toString() || ''
-
-  if (res.status === 200) {
-    return {url, moduleId}
-  } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
-    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extensionIdentifier} is too large. It must be less than ${maxSize}.`
-    throw new AbortError(errorMessage)
-  } else if (res.status >= 400 && res.status < 500) {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. The server responded with status ${res.status.toString()} and body: ${resBody}`
-    throw new BugError(errorMessage)
-  } else {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. Try again.`
-    throw new AbortError(errorMessage)
-  }
-}
-
-interface GetFunctionExtensionUploadURLOutput {
-  url: string
-  moduleId: string
-  maxSize: string
-  headers: {[key: string]: string}
-}
-
-async function getFunctionExtensionUploadUrlFromPartners(
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res = await handlePartnersErrors(() => developerPlatformClient.functionUploadUrl())
-
-  const generatedUrlDetails = res.functionUploadUrlGenerate?.generatedUrlDetails
-
-  if (!generatedUrlDetails) {
-    throw new AbortError('Something went wrong generating the upload URL for the Function.', 'Try again later.')
-  }
-
-  const headers = generatedUrlDetails.headers
-  assertStringMap(headers)
-
-  return {...generatedUrlDetails, headers}
 }
 
 async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {

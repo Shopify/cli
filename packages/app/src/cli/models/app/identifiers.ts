@@ -1,11 +1,11 @@
 import {getDotEnvFileName} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
+import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {deepCompare, getPathValue} from '@shopify/cli-kit/common/object'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import type {AppInterface} from './app.js'
 
@@ -33,7 +33,7 @@ export interface Identifiers {
   extensionsNonUuidManaged: IdentifiersExtensions
 }
 
-export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
+type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
 type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
@@ -74,16 +74,20 @@ export async function updateAppIdentifiers(
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
 
-  const write =
-    JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) &&
-    (command === 'deploy' || command === 'release')
+  const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
+  const writeToFile = !contentIsEqual && (command === 'deploy' || command === 'release')
   dotenvFile.variables = updatedVariables
-  if (write) {
-    await writeDotEnv(dotenvFile)
+
+  if (writeToFile) {
+    const dotEnvFileExists = await fileExists(dotenvFile.path)
+    const envFileContent = dotEnvFileExists ? await readFile(dotenvFile.path) : ''
+    const updatedEnvFileContent = patchEnvFile(envFileContent, updatedVariables)
+    await writeFile(dotenvFile.path, updatedEnvFileContent)
   }
 
   // eslint-disable-next-line require-atomic-updates
@@ -137,6 +141,7 @@ export function getAppIdentifiers(
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: ExtensionInstance) => {
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
     if (developerPlatformClient.supportsAtomicDeployments) {

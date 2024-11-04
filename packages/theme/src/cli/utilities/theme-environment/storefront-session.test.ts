@@ -80,12 +80,14 @@ describe('Storefront API', () => {
           response({
             status: 200,
             headers: {'set-cookie': ''},
+            text: () => Promise.resolve(''),
           }),
         )
         .mockResolvedValueOnce(
           response({
             status: 200,
             headers: {'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly'},
+            text: () => Promise.resolve(''),
           }),
         )
 
@@ -105,9 +107,15 @@ describe('Storefront API', () => {
           response({
             status: 200,
             headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
+            text: () => Promise.resolve(''),
           }),
         )
-        .mockResolvedValueOnce(response({status: 401}))
+        .mockResolvedValueOnce(
+          response({
+            status: 401,
+            text: () => Promise.resolve(''),
+          }),
+        )
 
       // When
       const cookies = getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'wrongpassword')
@@ -121,7 +129,7 @@ describe('Storefront API', () => {
 
   // Tests rely on this function because the 'packages/theme' package cannot
   // directly access node-fetch and they use: new Response('OK', {status: 200})
-  function response(mock: {status: number; headers?: {[key: string]: string}}) {
+  function response(mock: {status: number; headers?: {[key: string]: string}; text?: () => Promise<string>}) {
     const setCookieHeader = (mock.headers ?? {})['set-cookie'] ?? ''
     const setCookieArray = [setCookieHeader]
 
@@ -148,10 +156,19 @@ describe('Storefront API', () => {
       )
 
       // When
-      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
+      const result = await isStorefrontPasswordCorrect('correct-password-&', 'store.myshopify.com')
 
       // Then
       expect(result).toBe(true)
+      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+        body: 'form_type=storefront_password&utf8=%E2%9C%93&password=correct-password-%26',
+        headers: {
+          'cache-control': 'no-cache',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        method: 'POST',
+        redirect: 'manual',
+      })
     })
 
     test('returns false when the password is incorrect', async () => {

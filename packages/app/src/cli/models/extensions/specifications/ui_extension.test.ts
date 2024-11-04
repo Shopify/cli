@@ -1,15 +1,12 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {placeholderAppConfiguration, testDeveloperPlatformClient} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {describe, expect, test, vi} from 'vitest'
-
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -123,6 +120,7 @@ describe('ui_extension', async () => {
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
           capabilities: undefined,
+          preloads: {},
         },
       ])
     })
@@ -173,6 +171,7 @@ describe('ui_extension', async () => {
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
           capabilities: undefined,
+          preloads: {},
         },
       ])
     })
@@ -223,6 +222,58 @@ describe('ui_extension', async () => {
           metafields: [],
           default_placement_reference: undefined,
           capabilities: {allow_direct_linking: true},
+          preloads: {},
+        },
+      ])
+    })
+
+    test('targeting object accepts preloads', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            preloads: {chat: '/chat', not_supported: '/hello'},
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {chat: '/chat'},
         },
       ])
     })
@@ -348,7 +399,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // When
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
-          developerPlatformClient,
           appConfiguration: placeholderAppConfiguration,
         })
 

@@ -11,7 +11,12 @@ import {
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {AppConfigurationFileName, getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
+import {
+  AppConfigurationFileName,
+  AppConfigurationStateLinked,
+  getAppConfigurationFileName,
+  loadApp,
+} from '../../../models/app/loader.js'
 import {
   fetchOrCreateOrganizationApp,
   logMetadataForLoadedContext,
@@ -42,11 +47,18 @@ import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 export interface LinkOptions {
   directory: string
   apiKey?: string
+  appId?: string
+  organizationId?: string
   configName?: string
   baseConfigName?: string
   developerPlatformClient?: DeveloperPlatformClient
 }
 
+interface LinkOutput {
+  configuration: CurrentAppConfiguration
+  remoteApp: OrganizationApp
+  state: AppConfigurationStateLinked
+}
 /**
  * Link a local app configuration file to a remote app on the Shopify platform.
  *
@@ -58,7 +70,7 @@ export interface LinkOptions {
  * @param shouldRenderSuccess - Whether to render a success message to the user. This is useful for testing.
  * @returns The final app configuration object that was written to the filesystem
  */
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<CurrentAppConfiguration> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<LinkOutput> {
   // First, select (or create, if the user chooses to) a remote app to link to
   const {remoteApp, appDirectory, developerPlatformClient} = await selectOrCreateRemoteAppToLinkTo(options)
 
@@ -91,7 +103,16 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  return mergedAppConfiguration
+  const state: AppConfigurationStateLinked = {
+    state: 'connected-app',
+    basicConfiguration: mergedAppConfiguration,
+    appDirectory,
+    configurationPath: joinPath(appDirectory, configFileName),
+    configSource: options.configName ? 'flag' : 'cached',
+    configurationFileName: configFileName,
+  }
+
+  return {configuration: mergedAppConfiguration, remoteApp, state}
 }
 
 /**
@@ -113,7 +134,12 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromId({apiKey: options.apiKey, developerPlatformClient})
+    const remoteApp = await appFromId({
+      apiKey: options.apiKey,
+      id: options.appId,
+      developerPlatformClient,
+      organizationId: options.organizationId,
+    })
     if (!remoteApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -353,12 +379,11 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
   }
 
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
+
   const mergedAppConfiguration = {
     ...deepMergeObjects<AppConfiguration, CurrentAppConfiguration>(
       {
         ...(localAppOptions.existingConfig ?? {}),
-        // Scopes changes position from the template config format to the current one. Delete it if its left behind.
-        scopes: undefined,
       },
       {
         app_id: remoteApp.id,
@@ -376,6 +401,12 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
       linkedAppWasNewlyCreated: Boolean(remoteApp.newApp),
     }),
   }
+
+  // We were previously forcing scopes to be undefined, because scopes is no longer a top-level key.
+  // This works fine when writing to a file, but not when trying to parse the config object again in code.
+  // Make sure to delete it so that parsing works.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (mergedAppConfiguration as any).scopes
 
   // Always output using the canonical schema
   const schema = getAppVersionedSchema(specifications)

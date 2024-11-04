@@ -3,21 +3,20 @@ import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {
   exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
-import {authorize} from './session/authorize.js'
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
+import {isThemeAccessSession} from './api/rest.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
+import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -29,11 +28,12 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isSpin} from '@shopify/cli-kit/node/context/spin'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 /**
  * A scope supported by the Shopify Admin API.
  */
-type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
+export type AdminAPIScope = 'graphql' | 'themes' | 'collaborator'
 
 /**
  * It represents the options to authenticate against the Shopify Admin API.
@@ -49,7 +49,7 @@ interface AdminAPIOAuthOptions {
 /**
  * A scope supported by the Partners API.
  */
-type PartnersAPIScope = 'cli' | string
+export type PartnersAPIScope = 'cli'
 interface PartnersAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: PartnersAPIScope[]
@@ -58,7 +58,7 @@ interface PartnersAPIOAuthOptions {
 /**
  * A scope supported by the Developer Platform API.
  */
-type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage' | string
+export type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage'
 interface AppManagementAPIOauthOptions {
   /** List of scopes to request permissions for. */
   scopes: AppManagementAPIScope[]
@@ -67,13 +67,13 @@ interface AppManagementAPIOauthOptions {
 /**
  * A scope supported by the Storefront Renderer API.
  */
-type StorefrontRendererScope = 'devtools' | string
+export type StorefrontRendererScope = 'devtools'
 interface StorefrontRendererAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: StorefrontRendererScope[]
 }
 
-type BusinessPlatformScope = 'destinations' | string
+export type BusinessPlatformScope = 'destinations'
 interface BusinessPlatformAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: BusinessPlatformScope[]
@@ -101,26 +101,72 @@ export interface OAuthSession {
   userId: string
 }
 
+type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'custom_app_token' | 'none'
+
 let userId: undefined | string
+let authMethod: AuthMethod = 'none'
 
 /**
  * Retrieves the user ID from the current session or returns 'unknown' if not found.
- * This function first checks for a cached user ID in memory (obtained in the current run)
- * Then attempts to fetch it from the secure store. (from a previous auth session)
- * If no user ID is found, it returns 'unknown'.
+ *
+ * This function performs the following steps:
+ * 1. Checks for a cached user ID in memory (obtained in the current run).
+ * 2. Attempts to fetch it from the secure store (from a previous auth session).
+ * 3. Checks if a custom token was used (either as a theme password or partners token).
+ * 4. If a custom token is present in the environment, generates a UUID and uses it as userId.
+ * 5. If after all this we don't have a userId, then reports as 'unknown'.
  *
  * @returns A Promise that resolves to the user ID as a string.
  */
 export async function getLastSeenUserIdAfterAuth(): Promise<string> {
   if (userId) return userId
+
   const currentSession = (await secureStore.fetch()) || {}
   const fqdn = await identityFqdn()
   const cachedUserId = currentSession[fqdn]?.identity.userId
-  return cachedUserId ?? 'unknown'
+  if (cachedUserId) return cachedUserId
+
+  const customToken = getPartnersToken() ?? themeToken()
+  return customToken ? nonRandomUUID(customToken) : 'unknown'
 }
 
 export function setLastSeenUserIdAfterAuth(id: string) {
   userId = id
+}
+
+/**
+ * Retrieves the last seen authentication method used in the current session.
+ *
+ * This function checks for the authentication method in the following order:
+ * 1. Returns the cached auth method if it's not 'none'.
+ * 2. Checks for a cached session, which implies 'device_auth' was used.
+ * 3. Checks for a partners token in the environment.
+ * 4. Checks for a theme password in the environment.
+ * 5. If none of the above are true, returns 'none'.
+ *
+ * @returns A Promise that resolves to the last seen authentication method as an AuthMethod type.
+ */
+export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
+  if (authMethod !== 'none') return authMethod
+
+  const currentSession = (await secureStore.fetch()) || {}
+  const fqdn = await identityFqdn()
+  const cachedUserId = currentSession[fqdn]?.identity.userId
+  if (cachedUserId) return 'device_auth'
+
+  const partnersToken = getPartnersToken()
+  if (partnersToken) return 'partners_token'
+
+  const themePassword = themeToken()
+  if (themePassword) {
+    return isThemeAccessSession({token: themePassword, storeFqdn: ''}) ? 'theme_access_token' : 'custom_app_token'
+  }
+
+  return 'none'
+}
+
+export function setLastSeenAuthMethod(method: AuthMethod) {
+  authMethod = method
 }
 
 /**
@@ -147,6 +193,7 @@ export async function ensureAuthenticated(
   }
 
   const currentSession = (await secureStore.fetch()) || {}
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 
@@ -205,6 +252,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
   }
 
+  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }
@@ -228,7 +276,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   const identityTokenInformation = getIdentityTokenInformation()
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
-  } else if (useDeviceAuth()) {
+  } else {
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
     const deviceAuth = await requestDeviceAuthorization(scopes)
@@ -236,14 +284,6 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     // Poll for the identity token
     outputDebug(outputContent`Starting polling for the identity token...`)
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
-  } else {
-    // Authorize user via browser
-    outputDebug(outputContent`Authorizing through Identity's website...`)
-    const code = await authorize(scopes)
-
-    // Exchange code for identity token
-    outputDebug(outputContent`Authorization code received. Exchanging it for a CLI token...`)
-    identityToken = await exchangeCodeForAccessToken(code)
   }
 
   // Exchange identity token for application tokens

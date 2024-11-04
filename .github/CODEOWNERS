@@ -1,0 +1,14 @@
+# By default, review should come from the app-inner-loop team
+* @shopify/app-inner-loop
+
+# Theme team and CLI owners should review theme changes
+packages/cli-kit/src/private/themes/* @shopify/advanced-edits @shopify/app-inner-loop
+packages/cli-kit/src/public/themes/* @shopify/advanced-edits @shopify/app-inner-loop
+packages/theme/** @shopify/advanced-edits @shopify/app-inner-loop
+
+# These are metafiles that can be reviewed by anyone
+.changeset/* @shopify/advanced-edits @shopify/app-inner-loop
+.github/CODEOWNERS @shopify/advanced-edits @shopify/app-inner-loop
+docs-shopify.dev/*  @shopify/advanced-edits @shopify/app-inner-loop
+packages/cli/oclif.manifest.json @shopify/advanced-edits @shopify/app-inner-loop
+

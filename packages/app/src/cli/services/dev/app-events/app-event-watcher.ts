@@ -1,7 +1,7 @@
 /* eslint-disable tsdoc/syntax */
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
 import {AppExtensionsDiff, appDiff} from './app-diffing.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -75,7 +75,7 @@ export interface ExtensionEvent {
  * to determine how long it took to process the event.
  */
 interface AppEvent {
-  app: AppInterface
+  app: AppLinkedInterface
   extensionEvents: ExtensionEvent[]
   path: string
   startTime: [number, number]
@@ -83,7 +83,7 @@ interface AppEvent {
 
 interface HandlerInput {
   event: WatcherEvent
-  app: AppInterface
+  app: AppLinkedInterface
   extensions: ExtensionInstance[]
   options: OutputContextOptions
 }
@@ -104,10 +104,10 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
  * App event watcher will emit events when changes are detected in the file system.
  */
 export class AppEventWatcher extends EventEmitter {
-  private app: AppInterface
-  private options: OutputContextOptions
+  private app: AppLinkedInterface
+  private readonly options: OutputContextOptions
 
-  constructor(app: AppInterface, options?: OutputContextOptions) {
+  constructor(app: AppLinkedInterface, options?: OutputContextOptions) {
     super()
     this.app = app
     this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
@@ -218,7 +218,7 @@ async function AppConfigDeletedHandler(_input: HandlerInput): Promise<AppEvent> 
  * Reload the app and returns it
  * Prints the time to reload the app to stdout
  */
-async function reloadApp(app: AppInterface, options: OutputContextOptions): Promise<AppInterface> {
+export async function reloadApp(app: AppLinkedInterface, options: OutputContextOptions): Promise<AppLinkedInterface> {
   const start = startHRTime()
   try {
     const newApp = await loadApp({
@@ -228,7 +228,7 @@ async function reloadApp(app: AppInterface, options: OutputContextOptions): Prom
       remoteFlags: app.remoteFlags,
     })
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)
-    return newApp
+    return newApp as AppLinkedInterface
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputWarn(`Error reloading app: ${error.message}`, options.stderr)

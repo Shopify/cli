@@ -4,7 +4,6 @@ import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../model
 import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationFileName} from '../../models/app/loader.js'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 
 /**
  * Select an app from env, list or create a new one:
@@ -29,7 +28,6 @@ export async function selectOrCreateApp(
 ): Promise<OrganizationApp> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
-    outputInfo(`\nBefore proceeding, your project needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
@@ -47,6 +45,7 @@ export async function selectOrCreateApp(
     if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
     const fullSelectedApp = await developerPlatformClient.appFromId(app)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return fullSelectedApp!
   }
 }

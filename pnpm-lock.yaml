@@ -153,16 +153,13 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../cli-kit
-      '@shopify/create-app':
-        specifier: 3.67.0
-        version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -171,11 +168,11 @@ importers:
         specifier: 8.0.0
         version: 8.0.0
       '@shopify/theme':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 2.9.0
-        version: 2.9.0
+        specifier: 2.9.2
+        version: 2.9.2
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -204,8 +201,8 @@ importers:
         specifier: 1.18.1
         version: 1.18.1
       micromatch:
-        specifier: 4.0.5
-        version: 4.0.5
+        specifier: 4.0.8
+        version: 4.0.8
       proper-lockfile:
         specifier: 4.1.2
         version: 4.1.2
@@ -232,8 +229,8 @@ importers:
         specifier: ^1.17.11
         version: 1.17.14
       '@types/micromatch':
-        specifier: ^4.0.5
-        version: 4.0.7
+        specifier: ^4.0.8
+        version: 4.0.9
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
@@ -278,26 +275,29 @@ importers:
         specifier: 5.1.2
         version: 5.1.2
       '@shopify/app':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 8.4.4
-        version: 8.4.4(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.2
+        version: 9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../theme
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
+      '@typescript-eslint/eslint-plugin':
+        specifier: 7.13.1
+        version: 7.13.1(@typescript-eslint/parser@7.13.1)(eslint@8.57.0)(typescript@5.2.2)
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
@@ -397,9 +397,6 @@ importers:
       figures:
         specifier: 5.0.0
         version: 5.0.0
-      find-process:
-        specifier: 1.4.7
-        version: 1.4.7
       find-up:
         specifier: 6.3.0
         version: 6.3.0
@@ -430,9 +427,6 @@ importers:
       jose:
         specifier: 5.8.0
         version: 5.8.0
-      kill-port-process:
-        specifier: 3.1.0
-        version: 3.1.0
       latest-version:
         specifier: 7.0.0
         version: 7.0.0
@@ -490,9 +484,6 @@ importers:
       ts-error:
         specifier: 1.0.6
         version: 1.0.6
-      which:
-        specifier: 4.0.0
-        version: 4.0.0
       zod:
         specifier: 3.22.3
         version: 3.22.3
@@ -521,9 +512,6 @@ importers:
       '@types/semver':
         specifier: ^7.5.2
         version: 7.5.8
-      '@types/which':
-        specifier: 3.0.4
-        version: 3.0.4
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
@@ -541,12 +529,16 @@ importers:
         version: 5.2.2
 
   packages/create-app:
+    dependencies:
+      esbuild:
+        specifier: 0.19.8
+        version: 0.19.8
     devDependencies:
-      '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+      '@shopify/app':
+        specifier: 3.69.0
+        version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../cli-kit
       '@types/node':
         specifier: 18.19.3
@@ -670,7 +662,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -683,7 +675,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -699,14 +691,14 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.67.0
+        specifier: 3.69.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 2.9.0
-        version: 2.9.0
+        specifier: 2.9.2
+        version: 2.9.2
       '@shopify/theme-language-server-node':
-        specifier: 1.12.1
-        version: 1.12.1
+        specifier: 1.14.0
+        version: 1.14.0
       chokidar:
         specifier: 3.5.3
         version: 3.5.3
@@ -2027,6 +2019,7 @@ packages:
   /@babel/helper-split-export-declaration@7.24.7:
     resolution: {integrity: sha512-oy5V7pD+UvfkEATUKvIjvIAH/xCzfsFVw7ygW2SI6NClZzquT+mwdTfgfdbUiceh6iQO0CHtCPsyze/MZ2YbAA==}
     engines: {node: '>=6.9.0'}
+    requiresBuild: true
     dependencies:
       '@babel/types': 7.24.7
 
@@ -3229,6 +3222,13 @@ packages:
     resolution: {integrity: sha512-70jFkWKscK2osm7bnFbPLevrzHClrygM3UcKetKs/l81Xuzlxnu1SS3onN5OUl9kd9RN4XMFr46Pv5jSqWqImQ==}
     dependencies:
       '@bugsnag/core': 7.22.7
+    dev: false
+
+  /@bugsnag/browser@8.1.2:
+    resolution: {integrity: sha512-COP3OanbGCOS/K4g0rGwSYk2/RcIooG2PqxqdrF0MDY4u3Nz44iOaJg8w7WlOr8CckmDEiwSW2DVR+M7qZcoQw==}
+    dependencies:
+      '@bugsnag/core': 8.1.1
+    dev: true
 
   /@bugsnag/core@7.22.7:
     resolution: {integrity: sha512-9DPWBkkBjhFJc5dCFy/wVC3HE0Aw3ZiLJKjyAxgywSKbILgtpD+qT1Xe8sacWyxU92znamlZ8H8ziQOe7jhhbA==}
@@ -3238,6 +3238,17 @@ packages:
       error-stack-parser: 2.1.4
       iserror: 0.0.2
       stack-generator: 2.0.10
+    dev: false
+
+  /@bugsnag/core@8.1.1:
+    resolution: {integrity: sha512-ytOWqwm4H2h8rADqYPR+tQpDHsBav3NEZ5E2VSCCxPbT2R89Q0/t0PZTbQVlOS+TRutajO29VxTV9qsAREfpSw==}
+    dependencies:
+      '@bugsnag/cuid': 3.1.1
+      '@bugsnag/safe-json-stringify': 6.0.0
+      error-stack-parser: 2.1.4
+      iserror: 0.0.2
+      stack-generator: 2.0.10
+    dev: true
 
   /@bugsnag/cuid@3.1.1:
     resolution: {integrity: sha512-d2z4b0rEo3chI07FNN1Xds8v25CNeekecU6FC/2Fs9MxY2EipkZTThVcV2YinMn8dvRUlViKOyC50evoUxg8tw==}
@@ -3249,11 +3260,11 @@ packages:
       '@bugsnag/node': 7.22.7
     dev: false
 
-  /@bugsnag/js@7.22.7:
-    resolution: {integrity: sha512-Qq8l06rSDTZtxgNIDpTeXHrin9C30INNbPfnR2CNcEsCmfqyVQb4USPEuRb0xg5wiaLKU9r4IAatMqiCgdzG6A==}
+  /@bugsnag/js@8.1.2:
+    resolution: {integrity: sha512-vMl/TlMTpm0Xv4IKqYpmsjeVE4nPWAZL8uOxOi0JI6dgTaWE8+VQF6KuSpeKiA7Pr34uUxpWhSBrkZ3uSwCBdg==}
     dependencies:
-      '@bugsnag/browser': 7.22.7
-      '@bugsnag/node': 7.23.0
+      '@bugsnag/browser': 8.1.2
+      '@bugsnag/node': 8.1.1
     dev: true
 
   /@bugsnag/node@7.22.7:
@@ -3267,10 +3278,10 @@ packages:
       stack-generator: 2.0.10
     dev: false
 
-  /@bugsnag/node@7.23.0:
-    resolution: {integrity: sha512-eXA8/h+J2booEMlKsuRl1NAszebwm4KZ9zxCSg/xN4sw5boXia7kMifLf8QTqk+UBtIhNKBsyQQKHXbawKyE6Q==}
+  /@bugsnag/node@8.1.1:
+    resolution: {integrity: sha512-Ckdgj4tQto3CH4wWo12BAG0lQuS9s5SUpZvwmYF3meW5Qxq7D8XHZzrfGQo9nb1VTvmwOB+uyMt8En6Cy86Jcg==}
     dependencies:
-      '@bugsnag/core': 7.22.7
+      '@bugsnag/core': 8.1.1
       byline: 5.0.0
       error-stack-parser: 2.1.4
       iserror: 0.0.2
@@ -3377,7 +3388,7 @@ packages:
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
       fs-extra: 7.0.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /@changesets/errors@0.1.4:
@@ -3420,7 +3431,7 @@ packages:
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
       is-subdir: 1.2.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       spawndamnit: 2.0.0
     dev: true
 
@@ -4132,7 +4143,7 @@ packages:
       json-to-pretty-yaml: 1.2.2
       listr2: 4.0.5
       log-symbols: 4.1.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       shell-quote: 1.8.1
       string-env-interpolation: 1.0.1
       ts-log: 2.2.5
@@ -4510,7 +4521,7 @@ packages:
       '@graphql-tools/utils': 10.2.2(graphql@16.8.1)
       graphql: 16.8.1
       is-glob: 4.0.3
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       tslib: 2.6.2
       unixify: 1.0.0
     transitivePeerDependencies:
@@ -6007,15 +6018,15 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@8.4.4(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-zPZZ8Mo5lKiclkPMPIk0KIHXqBh3xTx+7Kdo/d1SREa8QrmxDt4mSlWShW+sHFkdIOyEGRdkwotJmvOGkaotZw==}
+  /@shopify/cli-hydrogen@9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-KRlBmgik6fdzIw8z9Xj31swE2dIgTFavCSTS/tonumlu2RX5DrT2M+OTjiQv8s6wLJn5a4Nn6/+5Ds/hKGaKEQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': ^0.3.1
-      '@shopify/mini-oxygen': ^3.0.5
+      '@shopify/hydrogen-codegen': ^0.3.2
+      '@shopify/mini-oxygen': ^3.1.0
       graphql-config: ^5.0.3
       vite: 5.3.1
     peerDependenciesMeta:
@@ -6036,7 +6047,7 @@ packages:
       '@graphql-codegen/cli': 5.0.2(@types/node@18.19.3)(graphql@16.8.1)(typescript@5.2.2)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.4.9(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.0
       chokidar: 3.5.3
@@ -6137,15 +6148,15 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
-  /@shopify/liquid-html-parser@2.0.3:
-    resolution: {integrity: sha512-aIkZ5TJWG7/ztd1sZm5XNpBNTG3B+Q0gv3WN/QahmNQzm2wmKYSHiRLOA8JALAnOGTmH0uqOJ7jzdqoATcZSxw==}
+  /@shopify/liquid-html-parser@2.0.5:
+    resolution: {integrity: sha512-MYp/fe3jSjzmRu6HlbaG/1IJpdB39iShdvnc5biDPjlBhLr0PH/2rHXVdthlAcYDhJvd7DTd7TV0kl3erpUNGg==}
     dependencies:
       line-column: 1.0.2
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.4.9(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-NCpMyRyXaBtLMSSIDuJsX4hYCiudyMCMeoqvtN7HYgjCZNsC5F2dvZLpu0mVOSqXrNB89PG/QnaXlcZZW+3IjQ==}
+  /@shopify/oxygen-cli@4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+    resolution: {integrity: sha512-mCpseNEqDbR26fPmIKL83BDsYSxXu/eeWrRGTG8cdQhq1z+xbDn93w/So/gi0r0MRH2vYsPOzJOIUyiWWVawDQ==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
@@ -6153,12 +6164,12 @@ packages:
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': ^3.58.0
     dependencies:
-      '@bugsnag/core': 7.22.7
-      '@bugsnag/js': 7.22.7
-      '@bugsnag/node': 7.23.0
+      '@bugsnag/core': 8.1.1
+      '@bugsnag/js': 8.1.2
+      '@bugsnag/node': 8.1.1
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      async: 3.2.5
+      async: 3.2.6
     dev: true
 
   /@shopify/polaris-icons@8.0.0:
@@ -6256,10 +6267,10 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@2.9.0:
-    resolution: {integrity: sha512-g9stsGeRWlm3VBK43n/SQy/vibkcseWPZniAkqwmT6RjT2mQ7dHnox3T3OlE8PEa73OIYrOjlkxRgx0e33Cs4g==}
+  /@shopify/theme-check-common@2.9.2:
+    resolution: {integrity: sha512-GXlRRNFXKQdYTgLrA3eAamlpDtZVAYr12UeXyiHxmkk0mmoozkpbtw30yX67FgGVdplM0YSAa7MQ7yHeznPfig==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.0.3
+      '@shopify/liquid-html-parser': 2.0.5
       cross-fetch: 4.0.0
       json-to-ast: 2.1.0
       jsonc-parser: 3.2.1
@@ -6271,33 +6282,33 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@2.9.0:
-    resolution: {integrity: sha512-BPZkhxTeEPI/Lic8MH8ptedkhTHQCn4sbGulfjjh9DYazcYzgsTs5kQ5EnvOqpAY0RgWvWTK6tLUXSbnQk2RYA==}
+  /@shopify/theme-check-docs-updater@2.9.2:
+    resolution: {integrity: sha512-ZGewVePcYvyeOSAwQOf/K/gYsLENfK0guQB3DZ809btslw0FGQtFL5lhyawcof4UEOkPSl2O/swvA72DPbDYlg==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 2.9.0
+      '@shopify/theme-check-common': 2.9.2
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@2.9.0:
-    resolution: {integrity: sha512-euL4blDxteLe1FHVibx6MeAQeWJfP43pT9GApugMhpJgG0Uy4oSWacgym4tei198nkSNz1W+Yya06ZVZfT5Opg==}
+  /@shopify/theme-check-node@2.9.2:
+    resolution: {integrity: sha512-mS0gtSsjF9LxavruE3V4eNFLU26kcAuvNPExvFI7oxOpuHDRHOPqaeR74zcgmBBoQwz4XqoI4ZyhBPF6k3Oesw==}
     dependencies:
-      '@shopify/theme-check-common': 2.9.0
-      '@shopify/theme-check-docs-updater': 2.9.0
+      '@shopify/theme-check-common': 2.9.2
+      '@shopify/theme-check-docs-updater': 2.9.2
       glob: 8.1.0
       yaml: 2.3.2
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-common@1.12.1:
-    resolution: {integrity: sha512-jv+ZOSKBtKnj4Xsw1CoplrySUqjDByGsBibk7G9ZXJXN1mzQJZ8GlnEeK8QkfBWhYJeg2ezXwfgtXoUik0CrOw==}
+  /@shopify/theme-language-server-common@1.14.0:
+    resolution: {integrity: sha512-7wC0Vh+mGIiHxK/eQ0Lef0QslNKXXvEMLh19UMAO/iMdE6m6nXwcyhUuEgEtxI3pcaEC+oeGiyEjrKT64vfQBA==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.0.3
-      '@shopify/theme-check-common': 2.9.0
+      '@shopify/liquid-html-parser': 2.0.5
+      '@shopify/theme-check-common': 2.9.2
       '@vscode/web-custom-data': 0.4.9
       vscode-json-languageservice: 5.3.11
       vscode-languageserver: 8.1.0
@@ -6307,12 +6318,12 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@1.12.1:
-    resolution: {integrity: sha512-feYuIptDf+yZc8MkaBISdOJN7Yw6taHwRK8i2qtK9Jrn36B+n78oRjsVNJXuJkoxwO8iQ8akte2zW59eX+i17g==}
+  /@shopify/theme-language-server-node@1.14.0:
+    resolution: {integrity: sha512-V7XGrdMyoo5KuZekK+1z9/pPcWjj/Pj1sGAObscm5OqeDGJAxPORunBOhfUFntH149wNVyEhcu3GpLmDMgf2Ow==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 2.9.0
-      '@shopify/theme-check-node': 2.9.0
-      '@shopify/theme-language-server-common': 1.12.1
+      '@shopify/theme-check-docs-updater': 2.9.2
+      '@shopify/theme-check-node': 2.9.2
+      '@shopify/theme-language-server-common': 1.14.0
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -6985,8 +6996,8 @@ packages:
     resolution: {integrity: sha512-Hwx9EUgdwf2GLarOjQp5ZH8ZmblzcbTBC2wtQWNKARBSxM9ezRIAUpeDTgoQRAFB0+8CNWXVA9+MaSOzOF3nPg==}
     dev: true
 
-  /@types/micromatch@4.0.7:
-    resolution: {integrity: sha512-C/FMQ8HJAZhTsDpl4wDKZdMeeW5USjgzOczUwTGbRc1ZopPgOhIEnxY2ZgUrsuyy4DwK1JVOJZKFakv3TbCKiA==}
+  /@types/micromatch@4.0.9:
+    resolution: {integrity: sha512-7V+8ncr22h4UoYRLnLXSpTxjQrNUXtWHGeMPRJt1nULXI57G9bIcpyrHlmrQ7QK24EyyuXvYcSSWAM8GA9nqCg==}
     dependencies:
       '@types/braces': 3.0.4
     dev: true
@@ -7126,10 +7137,6 @@ packages:
 
   /@types/uuid@9.0.1:
     resolution: {integrity: sha512-rFT3ak0/2trgvp4yYZo5iKFEPsET7vKydKF+VRCxlQ9bpheehyAJH89dAkaLEq/j/RZXJIqcgsmPJKUP1Z28HA==}
-    dev: true
-
-  /@types/which@3.0.4:
-    resolution: {integrity: sha512-liyfuo/106JdlgSchJzXEQCVArk0CvevqPote8F8HgWgJ3dRCcTHgJIsLDuee0kxk/mhbInzIZk3QWSZJ8R+2w==}
     dev: true
 
   /@types/wrap-ansi@3.0.0:
@@ -7996,6 +8003,10 @@ packages:
   /async@3.2.5:
     resolution: {integrity: sha512-baNZyqaaLhyLVKm/DlvdW051MSgO6b8eVfIezl9E5PqWxFgzLm/wQntEW4zOytVburDEr0JlALEpdOFwvErLsg==}
 
+  /async@3.2.6:
+    resolution: {integrity: sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==}
+    dev: true
+
   /asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
@@ -8233,6 +8244,12 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       fill-range: 7.0.1
+
+  /braces@3.0.3:
+    resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
+    engines: {node: '>=8'}
+    dependencies:
+      fill-range: 7.1.1
 
   /breakword@1.0.6:
     resolution: {integrity: sha512-yjxDAYyK/pBvws9H4xKYpLDpYKEH6CzrBPAuXq3x18I+c/2MkVtT3qAr7Oloi6Dss9qNhPVueAAVU1CSeNDIXw==}
@@ -8741,11 +8758,6 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
-  /commander@5.1.0:
-    resolution: {integrity: sha512-P0CysNDQ7rtVw4QIQtm+MRxV66vKFSvlsQvGYXZWR3qFU0jlMKHZZZgw8e+8DSah4UDKMqnknRDQz+xuQXQ/Zg==}
-    engines: {node: '>= 6'}
-    dev: false
-
   /commander@9.1.0:
     resolution: {integrity: sha512-i0/MaqBtdbnJ4XQs4Pmyb+oFQl+q0lsAmokVUH92SlSw4fkeAcG3bVon+Qt7hmtF+u3Het6o4VgrcY3qAoEB6w==}
     engines: {node: ^12.20.0 || >=14}
@@ -8992,6 +9004,7 @@ packages:
       lru-cache: 4.1.5
       shebang-command: 1.2.0
       which: 1.3.1
+    dev: true
 
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
@@ -10208,19 +10221,6 @@ packages:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
     dev: false
 
-  /execa@0.9.0:
-    resolution: {integrity: sha512-BbUMBiX4hqiHZUA5+JujIjNb6TyAlp2D5KLheMjMluwOuzcnylDL4AxZYLLn1n2AGB49eSWwyKvvEQoRpnAtmA==}
-    engines: {node: '>=4'}
-    dependencies:
-      cross-spawn: 5.1.0
-      get-stream: 3.0.0
-      is-stream: 1.1.0
-      npm-run-path: 2.0.2
-      p-finally: 1.0.0
-      signal-exit: 3.0.7
-      strip-eof: 1.0.0
-    dev: false
-
   /execa@7.2.0:
     resolution: {integrity: sha512-UduyVP7TLB5IcAQl+OzLyLcS/l32W/GLg+AhHJ+ow40FOk2U3SAllPwR44v4vmdFwIWqpdwxxpQbF1n5ta9seA==}
     engines: {node: ^14.18.0 || ^16.14.0 || >=18.0.0}
@@ -10334,7 +10334,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /fast-glob@3.3.1:
@@ -10345,7 +10345,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
 
   /fast-glob@3.3.2:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
@@ -10355,7 +10355,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /fast-json-parse@1.0.3:
@@ -10477,6 +10477,12 @@ packages:
     dependencies:
       to-regex-range: 5.0.1
 
+  /fill-range@7.1.1:
+    resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
+    engines: {node: '>=8'}
+    dependencies:
+      to-regex-range: 5.0.1
+
   /filter-iterator@0.0.1:
     resolution: {integrity: sha512-v4lhL7Qa8XpbW3LN46CEnmhGk3eHZwxfNl5at20aEkreesht4YKb/Ba3BUIbnPhAC/r3dmu7ABaGk6MAvh2alA==}
     dev: true
@@ -10504,17 +10510,6 @@ packages:
   /find-nearest-file@1.1.0:
     resolution: {integrity: sha512-NMsS0ITOwpBPrHOyO7YUtDhaVEGUKS0kBJDVaWZPuCzO7JMW+uzFQQVts/gPyIV9ioyNWDb5LjhHWXVf1OnBDA==}
     dev: true
-
-  /find-process@1.4.7:
-    resolution: {integrity: sha512-/U4CYp1214Xrp3u3Fqr9yNynUrr5Le4y0SsJh2lMDDSbpwYSz3M2SMWQC+wqcx79cN8PQtHQIL8KnuY9M66fdg==}
-    hasBin: true
-    dependencies:
-      chalk: 4.1.2
-      commander: 5.1.0
-      debug: 4.3.4(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
 
   /find-replace@3.0.0:
     resolution: {integrity: sha512-6Tb2myMioCAgv5kfvP5/PkZZ/ntTpVK39fHY7WkWBgvbeE+VHd/tZuZ4mrC+bxh4cfOZeYKVPaJIZtZXV7GNCQ==}
@@ -10548,14 +10543,14 @@ packages:
   /find-yarn-workspace-root2@1.2.16:
     resolution: {integrity: sha512-hr6hb1w8ePMpPVUK39S4RlwJzi+xPLuVuG8XlwXU3KD5Yn3qgBWVfy3AzNlDhWvE1EORCE65/Qm26rFQt3VLVA==}
     dependencies:
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       pkg-dir: 4.2.0
     dev: true
 
   /find-yarn-workspace-root@2.0.0:
     resolution: {integrity: sha512-1IMnbjt4KzsQfnhnzNd8wUEgXZ44IzZaZmnLYx7D5FZlaHt2gW20Cri8Q+E/t5tIj4+epTBub+2Zxu/vNILzqQ==}
     dependencies:
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /flat-cache@3.2.0:
@@ -10766,11 +10761,6 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
-  /get-stream@3.0.0:
-    resolution: {integrity: sha512-GlhdIUuVakc8SJ6kK0zAFbiGzRFzNnY4jUuEbV9UROo4Y+0Ny4fjvcZFVTeDA4odpFyOQzaw6hXukJSq/f28sQ==}
-    engines: {node: '>=4'}
-    dev: false
-
   /get-stream@6.0.1:
     resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
     engines: {node: '>=10'}
@@ -10786,10 +10776,6 @@ packages:
       call-bind: 1.0.7
       es-errors: 1.3.0
       get-intrinsic: 1.2.4
-
-  /get-them-args@1.3.2:
-    resolution: {integrity: sha512-LRn8Jlk+DwZE4GTlDbT3Hikd1wSHgLMme/+7ddlqKd7ldwR6LjJgTVWzBnR01wnYGe4KgrXjg287RaI22UHmAw==}
-    dev: false
 
   /git-diff@2.0.6:
     resolution: {integrity: sha512-/Iu4prUrydE3Pb3lCBMbcSNIf81tgGt0W1ZwknnyF62t3tHmtiJTRj0f+1ZIhp3+Rh0ktz1pJVoa7ZXUCskivA==}
@@ -11672,11 +11658,6 @@ packages:
     dependencies:
       call-bind: 1.0.7
 
-  /is-stream@1.1.0:
-    resolution: {integrity: sha512-uQPm8kcs47jx38atAcWTVxyltQYoPT68y9aWYdV6yWXSyW8mzSat0TL6CiWdZeCdF3KrAvpVtnHbTv4RN+rqdQ==}
-    engines: {node: '>=0.10.0'}
-    dev: false
-
   /is-stream@2.0.1:
     resolution: {integrity: sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==}
     engines: {node: '>=8'}
@@ -11775,6 +11756,7 @@ packages:
   /isexe@3.1.1:
     resolution: {integrity: sha512-LpB/54B+/2J5hqQ7imZHfdU31OlgQqx7ZicVlkm9kzg9/w8GKLEcFfJl/t7DCEDueOyBAD6zCCwTO6Fzs0NoEQ==}
     engines: {node: '>=16'}
+    dev: true
 
   /isobject@2.1.0:
     resolution: {integrity: sha512-+OUdGJlgjOBZDfxnDjYYG6zp487z0JGNQq3cYQYg5f5hKR+syHMsaztzGeml/4kGG55CSpKSpWTY+jYGgsHLgA==}
@@ -12102,15 +12084,6 @@ packages:
     dependencies:
       json-buffer: 3.0.1
 
-  /kill-port-process@3.1.0:
-    resolution: {integrity: sha512-sVODd2xDGzN3OaLGhHcJPiaRwWK0QZc+bD5YQTo3Xgh1AUg1AZgDYDeqRI6ILg4AhWrmSpupGwQEFK1G0Sy2fw==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dependencies:
-      get-them-args: 1.3.2
-      pid-from-port: 1.1.3
-    dev: false
-
   /kind-of@6.0.3:
     resolution: {integrity: sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==}
     engines: {node: '>=0.10.0'}
@@ -12406,6 +12379,7 @@ packages:
     dependencies:
       pseudomap: 1.0.2
       yallist: 2.1.2
+    dev: true
 
   /lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
@@ -12549,11 +12523,11 @@ packages:
     engines: {node: '>= 0.6'}
     dev: false
 
-  /micromatch@4.0.5:
-    resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
+  /micromatch@4.0.8:
+    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
     dependencies:
-      braces: 3.0.2
+      braces: 3.0.3
       picomatch: 2.3.1
 
   /mime-db@1.52.0:
@@ -12843,13 +12817,6 @@ packages:
       semver: 7.5.4
       validate-npm-package-name: 5.0.1
     dev: true
-
-  /npm-run-path@2.0.2:
-    resolution: {integrity: sha512-lJxZYlT4DW/bRUtFh1MQIWqmLwQfAxnqWG4HhEdjMlkrJYnJn0Jrr2u3mgxqaWsdiBc76TYkTG/mhrnYTuzfHw==}
-    engines: {node: '>=4'}
-    dependencies:
-      path-key: 2.0.1
-    dev: false
 
   /npm-run-path@4.0.1:
     resolution: {integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==}
@@ -13230,11 +13197,6 @@ packages:
       p-map: 2.1.0
     dev: true
 
-  /p-finally@1.0.0:
-    resolution: {integrity: sha512-LICb2p9CB7FS+0eR1oqWnHhp0FljGLZCWBE9aix0Uye9W8LTQPwMTYVGWQWIw9RdQiDg4+epXQODwIYJtSJaow==}
-    engines: {node: '>=4'}
-    dev: false
-
   /p-limit@2.3.0:
     resolution: {integrity: sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==}
     engines: {node: '>=6'}
@@ -13410,11 +13372,6 @@ packages:
     resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
     engines: {node: '>=0.10.0'}
 
-  /path-key@2.0.1:
-    resolution: {integrity: sha512-fEHGKCSmUSDPv4uoj8AlD+joPlq3peND+HRYyxFz4KPw4z926S/b8rIuFs2FYJg3BwsxJf6A9/3eIdLaYC+9Dw==}
-    engines: {node: '>=4'}
-    dev: false
-
   /path-key@3.1.1:
     resolution: {integrity: sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==}
     engines: {node: '>=8'}
@@ -13474,13 +13431,6 @@ packages:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
     dev: true
-
-  /pid-from-port@1.1.3:
-    resolution: {integrity: sha512-OlE82n3yMOE5dY9RMOwxhoWefeMlxwk5IVxoj0sSzSFIlmvhN4obzTvO3s/d/b5JhcgXikjaspsy/HuUDTqbBg==}
-    engines: {node: '>=4'}
-    dependencies:
-      execa: 0.9.0
-    dev: false
 
   /pify@4.0.1:
     resolution: {integrity: sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==}
@@ -13670,6 +13620,7 @@ packages:
 
   /pseudomap@1.0.2:
     resolution: {integrity: sha512-b/YwNhb8lk1Zz2+bXXpS/LK9OisiZZ1SNsSLxN1x2OXVEhW2Ckr/7mWE5vrC1ZTiJlD9g19jWszTmJsB+oEpFQ==}
+    dev: true
 
   /psl@1.9.0:
     resolution: {integrity: sha512-E/ZsdU4HLs/68gYzgGTkMicWTLPdAftJLfJFlLUAAKZGkStNU72sZjT66SnMDVOfOWY/YAoiD7Jxa9iHvngcag==}
@@ -14475,6 +14426,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       shebang-regex: 1.0.0
+    dev: true
 
   /shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -14485,6 +14437,7 @@ packages:
   /shebang-regex@1.0.0:
     resolution: {integrity: sha512-wpoSFAxys6b2a2wHZ1XpDSgD7N9iVjg29Ph9uV/uaP9Ex/KXlkTZTeddxDPSYQpgvzKLGJke2UU0AzoGCjNIvQ==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /shebang-regex@3.0.0:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
@@ -14884,11 +14837,6 @@ packages:
   /strip-bom@3.0.0:
     resolution: {integrity: sha512-vavAMRXOgBVNF6nyEEmL3DBK19iRpDcoIwW+swQ+CbGiu7lju6t+JklA1MHweoWtadgt4ISVUsXLyDq34ddcwA==}
     engines: {node: '>=4'}
-
-  /strip-eof@1.0.0:
-    resolution: {integrity: sha512-7FCwGGmx8mD5xQd3RPUvnSpUXHM3BWuzjtpD4TXsfcZ9EL4azvVVUscFYwD9nx8Kh+uCBC00XBtAykoMHwTh8Q==}
-    engines: {node: '>=0.10.0'}
-    dev: false
 
   /strip-final-newline@3.0.0:
     resolution: {integrity: sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==}
@@ -16022,6 +15970,7 @@ packages:
     hasBin: true
     dependencies:
       isexe: 2.0.0
+    dev: true
 
   /which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
@@ -16036,6 +15985,7 @@ packages:
     hasBin: true
     dependencies:
       isexe: 3.1.1
+    dev: true
 
   /why-is-node-running@2.2.2:
     resolution: {integrity: sha512-6tSwToZxTOcotxHeA+qGCq1mVzKR3CwcJGmVcY+QE8SHy6TnpFnh8PAvPNHYr7EcuVeG0QSMxtYCuO1ta/G/oA==}
@@ -16157,6 +16107,7 @@ packages:
 
   /yallist@2.1.2:
     resolution: {integrity: sha512-ncTzHV7NvsQZkYe1DW7cbDLm0YpzHmZF5r/iyP3ZnQtMiJ+pjzisCiMNI+Sj+xQF5pXhSHxSB3uDbsBTzY/c2A==}
+    dev: true
 
   /yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}

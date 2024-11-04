@@ -1,13 +1,17 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
-import {findOrSelectTheme, findThemes} from './theme-selector.js'
+import {findOrSelectTheme, findThemes, newThemeOption} from './theme-selector.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {test, describe, vi, expect} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {promptThemeName} from '@shopify/cli-kit/node/themes/utils'
+import {createTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('./theme-selector/fetch.js')
 vi.mock('../services/local-storage.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/themes/utils')
+vi.mock('@shopify/cli-kit/node/themes/api')
 
 const session = {
   token: 'token',
@@ -15,14 +19,14 @@ const session = {
 }
 
 const storeThemes = [
-  theme(1, 'unpublished'),
-  theme(2, 'unpublished'),
-  theme(3, 'live'),
-  theme(4, 'unpublished'),
-  theme(5, 'unpublished'),
-  theme(6, 'unpublished'),
-  theme(7, 'development'),
-  theme(8, 'development'),
+  mockTheme(1, 'unpublished'),
+  mockTheme(2, 'unpublished'),
+  mockTheme(3, 'live'),
+  mockTheme(4, 'unpublished'),
+  mockTheme(5, 'unpublished'),
+  mockTheme(6, 'unpublished'),
+  mockTheme(7, 'development'),
+  mockTheme(8, 'development'),
 ]
 
 describe('findOrSelectTheme', () => {
@@ -30,7 +34,7 @@ describe('findOrSelectTheme', () => {
     // Given
     const selectedTheme = storeThemes[0]
     vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue(selectedTheme)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(() => Promise.resolve(selectedTheme))
 
     // When
     const theme = await findOrSelectTheme(session, {
@@ -45,9 +49,9 @@ describe('findOrSelectTheme', () => {
   test('flags development theme as [yours]', async () => {
     // Given
     const header = 'Select a theme to open'
-    const themes = [theme(7, 'development'), theme(8, 'development')]
+    const themes = [mockTheme(7, 'development'), mockTheme(8, 'development')]
     vi.mocked(fetchStoreThemes).mockResolvedValue(themes)
-    vi.mocked(renderAutocompletePrompt).mockResolvedValue(themes[0])
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(() => Promise.resolve(themes[0]))
     vi.mocked(getDevelopmentTheme).mockReturnValue('7')
 
     // When
@@ -60,8 +64,8 @@ describe('findOrSelectTheme', () => {
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: header,
       choices: [
-        {group: 'Development', label: 'theme 7 [yours]', value: themes[0]},
-        {group: 'Development', label: 'theme 8', value: themes[1]},
+        expect.objectContaining({group: 'Development', label: 'theme 7 [yours]'}),
+        expect.objectContaining({group: 'Development', label: 'theme 8'}),
       ],
     })
   })
@@ -78,6 +82,28 @@ describe('findOrSelectTheme', () => {
 
     // Then
     expect(theme).toBe(storeThemes[1])
+  })
+
+  test('returns a new theme when users select that option', async () => {
+    // Given
+    const expectedTheme = mockTheme(42, 'unpublished')
+    const expectedThemeName = 'my new theme'
+
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(newThemeOption(session).value)
+    vi.mocked(promptThemeName).mockResolvedValue(expectedThemeName)
+    vi.mocked(createTheme).mockResolvedValue(expectedTheme)
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
+
+    // When
+    const actualTheme = await findOrSelectTheme(session, {
+      create: true,
+      header: 'Select a theme to push',
+      filter: {},
+    })
+
+    // Then
+    expect(createTheme).toBeCalledWith({name: 'my new theme', role: 'unpublished'}, session)
+    expect(actualTheme).toBe(expectedTheme)
   })
 })
 
@@ -110,6 +136,6 @@ describe('findThemes', () => {
   })
 })
 
-function theme(id: number, role: string) {
+function mockTheme(id: number, role: string) {
   return {id, role, name: `theme ${id}`} as Theme
 }

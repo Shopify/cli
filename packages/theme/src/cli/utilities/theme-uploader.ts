@@ -1,15 +1,17 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
+import {createSyncingCatchError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {renderWarning, Task} from '@shopify/cli-kit/node/ui'
+import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
   nodelete?: boolean
   deferPartialWork?: boolean
+  backgroundWorkCatch?: (error: Error) => never
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -29,7 +31,7 @@ export function uploadTheme(
   options: UploadOptions = {},
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
-  const uploadResults: Map<string, Result> = new Map()
+  const uploadResults = new Map<string, Result>()
   const getProgress = (params: {current: number; total: number}) =>
     `[${Math.round((params.current / params.total) * 100)}%]`
 
@@ -46,11 +48,16 @@ export function uploadTheme(
 
   const workPromise = options?.deferPartialWork
     ? themeCreationPromise
-    : deleteJobPromise
-        .then((result) => result.promise)
-        .catch(() => {
-          renderWarning({headline: 'Failed to delete outdated files from remote theme.'})
-        })
+    : deleteJobPromise.then((result) => result.promise)
+
+  if (options?.backgroundWorkCatch) {
+    // Aggregate all backgorund work in a single promise and handle errors
+    Promise.all([
+      themeCreationPromise,
+      uploadJobPromise.then((result) => result.promise),
+      deleteJobPromise.then((result) => result.promise),
+    ]).catch(options.backgroundWorkCatch)
+  }
 
   return {
     uploadResults,
@@ -124,12 +131,19 @@ function buildDeleteJob(
   const remoteFilesToBeDeleted = getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
+  let failedDeleteAttempts = 0
   const progress = {current: 0, total: orderedFiles.length}
   const promise = Promise.all(
     orderedFiles.map((file) =>
-      deleteThemeAsset(theme.id, file.key, session).then(() => {
-        progress.current++
-      }),
+      deleteThemeAsset(theme.id, file.key, session)
+        .catch((error: Error) => {
+          failedDeleteAttempts++
+          if (failedDeleteAttempts > 3) throw error
+          createSyncingCatchError(file.key, 'delete')(error)
+        })
+        .finally(() => {
+          progress.current++
+        }),
     ),
   ).then(() => {
     progress.current = progress.total
@@ -365,7 +379,7 @@ async function handleBulkUpload(
       .join('\n')}`,
   )
 
-  const failedUploadResults = results.filter((result) => result.success === false)
+  const failedUploadResults = results.filter((result) => !result.success)
   if (failedUploadResults.length > 0) {
     outputDebug(
       `The following files failed to upload:\n${failedUploadResults.map((param) => `-${param.key}`).join('\n')}`,

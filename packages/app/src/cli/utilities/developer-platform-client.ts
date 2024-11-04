@@ -55,7 +55,6 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {FunctionUploadUrlGenerateMutation} from '../api/graphql/partners/generated/function-upload-url-generate.js'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export enum ClientName {
@@ -180,13 +179,13 @@ export interface DevSessionOptions {
 
 type WithUserErrors<T> = T & {
   userErrors: {
-    field: string[]
+    field?: string[] | null
     message: string
   }[]
 }
 
 export type AssetUrlSchema = WithUserErrors<{
-  assetUrl: string
+  assetUrl?: string | null
 }>
 
 export enum Flag {
@@ -204,11 +203,11 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
 }
 
 export interface DeveloperPlatformClient {
-  clientName: string
-  webUiName: string
-  supportsAtomicDeployments: boolean
-  requiresOrganization: boolean
-  supportsDevSessions: boolean
+  readonly clientName: string
+  readonly webUiName: string
+  readonly supportsAtomicDeployments: boolean
+  readonly requiresOrganization: boolean
+  readonly supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
@@ -230,7 +229,6 @@ export interface DeveloperPlatformClient {
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
-  functionUploadUrl: () => Promise<FunctionUploadUrlGenerateMutation>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>

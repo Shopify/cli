@@ -1,17 +1,21 @@
 import {appFlags} from '../../flags.js'
 import {dev, DevOptions} from '../../services/dev.js'
-import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Dev extends Command {
+export default class Dev extends AppCommand {
   static summary = 'Run the app.'
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).
+
+> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must \`deploy\` your app.
 
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run \`dev\` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using \`dev --reset\` to go through all of them again:
 
@@ -131,18 +135,13 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for managing theme app extensions.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
     return 'app dev stop'
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Dev)
 
     if (!flags['api-key']) {
@@ -165,12 +164,23 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     await checkFolderIsValidApp(flags.path)
 
-    const devOptions: DevOptions = {
+    const appContextResult = await linkedAppContext({
       directory: flags.path,
-      configName: flags.config,
-      apiKey,
+      clientId: apiKey,
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
+    const store = await storeContext({
+      appContextResult,
       storeFqdn: flags.store,
-      reset: flags.reset,
+      forceReselectStore: flags.reset,
+    })
+
+    const devOptions: DevOptions = {
+      ...appContextResult,
+      store,
+      directory: flags.path,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig,
@@ -183,9 +193,9 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      devPreview: !flags.legacy,
     }
 
     await dev(devOptions)
+    return {app: appContextResult.app}
   }
 }

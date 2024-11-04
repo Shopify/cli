@@ -1,9 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
-import {
-  PreviewThemeAppExtensionsProcess as PreviewThemeAppExtensionsNextProcess,
-  setupPreviewThemeAppExtensionsProcess as setupPreviewThemeAppExtensionsProcessNext,
-} from './theme-app-extension-next.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
@@ -12,7 +8,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
+import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -31,7 +27,6 @@ interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: st
 type DevProcessDefinition =
   | SendWebhookProcess
   | PreviewThemeAppExtensionsProcess
-  | PreviewThemeAppExtensionsNextProcess
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
@@ -51,11 +46,9 @@ interface DevNetworkOptions {
 }
 
 export interface DevConfig {
-  localApp: AppInterface
+  localApp: AppLinkedInterface
   remoteAppUpdated: boolean
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {
-    apiSecret?: string | undefined
-  }
+  remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
@@ -83,7 +76,7 @@ export async function setupDevProcesses({
   graphiqlUrl: string | undefined
 }> {
   const apiKey = remoteApp.apiKey
-  const apiSecret = (remoteApp.apiSecret as string) ?? ''
+  const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
   const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
@@ -141,24 +134,13 @@ export async function setupDevProcesses({
           developerPlatformClient,
           proxyUrl: network.proxyUrl,
         }),
-    commandOptions.devPreview
-      ? await setupPreviewThemeAppExtensionsProcessNext({
-          remoteApp,
-          localApp,
-          storeFqdn,
-          developerPlatformClient,
-          theme: commandOptions.theme,
-          themeExtensionPort: commandOptions.themeExtensionPort,
-        })
-      : await setupPreviewThemeAppExtensionsProcess({
-          allExtensions: localApp.allExtensions,
-          storeFqdn,
-          apiKey,
-          developerPlatformClient,
-          theme: commandOptions.theme,
-          themeExtensionPort: commandOptions.themeExtensionPort,
-          notify: commandOptions.notify,
-        }),
+    await setupPreviewThemeAppExtensionsProcess({
+      remoteApp,
+      localApp,
+      storeFqdn,
+      theme: commandOptions.theme,
+      themeExtensionPort: commandOptions.themeExtensionPort,
+    }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,
       backendPort: network.backendPort,

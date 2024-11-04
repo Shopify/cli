@@ -153,14 +153,14 @@ export async function resolveFramework(rootDirectory: string): Promise<string> {
 
   const matchedFramework = frameworks.find(
     (framework) =>
-      (!framework.detectors?.some ||
-        framework.detectors?.some?.reduce(
+      (!framework.detectors.some ||
+        framework.detectors.some.reduce(
           (_previousDetectorsMatch: boolean, detector) =>
             matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles)),
           false,
         )) &&
-      (!framework.detectors?.every ||
-        framework.detectors?.every?.reduce(
+      (!framework.detectors.every ||
+        framework.detectors.every.reduce(
           (previousDetectorsMatch: boolean, detector) =>
             previousDetectorsMatch
               ? matchDetector(detector, loadFwConfigFile(rootDirectory, detector.path, fwConfigFiles))
@@ -175,6 +175,7 @@ export async function resolveFramework(rootDirectory: string): Promise<string> {
 function matchDetector(detector: FrameworkDetectionPattern, fwConfigFiles: {[key: string]: string | undefined} = {}) {
   if (!fwConfigFiles[detector.path]) return false
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return !detector.matchContent || new RegExp(detector.matchContent).test(fwConfigFiles[detector.path]!)
 }
 

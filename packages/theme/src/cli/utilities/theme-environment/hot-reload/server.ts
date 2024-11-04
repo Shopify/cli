@@ -1,7 +1,6 @@
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
-import {prettifySyntaxErrors} from '../html.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {
   createError,
@@ -56,7 +55,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
-    ? `${joinPath('templates', currentRoute?.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
+    ? `${joinPath('templates', currentRoute.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
   const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
 
@@ -94,12 +93,13 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
-    const isAsset = fileKey.startsWith('assets/')
 
-    if (isAsset) {
+    if (isAsset(fileKey)) {
       if (extension === '.liquid') {
         // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        onSync(() => triggerHotReload(fileKey, ctx))
+        onSync(() => {
+          triggerHotReload(fileKey.replace(extension, ''), ctx)
+        })
       } else {
         // Otherwise, just full refresh directly:
         triggerHotReload(fileKey, ctx)
@@ -112,16 +112,28 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       })
     } else {
       // Unknown files outside of assets. Wait for sync and reload:
-      onSync(() => triggerHotReload(fileKey, ctx))
+      onSync(() => {
+        triggerHotReload(fileKey, ctx)
+      })
+    }
+  }
+
+  const handleFileDelete = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
+    // Liquid assets are proxied, so we need to wait until the file has been deleted on the server before reloading
+    const isLiquidAsset = isAsset(fileKey) && extname(fileKey) === '.liquid'
+    if (isLiquidAsset) {
+      onSync?.(() => {
+        triggerHotReload(fileKey.replace('.liquid', ''), ctx)
+      })
+    } else {
+      sectionNamesByFile.delete(fileKey)
+      triggerHotReload(fileKey, ctx)
     }
   }
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
-  ctx.localThemeFileSystem.addEventListener('unlink', ({fileKey}) => {
-    sectionNamesByFile.delete(fileKey)
-    triggerHotReload(fileKey, ctx)
-  })
+  ctx.localThemeFileSystem.addEventListener('unlink', handleFileDelete)
 
   // Once the initial files are loaded, read all the JSON files so that
   // we gather the existing section names early. This way, when a section
@@ -159,7 +171,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
       eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
         eventStream.push(JSON.stringify(event)).catch((error: Error) => {
-          renderWarning({headline: 'Failed to send HotReload event.', body: error?.stack})
+          renderWarning({headline: 'Failed to send HotReload event.', body: error.stack})
         })
       })
 
@@ -207,7 +219,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       // the updated section ID and include them in replaceTemplates:
       for (const fileKey of inMemoryTemplateFiles) {
         if (fileKey.endsWith('.json')) {
-          for (const [_type, name] of sectionNamesByFile.get(fileKey) || []) {
+          for (const [_type, name] of sectionNamesByFile.get(fileKey) ?? []) {
             // Section ID is something like `template_12345__<section-name>`:
             if (sectionId.endsWith(`__${name}`)) {
               const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
@@ -238,8 +250,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
             })
           }
 
-          const html = await patchRenderingResponse(ctx, event, response)
-          return prettifySyntaxErrors(html)
+          return patchRenderingResponse(ctx, event, response)
         })
         .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
           let headline = `Failed to render section on Hot Reload with status ${error.statusCode} (${error.statusMessage}).`
@@ -259,7 +270,8 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 function triggerHotReload(key: string, ctx: DevServerContext) {
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
-    return emitHotReloadEvent({type: 'full', key})
+    emitHotReloadEvent({type: 'full', key})
+    return
   }
 
   const [type] = key.split('/')
@@ -281,7 +293,7 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
     const content = ctx.localThemeFileSystem.files.get(key)?.value
     if (content) {
       const sections: SectionGroup | undefined = parseJSON(content, null)?.sections
-      for (const sectionName of Object.keys(sections || {})) {
+      for (const sectionName of Object.keys(sections ?? {})) {
         sectionsToUpdate.add(sectionName)
       }
     }
@@ -301,6 +313,8 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
 
   if (sectionsToUpdate.size > 0) {
     emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+  } else {
+    emitHotReloadEvent({type: 'full', key})
   }
 }
 
@@ -310,4 +324,8 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
  */
 export function injectHotReloadScript(html: string) {
   return html.replace(/<\/head>/, `${getClientScripts()}</head>`)
+}
+
+function isAsset(key: string) {
+  return key.startsWith('assets/')
 }

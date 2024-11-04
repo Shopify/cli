@@ -31,6 +31,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         metafields: targeting.metafields ?? config.metafields ?? [],
         default_placement_reference: targeting.default_placement,
         capabilities: targeting.capabilities,
+        preloads: targeting.preloads ?? {},
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -100,7 +101,7 @@ Please check the module path for ${target}`.value,
       )
     }
 
-    if (uniqueTargets.indexOf(target) === -1) {
+    if (!uniqueTargets.includes(target)) {
       uniqueTargets.push(target)
     } else {
       duplicateTargets.push(target)
