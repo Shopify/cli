@@ -5,10 +5,9 @@ import {
 } from './storefront-session.js'
 import {describe, expect, test, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/ui')
 
 describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {
@@ -49,11 +48,10 @@ describe('Storefront API', () => {
       vi.mocked(fetch).mockResolvedValue(response({status: 302, headers: {location: 'https://store.myshopify.se'}}))
 
       // When
-      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
+      const isProtected = isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
-      expect(isProtected).toBe(false)
-      expect(renderWarning).toHaveBeenCalled()
+      await expect(isProtected).rejects.toThrow(AbortError)
     })
   })
 

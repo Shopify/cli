@@ -3,7 +3,6 @@ import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
@@ -16,9 +15,9 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
     if (redirectLocation === `${prependHttps(storeURL)}/password`) {
       return true
     } else if (redirectLocation) {
-      renderWarning({
-        body: `${storeURL} redirected to ${redirectLocation}. Please update the --store flag as this may cause issues.`,
-      })
+      throw new AbortError(
+        `${storeURL} redirected to ${redirectLocation}. Please update the --store flag as this may cause issues.`,
+      )
     }
   }
 
