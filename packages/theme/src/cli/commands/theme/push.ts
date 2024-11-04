@@ -110,7 +110,6 @@ export default class Push extends ThemeCommand {
       path: flags.path,
       password: flags.password,
       store: flags.store,
-      environment: flags.environment,
       theme: flags.theme,
       development: flags.development,
       live: flags.live,
