@@ -39,10 +39,12 @@ export async function ensureExtensionsIds(
   const identifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
 
-  const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, UIModulesMap)
-  const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, FlowModulesMap)
-  const paymentsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, PaymentModulesMap)
-  const marketingToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, MarketingModulesMap)
+  const allRemoteExtensions = remoteExtensions.concat(dashboardOnlyExtensions)
+
+  const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, UIModulesMap)
+  const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, FlowModulesMap)
+  const paymentsToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, PaymentModulesMap)
+  const marketingToMigrate = getModulesToMigrate(localExtensions, allRemoteExtensions, identifiers, MarketingModulesMap)
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
