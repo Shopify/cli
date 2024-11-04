@@ -1,0 +1,19 @@
+query getThemeFileChecksums($id: ID!, $after: String) {
+  theme(id: $id) {
+    files(first: 250, after: $after) {
+      nodes {
+        filename
+        size
+        checksumMd5
+      }
+      userErrors {
+        filename
+        code
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}

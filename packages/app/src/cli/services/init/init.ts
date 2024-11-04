@@ -5,6 +5,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadApp} from '../../models/app/loader.js'
 import {SelectAppOrNewAppNameResult} from '../../commands/app/init.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {
   findUpAndReadPackageJson,
   lockfiles,
@@ -197,8 +198,10 @@ async function init(options: InitOptions) {
 
   let app: OrganizationApp
   if (options.selectedAppOrNameResult.result === 'new') {
-    // Load the local app to get the creation options. No need for specs since we only care about Creation Options.
-    const localApp = await loadApp({specifications: [], directory: outputDirectory, userProvidedConfigName: undefined})
+    // Load the local app to get the creation options.
+    // NOTE: need the specs to load the scopes, if we ever remove the local specs, we need to find a way to do this without them.
+    const specifications = await loadLocalExtensionsSpecifications()
+    const localApp = await loadApp({specifications, directory: outputDirectory, userProvidedConfigName: undefined})
     const org = options.selectedAppOrNameResult.org
     app = await options.developerPlatformClient.createApp(org, options.name, localApp.creationDefaultOptions())
   } else {
