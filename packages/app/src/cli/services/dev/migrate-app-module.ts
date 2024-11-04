@@ -31,6 +31,7 @@ export const MarketingModulesMap = {
 export const FlowModulesMap = {
   flow_action: ['flow_action_definition'],
   flow_trigger: ['flow_trigger_definition'],
+  flow_trigger_lifecycle_callback: ['flow_trigger_discovery_webhook'],
 }
 
 export const UIModulesMap = {
