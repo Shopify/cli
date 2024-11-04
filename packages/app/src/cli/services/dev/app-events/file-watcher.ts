@@ -7,6 +7,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {debounce} from '@shopify/cli-kit/common/function'
 import {Writable} from 'stream'
 
 /**
@@ -55,7 +56,7 @@ export interface OutputContextOptions {
 export async function startFileWatcher(
   app: AppInterface,
   options: OutputContextOptions,
-  onChange: (events: WatcherEvent) => void,
+  onChange: (events: WatcherEvent[]) => void,
 ) {
   const {default: chokidar} = await import('chokidar')
 
@@ -63,6 +64,39 @@ export async function startFileWatcher(
   const extensionDirectories = [...(app.configuration.extension_directories ?? ['extensions'])].map((directory) => {
     return joinPath(app.directory, directory)
   })
+
+  let currentEvents: WatcherEvent[] = []
+
+  /**
+   * Debounced function to emit the accumulated events.
+   * This function will be called at most once every 500ms to avoid emitting too many events in a short period.
+   */
+  const debouncedEmit = debounce(emitEvents, 500)
+
+  /**
+   * Emits the accumulated events and resets the current events list.
+   * It also logs the number of events emitted and their paths for debugging purposes.
+   */
+  function emitEvents() {
+    const events = currentEvents
+    currentEvents = []
+    const message = `🔉 ${events.length} EVENTS EMITTED in files: ${events.map((event) => event.path).join('\n')}`
+    outputDebug(message, options.stdout)
+    onChange(events)
+  }
+
+  /**
+   * Adds a new event to the current events list and schedules the debounced emit function.
+   * If the event is already in the list, it will not be added again.
+   *
+   * @param event - The event to be added
+   */
+  function pushEvent(event: WatcherEvent) {
+    // If the event is already in the list, don't push it again
+    if (currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
+    currentEvents.push(event)
+    debouncedEmit()
+  }
 
   // Current active extension paths (not defined in the main app configuration file)
   // If a change happens outside of these paths, it will be ignored unless is for a new extension being created
@@ -77,8 +111,9 @@ export async function startFileWatcher(
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
+  // PENDING: Use .gitgnore from app and extensions to ignore files.
   const watcher = chokidar.watch(watchPaths, {
-    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
+    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
     persistent: true,
     ignoreInitial: true,
   })
@@ -102,9 +137,9 @@ export async function startFileWatcher(
     switch (event) {
       case 'change':
         if (isToml) {
-          onChange({type: 'extensions_config_updated', path, extensionPath, startTime})
+          pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
-          onChange({type: 'file_updated', path, extensionPath, startTime})
+          pushEvent({type: 'file_updated', path, extensionPath, startTime})
         }
         break
       case 'add':
@@ -112,7 +147,7 @@ export async function startFileWatcher(
         // If a toml file was added, a new extension(s) is being created.
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isToml) {
-          onChange({type: 'file_created', path, extensionPath, startTime})
+          pushEvent({type: 'file_created', path, extensionPath, startTime})
           break
         }
         let totalWaitedTime = 0
@@ -124,7 +159,7 @@ export async function startFileWatcher(
           } else {
             clearInterval(intervalId)
             extensionPaths.push(realPath)
-            onChange({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
+            pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
           }
           if (totalWaitedTime >= 20000) {
             clearInterval(intervalId)
@@ -137,17 +172,17 @@ export async function startFileWatcher(
         if (path.endsWith(configurationFileNames.lockFile)) break
 
         if (isConfigAppPath) {
-          onChange({type: 'app_config_deleted', path, extensionPath, startTime})
+          pushEvent({type: 'app_config_deleted', path, extensionPath, startTime})
         } else if (isToml) {
           // When a toml is deleted, we can consider every extension in that folder was deleted.
           extensionPaths = extensionPaths.filter((extPath) => extPath !== extensionPath)
-          onChange({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
+          pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
         } else {
           // This could be an extension delete event, Wait 500ms to see if the toml is deleted or not.
           setTimeout(() => {
             // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
             if (!extensionPaths.includes(extensionPath)) return
-            onChange({type: 'file_deleted', path, extensionPath, startTime})
+            pushEvent({type: 'file_deleted', path, extensionPath, startTime})
           }, 500)
         }
         break
