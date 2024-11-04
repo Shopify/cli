@@ -66,6 +66,8 @@ export const serializeCommerceObjectField = (field: ConfigField, type: FlowExten
   }
   if (commerceObject === 'marketing_activity') {
     serializedField.uiType = 'marketing-activity-id'
+    serializedField.marketingActivityCreateUrl = field.marketingActivityCreateUrl
+    serializedField.marketingActivityDeleteUrl = field.marketingActivityDeleteUrl
   }
 
   if (type === 'flow_action') {
