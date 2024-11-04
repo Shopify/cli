@@ -62,6 +62,8 @@ export const FieldSchema = zod.object({
   default_value: zod.any().optional(),
   type: zod.string(),
   validations: zod.array(zod.any()).optional(),
+  marketingActivityCreateUrl: zod.string().optional(),
+  marketingActivityDeleteUrl: zod.string().optional(),
 })
 
 const SettingsSchema = zod.object({

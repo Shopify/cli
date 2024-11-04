@@ -1,8 +1,8 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
-import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
+import {AppEventWatcher, EventType, reloadApp} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -18,12 +18,13 @@ interface DevSessionOptions {
   storeFqdn: string
   apiKey: string
   url: string
-  app: AppInterface
+  app: AppLinkedInterface
   organizationId: string
   appId: string
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
+  url: string
   bundlePath: string
   stdout: Writable
   stderr: Writable
@@ -59,7 +60,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient, app} = options
+  const {developerPlatformClient} = options
+
+  // Reload the app before starting the dev session, at this point the configuration has changed (e.g. application_url)
+  const app = await reloadApp(options.app, {stderr, stdout, signal})
 
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
@@ -67,7 +71,12 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
 
+<<<<<<< HEAD
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
+=======
+  const processOptions = {...options, stderr, stdout, signal, bundlePath, app}
+  const appWatcher = new AppEventWatcher(app, processOptions)
+>>>>>>> main
 
   outputWarn('-----> Using DEV SESSIONS <-----')
   processOptions.stdout.write('Preparing dev session...')

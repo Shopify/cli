@@ -1,7 +1,7 @@
 import {OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {AppEvent, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {appDiff} from './app-diffing.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
@@ -18,7 +18,7 @@ import {basename} from '@shopify/cli-kit/node/path'
  */
 export async function handleWatcherEvents(
   events: WatcherEvent[],
-  app: AppInterface,
+  app: AppLinkedInterface,
   options: OutputContextOptions,
 ): Promise<AppEvent | undefined> {
   if (events[0] === undefined) return undefined
@@ -41,7 +41,7 @@ type Handler = (input: HandlerInput) => AppEvent
 
 interface HandlerInput {
   event: WatcherEvent
-  app: AppInterface
+  app: AppLinkedInterface
   extensions: ExtensionInstance[]
   options: OutputContextOptions
 }
@@ -114,7 +114,7 @@ function AppConfigDeletedHandler(_input: HandlerInput): AppEvent {
  * - When an extension toml is updated
  */
 async function ReloadAppHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
+  const newApp = (await reloadApp(app, options)) as AppLinkedInterface
   const diff = appDiff(app, newApp, true)
   const createdEvents = diff.created.map((ext) => ({type: EventType.Created, extension: ext}))
   const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
