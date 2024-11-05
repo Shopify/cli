@@ -89,6 +89,7 @@ export class AppEventWatcher extends EventEmitter {
   private readonly options: OutputContextOptions
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
+  private started = false
 
   constructor(app: AppLinkedInterface, appURL?: string, options?: OutputContextOptions, buildOutputPath?: string) {
     super()
@@ -105,6 +106,8 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   async start() {
+    if (this.started) return
+    this.started = true
     // If there is a previous build folder, delete it
     if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
     await mkdir(this.buildOutputPath)
@@ -145,6 +148,8 @@ export class AppEventWatcher extends EventEmitter {
           this.options.stderr.write(`Error handling event: ${error.message}`)
         })
     })
+
+    this.emit('ready')
   }
 
   /**
@@ -156,6 +161,20 @@ export class AppEventWatcher extends EventEmitter {
   onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.addListener('all', listener)
+    return this
+  }
+
+  /**
+   * Register as a listener for the start event.
+   * This event is emitted when the watcher is ready to start processing events. (after the initial extension build)
+   *
+   * @param listener - The listener function to add
+   * @returns The AppEventWatcher instance
+   */
+  onStart(listener: () => Promise<void> | void) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.addListener('ready', listener)
+    if (this.started) this.emit('ready')
     return this
   }
 
