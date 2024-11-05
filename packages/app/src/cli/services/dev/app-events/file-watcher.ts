@@ -118,18 +118,7 @@ export async function startFileWatcher(
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
   // Read .gitignore files from extension directories and add the patterns to the ignored list
-  const customGitIgnoredPatterns = extensionPaths
-    .map((dir) => {
-      const gitIgnorePath = joinPath(dir, '.gitignore')
-      if (!fileExistsSync(gitIgnorePath)) return []
-      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
-      return gitIgnoreContent
-        .split('\n')
-        .map((pattern) => pattern.trim())
-        .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
-        .map((pattern) => joinPath(dir, pattern))
-    })
-    .flat()
+  const customGitIgnoredPatterns = getCustomGitIgnorePatterns(extensionPaths)
 
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   // PENDING: Use .gitgnore from app and extensions to ignore files.
@@ -233,4 +222,25 @@ const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptio
       .then(() => outputDebug(`File watching closed`, options.stdout))
       .catch((error: Error) => outputDebug(`File watching failed to close: ${error.message}`, options.stderr))
   })
+}
+
+/**
+ * Returns the custom gitignore patterns for the given extension directories.
+ *
+ * @param extensionDirectories - The extension directories to get the custom gitignore patterns from
+ * @returns The custom gitignore patterns
+ */
+function getCustomGitIgnorePatterns(extensionDirectories: string[]): string[] {
+  return extensionDirectories
+    .map((dir) => {
+      const gitIgnorePath = joinPath(dir, '.gitignore')
+      if (!fileExistsSync(gitIgnorePath)) return []
+      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+      return gitIgnoreContent
+        .split('\n')
+        .map((pattern) => pattern.trim())
+        .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
+        .map((pattern) => joinPath(dir, pattern))
+    })
+    .flat()
 }
