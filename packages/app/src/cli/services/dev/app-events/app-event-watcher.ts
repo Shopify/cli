@@ -168,7 +168,7 @@ export class AppEventWatcher extends EventEmitter {
 
   /**
    * Register as a listener for the start event.
-   * This event is emitted when the watcher is ready to start processing events. (after the initial extension build)
+   * This event is emitted when the watcher is ready to start processing events (after the initial extension build).
    *
    * @param listener - The listener function to add
    * @returns The AppEventWatcher instance
