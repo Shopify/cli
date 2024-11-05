@@ -27,10 +27,11 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export const CONFIG_EXTENSION_IDS = [
   AppAccessSpecIdentifier,
@@ -110,6 +111,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isESBuildExtension() {
     return this.features.includes('esbuild')
+  }
+
+  get isSourceMapGeneratingExtension() {
+    return this.features.includes('generates_source_maps')
   }
 
   get isAppConfigExtension() {
@@ -219,6 +224,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.buildValidation(this)
   }
 
+  async keepBuiltSourcemapsLocally(bundleDirectory: string, extensionId: string): Promise<void> {
+    if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
+
+    const inputPath = joinPath(bundleDirectory, extensionId)
+
+    const pathsToMove = await glob(`**/${this.handle}.js.map`, {
+      cwd: inputPath,
+      absolute: true,
+      followSymbolicLinks: false,
+    })
+
+    const pathToMove = pathsToMove[0]
+    if (pathToMove === undefined) return Promise.resolve()
+
+    const outputPath = joinPath(this.directory, 'dist', basename(pathToMove))
+    await moveFile(pathToMove, outputPath, {overwrite: true})
+    outputDebug(`Source map for ${this.localIdentifier} created: ${outputPath}`)
+  }
+
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
@@ -230,7 +254,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (this.specification.getBundleExtensionStdinContent) {
       return this.specification.getBundleExtensionStdinContent(this.configuration)
     }
-    const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
+    const relativeImportPath = this.entrySourceFilePath.replace(this.directory, '')
     return `import '.${relativeImportPath}';`
   }
 
@@ -291,7 +315,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isJavaScript() {
-    return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
+    return Boolean(this.entrySourceFilePath.endsWith('.js') || this.entrySourceFilePath.endsWith('.ts'))
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
@@ -324,6 +348,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }
+
+    await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId)
   }
 
   getOutputFolderId(extensionId?: string) {
