@@ -814,6 +814,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
 
+  async getCreateDevStoreLink(orgId: string): Promise<string> {
+    const url = `https://${await developerDashboardFqdn()}/dashboard/${orgId}/stores`
+    return (
+      `Looks like you don't have a dev store in the organization you selected. ` +
+      `Keep going — create a dev store on the Developer Dashboard:\n${url}\n`
+    )
+  }
+
   private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
     return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
   }
