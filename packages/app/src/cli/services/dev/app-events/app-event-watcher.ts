@@ -9,6 +9,8 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {formatMessagesSync, Message} from 'esbuild'
 import EventEmitter from 'events'
 
 /**
@@ -179,20 +181,29 @@ export class AppEventWatcher extends EventEmitter {
    */
   private async buildExtensions(extensions: ExtensionInstance[]): Promise<ExtensionBuildResult[]> {
     const promises = extensions.map(async (ext) => {
-      try {
-        if (this.esbuildManager.contexts[ext.handle]) {
-          const result = await this.esbuildManager.contexts[ext.handle]?.rebuild()
-          if (result?.errors?.length) throw new Error(result?.errors.map((err) => err.text).join('\n'))
-        } else {
-          await this.buildExtension(ext)
+      return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
+        try {
+          if (this.esbuildManager.contexts[ext.handle]) {
+            await this.esbuildManager.contexts[ext.handle]?.rebuild()
+          } else {
+            await this.buildExtension(ext)
+          }
+          return {status: 'ok', handle: ext.handle} as const
+          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+          const errors: Message[] = error.errors ?? []
+          if (errors.length) {
+            const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: true})
+            formattedErrors.forEach((error) => {
+              this.options.stderr.write(error)
+            })
+          } else {
+            this.options.stderr.write(error.message)
+          }
+          return {status: 'error', error: error.message, handle: ext.handle} as const
         }
-        return {status: 'ok', handle: ext.handle} as const
-        // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        return {status: 'error', error: error.message, handle: ext.handle} as const
-      }
+      })
     })
-    // ESBuild errors are already logged by the ESBuild bundler
     return Promise.all(promises)
   }
 

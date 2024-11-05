@@ -57,6 +57,7 @@ export class ESBuildContextManager {
           resolveDir: extension.directory,
           loader: 'tsx',
         },
+        logLevel: 'silent',
         stderr: this.stderr ?? process.stderr,
         stdout: this.stdout ?? process.stdout,
         sourceMaps: true,
