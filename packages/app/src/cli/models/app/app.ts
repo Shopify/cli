@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'

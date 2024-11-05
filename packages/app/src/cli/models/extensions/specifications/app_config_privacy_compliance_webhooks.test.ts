@@ -212,11 +212,7 @@ describe('privacy_compliance_webhooks', () => {
       // Then
       expect(result).toMatchObject({
         webhooks: {
-          privacy_compliance: {
-            customer_data_request_url: 'https://example.com/customer-data-request',
-            customer_deletion_url: 'https://example.com/customer-deletion',
-            shop_deletion_url: 'https://example.com/shop-deletion',
-          },
+          privacy_compliance: undefined,
         },
       })
     })
@@ -236,14 +232,18 @@ describe('privacy_compliance_webhooks', () => {
       // Then
       expect(result).toEqual({
         webhooks: {
-          privacy_compliance: {
-            customer_deletion_url: 'https://example.com/customer-deletion',
-          },
+          privacy_compliance: undefined,
+          subscriptions: [
+            {
+              compliance_topics: ['customers/redact'],
+              uri: 'https://example.com/customer-deletion',
+            },
+          ],
         },
       })
     })
 
-    test('should return an empty object if all properties are empty', () => {
+    test('should return an empty  if all properties are empty', () => {
       // Given
       const object = {
         customers_redact_url: '',

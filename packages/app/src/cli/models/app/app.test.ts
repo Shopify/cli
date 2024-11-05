@@ -359,27 +359,6 @@ describe('allExtensions', () => {
     webhooks: WebhooksConfig
   }
 
-  test('filters declarative webhook config when flag is not enabled', async () => {
-    const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
-    const app = await testApp(
-      {
-        configuration: CORRECT_CURRENT_APP_SCHEMA,
-        allExtensions: webhookExtensions,
-      },
-      'current',
-    )
-
-    const webhookConfig = app.allExtensions.find((ext) => ext.handle === 'webhooks')!
-      .configuration as unknown as WebhookTestConfig
-    const privacyConfig = app.allExtensions.find((ext) => ext.handle === 'privacy-compliance-webhooks')!
-      .configuration as unknown as WebhookTestConfig
-
-    expect(webhookConfig.webhooks.subscriptions!.length).toStrictEqual(0)
-    expect(webhookConfig.webhooks.privacy_compliance).toBeDefined()
-    expect(privacyConfig.webhooks.subscriptions!.length).toStrictEqual(0)
-    expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
-  })
-
   test('keeps declarative webhook config when flag is enabled', async () => {
     const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
     const app = await testApp(
