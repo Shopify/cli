@@ -90,6 +90,7 @@ export class AppEventWatcher extends EventEmitter {
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
   private started = false
+  private ready = false
 
   constructor(app: AppLinkedInterface, appURL?: string, options?: OutputContextOptions, buildOutputPath?: string) {
     super()
@@ -149,6 +150,7 @@ export class AppEventWatcher extends EventEmitter {
         })
     })
 
+    this.ready = true
     this.emit('ready')
   }
 
@@ -174,7 +176,7 @@ export class AppEventWatcher extends EventEmitter {
   onStart(listener: () => Promise<void> | void) {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.addListener('ready', listener)
-    if (this.started) this.emit('ready')
+    if (this.ready) this.emit('ready')
     return this
   }
 
