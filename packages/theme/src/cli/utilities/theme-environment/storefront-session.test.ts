@@ -5,7 +5,6 @@ import {
 } from './storefront-session.js'
 import {describe, expect, test, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/http')
 
@@ -43,26 +42,28 @@ describe('Storefront API', () => {
       })
     })
 
-    test('returns false when store redirects to a non-password page / different domain', async () => {
+    test('returns false when store redirects to a different domain', async () => {
       // Given
       vi.mocked(fetch).mockResolvedValue(response({status: 302, headers: {location: 'https://store.myshopify.se'}}))
 
       // When
-      const isProtected = isStorefrontPasswordProtected('store.myshopify.com')
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
-      await expect(isProtected).rejects.toThrow(AbortError)
+      expect(isProtected).toBe(false)
     })
 
-    test('returns false when store redirects via 301 to a non-password page / different domain', async () => {
+    test('returns false when store redirects to a different URI', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 301, headers: {location: 'https://store.myshopify.se'}}))
+      vi.mocked(fetch).mockResolvedValue(
+        response({status: 302, headers: {location: 'https://store.myshopify.com/random'}}),
+      )
 
       // When
-      const isProtected = isStorefrontPasswordProtected('store.myshopify.com')
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
 
       // Then
-      await expect(isProtected).rejects.toThrow(AbortError)
+      expect(isProtected).toBe(false)
     })
   })
 

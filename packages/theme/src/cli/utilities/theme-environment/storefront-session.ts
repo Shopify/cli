@@ -10,18 +10,7 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
     redirect: 'manual',
   })
 
-  if (response.status !== 302 && response.status !== 301) {
-    return false
-  }
-
-  const redirectLocation = response.headers.get('location')
-  if (redirectLocation === `${prependHttps(storeURL)}/password`) {
-    return true
-  } else {
-    throw new AbortError(
-      `${storeURL} redirected to ${redirectLocation}. Please update the --store flag as this may cause issues.`,
-    )
-  }
+  return response.headers.get('location') === `${prependHttps(storeURL)}/password`
 }
 
 /**
