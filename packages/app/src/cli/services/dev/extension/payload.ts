@@ -15,9 +15,11 @@ export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
 
 export async function getUIExtensionPayload(
   extension: ExtensionInstance,
+  bundlePath: string,
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
   return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
+    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
@@ -27,19 +29,19 @@ export async function getUIExtensionPayload(
         main: {
           name: 'main',
           url: `${url}/assets/${extension.outputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(extension.outputPath)) ?? 0,
+          lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
         },
       },
       capabilities: {
-        blockProgress: extension.configuration.capabilities?.block_progress || false,
-        networkAccess: extension.configuration.capabilities?.network_access || false,
-        apiAccess: extension.configuration.capabilities?.api_access || false,
+        blockProgress: extension.configuration.capabilities?.block_progress ?? false,
+        networkAccess: extension.configuration.capabilities?.network_access ?? false,
+        apiAccess: extension.configuration.capabilities?.api_access ?? false,
         collectBuyerConsent: {
-          smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
-          customerPrivacy: extension.configuration.capabilities?.collect_buyer_consent?.customer_privacy || false,
+          smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing ?? false,
+          customerPrivacy: extension.configuration.capabilities?.collect_buyer_consent?.customer_privacy ?? false,
         },
         iframe: {
-          sources: extension.configuration.capabilities?.iframe?.sources || [],
+          sources: extension.configuration.capabilities?.iframe?.sources ?? [],
         },
       },
       development: {
@@ -48,10 +50,10 @@ export async function getUIExtensionPayload(
         root: {
           url,
         },
-        hidden: options.currentDevelopmentPayload?.hidden || false,
+        hidden: options.currentDevelopmentPayload?.hidden ?? false,
         localizationStatus,
-        status: options.currentDevelopmentPayload?.status || 'success',
-        ...(options.currentDevelopmentPayload || {status: 'success'}),
+        status: options.currentDevelopmentPayload?.status ?? 'success',
+        ...(options.currentDevelopmentPayload ?? {status: 'success'}),
       },
       extensionPoints: getExtensionPoints(extension.configuration.extension_points, url),
       localization: localization ?? null,

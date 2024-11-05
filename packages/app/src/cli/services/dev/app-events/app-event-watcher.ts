@@ -65,6 +65,7 @@ export enum EventType {
 export interface ExtensionEvent {
   type: EventType
   extension: ExtensionInstance
+  buildResult?: ExtensionBuildResult
 }
 
 /**
@@ -119,7 +120,7 @@ export class AppEventWatcher extends EventEmitter {
     await this.esbuildManager.createContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
     // Initial build of all extensions
-    await this.buildExtensions(this.app.realExtensions)
+    await this.buildExtensions(this.app.realExtensions.map((ext) => ({type: EventType.Created, extension: ext})))
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (events) => {
@@ -134,11 +135,12 @@ export class AppEventWatcher extends EventEmitter {
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
-          const createdOrUpdatedExtensions = appEvent.extensionEvents
-            .filter((extEvent) => extEvent.type !== EventType.Deleted)
-            .map((extEvent) => extEvent.extension)
+          const createdOrUpdatedExtensionsEvents = appEvent.extensionEvents.filter(
+            (extEvent) => extEvent.type !== EventType.Deleted,
+          )
 
-          await this.buildExtensions(createdOrUpdatedExtensions)
+          // Build the created/updated extensions and update the extension events with the build result
+          await this.buildExtensions(createdOrUpdatedExtensionsEvents)
 
           // Find deleted extensions and delete their previous build output
           const deletedExtensions = appEvent.extensionEvents
@@ -183,8 +185,9 @@ export class AppEventWatcher extends EventEmitter {
    * ESBuild extensions will be built using their own ESBuild context, other extensions will be built using the default
    * buildForBundle method.
    */
-  private async buildExtensions(extensions: ExtensionInstance[]): Promise<ExtensionBuildResult[]> {
-    const promises = extensions.map(async (ext) => {
+  private async buildExtensions(extensionEvents: ExtensionEvent[]) {
+    const promises = extensionEvents.map(async (extEvent) => {
+      const ext = extEvent.extension
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts[ext.handle]) {
@@ -192,7 +195,7 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             await this.buildExtension(ext)
           }
-          return {status: 'ok', handle: ext.handle} as const
+          extEvent.buildResult = {status: 'ok', handle: ext.handle}
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
           const errors: Message[] = error.errors ?? []
@@ -204,7 +207,7 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             this.options.stderr.write(error.message)
           }
-          return {status: 'error', error: error.message, handle: ext.handle} as const
+          extEvent.buildResult = {status: 'error', error: error.message, handle: ext.handle}
         }
       })
     })

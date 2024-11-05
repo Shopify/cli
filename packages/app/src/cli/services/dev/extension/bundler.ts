@@ -7,7 +7,6 @@ import {reloadExtensionConfig} from '../update-extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
@@ -21,7 +20,6 @@ export interface FileWatcherOptions {
 }
 
 export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
-  const {default: chokidar} = await import('chokidar')
   const abortController = new AbortController()
 
   const bundlers: Promise<void>[] = []
@@ -57,9 +55,6 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
           )
 
           try {
-            await options.payloadStore.updateExtension(extension, options.devOptions, {
-              status: error ? 'error' : 'success',
-            })
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch {
             // ESBuild handles error output
@@ -69,34 +64,34 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
       }),
     )
 
-    const localeWatcher = chokidar
-      .watch(joinPath(extension.directory, 'locales', '**.json'))
-      .on('change', (_event, path) => {
-        outputDebug(`Locale file at path ${path} changed`, options.devOptions.stdout)
-        options.payloadStore
-          .updateExtension(extension, options.devOptions)
-          .then((_closed) => {
-            outputDebug(`Notified extension ${extension.devUUID} about the locale change.`, options.devOptions.stdout)
-          })
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .catch((_: any) => {})
-      })
+    // const localeWatcher = chokidar
+    //   .watch(joinPath(extension.directory, 'locales', '**.json'))
+    //   .on('change', (_event, path) => {
+    //     outputDebug(`Locale file at path ${path} changed`, options.devOptions.stdout)
+    //     options.payloadStore
+    //       .updateExtension(extension, options.devOptions)
+    //       .then((_closed) => {
+    //         outputDebug(`Notified extension ${extension.devUUID} about the locale change.`, options.devOptions.stdout)
+    //       })
+    //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //       .catch((_: any) => {})
+    //   })
 
-    abortController.signal.addEventListener('abort', () => {
-      outputDebug(`Closing locale file watching for extension with ID ${extension.devUUID}`, options.devOptions.stdout)
-      localeWatcher
-        .close()
-        .then(() => {
-          outputDebug(`Locale file watching closed for extension with ${extension.devUUID}`, options.devOptions.stdout)
-        })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .catch((error: any) => {
-          outputDebug(
-            `Locale file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
-            options.devOptions.stderr,
-          )
-        })
-    })
+    // abortController.signal.addEventListener('abort', () => {
+    //   outputDebug(`Closing locale file watching for extension with ID ${extension.devUUID}`, options.devOptions.stdout)
+    //   localeWatcher
+    //     .close()
+    //     .then(() => {
+    //       outputDebug(`Locale file watching closed for extension with ${extension.devUUID}`, options.devOptions.stdout)
+    //     })
+    //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    //     .catch((error: any) => {
+    //       outputDebug(
+    //         `Locale file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
+    //         options.devOptions.stderr,
+    //       )
+    //     })
+    // })
   })
 
   await Promise.all(bundlers)
