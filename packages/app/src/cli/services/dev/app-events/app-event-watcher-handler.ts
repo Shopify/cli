@@ -127,7 +127,7 @@ async function ReloadAppHandler({event, app, options}: HandlerInput): Promise<Ap
  * Reload the app and returns it
  * Prints the time to reload the app to stdout
  */
-export async function reloadApp(app: AppLinkedInterface, options: OutputContextOptions): Promise<AppLinkedInterface> {
+export async function reloadApp(app: AppLinkedInterface, options?: OutputContextOptions): Promise<AppLinkedInterface> {
   const start = startHRTime()
   try {
     const newApp = await loadApp({
@@ -136,11 +136,11 @@ export async function reloadApp(app: AppLinkedInterface, options: OutputContextO
       userProvidedConfigName: basename(app.configuration.path),
       remoteFlags: app.remoteFlags,
     })
-    outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)
+    outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options?.stdout)
     return newApp as AppLinkedInterface
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    outputWarn(`Error reloading app: ${error.message}`, options.stderr)
+    outputWarn(`Error reloading app: ${error.message}`, options?.stderr)
     return app
   }
 }

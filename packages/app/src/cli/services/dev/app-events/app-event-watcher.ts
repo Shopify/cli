@@ -88,16 +88,17 @@ type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; e
 export class AppEventWatcher extends EventEmitter {
   buildOutputPath: string
   private app: AppLinkedInterface
-  private readonly options: OutputContextOptions
+  private options: OutputContextOptions
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
 
-  constructor(app: AppLinkedInterface, appURL?: string, options?: OutputContextOptions, buildOutputPath?: string) {
+  constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'bundle')
-    this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
+    // Default options, to be overwritten by the start method
+    this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
     this.esbuildManager = new ESBuildContextManager({
       outputPath: this.buildOutputPath,
       dotEnvVariables: this.app.dotenv?.variables ?? {},
@@ -106,7 +107,10 @@ export class AppEventWatcher extends EventEmitter {
     })
   }
 
-  async start() {
+  async start(options: OutputContextOptions) {
+    this.options = options
+    this.esbuildManager.setAbortSignal(options.signal)
+
     // If there is a previous build folder, delete it
     if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
     await mkdir(this.buildOutputPath)

@@ -3,15 +3,11 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {getESBuildOptions} from '../../extensions/bundle.js'
 import {BuildContext, context as esContext} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {Writable} from 'stream'
 
 export interface DevAppWatcherOptions {
   dotEnvVariables: {[key: string]: string}
   url: string
   outputPath: string
-  stderr?: Writable
-  stdout?: Writable
-  signal?: AbortSignal
 }
 
 /**
@@ -23,20 +19,18 @@ export class ESBuildContextManager {
   outputPath: string
   dotEnvVariables: {[key: string]: string}
   url: string
-  stderr?: Writable
-  stdout?: Writable
   signal?: AbortSignal
 
   constructor(options: DevAppWatcherOptions) {
     this.dotEnvVariables = options.dotEnvVariables
     this.url = options.url
     this.outputPath = options.outputPath
-    this.stderr = options.stderr
-    this.stdout = options.stdout
-    this.signal = options.signal
     this.contexts = {}
+  }
 
-    options.signal?.addEventListener('abort', async () => {
+  setAbortSignal(signal: AbortSignal) {
+    this.signal = signal
+    this.signal?.addEventListener('abort', async () => {
       const allDispose = Object.values(this.contexts).map((context) => context.dispose())
       await Promise.all(allDispose)
     })
@@ -58,8 +52,9 @@ export class ESBuildContextManager {
           loader: 'tsx',
         },
         logLevel: 'silent',
-        stderr: this.stderr ?? process.stderr,
-        stdout: this.stdout ?? process.stdout,
+        // stdout and stderr are mandatory, but not actually used
+        stderr: process.stderr,
+        stdout: process.stdout,
         sourceMaps: true,
       })
 

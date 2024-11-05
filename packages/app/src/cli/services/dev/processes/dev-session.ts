@@ -3,7 +3,6 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
-import {reloadApp} from '../app-events/app-event-watcher-handler.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -22,6 +21,7 @@ interface DevSessionOptions {
   app: AppLinkedInterface
   organizationId: string
   appId: string
+  appWatcher: AppEventWatcher
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
@@ -61,16 +61,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient} = options
-
-  // Reload the app before starting the dev session, at this point the configuration has changed (e.g. application_url)
-  const app = await reloadApp(options.app, {stderr, stdout, signal})
+  const {developerPlatformClient, appWatcher} = options
 
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
   }
-
-  const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
@@ -115,7 +110,6 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   })
 
   // Start watching for changes in the app
-  await appWatcher.start()
   processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
 }
 
