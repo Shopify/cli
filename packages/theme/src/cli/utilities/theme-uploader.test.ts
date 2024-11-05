@@ -7,7 +7,7 @@ import {
   updateUploadErrors,
 } from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -15,7 +15,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 vi.mock('@shopify/cli-kit/node/themes/api')
 
 beforeEach(() => {
-  vi.mocked(deleteThemeAsset).mockImplementation(() => Promise.resolve(true))
+  vi.mocked(deleteThemeAssets).mockImplementation(() => Promise.resolve([]))
 
   vi.mocked(bulkUploadThemeAssets).mockImplementation(
     async (
@@ -66,8 +66,8 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
-    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/deleteme.liquid', adminSession)
+    expect(vi.mocked(deleteThemeAssets)).toHaveBeenCalledOnce()
+    expect(vi.mocked(deleteThemeAssets)).toHaveBeenCalledWith(remoteTheme.id, ['assets/deleteme.liquid'], adminSession)
   })
 
   test('should not delete generated assets', async () => {
@@ -87,8 +87,8 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
-    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/base.css.liquid', adminSession)
+    expect(vi.mocked(deleteThemeAssets)).toHaveBeenCalledOnce()
+    expect(vi.mocked(deleteThemeAssets)).toHaveBeenCalledWith(remoteTheme.id, ['assets/base.css.liquid'], adminSession)
   })
 
   test('should not delete files if nodelete is set', async () => {
@@ -111,7 +111,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
+    expect(vi.mocked(deleteThemeAssets)).not.toHaveBeenCalled()
   })
 
   test("should upload a minimum set of files if a theme doesn't exist yet", async () => {
@@ -267,19 +267,20 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(deleteThemeAsset).toHaveBeenCalledTimes(7)
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(
+    expect(deleteThemeAssets).toHaveBeenCalledTimes(1)
+    expect(deleteThemeAssets).toHaveBeenCalledWith(
       1,
-      remoteTheme.id,
-      'templates/product.context.uk.json',
+      [
+        'templates/product.context.uk.json',
+        'templates/product.json',
+        'sections/header-group.json',
+        'templates/index.liquid',
+        'assets/liquid.liquid',
+        'config/settings_data.json',
+        'assets/image.png',
+      ],
       adminSession,
     )
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(2, remoteTheme.id, 'templates/product.json', adminSession)
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(3, remoteTheme.id, 'sections/header-group.json', adminSession)
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(4, remoteTheme.id, 'templates/index.liquid', adminSession)
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(5, remoteTheme.id, 'assets/liquid.liquid', adminSession)
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(6, remoteTheme.id, 'config/settings_data.json', adminSession)
-    expect(deleteThemeAsset).toHaveBeenNthCalledWith(7, remoteTheme.id, 'assets/image.png', adminSession)
   })
 
   test('should separate files by type and upload in correct order', async () => {
@@ -556,7 +557,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(vi.mocked(deleteThemeAsset)).not.toHaveBeenCalled()
+    expect(vi.mocked(deleteThemeAssets)).not.toHaveBeenCalled()
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,
@@ -589,8 +590,8 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledOnce()
-    expect(vi.mocked(deleteThemeAsset)).toHaveBeenCalledWith(remoteTheme.id, 'assets/deleteme.liquid', adminSession)
+    expect(vi.mocked(deleteThemeAssets)).toHaveBeenCalledOnce()
+    expect(vi.mocked(deleteThemeAssets)).toHaveBeenCalledWith(remoteTheme.id, ['assets/deleteme.liquid'], adminSession)
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,

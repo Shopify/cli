@@ -223,6 +223,27 @@ export type OnlineStoreThemeFilesUpsertFileInput = {
   filename: Scalars['String']['input']
 }
 
+/** Possible error codes that can be returned by `OnlineStoreThemeFilesUserErrors`. */
+export type OnlineStoreThemeFilesUserErrorsCode =
+  /** Access denied. */
+  | 'ACCESS_DENIED'
+  /** There are files with the same filename. */
+  | 'DUPLICATE_FILE_INPUT'
+  /** Error. */
+  | 'ERROR'
+  /** The file is invalid. */
+  | 'FILE_VALIDATION_ERROR'
+  /** The input value should be less than or equal to the maximum value allowed. */
+  | 'LESS_THAN_OR_EQUAL_TO'
+  /** The record with the ID used as the input value couldn't be found. */
+  | 'NOT_FOUND'
+  /** There are theme files with conflicts. */
+  | 'THEME_FILES_CONFLICT'
+  /** This action is not available on your current plan. Please upgrade to access theme editing features. */
+  | 'THEME_LIMITED_PLAN'
+  /** Too many updates in a short period. Please try again later. */
+  | 'THROTTLED'
+
 /** The input fields for Theme attributes to update. */
 export type OnlineStoreThemeInput = {
   /** The new name of the theme. */
