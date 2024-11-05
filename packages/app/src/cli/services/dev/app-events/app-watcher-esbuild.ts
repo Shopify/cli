@@ -53,7 +53,7 @@ export class ESBuildContextManager {
           APP_URL: this.url,
         },
         stdin: {
-          contents: extension.getBundleExtensionStdinContent(),
+          contents: extension.getBundleExtensionStdinContent().targets,
           resolveDir: extension.directory,
           loader: 'tsx',
         },

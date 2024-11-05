@@ -32,7 +32,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         default_placement_reference: targeting.default_placement,
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
-        condition: targeting.condition,
+        shouldRender: targeting.shouldRender,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -73,8 +73,8 @@ const uiExtensionSpec = createExtensionSpecification({
 
     // TODO: we need to split conditions into separate files
     const conditions = config.extension_points
-      .map(({condition}) => {
-        return condition ? `import '${condition}';` : ''
+      .map(({shouldRender}) => {
+        return shouldRender ? `import '${shouldRender.module}';` : ''
       })
       .join('\n')
 

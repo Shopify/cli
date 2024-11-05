@@ -93,6 +93,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
   const {targets, conditions} = extension.getBundleExtensionStdinContent()
 
+  console.log({extension})
   try {
     await bundleExtension({
       minify: true,
@@ -109,7 +110,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     })
     if (conditions) {
       const outputDirectory = dirname(extension.outputPath)
-      const conditionsPath = joinPath(outputDirectory, 'conditions.js')
+      const conditionsPath = joinPath(outputDirectory, `${extension.handle}-conditions.js`)
 
       await bundleExtension({
         minify: true,
