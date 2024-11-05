@@ -65,6 +65,19 @@ describe('Storefront API', () => {
       // Then
       expect(isProtected).toBe(false)
     })
+
+    test('return true when store redirects to /<locale>/password', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValue(
+        response({status: 302, headers: {location: 'https://store.myshopify.com/fr-CA/password'}}),
+      )
+
+      // When
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
+
+      // Then
+      expect(isProtected).toBe(true)
+    })
   })
 
   describe('getStorefrontSessionCookies', () => {

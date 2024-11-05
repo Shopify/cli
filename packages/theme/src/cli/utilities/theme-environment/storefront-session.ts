@@ -10,7 +10,7 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
     redirect: 'manual',
   })
 
-  return response.headers.get('location') === `${prependHttps(storeURL)}/password`
+  return response.headers.get('location')?.endsWith('/password') ?? false
 }
 
 /**
