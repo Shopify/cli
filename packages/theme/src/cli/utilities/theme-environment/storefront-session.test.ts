@@ -78,6 +78,19 @@ describe('Storefront API', () => {
       // Then
       expect(isProtected).toBe(true)
     })
+
+    test('returns false if response is not a 302', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValue(
+        response({status: 301, headers: {location: 'https://store.myshopify.com/random'}}),
+      )
+
+      // When
+      const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
+
+      // Then
+      expect(isProtected).toBe(false)
+    })
   })
 
   describe('getStorefrontSessionCookies', () => {
