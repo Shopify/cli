@@ -249,7 +249,9 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
         await new Promise<void>((resolve, reject) => {
           const initialTime = Date.now()
           const checkEmitSpy = () => {
-            if (emitSpy.mock.calls.length > 0) {
+            const allCalled = emitSpy.mock.calls.some((call) => call[0] === 'all')
+            const readyCalled = emitSpy.mock.calls.some((call) => call[0] === 'ready')
+            if (allCalled && readyCalled) {
               resolve()
             } else if (Date.now() - initialTime < 3000) {
               setTimeout(checkEmitSpy, 100)
@@ -266,6 +268,8 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
           startTime: expect.anything(),
           path: expect.anything(),
         })
+
+        expect(emitSpy).toHaveBeenCalledWith('ready')
 
         if (needsAppReload) {
           expect(loadApp).toHaveBeenCalledWith({

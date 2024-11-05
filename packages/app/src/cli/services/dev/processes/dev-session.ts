@@ -58,7 +58,7 @@ export async function setupDevSessionProcess({
   }
 }
 
-const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
+export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
