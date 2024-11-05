@@ -272,6 +272,22 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build.command
   }
 
+  // Paths to be watched in a dev session
+  // Return undefiend if there aren't custom configured paths. (everything is watched)
+  // If there are, include some default paths.
+  get devSessionWatchPaths() {
+    const config = this.configuration as unknown as FunctionConfigType
+    if (!config.build || !config.build.watch) return undefined
+
+    const watchPaths = [config.build.watch].flat().map((path) => joinPath(this.directory, path))
+
+    watchPaths.push(joinPath(this.directory, 'locales', '**.json'))
+    watchPaths.push(joinPath(this.directory, '**', '!(.)*.graphql'))
+    watchPaths.push(joinPath(this.directory, '**.toml'))
+
+    return watchPaths
+  }
+
   get watchBuildPaths() {
     if (this.isFunctionExtension) {
       const config = this.configuration as unknown as FunctionConfigType

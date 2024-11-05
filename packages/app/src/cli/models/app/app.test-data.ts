@@ -257,7 +257,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
-export async function testAppConfigExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppConfigExtensions(emptyConfig = false, directory?: string): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -272,14 +272,17 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification,
   })
 
   return extension
 }
 
-export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppAccessConfigExtension(
+  emptyConfig = false,
+  directory?: string,
+): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -298,7 +301,7 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification: appAccessSpec,
   })
 

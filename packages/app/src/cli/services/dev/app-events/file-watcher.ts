@@ -6,7 +6,7 @@ import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
 import {Writable} from 'stream'
 
@@ -92,6 +92,13 @@ export async function startFileWatcher(
    * @param event - The event to be added
    */
   function pushEvent(event: WatcherEvent) {
+    const extension = app.realExtensions.find((ext) => ext.directory === event.extensionPath)
+    const watchPaths = extension?.devSessionWatchPaths
+    // If the affected extension defines custom watch paths, ignore the event if it's not in the list
+    if (watchPaths) {
+      const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
+      if (!isAValidWatchedPath) return
+    }
     // If the event is already in the list, don't push it again
     if (currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
     currentEvents.push(event)
@@ -110,10 +117,21 @@ export async function startFileWatcher(
   // Watch the extensions root directories and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
+  // Read .gitignore files from extension directories and add the patterns to the ignored list
+  const customGitIgnoredPatterns = getCustomGitIgnorePatterns(extensionPaths)
+
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   // PENDING: Use .gitgnore from app and extensions to ignore files.
   const watcher = chokidar.watch(watchPaths, {
-    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
+    ignored: [
+      '**/node_modules/**',
+      '**/.git/**',
+      '**/*.test.*',
+      '**/dist/**',
+      '**/*.swp',
+      '**/generated/**',
+      ...customGitIgnoredPatterns,
+    ],
     persistent: true,
     ignoreInitial: true,
   })
@@ -204,4 +222,25 @@ const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptio
       .then(() => outputDebug(`File watching closed`, options.stdout))
       .catch((error: Error) => outputDebug(`File watching failed to close: ${error.message}`, options.stderr))
   })
+}
+
+/**
+ * Returns the custom gitignore patterns for the given extension directories.
+ *
+ * @param extensionDirectories - The extension directories to get the custom gitignore patterns from
+ * @returns The custom gitignore patterns
+ */
+function getCustomGitIgnorePatterns(extensionDirectories: string[]): string[] {
+  return extensionDirectories
+    .map((dir) => {
+      const gitIgnorePath = joinPath(dir, '.gitignore')
+      if (!fileExistsSync(gitIgnorePath)) return []
+      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+      return gitIgnoreContent
+        .split('\n')
+        .map((pattern) => pattern.trim())
+        .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
+        .map((pattern) => joinPath(dir, pattern))
+    })
+    .flat()
 }
