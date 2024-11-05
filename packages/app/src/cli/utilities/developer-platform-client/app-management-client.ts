@@ -958,7 +958,7 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
   return storesArray.map((store: ShopNode) => {
     const {externalId, primaryDomain, name} = store
     return {
-      shopId: externalId,
+      shopId: externalId ? idFromEncodedGid(externalId) : undefined,
       link: primaryDomain,
       shopDomain: primaryDomain,
       shopName: name,
