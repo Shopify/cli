@@ -93,7 +93,6 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
   const {targets, conditions} = extension.getBundleExtensionStdinContent()
 
-  console.log({extension})
   try {
     await bundleExtension({
       minify: true,
