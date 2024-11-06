@@ -795,7 +795,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
     if (result.devSessionCreate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+      const error = result.devSessionCreate.userErrors.map((err) => err.message).join('\n')
+      throw new AbortError(error)
     }
     return result
   }
@@ -804,7 +805,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
     if (result.devSessionUpdate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
+      const error = result.devSessionUpdate.userErrors.map((err) => err.message).join('\n')
+      throw new AbortError(error)
     }
     return result
   }
@@ -812,6 +814,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
+  }
+
+  async getCreateDevStoreLink(orgId: string): Promise<string> {
+    const url = `https://${await developerDashboardFqdn()}/dashboard/${orgId}/stores`
+    return (
+      `Looks like you don't have a dev store in the organization you selected. ` +
+      `Keep going — create a dev store on the Developer Dashboard:\n${url}\n`
+    )
   }
 
   private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
@@ -958,7 +968,7 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
   return storesArray.map((store: ShopNode) => {
     const {externalId, primaryDomain, name} = store
     return {
-      shopId: externalId,
+      shopId: externalId ? idFromEncodedGid(externalId) : undefined,
       link: primaryDomain,
       shopDomain: primaryDomain,
       shopName: name,

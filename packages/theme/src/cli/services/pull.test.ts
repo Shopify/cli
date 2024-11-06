@@ -19,7 +19,6 @@ vi.mock('../utilities/theme-downloader.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/ui')
 
 const adminSession = {token: '', storeFqdn: ''}

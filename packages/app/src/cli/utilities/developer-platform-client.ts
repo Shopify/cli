@@ -255,4 +255,5 @@ export interface DeveloperPlatformClient {
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
+  getCreateDevStoreLink: (input: string) => Promise<string>
 }

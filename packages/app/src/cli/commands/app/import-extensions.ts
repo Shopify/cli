@@ -35,7 +35,7 @@ const getMigrationChoices = (): MigrationChoice[] => [
   {
     label: 'Flow Extensions',
     value: 'flow',
-    extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+    extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'flow_trigger_discovery_webhook'],
     buildTomlObject: buildFlowTomlObject,
   },
   {

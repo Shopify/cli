@@ -92,6 +92,8 @@ export class AppEventWatcher extends EventEmitter {
   private options: OutputContextOptions
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
+  private started = false
+  private ready = false
 
   constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string) {
     super()
@@ -109,6 +111,9 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   async start(options: OutputContextOptions) {
+    if (this.started) return
+    this.started = true
+
     this.options = options
     this.esbuildManager.setAbortSignal(options.signal)
 
@@ -153,6 +158,9 @@ export class AppEventWatcher extends EventEmitter {
           this.options.stderr.write(`Error handling event: ${error.message}`)
         })
     })
+
+    this.ready = true
+    this.emit('ready', this.app)
   }
 
   /**
@@ -164,6 +172,23 @@ export class AppEventWatcher extends EventEmitter {
   onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.addListener('all', listener)
+    return this
+  }
+
+  /**
+   * Register as a listener for the start event.
+   * This event is emitted when the watcher is ready to start processing events (after the initial extension build).
+   *
+   * @param listener - The listener function to add
+   * @returns The AppEventWatcher instance
+   */
+  onStart(listener: (app: AppLinkedInterface) => Promise<void> | void) {
+    if (this.ready) {
+      listener(this.app)?.catch(() => {})
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      this.once('ready', listener)
+    }
     return this
   }
 
