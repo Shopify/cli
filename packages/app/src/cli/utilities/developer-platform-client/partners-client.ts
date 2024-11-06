@@ -535,6 +535,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     return Promise.resolve()
   }
 
+  async getCreateDevStoreLink(orgId: string): Promise<string> {
+    const url = `https://${await partnersFqdn()}/dashboard/${orgId}/stores`
+    return (
+      `Looks like you don't have a dev store in the Partners org you selected. ` +
+      `Keep going — create a dev store on Shopify Partners:\n${url}\n`
+    )
+  }
+
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {
     const params: FindOrganizationQueryVariables = {id: orgId}
     if (title) params.title = title
