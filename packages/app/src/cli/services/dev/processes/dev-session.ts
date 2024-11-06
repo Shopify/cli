@@ -73,7 +73,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
 
-  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
+  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath, app}
 
   await printWarning('[BETA] Starting Dev Session', processOptions.stdout)
 
