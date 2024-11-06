@@ -115,7 +115,7 @@ import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
+const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type Properties = NonNullable<OrgType['properties']>
