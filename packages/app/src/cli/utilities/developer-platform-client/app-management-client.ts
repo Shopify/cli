@@ -305,7 +305,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           'Failed to fetch extension templates from',
           {link: {url: TEMPLATE_JSON_URL}},
           {char: '.'},
-          'This likely means a problem with GitHub.',
+          'This likely means a problem with your internet connection.',
         ],
         [
           {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
