@@ -280,7 +280,57 @@ describe('ensureDeployContext', () => {
     patchAppConfigurationFileSpy.mockRestore()
   })
 
-  test('doesnt prompt the user to include the configuration and display the current value if the flag', async () => {
+  test('prompts the user to include the configuration if the flag is false', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: false}}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(link).mockResolvedValue((app as any).configuration)
+    // vi.mocked(selectDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
+      .mockResolvedValue()
+    const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+
+    const options = deployOptions(app)
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(options.developerPlatformClient)
+
+    // When
+    await ensureDeployContext(options)
+
+    // Then
+    expect(metadataSpyOn).toHaveBeenCalled()
+
+    expect(renderConfirmationPrompt).toHaveBeenCalled()
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalled()
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2', 'Include config:  No'],
+          },
+        },
+        '\n',
+        'You can pass ',
+        {
+          command: '--reset',
+        },
+        ' to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml for default values:',
+    })
+    patchAppConfigurationFileSpy.mockRestore()
+  })
+
+  test('doesnt prompt the user to include the configuration and display the current value if the flag is true', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -330,7 +380,7 @@ describe('ensureDeployContext', () => {
     patchAppConfigurationFileSpy.mockRestore()
   })
 
-  test('prompts the user to include the configuration when reset is used if the flag', async () => {
+  test('prompts the user to include the configuration when reset is used and the flag is present', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -430,7 +480,7 @@ describe('ensureDeployContext', () => {
     patchAppConfigurationFileSpy.mockRestore()
   })
 
-  test('prompt the user to include the configuration when force is used  if the flag', async () => {
+  test('prompts the user to include the configuration when force is used and the flag is present', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -467,6 +517,57 @@ describe('ensureDeployContext', () => {
         ' to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
+    })
+    patchAppConfigurationFileSpy.mockRestore()
+  })
+
+  test('removes the include_config_on_deploy field when using app management API', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    const options = {
+      app,
+      remoteApp: APP2,
+      organization: ORG1,
+      reset: false,
+      force: false,
+      noRelease: false,
+      developerPlatformClient: buildDeveloperPlatformClient({supportsAtomicDeployments: true}),
+    }
+    await ensureDeployContext(options)
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: app.configuration.path,
+        patch: {
+          build: {include_config_on_deploy: undefined},
+        },
+        schema: expect.any(Object),
+      }),
+    )
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        'The `include_config_on_deploy` field has been removed from your configuration file and is now enabled by default.',
+      ],
+      headline: 'Configuration is now included on deploy',
+      link: {
+        label: 'See Shopify CLI documentation.',
+        url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
+      },
     })
     patchAppConfigurationFileSpy.mockRestore()
   })

@@ -13,6 +13,7 @@ import {
   CurrentAppConfiguration,
   AppCreationDefaultOptions,
   AppLinkedInterface,
+  isLegacyAppSchema,
 } from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -111,7 +112,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ident
   const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  await ensureIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force})
+  await checkIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force, developerPlatformClient})
 
   const identifiers = await ensureDeploymentIdsPresence({
     app,
@@ -135,19 +136,30 @@ interface ShouldOrPromptIncludeConfigDeployOptions {
   localApp: AppInterface
 }
 
-async function ensureIncludeConfigOnDeploy({
+async function checkIncludeConfigOnDeploy({
   org,
   app,
   remoteApp,
   reset,
   force,
+  developerPlatformClient,
 }: {
   org: Organization
   app: AppInterface
   remoteApp: OrganizationApp
   reset: boolean
   force: boolean
+  developerPlatformClient: DeveloperPlatformClient
 }) {
+  if (
+    developerPlatformClient.supportsAtomicDeployments &&
+    !isLegacyAppSchema(app.configuration) &&
+    app.configuration.build?.include_config_on_deploy
+  ) {
+    await removeIncludeConfigOnDeployField(app)
+    return
+  }
+
   let previousIncludeConfigOnDeploy = app.includeConfigOnDeploy
   if (reset) previousIncludeConfigOnDeploy = undefined
   if (force) previousIncludeConfigOnDeploy = previousIncludeConfigOnDeploy ?? false
@@ -161,21 +173,32 @@ async function ensureIncludeConfigOnDeploy({
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
 
-  if (force || previousIncludeConfigOnDeploy !== undefined) return
+  if (force || previousIncludeConfigOnDeploy === true) return
   await promptIncludeConfigOnDeploy({
     appDirectory: app.directory,
     localApp: app,
   })
 }
 
+async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
+  const patch = {build: {include_config_on_deploy: undefined}}
+  await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
+  const message = {
+    headline: `Configuration is now included on deploy`,
+    body: [
+      `The \`include_config_on_deploy\` field has been removed from your configuration file and is now enabled by default.`,
+    ],
+    link: {
+      label: 'See Shopify CLI documentation.',
+      url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
+    },
+  }
+  return renderInfo(message)
+}
+
 async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
   const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
-  localConfiguration.build = {
-    ...localConfiguration.build,
-    include_config_on_deploy: shouldIncludeConfigDeploy,
-  }
-
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
   await patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
@@ -183,9 +206,11 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
 
 function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   return renderConfirmationPrompt({
-    message: `Include \`${basename(configPath)}\` configuration on \`deploy\`?`,
-    confirmationMessage: 'Yes, always (Recommended)',
-    cancellationMessage: 'No, never',
+    message: `Include \`${basename(
+      configPath,
+    )}\` configuration on \`deploy\`? The \`include_config_on_deploy\` field will be deprecated soon and enabled by default, so we recommend to do it now.`,
+    confirmationMessage: 'Yes (Recommended)',
+    cancellationMessage: 'Not now',
   })
 }
 
