@@ -1,3 +1,6 @@
+import {FatalError} from '../node/error.js'
+import {renderFatalError} from '../node/ui.js'
+
 /**
  * Perform an action optimistically. If it fails the first time, first initiate
  * a provided recovery procedure, then retry the action. If it fails again,
@@ -25,7 +28,15 @@ export async function performActionWithRetryAfterRecovery<T>(
   } catch (err) {
     if (retries > 0) {
       // Run the provided recovery procedure, then retry the action
-      await recoveryProcedure()
+      try {
+        await recoveryProcedure()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (recoveryError) {
+        // If this is the last retry and the recovery procedure fails, show the error and exit the process
+        if (recoveryError instanceof FatalError && retries <= 1) {
+          renderFatalError(recoveryError)
+        }
+      }
       return performActionWithRetryAfterRecovery(performAction, recoveryProcedure, retries - 1)
     }
     throw err
