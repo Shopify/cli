@@ -178,10 +178,14 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     } else {
       await options.developerPlatformClient.devSessionCreate(payload)
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
-    options.stderr.write(error.message)
+    if (error.code === '401') {
+      throw new Error('Unauthorized')
+    } else {
+      options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
+      options.stderr.write(error.message)
+    }
   }
   return true
 }
