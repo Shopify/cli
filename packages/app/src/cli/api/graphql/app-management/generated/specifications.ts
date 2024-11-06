@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-duplicate-type-constituents */
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
