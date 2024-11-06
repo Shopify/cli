@@ -66,19 +66,6 @@ function transformFromPrivacyComplianceWebhooksModule(content: object) {
 
   if (webhooks.length === 0) return {}
   return {webhooks: {subscriptions: mergeAllWebhooks(webhooks), privacy_compliance: undefined}}
-
-  // if (customersRedactUrl || customersDataRequestUrl || shopRedactUrl) {
-  //   return {
-  //     webhooks: {
-  //       privacy_compliance: {
-  //         ...(customersRedactUrl ? {customer_deletion_url: customersRedactUrl} : {}),
-  //         ...(customersDataRequestUrl ? {customer_data_request_url: customersDataRequestUrl} : {}),
-  //         ...(shopRedactUrl ? {shop_deletion_url: shopRedactUrl} : {}),
-  //       },
-  //     },
-  //   }
-  // }
-  // return {}
 }
 
 function getComplianceUri(webhooks: WebhooksConfig, complianceTopic: string): string | undefined {
