@@ -795,7 +795,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
     if (result.devSessionCreate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+      const error = result.devSessionCreate.userErrors.map((err) => err.message).join('\n')
+      throw new AbortError(error)
     }
     return result
   }
@@ -804,7 +805,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
     if (result.devSessionUpdate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
+      const error = result.devSessionUpdate.userErrors.map((err) => err.message).join('\n')
+      throw new AbortError(error)
     }
     return result
   }
