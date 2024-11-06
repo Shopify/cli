@@ -47,7 +47,7 @@ export async function setupDevSessionProcess({
 }: Omit<DevSessionOptions, 'extensions'>): Promise<DevSessionProcess | undefined> {
   return {
     type: 'dev-session',
-    prefix: 'extensions',
+    prefix: 'dev-session',
     function: pushUpdatesForDevSession,
     options: {
       app,
@@ -106,8 +106,9 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         if (result) {
           processOptions.stdout.write(`✅ Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
         } else {
-          processOptions.stdout.write(
+          outputDebug(
             `❌ Session update aborted (new change detected) [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`,
+            processOptions.stdout,
           )
         }
       }, refreshToken)
@@ -115,7 +116,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     .onStart(async () => {
       await performActionWithRetryAfterRecovery(async () => {
         await bundleExtensionsAndUpload(processOptions, false)
-        await printWarning('[BETA] Dev session ready, watching for changes in your app', processOptions.stdout)
+        await printSuccess('[BETA] Dev session ready, watching for changes in your app', processOptions.stdout)
       }, refreshToken)
     })
 
@@ -188,7 +189,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
       // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
     } else {
-      options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
+      await printError(`${updating ? 'Update' : 'Create'} Dev session error`, options.stderr)
       await printError(`${error.message}`, options.stderr)
     }
   }
@@ -203,8 +204,12 @@ async function printError(message: string, stdout: Writable) {
   await printLogMessage(outputContent`${outputToken.errorText(message)}`.value, stdout)
 }
 
+async function printSuccess(message: string, stdout: Writable) {
+  await printLogMessage(outputContent`${outputToken.green(message)}`.value, stdout)
+}
+
 async function printLogMessage(message: string, stdout: Writable) {
-  await useConcurrentOutputContext({outputPrefix: 'extensions', stripAnsi: false}, () => {
+  await useConcurrentOutputContext({outputPrefix: 'dev-session', stripAnsi: false}, () => {
     stdout.write(message)
   })
 }
