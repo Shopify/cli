@@ -22,7 +22,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/system')
 
-const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
+const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com', refresh: async () => {}}
 const themeAccessSession = {...session, token: 'shptka_token'}
 const sessions = {CLI: session, 'Theme Access': themeAccessSession}
 
@@ -369,6 +369,31 @@ describe('request errors', () => {
 
       // Then
     }).rejects.toThrowError(AbortError)
+  })
+
+  test(`refresh the session when 401 errors happen`, async () => {
+    // Given
+    const id = 123
+    const assets: AssetParams[] = []
+
+    vi.spyOn(session, 'refresh').mockImplementation(vi.fn())
+    vi.mocked(restRequest)
+      .mockResolvedValueOnce({
+        json: {},
+        status: 401,
+        headers: {},
+      })
+      .mockResolvedValueOnce({
+        json: {},
+        status: 207,
+        headers: {},
+      })
+
+    // When
+    await bulkUploadThemeAssets(id, assets, session)
+
+    // Then
+    expect(session.refresh).toHaveBeenCalledOnce()
   })
 })
 
