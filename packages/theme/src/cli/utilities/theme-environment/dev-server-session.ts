@@ -46,7 +46,11 @@ export async function initializeDevServerSession(
   return session
 }
 
-export async function verifyRequiredFilesExist(themeId: string, adminSession: AdminSession) {
+export async function verifyRequiredFilesExist(
+  themeId: string,
+  adminSession: AdminSession,
+  retryDelay = RETRY_DELAY_MS,
+) {
   outputDebug(`Verifying required files for theme ${themeId}...`)
 
   const themeIdNumber = Number(themeId)
@@ -58,7 +62,7 @@ export async function verifyRequiredFilesExist(themeId: string, adminSession: Ad
 
   const hasFiles = await areFilesPresent()
   if (!hasFiles) {
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+    await new Promise((resolve) => setTimeout(resolve, retryDelay))
 
     const hasFilesAfterRetry = await areFilesPresent()
     if (!hasFilesAfterRetry) {

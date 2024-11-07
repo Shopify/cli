@@ -1,13 +1,10 @@
 import {verifyRequiredFilesExist} from './dev-server-session.js'
-import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
-import {describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('timers', () => ({
-  setTimeout: () => Promise.resolve(),
-}))
 
 const mockAdminSession: AdminSession = {token: 'token', storeFqdn: 'store.myshopify.com'}
 const themeId = '1234'
@@ -27,6 +24,10 @@ const mockConfigAsset: ThemeAsset = {
 }
 
 describe('verifyRequiredFilesExist', () => {
+  beforeEach(() => {
+    vi.mocked(themeDelete).mockResolvedValue(true)
+  })
+
   test('succeeds when both required files exist', async () => {
     // Given
     vi.mocked(fetchThemeAssets).mockResolvedValue([mockLayoutAsset, mockConfigAsset])
@@ -43,11 +44,10 @@ describe('verifyRequiredFilesExist', () => {
     vi.mocked(fetchThemeAssets).mockResolvedValueOnce([]).mockResolvedValue([mockLayoutAsset, mockConfigAsset])
 
     // When
-    const promise = verifyRequiredFilesExist(themeId, mockAdminSession)
-    vi.runAllTimers()
-    await expect(promise).resolves.not.toThrow()
+    const promise = verifyRequiredFilesExist(themeId, mockAdminSession, 0)
 
     // Then
+    await expect(promise).resolves.not.toThrow()
     expect(fetchThemeAssets).toHaveBeenCalledTimes(2)
     expect(themeDelete).not.toHaveBeenCalled()
   })
@@ -55,16 +55,15 @@ describe('verifyRequiredFilesExist', () => {
   test('deletes theme and throws if any file is missing after retry', async () => {
     // Given
     vi.mocked(fetchThemeAssets).mockResolvedValue([mockLayoutAsset])
-    vi.mocked(themeDelete).mockResolvedValue(true)
 
     // When
-    const promise = verifyRequiredFilesExist(themeId, mockAdminSession)
-    vi.runAllTimers()
-    await expect(promise).rejects.toThrow(
-      'Invalid theme removed from storefront. Please try deleting the theme and recreating it.',
-    )
+    const promise = verifyRequiredFilesExist(themeId, mockAdminSession, 0)
 
     // Then
+    await expect(promise).rejects.toThrowError(
+      'Invalid theme removed from storefront. Please try deleting the theme and recreating it.',
+    )
+    expect(fetchThemeAssets).toHaveBeenCalledTimes(2)
     expect(themeDelete).toHaveBeenCalledWith(1234, mockAdminSession)
   })
 })
