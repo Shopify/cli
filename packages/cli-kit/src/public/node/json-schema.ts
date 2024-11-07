@@ -2,8 +2,11 @@
 import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
-import {Ajv, ErrorObject, SchemaObject} from 'ajv'
+import {Ajv, ErrorObject, SchemaObject, type Plugin} from 'ajv'
+import ajvFormats, {type FormatsPluginOptions} from 'ajv-formats'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
+
+const addFormats = ajvFormats as unknown as Plugin<FormatsPluginOptions>
 
 type AjvError = ErrorObject<string, {[key: string]: unknown}>
 
@@ -36,6 +39,7 @@ export function jsonSchemaValidate(
   schema: SchemaObject,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
   const ajv = new Ajv({allowUnionTypes: true})
+  addFormats(ajv)
   const validator = ajv.compile(schema)
   validator(subject)
 
