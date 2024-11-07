@@ -56,9 +56,9 @@ Examples:
  * - Created: The extension was created
  */
 export enum EventType {
-  Updated,
-  Deleted,
-  Created,
+  Updated = 'changed',
+  Deleted = 'deleted',
+  Created = 'created',
 }
 
 export interface ExtensionEvent {

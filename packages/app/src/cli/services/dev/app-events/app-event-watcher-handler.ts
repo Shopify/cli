@@ -137,6 +137,7 @@ export async function reloadApp(app: AppLinkedInterface, options: OutputContextO
       remoteFlags: app.remoteFlags,
     })
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options.stdout)
+    // options.stdout.write(`App reloaded [${endHRTimeInMs(start)}ms]`)
     return newApp as AppLinkedInterface
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
