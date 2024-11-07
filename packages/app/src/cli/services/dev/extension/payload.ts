@@ -7,6 +7,7 @@ import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {dirname} from '@shopify/cli-kit/node/path'
 
 export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
@@ -22,12 +23,23 @@ export async function getUIExtensionPayload(
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
     const renderer = await getUIExtensionRendererVersion(extension)
+    // This is BAD...
+    const extConfig = extension.configuration as typeof extension.configuration & {
+      targeting?: {shouldRender: {module: string}}[]
+    }
+    // Should we be mapping over all of the targeting blocks and combining them?
+    const outputFileName = extConfig.targeting?.[0]?.shouldRender?.module.split('/').pop()
     const defaultConfig = {
       assets: {
         main: {
           name: 'main',
           url: `${url}/assets/${extension.outputFileName}`,
           lastUpdated: (await fileLastUpdatedTimestamp(extension.outputPath)) ?? 0,
+        },
+        condition: {
+          name: 'condition',
+          url: `${url}/assets/${dirname(extension.outputFileName)}/${outputFileName}`,
+          lastUpdated: (await fileLastUpdatedTimestamp(`${dirname(extension.outputPath)}/${outputFileName}`)) ?? 0,
         },
       },
       capabilities: {

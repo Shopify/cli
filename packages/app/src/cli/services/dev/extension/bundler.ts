@@ -7,17 +7,24 @@ import {reloadExtensionConfig} from '../update-extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
 import {deepCompare} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 import {AsyncResource} from 'async_hooks'
+import type {Loader} from 'esbuild'
 
 export interface FileWatcherOptions {
   devOptions: ExtensionDevOptions
   payloadStore: ExtensionsPayloadStore
+}
+
+interface Overrides {
+  contents?: string
+  loader?: Loader
+  outputPath?: string
 }
 
 export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
@@ -30,19 +37,19 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   extensions.forEach(async (extension) => {
-    bundlers.push(
+    const bundleExtensionWithOverrides = (overrides?: Overrides) =>
       bundleExtension({
         minify: false,
-        outputPath: extension.outputPath,
+        outputPath: overrides?.outputPath || extension.outputPath,
         environment: 'development',
         env: {
           ...(options.devOptions.appDotEnvFile?.variables ?? {}),
           APP_URL: options.devOptions.url,
         },
         stdin: {
-          contents: extension.getBundleExtensionStdinContent().targets,
+          contents: overrides?.contents || extension.getBundleExtensionStdinContent().targets,
           resolveDir: extension.directory,
-          loader: 'tsx',
+          loader: overrides?.loader || 'tsx',
         },
         stderr: options.devOptions.stderr,
         stdout: options.devOptions.stdout,
@@ -66,8 +73,28 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
           }
         },
         sourceMaps: true,
-      }),
-    )
+      })
+
+    bundlers.push(bundleExtensionWithOverrides())
+
+    const {conditions} = extension.getBundleExtensionStdinContent()
+
+    if (conditions) {
+      // This is BAD... why isn't targeting part of this type? Where do we change it?
+      const extConfig = extension.configuration as typeof extension.configuration & {
+        targeting?: {shouldRender: {module: string}}[]
+      }
+      // Should we be mapping over all of the targeting blocks and combining them?
+      const outputFileName = extConfig.targeting?.[0]?.shouldRender?.module.split('/').pop()
+
+      bundlers.push(
+        bundleExtensionWithOverrides({
+          contents: conditions,
+          loader: 'ts',
+          outputPath: `${dirname(extension.outputPath)}/${outputFileName}`,
+        }),
+      )
+    }
 
     const localeWatcher = chokidar
       .watch(joinPath(extension.directory, 'locales', '**.json'))
