@@ -21,7 +21,6 @@ import {
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -361,34 +360,13 @@ describe('allExtensions', () => {
     webhooks: WebhooksConfig
   }
 
-  test('filters declarative webhook config when flag is not enabled', async () => {
-    const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
-    const app = testApp(
-      {
-        configuration: CORRECT_CURRENT_APP_SCHEMA,
-        allExtensions: webhookExtensions,
-      },
-      'current',
-    )
-
-    const webhookConfig = app.allExtensions.find((ext) => ext.handle === 'webhooks')!
-      .configuration as unknown as WebhookTestConfig
-    const privacyConfig = app.allExtensions.find((ext) => ext.handle === 'privacy-compliance-webhooks')!
-      .configuration as unknown as WebhookTestConfig
-
-    expect(webhookConfig.webhooks.subscriptions!.length).toStrictEqual(0)
-    expect(webhookConfig.webhooks.privacy_compliance).toBeDefined()
-    expect(privacyConfig.webhooks.subscriptions!.length).toStrictEqual(0)
-    expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
-  })
-
   test('keeps declarative webhook config when flag is enabled', async () => {
     const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
     const app = testApp(
       {
         configuration: CORRECT_CURRENT_APP_SCHEMA,
         allExtensions: webhookExtensions,
-        remoteFlags: [Flag.DeclarativeWebhooks],
+        remoteFlags: [],
       },
       'current',
     )

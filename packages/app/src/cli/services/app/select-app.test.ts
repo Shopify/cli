@@ -127,11 +127,21 @@ describe('fetchAppRemoteConfiguration', () => {
       embedded: true,
       webhooks: {
         api_version: '2023-04',
-        privacy_compliance: {
-          customer_deletion_url: 'https://myapp.com/redact',
-          customer_data_request_url: 'https://myapp.com/data_request',
-          shop_deletion_url: 'https://myapp.com/shop_redact',
-        },
+        privacy_compliance: undefined,
+        subscriptions: [
+          {
+            compliance_topics: ['customers/data_request'],
+            uri: 'https://myapp.com/data_request',
+          },
+          {
+            compliance_topics: ['customers/redact'],
+            uri: 'https://myapp.com/redact',
+          },
+          {
+            compliance_topics: ['shop/redact'],
+            uri: 'https://myapp.com/shop_redact',
+          },
+        ],
       },
     })
   })

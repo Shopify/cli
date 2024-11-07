@@ -113,8 +113,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       }, refreshToken)
     })
     .onStart(async () => {
-      await bundleExtensionsAndUpload(processOptions, false)
-      await printWarning('[BETA] Dev session ready, watching for changes in your app', processOptions.stdout)
+      await performActionWithRetryAfterRecovery(async () => {
+        await bundleExtensionsAndUpload(processOptions, false)
+        await printWarning('[BETA] Dev session ready, watching for changes in your app', processOptions.stdout)
+      }, refreshToken)
     })
 
   // Start watching for changes in the app
@@ -180,16 +182,25 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     } else {
       await options.developerPlatformClient.devSessionCreate(payload)
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
-    options.stderr.write(error.message)
+    if (error.statusCode === 401) {
+      // Re-throw the error so the recovery procedure can be executed
+      throw new Error('Unauthorized')
+    } else {
+      options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
+      await printError(`${error.message}`, options.stderr)
+    }
   }
   return true
 }
 
 async function printWarning(message: string, stdout: Writable) {
   await printLogMessage(outputContent`${outputToken.yellow(message)}`.value, stdout)
+}
+
+async function printError(message: string, stdout: Writable) {
+  await printLogMessage(outputContent`${outputToken.errorText(message)}`.value, stdout)
 }
 
 async function printLogMessage(message: string, stdout: Writable) {

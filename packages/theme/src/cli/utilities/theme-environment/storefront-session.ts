@@ -10,7 +10,9 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
     redirect: 'manual',
   })
 
-  return response.status === 302
+  if (response.status !== 302) return false
+
+  return response.headers.get('location')?.endsWith('/password') ?? false
 }
 
 /**

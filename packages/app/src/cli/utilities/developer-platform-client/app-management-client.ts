@@ -115,7 +115,7 @@ import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
+const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type Properties = NonNullable<OrgType['properties']>
@@ -305,7 +305,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           'Failed to fetch extension templates from',
           {link: {url: TEMPLATE_JSON_URL}},
           {char: '.'},
-          'This likely means a problem with GitHub.',
+          'This likely means a problem with your internet connection.',
         ],
         [
           {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
@@ -795,7 +795,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
     if (result.devSessionCreate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
+      const error = result.devSessionCreate.userErrors.map((err) => err.message).join('\n')
+      throw new AbortError(error)
     }
     return result
   }
@@ -804,7 +805,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
     if (result.devSessionUpdate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
+      const error = result.devSessionUpdate.userErrors.map((err) => err.message).join('\n')
+      throw new AbortError(error)
     }
     return result
   }
