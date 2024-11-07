@@ -154,7 +154,7 @@ async function checkIncludeConfigOnDeploy({
   if (
     developerPlatformClient.supportsAtomicDeployments &&
     !isLegacyAppSchema(app.configuration) &&
-    app.configuration.build?.include_config_on_deploy
+    app.configuration.build?.include_config_on_deploy !== undefined
   ) {
     await removeIncludeConfigOnDeployField(app)
     return
