@@ -184,9 +184,9 @@ async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
   const patch = {build: {include_config_on_deploy: undefined}}
   await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
   const message = {
-    headline: `Configuration is now included on deploy`,
+    headline: `Your configuration file has been modified`,
     body: [
-      `The \`include_config_on_deploy\` field has been removed from your configuration file and is now enabled by default.`,
+      `The \`include_config_on_deploy\` field is no longer supported, since all apps must now include configuration on deploy. It has been removed from your configuration file.`,
     ],
     link: {
       label: 'See Shopify CLI documentation.',
@@ -208,9 +208,9 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   return renderConfirmationPrompt({
     message: `Include \`${basename(
       configPath,
-    )}\` configuration on \`deploy\`? The \`include_config_on_deploy\` field will be deprecated soon and enabled by default, so we recommend to do it now.`,
+    )}\` configuration on \`deploy\`? Soon, this will no longer be an option, and configuration will need to be included on deploy every time.`,
     confirmationMessage: 'Yes (Recommended)',
-    cancellationMessage: 'Not now',
+    cancellationMessage: 'No, not now',
   })
 }
 
