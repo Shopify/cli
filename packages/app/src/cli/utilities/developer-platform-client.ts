@@ -188,16 +188,12 @@ export type AssetUrlSchema = WithUserErrors<{
   assetUrl?: string | null
 }>
 
-export enum Flag {
-  DeclarativeWebhooks,
-}
+export enum Flag {}
 
-const FlagMap: {[key: string]: Flag} = {
-  '5b25141b': Flag.DeclarativeWebhooks,
-}
+const FlagMap: {[key: string]: Flag} = {}
 
 export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
-  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const defaultActiveFlags: Flag[] = []
   const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
   return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
