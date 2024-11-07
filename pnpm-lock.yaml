@@ -353,7 +353,7 @@ importers:
         specifier: 8.13.0
         version: 8.13.0
       ajv-formats:
-        specifier: ^3.0.1
+        specifier: 3.0.1
         version: 3.0.1(ajv@8.13.0)
       ansi-escapes:
         specifier: 6.2.0
