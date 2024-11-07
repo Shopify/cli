@@ -1,7 +1,6 @@
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {sanitizeURL} from './urls.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
-import {AbortError} from '../../../public/node/error.js'
 import {ClientError, Variables} from 'graphql-request'
 
 export function debugLogRequestInfo(
@@ -43,12 +42,7 @@ ${outputToken.json(error.response.errors)}
 Request ID: ${requestId}
 `
       }
-      let mappedError: Error
-      if (status < 500) {
-        mappedError = new GraphQLClientError(errorMessage, status, error.response.errors)
-      } else {
-        mappedError = new AbortError(errorMessage)
-      }
+      const mappedError: Error = new GraphQLClientError(errorMessage, status, error.response.errors)
       mappedError.stack = error.stack
       return mappedError
     } else {
