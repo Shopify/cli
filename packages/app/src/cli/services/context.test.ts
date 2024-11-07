@@ -561,9 +561,9 @@ describe('ensureDeployContext', () => {
     )
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
-        'The `include_config_on_deploy` field has been removed from your configuration file and is now enabled by default.',
+        'The `include_config_on_deploy` field is no longer supported, since all apps must now include configuration on deploy. It has been removed from your configuration file.',
       ],
-      headline: 'Configuration is now included on deploy',
+      headline: 'Your configuration file has been modified',
       link: {
         label: 'See Shopify CLI documentation.',
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
