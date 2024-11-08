@@ -79,7 +79,6 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     bundlers.push(bundleExtensionWithOverrides())
 
     if (conditions) {
-      // This is BAD... why isn't targeting part of this type? Where do we change it?
       const outputPath = joinPath(dirname(extension.outputPath), `${extension.configuration.handle}-conditions.js`)
 
       bundlers.push(
