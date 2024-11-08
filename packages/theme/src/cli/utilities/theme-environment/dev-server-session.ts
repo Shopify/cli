@@ -3,7 +3,7 @@ import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-s
 import {DevServerSession} from './types.js'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 // 30 minutes in miliseconds.
@@ -80,8 +80,11 @@ export async function verifyRequiredFilesExist(themeId: string, adminSession: Ad
 
   if (requiredAssets.length !== REQUIRED_THEME_FILES.length) {
     throw new AbortError(
-      `The theme with id ${themeId} is missing required files.
-      Please try deleting by running \`shopify theme delete -t ${themeId}\` and recreating it.`,
+      outputContent`The theme with id ${outputToken.cyan(
+        themeId,
+      )} is missing required files. Please try deleting by running ${outputToken.cyan(
+        `shopify theme delete -t ${themeId}`,
+      )} and recreating it.`.value,
     )
   }
 

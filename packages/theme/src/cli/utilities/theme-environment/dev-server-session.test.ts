@@ -5,6 +5,7 @@ import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/session')
@@ -38,8 +39,11 @@ describe('fetchDevServerSession', () => {
     // When/Then
     await expect(fetchDevServerSession(themeId, mockAdminSession)).rejects.toThrow(
       new AbortError(
-        `The theme with id ${themeId} is missing required files.
-        Please try deleting by running \`shopify theme delete -t ${themeId}\` and recreating it.`,
+        outputContent`The theme with id ${outputToken.cyan(
+          themeId,
+        )} is missing required files. Please try deleting by running ${outputToken.cyan(
+          `shopify theme delete -t ${themeId}`,
+        )} and recreating it.`.value,
       ),
     )
   })
