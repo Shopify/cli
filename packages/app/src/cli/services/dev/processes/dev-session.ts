@@ -127,7 +127,7 @@ async function handleDevSessionResult(
   event?: AppEvent,
 ) {
   if (result.status === 'updated') {
-    await printSuccess(`✅ Session updated`, processOptions.stdout)
+    await printSuccess(`✅ Updated`, processOptions.stdout)
     const scopeChanges = event?.extensionEvents.find((eve) => eve.extension.handle === 'app-access')
     if (scopeChanges) {
       await printWarning(`🔄 Action required`, processOptions.stdout)
@@ -138,7 +138,7 @@ async function handleDevSessionResult(
       await printWarning(message.value, processOptions.stdout)
     }
   } else if (result.status === 'created') {
-    await printSuccess(`✅ Dev session created, watching for changes in your app `, processOptions.stdout)
+    await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected)', processOptions.stdout)
   } else {

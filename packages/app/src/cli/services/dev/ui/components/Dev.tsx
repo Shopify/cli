@@ -214,6 +214,7 @@ const Dev: FunctionComponent<DevProps> = ({
         prefixColumnSize={calculatePrefixColumnSize(errorHandledProcesses, app.extensions)}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
+        useAlternativeColorPalette={app.developerPlatformClient.supportsDevSessions}
       />
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
