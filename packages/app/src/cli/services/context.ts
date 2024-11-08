@@ -202,7 +202,7 @@ function renderWarningAboutIncludeConfigOnDeploy() {
   renderWarning({
     headline: `Configuration is now included on deploy`,
     body: [
-      `The \`include_config_on_deploy\` field is no longer supported and has been removed from your configuration file. Review your app configuration file to ensure it's up to date with the correct configuration.`,
+      `The \`include_config_on_deploy\` field is no longer supported and has been removed from your configuration file. Review this file to ensure it's up to date with the correct configuration.`,
     ],
     link: {
       label: 'See Shopify CLI documentation.',
