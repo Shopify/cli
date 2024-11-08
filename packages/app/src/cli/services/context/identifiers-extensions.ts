@@ -47,12 +47,13 @@ export async function ensureExtensionsIds(
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
     if (!confirmedMigration) throw new AbortSilentError()
-    remoteExtensions = await migrateExtensionsToUIExtension(
+    const newRemoteExtensions = await migrateExtensionsToUIExtension(
       uiExtensionsToMigrate,
       options.appId,
       remoteExtensions,
       options.developerPlatformClient,
     )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }
 
   if (flowExtensionsToMigrate.length > 0) {
@@ -123,6 +124,7 @@ export async function ensureExtensionsIds(
     validMatches,
     extensionsToCreate,
     dashboardOnlyExtensions: dashboardExtensions,
+    didMigrateDashboardExtensions: remoteExtensions.length > initialRemoteExtensions.length,
   }
 }
 
