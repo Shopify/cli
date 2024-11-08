@@ -180,6 +180,9 @@ module.exports = {
     '@typescript-eslint/prefer-optional-chain': 'off',
     '@typescript-eslint/no-confusing-void-expression': 'off',
     '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+    '@babel/no-unused-expressions': 'off',
+    'no-unused-expressions': 'off',
+    '@typescript-eslint/no-unused-expressions': ['error', {allowTernary: true}],
   },
   overrides: [
     {

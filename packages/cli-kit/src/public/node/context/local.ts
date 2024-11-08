@@ -255,6 +255,12 @@ export function ciPlatform(
       name,
       metadata: getCIMetadata(name, env),
     }
+  } else if (isTruthy(env.TF_BUILD)) {
+    return {
+      isCI: true,
+      name: 'azure',
+      metadata: getCIMetadata('azure', env),
+    }
   }
   return {
     isCI: false,

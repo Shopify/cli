@@ -14,8 +14,9 @@ import {RemoteBulkUploadResponse} from './factories.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
+import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {test, vi, expect, describe} from 'vitest'
-import {adminRequestDoc, restRequest} from '@shopify/cli-kit/node/api/admin'
+import {adminRequestDoc, restRequest, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
@@ -57,29 +58,30 @@ describe('fetchThemes', () => {
   })
 })
 
-describe('fetwchChecksums', () => {
+describe('fetchChecksums', () => {
   test('returns theme checksums', async () => {
     // Given
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {
-        assets: [
-          {
-            key: 'snippets/product-variant-picker.liquid',
-            checksum: '29e2e56057c3b58c02bc7946d7600481',
-          },
-          {
-            key: 'templates/404.json',
-            checksum: 'f14a0bd594f4fee47b13fc09543098ff',
-          },
-          {
-            key: 'templates/article.json',
-            // May be null if an asset has not been updated recently.
-            checksum: null,
-          },
-        ],
+    vi.mocked(supportedApiVersions).mockResolvedValue(['2024-10'])
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      theme: {
+        files: {
+          nodes: [
+            {
+              filename: 'snippets/product-variant-picker.liquid',
+              checksumMd5: '29e2e56057c3b58c02bc7946d7600481',
+            },
+            {
+              filename: 'templates/404.json',
+              checksumMd5: 'f14a0bd594f4fee47b13fc09543098ff',
+            },
+            {
+              filename: 'templates/article.json',
+              checksumMd5: null,
+            },
+          ],
+          pageInfo: {hasNextPage: false, endCursor: null},
+        },
       },
-      status: 200,
-      headers: {},
     })
 
     // When
@@ -87,8 +89,9 @@ describe('fetwchChecksums', () => {
     const checksum = await fetchChecksums(id, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('GET', `/themes/${id}/assets`, session, undefined, {
-      fields: 'key,checksum',
+    expect(adminRequestDoc).toHaveBeenCalledWith(GetThemeFileChecksums, session, {
+      id: `gid://shopify/OnlineStoreTheme/${id}`,
+      after: null,
     })
     expect(checksum).toHaveLength(3)
     expect(checksum[0]!.key).toEqual('snippets/product-variant-picker.liquid')

@@ -42,7 +42,7 @@ const uiExtensionSpec = createExtensionSpecification({
   dependency,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
-    const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
+    const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild', 'generates_source_maps']
     const needsCart =
       config?.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
@@ -101,10 +101,10 @@ Please check the module path for ${target}`.value,
       )
     }
 
-    if (!uniqueTargets.includes(target)) {
-      uniqueTargets.push(target)
-    } else {
+    if (uniqueTargets.includes(target)) {
       duplicateTargets.push(target)
+    } else {
+      uniqueTargets.push(target)
     }
   }
 

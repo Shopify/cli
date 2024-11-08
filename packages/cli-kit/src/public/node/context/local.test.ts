@@ -261,4 +261,21 @@ describe('ciPlatform', () => {
       },
     })
   })
+
+  test('should return correct data for Azure CI environment', () => {
+    // Given
+    const azureEnv = {
+      TF_BUILD: 'true',
+    }
+
+    // When
+    const result = ciPlatform(azureEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'azure',
+      metadata: {},
+    })
+  })
 })

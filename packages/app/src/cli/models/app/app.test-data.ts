@@ -212,7 +212,10 @@ export async function testUIExtension(
         sources: [],
       },
     },
-    targeting: [{target: 'target1'}, {target: 'target2'}],
+    extension_points: [
+      {target: 'target1', module: 'module1'},
+      {target: 'target2', module: 'module2'},
+    ],
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
@@ -254,7 +257,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
-export async function testAppConfigExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppConfigExtensions(emptyConfig = false, directory?: string): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -269,14 +272,17 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification,
   })
 
   return extension
 }
 
-export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppAccessConfigExtension(
+  emptyConfig = false,
+  directory?: string,
+): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -295,7 +301,7 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification: appAccessSpec,
   })
 
@@ -1330,6 +1336,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     devSessionUpdate: (_input: DevSessionOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
+    getCreateDevStoreLink: (_input: string) =>
+      Promise.resolve(`Looks like you don't have a dev store in the Partners org you selected. Keep going — create a dev store through the
+      Developer Dashboard: https://partners.shopify.com/organizations/1234/stores/new`),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub

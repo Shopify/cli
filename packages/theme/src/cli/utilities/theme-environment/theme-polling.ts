@@ -1,7 +1,8 @@
-import {timestampDateFormat} from '../../constants.js'
+import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
+import {batchedRequests} from '../batching.js'
 import {renderThrownError} from '../errors.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {fetchChecksums, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -121,22 +122,32 @@ async function syncChangedAssets(
   localFileSystem: ThemeFileSystem,
   assetsChangedOnRemote: Checksum[],
 ) {
-  await Promise.all(
-    assetsChangedOnRemote.map(async (file) => {
-      if (localFileSystem.files.get(file.key)?.checksum === file.checksum) {
-        return
-      }
-      const asset = await fetchThemeAsset(targetTheme.id, file.key, currentSession)
-      if (asset) {
-        await localFileSystem.write(asset)
-        outputInfo(
-          outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw('»')} ${outputToken.gray(
-            `download ${asset.key} from remote theme`,
-          )}`,
-        )
-      }
-    }),
+  const filesToGet = assetsChangedOnRemote.filter(
+    (file) => localFileSystem.files.get(file.key)?.checksum !== file.checksum,
   )
+
+  const chunks = batchedRequests(filesToGet, MAX_GRAPHQL_THEME_FILES, async (chunk) => {
+    return fetchThemeAssets(
+      targetTheme.id,
+      chunk.map((file) => file.key),
+      currentSession,
+    ).then((assets) => {
+      return Promise.all(
+        assets.map(async (asset) => {
+          if (asset) {
+            await localFileSystem.write(asset)
+            outputInfo(
+              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                '»',
+              )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
+            )
+          }
+        }),
+      )
+    })
+  })
+
+  await Promise.all(chunks)
 }
 
 export async function deleteRemovedAssets(

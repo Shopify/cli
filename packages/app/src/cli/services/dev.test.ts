@@ -1,6 +1,6 @@
 import {developerPreviewController, warnIfScopesDifferBeforeDev} from './dev.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
-import {testApp, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
+import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -39,12 +39,12 @@ describe('developerPreviewController', () => {
 
 describe('warnIfScopesDifferBeforeDev', () => {
   const appsWithScopes = (local: string, remote: string) => {
-    const localApp = testApp({}, 'current')
+    const localApp = testAppLinked({})
     const remoteApp = testOrganizationApp()
     localApp.configuration = {
       ...localApp.configuration,
       access_scopes: {scopes: local, use_legacy_install_flow: false},
-    } as any
+    }
     remoteApp.configuration = {
       ...remoteApp.configuration,
       access_scopes: {scopes: remote, use_legacy_install_flow: false},

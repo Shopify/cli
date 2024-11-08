@@ -1,17 +1,18 @@
-/* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {fileExistsSync, mkdir, readFileSync, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {reloadApp} from '../app-events/app-event-watcher-handler.js'
+import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -19,12 +20,13 @@ interface DevSessionOptions {
   storeFqdn: string
   apiKey: string
   url: string
-  app: AppInterface
+  app: AppLinkedInterface
   organizationId: string
   appId: string
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
+  url: string
   bundlePath: string
   stdout: Writable
   stderr: Writable
@@ -60,93 +62,65 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient, app} = options
+  const {developerPlatformClient} = options
+
+  // Reload the app before starting the dev session, at this point the configuration has changed (e.g. application_url)
+  const app = await reloadApp(options.app, {stderr, stdout, signal})
 
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
   }
 
-  const bundlePath = joinPath(app.directory, '.shopify', 'bundle')
-  if (fileExistsSync(bundlePath)) await rmdir(bundlePath, {force: true})
-  await mkdir(bundlePath)
+  const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
 
-  const processOptions = {...options, stderr, stdout, signal, bundlePath}
-  const appWatcher = new AppEventWatcher(app, processOptions)
+  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath, app}
 
-  outputWarn('-----> Using DEV SESSIONS <-----')
-  processOptions.stdout.write('Preparing dev session...')
+  await printWarning('[BETA] Starting Dev Session', processOptions.stdout)
 
-  await initialBuild(processOptions)
-  await bundleExtensionsAndUpload(processOptions, false)
+  appWatcher
+    .onEvent(async (event) => {
+      // Cancel any ongoing bundle and upload process
+      bundleControllers.forEach((controller) => controller.abort())
+      // Remove aborted controllers from array:
+      bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
 
-  appWatcher.onEvent(async (event) => {
-    // Cancel any ongoing bundle and upload process
-    bundleControllers.forEach((controller) => controller.abort())
-    // Remove aborted controllers from array:
-    bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
+      event.extensionEvents.map((eve) => {
+        switch (eve.type) {
+          case EventType.Created:
+            processOptions.stdout.write(`✅ Extension created ->> ${eve.extension.handle}`)
+            break
+          case EventType.Deleted:
+            processOptions.stdout.write(`❌ Extension deleted ->> ${eve.extension.handle}`)
+            break
+          case EventType.Updated:
+            processOptions.stdout.write(`🔄 Extension Updated ->> ${eve.extension.handle}`)
+            break
+        }
+      })
 
-    const promises = event.extensionEvents.map(async (eve) => {
-      switch (eve.type) {
-        case EventType.Created:
-        case EventType.UpdatedSourceFile:
-          const message = eve.type === EventType.Created ? '✅ Extension created ' : '🔄 Extension Updated'
-          processOptions.stdout.write(`${message} ->> ${eve.extension.handle}`)
-          return eve.extension.buildForBundle(
-            {...processOptions, app: event.app, environment: 'development'},
-            processOptions.bundlePath,
-            undefined,
+      const networkStartTime = startHRTime()
+      await performActionWithRetryAfterRecovery(async () => {
+        const result = await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
+        const endTime = endHRTimeInMs(event.startTime)
+        const endNetworkTime = endHRTimeInMs(networkStartTime)
+        if (result) {
+          processOptions.stdout.write(`✅ Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
+        } else {
+          processOptions.stdout.write(
+            `❌ Session update aborted (new change detected) [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`,
           )
-        case EventType.Deleted:
-          processOptions.stdout.write(`❌ Extension deleted ->> ${eve.extension.handle}`)
-          return rmdir(joinPath(processOptions.bundlePath, eve.extension.handle), {force: true})
-        case EventType.Updated:
-          processOptions.stdout.write(`🔄 Extension Updated ->> ${eve.extension.handle}`)
-          break
-      }
+        }
+      }, refreshToken)
     })
-    try {
-      await Promise.all(promises)
-      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      processOptions.stderr.write('Error building extensions')
-      processOptions.stderr.write(error.message)
-    }
-
-    const networkStartTime = startHRTime()
-    await performActionWithRetryAfterRecovery(async () => {
-      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
-      const endTime = endHRTimeInMs(event.startTime)
-      const endNetworkTime = endHRTimeInMs(networkStartTime)
-      if (result) {
-        processOptions.stdout.write(`✅ Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
-      } else {
-        processOptions.stdout.write(
-          `❌ Session update aborted (new change detected) [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`,
-        )
-      }
-    }, refreshToken)
-  })
+    .onStart(async () => {
+      await performActionWithRetryAfterRecovery(async () => {
+        await bundleExtensionsAndUpload(processOptions, false)
+        await printWarning('[BETA] Dev session ready, watching for changes in your app', processOptions.stdout)
+      }, refreshToken)
+    })
 
   // Start watching for changes in the app
   await appWatcher.start()
-  processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
-}
-
-/**
- * Build all extensions for the initial bundle
- * All subsequent changes in extensions will trigger individual builds
- *
- * @param options - The options for the process
- */
-async function initialBuild(options: DevSessionProcessOptions) {
-  const allPromises = options.app.realExtensions.map((extension) => {
-    return extension.buildForBundle(
-      {...options, app: options.app, environment: 'development'},
-      options.bundlePath,
-      undefined,
-    )
-  })
-  await Promise.all(allPromises)
 }
 
 /**
@@ -208,10 +182,29 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
     } else {
       await options.developerPlatformClient.devSessionCreate(payload)
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    options.stderr.write('❌ Dev Session Error')
-    options.stderr.write(error.message)
+    if (error.statusCode === 401) {
+      // Re-throw the error so the recovery procedure can be executed
+      throw new Error('Unauthorized')
+    } else {
+      options.stderr.write(`❌ ${updating ? 'Update' : 'Create'} Dev Session Error`)
+      await printError(`${error.message}`, options.stderr)
+    }
   }
   return true
+}
+
+async function printWarning(message: string, stdout: Writable) {
+  await printLogMessage(outputContent`${outputToken.yellow(message)}`.value, stdout)
+}
+
+async function printError(message: string, stdout: Writable) {
+  await printLogMessage(outputContent`${outputToken.errorText(message)}`.value, stdout)
+}
+
+async function printLogMessage(message: string, stdout: Writable) {
+  await useConcurrentOutputContext({outputPrefix: 'extensions', stripAnsi: false}, () => {
+    stdout.write(message)
+  })
 }
