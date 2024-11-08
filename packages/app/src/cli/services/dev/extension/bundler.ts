@@ -37,6 +37,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   extensions.forEach(async (extension) => {
+    const {conditions, targets} = extension.getBundleExtensionStdinContent()
     const bundleExtensionWithOverrides = (overrides?: Overrides) =>
       bundleExtension({
         minify: false,
@@ -47,7 +48,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
           APP_URL: options.devOptions.url,
         },
         stdin: {
-          contents: overrides?.contents || extension.getBundleExtensionStdinContent().targets,
+          contents: overrides?.contents || targets,
           resolveDir: extension.directory,
           loader: overrides?.loader || 'tsx',
         },
@@ -77,21 +78,15 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 
     bundlers.push(bundleExtensionWithOverrides())
 
-    const {conditions} = extension.getBundleExtensionStdinContent()
-
     if (conditions) {
       // This is BAD... why isn't targeting part of this type? Where do we change it?
-      const extConfig = extension.configuration as typeof extension.configuration & {
-        targeting?: {shouldRender: {module: string}}[]
-      }
-      // Should we be mapping over all of the targeting blocks and combining them?
-      const outputFileName = extConfig.targeting?.[0]?.shouldRender?.module.split('/').pop()
+      const outputPath = joinPath(dirname(extension.outputPath), `${extension.configuration.handle}-conditions.js`)
 
       bundlers.push(
         bundleExtensionWithOverrides({
           contents: conditions,
           loader: 'ts',
-          outputPath: `${dirname(extension.outputPath)}/${outputFileName}`,
+          outputPath: outputPath,
         }),
       )
     }
