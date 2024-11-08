@@ -63,18 +63,18 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify theme:console`](#shopify-themeconsole)
+* [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
-* [`shopify theme:init [name]`](#shopify-themeinit-name)
+* [`shopify theme init [name]`](#shopify-theme-init-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify theme:push`](#shopify-themepush)
+* [`shopify theme push`](#shopify-theme-push)
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
@@ -1000,7 +1000,7 @@ FLAGS
       --no-verify                           Skip the routability verification step after deployment.
       --path=<value>                        The path to the directory of the Hydrogen storefront. Defaults to the
                                             current directory where the command is run.
-      --preview                             Deploys to the Preview environment. Overrides --env-branch and Git metadata.
+      --preview                             Deploys to the Preview environment.
 
 DESCRIPTION
   Builds and deploys a Hydrogen storefront to Oxygen.
@@ -1702,7 +1702,7 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
-## `shopify theme:console`
+## `shopify theme console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
 
@@ -1892,7 +1892,7 @@ DESCRIPTION
   specific theme.
 ```
 
-## `shopify theme:init [name]`
+## `shopify theme init [name]`
 
 Clones a Git repository to use as a starting point for building a new theme.
 
@@ -2076,7 +2076,7 @@ FLAGS
   -d, --development          Pull theme files from your remote development theme.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Pull theme files from your remote live theme.
-  -n, --nodelete             Runs the pull command without deleting local files.
+  -n, --nodelete             Prevent deleting local files that don't exist remotely.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
                              (example.myshopify.com, https://example.myshopify.com).
@@ -2095,7 +2095,7 @@ DESCRIPTION
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
 
-## `shopify theme:push`
+## `shopify theme push`
 
 Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
@@ -2110,7 +2110,7 @@ FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -j, --json                 Output JSON instead of a UI.
   -l, --live                 Push theme files from your remote live theme.
-  -n, --nodelete             Runs the push command without deleting local files.
+  -n, --nodelete             Prevent deleting remote files that don't exist locally.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
   -p, --publish              Publish as the live theme after uploading.
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL

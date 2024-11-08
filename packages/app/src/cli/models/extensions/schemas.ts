@@ -42,6 +42,11 @@ const NewExtensionPointSchema = zod.object({
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
   capabilities: TargetCapabilitiesSchema.optional(),
+  preloads: zod
+    .object({
+      chat: zod.string().optional(),
+    })
+    .optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
@@ -57,6 +62,8 @@ export const FieldSchema = zod.object({
   default_value: zod.any().optional(),
   type: zod.string(),
   validations: zod.array(zod.any()).optional(),
+  marketingActivityCreateUrl: zod.string().optional(),
+  marketingActivityDeleteUrl: zod.string().optional(),
 })
 
 const SettingsSchema = zod.object({

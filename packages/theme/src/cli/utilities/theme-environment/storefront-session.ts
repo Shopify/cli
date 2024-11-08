@@ -2,6 +2,7 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
@@ -9,7 +10,9 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
     redirect: 'manual',
   })
 
-  return response.status === 302
+  if (response.status !== 302) return false
+
+  return response.headers.get('location')?.endsWith('/password') ?? false
 }
 
 /**
@@ -17,12 +20,18 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
  * If the password is correct, SFR will respond with a 302 to redirect to the storefront
  */
 export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
+  const params = new URLSearchParams()
+
+  params.append('form_type', 'storefront_password')
+  params.append('utf8', '✓')
+  params.append('password', password ?? '')
+
   const response = await fetch(`${prependHttps(store)}/password`, {
     headers: {
       'cache-control': 'no-cache',
       'content-type': 'application/x-www-form-urlencoded',
     },
-    body: `form_type=storefront_password&utf8=%E2%9C%93&password=${password}`,
+    body: params.toString(),
     method: 'POST',
     redirect: 'manual',
   })
@@ -98,6 +107,14 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
 
+  if (!shopifyEssential) {
+    outputDebug(
+      `Failed to obtain _shopify_essential cookie.\n
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
+       -Body: ${await response.text()}`,
+    )
+  }
+
   return shopifyEssential
 }
 
@@ -122,6 +139,14 @@ async function enrichSessionWithStorefrontPassword(
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
+
+  if (!storefrontDigest) {
+    outputDebug(
+      `Failed to obtain storefront_digest cookie.\n
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
+       -Body: ${await response.text()}`,
+    )
+  }
 
   return storefrontDigest
 }

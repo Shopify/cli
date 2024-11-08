@@ -106,8 +106,8 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const state: AppConfigurationStateLinked = {
     state: 'connected-app',
     basicConfiguration: mergedAppConfiguration,
-    appDirectory: options.directory,
-    configurationPath: joinPath(options.directory, configFileName),
+    appDirectory,
+    configurationPath: joinPath(appDirectory, configFileName),
     configSource: options.configName ? 'flag' : 'cached',
     configurationFileName: configFileName,
   }

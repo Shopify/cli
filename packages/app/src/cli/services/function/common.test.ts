@@ -3,6 +3,7 @@ import {
   testAppLinked,
   testDeveloperPlatformClient,
   testFunctionExtension,
+  testOrganization,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
@@ -34,6 +35,7 @@ beforeEach(async () => {
     remoteApp: testOrganizationApp(),
     developerPlatformClient: testDeveloperPlatformClient(),
     specifications: [],
+    organization: testOrganization(),
   })
   vi.mocked(renderFatalError).mockReturnValue('')
   vi.mocked(renderAutocompletePrompt).mockResolvedValue(ourFunction)

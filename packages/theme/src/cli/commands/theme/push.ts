@@ -7,7 +7,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
-  static usage = ['theme:push', 'theme:push --unpublished --json']
+  static usage = ['theme push', 'theme push --unpublished --json']
 
   static descriptionWithMarkdown = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
 
@@ -65,7 +65,7 @@ export default class Push extends ThemeCommand {
     }),
     nodelete: Flags.boolean({
       char: 'n',
-      description: 'Runs the push command without deleting local files.',
+      description: `Prevent deleting remote files that don't exist locally.`,
       env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({

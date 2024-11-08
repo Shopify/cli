@@ -104,6 +104,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       env,
       stderr: options.stderr,
       stdout: options.stdout,
+      sourceMaps: extension.isSourceMapGeneratingExtension,
     })
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
@@ -117,7 +118,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
-export interface BuildFunctionExtensionOptions extends ExtensionBuildOptions {}
+export type BuildFunctionExtensionOptions = ExtensionBuildOptions
 
 /**
  * Builds a function extension
@@ -143,7 +144,11 @@ export async function buildFunctionExtension(
 
   try {
     const bundlePath = extension.outputPath
-    extension.outputPath = joinPath(extension.directory, joinPath('dist', 'function.wasm'))
+    const relativeBuildPath =
+      (extension as ExtensionInstance<FunctionConfigType>).configuration.build.path ?? joinPath('dist', 'index.wasm')
+
+    extension.outputPath = joinPath(extension.directory, relativeBuildPath)
+
     if (extension.isJavaScript) {
       await runCommandOrBuildJSFunction(extension, options)
     } else {
@@ -188,6 +193,7 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,

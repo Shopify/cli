@@ -28,6 +28,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
         apiKey,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         target: targeting![0]!.target,
         version,
       })

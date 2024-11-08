@@ -3,6 +3,8 @@ import {dev, DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -133,11 +135,6 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for managing theme app extensions.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -167,12 +164,23 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 
     await checkFolderIsValidApp(flags.path)
 
-    const devOptions: DevOptions = {
+    const appContextResult = await linkedAppContext({
       directory: flags.path,
-      configName: flags.config,
-      apiKey,
+      clientId: apiKey,
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
+    const store = await storeContext({
+      appContextResult,
       storeFqdn: flags.store,
-      reset: flags.reset,
+      forceReselectStore: flags.reset,
+    })
+
+    const devOptions: DevOptions = {
+      ...appContextResult,
+      store,
+      directory: flags.path,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig,
@@ -185,10 +193,9 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      devPreview: !flags.legacy,
     }
 
-    const result = await dev(devOptions)
-    return {app: result.app}
+    await dev(devOptions)
+    return {app: appContextResult.app}
   }
 }

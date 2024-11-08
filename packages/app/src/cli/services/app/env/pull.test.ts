@@ -1,20 +1,19 @@
 import {pullEnv} from './pull.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
-import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
+import {OrganizationApp} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
 
-vi.mock('../fetch-app-from-config-or-select')
-
 describe('env pull', () => {
-  let app: AppInterface
+  let app: AppLinkedInterface
+  let remoteApp: OrganizationApp
 
   beforeEach(async () => {
-    app = mockApp()
-    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(testOrganizationApp())
+    app = mockApp() as AppLinkedInterface
+    remoteApp = testOrganizationApp()
   })
 
   test('creates a new environment file when there is no .env', async () => {
@@ -24,7 +23,7 @@ describe('env pull', () => {
 
       // When
       const filePath = resolvePath(tmpDir, '.env')
-      const result = await pullEnv(app, {envFile: filePath})
+      const result = await pullEnv({app, remoteApp, envFile: filePath})
 
       // Then
       expect(file.writeFile).toHaveBeenCalledWith(
@@ -50,7 +49,7 @@ describe('env pull', () => {
       vi.spyOn(file, 'writeFile')
 
       // When
-      const result = await pullEnv(app, {envFile: filePath})
+      const result = await pullEnv({app, remoteApp, envFile: filePath})
 
       // Then
       expect(file.writeFile).toHaveBeenCalledWith(
@@ -84,7 +83,7 @@ describe('env pull', () => {
       vi.spyOn(file, 'writeFile')
 
       // When
-      const result = await pullEnv(app, {envFile: filePath})
+      const result = await pullEnv({app, remoteApp, envFile: filePath})
 
       // Then
       expect(file.writeFile).not.toHaveBeenCalled()

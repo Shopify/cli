@@ -34,14 +34,19 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 import colors from '@shopify/cli-kit/node/colors'
-// eslint-disable-next-line no-restricted-imports
-import {resolve} from 'path'
+
+import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
+  ...((await vi.importActual('@shopify/cli-kit/node/node-package-manager')) as any),
+  localCLIVersion: vi.fn(),
+  globalCLIVersion: vi.fn(),
+}))
+vi.mock('@shopify/cli-kit/node/version')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -322,9 +327,9 @@ wrong = "property"
 
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
-    vi.mocked(currentProcessIsGlobal).mockReturnValueOnce(true)
+    vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
+    vi.mocked(localCLIVersion).mockResolvedValue('3.65.0')
     const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
     await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',
@@ -339,16 +344,19 @@ wrong = "property"
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  You are running a global installation of Shopify CLI                        │
+      │  Two Shopify CLI installations found – using local dependency                │
       │                                                                              │
-      │  This project has Shopify CLI as a local dependency in package.json. If you  │
-      │   prefer to use that version, run the command with your package manager      │
-      │  (e.g. npm run shopify).                                                     │
+      │  A global installation (v3.68.0) and a local dependency (v3.65.0) were       │
+      │  detected.                                                                   │
+      │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
+      │  your package.json, unless you want to use different versions across         │
+      │  multiple apps.                                                              │
       │                                                                              │
-      │  For more information, see Shopify CLI documentation [1]                     │
+      │  See Shopify CLI documentation. [1]                                          │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/tools/cli
+      [1] https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executab
+      le-or-local-dependency
       "
     `)
     mockOutput.clear()
@@ -356,8 +364,8 @@ wrong = "property"
 
   test('doesnt show warning if there is no local dependency', async () => {
     // Given
+    vi.mocked(localCLIVersion).mockResolvedValue(undefined)
     const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
     await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',
@@ -1939,7 +1947,6 @@ wrong = "property"
       expect.objectContaining({
         webhooks: {
           api_version: '2023-07',
-          subscriptions: [],
         },
       }),
       expect.objectContaining({
@@ -1978,7 +1985,7 @@ wrong = "property"
     await writeConfig(appConfigurationWithWebhooks)
 
     // When
-    const app = await loadTestingApp({remoteFlags: [Flag.DeclarativeWebhooks]})
+    const app = await loadTestingApp({remoteFlags: []})
 
     // Then
     expect(app.allExtensions).toHaveLength(6)
@@ -2325,7 +2332,7 @@ wrong = "property"
 
       // Then
       expect(use).toHaveBeenCalledWith({
-        directory: normalizePath(resolve(tmpDir)),
+        directory: normalizePath(tmpDir),
         shouldRenderSuccess: false,
         warningContent: {
           headline: "Couldn't find shopify.app.non-existent.toml",

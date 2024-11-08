@@ -6,7 +6,7 @@ import {
   AbortSilentError,
   CancelExecution,
   errorMapper,
-  shouldReportError,
+  shouldReportErrorAsUnexpected,
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
@@ -46,7 +46,7 @@ export async function errorHandler(
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   // categorise the error first
   let exitMode: CommandExitMode = 'expected_error'
-  if (shouldReportError(error)) exitMode = 'unexpected_error'
+  if (shouldReportErrorAsUnexpected(error)) exitMode = 'unexpected_error'
 
   if (config !== undefined) {
     // Log an analytics event when there's an error
@@ -161,7 +161,7 @@ export function cleanStackFrameFilePath({
     ? currentFilePath
     : path.joinPath(projectRoot, currentFilePath)
 
-  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
+  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.startsWith(pluginPath))[0]
 
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
@@ -232,7 +232,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   const miscData = {} as {[key: string]: unknown}
   const appKeys = ['api_key', 'partner_id', 'project_type']
   const commandKeys = ['command']
-  const environmentKeys = ['cli_version', 'node_version', 'ruby_version', 'uname']
+  const environmentKeys = ['cli_version', 'node_version', 'uname']
 
   Object.entries(allMetadata).forEach(([key, value]) => {
     if (key.startsWith('app_') || appKeys.includes(key)) {

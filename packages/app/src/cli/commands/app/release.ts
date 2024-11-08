@@ -1,10 +1,9 @@
 import {appFlags} from '../../flags.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {getAppConfigurationState} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -64,21 +63,24 @@ export default class Release extends AppCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+    const requiredNonTTYFlags = ['force']
+    const configurationState = await getAppConfigurationState(flags.path, flags.config)
+    if (configurationState.state === 'template-only' && !apiKey) {
+      requiredNonTTYFlags.push('client-id')
+    }
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
+
+    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
-    const requiredNonTTYFlags = ['force']
-    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
-    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
-
     await release({
       app,
-      apiKey,
-      reset: flags.reset,
+      remoteApp,
+      developerPlatformClient,
       force: flags.force,
       version: flags.version,
     })

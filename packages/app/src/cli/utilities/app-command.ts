@@ -1,5 +1,5 @@
 import {configurationFileNames} from '../constants.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -9,8 +9,7 @@ import BaseCommand from '@shopify/cli-kit/node/base-command'
  * - A remoteApp is fetched
  */
 export interface AppCommandOutput {
-  // PENDING: Use AppLinkedInterface
-  app: AppInterface
+  app: AppLinkedInterface
 }
 
 export default abstract class AppCommand extends BaseCommand {

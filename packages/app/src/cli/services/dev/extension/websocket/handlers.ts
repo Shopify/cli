@@ -39,6 +39,7 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
 
 export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocketConnectionOptions) {
   return (data: RawData) => {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     const jsonData = JSON.parse(data.toString())
     const {event: eventType, data: eventData} = jsonData
 

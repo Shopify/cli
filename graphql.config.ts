@@ -1,17 +1,17 @@
-function projectFactory(name: string, schemaName: string) {
+function projectFactory(name: string, schemaName: string, project: string = 'app') {
   return {
-    schema: `./packages/app/src/cli/api/graphql/${name}/${schemaName}`,
-    documents: [`./packages/app/src/cli/api/graphql/${name}/queries/**/*.graphql`],
+    schema: `./packages/${project}/src/cli/api/graphql/${name}/${schemaName}`,
+    documents: [`./packages/${project}/src/cli/api/graphql/${name}/queries/**/*.graphql`,`./packages/${project}/src/cli/api/graphql/${name}/mutations/**/*.graphql`],
     extensions: {
       codegen: {
         generates: {
-          [`./packages/app/src/cli/api/graphql/${name}/generated/types.d.ts`]: {
+          [`./packages/${project}/src/cli/api/graphql/${name}/generated/types.d.ts`]: {
             plugins: [
               {'graphql-codegen-typescript-operation-types': {enumsAsTypes: true, useTypeImports: true}},
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax  */',
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
             ],
@@ -21,16 +21,18 @@ function projectFactory(name: string, schemaName: string) {
                 GlobalID: 'string',
                 PropertyId: 'string',
                 PropertyPublicID: 'string',
+                JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
+                URL: 'string',
               },
             },
           },
-          [`./packages/app/src/cli/api/graphql/${name}/generated/`]: {
+          [`./packages/${project}/src/cli/api/graphql/${name}/generated/`]: {
             preset: 'near-operation-file',
             plugins: [
               {
                 add: {
                   content:
-                    '/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types */',
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-duplicate-type-constituents */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
               {
@@ -43,13 +45,14 @@ function projectFactory(name: string, schemaName: string) {
                     GlobalID: 'string',
                     PropertyId: 'string',
                     PropertyPublicID: 'string',
+                    JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
+                    URL: 'string',
                   },
                 },
               },
               {
                 'typed-document-node': {
                   addTypenameToSelectionSets: true,
-                  nameSuffix: 'Funky',
                 },
               },
             ],
@@ -73,5 +76,7 @@ export default {
     businessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql'),
     businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
+    appManagement: projectFactory('app-management', 'app_management_schema.graphql'),
+    admin: projectFactory('admin', 'admin_schema.graphql', 'cli-kit'),
   },
 }

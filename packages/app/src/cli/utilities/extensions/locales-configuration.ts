@@ -1,6 +1,6 @@
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
 
 const L10N_FILE_SIZE_LIMIT = 16 * 1024
@@ -57,7 +57,7 @@ function findDefaultLocale(filePaths: string[]) {
 function getAllLocales(localesPath: string[]) {
   const all: {[key: string]: string} = {}
   for (const localePath of localesPath) {
-    const localeCode = basename(localePath).split('.')[0]!
+    const localeCode = failIfUnset(basename(localePath).split('.')[0], 'Locale code is unset')
     const locale = fs.readFileSync(localePath, 'base64')
     all[localeCode] = locale
   }
@@ -66,4 +66,11 @@ function getAllLocales(localesPath: string[]) {
 
 function bundleSize(localesPaths: string[]) {
   return localesPaths.map((locale) => fs.statSync(locale).size).reduce((acc, size) => acc + size, 0)
+}
+
+function failIfUnset<T>(value: T | undefined, message: string) {
+  if (value === undefined) {
+    throw new BugError(message)
+  }
+  return value
 }

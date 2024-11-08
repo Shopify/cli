@@ -31,6 +31,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         metafields: targeting.metafields ?? config.metafields ?? [],
         default_placement_reference: targeting.default_placement,
         capabilities: targeting.capabilities,
+        preloads: targeting.preloads ?? {},
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -41,7 +42,7 @@ const uiExtensionSpec = createExtensionSpecification({
   dependency,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
-    const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
+    const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild', 'generates_source_maps']
     const needsCart =
       config?.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
@@ -100,10 +101,10 @@ Please check the module path for ${target}`.value,
       )
     }
 
-    if (uniqueTargets.indexOf(target) === -1) {
-      uniqueTargets.push(target)
-    } else {
+    if (uniqueTargets.includes(target)) {
       duplicateTargets.push(target)
+    } else {
+      uniqueTargets.push(target)
     }
   }
 

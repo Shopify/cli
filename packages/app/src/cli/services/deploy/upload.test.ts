@@ -25,7 +25,9 @@ describe('uploadExtensionsBundle', () => {
         name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
+        appModules: [
+          {uuid: '123', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
+        ],
         developerPlatformClient,
         extensionIds: {},
         release: true,
@@ -44,6 +46,7 @@ describe('uploadExtensionsBundle', () => {
             context: '',
             uuid: '123',
             handle: 'handle',
+            specificationIdentifier: 'ui_extension',
           },
         ],
         skipPublish: false,
@@ -66,7 +69,9 @@ describe('uploadExtensionsBundle', () => {
         name: 'appName',
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
+        appModules: [
+          {uuid: '123', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
+        ],
         developerPlatformClient,
         extensionIds: {},
         release: true,
@@ -87,6 +92,7 @@ describe('uploadExtensionsBundle', () => {
             context: '',
             uuid: '123',
             handle: 'handle',
+            specificationIdentifier: 'ui_extension',
           },
         ],
         skipPublish: false,
@@ -221,8 +227,8 @@ describe('uploadExtensionsBundle', () => {
           organizationId: '1',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           appModules: [
-            {uuid: '123', config: '{}', context: '', handle: 'handle'},
-            {uuid: '456', config: '{}', context: '', handle: 'handle'},
+            {uuid: '123', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
+            {uuid: '456', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
           ],
           developerPlatformClient,
           extensionIds: {
@@ -323,8 +329,8 @@ describe('uploadExtensionsBundle', () => {
         organizationId: '1',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [
-          {uuid: '123', config: '{}', context: '', handle: 'handle'},
-          {uuid: '456', config: '{}', context: '', handle: 'handle'},
+          {uuid: '123', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
+          {uuid: '456', config: '{}', context: '', handle: 'handle', specificationIdentifier: 'ui_extension'},
         ],
         developerPlatformClient,
         extensionIds: {

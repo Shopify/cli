@@ -101,6 +101,7 @@ describe('graphqlRequestDoc', () => {
       `query QueryName {
   example
 }`,
+      'mockedAddress',
       mockVariables,
       expect.anything(),
     )

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -16,7 +17,6 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -111,7 +111,7 @@ export function getAppVersionedSchema(
   allowDynamicallySpecifiedConfigs = false,
 ): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const schema = specs.reduce((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema as any)
+  const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
 
   if (allowDynamicallySpecifiedConfigs) {
     return schema.passthrough()
@@ -330,10 +330,6 @@ export class App<
   }
 
   get allExtensions() {
-    if (!this.remoteFlags.includes(Flag.DeclarativeWebhooks)) {
-      this.filterDeclarativeWebhooksConfig()
-    }
-
     if (this.includeConfigOnDeploy) return this.realExtensions
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
@@ -355,7 +351,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
-          assets: module.uid,
+          assets: module.configuration.uid ?? module.handle,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
         }
@@ -434,21 +430,6 @@ export class App<
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.build?.include_config_on_deploy
-  }
-
-  private filterDeclarativeWebhooksConfig() {
-    const webhooksConfigIndex = this.realExtensions.findIndex((ext) => ext.handle === 'webhooks')
-    const complianceWebhooksConfigIndex = this.realExtensions.findIndex(
-      (ext) => ext.handle === 'privacy-compliance-webhooks',
-    )
-
-    if (webhooksConfigIndex > -1) {
-      setPathValue(this.realExtensions, `${webhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
-    }
-
-    if (complianceWebhooksConfigIndex > -1) {
-      setPathValue(this.realExtensions, `${complianceWebhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
-    }
   }
 }
 

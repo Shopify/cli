@@ -1,5 +1,4 @@
 import {reportAnalyticsEvent} from './analytics.js'
-import * as ruby from './ruby.js'
 import * as os from './os.js'
 import {
   analyticsDisabled,
@@ -22,7 +21,6 @@ import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/n
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 vi.mock('./context/local.js')
-vi.mock('./ruby.js')
 vi.mock('./os.js')
 vi.mock('../../store.js')
 vi.mock('../../public/node/crypto.js')
@@ -44,7 +42,6 @@ describe('event tracking', () => {
     vi.mocked(hashString).mockReturnValue('hashed-macaddress')
     vi.mocked(isUnitTest).mockReturnValue(true)
     vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
-    vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
   })
@@ -97,7 +94,7 @@ describe('event tracking', () => {
         success: true,
         uname: 'darwin arm64',
         cli_version: version,
-        ruby_version: '3.1.1',
+        ruby_version: '',
         node_version: process.version.replace('v', ''),
         is_employee: false,
         env_plugin_installed_any_custom: true,
@@ -146,7 +143,7 @@ describe('event tracking', () => {
         success: false,
         uname: 'darwin arm64',
         cli_version: version,
-        ruby_version: '3.1.1',
+        ruby_version: '',
         node_version: process.version.replace('v', ''),
         is_employee: false,
         user_id: 'cached-user-id',

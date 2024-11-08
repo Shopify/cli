@@ -1,6 +1,5 @@
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => {
@@ -74,7 +73,7 @@ describe('asset-ignore', () => {
   describe('applyIgnoreFilters', () => {
     test(`returns entire list of checksums when there's no filter to apply`, async () => {
       // Given/When
-      const actualChecksums = await applyIgnoreFilters(checksums, {})
+      const actualChecksums = applyIgnoreFilters(checksums, {})
 
       // Then
       expect(actualChecksums).toEqual(checksums)
@@ -89,12 +88,12 @@ describe('asset-ignore', () => {
           'sections/*',
           'templates/*',
           'config/*_data.json',
-          '.*settings_schema.json',
+          '/settings_schema/',
         ],
       }
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([{key: 'assets/basic.css', checksum: '00000000000000000000000000000000'}])
@@ -105,7 +104,7 @@ describe('asset-ignore', () => {
       const options = {ignore: ['config/*', 'templates/*', 'assets/image.png']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -120,7 +119,7 @@ describe('asset-ignore', () => {
       const options = {only: ['config/*', 'assets/image.png']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -135,7 +134,7 @@ describe('asset-ignore', () => {
       const options = {ignore: ['*.css']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -153,7 +152,7 @@ describe('asset-ignore', () => {
       const options = {only: ['templates/*.json']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
@@ -167,43 +166,122 @@ describe('asset-ignore', () => {
       const options = {only: ['templates/**/*.json']}
 
       // When
-      const actualChecksums = await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
       // Then
       expect(actualChecksums).toEqual([
         {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
       ])
     })
+  })
 
-    test(`only outputs glob pattern subdirectory warnings for the templates folder`, async () => {
+  describe('applyIgnoreFilters with negated patterns', () => {
+    test(`only negating a file does not produce side effects of other ignored files`, () => {
+      const options = {
+        ignoreFromFile: ['!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+        {key: 'assets/complex.css', checksum: '11111111111111111111111111111111'},
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+      ])
+    })
+    test(`negating a specific file overrides ignoring one`, () => {
       // Given
-      const options = {only: ['assets/*.json', 'config/*.json', 'sections/*.json']}
+      const options = {
+        ignoreFromFile: ['assets/*.css', '!assets/basic.css'],
+      }
+
       // When
-      await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
       // Then
-      expect(vi.mocked(outputWarn)).not.toHaveBeenCalled()
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+      ])
     })
 
-    test(`outputs warnings when there are glob pattern modifications required for subdirectories`, async () => {
-      // Given
-      const options = {only: ['templates/*.json']}
+    test('should not ignore files matching a negated pattern', () => {
+      const ignorePatterns = [
+        'assets/basic.css',
+        'sections/*.json',
+        'templates/*.json',
+        'templates/**/*.json',
+        'config/*.json',
+        '!config/*_schema.json',
+      ]
 
-      // When
-      await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, {ignoreFromFile: ignorePatterns})
 
-      // Then
-      expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
+      expect(actualChecksums).toEqual([
+        {key: 'assets/complex.css', checksum: '11111111111111111111111111111111'},
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+      ])
+    })
+  })
+  describe('applyIgnoreFilters with negated ignore and only options', () => {
+    test(`negating a specific file in ignore option overrides ignoring one`, () => {
+      const options = {
+        ignore: ['assets/*.css', '!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+      ])
     })
 
-    test('only outputs a single warning for duplicated glob patterns', async () => {
-      // Given
-      const options = {only: ['templates/*.json'], ignore: ['templates/*.json']}
+    test(`negating a specific file in only option properly overrides and ignores it`, () => {
+      const options = {
+        only: ['assets/*.css', '!assets/basic.css'],
+      }
 
-      // When
-      await applyIgnoreFilters(checksums, options)
+      const actualChecksums = applyIgnoreFilters(checksums, options)
 
-      // Then
-      expect(vi.mocked(outputWarn)).toHaveBeenCalledTimes(1)
+      expect(actualChecksums).toEqual([{key: 'assets/complex.css', checksum: '11111111111111111111111111111111'}])
+    })
+  })
+  describe('applyIgnoreFilters do not return duplicates', () => {
+    test(`should not return duplicates when negated patterns are used`, () => {
+      const options = {
+        ignoreFromFile: ['assets/*.css', '!assets/basic.css'],
+        ignore: ['!assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+      ])
     })
   })
 })

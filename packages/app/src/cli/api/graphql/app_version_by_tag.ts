@@ -36,7 +36,7 @@ export interface AppVersionByTagSchema {
     appVersion: {
       id: number
       uuid: string
-      versionTag: string
+      versionTag?: string | null
       location: string
       message: string
       appModuleVersions: AppModuleVersion[]

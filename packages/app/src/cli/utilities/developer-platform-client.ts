@@ -179,35 +179,31 @@ export interface DevSessionOptions {
 
 type WithUserErrors<T> = T & {
   userErrors: {
-    field: string[]
+    field?: string[] | null
     message: string
   }[]
 }
 
 export type AssetUrlSchema = WithUserErrors<{
-  assetUrl: string
+  assetUrl?: string | null
 }>
 
-export enum Flag {
-  DeclarativeWebhooks,
-}
+export enum Flag {}
 
-const FlagMap: {[key: string]: Flag} = {
-  '5b25141b': Flag.DeclarativeWebhooks,
-}
+const FlagMap: {[key: string]: Flag} = {}
 
 export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
-  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const defaultActiveFlags: Flag[] = []
   const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
   return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
 
 export interface DeveloperPlatformClient {
-  clientName: string
-  webUiName: string
-  supportsAtomicDeployments: boolean
-  requiresOrganization: boolean
-  supportsDevSessions: boolean
+  readonly clientName: string
+  readonly webUiName: string
+  readonly supportsAtomicDeployments: boolean
+  readonly requiresOrganization: boolean
+  readonly supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
@@ -255,4 +251,5 @@ export interface DeveloperPlatformClient {
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
+  getCreateDevStoreLink: (input: string) => Promise<string>
 }

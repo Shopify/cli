@@ -1,7 +1,5 @@
 import {appFlags} from '../../../flags.js'
-import {AppInterface} from '../../../models/app/app.js'
-import {loadApp} from '../../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -21,14 +19,13 @@ export default class EnvShow extends AppCommand {
 
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(EnvShow)
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+    const {app, remoteApp} = await linkedAppContext({
       directory: flags.path,
+      clientId: undefined,
+      forceRelink: false,
       userProvidedConfigName: flags.config,
-      mode: 'report',
     })
-    outputInfo(await showEnv(app))
+    outputInfo(await showEnv(app, remoteApp))
     return {app}
   }
 }

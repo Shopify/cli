@@ -28,6 +28,7 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
     ? table
     : Object.keys(table).map((header) => ({
         header,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         items: table[header]!,
         color: undefined,
         helperText: undefined,

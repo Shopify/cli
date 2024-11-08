@@ -412,14 +412,6 @@
           "name": "graphiql-port",
           "type": "option"
         },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for managing theme app extensions.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
-        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -2974,7 +2966,7 @@
         },
         "preview": {
           "allowNo": false,
-          "description": "Deploys to the Preview environment. Overrides --env-branch and Git metadata.",
+          "description": "Deploys to the Preview environment.",
           "name": "preview",
           "required": false,
           "type": "boolean"
@@ -3172,11 +3164,6 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_VERBOSE",
           "name": "verbose",
           "required": false,
-          "type": "boolean"
-        },
-        "worker": {
-          "hidden": true,
-          "name": "worker",
           "type": "boolean"
         }
       },
@@ -3890,11 +3877,6 @@
           ],
           "description": "Watches for changes and rebuilds the project.",
           "name": "watch",
-          "type": "boolean"
-        },
-        "worker": {
-          "hidden": true,
-          "name": "worker",
           "type": "boolean"
         }
       },
@@ -4816,8 +4798,8 @@
       "strict": true,
       "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
       "usage": [
-        "theme:console",
-        "theme:console --url /products/classic-leather-jacket"
+        "theme console",
+        "theme console --url /products/classic-leather-jacket"
       ]
     },
     "theme:delete": {
@@ -4920,20 +4902,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "host",
-        "live-reload",
-        "poll",
-        "theme-editor-sync",
-        "overwrite-json",
-        "port",
-        "theme",
-        "nodelete",
-        "only",
-        "ignore",
-        "force",
-        "notify"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
@@ -4972,14 +4940,6 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
-        },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -5271,7 +5231,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Clones a Git repository to use as a starting point for building a new theme.",
-      "usage": "theme:init [name]"
+      "usage": "theme init [name]"
     },
     "theme:language-server": {
       "aliases": [
@@ -5687,7 +5647,7 @@
         "nodelete": {
           "allowNo": false,
           "char": "n",
-          "description": "Runs the pull command without deleting local files.",
+          "description": "Prevent deleting local files that don't exist remotely.",
           "env": "SHOPIFY_FLAG_NODELETE",
           "name": "nodelete",
           "type": "boolean"
@@ -5834,7 +5794,7 @@
         "nodelete": {
           "allowNo": false,
           "char": "n",
-          "description": "Runs the push command without deleting local files.",
+          "description": "Prevent deleting remote files that don't exist locally.",
           "env": "SHOPIFY_FLAG_NODELETE",
           "name": "nodelete",
           "type": "boolean"
@@ -5918,8 +5878,8 @@
       "strict": true,
       "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
       "usage": [
-        "theme:push",
-        "theme:push --unpublished --json"
+        "theme push",
+        "theme push --unpublished --json"
       ]
     },
     "theme:rename": {
@@ -6024,20 +5984,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "host",
-        "live-reload",
-        "poll",
-        "theme-editor-sync",
-        "overwrite-json",
-        "port",
-        "theme",
-        "nodelete",
-        "only",
-        "ignore",
-        "force",
-        "notify"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
@@ -6076,14 +6022,6 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
-        },
-        "legacy": {
-          "allowNo": false,
-          "description": "Use the legacy Ruby implementation for the `shopify theme dev` command.",
-          "env": "SHOPIFY_FLAG_LEGACY",
-          "hidden": true,
-          "name": "legacy",
-          "type": "boolean"
         },
         "live-reload": {
           "default": "hot-reload",
@@ -6471,5 +6409,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.68.0"
+  "version": "3.69.0"
 }

@@ -3,6 +3,9 @@ import cleanup from './template/cleanup.js'
 import link from '../app/config/link.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {loadApp} from '../../models/app/loader.js'
+import {SelectAppOrNewAppNameResult} from '../../commands/app/init.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {
   findUpAndReadPackageJson,
   lockfiles,
@@ -34,7 +37,7 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 interface InitOptions {
   name: string
-  app: OrganizationApp
+  selectedAppOrNameResult: SelectAppOrNewAppNameResult
   directory: string
   template: string
   packageManager: PackageManager
@@ -75,7 +78,7 @@ async function init(options: InitOptions) {
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
     await mkdir(templateDownloadDir)
-    const tasks: Task<unknown>[] = [
+    const tasks: Task[] = [
       {
         title: `Downloading template from ${repoUrl}`,
         task: async () => {
@@ -193,13 +196,25 @@ async function init(options: InitOptions) {
     await moveFile(templateScaffoldDir, outputDirectory)
   })
 
-  // Link the new project to the selected App
+  let app: OrganizationApp
+  if (options.selectedAppOrNameResult.result === 'new') {
+    // Load the local app to get the creation options.
+    // NOTE: need the specs to load the scopes, if we ever remove the local specs, we need to find a way to do this without them.
+    const specifications = await loadLocalExtensionsSpecifications()
+    const localApp = await loadApp({specifications, directory: outputDirectory, userProvidedConfigName: undefined})
+    const org = options.selectedAppOrNameResult.org
+    app = await options.developerPlatformClient.createApp(org, options.name, localApp.creationDefaultOptions())
+  } else {
+    app = options.selectedAppOrNameResult.app
+  }
+
+  // Link the new project to the selected/created App
   await link(
     {
       directory: outputDirectory,
-      apiKey: options.app.apiKey,
-      appId: options.app.id,
-      organizationId: options.app.organizationId,
+      apiKey: app.apiKey,
+      appId: app.id,
+      organizationId: app.organizationId,
       configName: 'shopify.app.toml',
       developerPlatformClient: options.developerPlatformClient,
     },
@@ -217,7 +232,7 @@ async function init(options: InitOptions) {
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
       [
         'For an overview of commands, run',
-        {command: `${formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
+        {command: formatPackageManagerCommand(packageManager, 'shopify app', '--help')},
       ],
     ],
   })

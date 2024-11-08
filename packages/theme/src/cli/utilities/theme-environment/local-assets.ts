@@ -1,14 +1,6 @@
 import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
-import {
-  defineEventHandler,
-  EventHandlerRequest,
-  H3Event,
-  serveStatic,
-  setResponseHeader,
-  sendError,
-  createError,
-} from 'h3'
+import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import type {Theme, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -63,7 +55,7 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function findLocalFile(event: H3Event<EventHandlerRequest>, ctx: DevServerContext) {
+function findLocalFile(event: H3Event, ctx: DevServerContext) {
   const tryGetFile = (pattern: RegExp, fileSystem: VirtualFileSystem) => {
     const matchedFileName = event.path.match(pattern)?.[1]
 
@@ -80,8 +72,8 @@ function findLocalFile(event: H3Event<EventHandlerRequest>, ctx: DevServerContex
 
   // Try to match theme asset files first and fallback to theme extension asset files
   return (
-    tryGetFile(/^\/cdn\/.*?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
-    tryGetFile(/^\/ext\/cdn\/extensions\/.*?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
+    tryGetFile(/^(?:\/cdn\/.*?)?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
+    tryGetFile(/^(?:\/ext\/cdn\/extensions\/.*?)?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
       isUnsynced: false,
       fileKey: undefined,
       file: undefined,

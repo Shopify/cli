@@ -1,4 +1,4 @@
-import {fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
+import {fetchOrganizations, fetchStore, fetchStoreByDomain, NoOrgError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
@@ -12,6 +12,7 @@ import {AppManagementClient} from '../../utilities/developer-platform-client/app
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const ORG1: Organization = {
   id: '1',
@@ -135,6 +136,35 @@ describe('fetchStoreByDomain', async () => {
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
     expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
+  })
+})
+
+describe('fetchStore', () => {
+  test('returns fetched store', async () => {
+    // Given
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
+    })
+
+    // When
+    const got = await fetchStore(ORG1, 'domain1', developerPlatformClient)
+
+    // Then
+    expect(got).toEqual(STORE1)
+    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
+  })
+
+  test('throws error if store not found', async () => {
+    // Given
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
+    })
+
+    // When
+    const got = fetchStore(ORG1, 'domain1', developerPlatformClient)
+
+    // Then
+    await expect(got).rejects.toThrow(new AbortError(`Could not find Store for domain domain1 in Organization org1.`))
   })
 })
 

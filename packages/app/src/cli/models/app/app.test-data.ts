@@ -109,7 +109,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
   })
@@ -146,14 +145,14 @@ export function testAppWithLegacyConfig({
   return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
-export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface<CurrentAppConfiguration> {
-  const app = testApp(options?.app, 'current')
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinkedInterface {
+  const app = testAppLinked(options?.app)
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   } as CurrentAppConfiguration
 
-  return app as AppInterface<CurrentAppConfiguration>
+  return app
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -166,7 +165,7 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): Curre
   }
 }
 
-function testOrganization(): Organization {
+export function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
@@ -213,7 +212,10 @@ export async function testUIExtension(
         sources: [],
       },
     },
-    targeting: [{target: 'target1'}, {target: 'target2'}],
+    extension_points: [
+      {target: 'target1', module: 'module1'},
+      {target: 'target2', module: 'module2'},
+    ],
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
@@ -255,7 +257,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
-export async function testAppConfigExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppConfigExtensions(emptyConfig = false, directory?: string): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -270,14 +272,17 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification,
   })
 
   return extension
 }
 
-export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppAccessConfigExtension(
+  emptyConfig = false,
+  directory?: string,
+): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -296,7 +301,7 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification: appAccessSpec,
   })
 
@@ -859,9 +864,53 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       registrationLimit: 1,
     },
   },
+  {
+    name: 'Remote Extension Without Schema and Without local spec',
+    externalName: 'Extension Test 1',
+    identifier: 'remote_only_extension_without_schema',
+    externalIdentifier: 'remote_only_extension_without_schema_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, without localization',
+    externalName: 'Extension Test 2',
+    identifier: 'remote_only_extension_schema',
+    externalIdentifier: 'remote_only_extension_schema_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, with localization',
+    externalName: 'Extension Test 3',
+    identifier: 'remote_only_extension_schema_with_localization',
+    externalIdentifier: 'remote_only_extension_schema_with_localization_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
+    },
+  },
 ]
 
-export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
+const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
   identifier: 'subscription_ui',
   name: 'Subscription UI',
   defaultName: 'subscription-ui',
@@ -890,6 +939,39 @@ export const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
       name: 'TypeScript',
       value: 'typescript',
       path: 'templates/ui-extensions/projects/product_subscription',
+    },
+  ],
+}
+
+export const checkoutUITemplate: ExtensionTemplate = {
+  identifier: 'checkout_ui',
+  name: 'Checkout UI',
+  defaultName: 'checkout-ui',
+  group: 'Discounts and checkout',
+  supportLinks: ['https://shopify.dev/api/checkout-extensions/checkout/configuration'],
+  url: 'https://github.com/Shopify/extensions-templates',
+  type: 'ui_extension',
+  extensionPoints: [],
+  supportedFlavors: [
+    {
+      name: 'JavaScript React',
+      value: 'react',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'JavaScript',
+      value: 'vanilla-js',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'TypeScript React',
+      value: 'typescript-react',
+      path: 'checkout-extension',
+    },
+    {
+      name: 'TypeScript',
+      value: 'typescript',
+      path: 'checkout-extension',
     },
   ],
 }
@@ -1183,7 +1265,6 @@ const currentAccountInfoResponse: CurrentAccountInfoSchema = {
   currentAccountInfo: {
     __typename: 'UserAccount',
     email: 'user@example.com',
-    orgName: 'org1',
   },
 }
 
@@ -1255,6 +1336,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     devSessionUpdate: (_input: DevSessionOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
+    getCreateDevStoreLink: (_input: string) =>
+      Promise.resolve(`Looks like you don't have a dev store in the Partners org you selected. Keep going — create a dev store through the
+      Developer Dashboard: https://partners.shopify.com/organizations/1234/stores/new`),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub

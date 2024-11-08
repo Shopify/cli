@@ -2,7 +2,6 @@ import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {version as rubyVersion} from '@shopify/cli-kit/node/ruby'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -74,21 +73,19 @@ function devConfigSection(): [string, string] {
     ['Store', store],
     ['Development Theme ID', developmentTheme],
   ]
-  return [title, `${linesToColumns(lines)}`]
+  return [title, linesToColumns(lines)]
 }
 
 async function systemInfoSection(config: {cliVersion: string}): Promise<[string, string]> {
   const title = 'Tooling and System'
   const {platform, arch} = platformAndArch()
-  const ruby = (await rubyVersion()) || 'Not installed'
   const lines: string[][] = [
     ['Shopify CLI', await cliVersionInfo(config)],
     ['OS', `${platform}-${arch}`],
     ['Shell', process.env.SHELL || 'unknown'],
     ['Node version', process.version],
-    ['Ruby version', ruby],
   ]
-  return [title, `${linesToColumns(lines)}`]
+  return [title, linesToColumns(lines)]
 }
 
 async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {

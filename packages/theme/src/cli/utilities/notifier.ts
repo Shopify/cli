@@ -5,8 +5,8 @@ import fs from 'fs/promises'
 // - a URL
 // - a relative or absolute path on the filesystem
 export class Notifier {
-  private notifyPath: string
-  private isValidUrl: boolean
+  private readonly notifyPath: string
+  private readonly isValidUrl: boolean
 
   constructor(notifyPath: string) {
     this.notifyPath = notifyPath

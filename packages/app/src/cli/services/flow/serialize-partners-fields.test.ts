@@ -20,6 +20,12 @@ describe('serialize-fields', () => {
         uiType: 'commerce-object-id',
       },
       {
+        name: 'marketing_activity_id',
+        label: 'MarketingActivity ID',
+        required: false,
+        uiType: 'marketing-activity-id',
+      },
+      {
         name: 'email field',
         label: 'email label',
         description: 'email help',

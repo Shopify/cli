@@ -38,6 +38,7 @@ export async function uploadThemeExtensions(
   await Promise.all(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
       const themeExtensionInput: ExtensionUpdateDraftMutationVariables = {
         apiKey,
@@ -103,8 +104,8 @@ interface UploadExtensionValidationError {
 
 export interface UploadExtensionsBundleOutput {
   validationErrors: UploadExtensionValidationError[]
-  versionTag: string
-  message?: string
+  versionTag?: string | null
+  message?: string | null
   location: string
   deployError?: string
 }
@@ -226,7 +227,10 @@ export function deploymentErrorsToCustomSections(
   return customSections
 }
 
-function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors'], flags: {version?: string} = {}) {
+function generalErrorsSection(
+  errors: AppDeploySchema['appDeploy']['userErrors'],
+  flags: {version?: string} = {},
+): ErrorCustomSection[] {
   if (errors.length > 0) {
     if (
       errors.filter(
@@ -248,7 +252,7 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
     if (errors.length === 1) {
       return [
         {
-          body: errors[0]!.message,
+          body: errors[0]?.message ?? '',
         },
       ]
     }
@@ -268,8 +272,8 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
 }
 
 function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
-  return errors.reduce((sections, error) => {
-    const field = error.field.join('.').replace('extension_points', 'extensions.targeting')
+  return errors.reduce<ErrorCustomSection[]>((sections, error) => {
+    const field = (error.field ?? ['unknown']).join('.').replace('extension_points', 'extensions.targeting')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
     const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
@@ -339,12 +343,12 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
     })
 
     return sections
-  }, [] as ErrorCustomSection[])
+  }, [])
 }
 
 function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
   return errors
-    .reduce((sections, error) => {
+    .reduce<{title: string | undefined; errorCount: number}[]>((sections, error) => {
       const extensionIdentifier = error.details.find(
         (detail) => typeof detail.extension_title !== 'undefined',
       )?.extension_title
@@ -361,7 +365,7 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
       }
 
       return sections
-    }, [] as {title: string | undefined; errorCount: number}[])
+    }, [])
     .map((section) => ({
       title: section.title,
       body: `\n${section.errorCount} error${
@@ -380,7 +384,7 @@ export async function getExtensionUploadURL(
 ) {
   const result: AssetUrlSchema = await handlePartnersErrors(() => developerPlatformClient.generateSignedUploadUrl(app))
 
-  if (result.userErrors?.length > 0) {
+  if (!result.assetUrl || result.userErrors?.length > 0) {
     const errors = result.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
   }

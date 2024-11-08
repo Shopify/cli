@@ -6,8 +6,9 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
+import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {createTheme, fetchChecksums, publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
@@ -19,14 +20,6 @@ import {
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-
-export interface ThemeSelectionOptions {
-  live?: boolean
-  development?: boolean
-  unpublished?: boolean
-  theme?: string
-  'allow-live'?: boolean
-}
 
 interface PushOptions {
   path: string
@@ -110,6 +103,12 @@ export interface PushFlags {
  */
 export async function push(flags: PushFlags): Promise<void> {
   const {path} = flags
+
+  configureCLIEnvironment({
+    verbose: flags.verbose,
+    noColor: flags.noColor,
+  })
+
   const force = flags.force ?? false
 
   const store = ensureThemeStore({store: flags.store})
@@ -127,12 +126,12 @@ export async function push(flags: PushFlags): Promise<void> {
 
   await executePush(selectedTheme, adminSession, {
     path: workingDirectory,
-    nodelete: flags.nodelete || false,
-    publish: flags.publish || false,
-    json: flags.json || false,
+    nodelete: flags.nodelete ?? false,
+    publish: flags.publish ?? false,
+    json: flags.json ?? false,
     force,
-    ignore: flags.ignore || [],
-    only: flags.only || [],
+    ignore: flags.ignore ?? [],
+    only: flags.only ?? [],
   })
 }
 
@@ -158,7 +157,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   await renderThemeSyncProgress()
 
   if (options.publish) {
-    await publishTheme(theme.id, session)
+    await themePublish(theme.id, session)
   }
 
   await handlePushOutput(uploadResults, theme, session, options)
@@ -224,7 +223,7 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
   }
 
   if (hasErrors) {
-    const message = `The theme ${themeComponent(theme).join(' ')} was pushed with errors`
+    const message = `The theme '${theme.name}' was pushed with errors`
     output.theme.warning = message
   }
   outputInfo(JSON.stringify(output))
@@ -284,17 +283,14 @@ function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
   }
 }
 
-export async function createOrSelectTheme(
-  adminSession: AdminSession,
-  flags: ThemeSelectionOptions,
-): Promise<Theme | undefined> {
+export async function createOrSelectTheme(adminSession: AdminSession, flags: PushFlags): Promise<Theme | undefined> {
   const {live, development, unpublished, theme} = flags
 
   if (development) {
     const themeManager = new DevelopmentThemeManager(adminSession)
     return themeManager.findOrCreate()
   } else if (unpublished) {
-    const themeName = theme || (await promptThemeName('Name of the new theme'))
+    const themeName = theme ?? (await promptThemeName('Name of the new theme'))
     return createTheme(
       {
         name: themeName,
@@ -312,7 +308,7 @@ export async function createOrSelectTheme(
       },
     })
 
-    if (await confirmPushToTheme(selectedTheme.role as Role, flags['allow-live'], adminSession.storeFqdn)) {
+    if (await confirmPushToTheme(selectedTheme.role as Role, flags.allowLive, adminSession.storeFqdn)) {
       return selectedTheme
     }
   }

@@ -112,6 +112,7 @@ describe('setupDevServer', () => {
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       nodelete: true,
       deferPartialWork: true,
+      backgroundWorkCatch: expect.any(Function),
     })
   })
 
@@ -161,6 +162,7 @@ describe('setupDevServer', () => {
     expect(uploadTheme).toHaveBeenCalledWith(developmentTheme, context.session, [], context.localThemeFileSystem, {
       nodelete: true,
       deferPartialWork: true,
+      backgroundWorkCatch: expect.any(Function),
     })
   })
 
@@ -182,10 +184,10 @@ describe('setupDevServer', () => {
     const dispatchEvent = async (
       url: string,
       headers?: {[key: string]: string},
-    ): Promise<{res: ServerResponse<IncomingMessage>; status: number; body: string | Buffer}> => {
+    ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node
-      let body: string | Buffer | undefined
+      let body: string
       const resWrite = res.write.bind(res)
       res.write = (chunk) => {
         body ??= ''
@@ -220,6 +222,18 @@ describe('setupDevServer', () => {
       expect(body.toString()).toMatchInlineSnapshot(
         `".some-class { background: url(\\"/cdn/path/to/assets/file2.css\\") }"`,
       )
+    })
+
+    test('serves local assets from the root in a backward compatible way', async () => {
+      // Also serves assets from the root, similar to what the old server did:
+      const eventPromise = dispatchEvent('/assets/file2.css')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/css')
+      expect(body.toString()).toMatchInlineSnapshot(`".another-class {}"`)
     })
 
     test('gets the right content for assets with non-breaking spaces', async () => {
@@ -332,6 +346,23 @@ describe('setupDevServer', () => {
 
       const {body} = await eventPromise
       expect(body).toMatch(`src: url(/cdn/shop/t/img/assets/font.woff2)`)
+    })
+
+    test('proxies .js.liquid assets replacing the error query string', async () => {
+      const fetchStub = vi.fn(() => new Response())
+      vi.stubGlobal('fetch', fetchStub)
+      vi.useFakeTimers()
+      const now = Date.now()
+
+      const pathname = '/cdn/shop/t/img/assets/file4.js'
+      const eventPromise = dispatchEvent(`${pathname}?1234`)
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      expect(fetchStub).toHaveBeenCalledWith(
+        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&_fd=0&pb=0`,
+        expect.any(Object),
+      )
     })
   })
 })

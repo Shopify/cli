@@ -4,6 +4,7 @@ import {
   testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
+  testAppLinked,
   testSingleWebhookSubscriptionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
@@ -12,9 +13,12 @@ import {loadApp} from '../../../models/app/loader.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
+vi.mock('./app-watcher-esbuild.js')
 
 // Extensions 1 and 1B simulate extensions defined in the same directory (same toml)
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
@@ -111,7 +115,7 @@ const testCases: TestCase[] = [
     },
     initialExtensions: [extension1, extension2, posExtension],
     finalExtensions: [extension1, extension2, posExtension],
-    extensionEvents: [{type: EventType.UpdatedSourceFile, extension: extension1}],
+    extensionEvents: [{type: EventType.Updated, extension: extension1}],
   },
   {
     name: 'file_updated affecting a single extension',
@@ -148,8 +152,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2, posExtension],
     finalExtensions: [extension1, extension1B, extension2, posExtension],
     extensionEvents: [
-      {type: EventType.UpdatedSourceFile, extension: extension1},
-      {type: EventType.UpdatedSourceFile, extension: extension1B},
+      {type: EventType.Updated, extension: extension1},
+      {type: EventType.Updated, extension: extension1B},
     ],
   },
   {
@@ -163,8 +167,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2, posExtension],
     finalExtensions: [extension1, extension1B, extension2, posExtension],
     extensionEvents: [
-      {type: EventType.UpdatedSourceFile, extension: extension1},
-      {type: EventType.UpdatedSourceFile, extension: extension1B},
+      {type: EventType.Updated, extension: extension1},
+      {type: EventType.Updated, extension: extension1B},
     ],
   },
   {
@@ -178,8 +182,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2, posExtension],
     finalExtensions: [extension1, extension1B, extension2, posExtension],
     extensionEvents: [
-      {type: EventType.UpdatedSourceFile, extension: extension1},
-      {type: EventType.UpdatedSourceFile, extension: extension1B},
+      {type: EventType.Updated, extension: extension1},
+      {type: EventType.Updated, extension: extension1B},
     ],
   },
   {
@@ -193,7 +197,7 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension2, posExtension, webhookExtension],
     finalExtensions: [extension1, extension2, posExtensionUpdated, appAccessExtension],
     extensionEvents: [
-      {type: EventType.UpdatedSourceFile, extension: posExtensionUpdated},
+      {type: EventType.Updated, extension: posExtensionUpdated},
       {type: EventType.Deleted, extension: webhookExtension},
       {type: EventType.Created, extension: appAccessExtension},
     ],
@@ -210,8 +214,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2],
     finalExtensions: [extension1Updated, extension1BUpdated, extension2],
     extensionEvents: [
-      {type: EventType.UpdatedSourceFile, extension: extension1Updated},
-      {type: EventType.UpdatedSourceFile, extension: extension1BUpdated},
+      {type: EventType.Updated, extension: extension1Updated},
+      {type: EventType.Updated, extension: extension1BUpdated},
     ],
     needsAppReload: true,
   },
@@ -222,46 +226,63 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
     'The event $name returns the expected AppEvent',
     async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
       // Given
-      vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
-      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange(fileWatchEvent))
+      await inTemporaryDirectory(async (tmpDir) => {
+        vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
+        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
-      // When
-      const app = testApp({
-        allExtensions: initialExtensions,
-        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
-      })
-      const watcher = new AppEventWatcher(app, outputOptions)
-      const emitSpy = vi.spyOn(watcher, 'emit')
-      await watcher.start()
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
 
-      await flushPromises()
-
-      expect(emitSpy).toHaveBeenCalledWith('all', {
-        app: expect.objectContaining({realExtensions: finalExtensions}),
-        extensionEvents: expect.arrayContaining(extensionEvents),
-        startTime: expect.anything(),
-        path: expect.anything(),
-      })
-
-      if (needsAppReload) {
-        expect(loadApp).toHaveBeenCalledWith({
-          specifications: expect.anything(),
-          directory: expect.anything(),
-          // The app is loaded with the same configuration file
-          userProvidedConfigName: 'shopify.app.custom.toml',
-          remoteFlags: expect.anything(),
+        // When
+        const app = testAppLinked({
+          allExtensions: initialExtensions,
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
         })
-      } else {
-        expect(loadApp).not.toHaveBeenCalled()
-      }
+
+        const watcher = new AppEventWatcher(app, 'url', outputOptions, buildOutputPath)
+        const emitSpy = vi.spyOn(watcher, 'emit')
+        await watcher.start()
+
+        await flushPromises()
+
+        // Wait until emitSpy has been called at least once
+        // We need this because there are I/O operations that make the test finish before the event is emitted
+        await new Promise<void>((resolve, reject) => {
+          const initialTime = Date.now()
+          const checkEmitSpy = () => {
+            const allCalled = emitSpy.mock.calls.some((call) => call[0] === 'all')
+            const readyCalled = emitSpy.mock.calls.some((call) => call[0] === 'ready')
+            if (allCalled && readyCalled) {
+              resolve()
+            } else if (Date.now() - initialTime < 3000) {
+              setTimeout(checkEmitSpy, 100)
+            } else {
+              reject(new Error('Timeout waiting for emitSpy to be called'))
+            }
+          }
+          checkEmitSpy()
+        })
+
+        expect(emitSpy).toHaveBeenCalledWith('all', {
+          app: expect.objectContaining({realExtensions: finalExtensions}),
+          extensionEvents: expect.arrayContaining(extensionEvents),
+          startTime: expect.anything(),
+          path: expect.anything(),
+        })
+
+        expect(emitSpy).toHaveBeenCalledWith('ready')
+
+        if (needsAppReload) {
+          expect(loadApp).toHaveBeenCalledWith({
+            specifications: expect.anything(),
+            directory: expect.anything(),
+            // The app is loaded with the same configuration file
+            userProvidedConfigName: 'shopify.app.custom.toml',
+            remoteFlags: expect.anything(),
+          })
+        } else {
+          expect(loadApp).not.toHaveBeenCalled()
+        }
+      })
     },
   )
 })
-
-async function waitForEvent(watcher: AppEventWatcher) {
-  return new Promise((resolve) => {
-    watcher.onEvent((event) => {
-      resolve(event)
-    })
-  })
-}

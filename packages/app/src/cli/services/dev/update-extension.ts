@@ -7,7 +7,6 @@ import {
 } from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
-import {configWithoutFirstClassFields} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -111,8 +110,7 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
       )
     }
 
-    const mergedConfig = {...configuration, ...extensionConfig}
-    configObject = configWithoutFirstClassFields(mergedConfig)
+    configObject = {...configuration, ...extensionConfig}
   }
 
   const newConfig = await parseConfigurationObjectAgainstSpecification(

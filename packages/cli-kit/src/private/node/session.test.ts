@@ -9,20 +9,19 @@ import {
 } from './session.js'
 import {
   exchangeAccessForApplicationTokens,
-  exchangeCodeForAccessToken,
   exchangeCustomPartnerToken,
   refreshAccessToken,
   InvalidGrantError,
 } from './session/exchange.js'
-import {authorize} from './session/authorize.js'
 import {allDefaultScopes} from './session/scopes.js'
 import {store as secureStore, fetch as secureFetch} from './session/store.js'
 
 import {ApplicationToken, IdentityToken, Session} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
+import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
-import {themeToken, useDeviceAuth} from '../../public/node/context/local.js'
+import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {getPartnersToken} from '../../public/node/environment.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
@@ -104,12 +103,10 @@ vi.mock('./session/validate')
 vi.mock('../../public/node/api/partners.js')
 vi.mock('../../store')
 vi.mock('../../public/node/environment.js')
+vi.mock('./session/device-authorization')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
-  vi.mocked(useDeviceAuth).mockReturnValue(false)
-  vi.mocked(authorize).mockResolvedValue(code)
-  vi.mocked(exchangeCodeForAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(applicationId).mockImplementation((app) => app)
@@ -121,6 +118,16 @@ beforeEach(() => {
   vi.mocked(allDefaultScopes).mockImplementation((scopes) => scopes || [])
   setLastSeenUserIdAfterAuth(undefined as any)
   setLastSeenAuthMethod('none')
+
+  vi.mocked(requestDeviceAuthorization).mockResolvedValue({
+    deviceCode: 'device_code',
+    userCode: 'user_code',
+    verificationUri: 'verification_uri',
+    expiresIn: 3600,
+    verificationUriComplete: 'verification_uri_complete',
+    interval: 5,
+  })
+  vi.mocked(pollForDeviceAuthorization).mockResolvedValue(validIdentityToken)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -133,8 +140,6 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
@@ -160,7 +165,6 @@ The CLI is currently unable to prompt for reauthentication.`,
     )
 
     // Then
-    expect(authorize).not.toHaveBeenCalled()
     await expect(getLastSeenAuthMethod()).resolves.toEqual('none')
 
     // If there never was an auth event, the userId is 'unknown'
@@ -177,8 +181,6 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(newSession)
@@ -197,8 +199,6 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
@@ -219,8 +219,6 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).not.toHaveBeenCalled()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
@@ -240,8 +238,6 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).not.toHaveBeenCalled()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
@@ -259,8 +255,6 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications, process.env, {forceRefresh: true})
 
     // Then
-    expect(authorize).not.toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
@@ -281,8 +275,6 @@ describe('when existing session is expired', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).not.toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).not.toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)
@@ -304,8 +296,6 @@ describe('when existing session is expired', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(authorize).toHaveBeenCalledOnce()
-    expect(exchangeCodeForAccessToken).toBeCalled()
     expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(secureStore).toBeCalledWith(validSession)

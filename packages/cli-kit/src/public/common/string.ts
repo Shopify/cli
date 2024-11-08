@@ -213,6 +213,7 @@ export function pluralize<
   none?: () => TokenItem<TNoneToken>,
 ): TokenItem<TPluralToken | TSingularToken | TNoneToken> | string {
   if (items.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return singular(items[0]!)
   }
 
@@ -253,6 +254,7 @@ export function tryParseInt(maybeInt: string | undefined): number | undefined {
 export function linesToColumns(lines: string[][]): string {
   const widths: number[] = []
   for (let i = 0; lines[0] && i < lines[0].length; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const columnRows = lines.map((line) => line[i]!)
     widths.push(Math.max(...columnRows.map((row) => unstyled(row).length)))
   }
@@ -260,6 +262,7 @@ export function linesToColumns(lines: string[][]): string {
     .map((line) => {
       return line
         .map((col, index) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           return `${col}${' '.repeat(widths[index]! - unstyled(col).length)}`
         })
         .join('   ')

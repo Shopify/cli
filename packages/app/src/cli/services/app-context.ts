@@ -2,16 +2,20 @@ import {appFromId} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {OrganizationApp} from '../models/organization.js'
+import {fetchOrgFromId} from './dev/fetch.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {AppLoaderMode, getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
+import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface} from '../models/app/app.js'
+import metadata from '../metadata.js'
+import {tryParseInt} from '@shopify/cli-kit/common/string'
 
-interface LoadedAppContextOutput {
+export interface LoadedAppContextOutput {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
+  organization: Organization
   specifications: RemoteAwareExtensionSpecification[]
 }
 
@@ -22,7 +26,7 @@ interface LoadedAppContextOutput {
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
  * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
- * @param mode - The mode of the app loader, it can be 'strict' or 'report'. 'report' will not throw an error when the app/extension configuration is invalid.
+ * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
  * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
  */
 interface LoadedAppContextOptions {
@@ -30,7 +34,7 @@ interface LoadedAppContextOptions {
   forceRelink: boolean
   clientId: string | undefined
   userProvidedConfigName: string | undefined
-  mode: AppLoaderMode
+  unsafeReportMode?: boolean
 }
 
 /**
@@ -46,7 +50,7 @@ export async function linkedAppContext({
   clientId,
   forceRelink,
   userProvidedConfigName,
-  mode,
+  unsafeReportMode = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   // Get current app configuration state
   let configState = await getAppConfigurationState(directory, userProvidedConfigName)
@@ -75,6 +79,8 @@ export async function linkedAppContext({
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
+  const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
+
   // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
@@ -82,7 +88,7 @@ export async function linkedAppContext({
   const localApp = await loadAppUsingConfigurationState(configState, {
     specifications,
     remoteFlags: remoteApp.flags,
-    mode,
+    mode: unsafeReportMode ? 'report' : 'strict',
   })
 
   // If the remoteApp is the same as the linked one, update the cached info.
@@ -92,5 +98,15 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient, specifications}
+  await logMetadata(remoteApp, forceRelink)
+
+  return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+}
+
+async function logMetadata(app: {organizationId: string; apiKey: string}, resetUsed: boolean) {
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(app.organizationId),
+    api_key: app.apiKey,
+    cmd_app_reset_used: resetUsed,
+  }))
 }

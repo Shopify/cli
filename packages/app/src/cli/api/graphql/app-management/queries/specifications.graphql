@@ -1,0 +1,11 @@
+query fetchSpecifications {
+  specifications {
+    name
+    identifier
+    externalIdentifier
+    features
+    uidStrategy {
+      appModuleLimit
+    }
+  }
+}
