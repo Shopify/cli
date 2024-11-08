@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
+import {Identifiers} from './identifiers.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
@@ -259,7 +260,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): AppCreationDefaultOptions
-  manifest: () => Promise<JsonMapType>
+  manifest: (identifiers: Identifiers | undefined) => Promise<JsonMapType>
   removeExtension: (extensionHandle: string) => void
 }
 
@@ -340,7 +341,7 @@ export class App<
     )
   }
 
-  async manifest(): Promise<JsonMapType> {
+  async manifest(identifiers: Identifiers | undefined): Promise<JsonMapType> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
         const config = await module.deployConfig({
@@ -351,6 +352,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
+          uuid: identifiers?.extensions[module.localIdentifier] ?? undefined,
           assets: module.configuration.uid ?? module.handle,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,

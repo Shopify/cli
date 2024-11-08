@@ -119,6 +119,8 @@ export async function ensureExtensionsIds(
     extensionsToCreate.push(...matchResult.toCreate)
   }
 
+  // validMatches.forEach((uuid, localIdentifier) => {
+
   return {
     validMatches,
     extensionsToCreate,

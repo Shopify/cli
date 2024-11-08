@@ -591,6 +591,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             specificationIdentifier: mod.specificationIdentifier,
             handle: mod.handle,
             config: JSON.parse(mod.config),
+            // uuid: mod.uuid,
           }
         }),
       },

@@ -142,7 +142,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
 
   // Generate app manifest in the bundle folder (overwriting the previous one)
-  const appManifest = await options.app.manifest()
+  const appManifest = await options.app.manifest(undefined)
   const manifestPath = joinPath(options.bundlePath, 'manifest.json')
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 

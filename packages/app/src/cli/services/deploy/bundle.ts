@@ -23,7 +23,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions, systemEnv
 
     if (isTruthy(systemEnvironment.USE_APP_MANAGEMENT_API)) {
       // Include manifest in bundle
-      const appManifest = await options.app.manifest()
+      const appManifest = await options.app.manifest(options.identifiers)
       const manifestPath = joinPath(bundleDirectory, 'manifest.json')
       writeFileSync(manifestPath, JSON.stringify(appManifest, null, 2))
     }
