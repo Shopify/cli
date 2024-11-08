@@ -36,7 +36,7 @@ import {RemoteAwareExtensionSpecification} from '../models/extensions/specificat
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {renderConfirmationPrompt, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderInfo, renderTasks, renderWarning, Task} from '@shopify/cli-kit/node/ui'
 
 const APP1: OrganizationApp = testOrganizationApp({
   id: '1',
@@ -521,7 +521,7 @@ describe('ensureDeployContext', () => {
     patchAppConfigurationFileSpy.mockRestore()
   })
 
-  test('removes the include_config_on_deploy field when using app management API', async () => {
+  test('removes the include_config_on_deploy field when using app management API and the value is true', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -564,6 +564,57 @@ describe('ensureDeployContext', () => {
         'The `include_config_on_deploy` field is no longer supported, since all apps must now include configuration on deploy. It has been removed from your configuration file.',
       ],
       headline: 'Your configuration file has been modified',
+      link: {
+        label: 'See Shopify CLI documentation.',
+        url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
+      },
+    })
+    patchAppConfigurationFileSpy.mockRestore()
+  })
+
+  test('removes the include_config_on_deploy field when using app management API and the value is false', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: false}}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const patchAppConfigurationFileSpy = vi
+      .spyOn(patchAppConfigurationFile, 'patchAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    const options = {
+      app,
+      remoteApp: APP2,
+      organization: ORG1,
+      reset: false,
+      force: false,
+      noRelease: false,
+      developerPlatformClient: buildDeveloperPlatformClient({supportsAtomicDeployments: true}),
+    }
+    await ensureDeployContext(options)
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(patchAppConfigurationFileSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: app.configuration.path,
+        patch: {
+          build: {include_config_on_deploy: undefined},
+        },
+        schema: expect.any(Object),
+      }),
+    )
+    expect(renderWarning).toHaveBeenCalledWith({
+      body: [
+        "The `include_config_on_deploy` field is no longer supported and has been removed from your configuration file. Review your app configuration file to ensure it's up to date with the correct configuration.",
+      ],
+      headline: 'Configuration is now included on deploy',
       link: {
         label: 'See Shopify CLI documentation.',
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
