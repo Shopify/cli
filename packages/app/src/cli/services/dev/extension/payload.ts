@@ -22,10 +22,6 @@ export async function getUIExtensionPayload(
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
     const renderer = await getUIExtensionRendererVersion(extension)
-    // This is BAD...
-    const extConfig = extension.configuration as typeof extension.configuration & {
-      targeting?: {shouldRender: {module: string}}[]
-    }
 
     const conditionsOutputFileName = `${extension.configuration.handle}-conditions.js`
 

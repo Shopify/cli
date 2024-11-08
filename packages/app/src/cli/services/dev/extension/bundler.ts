@@ -41,16 +41,16 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     const bundleExtensionWithOverrides = (overrides?: Overrides) =>
       bundleExtension({
         minify: false,
-        outputPath: overrides?.outputPath || extension.outputPath,
+        outputPath: overrides?.outputPath ?? extension.outputPath,
         environment: 'development',
         env: {
           ...(options.devOptions.appDotEnvFile?.variables ?? {}),
           APP_URL: options.devOptions.url,
         },
         stdin: {
-          contents: overrides?.contents || targets,
+          contents: overrides?.contents ?? targets,
           resolveDir: extension.directory,
-          loader: overrides?.loader || 'tsx',
+          loader: overrides?.loader ?? 'tsx',
         },
         stderr: options.devOptions.stderr,
         stdout: options.devOptions.stdout,
@@ -85,7 +85,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         bundleExtensionWithOverrides({
           contents: conditions,
           loader: 'ts',
-          outputPath: outputPath,
+          outputPath,
         }),
       )
     }

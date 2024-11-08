@@ -71,7 +71,6 @@ const uiExtensionSpec = createExtensionSpecification({
       })
       .join('\n')
 
-    // TODO: we need to split conditions into separate files
     const conditions = config.extension_points
       .map(({shouldRender}) => {
         return shouldRender ? `import '${shouldRender.module}';` : ''
