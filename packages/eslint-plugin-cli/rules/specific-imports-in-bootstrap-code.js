@@ -16,7 +16,7 @@ function checkImport(allowList, context, node) {
   const gotMatch = allowList.includes(importTarget)
 
   if (!gotMatch) {
-    context.report(node, `Forbidden import source "${importTarget}", update allow list if required in the package.json`)
+    context.report(node, `Forbidden import source "${importTarget}", update allow list if required`)
   }
 }
 
