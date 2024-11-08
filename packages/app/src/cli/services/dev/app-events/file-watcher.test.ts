@@ -3,12 +3,15 @@ import {
   testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
+  testAppLinked,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
@@ -173,21 +176,46 @@ const defaultApp = testApp({
 describe('file-watcher events', () => {
   test('The file watcher is started with the correct paths and options', async () => {
     // Given
-    const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
-      return {
-        on: (_: string, listener: any) => listener('change', '/shopify.app.toml'),
-        close: () => Promise.resolve(),
-      } as any
-    })
+    await inTemporaryDirectory(async (dir) => {
+      const ext1 = await testUIExtension({type: 'ui_extension', directory: joinPath(dir, '/extensions/ext1')})
+      const ext2 = await testUIExtension({type: 'ui_extension', directory: joinPath(dir, '/extensions/ext2')})
+      const posExtension = await testAppConfigExtensions(false, dir)
+      const app = testAppLinked({
+        allExtensions: [ext1, ext2, posExtension],
+        directory: dir,
+        configuration: {path: joinPath(dir, '/shopify.app.toml'), scopes: ''},
+      })
 
-    // When
-    await startFileWatcher(defaultApp, outputOptions, vi.fn())
+      // Add a custom gitignore file to the extension
+      await mkdir(joinPath(dir, '/extensions/ext1'))
+      await writeFile(joinPath(dir, '/extensions/ext1/.gitignore'), '#comment\na_folder\na_file.txt\n**/nested/**')
 
-    // Then
-    expect(watchSpy).toHaveBeenCalledWith(['/shopify.app.toml', '/extensions'], {
-      ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
-      ignoreInitial: true,
-      persistent: true,
+      const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
+        return {
+          on: (_: string, listener: any) => listener('change', '/shopify.app.toml'),
+          close: () => Promise.resolve(),
+        } as any
+      })
+
+      // When
+      await startFileWatcher(app, outputOptions, vi.fn())
+
+      // Then
+      expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/*.test.*',
+          '**/dist/**',
+          '**/*.swp',
+          '**/generated/**',
+          joinPath(dir, '/extensions/ext1/a_folder'),
+          joinPath(dir, '/extensions/ext1/a_file.txt'),
+          joinPath(dir, '/extensions/ext1/**/nested/**'),
+        ],
+        ignoreInitial: true,
+        persistent: true,
+      })
     })
   })
 

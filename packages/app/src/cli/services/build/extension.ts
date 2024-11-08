@@ -106,6 +106,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       env,
       stderr: options.stderr,
       stdout: options.stdout,
+      sourceMaps: extension.isSourceMapGeneratingExtension,
     })
     if (conditions) {
       const outputDirectory = dirname(extension.outputPath)
