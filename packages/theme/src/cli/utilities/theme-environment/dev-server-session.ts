@@ -43,7 +43,7 @@ export async function initializeDevServerSession(
   return session
 }
 
-export async function fetchDevServerSession(
+async function fetchDevServerSession(
   themeId: string,
   adminSession: AdminSession,
   adminPassword?: string,

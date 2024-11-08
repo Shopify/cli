@@ -1,6 +1,6 @@
-import {fetchDevServerSession, abortOnMissingRequiredFile} from './dev-server-session.js'
+import {abortOnMissingRequiredFile, getStorefrontSessionCookiesWithVerification} from './dev-server-session.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
-import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -28,16 +28,22 @@ const mockConfigAsset: ThemeAsset = {
   checksum: 'fdsa',
 }
 
-describe('fetchDevServerSession', () => {
+describe('getStorefrontSessionCookiesWithVerification', () => {
   test('calls verifyRequiredFilesExist when ShopifyEssentialError is thrown', async () => {
     // Given
-    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockAdminSession)
-    vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
     vi.mocked(getStorefrontSessionCookies).mockRejectedValue(new ShopifyEssentialError('Test error'))
     vi.mocked(fetchThemeAssets).mockResolvedValue([mockLayoutAsset])
 
     // When/Then
-    await expect(fetchDevServerSession(themeId, mockAdminSession)).rejects.toThrow(
+    await expect(
+      getStorefrontSessionCookiesWithVerification(
+        mockAdminSession.storeFqdn,
+        themeId,
+        mockAdminSession,
+        'storefront-token',
+        'storefront-password ',
+      ),
+    ).rejects.toThrow(
       new AbortError(
         outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
           `shopify theme delete -t ${themeId}`,
