@@ -4,7 +4,7 @@ import {appDiff} from './app-diffing.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {basename} from '@shopify/cli-kit/node/path'
@@ -113,8 +113,8 @@ function AppConfigDeletedHandler(_input: HandlerInput): AppEvent {
  * - When the app.toml is updated
  * - When an extension toml is updated
  */
-async function ReloadAppHandler({event, app, options}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app, options)
+async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
+  const newApp = await reloadApp(app)
   const diff = appDiff(app, newApp, true)
   const createdEvents = diff.created.map((ext) => ({type: EventType.Created, extension: ext}))
   const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
@@ -127,7 +127,7 @@ async function ReloadAppHandler({event, app, options}: HandlerInput): Promise<Ap
  * Reload the app and returns it
  * Prints the time to reload the app to stdout
  */
-export async function reloadApp(app: AppLinkedInterface, options?: OutputContextOptions): Promise<AppLinkedInterface> {
+export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
   const start = startHRTime()
   try {
     const newApp = await loadApp({
@@ -136,11 +136,10 @@ export async function reloadApp(app: AppLinkedInterface, options?: OutputContext
       userProvidedConfigName: basename(app.configuration.path),
       remoteFlags: app.remoteFlags,
     })
-    outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`, options?.stdout)
+    outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`)
     return newApp as AppLinkedInterface
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    outputWarn(`Error reloading app: ${error.message}`, options?.stderr)
-    return app
+    throw new Error(`Error reloading app: ${error.message}`)
   }
 }
