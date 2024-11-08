@@ -21,7 +21,7 @@ import {OrganizationApp, MinimalAppIdentifiers} from '../../models/organization.
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
-import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 import {setPathValue} from '@shopify/cli-kit/common/object'
@@ -281,6 +281,7 @@ const options = async (params: {
   remoteApp?: OrganizationApp
   release?: boolean
   developerPlatformClient?: DeveloperPlatformClient
+  activeAppVersion?: ActiveAppVersion
 }) => {
   return {
     app: await LOCAL_APP(params.uiExtensions),
@@ -291,6 +292,7 @@ const options = async (params: {
     force: false,
     remoteApp: params.remoteApp ?? testOrganizationApp(),
     release: params.release ?? true,
+    activeAppVersion: params.activeAppVersion,
   }
 }
 
@@ -385,6 +387,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         validMatches: {EXTENSION_A: 'UUID_A'},
         dashboardOnlyExtensions: [],
         extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const remoteExtensionRegistrations = {
@@ -422,6 +425,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         validMatches: {EXTENSION_A: 'UUID_A'},
         dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
         extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const remoteExtensionRegistrations = {
@@ -459,6 +463,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         validMatches: {EXTENSION_A: 'UUID_A'},
         dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
         extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const remoteExtensionRegistrations = {
@@ -489,12 +494,13 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
       })
     })
-    test('and there is an active version with matching cli app modules then cli extension should be updated', async () => {
+    test('and there is an active version with matching cli app modules then cli extension should be updated, and no dashboard extension should be migrated', async () => {
       // Given
       const extensionsToConfirm = {
         validMatches: {EXTENSION_A: 'UUID_A'},
         dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
         extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const remoteExtensionRegistrations = {
@@ -504,18 +510,25 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
           dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
         },
       }
-      const activeVersion = {
+      const activeAppVersion = {
         appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A],
       }
+      let fetchActiveAppVersionCalled = false
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
         appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => {
+          fetchActiveAppVersionCalled = true
+          return Promise.resolve(activeAppVersion)
+        },
       })
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(await options({uiExtensions, developerPlatformClient}))
+      const result = await extensionsIdentifiersDeployBreakdown(
+        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
+      )
 
       // Then
+      expect(fetchActiveAppVersionCalled).toBe(false)
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
@@ -539,20 +552,28 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         validMatches: {EXTENSION_A: 'UUID_A', DASH_MIGRATED_EXTENSION_A: 'UUID_DM_A'},
         dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A, REGISTRATION_DASH_MIGRATED_A],
         extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: true,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
-      const activeVersion = {
+      const activeAppVersion = {
         appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A, MODULE_DASHBOARD_MIGRATED_CLI_A],
       }
+      let fetchActiveAppVersionCalled = false
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
         appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
-        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => {
+          fetchActiveAppVersionCalled = true
+          return Promise.resolve(activeAppVersion)
+        },
       })
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(await options({uiExtensions, developerPlatformClient}))
+      const result = await extensionsIdentifiersDeployBreakdown(
+        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
+      )
 
       // Then
+      expect(fetchActiveAppVersionCalled).toBe(true)
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
@@ -583,6 +604,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         validMatches: {EXTENSION_A: 'UUID_A', DASH_MIGRATED_EXTENSION_A: 'UUID_DM_A'},
         dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A, REGISTRATION_DASH_MIGRATED_A, REGISTRATION_DASHBOARD_NEW],
         extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
       const activeVersion = {
