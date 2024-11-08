@@ -110,12 +110,12 @@ export class AppEventWatcher extends EventEmitter {
     })
   }
 
-  async start(options: OutputContextOptions) {
+  async start(options?: OutputContextOptions) {
     if (this.started) return
     this.started = true
 
-    this.options = options
-    this.esbuildManager.setAbortSignal(options.signal)
+    this.options = options ?? this.options
+    this.esbuildManager.setAbortSignal(this.options.signal)
 
     // If there is a previous build folder, delete it
     if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})

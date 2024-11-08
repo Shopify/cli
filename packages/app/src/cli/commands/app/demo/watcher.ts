@@ -6,7 +6,6 @@ import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
 
 export default class DemoWatcher extends AppCommand {
   static summary = 'Watch and prints out changes to an app.'
@@ -28,7 +27,7 @@ export default class DemoWatcher extends AppCommand {
     })
 
     const watcher = new AppEventWatcher(app)
-    await watcher.start({stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()})
+    await watcher.start()
     outputInfo(`Watching for changes in ${app.name}...`)
 
     watcher.onEvent(async ({app: _newApp, extensionEvents, startTime, path}) => {
