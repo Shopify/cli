@@ -31,13 +31,16 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('POST', '/themes', session, {theme: {...params}})
-  const minimumThemeAssets = [
-    {key: 'config/settings_schema.json', value: '[]'},
-    {key: 'layout/password.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
-    {key: 'layout/theme.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
-  ]
 
-  await bulkUploadThemeAssets(response.json.theme.id, minimumThemeAssets, session)
+  if (!params.src) {
+    const minimumThemeAssets = [
+      {key: 'config/settings_schema.json', value: '[]'},
+      {key: 'layout/password.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+      {key: 'layout/theme.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+    ]
+
+    await bulkUploadThemeAssets(response.json.theme.id, minimumThemeAssets, session)
+  }
 
   return buildTheme({...response.json.theme, createdAtRuntime: true})
 }
