@@ -9,19 +9,15 @@ interface CacheValue<T> {
 
 export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
-export type NotificationsKey = `notifications-${string}`
-export type NotificationKey = `notification-${string}`
 type MostRecentOccurrenceKey = `most-recent-occurrence-${string}`
 type RateLimitKey = `rate-limited-occurrences-${string}`
 
-type ExportedKey = IntrospectionUrlKey | PackageVersionKey | NotificationsKey | NotificationKey
+type ExportedKey = IntrospectionUrlKey | PackageVersionKey
 
 interface Cache {
   [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
   [packageVersionKey: PackageVersionKey]: CacheValue<string>
-  [notifications: NotificationsKey]: CacheValue<string>
-  [notification: NotificationKey]: CacheValue<string>
-  [MostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
+  [mostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
   [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
@@ -89,31 +85,28 @@ export async function cacheRetrieveOrRepopulate(
   timeout?: number,
   config = cliKitStore(),
 ): Promise<CacheValueForKey<typeof key>> {
-  const cached = cacheRetrieve(key, config)
+  const cache: Cache = config.get('cache') || {}
+  const cached = cache[key]
 
   if (cached?.value !== undefined && (timeout === undefined || Date.now() - cached.timestamp < timeout)) {
     return cached.value
   }
 
   const value = await fn()
-  cacheStore(key, value, config)
-  return value
-}
-
-export function cacheStore(key: ExportedKey, value: string, config = cliKitStore()): void {
-  const cache: Cache = config.get('cache') || {}
   cache[key] = {value, timestamp: Date.now()}
   config.set('cache', cache)
+  return value
 }
 
 /**
  * Fetch from cache if already populated, otherwise return undefined.
  * @param key - The key to use for the cache.
- * @returns The chache element.
+ * @returns The value from the cache or the result of the function.
  */
-export function cacheRetrieve(key: ExportedKey, config = cliKitStore()): CacheValue<string> | undefined {
+export function cacheRetrieve(key: ExportedKey, config = cliKitStore()): CacheValueForKey<typeof key> | undefined {
   const cache: Cache = config.get('cache') || {}
-  return cache[key]
+  const cached = cache[key]
+  return cached?.value
 }
 
 export function cacheClear(config = cliKitStore()): void {

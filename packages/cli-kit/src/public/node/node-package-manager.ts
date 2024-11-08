@@ -288,7 +288,7 @@ export async function checkForNewVersion(
  */
 export function checkForCachedNewVersion(dependency: string, currentVersion: string): string | undefined {
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
-  const lastVersion = cacheRetrieve(cacheKey)?.value
+  const lastVersion = cacheRetrieve(cacheKey)
 
   if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
     return lastVersion

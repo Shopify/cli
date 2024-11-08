@@ -2061,25 +2061,6 @@
       "pluginType": "core",
       "strict": true
     },
-    "cache:clear": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Clear the CLI cache, used to store some API responses and handle notifications status",
-      "enableJsonFlag": false,
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "cache:clear",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
     "commands": {
       "aliases": [
       ],
@@ -4247,44 +4228,6 @@
       "hiddenAliases": [
       ],
       "id": "kitchen-sink:static",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
-    "notifications:generate": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Generate a new notification for the the CLI.",
-      "enableJsonFlag": false,
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "notifications:generate",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
-    "notifications:list": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "List current notifications configured for the CLI.",
-      "enableJsonFlag": false,
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "notifications:list",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
