@@ -43,6 +43,7 @@ export async function ensureExtensionsIds(
   const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, FlowModulesMap)
   const paymentsToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, PaymentModulesMap)
   const marketingToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, MarketingModulesMap)
+  let didMigrateDashboardExtensions = false
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
@@ -53,6 +54,7 @@ export async function ensureExtensionsIds(
       remoteExtensions,
       options.developerPlatformClient,
     )
+    didMigrateDashboardExtensions = true
   }
 
   if (flowExtensionsToMigrate.length > 0) {
@@ -65,6 +67,7 @@ export async function ensureExtensionsIds(
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+    didMigrateDashboardExtensions = true
   }
 
   if (marketingToMigrate.length > 0) {
@@ -78,6 +81,7 @@ export async function ensureExtensionsIds(
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+    didMigrateDashboardExtensions = true
   }
 
   if (paymentsToMigrate.length > 0) {
@@ -91,6 +95,7 @@ export async function ensureExtensionsIds(
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+    didMigrateDashboardExtensions = true
   }
 
   const matchExtensions = await automaticMatchmaking(
@@ -123,7 +128,7 @@ export async function ensureExtensionsIds(
     validMatches,
     extensionsToCreate,
     dashboardOnlyExtensions: dashboardExtensions,
-    didMigrateDashboardExtensions: remoteExtensions.length > initialRemoteExtensions.length,
+    didMigrateDashboardExtensions,
   }
 }
 
