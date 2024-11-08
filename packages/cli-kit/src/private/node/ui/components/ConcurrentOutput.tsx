@@ -14,6 +14,7 @@ export interface ConcurrentOutputProps {
   abortSignal: AbortSignal
   showTimestamps?: boolean
   keepRunningAfterProcessesResolve?: boolean
+  useAlternativeColorPalette?: boolean
 }
 
 interface Chunk {
@@ -88,10 +89,17 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   abortSignal,
   showTimestamps = true,
   keepRunningAfterProcessesResolve = false,
+  useAlternativeColorPalette = false,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
-  const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
+  const concurrentColors: TextProps['color'][] = useMemo(
+    () =>
+      useAlternativeColorPalette
+        ? ['#b994c3', '#e69e19', '#d17a73', 'cyan', 'magenta', 'blue']
+        : ['yellow', 'cyan', 'magenta', 'green', 'blue'],
+    [useAlternativeColorPalette],
+  )
 
   const calculatedPrefixColumnSize = useMemo(() => {
     const maxColumnSize = 25

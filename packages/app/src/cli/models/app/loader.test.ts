@@ -1947,7 +1947,6 @@ wrong = "property"
       expect.objectContaining({
         webhooks: {
           api_version: '2023-07',
-          subscriptions: [],
         },
       }),
       expect.objectContaining({
@@ -1986,7 +1985,7 @@ wrong = "property"
     await writeConfig(appConfigurationWithWebhooks)
 
     // When
-    const app = await loadTestingApp({remoteFlags: [Flag.DeclarativeWebhooks]})
+    const app = await loadTestingApp({remoteFlags: []})
 
     // Then
     expect(app.allExtensions).toHaveLength(6)

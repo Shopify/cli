@@ -1118,7 +1118,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     ]
     const app = options(localSources, [], {
       includeDeployConfig: true,
-      flags: [Flag.DeclarativeWebhooks],
+      flags: [],
     }).app
     const appId = 'appId'
 
@@ -1196,7 +1196,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     const remoteSources = [webhookSubscriptionExtension]
     const app = options(localSources, [], {
       includeDeployConfig: true,
-      flags: [Flag.DeclarativeWebhooks],
+      flags: [],
     }).app
     const appId = 'appId'
 
