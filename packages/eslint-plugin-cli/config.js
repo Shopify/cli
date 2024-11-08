@@ -181,6 +181,7 @@ module.exports = {
     '@typescript-eslint/no-confusing-void-expression': 'off',
     '@typescript-eslint/non-nullable-type-assertion-style': 'off',
     '@typescript-eslint/no-unused-expressions': ['error', {allowTernary: true}],
+    '@babel/no-unused-expressions': 'off',
   },
   overrides: [
     {

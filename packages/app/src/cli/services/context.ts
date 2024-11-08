@@ -182,11 +182,7 @@ async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
   const patch = {build: {include_config_on_deploy: undefined}}
   await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
 
-  if (includeConfigOnDeploy) {
-    renderInfoAboutIncludeConfigOnDeploy()
-  } else {
-    renderWarningAboutIncludeConfigOnDeploy()
-  }
+  includeConfigOnDeploy ? renderInfoAboutIncludeConfigOnDeploy() : renderWarningAboutIncludeConfigOnDeploy()
 }
 
 function renderInfoAboutIncludeConfigOnDeploy() {
