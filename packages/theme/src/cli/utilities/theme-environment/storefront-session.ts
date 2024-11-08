@@ -4,6 +4,8 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+export class ShopifyEssentialError extends Error {}
+
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
@@ -53,16 +55,6 @@ export async function getStorefrontSessionCookies(
   const cookieRecord: {[key: string]: string} = {}
   const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
 
-  if (!shopifyEssential) {
-    /**
-     * SFR should always define a _shopify_essential, so an error at this point
-     * is likely a Shopify error or firewall issue.
-     */
-    throw new AbortError(
-      'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
-    )
-  }
-
   cookieRecord._shopify_essential = shopifyEssential
 
   if (!password) {
@@ -74,12 +66,6 @@ export async function getStorefrontSessionCookies(
   }
 
   const storefrontDigest = await enrichSessionWithStorefrontPassword(shopifyEssential, storeUrl, password, headers)
-
-  if (!storefrontDigest) {
-    throw new AbortError(
-      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
-    )
-  }
 
   cookieRecord.storefront_digest = storefrontDigest
 
@@ -107,11 +93,18 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
 
+  /**
+   * SFR should always define a _shopify_essential, so an error at this point
+   * is likely a Shopify error or firewall issue.
+   */
   if (!shopifyEssential) {
     outputDebug(
       `Failed to obtain _shopify_essential cookie.\n
        -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
        -Body: ${await response.text()}`,
+    )
+    throw new ShopifyEssentialError(
+      'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
     )
   }
 
@@ -145,6 +138,9 @@ async function enrichSessionWithStorefrontPassword(
       `Failed to obtain storefront_digest cookie.\n
        -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
        -Body: ${await response.text()}`,
+    )
+    throw new AbortError(
+      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
     )
   }
 
