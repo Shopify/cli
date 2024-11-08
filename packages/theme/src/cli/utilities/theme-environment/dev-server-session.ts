@@ -49,42 +49,56 @@ export async function fetchDevServerSession(
   adminPassword?: string,
   storefrontPassword?: string,
 ): Promise<DevServerSession> {
-  try {
-    const baseUrl = buildBaseStorefrontUrl(adminSession)
+  const baseUrl = buildBaseStorefrontUrl(adminSession)
 
-    const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
-    const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
-    const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {
-      'X-Shopify-Shop': session.storeFqdn,
-      'X-Shopify-Access-Token': session.token,
+  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
+  const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
+  const sessionCookies = await getStorefrontSessionCookiesWithVerification(
+    baseUrl,
+    themeId,
+    adminSession,
+    storefrontToken,
+    storefrontPassword,
+  )
+
+  return {
+    ...session,
+    sessionCookies,
+    storefrontToken,
+  }
+}
+
+export async function getStorefrontSessionCookiesWithVerification(
+  storeUrl: string,
+  themeId: string,
+  adminSession: AdminSession,
+  storefrontToken: string,
+  storefrontPassword?: string,
+): Promise<{[key: string]: string}> {
+  try {
+    return await getStorefrontSessionCookies(storeUrl, themeId, storefrontPassword, {
+      'X-Shopify-Shop': adminSession.storeFqdn,
+      'X-Shopify-Access-Token': adminSession.token,
       Authorization: `Bearer ${storefrontToken}`,
     })
-
-    return {
-      ...session,
-      sessionCookies,
-      storefrontToken,
-    }
   } catch (error) {
     if (error instanceof ShopifyEssentialError) {
-      await verifyRequiredFilesExist(themeId, adminSession)
+      await abortOnMissingRequiredFile(themeId, adminSession)
     }
 
     throw error
   }
 }
 
-export async function verifyRequiredFilesExist(themeId: string, adminSession: AdminSession) {
+export async function abortOnMissingRequiredFile(themeId: string, adminSession: AdminSession) {
   outputDebug(`Verifying if theme with id ${themeId} has required files...`)
   const requiredAssets = await fetchThemeAssets(Number(themeId), REQUIRED_THEME_FILES, adminSession)
 
   if (requiredAssets.length !== REQUIRED_THEME_FILES.length) {
     throw new AbortError(
-      outputContent`The theme with id ${outputToken.cyan(
-        themeId,
-      )} is missing required files. Please try deleting by running ${outputToken.cyan(
+      outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
         `shopify theme delete -t ${themeId}`,
-      )} and recreating it.`.value,
+      )} to delete it, then try your command again.`.value,
     )
   }
 

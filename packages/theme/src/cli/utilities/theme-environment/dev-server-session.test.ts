@@ -1,4 +1,4 @@
-import {fetchDevServerSession, verifyRequiredFilesExist} from './dev-server-session.js'
+import {fetchDevServerSession, abortOnMissingRequiredFile} from './dev-server-session.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
@@ -39,11 +39,9 @@ describe('fetchDevServerSession', () => {
     // When/Then
     await expect(fetchDevServerSession(themeId, mockAdminSession)).rejects.toThrow(
       new AbortError(
-        outputContent`The theme with id ${outputToken.cyan(
-          themeId,
-        )} is missing required files. Please try deleting by running ${outputToken.cyan(
+        outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
           `shopify theme delete -t ${themeId}`,
-        )} and recreating it.`.value,
+        )} to delete it, then try your command again.`.value,
       ),
     )
   })
@@ -60,7 +58,7 @@ describe('verifyRequiredFilesExist', () => {
 
     // When
     // Then
-    await expect(verifyRequiredFilesExist(themeId, mockAdminSession)).resolves.not.toThrow()
+    await expect(abortOnMissingRequiredFile(themeId, mockAdminSession)).resolves.not.toThrow()
   })
 
   //   throws an AbortError if any file is missing
@@ -70,6 +68,6 @@ describe('verifyRequiredFilesExist', () => {
 
     // When
     // Then
-    await expect(verifyRequiredFilesExist(themeId, mockAdminSession)).rejects.toThrow()
+    await expect(abortOnMissingRequiredFile(themeId, mockAdminSession)).rejects.toThrow()
   })
 })
