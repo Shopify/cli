@@ -1,10 +1,14 @@
-import {verifyRequiredFilesExist} from './dev-server-session.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {fetchDevServerSession, verifyRequiredFilesExist} from './dev-server-session.js'
+import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
+import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./storefront-session.js')
 
 const mockAdminSession: AdminSession = {token: 'token', storeFqdn: 'store.myshopify.com'}
 const themeId = '1234'
@@ -23,6 +27,24 @@ const mockConfigAsset: ThemeAsset = {
   checksum: 'fdsa',
 }
 
+describe('fetchDevServerSession', () => {
+  test('calls verifyRequiredFilesExist when ShopifyEssentialError is thrown', async () => {
+    // Given
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockAdminSession)
+    vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
+    vi.mocked(getStorefrontSessionCookies).mockRejectedValue(new ShopifyEssentialError('Test error'))
+    vi.mocked(fetchThemeAssets).mockResolvedValue([mockLayoutAsset])
+
+    // When/Then
+    await expect(fetchDevServerSession(themeId, mockAdminSession)).rejects.toThrow(
+      new AbortError(
+        `The theme with id ${themeId} is missing required files.
+        Please try deleting by running \`shopify theme delete -t ${themeId}\` and recreating it.`,
+      ),
+    )
+  })
+})
+
 describe('verifyRequiredFilesExist', () => {
   beforeEach(() => {
     vi.mocked(themeDelete).mockResolvedValue(true)
@@ -33,37 +55,17 @@ describe('verifyRequiredFilesExist', () => {
     vi.mocked(fetchThemeAssets).mockResolvedValue([mockLayoutAsset, mockConfigAsset])
 
     // When
+    // Then
     await expect(verifyRequiredFilesExist(themeId, mockAdminSession)).resolves.not.toThrow()
-
-    // Then
-    expect(themeDelete).not.toHaveBeenCalled()
   })
 
-  test('retries once and succeeds if files exist on second attempt', async () => {
-    // Given
-    vi.mocked(fetchThemeAssets).mockResolvedValueOnce([]).mockResolvedValue([mockLayoutAsset, mockConfigAsset])
-
-    // When
-    const promise = verifyRequiredFilesExist(themeId, mockAdminSession, 0)
-
-    // Then
-    await expect(promise).resolves.not.toThrow()
-    expect(fetchThemeAssets).toHaveBeenCalledTimes(2)
-    expect(themeDelete).not.toHaveBeenCalled()
-  })
-
-  test('deletes theme and throws if any file is missing after retry', async () => {
+  //   throws an AbortError if any file is missing
+  test('throws an AbortError if any file is missing', async () => {
     // Given
     vi.mocked(fetchThemeAssets).mockResolvedValue([mockLayoutAsset])
 
     // When
-    const promise = verifyRequiredFilesExist(themeId, mockAdminSession, 0)
-
     // Then
-    await expect(promise).rejects.toThrowError(
-      'Invalid theme removed from storefront. Please try deleting the theme and recreating it.',
-    )
-    expect(fetchThemeAssets).toHaveBeenCalledTimes(2)
-    expect(themeDelete).toHaveBeenCalledWith(1234, mockAdminSession)
+    await expect(verifyRequiredFilesExist(themeId, mockAdminSession)).rejects.toThrow()
   })
 })

@@ -1,15 +1,14 @@
 import {buildBaseStorefrontUrl} from './storefront-renderer.js'
-import {getStorefrontSessionCookies} from './storefront-session.js'
+import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {DevServerSession} from './types.js'
+import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 
 // 30 minutes in miliseconds.
 const SESSION_TIMEOUT_IN_MS = 30 * 60 * 1000
 const REQUIRED_THEME_FILES = ['layout/theme.liquid', 'config/settings_schema.json']
-const RETRY_DELAY_MS = 3000
 
 /**
  * Initialize the session object, which is automatically refreshed
@@ -28,8 +27,6 @@ export async function initializeDevServerSession(
   adminPassword?: string,
   storefrontPassword?: string,
 ) {
-  await verifyRequiredFilesExist(themeId, adminSession)
-
   const session = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
 
   setInterval(() => {
@@ -46,51 +43,47 @@ export async function initializeDevServerSession(
   return session
 }
 
-export async function verifyRequiredFilesExist(
-  themeId: string,
-  adminSession: AdminSession,
-  retryDelay = RETRY_DELAY_MS,
-) {
-  outputDebug(`Verifying required files for theme ${themeId}...`)
-
-  const themeIdNumber = Number(themeId)
-
-  const areFilesPresent = async () => {
-    const assets = await fetchThemeAssets(themeIdNumber, REQUIRED_THEME_FILES, adminSession)
-    return assets.length === REQUIRED_THEME_FILES.length
-  }
-
-  const hasFiles = await areFilesPresent()
-  if (!hasFiles) {
-    await new Promise((resolve) => setTimeout(resolve, retryDelay))
-
-    const hasFilesAfterRetry = await areFilesPresent()
-    if (!hasFilesAfterRetry) {
-      await themeDelete(themeIdNumber, adminSession)
-      throw new AbortError('Invalid theme removed from storefront. Please try deleting the theme and recreating it.')
-    }
-  }
-}
-
-async function fetchDevServerSession(
+export async function fetchDevServerSession(
   themeId: string,
   adminSession: AdminSession,
   adminPassword?: string,
   storefrontPassword?: string,
 ): Promise<DevServerSession> {
-  const baseUrl = buildBaseStorefrontUrl(adminSession)
+  try {
+    const baseUrl = buildBaseStorefrontUrl(adminSession)
 
-  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
-  const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
-  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {
-    'X-Shopify-Shop': session.storeFqdn,
-    'X-Shopify-Access-Token': session.token,
-    Authorization: `Bearer ${storefrontToken}`,
-  })
+    const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
+    const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
+    const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {
+      'X-Shopify-Shop': session.storeFqdn,
+      'X-Shopify-Access-Token': session.token,
+      Authorization: `Bearer ${storefrontToken}`,
+    })
 
-  return {
-    ...session,
-    sessionCookies,
-    storefrontToken,
+    return {
+      ...session,
+      sessionCookies,
+      storefrontToken,
+    }
+  } catch (error) {
+    if (error instanceof ShopifyEssentialError) {
+      await verifyRequiredFilesExist(themeId, adminSession)
+    }
+
+    throw error
   }
+}
+
+export async function verifyRequiredFilesExist(themeId: string, adminSession: AdminSession) {
+  outputDebug(`Verifying if theme with id ${themeId} has required files...`)
+  const requiredAssets = await fetchThemeAssets(Number(themeId), REQUIRED_THEME_FILES, adminSession)
+
+  if (requiredAssets.length !== REQUIRED_THEME_FILES.length) {
+    throw new AbortError(
+      `The theme with id ${themeId} is missing required files.
+      Please try deleting by running \`shopify theme delete -t ${themeId}\` and recreating it.`,
+    )
+  }
+
+  outputDebug(`Theme with id ${themeId} has required files.`)
 }
