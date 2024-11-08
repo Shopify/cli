@@ -322,6 +322,7 @@ describe('matchmaking returns more remote sources than local', () => {
       validMatches: {
         EXTENSION_A: 'UUID_A',
       },
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed', async () => {
@@ -383,6 +384,7 @@ describe('matchmaking returns ok with pending manual matches', () => {
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
       },
+      didMigrateDashboardExtensions: false,
     })
   })
 
@@ -454,6 +456,7 @@ describe('matchmaking returns ok with pending manual matches and manual match fa
       validMatches: {
         EXTENSION_A: 'UUID_A',
       },
+      didMigrateDashboardExtensions: false,
     })
     expect(manualMatchIds).toBeCalledWith({
       local: [EXTENSION_A, EXTENSION_A_2],
@@ -518,6 +521,7 @@ describe('matchmaking returns ok with pending some pending to create', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [EXTENSION_A, EXTENSION_A_2],
       validMatches: {},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: Create the pending extensions and succeeds', async () => {
@@ -587,6 +591,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
       validMatches: {
         'extension-b': 'UUID_B',
       },
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed', async () => {
@@ -637,6 +642,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [EXTENSION_B],
       validMatches: {},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: creates non confirmed as new extensions', async () => {
@@ -688,6 +694,7 @@ describe('matchmaking returns ok with nothing pending', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [],
       validMatches: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: does not create any extension', async () => {
@@ -749,6 +756,7 @@ describe('includes functions', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [],
       validMatches: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: does not create any extension', async () => {
@@ -860,12 +868,22 @@ describe('ensureExtensionsIds: Migrates extension', () => {
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
 
     // When
-    await ensureExtensionsIds(opts, {
+    const result = await ensureExtensionsIds(opts, {
       extensionRegistrations: remoteExtensions,
       dashboardManagedExtensionRegistrations: [],
     })
 
     // Then
+    expect(result).toEqual({
+      didMigrateDashboardExtensions: true,
+      dashboardOnlyExtensions: [],
+      extensionsToCreate: [],
+      validMatches: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+      },
+    })
+
     expect(migrateExtensionsToUIExtension).toBeCalledWith(
       extensionsToMigrate,
       opts.appId,
