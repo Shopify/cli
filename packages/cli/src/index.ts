@@ -24,6 +24,8 @@ import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {FatalError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
@@ -42,7 +44,11 @@ export const HydrogenInitHook = HydrogenHooks.init
 // the error stack and manually call exit so that the cleanup code is called. This
 // makes sure that there are no lingering tunnel processes.
 process.on('uncaughtException', (err) => {
-  fs.writeSync(process.stderr.fd, `${err.stack || err.message || err}\n`)
+  if (err instanceof FatalError) {
+    renderFatalError(err)
+  } else {
+    fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
+  }
   process.exit(1)
 })
 const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']

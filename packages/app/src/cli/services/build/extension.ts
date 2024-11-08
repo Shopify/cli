@@ -104,6 +104,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       env,
       stderr: options.stderr,
       stdout: options.stdout,
+      sourceMaps: extension.isSourceMapGeneratingExtension,
     })
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug

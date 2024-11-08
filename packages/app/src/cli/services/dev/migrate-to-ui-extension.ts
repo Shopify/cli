@@ -2,44 +2,10 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
-import {LocalSource, RemoteSource} from '../context/identifiers.js'
-import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
+import {RemoteSource} from '../context/identifiers.js'
+import {LocalRemoteSource} from '../context/id-matching.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {slugify} from '@shopify/cli-kit/common/string'
-
-export function getUIExtensionsToMigrate(
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-  identifiers: IdentifiersExtensions,
-) {
-  const ids = getExtensionIds(localSources, identifiers)
-  const remoteExtensionTypesToMigrate = ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION']
-
-  return localSources.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
-    if (localSource.type === 'ui_extension') {
-      const remoteSource = remoteSources.find((source) => {
-        const matchesId = source.uuid === ids[localSource.localIdentifier]
-        const matchesTitle = slugify(source.title) === slugify(localSource.handle)
-
-        return matchesId || matchesTitle
-      })
-
-      if (!remoteSource) {
-        return accumulator
-      }
-
-      const typeIsToMigrate = remoteExtensionTypesToMigrate.includes(remoteSource.type)
-
-      if (typeIsToMigrate) {
-        accumulator.push({local: localSource, remote: remoteSource})
-      }
-    }
-
-    return accumulator
-  }, [])
-}
 
 export async function migrateExtensionsToUIExtension(
   extensionsToMigrate: LocalRemoteSource[],

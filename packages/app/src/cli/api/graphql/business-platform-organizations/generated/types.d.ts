@@ -25,6 +25,8 @@ export type Scalars = {
   ISO8601Date: {input: any; output: any}
   /** An ISO 8601-encoded datetime */
   ISO8601DateTime: {input: any; output: any}
+  /** The ID for a LegalEntity. */
+  LegalEntityID: {input: any; output: any}
   /** The ID for a OrganizationDomain. */
   OrganizationDomainID: {input: any; output: any}
   /** The ID for a Organization. */

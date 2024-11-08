@@ -1,6 +1,7 @@
 import {buildTomlObject as buildPaymentsTomlObject} from '../../services/payments/extension-to-toml.js'
 import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extension-to-toml.js'
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
+import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../../services/subscription_link/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
 import {importExtensions} from '../../services/import-extensions.js'
@@ -35,7 +36,7 @@ const getMigrationChoices = (): MigrationChoice[] => [
   {
     label: 'Flow Extensions',
     value: 'flow',
-    extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+    extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'flow_trigger_discovery_webhook'],
     buildTomlObject: buildFlowTomlObject,
   },
   {
@@ -43,6 +44,12 @@ const getMigrationChoices = (): MigrationChoice[] => [
     value: 'marketing activity',
     extensionTypes: ['marketing_activity_extension'],
     buildTomlObject: buildMarketingActivityTomlObject,
+  },
+  {
+    label: 'Subscription Link Extensions',
+    value: 'subscription link',
+    extensionTypes: ['subscription_link'],
+    buildTomlObject: buildSubscriptionLinkTomlObject,
   },
 ]
 
