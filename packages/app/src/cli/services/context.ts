@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrganizations} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
@@ -27,7 +26,7 @@ import {
 } from '../api/graphql/development_preview.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {Token, TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {Token, TokenItem, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
@@ -86,8 +85,8 @@ export async function ensureThemeExtensionDevContext(
     return extension.type === 'THEME_APP_EXTENSION'
   })
 
-  if (remoteRegistrations.length > 0) {
-    return remoteRegistrations[0]!
+  if (remoteRegistrations[0]) {
+    return remoteRegistrations[0]
   }
 
   const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
@@ -111,7 +110,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ident
   const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  await ensureIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force})
+  await checkIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force, developerPlatformClient})
 
   const identifiers = await ensureDeploymentIdsPresence({
     app,
@@ -135,19 +134,26 @@ interface ShouldOrPromptIncludeConfigDeployOptions {
   localApp: AppInterface
 }
 
-async function ensureIncludeConfigOnDeploy({
+async function checkIncludeConfigOnDeploy({
   org,
   app,
   remoteApp,
   reset,
   force,
+  developerPlatformClient,
 }: {
   org: Organization
   app: AppInterface
   remoteApp: OrganizationApp
   reset: boolean
   force: boolean
+  developerPlatformClient: DeveloperPlatformClient
 }) {
+  if (developerPlatformClient.supportsAtomicDeployments) {
+    await removeIncludeConfigOnDeployField(app)
+    return
+  }
+
   let previousIncludeConfigOnDeploy = app.includeConfigOnDeploy
   if (reset) previousIncludeConfigOnDeploy = undefined
   if (force) previousIncludeConfigOnDeploy = previousIncludeConfigOnDeploy ?? false
@@ -161,10 +167,47 @@ async function ensureIncludeConfigOnDeploy({
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
 
-  if (force || previousIncludeConfigOnDeploy !== undefined) return
+  if (force || previousIncludeConfigOnDeploy === true) return
   await promptIncludeConfigOnDeploy({
     appDirectory: app.directory,
     localApp: app,
+  })
+}
+
+async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
+  const configuration = localApp.configuration as CurrentAppConfiguration
+  const includeConfigOnDeploy = configuration.build?.include_config_on_deploy
+  if (includeConfigOnDeploy === undefined) return
+
+  const patch = {build: {include_config_on_deploy: undefined}}
+  await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
+
+  includeConfigOnDeploy ? renderInfoAboutIncludeConfigOnDeploy() : renderWarningAboutIncludeConfigOnDeploy()
+}
+
+function renderInfoAboutIncludeConfigOnDeploy() {
+  renderInfo({
+    headline: `Your configuration file has been modified`,
+    body: [
+      `The \`include_config_on_deploy\` field is no longer supported, since all apps must now include configuration on deploy. It has been removed from your configuration file.`,
+    ],
+    link: {
+      label: 'See Shopify CLI documentation.',
+      url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
+    },
+  })
+}
+
+function renderWarningAboutIncludeConfigOnDeploy() {
+  renderWarning({
+    headline: `Configuration is now included on deploy`,
+    body: [
+      `The \`include_config_on_deploy\` field is no longer supported and has been removed from your configuration file. Review this file to ensure it's up to date with the correct configuration.`,
+    ],
+    link: {
+      label: 'See Shopify CLI documentation.',
+      url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
+    },
   })
 }
 
@@ -175,7 +218,6 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
     ...localConfiguration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
-
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
   await patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
@@ -183,9 +225,11 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
 
 function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   return renderConfirmationPrompt({
-    message: `Include \`${basename(configPath)}\` configuration on \`deploy\`?`,
+    message: `Include \`${basename(
+      configPath,
+    )}\` configuration on \`deploy\`? Soon, this will no longer be an option, and configuration will need to be included on deploy every time.`,
     confirmationMessage: 'Yes, always (Recommended)',
-    cancellationMessage: 'No, never',
+    cancellationMessage: 'No, not now',
   })
 }
 
