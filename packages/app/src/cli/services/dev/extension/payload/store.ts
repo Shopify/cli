@@ -38,11 +38,7 @@ export async function getExtensionsPayloadStoreRawPayload(
       url: new URL('/extensions/dev-console', options.url).toString(),
     },
     store: options.storeFqdn,
-    extensions: await Promise.all(
-      options.extensions.map((extension) => {
-        return getUIExtensionPayload(extension, bundlePath, options)
-      }),
-    ),
+    extensions: await Promise.all(options.extensions.map((ext) => getUIExtensionPayload(ext, bundlePath, options))),
   }
 }
 

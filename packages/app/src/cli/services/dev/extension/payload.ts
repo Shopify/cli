@@ -33,15 +33,15 @@ export async function getUIExtensionPayload(
         },
       },
       capabilities: {
-        blockProgress: extension.configuration.capabilities?.block_progress ?? false,
-        networkAccess: extension.configuration.capabilities?.network_access ?? false,
-        apiAccess: extension.configuration.capabilities?.api_access ?? false,
+        blockProgress: extension.configuration.capabilities?.block_progress || false,
+        networkAccess: extension.configuration.capabilities?.network_access || false,
+        apiAccess: extension.configuration.capabilities?.api_access || false,
         collectBuyerConsent: {
-          smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing ?? false,
-          customerPrivacy: extension.configuration.capabilities?.collect_buyer_consent?.customer_privacy ?? false,
+          smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
+          customerPrivacy: extension.configuration.capabilities?.collect_buyer_consent?.customer_privacy || false,
         },
         iframe: {
-          sources: extension.configuration.capabilities?.iframe?.sources ?? [],
+          sources: extension.configuration.capabilities?.iframe?.sources || [],
         },
       },
       development: {
@@ -50,10 +50,10 @@ export async function getUIExtensionPayload(
         root: {
           url,
         },
-        hidden: options.currentDevelopmentPayload?.hidden ?? false,
+        hidden: options.currentDevelopmentPayload?.hidden || false,
         localizationStatus,
-        status: options.currentDevelopmentPayload?.status ?? 'success',
-        ...(options.currentDevelopmentPayload ?? {status: 'success'}),
+        status: options.currentDevelopmentPayload?.status || 'success',
+        ...(options.currentDevelopmentPayload || {status: 'success'}),
       },
       extensionPoints: getExtensionPoints(extension.configuration.extension_points, url),
       localization: localization ?? null,
