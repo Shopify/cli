@@ -2,18 +2,15 @@
     organization {
       id
       name
-      properties(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, offeringHandles: ["shop"]) {
+      accessibleShops(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}) {
         edges {
           node {
-            ... on Shop {
-              __typename
-              id
-              externalId
-              name
-              storeType
-              primaryDomain
-              shortName
-            }
+            id
+            externalId
+            name
+            storeType
+            primaryDomain
+            shortName
           }
         }
       }
