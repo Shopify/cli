@@ -91,7 +91,6 @@ export async function setupDevProcesses({
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   const processes = [
-    await setupAppWatcherProcess({appWatcher}),
     ...(await setupWebProcesses({
       webs: reloadedApp.webs,
       proxyUrl: network.proxyUrl,
@@ -170,6 +169,9 @@ export async function setupDevProcesses({
           storeName: storeFqdn,
         })
       : undefined,
+    await setupAppWatcherProcess({
+      appWatcher,
+    }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
