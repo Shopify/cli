@@ -63,7 +63,8 @@
       "../../.eslintrc.cjs"
     ],
     "ignorePatterns": [
-      "**/vendor/otel-js/**/*.ts"
+      "**/vendor/otel-js/**/*.ts",
+      "**/vendor/dev_server/**/*.ts"
     ],
     "overrides": [
       {
@@ -144,6 +145,7 @@
     "macaddress": "0.5.3",
     "minimatch": "9.0.3",
     "mrmime": "1.0.1",
+    "network-interfaces": "1.1.0",
     "node-abort-controller": "3.1.1",
     "node-fetch": "3.3.2",
     "open": "8.4.2",

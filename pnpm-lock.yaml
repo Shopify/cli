@@ -445,6 +445,9 @@ importers:
       mrmime:
         specifier: 1.0.1
         version: 1.0.1
+      network-interfaces:
+        specifier: 1.1.0
+        version: 1.1.0
       node-abort-controller:
         specifier: 3.1.1
         version: 3.1.1
@@ -12709,6 +12712,10 @@ packages:
   /negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
+    dev: false
+
+  /network-interfaces@1.1.0:
+    resolution: {integrity: sha512-fBk/Cm/RminFKhyUYKolI5nWI2de1m0pHlikz1mnTDbbe/1d2+ti+x/pWlOYuK8o/9p9vyK912+66h2NXGNUwQ==}
     dev: false
 
   /no-case@3.0.4:
