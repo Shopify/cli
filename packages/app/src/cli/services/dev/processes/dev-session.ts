@@ -79,7 +79,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
-  processOptions.stdout.write('Preparing dev session')
+  await printLogMessage('Preparing dev session', processOptions.stdout)
 
   appWatcher
     .onEvent(async (event) => {
@@ -230,6 +230,7 @@ async function printSuccess(message: string, stdout: Writable) {
   await printLogMessage(outputContent`${outputToken.green(message)}`.value, stdout)
 }
 
+// Helper function to print to terminal using output context with stripAnsi disabled.
 async function printLogMessage(message: string, stdout: Writable) {
   await useConcurrentOutputContext({outputPrefix: 'dev-session', stripAnsi: false}, () => {
     stdout.write(message)

@@ -4,7 +4,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile, glob} from '@shopify/cli-kit/node/fs'
 import {ExtendableError} from '@shopify/cli-kit/node/error'
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 
 type Locale = string
 
@@ -57,6 +57,7 @@ export async function getLocalization(
       }),
     )
     localization.lastUpdated = Date.now()
+    outputDebug(`Parsed locales for extension ${extension.handle} at ${extension.directory}`, options.stdout)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
   } catch (error: any) {
     status = 'error'
