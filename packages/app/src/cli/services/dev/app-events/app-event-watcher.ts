@@ -95,19 +95,26 @@ export class AppEventWatcher extends EventEmitter {
   private started = false
   private ready = false
 
-  constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string) {
+  constructor(
+    app: AppLinkedInterface,
+    appURL?: string,
+    buildOutputPath?: string,
+    esbuildManager?: ESBuildContextManager,
+  ) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'bundle')
     // Default options, to be overwritten by the start method
     this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-    this.esbuildManager = new ESBuildContextManager({
-      outputPath: this.buildOutputPath,
-      dotEnvVariables: this.app.dotenv?.variables ?? {},
-      url: this.appURL ?? '',
-      ...this.options,
-    })
+    this.esbuildManager =
+      esbuildManager ??
+      new ESBuildContextManager({
+        outputPath: this.buildOutputPath,
+        dotEnvVariables: this.app.dotenv?.variables ?? {},
+        url: this.appURL ?? '',
+        ...this.options,
+      })
   }
 
   async start(options?: OutputContextOptions) {
@@ -125,33 +132,26 @@ export class AppEventWatcher extends EventEmitter {
     await this.esbuildManager.createContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
     // Initial build of all extensions
-    await this.buildExtensions(this.app.realExtensions.map((ext) => ({type: EventType.Created, extension: ext})))
+    await this.buildExtensions(this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext})))
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (events) => {
       handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
-          if (!appEvent) return
+          if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
+          if (!appEvent || appEvent.extensionEvents.length === 0) return
+
           this.app = appEvent.app
-          if (appEvent.extensionEvents.length === 0) {
-            outputDebug('Change detected, but no extensions were affected', this.options.stdout)
-            return
-          }
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
-          const createdOrUpdatedExtensionsEvents = appEvent.extensionEvents.filter(
-            (extEvent) => extEvent.type !== EventType.Deleted,
-          )
+          const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
 
           // Build the created/updated extensions and update the extension events with the build result
-          await this.buildExtensions(createdOrUpdatedExtensionsEvents)
+          await this.buildExtensions(buildableEvents)
 
           // Find deleted extensions and delete their previous build output
-          const deletedExtensions = appEvent.extensionEvents
-            .filter((extEvent) => extEvent.type === EventType.Deleted)
-            .map((extEvent) => extEvent.extension)
-          await this.deleteExtensionsBuildOutput(deletedExtensions)
+          await this.deleteExtensionsBuildOutput(appEvent)
           this.emit('all', appEvent)
         })
         .catch((error) => {
@@ -197,7 +197,10 @@ export class AppEventWatcher extends EventEmitter {
    *
    * This is just a cleanup function after detecting that an extension has been deleted.
    */
-  private async deleteExtensionsBuildOutput(extensions: ExtensionInstance[]) {
+  private async deleteExtensionsBuildOutput(appEvent: AppEvent) {
+    const extensions = appEvent.extensionEvents
+      .filter((extEvent) => extEvent.type === EventType.Deleted)
+      .map((extEvent) => extEvent.extension)
     const promises = extensions.map(async (ext) => {
       const outputPath = joinPath(this.buildOutputPath, ext.getOutputFolderId())
       return rmdir(outputPath, {force: true})

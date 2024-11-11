@@ -171,6 +171,9 @@ export async function setupDevProcesses({
           storeName: storeFqdn,
         })
       : undefined,
+    await setupAppWatcherProcess({
+      appWatcher,
+    }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
