@@ -14,6 +14,9 @@ import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
+import List from './cli/commands/notifications/list.js'
+import Generate from './cli/commands/notifications/generate.js'
+import ClearCache from './cli/commands/cache/clear.js'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
@@ -146,6 +149,9 @@ export const COMMANDS: any = {
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
   'docs:generate': DocsGenerate,
+  'notifications:list': List,
+  'notifications:generate': Generate,
+  'cache:clear': ClearCache,
 }
 
 export default runShopifyCLI

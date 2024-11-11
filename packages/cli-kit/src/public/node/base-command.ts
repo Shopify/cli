@@ -8,6 +8,8 @@ import {outputContent, outputInfo, outputToken} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
+import {showNotificationsIfNeeded} from './notifications-system.js'
+import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Errors} from '@oclif/core'
@@ -45,11 +47,13 @@ abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async init(): Promise<any> {
     this.exitWithTimestampWhenEnvVariablePresent()
+    setCurrentCommandId(this.id || '')
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
     this.showNpmFlagWarning()
+    await showNotificationsIfNeeded()
     return super.init()
   }
 

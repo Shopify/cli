@@ -1,7 +1,7 @@
 import {isTruthy} from './context/utilities.js'
 import {printEventsJson} from '../../private/node/demo-recorder.js'
+import {cacheClear} from '../../private/node/conf-store.js'
 import {Flags} from '@oclif/core'
-// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import {fileURLToPath} from 'url'
 
 /**
@@ -201,4 +201,11 @@ export const globalFlags = {
     description: 'Increase the verbosity of the output.',
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
+}
+
+/**
+ * Clear the CLI cache, used to store some API responses and handle notifications status
+ */
+export function clearCache(): void {
+  cacheClear()
 }
