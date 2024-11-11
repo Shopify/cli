@@ -91,7 +91,6 @@ export async function setupDevProcesses({
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   const processes = [
-    await setupAppWatcherProcess({appWatcher}),
     ...(await setupWebProcesses({
       webs: reloadedApp.webs,
       proxyUrl: network.proxyUrl,
