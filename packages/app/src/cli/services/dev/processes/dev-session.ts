@@ -3,7 +3,6 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {reloadApp} from '../app-events/app-event-watcher-handler.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -23,6 +22,7 @@ interface DevSessionOptions {
   app: AppLinkedInterface
   organizationId: string
   appId: string
+  appWatcher: AppEventWatcher
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
@@ -71,18 +71,13 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient} = options
-
-  // Reload the app before starting the dev session, at this point the configuration has changed (e.g. application_url)
-  const app = await reloadApp(options.app, {stderr, stdout, signal})
+  const {developerPlatformClient, appWatcher} = options
 
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
   }
 
-  const appWatcher = new AppEventWatcher(app, options.url, {stderr, stdout, signal})
-
-  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath, app}
+  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
   await printLogMessage('Preparing dev session', processOptions.stdout)
 
@@ -110,15 +105,12 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         outputDebug(`✅ Event handled [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`, processOptions.stdout)
       }, refreshToken)
     })
-    .onStart(async () => {
+    .onStart(async (app) => {
       await performActionWithRetryAfterRecovery(async () => {
-        const result = await bundleExtensionsAndUpload(processOptions)
+        const result = await bundleExtensionsAndUpload({...processOptions, app})
         await handleDevSessionResult(result, processOptions)
       }, refreshToken)
     })
-
-  // Start watching for changes in the app
-  await appWatcher.start()
 }
 
 async function handleDevSessionResult(

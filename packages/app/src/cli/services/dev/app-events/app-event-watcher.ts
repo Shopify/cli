@@ -10,6 +10,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {formatMessagesSync, Message} from 'esbuild'
 import EventEmitter from 'events'
 
 /**
@@ -64,6 +65,7 @@ export enum EventType {
 export interface ExtensionEvent {
   type: EventType
   extension: ExtensionInstance
+  buildResult?: ExtensionBuildResult
 }
 
 /**
@@ -87,18 +89,19 @@ type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; e
 export class AppEventWatcher extends EventEmitter {
   buildOutputPath: string
   private app: AppLinkedInterface
-  private readonly options: OutputContextOptions
+  private options: OutputContextOptions
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
   private started = false
   private ready = false
 
-  constructor(app: AppLinkedInterface, appURL?: string, options?: OutputContextOptions, buildOutputPath?: string) {
+  constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'bundle')
-    this.options = options ?? {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
+    // Default options, to be overwritten by the start method
+    this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
     this.esbuildManager = new ESBuildContextManager({
       outputPath: this.buildOutputPath,
       dotEnvVariables: this.app.dotenv?.variables ?? {},
@@ -107,9 +110,13 @@ export class AppEventWatcher extends EventEmitter {
     })
   }
 
-  async start() {
+  async start(options?: OutputContextOptions) {
     if (this.started) return
     this.started = true
+
+    this.options = options ?? this.options
+    this.esbuildManager.setAbortSignal(this.options.signal)
+
     // If there is a previous build folder, delete it
     if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
     await mkdir(this.buildOutputPath)
@@ -118,7 +125,7 @@ export class AppEventWatcher extends EventEmitter {
     await this.esbuildManager.createContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
     // Initial build of all extensions
-    await this.buildExtensions(this.app.realExtensions)
+    await this.buildExtensions(this.app.realExtensions.map((ext) => ({type: EventType.Created, extension: ext})))
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (events) => {
@@ -133,11 +140,12 @@ export class AppEventWatcher extends EventEmitter {
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
-          const createdOrUpdatedExtensions = appEvent.extensionEvents
-            .filter((extEvent) => extEvent.type !== EventType.Deleted)
-            .map((extEvent) => extEvent.extension)
+          const createdOrUpdatedExtensionsEvents = appEvent.extensionEvents.filter(
+            (extEvent) => extEvent.type !== EventType.Deleted,
+          )
 
-          await this.buildExtensions(createdOrUpdatedExtensions)
+          // Build the created/updated extensions and update the extension events with the build result
+          await this.buildExtensions(createdOrUpdatedExtensionsEvents)
 
           // Find deleted extensions and delete their previous build output
           const deletedExtensions = appEvent.extensionEvents
@@ -152,7 +160,7 @@ export class AppEventWatcher extends EventEmitter {
     })
 
     this.ready = true
-    this.emit('ready')
+    this.emit('ready', this.app)
   }
 
   /**
@@ -174,10 +182,13 @@ export class AppEventWatcher extends EventEmitter {
    * @param listener - The listener function to add
    * @returns The AppEventWatcher instance
    */
-  onStart(listener: () => Promise<void> | void) {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    this.addListener('ready', listener)
-    if (this.ready) this.emit('ready')
+  onStart(listener: (app: AppLinkedInterface) => Promise<void> | void) {
+    if (this.ready) {
+      listener(this.app)?.catch(() => {})
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      this.once('ready', listener)
+    }
     return this
   }
 
@@ -199,24 +210,32 @@ export class AppEventWatcher extends EventEmitter {
    * ESBuild extensions will be built using their own ESBuild context, other extensions will be built using the default
    * buildForBundle method.
    */
-  private async buildExtensions(extensions: ExtensionInstance[]): Promise<ExtensionBuildResult[]> {
-    const promises = extensions.map(async (ext) => {
+  private async buildExtensions(extensionEvents: ExtensionEvent[]) {
+    const promises = extensionEvents.map(async (extEvent) => {
+      const ext = extEvent.extension
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts[ext.handle]) {
-            const result = await this.esbuildManager.contexts[ext.handle]?.rebuild()
-            if (result?.errors?.length) throw new Error(result?.errors.map((err) => err.text).join('\n'))
+            await this.esbuildManager.contexts[ext.handle]?.rebuild()
           } else {
             await this.buildExtension(ext)
           }
-          return {status: 'ok', handle: ext.handle} as const
+          extEvent.buildResult = {status: 'ok', handle: ext.handle}
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
-          return {status: 'error', error: error.message, handle: ext.handle} as const
+          const errors: Message[] = error.errors ?? []
+          if (errors.length) {
+            const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: true})
+            formattedErrors.forEach((error) => {
+              this.options.stderr.write(error)
+            })
+          } else {
+            this.options.stderr.write(error.message)
+          }
+          extEvent.buildResult = {status: 'error', error: error.message, handle: ext.handle}
         }
       })
     })
-    // ESBuild errors are already logged by the ESBuild bundler
     return Promise.all(promises)
   }
 
