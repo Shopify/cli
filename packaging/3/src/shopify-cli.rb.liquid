@@ -11,7 +11,6 @@ class ShopifyCli{% if formulaVersion %}{% if formulaVersion == '3' %}AT3{% else 
   sha256 "{{ cliSha }}"
   license "MIT"
   depends_on "node"
-  depends_on "ruby"
   depends_on "git"
 
   livecheck do
@@ -38,7 +37,6 @@ class ShopifyCli{% if formulaVersion %}{% if formulaVersion == '3' %}AT3{% else 
     executable_content = <<~SCRIPT
       #!/usr/bin/env #{Formula["node"].opt_bin}/node
 
-      process.env.SHOPIFY_RUBY_BINDIR = "#{Formula["ruby"].opt_bin}"
       process.env.SHOPIFY_HOMEBREW_FORMULA = "shopify-cli{% if formulaVersion %}{% if formulaVersion == '3' %}@{% else %}-{% endif %}{{formulaVersion}}{% endif %}"
 
       import("#{new_original_executable_path}")
