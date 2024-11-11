@@ -324,7 +324,7 @@ describe('setup-dev-processes', () => {
 
     expect(res.processes[2]).toMatchObject({
       type: 'dev-session',
-      prefix: 'extensions',
+      prefix: 'dev-session',
       function: pushUpdatesForDevSession,
       options: {
         app: localApp,
