@@ -8,7 +8,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 
-export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
+export type GetUIExtensionPayloadOptions = Omit<ExtensionDevOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
   currentLocalizationPayload?: UIExtensionPayload['localization']
 }

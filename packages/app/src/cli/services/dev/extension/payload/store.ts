@@ -16,7 +16,7 @@ export enum ExtensionsPayloadStoreEvent {
 }
 
 export async function getExtensionsPayloadStoreRawPayload(
-  options: ExtensionsPayloadStoreOptions,
+  options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
   bundlePath: string,
 ): Promise<ExtensionsEndpointPayload> {
   return {
@@ -131,7 +131,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
 
   async updateExtension(
     extension: ExtensionInstance,
-    options: ExtensionDevOptions,
+    options: Omit<ExtensionDevOptions, 'appWatcher'>,
     bundlePath: string,
     development?: Partial<UIExtensionPayload['development']>,
   ) {
