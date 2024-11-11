@@ -217,6 +217,7 @@ async function init(options: InitOptions) {
       organizationId: app.organizationId,
       configName: 'shopify.app.toml',
       developerPlatformClient: options.developerPlatformClient,
+      isNewApp: true,
     },
     false,
   )

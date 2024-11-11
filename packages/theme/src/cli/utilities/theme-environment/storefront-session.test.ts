@@ -2,9 +2,11 @@ import {
   getStorefrontSessionCookies,
   isStorefrontPasswordCorrect,
   isStorefrontPasswordProtected,
+  ShopifyEssentialError,
 } from './storefront-session.js'
 import {describe, expect, test, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/http')
 
@@ -133,7 +135,7 @@ describe('Storefront API', () => {
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==123:', storefront_digest: 'digest-value'})
     })
 
-    test(`throws an error when _shopify_essential can't be defined`, async () => {
+    test(`throws an ShopifyEssentialError when _shopify_essential can't be defined`, async () => {
       // Given
       vi.mocked(fetch)
         .mockResolvedValueOnce(
@@ -156,7 +158,9 @@ describe('Storefront API', () => {
 
       // Then
       await expect(cookies).rejects.toThrow(
-        'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+        new ShopifyEssentialError(
+          'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+        ),
       )
     })
 
@@ -182,7 +186,9 @@ describe('Storefront API', () => {
 
       // Then
       await expect(cookies).rejects.toThrow(
-        'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+        new AbortError(
+          'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+        ),
       )
     })
   })

@@ -340,6 +340,11 @@ export class App<
     )
   }
 
+  get appManagementApiEnabled() {
+    if (isLegacyAppSchema(this.configuration)) return false
+    return this.configuration.organization_id !== undefined
+  }
+
   async manifest(): Promise<JsonMapType> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
@@ -429,6 +434,7 @@ export class App<
 
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
+    if (this.appManagementApiEnabled) return true
     return this.configuration.build?.include_config_on_deploy
   }
 }
