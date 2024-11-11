@@ -4257,7 +4257,7 @@
       ],
       "args": {
       },
-      "description": "Generate a new notification for the the CLI.",
+      "description": "Generate a notifications.json file for the the CLI, appending a new notification to the current file.",
       "enableJsonFlag": false,
       "flags": {
       },
