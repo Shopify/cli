@@ -49,6 +49,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 
 const defaultExtensionDirectory = 'extensions/*'
@@ -326,6 +327,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       configSchema,
       remoteFlags: this.remoteFlags,
     })
+
+    // Show CLI notifications that are targetted for when your app has specific extension types
+    const extensionTypes = appClass.realExtensions.map((module) => module.type)
+    await showNotificationsIfNeeded(extensionTypes)
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
