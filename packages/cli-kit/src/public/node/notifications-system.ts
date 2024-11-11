@@ -1,7 +1,6 @@
 import {versionSatisfies} from './node-package-manager.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {getCurrentCommandId} from './global-context.js'
-import {fileExists, readFile} from './fs.js'
 import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
@@ -15,7 +14,7 @@ import {
 } from '../../private/node/conf-store.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 
-const URL = 'https://raw.githubusercontent.com/Shopify/cli/main/notifications.json'
+const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const CACHE_DURATION_IN_MS = 3600 * 1000
 
 function url(): string {
@@ -247,18 +246,4 @@ export function stringifyFilters(notification: Notification): string {
   if (notification.surface) filters.push(`surface = ${notification.surface}`)
   if (notification.commands) filters.push(`commands = ${notification.commands.join(', ')}`)
   return filters.join('\n')
-}
-
-/**
- * Reads the notifications from the local file.
- *
- * @returns A Notifications object.
- */
-export async function getLocalNotifications(): Promise<Notifications> {
-  const filePath = './notifications.json'
-  if (!(await fileExists(filePath))) return {notifications: []}
-
-  const rawNotifications = await readFile(filePath)
-  const notifications: object = JSON.parse(rawNotifications)
-  return NotificationsSchema.parse(notifications)
 }

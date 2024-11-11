@@ -3,9 +3,9 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {
   Notifications,
-  getLocalNotifications,
   Notification,
   stringifyFilters,
+  getNotifications,
 } from '@shopify/cli-kit/node/notifications-system'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderSelectPrompt, renderTextPrompt, renderSuccess, renderTable, TableColumn} from '@shopify/cli-kit/node/ui'
@@ -73,7 +73,7 @@ export async function generate() {
     message: 'Slack channel of the team who will own this notification',
   })
 
-  const notifications: Notifications = await getLocalNotifications()
+  const notifications: Notifications = await getNotifications()
   const notification: Notification = {
     id,
     type,
@@ -95,7 +95,7 @@ export async function generate() {
 }
 
 export async function list() {
-  const notifications: Notifications = await getLocalNotifications()
+  const notifications: Notifications = await getNotifications()
 
   const columns: TableColumn<{type: string; title: string; message: string; filters: string}> = {
     type: {header: 'Type', color: 'dim'},
