@@ -52,6 +52,7 @@ export interface LinkOptions {
   configName?: string
   baseConfigName?: string
   developerPlatformClient?: DeveloperPlatformClient
+  isNewApp?: boolean
 }
 
 interface LinkOutput {
@@ -280,7 +281,7 @@ async function loadLocalAppOptions(
         appDirectory: app.directory,
         packageManager: app.packageManager,
       }
-    } else if (app.configuration.client_id === remoteAppApiKey) {
+    } else if (app.configuration.client_id === remoteAppApiKey || options.isNewApp) {
       return {
         state: 'reusable-current-app',
         configFormat: 'current',

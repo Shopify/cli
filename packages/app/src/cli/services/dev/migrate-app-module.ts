@@ -38,6 +38,10 @@ export const UIModulesMap = {
   ui_extension: ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION'],
 }
 
+export const SubscriptionModulesMap = {
+  subscription_link_extension: ['subscription_link'],
+}
+
 /**
  * Returns a list of local and remote extensions that need to be migrated.
  *
