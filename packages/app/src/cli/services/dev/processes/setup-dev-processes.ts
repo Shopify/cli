@@ -86,6 +86,7 @@ export async function setupDevProcesses({
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
+  // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
