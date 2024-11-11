@@ -57,7 +57,7 @@ export async function getLocalization(
       }),
     )
     localization.lastUpdated = Date.now()
-    outputDebug(`Parsed locales for extension ${extension.handle} at ${extension.directory}`)
+    outputDebug(`Parsed locales for extension ${extension.handle} at ${extension.directory}`, options.stdout)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
   } catch (error: any) {
     status = 'error'
