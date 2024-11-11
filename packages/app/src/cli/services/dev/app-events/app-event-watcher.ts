@@ -95,19 +95,26 @@ export class AppEventWatcher extends EventEmitter {
   private started = false
   private ready = false
 
-  constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string) {
+  constructor(
+    app: AppLinkedInterface,
+    appURL?: string,
+    buildOutputPath?: string,
+    esbuildManager?: ESBuildContextManager,
+  ) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'bundle')
     // Default options, to be overwritten by the start method
     this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-    this.esbuildManager = new ESBuildContextManager({
-      outputPath: this.buildOutputPath,
-      dotEnvVariables: this.app.dotenv?.variables ?? {},
-      url: this.appURL ?? '',
-      ...this.options,
-    })
+    this.esbuildManager =
+      esbuildManager ??
+      new ESBuildContextManager({
+        outputPath: this.buildOutputPath,
+        dotEnvVariables: this.app.dotenv?.variables ?? {},
+        url: this.appURL ?? '',
+        ...this.options,
+      })
   }
 
   async start(options?: OutputContextOptions) {

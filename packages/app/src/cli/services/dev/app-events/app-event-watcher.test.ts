@@ -1,5 +1,6 @@
-import {AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
+import {AppEvent, AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
+import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {
   testApp,
   testAppAccessConfigExtension,
@@ -102,7 +103,9 @@ const testCases: TestCase[] = [
     },
     initialExtensions: [extension1, posExtension],
     finalExtensions: [extension1, extension2, posExtension],
-    extensionEvents: [{type: EventType.Created, extension: extension2}],
+    extensionEvents: [
+      {type: EventType.Created, extension: extension2, buildResult: {status: 'ok', handle: 'test-ui-extension'}},
+    ],
     needsAppReload: true,
   },
   {
@@ -115,7 +118,7 @@ const testCases: TestCase[] = [
     },
     initialExtensions: [extension1, extension2, posExtension],
     finalExtensions: [extension1, extension2, posExtension],
-    extensionEvents: [{type: EventType.Updated, extension: extension1}],
+    extensionEvents: [{type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', handle: 'h1'}}],
   },
   {
     name: 'file_updated affecting a single extension',
@@ -127,7 +130,7 @@ const testCases: TestCase[] = [
     },
     initialExtensions: [extension1, extension2, posExtension],
     finalExtensions: [extension1, extension2, posExtension],
-    extensionEvents: [{type: EventType.Updated, extension: extension1}],
+    extensionEvents: [{type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', handle: 'h1'}}],
   },
   {
     name: 'file_deleted affecting a single extension',
@@ -139,7 +142,7 @@ const testCases: TestCase[] = [
     },
     initialExtensions: [extension1, extension2, posExtension],
     finalExtensions: [extension1, extension2, posExtension],
-    extensionEvents: [{type: EventType.Updated, extension: extension1}],
+    extensionEvents: [{type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', handle: 'h1'}}],
   },
   {
     name: 'file_created affecting a multiple extensions',
@@ -152,8 +155,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2, posExtension],
     finalExtensions: [extension1, extension1B, extension2, posExtension],
     extensionEvents: [
-      {type: EventType.Updated, extension: extension1},
-      {type: EventType.Updated, extension: extension1B},
+      {type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', handle: 'h1'}},
+      {type: EventType.Updated, extension: extension1B, buildResult: {status: 'ok', handle: 'h2'}},
     ],
   },
   {
@@ -167,8 +170,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2, posExtension],
     finalExtensions: [extension1, extension1B, extension2, posExtension],
     extensionEvents: [
-      {type: EventType.Updated, extension: extension1},
-      {type: EventType.Updated, extension: extension1B},
+      {type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', handle: 'h1'}},
+      {type: EventType.Updated, extension: extension1B, buildResult: {status: 'ok', handle: 'h2'}},
     ],
   },
   {
@@ -182,8 +185,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2, posExtension],
     finalExtensions: [extension1, extension1B, extension2, posExtension],
     extensionEvents: [
-      {type: EventType.Updated, extension: extension1},
-      {type: EventType.Updated, extension: extension1B},
+      {type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', handle: 'h1'}},
+      {type: EventType.Updated, extension: extension1B, buildResult: {status: 'ok', handle: 'h2'}},
     ],
   },
   {
@@ -197,9 +200,9 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension2, posExtension, webhookExtension],
     finalExtensions: [extension1, extension2, posExtensionUpdated, appAccessExtension],
     extensionEvents: [
-      {type: EventType.Updated, extension: posExtensionUpdated},
+      {type: EventType.Updated, extension: posExtensionUpdated, buildResult: {status: 'ok', handle: 'point-of-sale'}},
       {type: EventType.Deleted, extension: webhookExtension},
-      {type: EventType.Created, extension: appAccessExtension},
+      {type: EventType.Created, extension: appAccessExtension, buildResult: {status: 'ok', handle: 'app-access'}},
     ],
     needsAppReload: true,
   },
@@ -214,8 +217,8 @@ const testCases: TestCase[] = [
     initialExtensions: [extension1, extension1B, extension2],
     finalExtensions: [extension1Updated, extension1BUpdated, extension2],
     extensionEvents: [
-      {type: EventType.Updated, extension: extension1Updated},
-      {type: EventType.Updated, extension: extension1BUpdated},
+      {type: EventType.Updated, extension: extension1Updated, buildResult: {status: 'ok', handle: 'h1'}},
+      {type: EventType.Updated, extension: extension1BUpdated, buildResult: {status: 'ok', handle: 'h2'}},
     ],
     needsAppReload: true,
   },
@@ -238,7 +241,7 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
           configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
         })
 
-        const watcher = new AppEventWatcher(app, 'url', outputOptions, buildOutputPath)
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
         const emitSpy = vi.spyOn(watcher, 'emit')
         await watcher.start()
 
@@ -269,7 +272,7 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
           path: expect.anything(),
         })
 
-        expect(emitSpy).toHaveBeenCalledWith('ready')
+        expect(emitSpy).toHaveBeenCalledWith('ready', app)
 
         if (needsAppReload) {
           expect(loadApp).toHaveBeenCalledWith({
@@ -286,3 +289,22 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
     },
   )
 })
+
+// Mock class for ESBuildContextManager
+// It handles the ESBuild contexts for the extensions that are being watched
+class MockESBuildContextManager extends ESBuildContextManager {
+  contexts = {
+    // The keys are the extension handles, the values are the ESBuild contexts mocked
+    h1: {rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()},
+    h2: {rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()},
+    'test-ui-extension': {rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()},
+  }
+
+  constructor() {
+    super({dotEnvVariables: {}, url: 'url', outputPath: 'outputPath'})
+  }
+
+  async createContexts(extensions: ExtensionInstance[]) {}
+  async updateContexts(appEvent: AppEvent) {}
+  async deleteContexts(extensions: ExtensionInstance[]) {}
+}
