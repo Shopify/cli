@@ -1,5 +1,25 @@
 # @shopify/theme
 
+## 3.70.0
+
+### Minor Changes
+
+- ade20307dc: Removes Ruby implementation of the `theme push` command
+- b981aea41c: Removes the Ruby implementation of the `theme push` command
+
+### Patch Changes
+
+- 404cd2674c: Added a warning to help users troubleshoot when a development theme is missing required files
+- 5aecb3eecb: Prevent the `shopify theme dev` command from terminating by refreshing the session
+- 82786bc78c: Bump Shopify/theme-tools packages
+- 57abf0b31c: Fix the theme ID mismatch error, where the live theme ID is returned instead of the development theme ID
+- eccb52dccd: Fixes an issue in the `theme push` command where a confirmation prompt is rendered to users who provide the `--allow-live` flag
+- 7d89068e32: Fix an issue in `app dev` where host themes would have empty files
+- 8120536219: Show an error when the `config/settings_schema.json` file cannot be parsed.
+- Updated dependencies [03b39a67b3]
+- Updated dependencies [33477dd9d7]
+  - @shopify/cli-kit@3.70.0
+
 ## 3.69.0
 
 ### Minor Changes
