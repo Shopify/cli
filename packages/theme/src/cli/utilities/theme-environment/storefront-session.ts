@@ -28,6 +28,12 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
   params.append('utf8', '✓')
   params.append('password', password ?? '')
 
+  console.log(
+    `\n-- Endpoint: ${prependHttps(store)}/password\n-- Input password: "${password}". Password length: ${
+      password?.length
+    }. Body: ${params.toString()}\n`,
+  )
+
   const response = await fetch(`${prependHttps(store)}/password`, {
     headers: {
       'cache-control': 'no-cache',
