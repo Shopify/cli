@@ -259,10 +259,9 @@ DESCRIPTION
   and access scopes.
   - Building and serving your app and app extensions.
 
-  If you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview
+  If you're using the Ruby app template, then you need to complete the following steps before you can preview
   your app for the first time:
 
-  - PHP: "Set up your Laravel app" (https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)
   - Ruby: "Set up your Rails app" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
 
   > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have
