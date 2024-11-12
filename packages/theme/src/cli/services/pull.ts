@@ -36,7 +36,7 @@ export interface PullFlags {
   /**
    * The environment to apply to the current command.
    */
-  environment?: string
+  environment?: string[]
 
   /**
    * Store URL. It can be the store prefix (example.myshopify.com) or the full myshopify.com URL (https://example.myshopify.com).

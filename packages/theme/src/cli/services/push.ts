@@ -54,7 +54,7 @@ export interface PushFlags {
   store?: string
 
   /** The environment to apply to the current command. */
-  environment?: string
+  environment?: string[]
 
   /** Theme ID or name of the remote theme. */
   theme?: string

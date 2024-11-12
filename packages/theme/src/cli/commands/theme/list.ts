@@ -35,8 +35,8 @@ export default class List extends ThemeCommand {
     environment: themeFlags.environment,
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(List)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async runCommand(flags: any): Promise<void> {
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 

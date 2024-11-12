@@ -40,10 +40,11 @@ export async function loadEnvironment(
     return undefined
   }
   const environment = environments[environmentName] as JsonMap
-  if (!environment)
-    renderWarning({
-      body: ['Environment', {command: environmentName}, 'not found.'],
-    })
+  // == Ignore when multiple environments are passed.
+  // if (!environment)
+  //   renderWarning({
+  //     body: ['Environment', {command: environmentName}, 'not found.'],
+  //   })
 
   await metadata.addSensitiveMetadata(() => ({
     environmentFlags: JSON.stringify(environment),

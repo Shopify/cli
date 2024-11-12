@@ -1,5 +1,8 @@
 import {configurationFileName} from '../constants.js'
+import {ArgOutput, FlagOutput, Input} from '@oclif/core/lib/interfaces/parser.js'
 import Command from '@shopify/cli-kit/node/base-command'
+import {loadEnvironment} from '@shopify/cli-kit/node/environments'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
@@ -28,5 +31,48 @@ export default abstract class ThemeCommand extends Command {
 
   environmentsFilename(): string {
     return configurationFileName
+  }
+
+  async runCommand<TFlags extends FlagOutput & {path?: string; verbose?: boolean}>(_flags: TFlags): Promise<void> {}
+
+  async run<
+    TFlags extends FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends FlagOutput,
+    TArgs extends ArgOutput,
+  >(options?: Input<TFlags, TGlobalFlags, TArgs>): Promise<void> {
+    const flagsEnv = await this.parseEnvironments(options)
+
+    for (const flags of flagsEnv) {
+      renderInfo({
+        headline: ['Using applicable flags from', {userInput: flags.environment}, 'environment:'],
+      })
+
+      // eslint-disable-next-line no-await-in-loop
+      await this.runCommand(flags)
+    }
+  }
+
+  protected async parseEnvironments<
+    TFlags extends FlagOutput & {path?: string; verbose?: boolean},
+    TGlobalFlags extends FlagOutput,
+    TArgs extends ArgOutput,
+  >(options?: Input<TFlags, TGlobalFlags, TArgs>, argv?: string[]): Promise<TFlags[]> {
+    const result = await this.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const flags = result.flags as any
+    const resultFlags = []
+    let environments = flags.environment ?? []
+    if (!Array.isArray(environments)) {
+      environments = [environments]
+    }
+
+    for (const env of environments) {
+      // eslint-disable-next-line no-await-in-loop
+      resultFlags.push({...(await loadEnvironment(env, 'shopify.theme.toml', {from: flags.path})), environment: env})
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return resultFlags as any
   }
 }
