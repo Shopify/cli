@@ -1,5 +1,4 @@
 import {isTruthy} from './context/utilities.js'
-import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {cacheClear} from '../../private/node/conf-store.js'
 import {Flags} from '@oclif/core'
 import {fileURLToPath} from 'url'
@@ -94,7 +93,6 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
 
     await oclif.default.run(undefined, config)
     await oclif.default.flush()
-    printEventsJson()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     await errorHandler(error as Error)
