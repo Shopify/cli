@@ -25,7 +25,7 @@ export async function partnersFqdn(): Promise<string> {
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
     case 'local':
-      return 'partners.myshopify.io'
+      return 'app.myshopify.io'
     case 'spin':
       return `partners.${await spinFqdn()}`
     default:
@@ -43,7 +43,7 @@ export async function appManagementFqdn(): Promise<string> {
   const productionFqdn = 'app.shopify.com'
   switch (environment) {
     case 'local':
-      return 'app.shopify.myshopify.io'
+      return 'app.myshopify.io'
     case 'spin':
       return `app.shopify.${await spinFqdn()}`
     default:
