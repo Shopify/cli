@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.70.0
+
+### Minor Changes
+
+- 33477dd9d7: Notification system
+
+### Patch Changes
+
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+
 ## 3.69.0
 
 ### Minor Changes

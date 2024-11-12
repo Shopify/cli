@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.69.0",
+  "version": "3.70.0",
   "private": true,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.69.0",
+    "@shopify/cli-kit": "3.70.0",
     "@shopify/theme-check-node": "2.9.2",
     "@shopify/theme-language-server-node": "1.14.0",
     "chokidar": "3.5.3",

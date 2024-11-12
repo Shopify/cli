@@ -1,5 +1,34 @@
 # @shopify/app
 
+## 3.70.0
+
+### Minor Changes
+
+- a52719a831: Always ask to enable `include_config_on_deploy` and warn about deprecation
+- 33477dd9d7: Notification system
+- d060df761a: Enable local file systen sourcemap generation for UI extensions
+
+### Patch Changes
+
+- 82786bc78c: Bump Shopify/theme-tools packages
+- 851867cbb2: adding optional preloads to ui extension targets
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+- 8f44866aaa: Updated Javy to 3.1.2
+- Updated dependencies [404cd2674c]
+- Updated dependencies [ade20307dc]
+- Updated dependencies [5aecb3eecb]
+- Updated dependencies [82786bc78c]
+- Updated dependencies [57abf0b31c]
+- Updated dependencies [eccb52dccd]
+- Updated dependencies [7d89068e32]
+- Updated dependencies [03b39a67b3]
+- Updated dependencies [8120536219]
+- Updated dependencies [b981aea41c]
+- Updated dependencies [33477dd9d7]
+  - @shopify/theme@3.70.0
+  - @shopify/cli-kit@3.70.0
+  - @shopify/plugin-cloudflare@3.70.0
+
 ## 3.69.0
 
 ### Minor Changes
