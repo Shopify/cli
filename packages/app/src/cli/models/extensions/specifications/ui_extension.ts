@@ -32,7 +32,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         default_placement_reference: targeting.default_placement,
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
-        shouldRender: targeting.shouldRender,
+        should_render: targeting.should_render,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -72,8 +72,8 @@ const uiExtensionSpec = createExtensionSpecification({
       .join('\n')
 
     const conditions = config.extension_points
-      .map(({shouldRender}) => {
-        return shouldRender ? `import '${shouldRender.module}';` : ''
+      .map(({should_render}) => {
+        return should_render ? `import '${should_render.module}';` : ''
       })
       .join('\n')
 

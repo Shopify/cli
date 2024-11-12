@@ -43,7 +43,7 @@ const ShouldRenderSchema = zod.object({
 const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
-  shouldRender: ShouldRenderSchema.optional(),
+  should_render: ShouldRenderSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
   capabilities: TargetCapabilitiesSchema.optional(),

@@ -7,6 +7,7 @@ import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
 export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
@@ -35,7 +36,8 @@ export async function getUIExtensionPayload(
         condition: {
           name: 'condition',
           url: `${url}/assets/${conditionsOutputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(conditionsOutputFileName)) ?? 0,
+          lastUpdated:
+            (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), conditionsOutputFileName))) ?? 0,
         },
       },
       capabilities: {
