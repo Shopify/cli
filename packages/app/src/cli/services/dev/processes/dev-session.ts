@@ -87,8 +87,20 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   await printLogMessage('Preparing dev session', processOptions.stdout)
 
+  setTimeout(() => {
+    if (devSessionStatus !== 'ready') {
+      printError('❌ Timeout, session failed to start in 20s, please try again.', processOptions.stdout).catch(() => {})
+      process.exit(1)
+    }
+  }, 20000)
+
   appWatcher
     .onEvent(async (event) => {
+      if (devSessionStatus !== 'ready') {
+        await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)
+        return
+      }
+
       // Cancel any ongoing bundle and upload process
       bundleControllers.forEach((controller) => controller.abort())
       // Remove aborted controllers from array:
@@ -163,7 +175,12 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
-  bundleControllers.push(currentBundleController)
+
+  if (devSessionStatus === 'ready') {
+    // Only save the controller if the dev session is ready, otherwise we might end up with a race condition where
+    // the dev session is aborted before being created.
+    bundleControllers.push(currentBundleController)
+  }
 
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   outputDebug('Bundling and uploading extensions', options.stdout)
