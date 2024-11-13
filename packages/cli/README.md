@@ -259,10 +259,9 @@ DESCRIPTION
   and access scopes.
   - Building and serving your app and app extensions.
 
-  If you're using the Ruby app template, then you need to complete the following steps before you can preview
-  your app for the first time:
-
-  - Ruby: "Set up your Rails app" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
+  If you're using the Ruby app template, then you need to complete the following steps outlined in the "README"
+  (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app) before you can preview your app for
+  the first time.
 
   > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have
   a "staff account" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are
