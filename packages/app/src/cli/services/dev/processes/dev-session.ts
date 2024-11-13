@@ -89,6 +89,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   appWatcher
     .onEvent(async (event) => {
+      if (devSessionStatus !== 'ready') {
+        await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)
+        return
+      }
+
       // Cancel any ongoing bundle and upload process
       bundleControllers.forEach((controller) => controller.abort())
       // Remove aborted controllers from array:
@@ -120,6 +125,17 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   // Start watching for changes in the app
   await appWatcher.start()
+}
+
+// We shouldn't need this, as the dev session create mutation shouldn't hang, but it can be a temporary
+// utility to debug issues with the dev API.
+function startTimeout(processOptions: DevSessionProcessOptions) {
+  setTimeout(() => {
+    if (devSessionStatus !== 'ready') {
+      printError('❌ Timeout, session failed to start in 30s, please try again.', processOptions.stdout).catch(() => {})
+      process.exit(1)
+    }
+  }, 30000)
 }
 
 async function handleDevSessionResult(
@@ -163,7 +179,12 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
-  bundleControllers.push(currentBundleController)
+
+  if (devSessionStatus === 'ready') {
+    // Only save the controller if the dev session is ready, otherwise we might end up with a race condition where
+    // the dev session is aborted before being created.
+    bundleControllers.push(currentBundleController)
+  }
 
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   outputDebug('Bundling and uploading extensions', options.stdout)
@@ -209,6 +230,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
       await options.developerPlatformClient.devSessionUpdate(payload)
       return {status: 'updated'}
     } else {
+      startTimeout(options)
       await options.developerPlatformClient.devSessionCreate(payload)
       // eslint-disable-next-line require-atomic-updates
       devSessionStatus = 'ready'
