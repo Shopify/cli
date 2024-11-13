@@ -127,6 +127,8 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   await appWatcher.start()
 }
 
+// We shouldn't need this, as the dev session create mutation shouldn't hang, but it can be a temporary
+// utility to debug issues with the dev API.
 function startTimeout(processOptions: DevSessionProcessOptions) {
   setTimeout(() => {
     if (devSessionStatus !== 'ready') {
