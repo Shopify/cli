@@ -231,8 +231,10 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
     if (error.statusCode === 401) {
       // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
-    } else {
+    } else if (isDevSessionReady) {
       return {status: 'error', error: error.message}
+    } else {
+      throw error
     }
   }
 }
