@@ -174,6 +174,8 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
+  bundleControllers.push(currentBundleController)
+
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   outputDebug('Bundling and uploading extensions', options.stdout)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
