@@ -23,7 +23,7 @@ const APP_LOG: AppLogData = {
 const NEW_APP_LOG: AppLogData = {
   shop_id: 1,
   api_client_id: 2,
-  payload: JSON.stringify({someJson: 'someJSOn'}),
+  payload: JSON.stringify({some_json: 'someJSOn'}),
   log_type: 'new_app_log_type',
   cursor: '2024-05-22T15:06:43.841156Z',
   status: 'success',
@@ -106,15 +106,12 @@ describe('writeAppLogsToFile', () => {
 function expectedLogDataFromAppEvent(event: AppLogData, payload: AppLogPayload | any): string {
   const {cursor: _, ...eventWithoutCursor} = event
 
-  const data: any = camelcaseKeys(
-    {
-      ...eventWithoutCursor,
-      payload,
-      localTime: formatLocalDate(APP_LOG.log_timestamp),
-      storeName: STORE_NAME,
-    },
-    {deep: true},
-  )
+  const data: any = camelcaseKeys({
+    ...eventWithoutCursor,
+    payload,
+    localTime: formatLocalDate(APP_LOG.log_timestamp),
+    storeName: STORE_NAME,
+  })
 
   return JSON.stringify(data, null, 2)
 }
