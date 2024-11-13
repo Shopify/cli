@@ -4,6 +4,7 @@ import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../app-events/app-event-watcher-handler.js'
+import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -131,10 +132,8 @@ async function handleDevSessionResult(
     const scopeChanges = event?.extensionEvents.find((eve) => eve.extension.handle === 'app-access')
     if (scopeChanges) {
       await printWarning(`🔄 Action required`, processOptions.stdout)
-      const message = outputContent`${outputToken.yellow(`└  Scopes updated`)}. ${outputToken.link(
-        'Open app to accept scopes.',
-        'https://shopify.dev/docs/apps/build/app-scopes/scopes-overview',
-      )}`
+      const scopesURL = await buildAppURLForWeb(processOptions.storeFqdn, processOptions.apiKey)
+      const message = outputContent`└  Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`
       await printWarning(message.value, processOptions.stdout)
     }
   } else if (result.status === 'created') {
