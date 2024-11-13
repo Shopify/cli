@@ -87,13 +87,6 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   await printLogMessage('Preparing dev session', processOptions.stdout)
 
-  setTimeout(() => {
-    if (devSessionStatus !== 'ready') {
-      printError('❌ Timeout, session failed to start in 20s, please try again.', processOptions.stdout).catch(() => {})
-      process.exit(1)
-    }
-  }, 20000)
-
   appWatcher
     .onEvent(async (event) => {
       if (devSessionStatus !== 'ready') {
@@ -132,6 +125,15 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   // Start watching for changes in the app
   await appWatcher.start()
+}
+
+function startTimeout(processOptions: DevSessionProcessOptions) {
+  setTimeout(() => {
+    if (devSessionStatus !== 'ready') {
+      printError('❌ Timeout, session failed to start in 30s, please try again.', processOptions.stdout).catch(() => {})
+      process.exit(1)
+    }
+  }, 30000)
 }
 
 async function handleDevSessionResult(
@@ -226,6 +228,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
       await options.developerPlatformClient.devSessionUpdate(payload)
       return {status: 'updated'}
     } else {
+      startTimeout(options)
       await options.developerPlatformClient.devSessionCreate(payload)
       // eslint-disable-next-line require-atomic-updates
       devSessionStatus = 'ready'
