@@ -47,7 +47,7 @@ let bundleControllers: AbortController[] = []
 
 // Current status of the dev session
 // Since the watcher can emit events before the dev session is ready, we need to keep track of the status
-let devSessionStatus: 'idle' | 'initializing' | 'ready' = 'idle'
+let devSessionStatus: 'starting' | 'ready' = 'starting'
 
 export async function setupDevSessionProcess({
   app,
@@ -171,21 +171,9 @@ async function handleDevSessionResult(
  * @param updating - Whether the dev session is being updated or created
  */
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Promise<DevSessionResult> {
-  // If the dev session is still initializing, ignore this event
-  if (devSessionStatus === 'initializing') return {status: 'aborted'}
-  // If the dev session is idle, set the status to initializing
-  if (devSessionStatus === 'idle') devSessionStatus = 'initializing'
-
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
-
-  if (devSessionStatus === 'ready') {
-    // Only save the controller if the dev session is ready, otherwise we might end up with a race condition where
-    // the dev session is aborted before being created.
-    bundleControllers.push(currentBundleController)
-  }
-
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   outputDebug('Bundling and uploading extensions', options.stdout)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
