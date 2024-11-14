@@ -13,11 +13,7 @@ import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
-import ThemeCommands, {
-  push as ThemePush,
-  pull as ThemePull,
-  fetchStoreThemes as ThemeFetchStoreThemes,
-} from '@shopify/theme'
+import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
@@ -27,7 +23,6 @@ import {runCLI} from '@shopify/cli-kit/node/cli'
 import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {FatalError} from '@shopify/cli-kit/node/error'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
 import fs from 'fs'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
@@ -35,51 +30,7 @@ export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunne
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
-
-export const push: (options: {
-  /** Path to the theme directory */
-  path: string
-  /** Store URL (e.g. my-store.myshopify.com) */
-  store: string
-  /** Admin API access token. Will prompt if not provided */
-  password?: string
-  /** Theme ID. Will create new theme if not provided */
-  theme?: string
-  /** Keep remote files that don't exist locally */
-  nodelete?: boolean
-  /** Development theme suffix */
-  development?: boolean
-  /** Only upload files that have changed */
-  only?: string[]
-  /** Ignore specific files */
-  ignore?: string[]
-  /** Live reload */
-  live?: boolean
-  /** Allow live reload to work outside local environments */
-  'allow-live'?: boolean
-}) => Promise<void> = ThemePush
-
-export const pull: (options: {
-  /** Theme ID to pull from */
-  theme: string
-  /** Store URL (e.g. my-store.myshopify.com) */
-  store: string
-  /** Admin API access token. Will prompt if not provided */
-  password?: string
-  /** Development theme suffix */
-  development?: boolean
-  /** Only download specific files */
-  only?: string[]
-  /** Ignore specific files */
-  ignore?: string[]
-}) => Promise<void> = ThemePull
-
-export const fetchStoreThemes: (options: {
-  /** Store URL (e.g. my-store.myshopify.com) */
-  store: string
-  /** Admin API access token. Will prompt if not provided */
-  password: string
-}) => Promise<Theme[]> = (options) => ThemeFetchStoreThemes(options.store, options.password)
+export {push, pull, fetchStoreThemes, type PullFlags, type PushFlags, type PublicFetchStoreThemes} from '@shopify/theme'
 
 export const HydrogenInitHook = HydrogenHooks.init
 

@@ -6,13 +6,16 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 export type Role = 'live' | 'development' | 'unpublished'
 export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
 
+// Export the function type
+export type PublicFetchStoreThemes = (store: string, password: string) => Promise<Theme[]>
+
 /**
  * Fetches the themes from the store.
  * @param store - Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
  * @param password - Password generated from the Theme Access app.
  * @returns An array of themes from the store.
  */
-export async function publicFetchStoreThemes(store: string, password: string) {
+export const publicFetchStoreThemes: PublicFetchStoreThemes = async (store, password) => {
   const adminSession = await ensureAuthenticatedThemes(store, password)
   return fetchStoreThemes(adminSession)
 }
