@@ -237,6 +237,33 @@ describe('Storefront API', () => {
       })
     })
 
+    test('returns true when the password is correct and the store name is capitalized', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 302,
+          headers: {
+            location: 'https://store.myshopify.com',
+          },
+        }),
+      )
+
+      // When
+      const result = await isStorefrontPasswordCorrect('correct-password-&', 'Store.myshopify.com')
+
+      // Then
+      expect(result).toBe(true)
+      expect(fetch).toBeCalledWith('https://Store.myshopify.com/password', {
+        body: 'form_type=storefront_password&utf8=%E2%9C%93&password=correct-password-%26',
+        headers: {
+          'cache-control': 'no-cache',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        method: 'POST',
+        redirect: 'manual',
+      })
+    })
+
     test('returns false when the password is incorrect', async () => {
       // Given
       vi.mocked(fetch).mockResolvedValueOnce(
