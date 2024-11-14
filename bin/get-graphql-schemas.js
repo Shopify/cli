@@ -32,6 +32,7 @@ const schemas = [
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
+    branch: 'dd',
   },
   {
     repo: 'shopify',
@@ -79,12 +80,14 @@ function extractPassword(output) {
 async function fetchFileForSchema(schema, octokit) {
   try {
     // Fetch the file content from the repository
+    const branch = schema.branch ?? BRANCH
+    console.log(`\nFetching ${OWNER}/${schema.repo}#${branch}: ${schema.pathToFile} ...`)
     const {data} = await octokit.repos.getContent({
       mediaType: { format: "raw" },
       owner: OWNER,
       repo: schema.repo,
       path: schema.pathToFile,
-      ref: BRANCH,
+      ref: branch,
     })
 
     const content = Buffer.from(data).toString('utf-8')
