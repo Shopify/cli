@@ -257,9 +257,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {organization: organization!, apps, hasMorePages}
   }
 
-  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+  async appsForOrg(organizationId: string, term = ''): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
     const query = ListApps
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    const variables = {
+      query: term
+        .split(' ')
+        .filter((word) => word)
+        .map((word) => `title:${word}`)
+        .join(' '),
+    }
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
     if (!result.appsConnection) {
       throw new AbortError('Server failed to retrieve apps')
     }
