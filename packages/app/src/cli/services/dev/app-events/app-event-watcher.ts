@@ -11,6 +11,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {formatMessagesSync, Message} from 'esbuild'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import EventEmitter from 'events'
 
 /**
@@ -230,7 +231,7 @@ export class AppEventWatcher extends EventEmitter {
           // If not, just print the error message to stderr.
           const errors: Message[] = error.errors ?? []
           if (errors.length) {
-            const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: true})
+            const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: !isUnitTest()})
             formattedErrors.forEach((error) => {
               this.options.stderr.write(error)
             })
