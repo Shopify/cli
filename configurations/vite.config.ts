@@ -44,6 +44,7 @@ export default function config(packagePath: string) {
         include: ['**/src/**'],
         all: true,
         reporter: ['text', 'json', 'lcov'],
+        exclude: ['**/src/**/vendor/**'],
       },
       snapshotFormat: {
         escapeString: true,

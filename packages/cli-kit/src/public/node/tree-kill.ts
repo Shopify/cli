@@ -4,7 +4,6 @@
 /* eslint-disable no-restricted-imports */
 
 import {outputDebug} from './output.js'
-import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {exec, spawn} from 'child_process'
 
 interface ProcessTree {
@@ -32,7 +31,6 @@ export function treeKill(
     ((error?: Error) => {
       if (error) outputDebug(`Failed to kill process ${pid}: ${error}`)
     })
-  printEventsJson()
   adaptedTreeKill(pid, killSignal, killRoot, after)
 }
 
