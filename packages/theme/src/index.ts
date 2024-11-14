@@ -44,9 +44,6 @@ export {isStorefrontPasswordProtected} from './cli/utilities/theme-environment/s
 export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-password-prompt.js'
 
 // Expose core utilities for developers to build and expand on the CLI
-export {pull, type PullFlags} from './cli/services/pull.js'
-export {push, type PushFlags} from './cli/services/push.js'
-export {
-  publicFetchStoreThemes as fetchStoreThemes,
-  type PublicFetchStoreThemes,
-} from './cli/utilities/theme-selector/fetch.js'
+export * from './cli/services/pull.js'
+export * from './cli/services/push.js'
+export * from './cli/utilities/theme-selector/fetch.js'
