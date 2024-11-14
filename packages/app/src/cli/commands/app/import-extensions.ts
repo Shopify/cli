@@ -1,5 +1,6 @@
 import {buildTomlObject as buildPaymentsTomlObject} from '../../services/payments/extension-to-toml.js'
 import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extension-to-toml.js'
+import {buildTomlObject as buildAdminLinkTomlObject} from '../../services/admin-link/extension-to-toml.js'
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
 import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../../services/subscription_link/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
@@ -50,6 +51,12 @@ const getMigrationChoices = (): MigrationChoice[] => [
     value: 'subscription link',
     extensionTypes: ['subscription_link'],
     buildTomlObject: buildSubscriptionLinkTomlObject,
+  },
+  {
+    label: 'Admin Link extensions',
+    value: 'link extension',
+    extensionTypes: ['app_link', 'bulk_action'],
+    buildTomlObject: buildAdminLinkTomlObject,
   },
 ]
 
