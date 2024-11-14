@@ -4,10 +4,6 @@ import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
-import Demo from './cli/commands/demo/index.js'
-import Catalog from './cli/commands/demo/catalog.js'
-import GenerateFile from './cli/commands/demo/generate-file.js'
-import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
@@ -23,7 +19,7 @@ import {commands as AppCommands} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
-import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
+import {runCLI} from '@shopify/cli-kit/node/cli'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {FatalError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
@@ -70,14 +66,6 @@ interface RunShopifyCLIOptions {
 }
 
 async function runShopifyCLI({development}: RunShopifyCLIOptions) {
-  if (!development) {
-    // If we run a local CLI instead, don't run the global one again after!
-    const ranLocalInstead = await useLocalCLIIfDetected(import.meta.url)
-    if (ranLocalInstead) {
-      return
-    }
-  }
-
   await runCLI({
     moduleURL: import.meta.url,
     development,
@@ -140,10 +128,6 @@ export const COMMANDS: any = {
   help: HelpCommand,
   'auth:logout': Logout,
   'debug:command-flags': CommandFlags,
-  demo: Demo,
-  'demo:catalog': Catalog,
-  'demo:generate-file': GenerateFile,
-  'demo:print-ai-prompt': PrintAIPrompt,
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,

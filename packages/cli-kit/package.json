@@ -90,7 +90,6 @@
               "static": [
                 "@oclif/core",
                 "./context/utilities.js",
-                "../../private/node/demo-recorder.js",
                 "../../private/node/conf-store.js",
                 "url"
               ]

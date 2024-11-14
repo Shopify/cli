@@ -82,7 +82,7 @@ export const pollAppLogs = async ({
         await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
           if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
             handleFunctionRunLog(log, payload, stdout)
-            payload = new FunctionRunLog(camelcaseKeys(payload, {deep: true}))
+            payload = new FunctionRunLog(camelcaseKeys(payload))
           } else if (log.log_type.startsWith(LOG_TYPE_FUNCTION_NETWORK_ACCESS)) {
             handleFunctionNetworkAccessLog(log, payload, stdout)
           } else {

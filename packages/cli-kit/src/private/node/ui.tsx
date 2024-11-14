@@ -19,7 +19,7 @@ export function renderOnce(
 
   if (output) {
     if (isUnitTest()) collectLog(logLevel, output)
-    outputWhereAppropriate(logLevel, logger, output, {skipUIEvent: true})
+    outputWhereAppropriate(logLevel, logger, output)
   }
 
   unmount()

@@ -3,6 +3,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -46,7 +47,7 @@ let bundleControllers: AbortController[] = []
 
 // Current status of the dev session
 // Since the watcher can emit events before the dev session is ready, we need to keep track of the status
-let devSessionStatus: 'idle' | 'initializing' | 'ready' = 'idle'
+let isDevSessionReady = false
 
 export async function setupDevSessionProcess({
   app,
@@ -83,6 +84,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   appWatcher
     .onEvent(async (event) => {
+      if (!isDevSessionReady) {
+        await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)
+        return
+      }
+
       // Cancel any ongoing bundle and upload process
       bundleControllers.forEach((controller) => controller.abort())
       // Remove aborted controllers from array:
@@ -113,6 +119,17 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     })
 }
 
+// We shouldn't need this, as the dev session create mutation shouldn't hang, but it can be a temporary
+// utility to debug issues with the dev API.
+function startTimeout(processOptions: DevSessionProcessOptions) {
+  setTimeout(() => {
+    if (!isDevSessionReady) {
+      printError('❌ Timeout, session failed to start in 30s, please try again.', processOptions.stdout).catch(() => {})
+      process.exit(1)
+    }
+  }, 30000)
+}
+
 async function handleDevSessionResult(
   result: DevSessionResult,
   processOptions: DevSessionProcessOptions,
@@ -123,10 +140,8 @@ async function handleDevSessionResult(
     const scopeChanges = event?.extensionEvents.find((eve) => eve.extension.handle === 'app-access')
     if (scopeChanges) {
       await printWarning(`🔄 Action required`, processOptions.stdout)
-      const message = outputContent`${outputToken.yellow(`└  Scopes updated`)}. ${outputToken.link(
-        'Open app to accept scopes.',
-        'https://shopify.dev/docs/apps/build/app-scopes/scopes-overview',
-      )}`
+      const scopesURL = await buildAppURLForWeb(processOptions.storeFqdn, processOptions.apiKey)
+      const message = outputContent`└  Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`
       await printWarning(message.value, processOptions.stdout)
     }
   } else if (result.status === 'created') {
@@ -148,11 +163,6 @@ async function handleDevSessionResult(
  * @param updating - Whether the dev session is being updated or created
  */
 async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Promise<DevSessionResult> {
-  // If the dev session is still initializing, ignore this event
-  if (devSessionStatus === 'initializing') return {status: 'aborted'}
-  // If the dev session is idle, set the status to initializing
-  if (devSessionStatus === 'idle') devSessionStatus = 'initializing'
-
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
@@ -198,13 +208,14 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   // Create or update the dev session
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
-    if (devSessionStatus === 'ready') {
+    if (isDevSessionReady) {
       await options.developerPlatformClient.devSessionUpdate(payload)
       return {status: 'updated'}
     } else {
+      startTimeout(options)
       await options.developerPlatformClient.devSessionCreate(payload)
       // eslint-disable-next-line require-atomic-updates
-      devSessionStatus = 'ready'
+      isDevSessionReady = true
       return {status: 'created'}
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

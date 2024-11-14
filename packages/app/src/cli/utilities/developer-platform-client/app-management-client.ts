@@ -118,8 +118,8 @@ import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
-type Properties = NonNullable<OrgType['properties']>
-type ShopEdge = NonNullable<Properties['edges'][number]>
+type AccessibleShops = NonNullable<OrgType['accessibleShops']>
+type ShopEdge = NonNullable<AccessibleShops['edges'][number]>
 type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
@@ -373,7 +373,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`No organization found`)
     }
 
-    const shopArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
@@ -695,7 +695,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`No organization found`)
     }
 
-    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
 
     return {

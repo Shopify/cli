@@ -227,7 +227,7 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   return renderConfirmationPrompt({
     message: `Include \`${basename(
       configPath,
-    )}\` configuration on \`deploy\`? Soon, this will no longer be an option, and configuration will need to be included on deploy every time.`,
+    )}\` configuration on \`deploy\`? Soon, this will no longer be optional and configuration will be included on every deploy.`,
     confirmationMessage: 'Yes, always (Recommended)',
     cancellationMessage: 'No, not now',
   })
