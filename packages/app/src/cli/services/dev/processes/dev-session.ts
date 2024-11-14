@@ -89,6 +89,10 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         return
       }
 
+      // If there are any errors build errors, don't update the dev session
+      const anyError = event.extensionEvents.some((eve) => eve.buildResult?.status === 'error')
+      if (anyError) return
+
       // Cancel any ongoing bundle and upload process
       bundleControllers.forEach((controller) => controller.abort())
       // Remove aborted controllers from array:

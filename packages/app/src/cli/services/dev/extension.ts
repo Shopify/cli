@@ -124,14 +124,22 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
 
-  options.appWatcher.onEvent(async ({extensionEvents}) => {
-    for (const event of extensionEvents) {
-      const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
-      // eslint-disable-next-line no-await-in-loop
-      await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
-      outputDebug(`Extension ${event.extension.handle} updated`, options.stdout)
-    }
-  })
+  options.appWatcher
+    .onEvent(async ({extensionEvents}) => {
+      for (const event of extensionEvents) {
+        const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
+        // eslint-disable-next-line no-await-in-loop
+        await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+        outputDebug(`Extension ${event.extension.handle} updated`, options.stdout)
+      }
+    })
+    .onStart(async (_, initialEvents) => {
+      for (const event of initialEvents) {
+        const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
+        // eslint-disable-next-line no-await-in-loop
+        await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+      }
+    })
 
   options.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
