@@ -157,8 +157,7 @@ async function handleDevSessionResult(
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected)', processOptions.stdout)
   } else {
-    await printError(`❌ Error`, processOptions.stderr)
-    await printError(`└  ${result.error}`, processOptions.stderr)
+    await printError(result.error ?? 'Unknown error', processOptions.stdout)
   }
 }
 
@@ -232,6 +231,11 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
       // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
     } else {
+      if (!isDevSessionReady) {
+        // If the session failed to start, exit the process
+        await printError(error.message, options.stdout)
+        process.exit(1)
+      }
       return {status: 'error', error: error.message}
     }
   }
@@ -242,7 +246,10 @@ async function printWarning(message: string, stdout: Writable) {
 }
 
 async function printError(message: string, stdout: Writable) {
-  await printLogMessage(outputContent`${outputToken.errorText(message)}`.value, stdout)
+  const header = outputToken.errorText(`❌ Error`)
+  const content = outputToken.errorText(`└  ${message}`)
+  await printLogMessage(outputContent`${header}`.value, stdout)
+  await printLogMessage(outputContent`${content}`.value, stdout)
 }
 
 async function printSuccess(message: string, stdout: Writable) {
