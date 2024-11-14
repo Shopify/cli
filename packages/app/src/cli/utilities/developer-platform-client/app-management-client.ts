@@ -289,6 +289,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           registrationLimit: spec.uidStrategy.appModuleLimit,
         },
         experience: experience(spec.identifier),
+        validationSchema: spec.validationSchema,
       }),
     )
   }
