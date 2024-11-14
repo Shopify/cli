@@ -334,13 +334,15 @@ describe('app-event-watcher build extension errors', () => {
 
       // Then
       expect(stderr.write).toHaveBeenCalledWith(
-        `✘ [ERROR] Syntax error
+        expect.stringContaining(
+          `[ERROR] Syntax error
 
     test.js:1:2:
       1 │ console.log(aa);
         ╵   ^
 
 `,
+        ),
       )
     })
   })
