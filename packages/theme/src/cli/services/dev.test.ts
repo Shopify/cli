@@ -108,13 +108,7 @@ describe('dev', () => {
         body: [
           {
             list: {
-              items: [
-                {
-                  link: {
-                    url: 'http://127.0.0.1:9292',
-                  },
-                },
-              ],
+              items: ['http://127.0.0.1:9292'],
               title: {
                 bold: 'Preview your theme',
               },
@@ -139,12 +133,7 @@ describe('dev', () => {
             },
           ],
           [
-            {
-              link: {
-                label: 'Share your theme preview',
-                url: 'https://my-store.myshopify.com/?preview_theme_id=123',
-              },
-            },
+            'Share your theme preview',
             {
               subdued: '(https://my-store.myshopify.com/?preview_theme_id=123)',
             },

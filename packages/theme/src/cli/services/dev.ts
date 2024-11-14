@@ -114,13 +114,7 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
       {
         list: {
           title: {bold: 'Preview your theme'},
-          items: [
-            {
-              link: {
-                url: localUrl,
-              },
-            },
-          ],
+          items: [localUrl],
         },
       },
     ],
@@ -142,12 +136,7 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
         },
       ],
       [
-        {
-          link: {
-            label: 'Share your theme preview',
-            url: `${remoteUrl}/?preview_theme_id=${themeId}`,
-          },
-        },
+        'Share your theme preview',
         {
           subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
         },
