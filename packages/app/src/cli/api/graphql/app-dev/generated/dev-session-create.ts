@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -8,7 +9,11 @@ export type DevSessionCreateMutationVariables = Types.Exact<{
   assetsUrl: Types.Scalars['String']['input']
 }>
 
-export type DevSessionCreateMutation = {devSessionCreate?: {userErrors: {message: string}[]} | null}
+export type DevSessionCreateMutation = {
+  devSessionCreate?: {
+    userErrors: {message: string; on: JsonMapType; field?: string[] | null; category: string}[]
+  } | null
+}
 
 export const DevSessionCreate = {
   kind: 'Document',
@@ -57,6 +62,9 @@ export const DevSessionCreate = {
                     kind: 'SelectionSet',
                     selections: [
                       {kind: 'Field', name: {kind: 'Name', value: 'message'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'on'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'field'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'category'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
