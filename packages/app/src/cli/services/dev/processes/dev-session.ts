@@ -39,6 +39,13 @@ export interface DevSessionProcess extends BaseProcess<DevSessionOptions> {
   type: 'dev-session'
 }
 
+interface UserError {
+  message: string
+  on: JsonMapType
+  field?: string[] | null
+  category: string
+}
+
 interface DevSessionResult {
   status: 'updated' | 'created' | 'aborted' | 'error'
   error?: string | UserError[] | Error
@@ -146,6 +153,8 @@ async function handleDevSessionResult(
   } else if (result.status === 'error') {
     const errors = result.error ?? []
     await processUserErrors(errors, processOptions, processOptions.stdout)
+
+    // If we failed to create a session, exit the process
     if (!isDevSessionReady) process.exit(1)
   }
 }
@@ -230,13 +239,6 @@ async function sendSessionPayload(signedURL: string, options: DevSessionProcessO
   }
 }
 
-interface UserError {
-  message: string
-  on: JsonMapType
-  field?: string[] | null
-  category: string
-}
-
 async function processUserErrors(
   errors: UserError[] | Error | string,
   options: DevSessionProcessOptions,
@@ -249,6 +251,7 @@ async function processUserErrors(
   } else {
     for (const error of errors) {
       const on = error.on ? (error.on[0] as {user_identifier: string}) : undefined
+      // If we have information about the extension that caused the error, use the handle as prefix in the output.
       const extension = options.app.allExtensions.find((ext) => ext.uid === on?.user_identifier)
       // eslint-disable-next-line no-await-in-loop
       await printError(error.message, stdout, extension?.handle ?? 'dev-session')
