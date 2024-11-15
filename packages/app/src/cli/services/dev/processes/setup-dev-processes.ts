@@ -7,6 +7,7 @@ import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
+import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
@@ -16,6 +17,8 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {reloadApp} from '../app-events/app-event-watcher-handler.js'
+import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -34,6 +37,7 @@ type DevProcessDefinition =
   | GraphiQLServerProcess
   | DevSessionProcess
   | AppLogsSubscribeProcess
+  | AppWatcherProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -82,15 +86,19 @@ export async function setupDevProcesses({
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
+  // At this point, the toml file has changed, we need to reload the app before actually starting dev
+  const reloadedApp = await reloadApp(localApp)
+  const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
+
   const processes = [
     ...(await setupWebProcesses({
-      webs: localApp.webs,
+      webs: reloadedApp.webs,
       proxyUrl: network.proxyUrl,
       frontendPort: network.frontendPort,
       backendPort: network.backendPort,
       apiKey,
       apiSecret,
-      scopes: getAppScopes(localApp.configuration),
+      scopes: getAppScopes(reloadedApp.configuration),
     })),
     shouldRenderGraphiQL
       ? await setupGraphiQLServerProcess({
@@ -104,31 +112,32 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
-      allExtensions: localApp.allExtensions,
+      allExtensions: reloadedApp.allExtensions,
       storeFqdn,
       storeId,
       apiKey,
       subscriptionProductUrl: commandOptions.subscriptionProductUrl,
       checkoutCartUrl: commandOptions.checkoutCartUrl,
       proxyUrl: network.proxyUrl,
-      appName: localApp.name,
-      appDotEnvFile: localApp.dotenv,
+      appName: reloadedApp.name,
+      appDotEnvFile: reloadedApp.dotenv,
       grantedScopes: remoteApp.grantedScopes,
       appId: remoteApp.id,
-      appDirectory: localApp.directory,
+      appDirectory: reloadedApp.directory,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
-          app: localApp,
+          app: reloadedApp,
           apiKey,
           developerPlatformClient,
           url: network.proxyUrl,
           appId: remoteApp.id,
           organizationId: remoteApp.organizationId,
           storeFqdn,
+          appWatcher,
         })
       : await setupDraftableExtensionsProcess({
-          localApp,
+          localApp: reloadedApp,
           remoteApp,
           apiKey,
           developerPlatformClient,
@@ -136,13 +145,13 @@ export async function setupDevProcesses({
         }),
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,
-      localApp,
+      localApp: reloadedApp,
       storeFqdn,
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
     }),
     setupSendUninstallWebhookProcess({
-      webs: localApp.webs,
+      webs: reloadedApp.webs,
       backendPort: network.backendPort,
       frontendPort: network.frontendPort,
       developerPlatformClient,
@@ -160,6 +169,9 @@ export async function setupDevProcesses({
           storeName: storeFqdn,
         })
       : undefined,
+    await setupAppWatcherProcess({
+      appWatcher,
+    }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
