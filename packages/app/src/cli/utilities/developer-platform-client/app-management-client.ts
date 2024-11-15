@@ -794,22 +794,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
-    if (result.devSessionCreate?.userErrors?.length) {
-      console.log(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
-      const error = result.devSessionCreate.userErrors.map((err) => err.message).join('\n')
-      throw new AbortError(error)
-    }
     return result
   }
 
   async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
-    if (result.devSessionUpdate?.userErrors?.length) {
-      console.log(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
-      const error = result.devSessionUpdate.userErrors.map((err) => err.message).join('\n')
-      throw new AbortError(error)
-    }
     return result
   }
 
