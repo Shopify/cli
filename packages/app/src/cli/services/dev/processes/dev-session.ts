@@ -4,7 +4,6 @@ import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
-import {JsonMap} from '../../../../../../cli-kit/src/private/common/json.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -14,6 +13,7 @@ import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/out
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -41,7 +41,7 @@ export interface DevSessionProcess extends BaseProcess<DevSessionOptions> {
 
 interface DevSessionResult {
   status: 'updated' | 'created' | 'aborted' | 'error'
-  error?: string
+  error?: string | UserError[] | Error
 }
 
 let bundleControllers: AbortController[] = []
@@ -124,17 +124,6 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     })
 }
 
-// We shouldn't need this, as the dev session create mutation shouldn't hang, but it can be a temporary
-// utility to debug issues with the dev API.
-function startTimeout(processOptions: DevSessionProcessOptions) {
-  setTimeout(() => {
-    if (!isDevSessionReady) {
-      printError('Timeout, session failed to start in 30s, please try again.', processOptions.stdout).catch(() => {})
-      process.exit(1)
-    }
-  }, 30000)
-}
-
 async function handleDevSessionResult(
   result: DevSessionResult,
   processOptions: DevSessionProcessOptions,
@@ -150,11 +139,14 @@ async function handleDevSessionResult(
       await printWarning(message.value, processOptions.stdout)
     }
   } else if (result.status === 'created') {
+    isDevSessionReady = true
     await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected)', processOptions.stdout)
-  } else {
-    await printError(result.error ?? 'Unknown error', processOptions.stdout)
+  } else if (result.status === 'error') {
+    const errors = result.error ?? []
+    await processUserErrors(errors, processOptions, processOptions.stdout)
+    if (!isDevSessionReady) process.exit(1)
   }
 }
 
@@ -218,21 +210,13 @@ async function sendSessionPayload(signedURL: string, options: DevSessionProcessO
   try {
     if (isDevSessionReady) {
       const result = await options.developerPlatformClient.devSessionUpdate(payload)
-      const hasErrors = result.devSessionUpdate?.userErrors?.length
-      if (hasErrors) {
-        await processUserErrors(result.devSessionUpdate?.userErrors ?? [], options, options.stdout)
-        return {status: 'aborted'}
-      }
+      const errors = result.devSessionUpdate?.userErrors ?? []
+      if (errors.length) return {status: 'error', error: errors}
       return {status: 'updated'}
     } else {
-      startTimeout(options)
       const result = await options.developerPlatformClient.devSessionCreate(payload)
-      if (result.devSessionCreate?.userErrors?.length) {
-        await processUserErrors(result.devSessionCreate?.userErrors ?? [], options, options.stdout)
-        process.exit(1)
-      }
-      // eslint-disable-next-line require-atomic-updates
-      isDevSessionReady = true
+      const errors = result.devSessionCreate?.userErrors ?? []
+      if (errors.length) return {status: 'error', error: errors}
       return {status: 'created'}
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,28 +225,34 @@ async function sendSessionPayload(signedURL: string, options: DevSessionProcessO
       // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
     } else {
-      if (!isDevSessionReady) {
-        // If the session failed to start, exit the process, no retries.
-        // This could happen if the extensions are invalid for instance or if there is an issue with the server.
-        await printError(error.message, options.stdout)
-        process.exit(1)
-      }
-      return {status: 'error', error: error.message}
+      return {status: 'error', error}
     }
   }
 }
 
 interface UserError {
   message: string
-  on: JsonMap
+  on: JsonMapType
+  field?: string[] | null
+  category: string
 }
 
-async function processUserErrors(errors: UserError[], options: DevSessionProcessOptions, stdout: Writable) {
-  for (const error of errors) {
-    const on = error.on[0] as {user_identifier: string}
-    const extension = options.app.allExtensions.find((ext) => ext.uid === on.user_identifier)
-    // eslint-disable-next-line no-await-in-loop
-    await printError(error.message, stdout, extension?.handle ?? 'dev-session')
+async function processUserErrors(
+  errors: UserError[] | Error | string,
+  options: DevSessionProcessOptions,
+  stdout: Writable,
+) {
+  if (typeof errors === 'string') {
+    await printError(errors, stdout)
+  } else if (errors instanceof Error) {
+    await printError(errors.message, stdout)
+  } else {
+    for (const error of errors) {
+      const on = error.on ? (error.on[0] as {user_identifier: string}) : undefined
+      const extension = options.app.allExtensions.find((ext) => ext.uid === on?.user_identifier)
+      // eslint-disable-next-line no-await-in-loop
+      await printError(error.message, stdout, extension?.handle ?? 'dev-session')
+    }
   }
 }
 
