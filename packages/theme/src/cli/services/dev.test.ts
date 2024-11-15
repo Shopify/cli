@@ -135,7 +135,7 @@ describe('dev', () => {
           [
             'Share your theme preview',
             {
-              subdued: '(https://my-store.myshopify.com/?preview_theme_id=123)',
+              subdued: '\nhttps://my-store.myshopify.com/?preview_theme_id=123',
             },
           ],
         ],

@@ -138,7 +138,7 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
       [
         'Share your theme preview',
         {
-          subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
+          subdued: `\n${remoteUrl}/?preview_theme_id=${themeId}`,
         },
       ],
     ],
