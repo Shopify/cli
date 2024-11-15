@@ -227,7 +227,6 @@ async function sendSessionPayload(signedURL: string, options: DevSessionProcessO
     } else {
       startTimeout(options)
       const result = await options.developerPlatformClient.devSessionCreate(payload)
-      console.log(JSON.stringify(result.devSessionCreate?.userErrors, null, 2))
       if (result.devSessionCreate?.userErrors?.length) {
         await processUserErrors(result.devSessionCreate?.userErrors ?? [], options, options.stdout)
         process.exit(1)
@@ -259,12 +258,12 @@ interface UserError {
 }
 
 async function processUserErrors(errors: UserError[], options: DevSessionProcessOptions, stdout: Writable) {
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  errors.forEach(async (error) => {
-    const on = error.on as {user_identifier: string}
+  for (const error of errors) {
+    const on = error.on[0] as {user_identifier: string}
     const extension = options.app.allExtensions.find((ext) => ext.uid === on.user_identifier)
+    // eslint-disable-next-line no-await-in-loop
     await printError(error.message, stdout, extension?.handle ?? 'dev-session')
-  })
+  }
 }
 
 async function printWarning(message: string, stdout: Writable) {
