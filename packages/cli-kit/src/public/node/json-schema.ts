@@ -36,6 +36,7 @@ export function jsonSchemaValidate(
   schema: SchemaObject,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
   const ajv = new Ajv({allowUnionTypes: true})
+  ajv.addKeyword('x-taplo')
   const validator = ajv.compile(schema)
   validator(subject)
 
@@ -153,7 +154,8 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
  * @returns A simplified list of errors.
  */
 function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: SchemaObject): AjvError[] {
-  const ajv = new Ajv()
+  const ajv = new Ajv({allowUnionTypes: true})
+  ajv.addKeyword('x-taplo')
   let errors = rawErrors
 
   const resolvedUnionErrors = new Set()
