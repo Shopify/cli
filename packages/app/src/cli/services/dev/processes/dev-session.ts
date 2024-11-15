@@ -4,6 +4,7 @@ import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
+import {JsonMap} from '../../../../../../cli-kit/src/private/common/json.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -128,7 +129,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 function startTimeout(processOptions: DevSessionProcessOptions) {
   setTimeout(() => {
     if (!isDevSessionReady) {
-      printError('❌ Timeout, session failed to start in 30s, please try again.', processOptions.stdout).catch(() => {})
+      printError('Timeout, session failed to start in 30s, please try again.', processOptions.stdout).catch(() => {})
       process.exit(1)
     }
   }, 30000)
@@ -153,8 +154,7 @@ async function handleDevSessionResult(
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected)', processOptions.stdout)
   } else {
-    await printError(`❌ Error`, processOptions.stderr)
-    await printError(`└  ${result.error}`, processOptions.stderr)
+    await printError(result.error ?? 'Unknown error', processOptions.stdout)
   }
 }
 
@@ -207,17 +207,31 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
     headers: form.getHeaders(),
   })
 
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
+
+  return sendSessionPayload(signedURL, options)
+}
+
+async function sendSessionPayload(signedURL: string, options: DevSessionProcessOptions): Promise<DevSessionResult> {
   const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
-  // Create or update the dev session
-  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
     if (isDevSessionReady) {
-      await options.developerPlatformClient.devSessionUpdate(payload)
+      const result = await options.developerPlatformClient.devSessionUpdate(payload)
+      const hasErrors = result.devSessionUpdate?.userErrors?.length
+      if (hasErrors) {
+        await processUserErrors(result.devSessionUpdate?.userErrors ?? [], options, options.stdout)
+        return {status: 'aborted'}
+      }
       return {status: 'updated'}
     } else {
       startTimeout(options)
-      await options.developerPlatformClient.devSessionCreate(payload)
+      const result = await options.developerPlatformClient.devSessionCreate(payload)
+      console.log(JSON.stringify(result.devSessionCreate?.userErrors, null, 2))
+      if (result.devSessionCreate?.userErrors?.length) {
+        await processUserErrors(result.devSessionCreate?.userErrors ?? [], options, options.stdout)
+        process.exit(1)
+      }
       // eslint-disable-next-line require-atomic-updates
       isDevSessionReady = true
       return {status: 'created'}
@@ -228,17 +242,40 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
       // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
     } else {
+      if (!isDevSessionReady) {
+        // If the session failed to start, exit the process, no retries.
+        // This could happen if the extensions are invalid for instance or if there is an issue with the server.
+        await printError(error.message, options.stdout)
+        process.exit(1)
+      }
       return {status: 'error', error: error.message}
     }
   }
+}
+
+interface UserError {
+  message: string
+  on: JsonMap
+}
+
+async function processUserErrors(errors: UserError[], options: DevSessionProcessOptions, stdout: Writable) {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  errors.forEach(async (error) => {
+    const on = error.on as {user_identifier: string}
+    const extension = options.app.allExtensions.find((ext) => ext.uid === on.user_identifier)
+    await printError(error.message, stdout, extension?.handle ?? 'dev-session')
+  })
 }
 
 async function printWarning(message: string, stdout: Writable) {
   await printLogMessage(outputContent`${outputToken.yellow(message)}`.value, stdout)
 }
 
-async function printError(message: string, stdout: Writable) {
-  await printLogMessage(outputContent`${outputToken.errorText(message)}`.value, stdout)
+async function printError(message: string, stdout: Writable, prefix?: string) {
+  const header = outputToken.errorText(`❌ Error`)
+  const content = outputToken.errorText(`└  ${message}`)
+  await printLogMessage(outputContent`${header}`.value, stdout, prefix)
+  await printLogMessage(outputContent`${content}`.value, stdout, prefix)
 }
 
 async function printSuccess(message: string, stdout: Writable) {
@@ -246,8 +283,8 @@ async function printSuccess(message: string, stdout: Writable) {
 }
 
 // Helper function to print to terminal using output context with stripAnsi disabled.
-async function printLogMessage(message: string, stdout: Writable) {
-  await useConcurrentOutputContext({outputPrefix: 'dev-session', stripAnsi: false}, () => {
+async function printLogMessage(message: string, stdout: Writable, prefix?: string) {
+  await useConcurrentOutputContext({outputPrefix: prefix ?? 'dev-session', stripAnsi: false}, () => {
     stdout.write(message)
   })
 }
