@@ -215,19 +215,14 @@ export async function checkFolderIsValidApp(directory: string) {
 export async function loadConfigForAppCreation(directory: string, name: string): Promise<AppCreationDefaultOptions> {
   const state = await getAppConfigurationState(directory)
   const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
-  const scopesArray = getAppScopesArray(config)
   const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
 
-  const loader = new AppLoader({
-    mode: 'report',
-    loadedConfiguration,
-  })
+  const loader = new AppLoader({mode: 'report', loadedConfiguration})
   const webs = await loader.loadWebs(directory)
-  const isLaunchable = webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
 
   return {
-    isLaunchable,
-    scopesArray,
+    isLaunchable: webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend)),
+    scopesArray: getAppScopesArray(config),
     name,
   }
 }
