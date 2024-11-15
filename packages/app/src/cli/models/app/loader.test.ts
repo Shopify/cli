@@ -8,6 +8,7 @@ import {
   checkFolderIsValidApp,
   AppLoaderMode,
   getAppConfigurationState,
+  loadConfigForAppCreation,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -3142,6 +3143,143 @@ describe('getAppConfigurationState', () => {
 
       const state = await getAppConfigurationState(tmpDir, undefined)
       expect(state).toMatchObject(resultShouldContain)
+    })
+  })
+})
+
+describe('loadConfigForAppCreation', () => {
+  test('returns correct configuration for a basic app with no webs', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+        scopes = "write_products,read_orders"
+        name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: ['read_orders', 'write_products'],
+        name: 'my-app',
+      })
+    })
+  })
+
+  test('returns correct configuration for an app with a frontend web', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+        scopes = "write_products"
+        name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      await writeFile(
+        joinPath(tmpDir, 'shopify.web.toml'),
+        `roles = ["frontend"]
+name = "web"
+
+[commands]
+dev = "echo 'Hello, world!'"
+        `,
+      )
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: true,
+        scopesArray: ['write_products'],
+        name: 'my-app',
+      })
+    })
+  })
+
+  test('returns correct configuration for an app with a backend web', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+        scopes = "write_products"
+        name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // Create web directory with backend configuration
+      const webDir = joinPath(tmpDir, 'web')
+      await mkdir(webDir)
+      await writeFile(
+        joinPath(tmpDir, 'shopify.web.toml'),
+        `roles = ["backend"]
+name = "web"
+
+[commands]
+dev = "echo 'Hello, world!'"
+        `,
+      )
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: true,
+        scopesArray: ['write_products'],
+        name: 'my-app',
+      })
+    })
+  })
+
+  test('returns correct configuration for a connected app', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+        client_id = "12345"
+        name = "my-app"
+        [access_scopes]
+        scopes = "read_orders,write_products"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: ['read_orders', 'write_products'],
+        name: 'my-app',
+      })
+    })
+  })
+
+  test('handles empty scopes correctly', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+        name = "my-app"
+        scopes = ""
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: [],
+        name: 'my-app',
+      })
     })
   })
 })
