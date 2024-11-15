@@ -15,16 +15,11 @@ const CollectBuyerConsentCapabilitySchema = zod.object({
   customer_privacy: zod.boolean().optional(),
 })
 
-const IframeCapabilitySchema = zod.object({
-  sources: zod.array(zod.string()).optional(),
-})
-
 const CapabilitiesSchema = zod.object({
   network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
   collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
-  iframe: IframeCapabilitySchema.optional(),
 })
 
 export const ExtensionsArraySchema = zod.object({

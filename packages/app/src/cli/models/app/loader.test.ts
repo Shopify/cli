@@ -1365,9 +1365,6 @@ wrong = "property"
         customer_privacy = false
         sms_marketing = true
 
-        [extensions.capabilities.iframe]
-        sources = ["https://my-iframe.com"]
-
         [extensions.settings]
           [[extensions.settings.fields]]
           key = "field_key"
@@ -1435,9 +1432,6 @@ wrong = "property"
           collect_buyer_consent: {
             customer_privacy: false,
             sms_marketing: true,
-          },
-          iframe: {
-            sources: ['https://my-iframe.com'],
           },
         },
         settings: {
@@ -1806,9 +1800,6 @@ wrong = "property"
       customer_privacy = true
       sms_marketing = true
 
-      [capabilities.iframe]
-      sources = ["https://my-iframe.com"]
-
       [settings]
         [[settings.fields]]
         key = "field_key"
@@ -1845,9 +1836,6 @@ wrong = "property"
           collect_buyer_consent: {
             customer_privacy: true,
             sms_marketing: true,
-          },
-          iframe: {
-            sources: ['https://my-iframe.com'],
           },
         },
         settings: {

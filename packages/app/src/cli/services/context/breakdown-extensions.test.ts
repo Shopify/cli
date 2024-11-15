@@ -323,9 +323,6 @@ beforeAll(async () => {
         collect_buyer_consent: {
           sms_marketing: false,
         },
-        iframe: {
-          sources: [],
-        },
       },
     },
     entrySourceFilePath: '',
@@ -345,9 +342,6 @@ beforeAll(async () => {
         collect_buyer_consent: {
           sms_marketing: false,
         },
-        iframe: {
-          sources: [],
-        },
       },
     },
     entrySourceFilePath: '',
@@ -366,9 +360,6 @@ beforeAll(async () => {
         api_access: false,
         collect_buyer_consent: {
           sms_marketing: false,
-        },
-        iframe: {
-          sources: [],
         },
       },
     },

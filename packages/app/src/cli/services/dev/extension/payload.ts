@@ -38,9 +38,6 @@ export async function getUIExtensionPayload(
           smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
           customerPrivacy: extension.configuration.capabilities?.collect_buyer_consent?.customer_privacy || false,
         },
-        iframe: {
-          sources: extension.configuration.capabilities?.iframe?.sources || [],
-        },
       },
       development: {
         ...options.currentDevelopmentPayload,

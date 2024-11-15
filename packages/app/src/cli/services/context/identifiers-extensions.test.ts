@@ -198,9 +198,6 @@ beforeAll(async () => {
           sms_marketing: false,
           customer_privacy: false,
         },
-        iframe: {
-          sources: [],
-        },
       },
     },
     entrySourceFilePath: '',
@@ -220,9 +217,6 @@ beforeAll(async () => {
         collect_buyer_consent: {
           sms_marketing: false,
           customer_privacy: false,
-        },
-        iframe: {
-          sources: [],
         },
       },
     },
@@ -244,9 +238,6 @@ beforeAll(async () => {
         collect_buyer_consent: {
           sms_marketing: false,
           customer_privacy: false,
-        },
-        iframe: {
-          sources: [],
         },
       },
     },
