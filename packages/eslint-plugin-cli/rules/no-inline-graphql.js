@@ -143,7 +143,7 @@ const knownFailures = {
   'packages/app/src/cli/api/graphql/extension_migrate_to_ui_extension.ts':
     'dd3fb42d0b9327de627bd02295de9e08087266885777602a34b44bdc460c0285',
   'packages/app/src/cli/api/graphql/extension_specifications.ts':
-    '9078c6fe4e0f48eea7d69e4253f1377fae58cc1ede4bd4f95b615d6b8b415b81',
+    'a514090fe981495a67123ccc7fcb74169d97f5b33551f9b8ebbbe6476bb66faa',
   'packages/app/src/cli/api/graphql/find_app.ts': '699def43534d0fdb4988b91e74a890778026960fd31662fecd86384ecfc05370',
   'packages/app/src/cli/api/graphql/find_app_preview_mode.ts':
     '8311925b338d4aba1957974bb815cfa8c5d8272226f68b8e74a69d91acc9c8cb',

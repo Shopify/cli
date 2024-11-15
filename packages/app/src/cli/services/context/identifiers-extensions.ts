@@ -16,6 +16,7 @@ import {
   PaymentModulesMap,
   UIModulesMap,
   SubscriptionModulesMap,
+  AdminLinkModulesMap,
 } from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -49,6 +50,12 @@ export async function ensureExtensionsIds(
     dashboardExtensions,
     identifiers,
     SubscriptionModulesMap,
+  )
+  const adminLinkExtensionsToMigrate = getModulesToMigrate(
+    localExtensions,
+    dashboardExtensions,
+    identifiers,
+    AdminLinkModulesMap,
   )
 
   let didMigrateDashboardExtensions = false
@@ -113,6 +120,19 @@ export async function ensureExtensionsIds(
       subscriptionLinksToMigrate,
       options.appId,
       'subscription_link_extension',
+      dashboardExtensions,
+      options.developerPlatformClient,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+  }
+
+  if (adminLinkExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(adminLinkExtensionsToMigrate, false)
+    if (!confirmedMigration) throw new AbortSilentError()
+    const newRemoteExtensions = await migrateAppModules(
+      adminLinkExtensionsToMigrate,
+      options.appId,
+      'admin_link',
       dashboardExtensions,
       options.developerPlatformClient,
     )

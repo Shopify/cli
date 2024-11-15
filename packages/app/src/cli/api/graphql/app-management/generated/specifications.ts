@@ -12,6 +12,7 @@ export type FetchSpecificationsQuery = {
     externalIdentifier: string
     features: string[]
     uidStrategy: {appModuleLimit: number} | {appModuleLimit: number}
+    validationSchema?: {jsonSchema: string} | null
   }[]
 }
 
@@ -42,6 +43,17 @@ export const FetchSpecifications = {
                     kind: 'SelectionSet',
                     selections: [
                       {kind: 'Field', name: {kind: 'Name', value: 'appModuleLimit'}},
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'validationSchema'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'jsonSchema'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
