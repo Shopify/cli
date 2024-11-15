@@ -217,7 +217,7 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
   const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
 
-  const loader = new AppLoader({mode: 'report', loadedConfiguration})
+  const loader = new AppLoader({loadedConfiguration})
   const webs = await loader.loadWebs(directory)
 
   return {
