@@ -3147,8 +3147,6 @@ describe('getAppConfigurationState', () => {
   })
 })
 
-// ... existing imports ...
-
 describe('loadConfigForAppCreation', () => {
   test('returns correct configuration for a basic app with no webs', async () => {
     // Given
