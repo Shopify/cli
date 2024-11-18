@@ -1,7 +1,6 @@
 import * as store from './extension/payload/store.js'
 import * as server from './extension/server.js'
 import * as websocket from './extension/websocket.js'
-import * as bundler from './extension/bundler.js'
 import {devUIExtensions, ExtensionDevOptions} from './extension.js'
 import {ExtensionsEndpointPayload} from './extension/payload/models.js'
 import {WebsocketConnection} from './extension/websocket/models.js'
@@ -37,9 +36,6 @@ describe('devUIExtensions()', () => {
     vi.spyOn(websocket, 'setupWebsocketConnection').mockReturnValue({
       close: websocketCloseSpy,
     } as unknown as WebsocketConnection)
-    vi.spyOn(bundler, 'setupBundlerAndFileWatcher').mockResolvedValue({
-      close: bundlerCloseSpy,
-    })
   }
 
   test('initializes the payload store', async () => {
@@ -81,20 +77,6 @@ describe('devUIExtensions()', () => {
     expect(websocket.setupWebsocketConnection).toHaveBeenCalledWith({
       ...options,
       httpServer: expect.objectContaining({mock: 'http-server'}),
-      payloadStore: {mock: 'payload-store'},
-    })
-  })
-
-  test('initializes the bundler and file watcher', async () => {
-    // GIVEN
-    spyOnEverything()
-
-    // WHEN
-    await devUIExtensions(options)
-
-    // THEN
-    expect(bundler.setupBundlerAndFileWatcher).toHaveBeenCalledWith({
-      devOptions: options,
       payloadStore: {mock: 'payload-store'},
     })
   })
