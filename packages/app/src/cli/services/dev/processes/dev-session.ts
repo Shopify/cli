@@ -46,11 +46,6 @@ interface UserError {
   category: string
 }
 
-// interface DevSessionResult {
-//   status: 'updated' | 'created' | 'aborted' | 'error'
-//   error?: string | UserError[] | Error
-// }
-
 type DevSessionResult =
   | {status: 'updated' | 'created' | 'aborted'}
   | {status: 'remote-error'; error: UserError[]}
@@ -212,10 +207,10 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
     headers: form.getHeaders(),
   })
 
-  if (currentBundleController.signal.aborted) return {status: 'aborted'}
-
   const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
+  // Create or update the dev session
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
     if (isDevSessionReady) {
       const result = await options.developerPlatformClient.devSessionUpdate(payload)
