@@ -389,7 +389,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app.appModuleVersions.forEach((mod) => {
       const registration = {
         id: mod.registrationId,
-        uid: mod.registrationUid!,
         uuid: mod.registrationUuid!,
         title: mod.registrationTitle,
         type: mod.type,
@@ -472,7 +471,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
           appModuleVersions: versionInfo.appModules.map((mod: ReleasedAppModuleFragment) => {
             return {
               registrationId: mod.uuid,
-              registrationUid: mod.uuid,
               registrationUuid: mod.uuid,
               registrationTitle: mod.handle,
               type: mod.specification.externalIdentifier,
@@ -534,7 +532,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
       appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
         return {
           registrationId: mod.uuid,
-          registrationUid: mod.uuid,
           registrationUuid: mod.uuid,
           registrationTitle: mod.handle,
           type: mod.specification.externalIdentifier,

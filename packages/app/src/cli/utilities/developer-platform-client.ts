@@ -154,7 +154,6 @@ interface AppModuleVersionSpecification {
 export interface AppModuleVersion {
   registrationId: string
   registrationUuid?: string
-  registrationUid?: string
   registrationTitle: string
   config?: object
   type: string
