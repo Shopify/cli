@@ -115,9 +115,9 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         outputDebug(`✅ Event handled [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`, processOptions.stdout)
       }, refreshToken)
     })
-    .onStart(async (app) => {
+    .onStart(async (event) => {
       await performActionWithRetryAfterRecovery(async () => {
-        const result = await bundleExtensionsAndUpload({...processOptions, app})
+        const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
         await handleDevSessionResult(result, processOptions)
       }, refreshToken)
     })

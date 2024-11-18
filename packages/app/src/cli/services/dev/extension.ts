@@ -1,7 +1,7 @@
 import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
-import {AppEventWatcher} from './app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher} from './app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -124,22 +124,15 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
 
-  options.appWatcher
-    .onEvent(async ({extensionEvents}) => {
-      for (const event of extensionEvents) {
-        const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
-        // eslint-disable-next-line no-await-in-loop
-        await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
-        outputDebug(`Extension ${event.extension.handle} updated`, options.stdout)
-      }
-    })
-    .onStart(async (_, initialEvents) => {
-      for (const event of initialEvents) {
-        const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
-        // eslint-disable-next-line no-await-in-loop
-        await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
-      }
-    })
+  const eventHandler = async ({extensionEvents}: AppEvent) => {
+    for (const event of extensionEvents) {
+      const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
+      // eslint-disable-next-line no-await-in-loop
+      await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+    }
+  }
+
+  options.appWatcher.onEvent(eventHandler).onStart(eventHandler)
 
   options.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')

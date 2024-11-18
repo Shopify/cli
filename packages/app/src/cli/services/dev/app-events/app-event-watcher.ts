@@ -165,7 +165,7 @@ export class AppEventWatcher extends EventEmitter {
     })
 
     this.ready = true
-    this.emit('ready', this.app, this.initialEvents)
+    this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})
   }
 
   /**
@@ -187,9 +187,10 @@ export class AppEventWatcher extends EventEmitter {
    * @param listener - The listener function to add
    * @returns The AppEventWatcher instance
    */
-  onStart(listener: (app: AppLinkedInterface, initialEvents: ExtensionEvent[]) => Promise<void> | void) {
+  onStart(listener: (appEvent: AppEvent) => Promise<void> | void) {
     if (this.ready) {
-      listener(this.app, this.initialEvents)?.catch(() => {})
+      const event: AppEvent = {app: this.app, extensionEvents: this.initialEvents, startTime: [0, 0], path: ''}
+      listener(event)?.catch(() => {})
     } else {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       this.once('ready', listener)
