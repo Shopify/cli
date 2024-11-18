@@ -52,10 +52,6 @@ export const templates = {
     url: 'https://github.com/Shopify/shopify-app-template-node',
     visible: false,
   } as Template,
-  php: {
-    url: 'https://github.com/Shopify/shopify-app-template-php',
-    visible: false,
-  } as Template,
   ruby: {
     url: 'https://github.com/Shopify/shopify-app-template-ruby',
     visible: false,

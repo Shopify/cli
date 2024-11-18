@@ -6,6 +6,7 @@ import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
   testAppLinked,
+  testFlowActionExtension,
   testSingleWebhookSubscriptionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
@@ -16,6 +17,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {Writable} from 'stream'
 
 vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
@@ -25,6 +27,7 @@ vi.mock('./app-watcher-esbuild.js')
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
+const flowExtension = await testFlowActionExtension('/extensions/flow_action')
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
 const webhookExtension = await testSingleWebhookSubscriptionExtension()
@@ -224,7 +227,7 @@ const testCases: TestCase[] = [
   },
 ]
 
-describe('app-event-watcher when receiving a file event that doesnt require an app reload', () => {
+describe('app-event-watcher when receiving a file event', () => {
   test.each(testCases)(
     'The event $name returns the expected AppEvent',
     async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
@@ -288,6 +291,95 @@ describe('app-event-watcher when receiving a file event that doesnt require an a
       })
     },
   )
+})
+
+describe('app-event-watcher build extension errors', () => {
+  test('esbuild errors are logged with a custom format', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fileWatchEvent: WatcherEvent = {
+        type: 'file_updated',
+        path: '/extensions/ui_extension_1/src/file.js',
+        extensionPath: '/extensions/ui_extension_1',
+        startTime: [0, 0],
+      }
+      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
+
+      // Given
+      const esbuildError = {
+        errors: [
+          {
+            text: 'Syntax error',
+            location: {file: 'test.js', line: 1, column: 2, lineText: 'console.log(aa);'},
+          },
+        ],
+      }
+
+      const mockManager = new MockESBuildContextManager()
+      mockManager.contexts.h1.rebuild.mockRejectedValueOnce(esbuildError)
+
+      const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+      const app = testAppLinked({
+        allExtensions: [extension1],
+        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+      })
+
+      // When
+      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager)
+      const stderr = {write: vi.fn()} as unknown as Writable
+      const stdout = {write: vi.fn()} as unknown as Writable
+
+      await watcher.start({stdout, stderr, signal: new AbortSignal()})
+
+      await flushPromises()
+
+      // Then
+      expect(stderr.write).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `[ERROR] Syntax error
+
+    test.js:1:2:
+      1 │ console.log(aa);
+        ╵   ^
+
+`,
+        ),
+      )
+    })
+  })
+
+  test('general build errors are logged as plain messages', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fileWatchEvent: WatcherEvent = {
+        type: 'file_updated',
+        path: '/extensions/flow_action/src/file.js',
+        extensionPath: '/extensions/flow_action',
+        startTime: [0, 0],
+      }
+      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
+
+      // Given
+      const esbuildError = {message: 'Build failed'}
+      flowExtension.buildForBundle = vi.fn().mockRejectedValueOnce(esbuildError)
+
+      const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+      const app = testAppLinked({
+        allExtensions: [flowExtension],
+        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+      })
+
+      // When
+      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
+      const stderr = {write: vi.fn()} as unknown as Writable
+      const stdout = {write: vi.fn()} as unknown as Writable
+
+      await watcher.start({stdout, stderr, signal: new AbortSignal()})
+
+      await flushPromises()
+
+      // Then
+      expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
+    })
+  })
 })
 
 // Mock class for ESBuildContextManager

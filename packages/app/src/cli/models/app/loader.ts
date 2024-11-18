@@ -15,6 +15,7 @@ import {
   LegacyAppConfiguration,
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
+  AppCreationDefaultOptions,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -211,6 +212,21 @@ export async function checkFolderIsValidApp(directory: string) {
   )
 }
 
+export async function loadConfigForAppCreation(directory: string, name: string): Promise<AppCreationDefaultOptions> {
+  const state = await getAppConfigurationState(directory)
+  const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
+  const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
+
+  const loader = new AppLoader({loadedConfiguration})
+  const webs = await loader.loadWebs(directory)
+
+  return {
+    isLaunchable: webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend)),
+    scopesArray: getAppScopesArray(config),
+    name,
+  }
+}
+
 /**
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
@@ -342,6 +358,23 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return appClass
   }
 
+  async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+    const defaultWebDirectory = '**'
+    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
+      return joinPath(appDirectory, webGlob, configurationFileNames.web)
+    })
+    webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
+    const webTomlPaths = await glob(webConfigGlobs)
+
+    const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
+    this.validateWebs(webs)
+
+    const webTomlsInStandardLocation = await glob(joinPath(appDirectory, `web/**/${configurationFileNames.web}`))
+    const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
+
+    return {webs, usedCustomLayout}
+  }
+
   private findSpecificationForType(type: string) {
     return this.specifications.find(
       (spec) =>
@@ -385,26 +418,6 @@ We recommend removing the @shopify/cli and @shopify/app dependencies from your p
       renderInfo(warningContent)
       alreadyShownCLIWarning = true
     }
-  }
-
-  private async loadWebs(
-    appDirectory: string,
-    webDirectories?: string[],
-  ): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
-    const defaultWebDirectory = '**'
-    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
-      return joinPath(appDirectory, webGlob, configurationFileNames.web)
-    })
-    webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
-    const webTomlPaths = await glob(webConfigGlobs)
-
-    const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
-    this.validateWebs(webs)
-
-    const webTomlsInStandardLocation = await glob(joinPath(appDirectory, `web/**/${configurationFileNames.web}`))
-    const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
-
-    return {webs, usedCustomLayout}
   }
 
   private validateWebs(webs: Web[]): void {
