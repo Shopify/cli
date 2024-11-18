@@ -117,7 +117,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       const networkStartTime = startHRTime()
       await performActionWithRetryAfterRecovery(async () => {
         const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
-        await handleDevSessionResult(result, processOptions, event)
+        await handleDevSessionResult(result, {...processOptions, app: event.app}, event)
         const endTime = endHRTimeInMs(event.startTime)
         const endNetworkTime = endHRTimeInMs(networkStartTime)
         outputDebug(`✅ Event handled [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`, processOptions.stdout)
@@ -126,7 +126,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
     .onStart(async (event) => {
       await performActionWithRetryAfterRecovery(async () => {
         const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
-        await handleDevSessionResult(result, processOptions)
+        await handleDevSessionResult(result, {...processOptions, app: event.app})
       }, refreshToken)
     })
 }
