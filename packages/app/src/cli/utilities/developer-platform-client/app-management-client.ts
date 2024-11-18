@@ -60,8 +60,6 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
-import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
 import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
@@ -107,6 +105,16 @@ import {UserInfo} from '../../api/graphql/business-platform-destinations/generat
 import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
+import {
+  SchemaDefinitionByTarget,
+  SchemaDefinitionByTargetQuery,
+  SchemaDefinitionByTargetQueryVariables,
+} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {
+  SchemaDefinitionByApiType,
+  SchemaDefinitionByApiTypeQuery,
+  SchemaDefinitionByApiTypeQueryVariables,
+} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -123,6 +131,7 @@ import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
+import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -778,12 +787,53 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: currentAccountInfo')
   }
 
-  async targetSchemaDefinition(_input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
-    throw new BugError('Not implemented: targetSchemaDefinition')
+  async targetSchemaDefinition(
+    input: SchemaDefinitionByTargetQueryVariables,
+    _apiKey: string,
+    organizationId: string,
+    appId?: string,
+  ): Promise<string | null> {
+    try {
+      const appIdNumber = String(numberFromGid(appId!))
+      const token = await this.token()
+      const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
+        organizationId,
+        SchemaDefinitionByTarget,
+        token,
+        appIdNumber,
+        {
+          handle: input.handle,
+          version: input.version,
+        },
+      )
+
+      return result?.target?.api?.schema?.definition ?? null
+    } catch (error) {
+      throw new AbortError(`Failed to fetch schema definition: ${error}`)
+    }
   }
 
-  async apiSchemaDefinition(_input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
-    throw new BugError('Not implemented: apiSchemaDefinition')
+  async apiSchemaDefinition(
+    input: SchemaDefinitionByApiTypeQueryVariables,
+    _apiKey: string,
+    organizationId: string,
+    appId?: string,
+  ): Promise<string | null> {
+    try {
+      const appIdNumber = String(numberFromGid(appId!))
+      const token = await this.token()
+      const result = await functionsRequestDoc<SchemaDefinitionByApiTypeQuery, SchemaDefinitionByApiTypeQueryVariables>(
+        organizationId,
+        SchemaDefinitionByApiType,
+        token,
+        appIdNumber,
+        input,
+      )
+
+      return result?.api?.schema?.definition ?? null
+    } catch (error) {
+      throw new AbortError(`Failed to fetch schema definition: ${error}`)
+    }
   }
 
   async migrateToUiExtension(_input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
