@@ -63,6 +63,13 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
 
+  if (extensionsToConfirm.didMigrateDashboardExtensions) {
+    // If we migrated dashboard extensions, we need to refetch the active app version
+    const newActiveAppVersion = await options.developerPlatformClient.activeAppVersion(options.remoteApp)
+    // eslint-disable-next-line require-atomic-updates
+    options.activeAppVersion = newActiveAppVersion
+  }
+
   if (extensionsToConfirm.dashboardOnlyExtensions.length > 0) {
     remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations({...options, activeAppVersion: undefined})
   }

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -9,19 +9,16 @@ export type ListAppDevStoresQuery = {
   organization?: {
     id: string
     name: string
-    properties?: {
+    accessibleShops?: {
       edges: {
-        node:
-          | {
-              __typename: 'Shop'
-              id: string
-              externalId?: string | null
-              name: string
-              storeType?: Types.Store | null
-              primaryDomain?: string | null
-              shortName?: string | null
-            }
-          | {}
+        node: {
+          id: string
+          externalId?: string | null
+          name: string
+          storeType?: Types.Store | null
+          primaryDomain?: string | null
+          shortName?: string | null
+        }
       }[]
     } | null
   } | null
@@ -47,7 +44,7 @@ export const ListAppDevStores = {
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
                 {
                   kind: 'Field',
-                  name: {kind: 'Name', value: 'properties'},
+                  name: {kind: 'Name', value: 'accessibleShops'},
                   arguments: [
                     {
                       kind: 'Argument',
@@ -73,11 +70,6 @@ export const ListAppDevStores = {
                         ],
                       },
                     },
-                    {
-                      kind: 'Argument',
-                      name: {kind: 'Name', value: 'offeringHandles'},
-                      value: {kind: 'ListValue', values: [{kind: 'StringValue', value: 'shop', block: false}]},
-                    },
                   ],
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -94,22 +86,12 @@ export const ListAppDevStores = {
                               selectionSet: {
                                 kind: 'SelectionSet',
                                 selections: [
-                                  {
-                                    kind: 'InlineFragment',
-                                    typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'Shop'}},
-                                    selectionSet: {
-                                      kind: 'SelectionSet',
-                                      selections: [
-                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: 'id'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: 'externalId'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: 'name'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
-                                        {kind: 'Field', name: {kind: 'Name', value: 'shortName'}},
-                                      ],
-                                    },
-                                  },
+                                  {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'externalId'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'shortName'}},
                                   {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                 ],
                               },

@@ -13,7 +13,6 @@ import {
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
-import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -30,14 +29,13 @@ export async function errorHandler(
       outputInfo(`✨  ${error.message}`)
     }
   } else if (error instanceof AbortSilentError) {
-    printEventsJson()
+    /* empty */
   } else {
     return errorMapper(error)
       .then((error) => {
         return handler(error)
       })
       .then((mappedError) => {
-        printEventsJson()
         return reportError(mappedError, config)
       })
   }

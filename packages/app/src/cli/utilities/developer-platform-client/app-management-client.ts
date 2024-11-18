@@ -112,14 +112,14 @@ import {
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
-type Properties = NonNullable<OrgType['properties']>
-type ShopEdge = NonNullable<Properties['edges'][number]>
+type AccessibleShops = NonNullable<OrgType['accessibleShops']>
+type ShopEdge = NonNullable<AccessibleShops['edges'][number]>
 type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
@@ -289,6 +289,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           registrationLimit: spec.uidStrategy.appModuleLimit,
         },
         experience: experience(spec.identifier),
+        validationSchema: spec.validationSchema,
       }),
     )
   }
@@ -373,7 +374,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`No organization found`)
     }
 
-    const shopArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
@@ -696,7 +697,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`No organization found`)
     }
 
-    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
 
     return {
@@ -735,7 +736,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    outputWarn('⚠️ sendSampleWebhook is not implemented')
+    outputDebug('⚠️ sendSampleWebhook is not implemented')
     return {
       sendSampleWebhook: {
         samplePayload: '',
@@ -747,7 +748,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
-    outputWarn('⚠️ apiVersions is not implemented')
+    outputDebug('⚠️ apiVersions is not implemented')
     return {publicApiVersions: ['unstable']}
   }
 
@@ -764,7 +765,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    outputWarn('⚠️ updateURLs is not implemented')
+    outputDebug('⚠️ updateURLs is not implemented')
     return {appUpdate: {userErrors: []}}
   }
 

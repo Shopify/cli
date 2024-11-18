@@ -49,6 +49,11 @@ interface BundleOptions {
    * Whether or not to generate source maps.
    */
   sourceMaps?: boolean
+
+  /**
+   * Whether or not to log messages to the console.
+   */
+  logLevel?: 'silent' | 'error'
 }
 
 /**
@@ -137,6 +142,7 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
     bundle: true,
     define,
     jsx: 'automatic',
+    logLevel: options.logLevel ?? 'error',
     loader: {
       '.esnext': 'ts',
       '.js': 'jsx',

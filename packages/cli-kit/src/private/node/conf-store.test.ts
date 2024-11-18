@@ -155,14 +155,15 @@ describe('cacheRetrieve', () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<any>({cwd})
-      const cacheValue = {'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now()}}
-      config.set('cache', cacheValue)
+      const cacheValue = {value: 'URL1', timestamp: Date.now()}
+      const cacheEntry = {'identity-introspection-url-IDENTITYURL': cacheValue}
+      config.set('cache', cacheEntry)
 
       // When
       const got = cacheRetrieve('identity-introspection-url-IDENTITYURL', config)
 
       // Then
-      expect(got).toEqual('URL1')
+      expect(got).toEqual(cacheValue)
     })
   })
 

@@ -348,8 +348,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a \"development store\" (https://shopify.dev/docs/apps/tools/development-stores) or \"Plus sandbox store\" (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your app.\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving \"GraphiQL for the Admin API\" (https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: \"Set up your Laravel app\" (https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: \"Set up your Rails app\" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a \"staff account\" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
-      "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your app.\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving [GraphiQL for the Admin API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
+      "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a \"development store\" (https://shopify.dev/docs/apps/tools/development-stores) or \"Plus sandbox store\" (https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your app.\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving \"GraphiQL for the Admin API\" (https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the Ruby app template, then you need to complete the following steps outlined in the \"README\" (https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app) before you can preview your app for the first time.\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a \"staff account\" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
+      "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).\n\n> Note: Development store preview of extension drafts is not supported for Plus sandbox stores. You must `deploy` your app.\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Serving [GraphiQL for the Admin API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's credentials and access scopes.\n- Building and serving your app and app extensions.\n\nIf you're using the Ruby app template, then you need to complete the following steps outlined in the [README](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app) before you can preview your app for the first time.\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a [staff account](https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n",
       "flags": {
         "api-key": {
           "description": "The API key of your app.",
@@ -2061,6 +2061,25 @@
       "pluginType": "core",
       "strict": true
     },
+    "cache:clear": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Clear the CLI cache, used to store some API responses and handle notifications status",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "cache:clear",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "commands": {
       "aliases": [
       ],
@@ -2273,123 +2292,6 @@
       "hiddenAliases": [
       ],
       "id": "debug:command-flags",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
-    "demo": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Demo a command design defined in a file",
-      "enableJsonFlag": false,
-      "flags": {
-        "file": {
-          "default": ".",
-          "description": "The name of the demo file.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "file",
-          "type": "option"
-        },
-        "path": {
-          "default": ".",
-          "description": "The directory where the demo file is located. Defaults to the current directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "path",
-          "type": "option"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "demo",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
-    "demo:catalog": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Browse the catalog for steps",
-      "enableJsonFlag": false,
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "demo:catalog",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
-    "demo:generate-file": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Create a command design file",
-      "enableJsonFlag": false,
-      "flags": {
-        "file": {
-          "description": "The name of the demo file.",
-          "env": "SHOPIFY_FLAG_FILENAME",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "file",
-          "required": true,
-          "type": "option"
-        },
-        "path": {
-          "default": ".",
-          "description": "The directory for generating the demo file.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "path",
-          "type": "option"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "demo:generate-file",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Creates a JSON file alongside a JSON schema that will validate it"
-    },
-    "demo:print-ai-prompt": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
-      "enableJsonFlag": false,
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "demo:print-ai-prompt",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -4228,6 +4130,44 @@
       "hiddenAliases": [
       ],
       "id": "kitchen-sink:static",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "notifications:generate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Generate a notifications.json file for the the CLI, appending a new notification to the current file.",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "notifications:generate",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "notifications:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "List current notifications configured for the CLI.",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "notifications:list",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6409,5 +6349,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.69.0"
+  "version": "3.70.0"
 }

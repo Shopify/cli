@@ -22,7 +22,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/system')
 
-const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
+const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com', refresh: async () => {}}
 const themeAccessSession = {...session, token: 'shptka_token'}
 const sessions = {CLI: session, 'Theme Access': themeAccessSession}
 
@@ -104,14 +104,14 @@ describe('fetchChecksums', () => {
 })
 
 describe('createTheme', () => {
+  const id = 123
+  const name = 'new theme'
+  const role = 'unpublished'
+  const processing = false
+  const params: ThemeParams = {name, role}
+
   test('creates a theme', async () => {
     // Given
-    const id = 123
-    const name = 'new theme'
-    const role = 'unpublished'
-    const processing = false
-    const params: ThemeParams = {name, role}
-
     vi.mocked(restRequest)
       .mockResolvedValueOnce({
         json: {theme: {id, name, role, processing}},
@@ -136,6 +136,36 @@ describe('createTheme', () => {
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
     expect(theme!.processing).toBeFalsy()
+  })
+
+  test('does not upload minimum theme assets when src is provided', async () => {
+    // Given
+    vi.mocked(restRequest)
+      .mockResolvedValueOnce({
+        json: {theme: {id, name, role, processing}},
+        status: 200,
+        headers: {},
+      })
+      .mockResolvedValueOnce({
+        json: {
+          results: [],
+        },
+        status: 207,
+        headers: {},
+      })
+
+    // When
+    const theme = await createTheme({...params, src: 'https://example.com/theme.zip'}, session)
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith(
+      'POST',
+      '/themes',
+      session,
+      {theme: {...params, src: 'https://example.com/theme.zip'}},
+      {},
+    )
+    expect(restRequest).not.toHaveBeenCalledWith('PUT', `/themes/${id}/assets/bulk`, session, undefined, {})
   })
 })
 
@@ -339,6 +369,31 @@ describe('request errors', () => {
 
       // Then
     }).rejects.toThrowError(AbortError)
+  })
+
+  test(`refresh the session when 401 errors happen`, async () => {
+    // Given
+    const id = 123
+    const assets: AssetParams[] = []
+
+    vi.spyOn(session, 'refresh').mockImplementation(vi.fn())
+    vi.mocked(restRequest)
+      .mockResolvedValueOnce({
+        json: {},
+        status: 401,
+        headers: {},
+      })
+      .mockResolvedValueOnce({
+        json: {},
+        status: 207,
+        headers: {},
+      })
+
+    // When
+    await bulkUploadThemeAssets(id, assets, session)
+
+    // Then
+    expect(session.refresh).toHaveBeenCalledOnce()
   })
 })
 

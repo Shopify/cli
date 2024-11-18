@@ -7,6 +7,7 @@ import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
+import {launchAppWatcher} from './app-watcher-process.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -26,6 +27,8 @@ import {
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {reloadApp} from '../app-events/app-event-watcher-handler.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
@@ -39,6 +42,8 @@ vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/theme')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('../app-events/app-event-watcher-handler.js')
+
 beforeEach(() => {
   // mocked for draft extensions
   vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({
@@ -63,6 +68,7 @@ beforeEach(() => {
     role: 'theme',
     processing: false,
   })
+  vi.mocked(reloadApp).mockResolvedValue(testAppLinked())
 })
 
 const appContextResult = {
@@ -124,6 +130,7 @@ describe('setup-dev-processes', () => {
         allExtensions: [previewable, draftable, theme],
       },
     })
+    vi.mocked(reloadApp).mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -251,12 +258,21 @@ describe('setup-dev-processes', () => {
       },
     })
 
+    expect(res.processes[6]).toMatchObject({
+      type: 'app-watcher',
+      prefix: 'dev-session',
+      function: launchAppWatcher,
+      options: {
+        appWatcher: expect.any(AppEventWatcher),
+      },
+    })
+
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
     const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
-    expect(res.processes[6]).toMatchObject({
+    expect(res.processes[7]).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
       function: startProxyServer,
@@ -324,7 +340,7 @@ describe('setup-dev-processes', () => {
 
     expect(res.processes[2]).toMatchObject({
       type: 'dev-session',
-      prefix: 'extensions',
+      prefix: 'dev-session',
       function: pushUpdatesForDevSession,
       options: {
         app: localApp,
@@ -390,6 +406,7 @@ describe('setup-dev-processes', () => {
         allExtensions: [previewable, draftable, theme, functionExtension],
       },
     })
+    vi.mocked(reloadApp).mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -577,6 +594,7 @@ describe('setup-dev-processes', () => {
         ],
       },
     })
+    vi.mocked(reloadApp).mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',

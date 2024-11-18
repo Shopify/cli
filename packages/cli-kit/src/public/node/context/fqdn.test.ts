@@ -6,6 +6,22 @@ import {expect, describe, test, vi} from 'vitest'
 vi.mock('../context/spin.js')
 vi.mock('../../../private/node/context/service.js')
 
+vi.mock('../vendor/dev_server/DevServer.js', () => {
+  return {
+    DevServerCore: class {
+      host(serviceName: string) {
+        return `${serviceName}.myshopify.io`
+      }
+    },
+    DevServer: class {
+      constructor(private readonly serviceName: string) {}
+      host() {
+        return `${this.serviceName}.myshopify.io`
+      }
+    },
+  }
+})
+
 describe('partners', () => {
   test('returns the local fqdn when the environment is local', async () => {
     // Given
@@ -51,7 +67,7 @@ describe('appManagementFqdn', () => {
     const got = await appManagementFqdn()
 
     // Then
-    expect(got).toEqual('app.shopify.myshopify.io')
+    expect(got).toEqual('app.myshopify.io')
   })
 
   test('returns the production fqdn when the environment is production', async () => {

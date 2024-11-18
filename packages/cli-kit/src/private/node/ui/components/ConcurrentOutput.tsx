@@ -1,6 +1,5 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
-import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, Static, Text, TextProps, useApp} from 'ink'
 import figures from 'figures'
@@ -14,6 +13,7 @@ export interface ConcurrentOutputProps {
   abortSignal: AbortSignal
   showTimestamps?: boolean
   keepRunningAfterProcessesResolve?: boolean
+  useAlternativeColorPalette?: boolean
 }
 
 interface Chunk {
@@ -88,10 +88,17 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   abortSignal,
   showTimestamps = true,
   keepRunningAfterProcessesResolve = false,
+  useAlternativeColorPalette = false,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
-  const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
+  const concurrentColors: TextProps['color'][] = useMemo(
+    () =>
+      useAlternativeColorPalette
+        ? ['#b994c3', '#e69e19', '#d17a73', 'cyan', 'magenta', 'blue']
+        : ['yellow', 'cyan', 'magenta', 'green', 'blue'],
+    [useAlternativeColorPalette],
+  )
 
   const calculatedPrefixColumnSize = useMemo(() => {
     const maxColumnSize = 25
@@ -134,7 +141,6 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           const index = addPrefix(prefix, prefixes)
 
           const lines = shouldStripAnsi ? stripAnsi(log).split(/\n/) : log.split(/\n/)
-          addOrUpdateConcurrentUIEventOutput({prefix, index, output: lines.join('\n')})
           setProcessOutput((previousProcessOutput) => [
             ...previousProcessOutput,
             {

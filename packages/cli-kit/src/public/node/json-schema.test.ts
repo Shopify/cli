@@ -66,6 +66,21 @@ describe('jsonSchemaValidate', () => {
     expect(schemaParsed.errors, `Converting ${JSON.stringify(schemaParsed.rawErrors)}`).toEqual(zodErrors)
   })
 
+  test('ignores custom x-taplo directive', () => {
+    const subject = {
+      foo: 'bar',
+    }
+    const contract = {
+      type: 'object',
+      properties: {
+        foo: {type: 'string'},
+      },
+      'x-taplo': {foo: 'bar'},
+    }
+    const schemaParsed = jsonSchemaValidate(subject, contract)
+    expect(schemaParsed.state).toBe('ok')
+  })
+
   test('deals with a union mismatch with a preferred branch', () => {
     const subject = {
       root: {

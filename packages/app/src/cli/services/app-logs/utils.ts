@@ -188,15 +188,12 @@ export const toFormattedAppLogJson = ({
 }): string => {
   const {cursor: _, ...appLogWithoutCursor} = appLog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const toSaveData: any = camelcaseKeys(
-    {
-      ...appLogWithoutCursor,
-      payload: appLogPayload,
-      localTime: formatLocalDate(appLog.log_timestamp),
-      storeName,
-    },
-    {deep: true},
-  )
+  const toSaveData: any = camelcaseKeys({
+    ...appLogWithoutCursor,
+    payload: appLogPayload,
+    localTime: formatLocalDate(appLog.log_timestamp),
+    storeName,
+  })
 
   if (appLogPayload instanceof FunctionRunLog) {
     toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
@@ -217,7 +214,7 @@ export const toFormattedAppLogJson = ({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const parseAppLogPayload = (payload: string, logType: string): any => {
-  const parsedPayload = camelcaseKeys(JSON.parse(payload), {deep: true})
+  const parsedPayload = camelcaseKeys(JSON.parse(payload))
 
   if (logType === LOG_TYPE_FUNCTION_RUN) {
     return new FunctionRunLog(parsedPayload)

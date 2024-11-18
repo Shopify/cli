@@ -1,11 +1,14 @@
 import {buildBaseStorefrontUrl} from './storefront-renderer.js'
-import {getStorefrontSessionCookies} from './storefront-session.js'
+import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {DevServerSession} from './types.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 // 30 minutes in miliseconds.
 const SESSION_TIMEOUT_IN_MS = 30 * 60 * 1000
+const REQUIRED_THEME_FILES = ['layout/theme.liquid', 'config/settings_schema.json']
 
 /**
  * Initialize the session object, which is automatically refreshed
@@ -26,15 +29,19 @@ export async function initializeDevServerSession(
 ) {
   const session = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
 
+  session.refresh = async () => {
+    outputDebug('Refreshing theme session...')
+    const newSession = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
+    Object.assign(session, newSession)
+  }
+
   setInterval(() => {
-    fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
-      .then((newSession) => {
-        outputDebug('Refreshing theme session...')
-        Object.assign(session, newSession)
-      })
-      .catch(() => {
-        outputDebug('Session could not be refreshed.')
-      })
+    if (!session.refresh) return
+
+    session
+      .refresh()
+      .then(() => outputDebug('Refreshed theme session via auto-refresher...'))
+      .catch(() => outputDebug('Session could not be refreshed.'))
   }, SESSION_TIMEOUT_IN_MS)
 
   return session
@@ -50,15 +57,54 @@ async function fetchDevServerSession(
 
   const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
   const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
-  const sessionCookies = await getStorefrontSessionCookies(baseUrl, themeId, storefrontPassword, {
-    'X-Shopify-Shop': session.storeFqdn,
-    'X-Shopify-Access-Token': session.token,
-    Authorization: `Bearer ${storefrontToken}`,
-  })
+  const sessionCookies = await getStorefrontSessionCookiesWithVerification(
+    baseUrl,
+    themeId,
+    adminSession,
+    storefrontToken,
+    storefrontPassword,
+  )
 
   return {
     ...session,
     sessionCookies,
     storefrontToken,
   }
+}
+
+export async function getStorefrontSessionCookiesWithVerification(
+  storeUrl: string,
+  themeId: string,
+  adminSession: AdminSession,
+  storefrontToken: string,
+  storefrontPassword?: string,
+): Promise<{[key: string]: string}> {
+  try {
+    return await getStorefrontSessionCookies(storeUrl, themeId, storefrontPassword, {
+      'X-Shopify-Shop': adminSession.storeFqdn,
+      'X-Shopify-Access-Token': adminSession.token,
+      Authorization: `Bearer ${storefrontToken}`,
+    })
+  } catch (error) {
+    if (error instanceof ShopifyEssentialError) {
+      await abortOnMissingRequiredFile(themeId, adminSession)
+    }
+
+    throw error
+  }
+}
+
+export async function abortOnMissingRequiredFile(themeId: string, adminSession: AdminSession) {
+  outputDebug(`Verifying if theme with id ${themeId} has required files...`)
+  const requiredAssets = await fetchThemeAssets(Number(themeId), REQUIRED_THEME_FILES, adminSession)
+
+  if (requiredAssets.length !== REQUIRED_THEME_FILES.length) {
+    throw new AbortError(
+      outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
+        `shopify theme delete -t ${themeId}`,
+      )} to delete it, then try your command again.`.value,
+    )
+  }
+
+  outputDebug(`Theme with id ${themeId} has required files.`)
 }
