@@ -25,7 +25,6 @@ import {
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
-import {AppVersionByTagSchema} from '../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
@@ -160,8 +159,16 @@ export interface AppModuleVersion {
   specification?: AppModuleVersionSpecification
 }
 
-export interface ActiveAppVersion {
+export interface AppVersion {
   appModuleVersions: AppModuleVersion[]
+}
+
+export type AppVersionWithContext = AppVersion & {
+  id: number
+  uuid: string
+  versionTag?: string | null
+  location: string
+  message: string
 }
 
 export type AppDeployOptions = AppDeployVariables & {
@@ -218,11 +225,11 @@ export interface DeveloperPlatformClient {
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
-    activeAppVersion?: ActiveAppVersion,
+    activeAppVersion?: AppVersion,
   ) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
-  activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
-  appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
+  activeAppVersion: (app: MinimalAppIdentifiers) => Promise<AppVersion | undefined>
+  appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>

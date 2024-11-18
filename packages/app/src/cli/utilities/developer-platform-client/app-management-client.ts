@@ -8,13 +8,15 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import {
   DeveloperPlatformClient,
   Paginateable,
-  ActiveAppVersion,
+  AppVersion,
+  AppVersionWithContext,
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
   DevSessionOptions,
   filterDisabledFlags,
   ClientName,
+  AppModuleVersion,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -43,7 +45,6 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema as AppVersionByTagSchemaInterface} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
@@ -380,7 +381,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(
     appIdentifiers: MinimalAppIdentifiers,
-    activeAppVersion?: ActiveAppVersion,
+    activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
 
@@ -441,7 +442,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersionByTag(
     {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
     tag: string,
-  ): Promise<AppVersionByTagSchemaInterface> {
+  ): Promise<AppVersionWithContext> {
     const query = AppVersions
     const variables = {appId}
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
@@ -459,32 +460,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const versionInfo = result2.version
 
     return {
-      app: {
-        appVersion: {
-          id: parseInt(versionInfo.id, 10),
-          uuid: versionInfo.id,
-          versionTag: versionInfo.metadata.versionTag,
-          location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join(
-            '/',
-          ),
-          message: '',
-          appModuleVersions: versionInfo.appModules.map((mod: ReleasedAppModuleFragment) => {
-            return {
-              registrationId: mod.uuid,
-              registrationUuid: mod.uuid,
-              registrationTitle: mod.handle,
-              type: mod.specification.externalIdentifier,
-              config: JSON.stringify(mod.config),
-              specification: {
-                ...mod.specification,
-                identifier: mod.specification.externalIdentifier,
-                options: {managementExperience: 'cli'},
-                experience: experience(mod.specification.identifier),
-              },
-            }
-          }),
-        },
-      },
+      id: parseInt(versionInfo.id, 10),
+      uuid: versionInfo.id,
+      versionTag: versionInfo.metadata.versionTag,
+      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
+      message: '',
+      appModuleVersions: versionInfo.appModules.map(appModuleVersion),
     }
   }
 
@@ -526,24 +507,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+  async activeAppVersion(app: MinimalAppIdentifiers): Promise<AppVersion> {
     const result = await this.activeAppVersionRawResult(app)
     return {
-      appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
-        return {
-          registrationId: mod.uuid,
-          registrationUuid: mod.uuid,
-          registrationTitle: mod.handle,
-          type: mod.specification.externalIdentifier,
-          config: mod.config,
-          specification: {
-            ...mod.specification,
-            identifier: mod.specification.identifier,
-            options: {managementExperience: 'cli'},
-            experience: experience(mod.specification.identifier),
-          },
-        }
-      }),
+      appModuleVersions: result.app.activeRelease.version.appModules.map(appModuleVersion),
       ...result.app.activeRelease,
     }
   }
@@ -974,4 +941,20 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
       convertableToPartnerTest: true,
     } as OrganizationStore
   })
+}
+
+function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
+  return {
+    registrationId: mod.uuid,
+    registrationUuid: mod.uuid,
+    registrationTitle: mod.handle,
+    type: mod.specification.externalIdentifier,
+    config: mod.config,
+    specification: {
+      ...mod.specification,
+      identifier: mod.specification.identifier,
+      options: {managementExperience: 'cli'},
+      experience: experience(mod.specification.identifier),
+    },
+  }
 }

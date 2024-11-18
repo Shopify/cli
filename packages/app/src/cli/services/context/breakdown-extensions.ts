@@ -11,7 +11,7 @@ import {
   fetchAppRemoteConfiguration,
   remoteAppConfigurationExtensionContent,
 } from '../app/select-app.js'
-import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   RemoteExtensionRegistrations,
@@ -136,7 +136,7 @@ export async function configExtensionsIdentifiersBreakdown({
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
-  activeAppVersion?: ActiveAppVersion
+  activeAppVersion?: AppVersion
 }) {
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
@@ -170,7 +170,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   remoteApp: MinimalOrganizationApp,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
-  activeAppVersion?: ActiveAppVersion,
+  activeAppVersion?: AppVersion,
 ) {
   const remoteConfig: Partial<AppConfigurationUsedByCli> =
     (await fetchAppRemoteConfiguration(
@@ -337,7 +337,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   specs: ExtensionSpecification[],
-  activeAppVersion?: ActiveAppVersion,
+  activeAppVersion?: AppVersion,
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
   const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
@@ -359,7 +359,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
 }
 
 function loadExtensionsIdentifiersBreakdown(
-  activeAppVersion: ActiveAppVersion,
+  activeAppVersion: AppVersion,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
@@ -392,7 +392,7 @@ function loadExtensionsIdentifiersBreakdown(
   }
 }
 
-function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: ActiveAppVersion) {
+function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: AppVersion) {
   const currentVersions =
     activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification!.options.managementExperience === 'dashboard',
