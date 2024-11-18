@@ -46,10 +46,15 @@ interface UserError {
   category: string
 }
 
-interface DevSessionResult {
-  status: 'updated' | 'created' | 'aborted' | 'error'
-  error?: string | UserError[] | Error
-}
+// interface DevSessionResult {
+//   status: 'updated' | 'created' | 'aborted' | 'error'
+//   error?: string | UserError[] | Error
+// }
+
+type DevSessionResult =
+  | {status: 'updated' | 'created' | 'aborted'}
+  | {status: 'remote-error'; error: UserError[]}
+  | {status: 'unknown-error'; error: Error}
 
 let bundleControllers: AbortController[] = []
 
@@ -149,14 +154,13 @@ async function handleDevSessionResult(
     isDevSessionReady = true
     await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
   } else if (result.status === 'aborted') {
-    outputDebug('❌ Session update aborted (new change detected)', processOptions.stdout)
-  } else if (result.status === 'error') {
-    const errors = result.error ?? []
-    await processUserErrors(errors, processOptions, processOptions.stdout)
-
-    // If we failed to create a session, exit the process
-    if (!isDevSessionReady) process.exit(1)
+    outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
+  } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
+    await processUserErrors(result.error, processOptions, processOptions.stdout)
   }
+
+  // If we failed to create a session, exit the process
+  if (!isDevSessionReady) process.exit(1)
 }
 
 /**
@@ -210,22 +214,18 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
 
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
 
-  return sendSessionPayload(signedURL, options)
-}
-
-async function sendSessionPayload(signedURL: string, options: DevSessionProcessOptions): Promise<DevSessionResult> {
   const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
   try {
     if (isDevSessionReady) {
       const result = await options.developerPlatformClient.devSessionUpdate(payload)
       const errors = result.devSessionUpdate?.userErrors ?? []
-      if (errors.length) return {status: 'error', error: errors}
+      if (errors.length) return {status: 'remote-error', error: errors}
       return {status: 'updated'}
     } else {
       const result = await options.developerPlatformClient.devSessionCreate(payload)
       const errors = result.devSessionCreate?.userErrors ?? []
-      if (errors.length) return {status: 'error', error: errors}
+      if (errors.length) return {status: 'remote-error', error: errors}
       return {status: 'created'}
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -234,7 +234,7 @@ async function sendSessionPayload(signedURL: string, options: DevSessionProcessO
       // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
     } else {
-      return {status: 'error', error}
+      return {status: 'unknown-error', error}
     }
   }
 }
