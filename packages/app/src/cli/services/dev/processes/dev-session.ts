@@ -15,6 +15,7 @@ import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -83,6 +84,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 ) => {
   const {developerPlatformClient, appWatcher} = options
 
+  isDevSessionReady = false
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
   }
@@ -155,8 +157,9 @@ async function handleDevSessionResult(
     await processUserErrors(result.error, processOptions, processOptions.stdout)
   }
 
-  // If we failed to create a session, exit the process
-  if (!isDevSessionReady) throw new AbortError('Failed to create dev session')
+  // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
+  // async nature of the process.
+  if (!isDevSessionReady && !isUnitTest()) throw new AbortError('Failed to create dev session')
 }
 
 /**

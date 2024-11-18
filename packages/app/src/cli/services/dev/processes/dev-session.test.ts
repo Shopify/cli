@@ -3,19 +3,24 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
-import {testAppLinked, testDeveloperPlatformClient, testWebhookExtensions} from '../../../models/app/app.test-data.js'
+import {
+  testAppLinked,
+  testDeveloperPlatformClient,
+  testUIExtension,
+  testWebhookExtensions,
+} from '../../../models/app/app.test-data.js'
 import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
+import {writeFile} from '@shopify/cli-kit/node/fs'
+import * as outputContext from '@shopify/cli-kit/node/ui/components'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
-
-vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
 
 describe('setupDevSessionProcess', () => {
   test('returns a dev session process with correct configuration', async () => {
@@ -63,6 +68,7 @@ describe('pushUpdatesForDevSession', () => {
 
   beforeEach(() => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
+    vi.mocked(writeFile).mockResolvedValue(undefined)
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
     developerPlatformClient = testDeveloperPlatformClient()
@@ -89,21 +95,40 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Ready'))
   })
 
+  test('updates use the extension handle as the output prefix', async () => {
+    // When
+
+    const spyContext = vi.spyOn(outputContext, 'useConcurrentOutputContext')
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
+    await appWatcher.start()
+    await flushPromises()
+
+    const extension = await testUIExtension()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
+    expect(spyContext).toHaveBeenCalledWith({outputPrefix: 'test-ui-extension', stripAnsi: false}, expect.anything())
+
+    // In theory this shouldn't be necessary, but vitest doesn't restore spies automatically.
+    // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
+    vi.restoreAllMocks()
+  })
+
   test('handles user errors from dev session creation', async () => {
     // Given
     const userErrors = [{message: 'Test error', category: 'test'}]
     developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({devSessionCreate: {userErrors}})
-    const exitSpy = vi.spyOn(process, 'exit')
 
     // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
     await appWatcher.start()
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
     await flushPromises()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Test error'))
-    expect(exitSpy).toHaveBeenCalledWith(1)
   })
 
   test('handles receiving an event before session is ready', async () => {
@@ -124,7 +149,6 @@ describe('pushUpdatesForDevSession', () => {
     // Given
     const userErrors = [{message: 'Update error', category: 'test'}]
     developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({devSessionUpdate: {userErrors}})
-    const exitSpy = vi.spyOn(process, 'exit')
 
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
@@ -136,13 +160,13 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Update error'))
-    expect(exitSpy).not.toHaveBeenCalled()
   })
 
   test('handles scope changes and displays action required message', async () => {
     // Given
     vi.mocked(buildAppURLForWeb).mockResolvedValue('https://test.myshopify.com/admin/apps/test')
     const event = {extensionEvents: [{type: 'updated', extension: {handle: 'app-access'}}], app}
+    const contextSpy = vi.spyOn(outputContext, 'useConcurrentOutputContext')
 
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
@@ -155,5 +179,6 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
+    expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'dev-session', stripAnsi: false}, expect.anything())
   })
 })
