@@ -14,6 +14,7 @@ import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -155,7 +156,7 @@ async function handleDevSessionResult(
   }
 
   // If we failed to create a session, exit the process
-  if (!isDevSessionReady) process.exit(1)
+  if (!isDevSessionReady) throw new AbortError('Failed to create dev session')
 }
 
 /**
@@ -245,7 +246,7 @@ async function processUserErrors(
     await printError(errors.message, stdout)
   } else {
     for (const error of errors) {
-      const on = error.on ? (error.on[0] as {user_identifier: string}) : undefined
+      const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
       // If we have information about the extension that caused the error, use the handle as prefix in the output.
       const extension = options.app.allExtensions.find((ext) => ext.uid === on?.user_identifier)
       // eslint-disable-next-line no-await-in-loop
