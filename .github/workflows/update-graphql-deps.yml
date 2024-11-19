@@ -40,7 +40,7 @@ jobs:
           git push --set-upstream origin auto-update-graphql-deps --force
 
           if ! gh pr view auto-update-graphql-deps &>/dev/null; then
-            gh pr create --title "update generated graphql files" \
+            gh pr create --title "Update generated GraphQL files" \
               --body "This auto-generated PR updates the generated graphql files" \
               --head auto-update-graphql-deps
           fi
