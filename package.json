@@ -149,6 +149,7 @@
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
           "bin/*",
+          "gh",
           "istanbul-merge"
         ],
         "ignoreDependencies": [
