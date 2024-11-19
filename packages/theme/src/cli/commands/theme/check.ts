@@ -111,7 +111,7 @@ export default class Check extends ThemeCommand {
 
       let version = 'unknown'
       if (pkgJsonPath) {
-        version = (await getPackageVersion(pkgJsonPath)) || 'unknown'
+        version = (await getPackageVersion(pkgJsonPath)) ?? 'unknown'
       }
 
       outputInfo(version)
