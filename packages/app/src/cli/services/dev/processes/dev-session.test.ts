@@ -4,6 +4,7 @@ import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {
+  testAppAccessConfigExtension,
   testAppLinked,
   testDeveloperPlatformClient,
   testUIExtension,
@@ -165,7 +166,8 @@ describe('pushUpdatesForDevSession', () => {
   test('handles scope changes and displays action required message', async () => {
     // Given
     vi.mocked(buildAppURLForWeb).mockResolvedValue('https://test.myshopify.com/admin/apps/test')
-    const event = {extensionEvents: [{type: 'updated', extension: {handle: 'app-access'}}], app}
+    const appAccess = await testAppAccessConfigExtension()
+    const event = {extensionEvents: [{type: 'updated', extension: appAccess}], app}
     const contextSpy = vi.spyOn(outputContext, 'useConcurrentOutputContext')
 
     // When
