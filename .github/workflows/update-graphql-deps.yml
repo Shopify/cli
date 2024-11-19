@@ -5,6 +5,14 @@ on:
     - cron: '13 0,6,12,18 * * *' # Runs at 00:13, 06:13, 12:13, and 18:13 UTC
   workflow_dispatch:  # Allows manual triggering from the GitHub UI
 
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '8.15.7'
+  SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
+  SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+
 jobs:
   update-graphql-deps:
     name: Update GraphQL Dependencies
@@ -21,6 +29,8 @@ jobs:
         with:
           node-version: '22.11.0'
       - name: Get schemas for codegen
+        env:
+          GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
         run: pnpm graphql-codegen:get-graphql-schemas
       - name: Run graphql-codegen
         run: pnpm graphql-codegen
