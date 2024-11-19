@@ -13,6 +13,7 @@ export type Scalars = {
   Boolean: {input: boolean; output: boolean}
   Int: {input: number; output: number}
   Float: {input: number; output: number}
+  AccessRoleAssignee: {input: any; output: any}
   /** The ID for a AccessRole. */
   AccessRoleID: {input: any; output: any}
   AccessRoleRecordId: {input: any; output: any}
@@ -45,4 +46,4 @@ export type Scalars = {
   URL: {input: string; output: string}
 }
 
-export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'PRODUCTION'
+export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'DEVELOPMENT_SUPERSET' | 'PRODUCTION'
