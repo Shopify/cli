@@ -5,9 +5,11 @@ import {
   ExtensionSpecification,
   RemoteAwareExtensionSpecification,
 } from '../../models/extensions/specification.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
+import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
+import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
@@ -53,8 +55,13 @@ export async function fetchSpecifications({
     })
 
   const local = await loadLocalExtensionsSpecifications()
-  const updatedSpecs = await mergeLocalAndRemoteSpecs(local, extensionSpecifications)
-  return [...updatedSpecs]
+  let updatedSpecs = await mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+
+  if (developerPlatformClient.clientName === ClientName.AppManagement) {
+    updatedSpecs = appManagementSpecTransform(updatedSpecs)
+  }
+
+  return updatedSpecs
 }
 
 async function mergeLocalAndRemoteSpecs(
@@ -113,4 +120,24 @@ async function mergeLocalAndRemoteSpecs(
   }
 
   return result
+}
+
+/**
+ * The AppManagementClient has relaxed requirements for some extension specifications
+ * This should be a temporary transform until we either use contracts for every spec, or all extensions are optional by default
+ */
+function appManagementSpecTransform(specs: RemoteAwareExtensionSpecification[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return specs.map((spec: any) => {
+    if (spec.identifier === AppHomeSpecIdentifier) {
+      spec.schema.shape.application_url = spec.schema.shape.application_url.optional()
+      spec.schema.shape.embedded = spec.schema.shape.embedded.optional()
+    }
+
+    if (spec.identifier === WebhooksSpecIdentifier) {
+      spec.schema.shape.webhooks = spec.schema.shape.webhooks.optional()
+    }
+
+    return spec
+  })
 }
