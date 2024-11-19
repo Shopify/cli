@@ -136,8 +136,6 @@ export class AppEventWatcher extends EventEmitter {
     // Initial build of all extensions
     this.initialEvents = this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
     await this.buildExtensions(this.initialEvents)
-    // const anyError = initialEvents.some((extEvent) => extEvent.buildResult?.status === 'error')
-    // if (anyError) return
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (events) => {
@@ -225,7 +223,7 @@ export class AppEventWatcher extends EventEmitter {
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts[ext.handle]) {
-            const result = await this.esbuildManager.contexts[ext.handle]?.rebuild()
+            await this.esbuildManager.contexts[ext.handle]?.rebuild()
           } else {
             await this.buildExtension(ext)
           }
