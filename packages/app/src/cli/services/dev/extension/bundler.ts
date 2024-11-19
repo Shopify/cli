@@ -1,6 +1,3 @@
-import {ExtensionsPayloadStore} from './payload/store.js'
-import {ExtensionDevOptions} from '../extension.js'
-
 import {AppInterface} from '../../../models/app/app.js'
 import {reloadExtensionConfig} from '../update-extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -12,11 +9,6 @@ import micromatch from 'micromatch'
 import {deepCompare} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 import {AsyncResource} from 'async_hooks'
-
-export interface FileWatcherOptions {
-  devOptions: ExtensionDevOptions
-  payloadStore: ExtensionsPayloadStore
-}
 
 export interface SetupExtensionWatcherOptions {
   extension: ExtensionInstance
