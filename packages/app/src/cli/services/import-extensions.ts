@@ -1,6 +1,6 @@
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {getExtensions} from './fetch-extensions.js'
-import {AppLinkedInterface} from '../models/app/app.js'
+import {AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -17,7 +17,11 @@ interface ImportOptions {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
+  buildTomlObject: (
+    ext: ExtensionRegistration,
+    allExtensions: ExtensionRegistration[],
+    appConfig: CurrentAppConfiguration,
+  ) => string
 }
 
 export async function importExtensions(options: ImportOptions) {
@@ -54,7 +58,7 @@ export async function importExtensions(options: ImportOptions) {
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = options.buildTomlObject(ext, extensionRegistrations)
+    const tomlObject = options.buildTomlObject(ext, extensionRegistrations, options.app.configuration)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     const handle = slugify(ext.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH))
