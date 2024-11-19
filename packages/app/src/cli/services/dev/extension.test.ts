@@ -4,6 +4,8 @@ import * as websocket from './extension/websocket.js'
 import {devUIExtensions, ExtensionDevOptions} from './extension.js'
 import {ExtensionsEndpointPayload} from './extension/payload/models.js'
 import {WebsocketConnection} from './extension/websocket/models.js'
+import {AppEventWatcher} from './app-events/app-event-watcher.js'
+import {testAppLinked} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 import {Server} from 'http'
 
@@ -11,6 +13,7 @@ describe('devUIExtensions()', () => {
   const serverCloseSpy = vi.fn()
   const websocketCloseSpy = vi.fn()
   const bundlerCloseSpy = vi.fn()
+  const app = testAppLinked()
 
   const options = {
     mock: 'options',
@@ -19,6 +22,7 @@ describe('devUIExtensions()', () => {
     stdout: process.stdout,
     stderr: process.stderr,
     checkoutCartUrl: 'mock/path/from/extensions',
+    appWatcher: new AppEventWatcher(app, 'url', 'path'),
   } as unknown as ExtensionDevOptions
 
   function spyOnEverything() {
@@ -96,7 +100,6 @@ describe('devUIExtensions()', () => {
 
     abortEventCallback()
 
-    expect(bundlerCloseSpy).toHaveBeenCalledOnce()
     expect(websocketCloseSpy).toHaveBeenCalledOnce()
     expect(serverCloseSpy).toHaveBeenCalledOnce()
   })
