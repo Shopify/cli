@@ -43,13 +43,13 @@ export const UIExtensionSchema = BaseSchema.extend({
       const buildManifest: BuildManifest = {
         assets: {
           [AssetIdentifier.Main]: {
-            filepath: `/${config.handle}.js`,
+            filepath: `dist/${config.handle}.js`,
             module: targeting.module,
           },
           ...(targeting.should_render?.module
             ? {
                 [AssetIdentifier.ShouldRender]: {
-                  filepath: `/${config.handle}-conditions.js`,
+                  filepath: `dist/${config.handle}-conditions.js`,
                   module: targeting.should_render.module,
                 },
               }
