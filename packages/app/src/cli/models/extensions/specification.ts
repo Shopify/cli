@@ -172,7 +172,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
-    getDevSessionUpdateWarningMessage: spec.getDevSessionActionUpdateMessage,
+    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
   }
   const merged = {...defaults, ...spec}
 
