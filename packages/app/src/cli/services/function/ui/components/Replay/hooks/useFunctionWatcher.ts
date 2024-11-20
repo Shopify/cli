@@ -1,26 +1,32 @@
 import {FunctionRunData} from '../../../../replay.js'
-import {AppInterface} from '../../../../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../../../../models/app/app.js'
 import {FunctionConfigType} from '../../../../../../models/extensions/specifications/function.js'
 import {ExtensionInstance} from '../../../../../../models/extensions/extension-instance.js'
-import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 import {runFunction} from '../../../../runner.js'
+import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useState} from 'react'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
-import {FatalError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 interface WatchFunctionForReplayOptions {
   selectedRun: FunctionRunData
   abortController: AbortController
-  app: AppInterface
+  app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
+  appWatcher?: AppEventWatcher
 }
 
-export function useFunctionWatcher({selectedRun, abortController, app, extension}: WatchFunctionForReplayOptions) {
+export function useFunctionWatcher({
+  selectedRun,
+  abortController,
+  app,
+  extension,
+  appWatcher,
+}: WatchFunctionForReplayOptions) {
   const functionRunFromSelectedRun = {
     type: 'functionRun',
     input: selectedRun.payload.input,
@@ -44,6 +50,8 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
 
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
 
+  const appWatcherInstance = appWatcher ?? new AppEventWatcher(app)
+
   useEffect(() => {
     const watchAbortController = new AbortController()
     abortController.signal.addEventListener('abort', () => {
@@ -65,6 +73,18 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
     }
 
     const startWatchingFunction = async () => {
+      appWatcherInstance.onEvent(async (event) => {
+        const functionExt = event.extensionEvents.find((extEvent) => extEvent.extension.handle === extension.handle)
+        if (!functionExt || functionExt.type !== EventType.Updated) return
+        if (functionExt.buildResult?.status === 'error') {
+          setError(`Error while reloading and building extension: ${functionExt.buildResult?.error}`)
+          return
+        }
+        setError(undefined)
+        setStatusMessage('Re-running with latest changes...')
+        await runFunction()
+      })
+
       const customStdout = new Writable({
         write(chunk, _enconding, next) {
           setLogs((logs) => [...logs, {type: 'systemMessage', message: chunk.toString()}])
@@ -72,26 +92,7 @@ export function useFunctionWatcher({selectedRun, abortController, app, extension
         },
       })
 
-      await setupExtensionWatcher({
-        extension,
-        app,
-        stdout: customStdout,
-        stderr: customStdout,
-        onChange: async () => {
-          setError(undefined)
-          setStatusMessage('Re-running with latest changes...')
-          await runFunction()
-        },
-        onReloadAndBuildError: async (error) => {
-          if (error instanceof FatalError) {
-            // eslint-disable-next-line @typescript-eslint/no-base-to-string
-            setError(`Fatal error while reloading and building extension: ${error.formattedMessage || error.message}`)
-          } else {
-            setError(`Error while reloading and building extension: ${error.message}`)
-          }
-        },
-        signal: watchAbortController.signal,
-      })
+      await appWatcherInstance.start({stdout: customStdout, stderr: customStdout, signal: watchAbortController.signal})
     }
 
     // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/no-floating-promises

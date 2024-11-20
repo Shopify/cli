@@ -3,7 +3,7 @@ import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
 import {FunctionRunData} from '../../../replay.js'
 import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
-import {AppInterface} from '../../../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../../../models/app/app.js'
 import {prettyPrintJsonIfPossible} from '../../../../app-logs/utils.js'
 import figures from '@shopify/cli-kit/node/figures'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -15,7 +15,7 @@ import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 export interface ReplayProps {
   selectedRun: FunctionRunData
   abortController: AbortController
-  app: AppInterface
+  app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
 }
 
