@@ -2,6 +2,7 @@ import {DevAppWatcherOptions, ESBuildContextManager} from './app-watcher-esbuild
 import {AppEvent, EventType} from './app-event-watcher.js'
 import {testAppLinked, testUIExtension} from '../../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
+import * as fs from '@shopify/cli-kit/node/fs'
 
 vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
   default: {
@@ -15,13 +16,14 @@ const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', di
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
 
 describe('app-watcher-esbuild', () => {
+  const options: DevAppWatcherOptions = {
+    dotEnvVariables: {key: 'value'},
+    url: 'http://localhost:3000',
+    outputPath: '/path/to/output',
+  }
+
   test('creating contexts', async () => {
     // Given
-    const options: DevAppWatcherOptions = {
-      dotEnvVariables: {key: 'value'},
-      url: 'http://localhost:3000',
-      outputPath: '/path/to/output',
-    }
     const manager = new ESBuildContextManager(options)
     const extensions = [extension1, extension2]
 
@@ -35,11 +37,6 @@ describe('app-watcher-esbuild', () => {
 
   test('deleting contexts', async () => {
     // Given
-    const options: DevAppWatcherOptions = {
-      dotEnvVariables: {key: 'value'},
-      url: 'http://localhost:3000',
-      outputPath: '/path/to/output',
-    }
     const manager = new ESBuildContextManager(options)
     const extensions = [extension1, extension2]
     await manager.createContexts(extensions)
@@ -54,11 +51,6 @@ describe('app-watcher-esbuild', () => {
 
   test('updating contexts with an app event', async () => {
     // Given
-    const options: DevAppWatcherOptions = {
-      dotEnvVariables: {key: 'value'},
-      url: 'http://localhost:3000',
-      outputPath: '/path/to/output',
-    }
     const manager = new ESBuildContextManager(options)
     await manager.createContexts([extension2])
 
@@ -78,5 +70,20 @@ describe('app-watcher-esbuild', () => {
     // Then
     expect(manager.contexts).toHaveProperty('h1')
     expect(manager.contexts).not.toHaveProperty('test-ui-extension')
+  })
+
+  test('rebuilding contexts', async () => {
+    // Given
+    const manager = new ESBuildContextManager(options)
+    await manager.createContexts([extension1])
+    const spyContext = vi.spyOn(manager.contexts.h1!, 'rebuild').mockResolvedValue({} as any)
+    const spyCopy = vi.spyOn(fs, 'copyFile').mockResolvedValue()
+
+    // When
+    await manager.rebuildContext(extension1)
+
+    // Then
+    expect(spyContext).toHaveBeenCalled()
+    expect(spyCopy).toHaveBeenCalledWith('/path/to/output/h1/dist', '/extensions/ui_extension_1/dist')
   })
 })
