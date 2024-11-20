@@ -35,13 +35,22 @@ export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType 
   }
 }
 
+export interface Asset {
+  [name: string]: {
+    name: string
+    url: string
+    lastUpdated: number
+  }
+}
+
 export interface UIExtensionPayload {
   assets: {
     main: {
+      name?: string
       url: string
       lastUpdated: number
     }
-  }
+  } & Asset
   capabilities?: Capabilities
   development: {
     resource: {

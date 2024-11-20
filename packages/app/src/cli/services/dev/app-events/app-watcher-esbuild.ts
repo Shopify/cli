@@ -1,10 +1,10 @@
 import {AppEvent, EventType} from './app-event-watcher.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {getESBuildOptions} from '../../extensions/bundle.js'
+import {BundleOptions, getESBuildOptions} from '../../extensions/bundle.js'
 import {BuildContext, context as esContext} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
-import {dirname} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
 export interface DevAppWatcherOptions {
   dotEnvVariables: {[key: string]: string}
@@ -17,7 +17,7 @@ export interface DevAppWatcherOptions {
  * Has a list of all active contexts and methods to create, update and delete them.
  */
 export class ESBuildContextManager {
-  contexts: {[key: string]: BuildContext}
+  contexts: {[key: string]: BuildContext[]}
   outputPath: string
   dotEnvVariables: {[key: string]: string}
   url: string
@@ -33,35 +33,43 @@ export class ESBuildContextManager {
   setAbortSignal(signal: AbortSignal) {
     this.signal = signal
     this.signal?.addEventListener('abort', async () => {
-      const allDispose = Object.values(this.contexts).map((context) => context.dispose())
+      const allDispose = Object.values(this.contexts).map((context) => context.map((ctxt) => ctxt.dispose()))
       await Promise.all(allDispose)
     })
   }
 
   async createContexts(extensions: ExtensionInstance[]) {
     const promises = extensions.map(async (extension) => {
-      const esbuildOptions = getESBuildOptions({
-        minify: false,
-        outputPath: extension.getOutputPathForDirectory(this.outputPath),
-        environment: 'development',
-        env: {
-          ...this.dotEnvVariables,
-          APP_URL: this.url,
-        },
+      const {main, assets} = extension.getBundleExtensionStdinContent()
+      const contexts: BuildContext[] = []
+
+      const esbuildOptions = await this.extensionEsBuildOptions(extension, {
         stdin: {
-          contents: extension.getBundleExtensionStdinContent(),
+          contents: main,
           resolveDir: extension.directory,
           loader: 'tsx',
         },
-        logLevel: 'silent',
-        // stdout and stderr are mandatory, but not actually used
-        stderr: process.stderr,
-        stdout: process.stdout,
-        sourceMaps: true,
       })
-
       const context = await esContext(esbuildOptions)
-      this.contexts[extension.handle] = context
+      contexts.push(context)
+
+      if (assets) {
+        await Promise.all(
+          assets.map(async (asset) => {
+            const esbuildOptions = await this.extensionEsBuildOptions(extension, {
+              outputFileName: asset.outputFileName,
+              stdin: {
+                contents: asset.content,
+                resolveDir: extension.directory,
+                loader: 'ts',
+              },
+            })
+            const context = await esContext(esbuildOptions)
+            contexts.push(context)
+          }),
+        )
+      }
+      this.contexts[extension.handle] = contexts
     })
 
     await Promise.all(promises)
@@ -70,7 +78,7 @@ export class ESBuildContextManager {
   async rebuildContext(extension: ExtensionInstance) {
     const context = this.contexts[extension.handle]
     if (!context) return
-    await context.rebuild()
+    await Promise.all(context.map((ctxt) => ctxt.rebuild()))
 
     // The default output path for a extension is now inside `.shopify/bundle/<ext_id>/dist`,
     // all extensions output need to be under the same directory so that it can all be zipped together.
@@ -97,11 +105,36 @@ export class ESBuildContextManager {
   }
 
   async deleteContexts(extensions: ExtensionInstance[]) {
-    const promises = extensions.map((ext) => this.contexts[ext.handle]?.dispose())
+    const promises = extensions.map((ext) => this.contexts[ext.handle]?.map((context) => context.dispose()))
     await Promise.all(promises)
     extensions.forEach((ext) => {
       const {[ext.handle]: _, ...rest} = this.contexts
       this.contexts = rest
+    })
+  }
+
+  private async extensionEsBuildOptions(
+    extension: ExtensionInstance,
+    overrides: Pick<BundleOptions, 'stdin'> & {outputFileName?: string},
+  ) {
+    const outputPath = overrides.outputFileName
+      ? joinPath(dirname(extension.outputPath), overrides.outputFileName)
+      : extension.getOutputPathForDirectory(this.outputPath)
+
+    return getESBuildOptions({
+      minify: false,
+      outputPath,
+      environment: 'development',
+      env: {
+        ...this.dotEnvVariables,
+        APP_URL: this.url,
+      },
+      stdin: overrides.stdin,
+      logLevel: 'silent',
+      // stdout and stderr are mandatory, but not actually used
+      stderr: process.stderr,
+      stdout: process.stdout,
+      sourceMaps: true,
     })
   }
 }

@@ -35,6 +35,50 @@ describe('app-watcher-esbuild', () => {
     expect(manager.contexts).toHaveProperty('test-ui-extension')
   })
 
+  test('creating multiple contexts for the same extension', async () => {
+    // Given
+    const options: DevAppWatcherOptions = {
+      dotEnvVariables: {key: 'value'},
+      url: 'http://localhost:3000',
+      outputPath: '/path/to/output',
+    }
+    const manager = new ESBuildContextManager(options)
+    const extension = await testUIExtension({
+      configuration: {
+        ...extension2.configuration,
+        handle: 'conditional-extension',
+        extension_points: [
+          {
+            target: 'target1',
+            module: 'module1',
+            should_render: {
+              module: 'shouldRenderModule1',
+            },
+            build_manifest: {
+              assets: {
+                main: {
+                  module: 'module1',
+                  filepath: '/conditional-extension.js',
+                },
+                should_render: {
+                  module: 'shouldRenderModule1',
+                  filepath: '/conditional-extension-conditions.js',
+                },
+              },
+            },
+          },
+        ],
+      },
+    })
+
+    // When
+    await manager.createContexts([extension])
+
+    // Then
+    expect(manager.contexts).toHaveProperty('conditional-extension')
+    expect(manager.contexts['conditional-extension']).toHaveLength(2)
+  })
+
   test('deleting contexts', async () => {
     // Given
     const manager = new ESBuildContextManager(options)

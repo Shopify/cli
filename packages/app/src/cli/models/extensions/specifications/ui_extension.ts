@@ -1,4 +1,4 @@
-import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
+import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -14,6 +14,21 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
   return config.extension_points !== undefined || config.targeting !== undefined
 }
 
+interface BuildManifest {
+  assets: {
+    // Main asset is always required
+    [AssetIdentifier.Main]: {
+      filepath: string
+      module?: string
+    }
+  } & {
+    [key in AssetIdentifier]?: {
+      filepath: string
+      module?: string
+    }
+  }
+}
+
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
 export type UIExtensionSchemaType = zod.infer<typeof UIExtensionSchema>
@@ -25,6 +40,23 @@ export const UIExtensionSchema = BaseSchema.extend({
   .refine((config) => validatePoints(config), missingExtensionPointsMessage)
   .transform((config) => {
     const extensionPoints = (config.targeting ?? config.extension_points ?? []).map((targeting) => {
+      const buildManifest: BuildManifest = {
+        assets: {
+          [AssetIdentifier.Main]: {
+            filepath: `/${config.handle}.js`,
+            module: targeting.module,
+          },
+          ...(targeting.should_render?.module
+            ? {
+                [AssetIdentifier.ShouldRender]: {
+                  filepath: `/${config.handle}-conditions.js`,
+                  module: targeting.should_render.module,
+                },
+              }
+            : null),
+        },
+      }
+
       return {
         target: targeting.target,
         module: targeting.module,
@@ -32,6 +64,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         default_placement_reference: targeting.default_placement,
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
+        build_manifest: buildManifest,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -64,7 +97,34 @@ const uiExtensionSpec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
-    return config.extension_points.map(({module}) => `import '${module}';`).join('\n')
+    const main = config.extension_points
+      .map(({module}) => {
+        return `import '${module}'; `
+      })
+      .join('\n')
+
+    const assets: {[key: string]: Asset} = {}
+    config.extension_points.forEach((extensionPoint) => {
+      // Start of Selection
+      Object.entries(extensionPoint.build_manifest.assets).forEach(([identifier, asset]) => {
+        if (identifier === AssetIdentifier.Main) {
+          return
+        }
+        const existingContent = assets[identifier]?.content ?? ''
+
+        assets[identifier] = {
+          identifier: identifier as AssetIdentifier,
+          outputFileName: asset.filepath,
+          content: [existingContent, `import '${asset.module}'`].join('\n'),
+        }
+      })
+    })
+
+    const assetsArray = Object.values(assets)
+    return {
+      main,
+      ...(assetsArray.length ? {assets: assetsArray} : {}),
+    }
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (

@@ -255,7 +255,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return this.specification.getBundleExtensionStdinContent(this.configuration)
     }
     const relativeImportPath = this.entrySourceFilePath.replace(this.directory, '')
-    return `import '.${relativeImportPath}';`
+    return {main: `import '.${relativeImportPath}';`}
   }
 
   shouldFetchCartUrl(): boolean {

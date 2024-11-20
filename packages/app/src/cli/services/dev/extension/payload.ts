@@ -1,5 +1,5 @@
 import {getLocalization} from './localization.js'
-import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
+import {Asset, DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
@@ -7,6 +7,7 @@ import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
 export type GetUIExtensionPayloadOptions = Omit<ExtensionDevOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
@@ -24,6 +25,43 @@ export async function getUIExtensionPayload(
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
     const renderer = await getUIExtensionRendererVersion(extension)
+
+    const extensionPointsWithAssets = await Promise.all(
+      extension.configuration.extension_points.map(
+        async (extensionPoint: ExtensionInstance['configuration']['extension_points']) => {
+          const buildManifest = extensionPoint.build_manifest as {
+            assets: {[key: string]: {filepath: string}}
+          }
+
+          let assets: Asset = {}
+
+          if (buildManifest?.assets) {
+            const manifests = await Promise.all(
+              Object.entries(buildManifest.assets).map(async ([name, asset]) => ({
+                name,
+                url: `${url}${joinPath('/assets/', asset.filepath)}`,
+                lastUpdated:
+                  (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), asset.filepath))) ?? 0,
+              })),
+            )
+            assets = manifests.reduce((acc, asset) => {
+              acc[asset.name] = asset
+              return acc
+            }, assets)
+
+            return {
+              ...extensionPoint,
+              assets,
+            }
+          }
+
+          return extensionPoint
+        },
+      ),
+    )
+
+    const extensionPoints = getExtensionPoints(extensionPointsWithAssets, url)
+
     const defaultConfig = {
       assets: {
         main: {
@@ -55,7 +93,7 @@ export async function getUIExtensionPayload(
         status: options.currentDevelopmentPayload?.status || 'success',
         ...(options.currentDevelopmentPayload || {status: 'success'}),
       },
-      extensionPoints: getExtensionPoints(extension.configuration.extension_points, url),
+      extensionPoints,
       localization: localization ?? null,
       metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
       type: extension.configuration.type,

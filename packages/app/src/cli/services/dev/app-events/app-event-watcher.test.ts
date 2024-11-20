@@ -395,9 +395,9 @@ describe('app-event-watcher build extension errors', () => {
 class MockESBuildContextManager extends ESBuildContextManager {
   contexts = {
     // The keys are the extension handles, the values are the ESBuild contexts mocked
-    h1: {rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()},
-    h2: {rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()},
-    'test-ui-extension': {rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()},
+    h1: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
+    h2: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
+    'test-ui-extension': [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
   }
 
   constructor() {

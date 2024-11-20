@@ -120,6 +120,151 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('returns the right payload for UI Extensions with build_manifest', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
+      await touchFile(outputPath)
+      const signal: any = vi.fn()
+      const stdout: any = vi.fn()
+      const stderr: any = vi.fn()
+      vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
+        name: 'extension-renderer',
+        version: '1.2.3',
+      })
+
+      const buildManifest = {
+        assets: {
+          main: {identifier: 'main', module: './src/ExtensionPointA.js', filepath: '/test-ui-extension.js'},
+          should_render: {
+            identifier: 'should_render',
+            module: './src/ShouldRender.js',
+            filepath: '/test-ui-extension-conditions.js',
+          },
+        },
+      }
+
+      const uiExtension = await testUIExtension({
+        outputPath,
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          metafields: [],
+          capabilities: {
+            network_access: true,
+            api_access: true,
+            block_progress: false,
+            collect_buyer_consent: {
+              sms_marketing: false,
+              customer_privacy: false,
+            },
+            iframe: {
+              sources: ['https://my-iframe.com'],
+            },
+          },
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+              build_manifest: buildManifest,
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      const options: ExtensionDevOptions = {
+        signal,
+        stdout,
+        stderr,
+        apiKey: 'api-key',
+        appName: 'foobar',
+        appDirectory: '/tmp',
+        extensions: [uiExtension],
+        grantedScopes: ['scope-a'],
+        port: 123,
+        url: 'http://tunnel-url.com',
+        storeFqdn: 'my-domain.com',
+        storeId: '123456789',
+        buildDirectory: tmpDir,
+        checkoutCartUrl: 'https://my-domain.com/cart',
+        subscriptionProductUrl: 'https://my-domain.com/subscription',
+        manifestVersion: '3',
+      }
+      const development: Partial<UIExtensionPayload['development']> = {
+        hidden: true,
+        status: 'success',
+      }
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, {
+        ...options,
+        currentDevelopmentPayload: development,
+      })
+
+      // Then
+      expect(got).toMatchObject({
+        assets: {
+          main: {
+            lastUpdated: expect.any(Number),
+            name: 'main',
+            url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+          },
+        },
+        capabilities: {
+          blockProgress: false,
+          networkAccess: true,
+          apiAccess: true,
+          collectBuyerConsent: {
+            smsMarketing: false,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
+          },
+        },
+        development: {
+          hidden: true,
+          localizationStatus: '',
+          resource: {
+            url: '',
+          },
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID',
+          },
+          status: 'success',
+        },
+        extensionPoints: [
+          {
+            target: 'CUSTOM_EXTENSION_POINT',
+            build_manifest: buildManifest,
+            assets: {
+              main: {
+                lastUpdated: expect.any(Number),
+                name: 'main',
+                url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+              },
+              should_render: {
+                lastUpdated: expect.any(Number),
+                name: 'should_render',
+                url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-conditions.js',
+              },
+            },
+          },
+        ],
+        externalType: 'ui_extension_external',
+        localization: null,
+        metafields: null,
+        // as surfaces come from remote specs, we dont' have real values here
+        surface: 'test-surface',
+        title: 'test-ui-extension',
+        type: 'ui_extension',
+        uuid: 'devUUID',
+        version: '1.2.3',
+        approvalScopes: ['scope-a'],
+      })
+    })
+  })
+
   test('default values', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
