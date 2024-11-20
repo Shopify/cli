@@ -173,7 +173,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: ExtensionDevOptions = {
+      const options: Omit<ExtensionDevOptions, 'appWatcher'> = {
         signal,
         stdout,
         stderr,
@@ -197,7 +197,7 @@ describe('getUIExtensionPayload', () => {
       }
 
       // When
-      const got = await getUIExtensionPayload(uiExtension, {
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
         ...options,
         currentDevelopmentPayload: development,
       })

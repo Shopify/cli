@@ -33,7 +33,9 @@ export class ESBuildContextManager {
   setAbortSignal(signal: AbortSignal) {
     this.signal = signal
     this.signal?.addEventListener('abort', async () => {
-      const allDispose = Object.values(this.contexts).map((context) => context.map((ctxt) => ctxt.dispose()))
+      const allDispose = Object.values(this.contexts)
+        .map((context) => context.map((ctxt) => ctxt.dispose()))
+        .flat()
       await Promise.all(allDispose)
     })
   }
@@ -105,7 +107,7 @@ export class ESBuildContextManager {
   }
 
   async deleteContexts(extensions: ExtensionInstance[]) {
-    const promises = extensions.map((ext) => this.contexts[ext.handle]?.map((context) => context.dispose()))
+    const promises = extensions.map((ext) => this.contexts[ext.handle]?.map((context) => context.dispose())).flat()
     await Promise.all(promises)
     extensions.forEach((ext) => {
       const {[ext.handle]: _, ...rest} = this.contexts
