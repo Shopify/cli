@@ -1,7 +1,7 @@
 import {AppEvent, EventType} from './app-event-watcher.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {BundleOptions, getESBuildOptions} from '../../extensions/bundle.js'
-import {BuildContext, context as esContext} from 'esbuild'
+import {getESBuildOptions} from '../../extensions/bundle.js'
+import {BuildContext, context as esContext, StdinOptions} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -44,28 +44,29 @@ export class ESBuildContextManager {
     const promises = extensions.map(async (extension) => {
       const {main, assets} = extension.getBundleExtensionStdinContent()
       const contexts: BuildContext[] = []
-
-      const esbuildOptions = await this.extensionEsBuildOptions(extension, {
-        stdin: {
+      const mainOutputPath = extension.getOutputPathForDirectory(this.outputPath)
+      const esbuildOptions = await this.extensionEsBuildOptions(
+        {
           contents: main,
           resolveDir: extension.directory,
           loader: 'tsx',
         },
-      })
+        mainOutputPath,
+      )
       const context = await esContext(esbuildOptions)
       contexts.push(context)
 
       if (assets) {
         await Promise.all(
           assets.map(async (asset) => {
-            const esbuildOptions = await this.extensionEsBuildOptions(extension, {
-              outputFileName: asset.outputFileName,
-              stdin: {
+            const esbuildOptions = await this.extensionEsBuildOptions(
+              {
                 contents: asset.content,
                 resolveDir: extension.directory,
                 loader: 'ts',
               },
-            })
+              joinPath(dirname(mainOutputPath), asset.outputFileName),
+            )
             const context = await esContext(esbuildOptions)
             contexts.push(context)
           }),
@@ -115,14 +116,7 @@ export class ESBuildContextManager {
     })
   }
 
-  private async extensionEsBuildOptions(
-    extension: ExtensionInstance,
-    overrides: Pick<BundleOptions, 'stdin'> & {outputFileName?: string},
-  ) {
-    const outputPath = overrides.outputFileName
-      ? joinPath(dirname(extension.outputPath), overrides.outputFileName)
-      : extension.getOutputPathForDirectory(this.outputPath)
-
+  private async extensionEsBuildOptions(stdin: StdinOptions, outputPath: string) {
     return getESBuildOptions({
       minify: false,
       outputPath,
@@ -131,7 +125,7 @@ export class ESBuildContextManager {
         ...this.dotEnvVariables,
         APP_URL: this.url,
       },
-      stdin: overrides.stdin,
+      stdin,
       logLevel: 'silent',
       // stdout and stderr are mandatory, but not actually used
       stderr: process.stderr,

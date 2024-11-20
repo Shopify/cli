@@ -14,7 +14,7 @@ import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
 
-export interface BundleOptions {
+interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
   outputPath: string
