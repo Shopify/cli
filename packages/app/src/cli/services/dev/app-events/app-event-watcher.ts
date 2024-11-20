@@ -223,7 +223,7 @@ export class AppEventWatcher extends EventEmitter {
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts[ext.handle]) {
-            await this.esbuildManager.contexts[ext.handle]?.rebuild()
+            await this.esbuildManager.rebuildContext(ext)
           } else {
             await this.buildExtension(ext)
           }
