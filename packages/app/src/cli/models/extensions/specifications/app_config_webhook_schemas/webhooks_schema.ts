@@ -5,7 +5,7 @@ import {SingleWebhookSubscriptionSchema} from '../app_config_webhook_subscriptio
 import {mergeAllWebhooks} from '../transform/app_config_webhook.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const WebhooksConfigSchema = zod.object({
+export const WebhooksConfigSchema = zod.object({
   api_version: zod.string({required_error: 'String is required'}),
   privacy_compliance: zod
     .object({
@@ -23,5 +23,5 @@ const WebhooksConfigSchema = zod.object({
 export type SingleWebhookSubscriptionType = zod.infer<typeof SingleWebhookSubscriptionSchema>
 
 export const WebhooksSchema = zod.object({
-  webhooks: WebhooksConfigSchema.superRefine(webhookValidator),
+  webhooks: WebhooksConfigSchema.superRefine(webhookValidator).optional(),
 })

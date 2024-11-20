@@ -24,6 +24,7 @@ import {
   ActiveAppVersion,
   AppVersionIdentifiers,
   AssetUrlSchema,
+  ClientName,
   CreateAppOptions,
   DeveloperPlatformClient,
   DevSessionOptions,
@@ -111,6 +112,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     specifications: app.specifications ?? [],
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
+    developerPlatformClientName: app.developerPlatformClientName ?? ClientName.Partners,
   })
 
   if (app.updateDependencies) {
@@ -1284,7 +1286,7 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
-    clientName: 'test',
+    clientName: ClientName.Partners,
     webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,
@@ -1364,10 +1366,13 @@ export const testPartnersServiceSession: PartnersSession = {
   userId: '1234-5678',
 }
 
-export async function buildVersionedAppSchema() {
+export async function buildVersionedAppSchema(developerPlatformClientName: ClientName = ClientName.Partners) {
   const configSpecifications = await configurationSpecifications()
   return {
-    schema: getAppVersionedSchema(configSpecifications),
+    schema: getAppVersionedSchema({
+      specifications: configSpecifications,
+      developerPlatformClientName,
+    }),
     configSpecifications,
   }
 }

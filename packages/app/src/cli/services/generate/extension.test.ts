@@ -16,6 +16,7 @@ import {
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {ClientName} from '../../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {
@@ -63,7 +64,12 @@ describe('initialize a extension', async () => {
         specifications,
         onGetTemplateRepository,
       })
-      const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
+      const app = await loadApp({
+        directory: tmpDir,
+        specifications,
+        userProvidedConfigName: undefined,
+        developerPlatformClientName: ClientName.Partners,
+      })
       const generatedExtension = app.allExtensions[0]!
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
@@ -96,7 +102,12 @@ describe('initialize a extension', async () => {
 
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
-      const loadedApp = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
+      const loadedApp = await loadApp({
+        directory: tmpDir,
+        specifications,
+        userProvidedConfigName: undefined,
+        developerPlatformClientName: ClientName.Partners,
+      })
       expect(loadedApp.allExtensions.length).toEqual(2)
     })
   })
@@ -312,7 +323,12 @@ describe('initialize a extension', async () => {
       })
 
       // Then
-      const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
+      const app = await loadApp({
+        directory: tmpDir,
+        specifications,
+        userProvidedConfigName: undefined,
+        developerPlatformClientName: ClientName.Partners,
+      })
       const generatedFunction = app.allExtensions[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
@@ -353,7 +369,12 @@ describe('initialize a extension', async () => {
         })
 
         // Then
-        const app = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
+        const app = await loadApp({
+          directory: tmpDir,
+          specifications,
+          userProvidedConfigName: undefined,
+          developerPlatformClientName: ClientName.Partners,
+        })
         const generatedFunction = app.allExtensions[0]!
         expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedFunction.configuration.name).toBe(name)
@@ -456,7 +477,12 @@ async function createFromTemplate({
 }: CreateFromTemplateOptions): Promise<string> {
   const result = await generateExtensionTemplate({
     extensionTemplate: specification,
-    app: await loadApp({directory: appDirectory, specifications, userProvidedConfigName: undefined}),
+    app: await loadApp({
+      directory: appDirectory,
+      specifications,
+      userProvidedConfigName: undefined,
+      developerPlatformClientName: ClientName.Partners,
+    }),
     extensionChoices: {name, flavor: extensionFlavor},
     developerPlatformClient: testDeveloperPlatformClient(),
     onGetTemplateRepository,

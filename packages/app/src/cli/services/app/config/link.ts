@@ -27,6 +27,7 @@ import {
   Flag,
   DeveloperPlatformClient,
   sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+  ClientName,
 } from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -81,7 +82,13 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     app: remoteApp,
   })
   const flags = remoteApp.flags
-  const localAppOptions = await loadLocalAppOptions(options, specifications, flags, remoteApp.apiKey)
+  const localAppOptions = await loadLocalAppOptions(
+    options,
+    specifications,
+    flags,
+    remoteApp.apiKey,
+    developerPlatformClient.clientName,
+  )
   const configFileName = await loadConfigurationFileName(remoteApp, options, {
     appDirectory: localAppOptions.appDirectory,
     format: localAppOptions.configFormat,
@@ -130,7 +137,10 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
 }> {
   let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
 
-  const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
+  const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(
+    options,
+    developerPlatformClient.clientName,
+  )
   const appDirectory = possibleAppDirectory || options.directory
 
   if (options.apiKey) {
@@ -173,7 +183,10 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
  *
  * @returns Default options for creating a new app; the app's actual directory if loaded.
  */
-async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise<{
+async function getAppCreationDefaultsFromLocalApp(
+  options: LinkOptions,
+  developerPlatformClientName: ClientName,
+): Promise<{
   creationOptions: AppCreationDefaultOptions
   appDirectory?: string
 }> {
@@ -189,6 +202,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       mode: 'report',
       userProvidedConfigName: options.baseConfigName,
       remoteFlags: undefined,
+      developerPlatformClientName,
     })
     const configuration = app.configuration
 
@@ -257,6 +271,7 @@ async function loadLocalAppOptions(
   specifications: RemoteAwareExtensionSpecification[],
   remoteFlags: Flag[],
   remoteAppApiKey: string,
+  developerPlatformClientName: ClientName,
 ): Promise<LocalAppOptions> {
   // Though we already loaded the app once, we have to go again now that we have the remote aware specifications in
   // place. We didn't have them earlier.
@@ -267,6 +282,7 @@ async function loadLocalAppOptions(
       mode: 'report',
       userProvidedConfigName: options.baseConfigName,
       remoteFlags,
+      developerPlatformClientName,
     })
     const configuration = app.configuration
 
@@ -410,7 +426,10 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
   delete (mergedAppConfiguration as any).scopes
 
   // Always output using the canonical schema
-  const schema = getAppVersionedSchema(specifications)
+  const schema = getAppVersionedSchema({
+    specifications,
+    developerPlatformClientName: developerPlatformClient.clientName,
+  })
   await writeAppConfigurationFile(mergedAppConfiguration, schema)
   setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
 

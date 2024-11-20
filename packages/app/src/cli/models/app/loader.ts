@@ -24,7 +24,7 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {ClientName, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -202,6 +202,7 @@ export class AppErrors {
 interface AppLoaderConstructorArgs<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   mode?: AppLoaderMode
   loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  developerPlatformClientName: ClientName
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -212,12 +213,16 @@ export async function checkFolderIsValidApp(directory: string) {
   )
 }
 
-export async function loadConfigForAppCreation(directory: string, name: string): Promise<AppCreationDefaultOptions> {
+export async function loadConfigForAppCreation(
+  directory: string,
+  name: string,
+  developerPlatformClientName: ClientName,
+): Promise<AppCreationDefaultOptions> {
   const state = await getAppConfigurationState(directory)
   const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
-  const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
+  const loadedConfiguration = await loadAppConfigurationFromState(state, [], [], developerPlatformClientName)
 
-  const loader = new AppLoader({loadedConfiguration})
+  const loader = new AppLoader({loadedConfiguration, developerPlatformClientName})
   const webs = await loader.loadWebs(directory)
 
   return {
@@ -237,16 +242,23 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
     userProvidedConfigName: string | undefined
     specifications: TModuleSpec[]
     remoteFlags?: Flag[]
+    developerPlatformClientName: ClientName
   },
 ): Promise<AppInterface<AppConfiguration, TModuleSpec>> {
   const specifications = options.specifications
 
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
-  const loadedConfiguration = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
+  const loadedConfiguration = await loadAppConfigurationFromState(
+    state,
+    specifications,
+    options.remoteFlags ?? [],
+    options.developerPlatformClientName,
+  )
 
   const loader = new AppLoader<AppConfiguration, TModuleSpec>({
     mode: options.mode,
     loadedConfiguration,
+    developerPlatformClientName: options.developerPlatformClientName,
   })
   return loader.loaded()
 }
@@ -257,17 +269,25 @@ export async function loadAppUsingConfigurationState<TConfig extends AppConfigur
     specifications,
     remoteFlags,
     mode,
+    developerPlatformClientName,
   }: {
     specifications: RemoteAwareExtensionSpecification[]
     remoteFlags?: Flag[]
     mode: AppLoaderMode
+    developerPlatformClientName: ClientName
   },
 ): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
-  const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
+  const loadedConfiguration = await loadAppConfigurationFromState(
+    configState,
+    specifications,
+    remoteFlags ?? [],
+    developerPlatformClientName,
+  )
 
   const loader = new AppLoader({
     mode,
     loadedConfiguration,
+    developerPlatformClientName,
   })
   return loader.loaded()
 }
@@ -301,12 +321,18 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   private readonly specifications: TModuleSpec[]
   private readonly remoteFlags: Flag[]
   private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  private readonly developerPlatformClientName: ClientName
 
-  constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
+  constructor({
+    mode,
+    loadedConfiguration,
+    developerPlatformClientName,
+  }: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'
     this.specifications = loadedConfiguration.specifications
     this.remoteFlags = loadedConfiguration.remoteFlags
     this.loadedConfiguration = loadedConfiguration
+    this.developerPlatformClientName = developerPlatformClientName
   }
 
   async loaded() {
@@ -342,6 +368,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specifications: this.specifications,
       configSchema,
       remoteFlags: this.remoteFlags,
+      developerPlatformClientName: this.developerPlatformClientName,
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -753,7 +780,12 @@ export async function loadAppConfiguration(
 ): Promise<AppConfigurationInterface> {
   const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
-  const result = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
+  const result = await loadAppConfigurationFromState(
+    state,
+    specifications,
+    options.remoteFlags ?? [],
+    options.developerPlatformClientName,
+  )
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
   return result
 }
@@ -763,6 +795,7 @@ interface AppConfigurationLoaderConstructorArgs {
   userProvidedConfigName: string | undefined
   specifications?: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  developerPlatformClientName: ClientName
 }
 
 type LinkedConfigurationSource =
@@ -882,7 +915,7 @@ export async function getAppConfigurationState(
 /**
  * Given app configuration state, load the app configuration.
  *
- * This is typically called after getting remote-aware extension specifications. The app configuration is validated acordingly.
+ * This is typically called after getting remote-aware extension specifications. The app configuration is validated accordingly.
  */
 async function loadAppConfigurationFromState<
   TConfig extends AppConfigurationState,
@@ -891,6 +924,7 @@ async function loadAppConfigurationFromState<
   configState: TConfig,
   specifications: TModuleSpec[],
   remoteFlags: Flag[],
+  developerPlatformClientName: ClientName,
 ): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState<TConfig>, TModuleSpec>> {
   let file: JsonMapType
   let schemaForConfigurationFile: SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
@@ -910,7 +944,7 @@ async function loadAppConfigurationFromState<
           ...configState.basicConfiguration,
         }
         delete file.path
-        const appVersionedSchema = getAppVersionedSchema(specifications)
+        const appVersionedSchema = getAppVersionedSchema({specifications, developerPlatformClientName})
         appSchema = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
         break
       }
@@ -975,6 +1009,7 @@ async function loadAppConfigurationFromState<
     configSchema: schemaForConfigurationFile,
     specifications,
     remoteFlags,
+    developerPlatformClientName,
   }
 }
 

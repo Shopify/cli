@@ -197,7 +197,11 @@ async function init(options: InitOptions) {
 
   let app: OrganizationApp
   if (options.selectedAppOrNameResult.result === 'new') {
-    const creationOptions = await loadConfigForAppCreation(outputDirectory, options.name)
+    const creationOptions = await loadConfigForAppCreation(
+      outputDirectory,
+      options.name,
+      options.developerPlatformClient.clientName,
+    )
     const org = options.selectedAppOrNameResult.org
     app = await options.developerPlatformClient.createApp(org, options.name, creationOptions)
   } else {

@@ -3,7 +3,7 @@ import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {ClientName, Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {Result} from '@shopify/cli-kit/node/result'
@@ -49,6 +49,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   registrationLimit: number
   experience: ExtensionExperience
   dependency?: string
+  schema: ZodSchemaType<TConfiguration>
   graphQLType?: string
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
@@ -62,6 +63,10 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  customizeSchemaForDevPlatformClient?: (
+    platformClientName: ClientName,
+    currentSchema: ZodSchemaType<unknown>,
+  ) => ZodSchemaType<unknown>
 
   /**
    * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
@@ -212,6 +217,10 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
+  customizeSchemaForDevPlatformClient?: (
+    platformClientName: ClientName,
+    currentSchema: ZodSchemaType<unknown>,
+  ) => ZodSchemaType<unknown>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -224,6 +233,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
+    customizeSchemaForDevPlatformClient: spec.customizeSchemaForDevPlatformClient,
   })
 }
 

@@ -8,7 +8,7 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../exte
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {ClientName, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
@@ -106,17 +106,25 @@ export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: 
 /** Validation schema that produces a provided app configuration type */
 export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
 
-export function getAppVersionedSchema(
-  specs: ExtensionSpecification[],
+export function getAppVersionedSchema({
+  specifications,
   allowDynamicallySpecifiedConfigs = false,
-): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
+  developerPlatformClientName,
+}: {
+  specifications: ExtensionSpecification[]
+  allowDynamicallySpecifiedConfigs?: boolean
+  developerPlatformClientName: ClientName
+}): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
+  const schema = specifications.reduce<any>((schema, spec) => {
+    const updatedSchema = spec.contributeToAppConfigurationSchema(schema)
+    return spec.customizeSchemaForDevPlatformClient?.(developerPlatformClientName, updatedSchema) ?? updatedSchema
+  }, AppSchema)
 
   if (allowDynamicallySpecifiedConfigs) {
     return schema.passthrough()
   } else {
-    return specs.length > 0 ? schema.strict() : schema
+    return specifications.length > 0 ? schema.strict() : schema
   }
 }
 
@@ -224,6 +232,7 @@ export interface AppConfigurationInterface<
   configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
   remoteFlags: Flag[]
+  developerPlatformClientName: ClientName
 }
 
 export type AppLinkedInterface = AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
@@ -277,6 +286,7 @@ type AppConstructor<
   errors?: AppErrors
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  developerPlatformClientName: ClientName
 }
 
 export class App<
@@ -298,7 +308,7 @@ export class App<
   configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
-
+  developerPlatformClientName: ClientName
   constructor({
     name,
     directory,
@@ -313,6 +323,7 @@ export class App<
     specifications,
     configSchema,
     remoteFlags,
+    developerPlatformClientName,
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
@@ -327,6 +338,7 @@ export class App<
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
+    this.developerPlatformClientName = developerPlatformClientName
   }
 
   get allExtensions() {

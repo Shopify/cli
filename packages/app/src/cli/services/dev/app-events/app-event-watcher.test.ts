@@ -288,6 +288,7 @@ describe('app-event-watcher when receiving a file event', () => {
         if (needsAppReload) {
           expect(loadApp).toHaveBeenCalledWith({
             specifications: expect.anything(),
+            developerPlatformClientName: 'partners',
             directory: expect.anything(),
             // The app is loaded with the same configuration file
             userProvidedConfigName: 'shopify.app.custom.toml',

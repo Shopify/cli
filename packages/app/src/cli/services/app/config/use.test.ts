@@ -10,6 +10,7 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {appFromId, logMetadataForLoadedContext} from '../../context.js'
+import {ClientName} from '../../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -89,6 +90,7 @@ describe('use', () => {
         configSchema,
         specifications: [],
         remoteFlags: [],
+        developerPlatformClientName: ClientName.Partners,
       })
 
       // When
@@ -157,6 +159,7 @@ describe('use', () => {
         configSchema,
         specifications: [],
         remoteFlags: [],
+        developerPlatformClientName: ClientName.Partners,
       })
 
       // When
@@ -198,6 +201,7 @@ describe('use', () => {
         configSchema,
         specifications: [],
         remoteFlags: [],
+        developerPlatformClientName: ClientName.Partners,
       })
 
       // When
@@ -241,6 +245,7 @@ describe('use', () => {
         configSchema,
         specifications: [],
         remoteFlags: [],
+        developerPlatformClientName: ClientName.Partners,
       })
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
@@ -271,6 +276,7 @@ describe('use', () => {
         configSchema,
         specifications: [],
         remoteFlags: [],
+        developerPlatformClientName: ClientName.Partners,
       })
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
@@ -301,6 +307,7 @@ describe('use', () => {
         configSchema,
         specifications: [],
         remoteFlags: [],
+        developerPlatformClientName: ClientName.Partners,
       })
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       vi.mocked(appFromId).mockResolvedValue(REMOTE_APP)

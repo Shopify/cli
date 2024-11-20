@@ -1,6 +1,7 @@
 import {patchAppConfigurationFile} from './patch-app-configuration-file.js'
 import {getAppVersionedSchema} from '../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {ClientName} from '../../utilities/developer-platform-client.js'
 import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -25,7 +26,11 @@ redirect_urls = [
 api_version = "2023-04"
 `
 
-const schema = getAppVersionedSchema(await loadLocalExtensionsSpecifications(), false)
+const schema = getAppVersionedSchema({
+  specifications: await loadLocalExtensionsSpecifications(),
+  developerPlatformClientName: ClientName.Partners,
+  allowDynamicallySpecifiedConfigs: false,
+})
 
 function writeDefaulToml(tmpDir: string) {
   const configPath = joinPath(tmpDir, 'shopify.app.toml')

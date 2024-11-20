@@ -89,6 +89,7 @@ export async function linkedAppContext({
     specifications,
     remoteFlags: remoteApp.flags,
     mode: unsafeReportMode ? 'report' : 'strict',
+    developerPlatformClientName: developerPlatformClient.clientName,
   })
 
   // If the remoteApp is the same as the linked one, update the cached info.

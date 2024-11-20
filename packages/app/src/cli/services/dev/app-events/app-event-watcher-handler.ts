@@ -135,6 +135,7 @@ export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInter
       directory: app.directory,
       userProvidedConfigName: basename(app.configuration.path),
       remoteFlags: app.remoteFlags,
+      developerPlatformClientName: app.developerPlatformClientName,
     })
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`)
     return newApp as AppLinkedInterface

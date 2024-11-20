@@ -1,5 +1,6 @@
 import spec from './app_config_webhook.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
+import {ClientName} from '../../../utilities/developer-platform-client.js'
 import {describe, expect, test} from 'vitest'
 
 describe('webhooks', () => {
@@ -59,6 +60,27 @@ describe('webhooks', () => {
           api_version: '2024-01',
         },
       })
+    })
+  })
+
+  describe('customizeSchemaForDevPlatformClient', () => {
+    test('when using Partners client, webhooks field becomes required', () => {
+      const webhookSpec = spec
+      const schema = webhookSpec.customizeSchemaForDevPlatformClient!(ClientName.Partners, webhookSpec.schema)
+
+      expect(() => schema.parse({})).toThrow()
+      expect(() => schema.parse({webhooks: {subscriptions: []}})).toThrow()
+      expect(() => schema.parse({webhooks: {api_version: '2024-01', subscriptions: []}})).not.toThrow()
+    })
+
+    test('when using non-Partners client, webhooks field remains optional', () => {
+      const webhookSpec = spec
+      const schema = webhookSpec.customizeSchemaForDevPlatformClient!(ClientName.AppManagement, webhookSpec.schema)
+
+      expect(() => schema.parse({})).not.toThrow()
+      // if webhooks field is present, we still always need api_version
+      expect(() => schema.parse({webhooks: {subscriptions: []}})).toThrow()
+      expect(() => schema.parse({webhooks: {api_version: '2024-01', subscriptions: []}})).not.toThrow()
     })
   })
 })

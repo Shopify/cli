@@ -103,6 +103,7 @@ export async function sniffServiceOptionsAndAppConfigToSelectPlatformClient(opti
     const {configuration} = await loadAppConfiguration({
       ...options,
       userProvidedConfigName: options.configName,
+      developerPlatformClientName: ClientName.Partners,
     })
     const developerPlatformClient = selectDeveloperPlatformClient({configuration})
     return developerPlatformClient
@@ -199,7 +200,7 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
 }
 
 export interface DeveloperPlatformClient {
-  readonly clientName: string
+  readonly clientName: ClientName
   readonly webUiName: string
   readonly supportsAtomicDeployments: boolean
   readonly requiresOrganization: boolean

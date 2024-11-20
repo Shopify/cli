@@ -20,7 +20,7 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {ClientName, Flag} from '../../utilities/developer-platform-client.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -54,8 +54,18 @@ describe('load', () => {
 
   let tmpDir: string
 
-  function loadTestingApp(extras?: {remoteFlags?: Flag[]; mode?: AppLoaderMode}) {
-    return loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined, ...extras})
+  function loadTestingApp(extras?: {
+    remoteFlags?: Flag[]
+    mode?: AppLoaderMode
+    developerPlatformClientName?: ClientName
+  }) {
+    return loadApp({
+      directory: tmpDir,
+      specifications,
+      userProvidedConfigName: undefined,
+      developerPlatformClientName: ClientName.Partners,
+      ...extras,
+    })
   }
 
   const appConfiguration = `
@@ -164,9 +174,14 @@ automatically_update_urls_on_dev = true
       await rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(loadApp({directory: tmp, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-        `Couldn't find directory ${tmp}`,
-      )
+      await expect(
+        loadApp({
+          directory: tmp,
+          specifications,
+          userProvidedConfigName: undefined,
+          developerPlatformClientName: ClientName.Partners,
+        }),
+      ).rejects.toThrow(`Couldn't find directory ${tmp}`)
     })
   })
 
@@ -175,9 +190,14 @@ automatically_update_urls_on_dev = true
     const currentDir = cwd()
 
     // When/Then
-    await expect(loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-      `Couldn't find an app toml file at ${currentDir}`,
-    )
+    await expect(
+      loadApp({
+        directory: currentDir,
+        specifications,
+        userProvidedConfigName: undefined,
+        developerPlatformClientName: ClientName.Partners,
+      }),
+    ).rejects.toThrow(`Couldn't find an app toml file at ${currentDir}`)
   })
 
   test('throws an error when the configuration file is invalid', async () => {
@@ -256,7 +276,12 @@ wrong = "property"
     await writeConfig(appConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications: [], userProvidedConfigName: undefined})
+    const app = await loadApp({
+      directory: tmpDir,
+      specifications: [],
+      userProvidedConfigName: undefined,
+      developerPlatformClientName: ClientName.Partners,
+    })
 
     // Then
     expect(app.name).toBe('my_app')
@@ -760,7 +785,12 @@ wrong = "property"
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
-    const app = await loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})
+    const app = await loadApp({
+      directory: blockDir,
+      specifications,
+      userProvidedConfigName: undefined,
+      developerPlatformClientName: ClientName.Partners,
+    })
 
     // Then
     expect(app.name).toBe('my_app')
@@ -896,9 +926,14 @@ wrong = "property"
     })
 
     // When
-    await expect(loadApp({directory: blockDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-      /Couldn't find an index.{js,jsx,ts,tsx} file in the directories/,
-    )
+    await expect(
+      loadApp({
+        directory: blockDir,
+        specifications,
+        userProvidedConfigName: undefined,
+        developerPlatformClientName: ClientName.Partners,
+      }),
+    ).rejects.toThrow(/Couldn't find an index.{js,jsx,ts,tsx} file in the directories/)
   })
 
   test('throws an error if the extension has a type non included in the specs', async () => {
@@ -2161,7 +2196,12 @@ wrong = "property"
     vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
     // When
-    const result = loadApp({directory: tmpDir, specifications, userProvidedConfigName: 'non-existent'})
+    const result = loadApp({
+      directory: tmpDir,
+      specifications,
+      userProvidedConfigName: 'non-existent',
+      developerPlatformClientName: ClientName.Partners,
+    })
 
     // Then
     await expect(result).rejects.toThrow()
@@ -3159,7 +3199,7 @@ describe('loadConfigForAppCreation', () => {
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
       // When
-      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app', ClientName.Partners)
 
       // Then
       expect(result).toEqual({
@@ -3191,7 +3231,7 @@ dev = "echo 'Hello, world!'"
       )
 
       // When
-      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app', ClientName.Partners)
 
       // Then
       expect(result).toEqual({
@@ -3226,7 +3266,7 @@ dev = "echo 'Hello, world!'"
       )
 
       // When
-      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app', ClientName.Partners)
 
       // Then
       expect(result).toEqual({
@@ -3250,7 +3290,7 @@ dev = "echo 'Hello, world!'"
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
       // When
-      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app', ClientName.Partners)
 
       // Then
       expect(result).toEqual({
@@ -3272,7 +3312,7 @@ dev = "echo 'Hello, world!'"
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
       // When
-      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app', ClientName.Partners)
 
       // Then
       expect(result).toEqual({

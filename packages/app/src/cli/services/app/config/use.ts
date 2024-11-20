@@ -3,7 +3,7 @@ import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {AppConfiguration, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -51,6 +51,7 @@ export default async function use({
   const {configuration} = await loadAppConfiguration({
     userProvidedConfigName: configFileName,
     directory,
+    developerPlatformClientName: ClientName.Partners,
   })
   setCurrentConfigPreference(configuration, {configFileName, directory})
 

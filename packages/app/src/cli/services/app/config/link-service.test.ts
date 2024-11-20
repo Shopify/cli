@@ -1,6 +1,11 @@
 import link from './link.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {
+  ClientName,
+  DeveloperPlatformClient,
+  selectDeveloperPlatformClient,
+  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+} from '../../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -21,7 +26,9 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
     async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
-          return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
+          return testOrganizationApp({
+            developerPlatformClient: this as DeveloperPlatformClient,
+          })
         default:
           return undefined
       }
@@ -35,6 +42,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
         developerPlatformClient: this as DeveloperPlatformClient,
       })
     },
+    clientName: ClientName.Partners,
   })
 }
 
@@ -56,6 +64,9 @@ describe('link, with minimal mocking', () => {
 
       const developerPlatformClient = buildDeveloperPlatformClient()
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+      vi.mocked(sniffServiceOptionsAndAppConfigToSelectPlatformClient).mockReturnValue(
+        Promise.resolve(developerPlatformClient),
+      )
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('A user provided name')
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({id: '12345', businessName: 'test'})
