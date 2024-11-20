@@ -219,8 +219,30 @@ export async function testUIExtension(
       },
     },
     extension_points: [
-      {target: 'target1', module: 'module1'},
-      {target: 'target2', module: 'module2'},
+      {
+        target: 'target1',
+        module: 'module1',
+        build_manifest: {
+          assets: {
+            main: {
+              module: 'module1',
+              filepath: uiExtension?.handle ? `/${uiExtension.handle}.js` : '/test-ui-extension.js',
+            },
+          },
+        },
+      },
+      {
+        target: 'target2',
+        module: 'module2',
+        build_manifest: {
+          assets: {
+            main: {
+              module: 'module2',
+              filepath: uiExtension?.handle ? `/${uiExtension.handle}.js` : '/test-ui-extension.js',
+            },
+          },
+        },
+      },
     ],
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`

@@ -35,6 +35,16 @@ export interface CustomTransformationConfig {
 type ExtensionExperience = 'extension' | 'configuration'
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
+export enum AssetIdentifier {
+  ShouldRender = 'should_render',
+  Main = 'main',
+}
+
+export interface Asset {
+  identifier: AssetIdentifier
+  outputFileName: string
+  content: string
+}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -50,7 +60,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
-  getBundleExtensionStdinContent?: (config: TConfiguration) => string
+  getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,
     directory: string,
