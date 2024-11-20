@@ -149,8 +149,8 @@
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
           "bin/*",
-          "istanbul-merge",
-          "gh"
+          "gh",
+          "istanbul-merge"
         ],
         "ignoreDependencies": [
           "@nx/workspace",
