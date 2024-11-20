@@ -10,8 +10,8 @@ import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
 const FUNCTION_RUNNER_VERSION = 'v6.3.0'
-const JAVY_VERSION = 'v3.2.0'
-const JAVY_PLUGIN_VERSION = 'v3.2.0'
+const JAVY_VERSION = 'v4.0.0'
+const JAVY_PLUGIN_VERSION = 'v4.0.0'
 
 interface DownloadableBinary {
   path: string
