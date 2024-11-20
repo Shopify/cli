@@ -14,6 +14,9 @@ import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
 import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
+import UpdateInit from './cli/commands/theme/update/init.js'
+import UpdateCheck from './cli/commands/theme/update/check.js'
+import UpdateRun from './cli/commands/theme/update/run.js'
 
 const COMMANDS = {
   'theme:init': Init,
@@ -32,6 +35,9 @@ const COMMANDS = {
   'theme:rename': Rename,
   'theme:serve': Serve,
   'theme:share': Share,
+  'theme:update:init': UpdateInit,
+  'theme:update:check': UpdateCheck,
+  'theme:update:run': UpdateRun,
 }
 
 export default COMMANDS

@@ -29,6 +29,20 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   return []
 }
 
+interface UpgradeThemeOptions {
+  fromTheme: number
+  toTheme: number
+  script?: string
+  session: AdminSession
+}
+
+export async function upgradeTheme(upgradeOptions: UpgradeThemeOptions): Promise<Theme | undefined> {
+  const {fromTheme, toTheme, session, script} = upgradeOptions
+  const params = {from_theme: fromTheme, to_theme: toTheme, ...(script && {script})}
+  const response = await request('POST', `/themes`, session, params)
+  return buildTheme(response.json.theme)
+}
+
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('POST', '/themes', session, {theme: {...params}})
 

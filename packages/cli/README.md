@@ -77,6 +77,9 @@
 * [`shopify theme push`](#shopify-theme-push)
 * [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
+* [`shopify theme update check`](#shopify-theme-update-check)
+* [`shopify theme update init`](#shopify-theme-update-init)
+* [`shopify theme update run`](#shopify-theme-update-run)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
 
@@ -2213,6 +2216,64 @@ DESCRIPTION
   This command returns a "preview link"
   (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
   share with others.
+```
+
+## `shopify theme update check`
+
+Validate an 'update_extension.json' script.
+
+```
+USAGE
+  $ shopify theme update check [--no-color] [--script <value>] [--verbose]
+
+FLAGS
+  --no-color        Disable color output.
+  --script=<value>  [default: ./update_extension.json] The path to the 'update_extension.json' script.
+  --verbose         Increase the verbosity of the output.
+
+DESCRIPTION
+  Validate an 'update_extension.json' script.
+```
+
+## `shopify theme update init`
+
+Initialize an 'update_extension.json' script.
+
+```
+USAGE
+  $ shopify theme update init [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  --no-color      Disable color output.
+  --path=<value>  The path to your theme directory.
+  --verbose       Increase the verbosity of the output.
+
+DESCRIPTION
+  Initialize an 'update_extension.json' script.
+```
+
+## `shopify theme update run`
+
+Run the theme update process.
+
+```
+USAGE
+  $ shopify theme update run --from-theme <value> --to-theme <value> [--no-color] [--password <value>] [--path
+    <value>] [--script <value>] [-s <value>] [--verbose]
+
+FLAGS
+  -s, --store=<value>       Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                            (example.myshopify.com, https://example.myshopify.com).
+      --from-theme=<value>  (required) The theme ID or name of the theme at the previous version.
+      --no-color            Disable color output.
+      --password=<value>    Password generated from the Theme Access app.
+      --path=<value>        The path to your theme directory.
+      --script=<value>      The path to the 'update_extension.json' script.
+      --to-theme=<value>    (required) The theme ID or name of the theme at the target version.
+      --verbose             Increase the verbosity of the output.
+
+DESCRIPTION
+  Run the theme update process.
 ```
 
 ## `shopify upgrade`

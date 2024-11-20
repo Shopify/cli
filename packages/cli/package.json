@@ -149,6 +149,9 @@
       "theme": {
         "description": "Build Liquid themes."
       },
+      "theme:update": {
+        "description": "Manage 'update_extension.json' scripts."
+      },
       "app": {
         "description": "Build Shopify apps."
       },

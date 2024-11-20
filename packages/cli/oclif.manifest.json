@@ -6185,6 +6185,178 @@
       "strict": true,
       "summary": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name."
     },
+    "theme:update:check": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Validate an 'update_extension.json' script.",
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "script": {
+          "default": "./update_extension.json",
+          "description": "The path to the 'update_extension.json' script.",
+          "env": "SHOPIFY_FLAG_SCRIPT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "script",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:update:check",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "theme:update:init": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Initialize an 'update_extension.json' script.",
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:update:init",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "theme:update:run": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Run the theme update process.",
+      "flags": {
+        "from-theme": {
+          "description": "The theme ID or name of the theme at the previous version.",
+          "env": "SHOPIFY_FLAG_SOURCE_THEME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "from-theme",
+          "required": true,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "script": {
+          "description": "The path to the 'update_extension.json' script.",
+          "env": "SHOPIFY_FLAG_SCRIPT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "script",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "to-theme": {
+          "description": "The theme ID or name of the theme at the target version.",
+          "env": "SHOPIFY_FLAG_TARGET_THEME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "to-theme",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:update:run",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "upgrade": {
       "aliases": [
       ],
