@@ -117,25 +117,25 @@ describe('dev', () => {
         ],
         nextSteps: [
           [
+            'Share your theme preview',
             {
-              link: {
-                label: 'Preview your gift cards',
-                url: 'http://127.0.0.1:9292/gift_cards/[store_id]/preview',
-              },
+              subdued: '\nhttps://my-store.myshopify.com/?preview_theme_id=123',
             },
           ],
           [
             {
               link: {
-                label: 'Customize your theme at the theme editor',
+                label: 'Customize your theme in the theme editor',
                 url: 'https://my-store.myshopify.com/admin/themes/123/editor',
               },
             },
           ],
           [
-            'Share your theme preview',
             {
-              subdued: '\nhttps://my-store.myshopify.com/?preview_theme_id=123',
+              link: {
+                label: 'Preview your gift cards',
+                url: 'http://127.0.0.1:9292/gift_cards/[store_id]/preview',
+              },
             },
           ],
         ],
