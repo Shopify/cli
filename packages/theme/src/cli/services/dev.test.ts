@@ -117,9 +117,14 @@ describe('dev', () => {
         ],
         nextSteps: [
           [
-            'Share your theme preview',
             {
-              subdued: '\nhttps://my-store.myshopify.com/?preview_theme_id=123',
+              link: {
+                label: 'Share your theme preview',
+                url: `https://my-store.myshopify.com/?preview_theme_id=123`,
+              },
+            },
+            {
+              subdued: '(https://my-store.myshopify.com/?preview_theme_id=123)',
             },
           ],
           [
