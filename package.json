@@ -149,6 +149,7 @@
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
           "bin/*",
+          "gh",
           "istanbul-merge"
         ],
         "ignoreDependencies": [
@@ -261,7 +262,6 @@
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreBinaries": [
-          "bundle",
           "open"
         ],
         "vite": {

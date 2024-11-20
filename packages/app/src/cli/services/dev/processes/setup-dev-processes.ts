@@ -124,6 +124,7 @@ export async function setupDevProcesses({
       grantedScopes: remoteApp.grantedScopes,
       appId: remoteApp.id,
       appDirectory: reloadedApp.directory,
+      appWatcher,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
