@@ -16,7 +16,7 @@ import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('h3', async () => {
   const actual: any = await vi.importActual('h3')
@@ -234,23 +234,20 @@ describe('getExtensionAssetMiddleware()', () => {
   test('returns the file for that asset path', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       const response = getMockResponse()
-      const devUUID = '123abc'
       const fileName = 'test-ui-extension.js'
-      const outputPath = joinPath(tmpDir, devUUID, fileName)
+      const extension = await testUIExtension({})
+      const outputPath = extension.getOutputPathForDirectory(tmpDir)
       const options = {
         devOptions: {
-          extensions: [
-            {
-              devUUID,
-              outputPath,
-              outputFileName: fileName,
-            },
-          ],
+          extensions: [extension],
+          appWatcher: {
+            buildOutputPath: tmpDir,
+          },
         },
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions
 
-      await mkdir(joinPath(tmpDir, devUUID))
+      await mkdir(dirname(outputPath))
       await touchFile(outputPath)
       await writeFile(outputPath, `content from ${fileName}`)
 
@@ -258,7 +255,7 @@ describe('getExtensionAssetMiddleware()', () => {
         getMockRequest({
           context: {
             params: {
-              extensionId: devUUID,
+              extensionId: extension.devUUID,
               assetPath: fileName,
             },
           },
@@ -420,6 +417,9 @@ describe('getExtensionPayloadMiddleware()', () => {
             }),
           ],
           manifestVersion: '3',
+          appWatcher: {
+            buildOutputPath: 'mock-build-output-path',
+          },
         },
         payloadStore: {},
       } as unknown as GetExtensionsMiddlewareOptions

@@ -275,7 +275,15 @@ describe('app-event-watcher when receiving a file event', () => {
           path: expect.anything(),
         })
 
-        expect(emitSpy).toHaveBeenCalledWith('ready', app)
+        const initialEvents = app.realExtensions.map((eve) => ({
+          type: EventType.Updated,
+          extension: eve,
+          buildResult: {status: 'ok', handle: eve.handle},
+        }))
+        expect(emitSpy).toHaveBeenCalledWith('ready', {
+          app,
+          extensionEvents: expect.arrayContaining(initialEvents),
+        })
 
         if (needsAppReload) {
           expect(loadApp).toHaveBeenCalledWith({

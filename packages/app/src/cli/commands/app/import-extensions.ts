@@ -93,6 +93,7 @@ export default class ImportExtensions extends AppCommand {
       renderFatalError(new AbortError('Invalid migration choice'))
       process.exit(1)
     }
+
     await importExtensions({
       ...appContext,
       extensionTypes: migrationChoice.extensionTypes,

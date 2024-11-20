@@ -8,16 +8,18 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 
-export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
+export type GetUIExtensionPayloadOptions = Omit<ExtensionDevOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
   currentLocalizationPayload?: UIExtensionPayload['localization']
 }
 
 export async function getUIExtensionPayload(
   extension: ExtensionInstance,
+  bundlePath: string,
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
   return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
+    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
@@ -27,7 +29,7 @@ export async function getUIExtensionPayload(
         main: {
           name: 'main',
           url: `${url}/assets/${extension.outputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(extension.outputPath)) ?? 0,
+          lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
         },
       },
       capabilities: {

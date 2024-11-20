@@ -262,7 +262,6 @@
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreBinaries": [
-          "bundle",
           "open"
         ],
         "vite": {
