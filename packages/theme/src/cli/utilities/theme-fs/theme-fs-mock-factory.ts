@@ -9,6 +9,7 @@ export function fakeThemeFileSystem(
   return {
     root,
     files,
+    errors: new Map(),
     unsyncedFileKeys: new Set(),
     ready: () => Promise.resolve(),
     delete: async (fileKey: string) => {

@@ -92,6 +92,11 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  */
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
+    if (ctx.localThemeFileSystem.errors.has(fileKey)) {
+      triggerHotReload(fileKey, ctx)
+      return
+    }
+
     const extension = extname(fileKey)
 
     if (isAsset(fileKey)) {
@@ -134,7 +139,6 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('change', handleFileUpdate)
   ctx.localThemeFileSystem.addEventListener('unlink', handleFileDelete)
-
   // Once the initial files are loaded, read all the JSON files so that
   // we gather the existing section names early. This way, when a section
   // is reloaded, we can quickly find what to update in the DOM without

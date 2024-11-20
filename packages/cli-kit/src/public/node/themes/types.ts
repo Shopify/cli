@@ -5,7 +5,7 @@ import {AdminSession} from '../session.js'
  */
 export type Key = string
 
-export type ThemeFSEventName = 'add' | 'change' | 'unlink'
+export type ThemeFSEventName = 'add' | 'change' | 'unlink' | 'error'
 
 type ThemeFSEvent =
   | {
@@ -16,6 +16,7 @@ type ThemeFSEvent =
       type: 'add' | 'change'
       payload: {
         fileKey: Key
+        errors: Map<Key, string[]>
         onContent: (fn: (content: string) => void) => void
         onSync: (fn: () => void) => void
       }
@@ -99,6 +100,11 @@ export interface ThemeFileSystem extends VirtualFileSystem {
    * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
    */
   applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
+
+  /**
+   * Map of file keys to errors.
+   */
+  errors: Map<string, string[]>
 }
 
 /**

@@ -46,6 +46,7 @@ const THEME_PARTITION_REGEX = {
 export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
   const unsyncedFileKeys = new Set<string>()
+  const fileErrors = new Map<string, string[]>()
   const filterPatterns = {
     ignoreFromFile: [] as string[],
     ignore: options?.filters?.ignore ?? [],
@@ -148,11 +149,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
         if (!result?.success) {
-          throw new Error(
-            result?.errors?.asset
-              ? `\n\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
-              : 'Response was not successful.',
-          )
+          fileErrors.set(fileKey, result?.errors?.asset ?? ['Response was not successful.'])
         }
 
         unsyncedFileKeys.delete(fileKey)
@@ -164,6 +161,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     emitEvent(eventName, {
       fileKey,
+      errors: fileErrors,
       onContent: (fn) => {
         contentPromise
           .then((content) => {
@@ -223,6 +221,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     root,
     files,
     unsyncedFileKeys,
+    errors: fileErrors,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
       files.delete(fileKey)
