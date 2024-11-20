@@ -1,16 +1,15 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {updateExtensionDraft} from '../update-extension.js'
-import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {AppEvent, AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {outputWarn} from '@shopify/cli-kit/node/output'
 
 interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
@@ -19,6 +18,7 @@ interface DraftableExtensionOptions {
   remoteExtensionIds: {[key: string]: string}
   proxyUrl: string
   localApp: AppInterface
+  appWatcher: AppEventWatcher
 }
 
 export interface DraftableExtensionProcess extends BaseProcess<DraftableExtensionOptions> {
@@ -26,8 +26,8 @@ export interface DraftableExtensionProcess extends BaseProcess<DraftableExtensio
 }
 
 export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExtensionOptions> = async (
-  {stderr, stdout, abortSignal: signal},
-  {extensions, developerPlatformClient, apiKey, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
+  {stderr, stdout},
+  {developerPlatformClient, apiKey, remoteExtensionIds: remoteExtensions, localApp: app, appWatcher},
 ) => {
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
@@ -37,63 +37,35 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
     await developerPlatformClient.refreshToken()
   }
 
-  await Promise.all(
-    extensions.map(async (extension) => {
+  const handleAppEvent = (event: AppEvent) => {
+    const extensionEvents = event.extensionEvents
+      .filter((ev) => ev.type === EventType.Updated)
+      .filter((ev) => ev.buildResult?.status === 'ok')
+
+    for (const extensionEvent of extensionEvents) {
+      const extension = extensionEvent.extension
+      const registrationId = remoteExtensions[extension.localIdentifier]
+      if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
       return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
-        await extension.build({
-          app,
-          stdout,
-          stderr,
-          useTasks: false,
-          signal,
-          environment: 'development',
-        })
-        const registrationId = remoteExtensions[extension.localIdentifier]
-        if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-        // Initial draft update for each extension
-        await updateExtensionDraft({
-          extension,
-          developerPlatformClient,
-          apiKey,
-          registrationId,
-          stdout,
-          stderr,
-          appConfiguration: app.configuration,
-        })
-        // Watch for changes
-        return setupExtensionWatcher({
-          extension,
-          app,
-          url: proxyUrl,
-          stdout,
-          stderr,
-          signal,
-          onChange: async () => {
-            // At this point the extension has already been built and is ready to be updated
-            return performActionWithRetryAfterRecovery(
-              async () =>
-                updateExtensionDraft({
-                  extension,
-                  developerPlatformClient,
-                  apiKey,
-                  registrationId,
-                  stdout,
-                  stderr,
-                  appConfiguration: app.configuration,
-                }),
-              refreshToken,
-            )
-          },
-          onReloadAndBuildError: async (error) => {
-            const draftUpdateErrorMessage = extension.draftMessages.errorMessage
-            if (draftUpdateErrorMessage) {
-              outputWarn(`${draftUpdateErrorMessage}: ${error.message}`, stdout)
-            }
-          },
-        })
+        return performActionWithRetryAfterRecovery(
+          async () =>
+            updateExtensionDraft({
+              extension,
+              developerPlatformClient,
+              apiKey,
+              registrationId,
+              stdout,
+              stderr,
+              appConfiguration: app.configuration,
+              bundlePath: appWatcher.buildOutputPath,
+            }),
+          refreshToken,
+        )
       })
-    }),
-  )
+    }
+  }
+
+  appWatcher.onEvent(handleAppEvent).onStart(handleAppEvent)
 }
 
 export async function setupDraftableExtensionsProcess({
