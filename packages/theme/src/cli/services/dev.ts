@@ -122,23 +122,28 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
       [
         {
           link: {
-            label: 'Preview your gift cards',
-            url: `${localUrl}/gift_cards/[store_id]/preview`,
+            label: 'Share your theme preview',
+            url: `${remoteUrl}/?preview_theme_id=${themeId}`,
+          },
+        },
+        {
+          subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
+        },
+      ],
+      [
+        {
+          link: {
+            label: 'Customize your theme in the theme editor',
+            url: `${remoteUrl}/admin/themes/${themeId}/editor`,
           },
         },
       ],
       [
         {
           link: {
-            label: 'Customize your theme at the theme editor',
-            url: `${remoteUrl}/admin/themes/${themeId}/editor`,
+            label: 'Preview your gift cards',
+            url: `${localUrl}/gift_cards/[store_id]/preview`,
           },
-        },
-      ],
-      [
-        'Share your theme preview',
-        {
-          subdued: `\n${remoteUrl}/?preview_theme_id=${themeId}`,
         },
       ],
     ],
