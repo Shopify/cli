@@ -127,7 +127,7 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
           },
         },
         {
-          subdued: `(${remoteUrl}/?preview_theme_id=${themeId})`,
+          subdued: `${remoteUrl}/?preview_theme_id=${themeId}`,
         },
       ],
       [

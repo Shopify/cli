@@ -124,7 +124,7 @@ describe('dev', () => {
               },
             },
             {
-              subdued: '(https://my-store.myshopify.com/?preview_theme_id=123)',
+              subdued: 'https://my-store.myshopify.com/?preview_theme_id=123',
             },
           ],
           [
