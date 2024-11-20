@@ -110,12 +110,11 @@ const uiExtensionSpec = createExtensionSpecification({
         if (identifier === AssetIdentifier.Main) {
           return
         }
-        const existingContent = assets[identifier]?.content ?? ''
 
         assets[identifier] = {
           identifier: identifier as AssetIdentifier,
           outputFileName: asset.filepath,
-          content: [existingContent, `import '${asset.module}'`].join('\n'),
+          content: `import '${asset.module}'`,
         }
       })
     })

@@ -599,64 +599,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(stdInContent).toContain(`import './src/ExtensionPointB.js';`)
       })
     })
-
-    test('maps every should_render to an import statement', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        // Given
-        const uiExtension = await getTestUIExtension({
-          directory: tmpDir,
-          extensionPoints: [
-            {
-              target: 'EXTENSION::POINT::A',
-              module: './src/ExtensionPointA.js',
-              should_render: {
-                module: './src/ShouldRenderA.js',
-              },
-              build_manifest: {
-                assets: {
-                  main: {
-                    filepath: '/test-ui-extension.js',
-                    module: './src/ExtensionPointA.js',
-                  },
-                  should_render: {
-                    filepath: '/test-ui-extension-conditions.js',
-                    module: './src/ShouldRenderA.js',
-                  },
-                },
-              },
-            },
-            {
-              target: 'EXTENSION::POINT::B',
-              module: './src/ExtensionPointB.js',
-              should_render: {
-                module: './src/ShouldRenderB.js',
-              },
-              build_manifest: {
-                assets: {
-                  main: {
-                    filepath: '/test-ui-extension.js',
-                    module: './src/ExtensionPointB.js',
-                  },
-                  should_render: {
-                    filepath: '/test-ui-extension-conditions-b.js',
-                    module: './src/ShouldRenderB.js',
-                  },
-                },
-              },
-            },
-          ],
-        })
-
-        // When
-        const stdInContent = uiExtension
-          .getBundleExtensionStdinContent()
-          .assets?.find((asset) => asset.identifier === 'should_render')?.content
-
-        // Then
-        expect(stdInContent).toContain(`import './src/ShouldRenderA.js'`)
-        expect(stdInContent).toContain(`import './src/ShouldRenderB.js'`)
-      })
-    })
   })
 
   describe('shouldFetchCartUrl()', async () => {
