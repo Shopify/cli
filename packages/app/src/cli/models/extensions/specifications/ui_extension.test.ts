@@ -148,11 +148,11 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: '/test-ui-extension.js',
+                filepath: 'dist/test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
               should_render: {
-                filepath: '/test-ui-extension-conditions.js',
+                filepath: 'dist/test-ui-extension-conditions.js',
                 module: './src/ShouldRender.js',
               },
             },
@@ -212,7 +212,7 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: '/test-ui-extension.js',
+                filepath: 'dist/test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
             },
@@ -272,7 +272,7 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: '/test-ui-extension.js',
+                filepath: 'dist/test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
             },
@@ -332,7 +332,7 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: '/test-ui-extension.js',
+                filepath: 'dist/test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
             },
@@ -395,11 +395,11 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: '/test-ui-extension.js',
+                filepath: 'dist/test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
               should_render: {
-                filepath: '/test-ui-extension-conditions.js',
+                filepath: 'dist/test-ui-extension-conditions.js',
                 module: './src/ShouldRender.js',
               },
             },
