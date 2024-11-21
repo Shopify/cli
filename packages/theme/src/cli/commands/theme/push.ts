@@ -102,8 +102,8 @@ export default class Push extends ThemeCommand {
       env: 'SHOPIFY_FLAG_FORCE',
     }),
     strict: Flags.boolean({
-      description: 'Push theme files to the remote theme, but fail if there are theme check offenses.',
-      env: 'SHOPIFY_FLAG_STRICT',
+      description: 'Require theme check to pass without errors before pushing. Warnings are allowed.',
+      env: 'SHOPIFY_FLAG_STRICT_PUSH',
     }),
   }
 
