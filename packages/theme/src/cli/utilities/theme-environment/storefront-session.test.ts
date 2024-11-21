@@ -237,6 +237,24 @@ describe('Storefront API', () => {
       })
     })
 
+    test('returns true when the password is correct and the store redirects to a localized URL', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 302,
+          headers: {
+            location: 'https://store.myshopify.com/en',
+          },
+        }),
+      )
+
+      // When
+      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
+
+      // Then
+      expect(result).toBe(true)
+    })
+
     test('returns true when the password is correct and the store name is capitalized', async () => {
       // Given
       vi.mocked(fetch).mockResolvedValueOnce(
@@ -286,6 +304,24 @@ describe('Storefront API', () => {
           status: 302,
           headers: {
             location: 'https://random-location.com/',
+          },
+        }),
+      )
+
+      // When
+      const result = await isStorefrontPasswordCorrect('correct-password', 'store.myshopify.com')
+
+      // Then
+      expect(result).toBe(false)
+    })
+
+    test('returns false when the redirect location has a different origin', async () => {
+      // Given
+      vi.mocked(fetch).mockResolvedValueOnce(
+        response({
+          status: 302,
+          headers: {
+            location: 'https://another-store.myshopify.com/',
           },
         }),
       )
