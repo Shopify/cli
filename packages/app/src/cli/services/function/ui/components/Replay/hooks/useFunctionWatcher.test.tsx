@@ -82,6 +82,7 @@ describe('useFunctionWatcher', () => {
         abortController: ABORT_CONTROLLER,
         app: APP,
         extension: EXTENSION,
+        appWatcher: new AppEventWatcher(APP),
       }),
     )
     // needed to await the render

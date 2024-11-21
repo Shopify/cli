@@ -17,7 +17,7 @@ interface WatchFunctionForReplayOptions {
   abortController: AbortController
   app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
-  appWatcher?: AppEventWatcher
+  appWatcher: AppEventWatcher
 }
 
 export function useFunctionWatcher({
@@ -50,8 +50,6 @@ export function useFunctionWatcher({
 
   const [statusMessage, setStatusMessage] = useState(`Watching for changes to ${selectedRun.source}...`)
 
-  const appWatcherInstance = appWatcher ?? new AppEventWatcher(app)
-
   useEffect(() => {
     const watchAbortController = new AbortController()
     abortController.signal.addEventListener('abort', () => {
@@ -73,7 +71,7 @@ export function useFunctionWatcher({
     }
 
     const startWatchingFunction = async () => {
-      appWatcherInstance.onEvent(async (event) => {
+      appWatcher.onEvent(async (event) => {
         const functionExt = event.extensionEvents.find((extEvent) => extEvent.extension.handle === extension.handle)
         if (!functionExt || functionExt.type !== EventType.Updated) return
         if (functionExt.buildResult?.status === 'error') {
@@ -92,7 +90,7 @@ export function useFunctionWatcher({
         },
       })
 
-      await appWatcherInstance.start({stdout: customStdout, stderr: customStdout, signal: watchAbortController.signal})
+      await appWatcher.start({stdout: customStdout, stderr: customStdout, signal: watchAbortController.signal})
     }
 
     // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/no-floating-promises
