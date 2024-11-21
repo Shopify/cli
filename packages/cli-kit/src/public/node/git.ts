@@ -268,9 +268,21 @@ export class OutsideGitDirectoryError extends AbortError {}
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  if (!(await git({baseDir: directory}).checkIsRepo())) {
+  if (!(await insideGitDirectory(directory))) {
     throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
   }
+}
+
+/**
+ * Returns true if the given directory is inside a .git directory tree.
+ *
+ * @param directory - The directory to check.
+ * @returns True if the directory is inside a .git directory tree.
+ */
+export async function insideGitDirectory(directory?: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  return git({baseDir: directory}).checkIsRepo()
 }
 
 export class GitDirectoryNotCleanError extends AbortError {}
