@@ -79,6 +79,12 @@ export interface themepush {
   '-s, --store <value>'?: string
 
   /**
+   * Require theme check to pass without errors before pushing. Warnings are allowed.
+   * @environment SHOPIFY_FLAG_STRICT_PUSH
+   */
+  '--strict'?: ''
+
+  /**
    * Theme ID or name of the remote theme.
    * @environment SHOPIFY_FLAG_THEME_ID
    */
