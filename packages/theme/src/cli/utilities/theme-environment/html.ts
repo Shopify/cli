@@ -87,7 +87,9 @@ function getErrorSection(errors: Map<string, string[]>) {
       ([fileKey, messages]) => `
         <div style="margin-bottom: 16px; text-align: left;">
           <strong>${fileKey}</strong>
-          ${messages.map((msg) => `<pre style="margin: 8px 0; white-space: normal;">- ${msg}</pre>`).join('')}
+          ${messages
+            .map((msg) => `<pre style="margin: 8px 0; white-space: normal; word-wrap: break-word;">- ${msg}</pre>`)
+            .join('')}
         </div>
       `,
     )
