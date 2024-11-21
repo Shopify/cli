@@ -13,6 +13,7 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
+import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 
 interface PullOptions {
   path: string
@@ -145,6 +146,21 @@ async function executePull(theme: Theme, session: AdminSession, options: PullOpt
     !(await isEmptyDir(path)) &&
     !(await hasRequiredThemeDirectories(path)) &&
     !(await currentDirectoryConfirmed(force))
+  ) {
+    return
+  }
+
+  /**
+   * If the current directory is a Git directory and it is not clean, we ask for
+   * confirmation before proceeding.
+   */
+  if (
+    (await insideGitDirectory(path)) &&
+    !(await isClean(path)) &&
+    !(await currentDirectoryConfirmed(
+      force,
+      'The current Git directory has uncommitted changes. Do you want to proceed?',
+    ))
   ) {
     return
   }

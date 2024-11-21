@@ -16,12 +16,15 @@ export function themesComponent(themes: Theme[]) {
   return {list: {items}}
 }
 
-export async function currentDirectoryConfirmed(force: boolean) {
+export async function currentDirectoryConfirmed(
+  force: boolean,
+  message = "It doesn't seem like you're running this command in a theme directory.",
+) {
   if (force) {
     return true
   }
 
-  renderWarning({body: `It doesn't seem like you're running this command in a theme directory.`})
+  renderWarning({body: message})
 
   if (!process.stdout.isTTY) {
     return true
