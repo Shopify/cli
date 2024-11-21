@@ -163,6 +163,28 @@ describe('push', () => {
       // When/Then
       await expect(push({...defaultFlags, strict: true})).resolves.not.toThrow()
     })
+
+    test('passes the --json flag to theme check as output format', async () => {
+      // Given
+      vi.mocked(runThemeCheck).mockResolvedValue({
+        offenses: [
+          {
+            severity: Severity.WARNING,
+            message: 'warning message',
+            check: 'check',
+            absolutePath: '/path/to/file.liquid',
+            type: SourceCodeType.LiquidHtml,
+            start: {index: 0, line: 1, character: 1},
+            end: {index: 1, line: 1, character: 1},
+          },
+        ],
+        theme: [],
+      })
+
+      // When/Then
+      await push({...defaultFlags, strict: true, json: true})
+      expect(runThemeCheck).toHaveBeenCalledWith(path, 'json')
+    })
   })
 })
 
