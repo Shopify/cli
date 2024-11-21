@@ -109,7 +109,7 @@ export interface PushFlags {
  */
 export async function push(flags: PushFlags): Promise<void> {
   if (flags.strict) {
-    const outputType = flags.json ?? false ? 'json' : 'text'
+    const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
 
     if (offenses.length > 0) {
