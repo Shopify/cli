@@ -5,6 +5,7 @@ import {getUIExtensionResourceURL} from '../../../utilities/extensions/configura
 import {ExtensionDevOptions} from '../extension.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -26,41 +27,7 @@ export async function getUIExtensionPayload(
 
     const renderer = await getUIExtensionRendererVersion(extension)
 
-    const extensionPointsWithAssets = await Promise.all(
-      extension.configuration.extension_points.map(
-        async (extensionPoint: ExtensionInstance['configuration']['extension_points']) => {
-          const buildManifest = extensionPoint.build_manifest as {
-            assets: {[key: string]: {filepath: string}}
-          }
-
-          let assets: Asset = {}
-
-          if (buildManifest?.assets) {
-            const manifests = await Promise.all(
-              Object.entries(buildManifest.assets).map(async ([name, asset]) => ({
-                name,
-                url: `${url}${joinPath('/assets/', asset.filepath)}`,
-                lastUpdated:
-                  (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), asset.filepath))) ?? 0,
-              })),
-            )
-            assets = manifests.reduce((acc, asset) => {
-              acc[asset.name] = asset
-              return acc
-            }, assets)
-
-            return {
-              ...extensionPoint,
-              assets,
-            }
-          }
-
-          return extensionPoint
-        },
-      ),
-    )
-
-    const extensionPoints = getExtensionPoints(extensionPointsWithAssets, url)
+    const extensionPoints = await getExtensionPoints(extension, url)
 
     const defaultConfig = {
       assets: {
@@ -118,23 +85,45 @@ export async function getUIExtensionPayload(
   })
 }
 
-function getExtensionPoints(extensionPoints: ExtensionInstance['configuration']['extension_points'], url: string) {
-  if (isNewExtensionPointsSchema(extensionPoints)) {
-    return extensionPoints.map((extensionPoint) => {
-      const {target, resource} = extensionPoint
+async function getExtensionPoints(extension: ExtensionInstance, url: string) {
+  const extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
 
-      return {
-        ...extensionPoint,
-        surface: getExtensionPointTargetSurface(target),
-        root: {
-          url: `${url}/${target}`,
-        },
-        resource: resource || {url: ''},
-      }
-    })
+  if (isNewExtensionPointsSchema(extensionPoints)) {
+    return Promise.all(
+      extensionPoints.map(async (extensionPoint) => {
+        const {target, resource} = extensionPoint
+        const assets = await extractAssetsFromBuildManifest(extensionPoint.build_manifest, url, extension)
+
+        return {
+          ...extensionPoint,
+          assets,
+          surface: getExtensionPointTargetSurface(target),
+          root: {
+            url: `${url}/${target}`,
+          },
+          resource: resource || {url: ''},
+        }
+      }),
+    )
   }
 
   return extensionPoints
+}
+
+async function extractAssetsFromBuildManifest(buildManifest: BuildManifest, url: string, extension: ExtensionInstance) {
+  if (!buildManifest.assets) return {}
+  const assets: {[key: string]: Asset} = {}
+
+  for (const [name, asset] of Object.entries(buildManifest.assets)) {
+    assets[name] = {
+      name,
+      url: `${url}${joinPath('/assets/', asset.filepath)}`,
+      // eslint-disable-next-line no-await-in-loop
+      lastUpdated: (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), asset.filepath))) ?? 0,
+    }
+  }
+
+  return assets
 }
 
 export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionPoints is DevNewExtensionPointSchema[] {

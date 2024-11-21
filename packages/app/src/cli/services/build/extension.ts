@@ -113,7 +113,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         assets.map(async (asset) => {
           await bundleExtension({
             minify: true,
-            outputPath: joinPath(dirname(extension.outputPath), `${extension.configuration.handle}-conditions.js`),
+            outputPath: joinPath(dirname(extension.outputPath), asset.outputFileName),
             stdin: {
               contents: asset.content,
               resolveDir: extension.directory,

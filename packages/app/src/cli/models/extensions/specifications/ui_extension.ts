@@ -14,7 +14,7 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
   return config.extension_points !== undefined || config.targeting !== undefined
 }
 
-interface BuildManifest {
+export interface BuildManifest {
   assets: {
     // Main asset is always required
     [AssetIdentifier.Main]: {
@@ -43,13 +43,13 @@ export const UIExtensionSchema = BaseSchema.extend({
       const buildManifest: BuildManifest = {
         assets: {
           [AssetIdentifier.Main]: {
-            filepath: `dist/${config.handle}.js`,
+            filepath: `${config.handle}.js`,
             module: targeting.module,
           },
           ...(targeting.should_render?.module
             ? {
                 [AssetIdentifier.ShouldRender]: {
-                  filepath: `dist/${config.handle}-conditions.js`,
+                  filepath: `${config.handle}-conditions.js`,
                   module: targeting.should_render.module,
                 },
               }
@@ -86,9 +86,11 @@ const uiExtensionSpec = createExtensionSpecification({
     return validateUIExtensionPointConfig(directory, config.extension_points, path)
   },
   deployConfig: async (config, directory) => {
+    const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
+
     return {
       api_version: config.api_version,
-      extension_points: config.extension_points,
+      extension_points: transformedExtensionPoints,
       capabilities: config.capabilities,
       name: config.name,
       description: config.description,
@@ -133,6 +135,24 @@ const uiExtensionSpec = createExtensionSpecification({
     )
   },
 })
+
+function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest: BuildManifest}) {
+  return {
+    ...extP,
+    build_manifest: {
+      ...extP.build_manifest,
+      assets: Object.fromEntries(
+        Object.entries(extP.build_manifest.assets).map(([key, value]) => [
+          key as AssetIdentifier,
+          {
+            ...value,
+            filepath: joinPath('dist', value.filepath),
+          },
+        ]),
+      ),
+    },
+  }
+}
 
 async function validateUIExtensionPointConfig(
   directory: string,
