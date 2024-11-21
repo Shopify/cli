@@ -112,7 +112,7 @@ function getErrorSection(errors: Map<string, string[]>) {
     >
       <div
         style="
-          background: color(from ${color} srgb r g b / 0.6);
+          background: rgba(200, 200, 200, 0.9);
           backdrop-filter: blur(10px);
           border-radius: 10px;
           padding: 20px;
