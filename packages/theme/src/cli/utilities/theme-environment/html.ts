@@ -119,6 +119,7 @@ function getErrorSection(errors: Map<string, string[]>) {
           max-height: 80%;
           box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
           position: relative;
+          overflow-y: scroll;
         "
       >
         ${errorContent}
