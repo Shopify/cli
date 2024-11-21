@@ -43,7 +43,7 @@ export function uploadTheme(
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
-    .then(() => reportFailedUploads(uploadResults))
+    .then(() => reportFailedUploads(uploadResults, themeFileSystem))
     .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options))
 
   const workPromise = options?.deferPartialWork
@@ -412,9 +412,16 @@ async function handleFailedUploads(
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
 }
 
-function reportFailedUploads(uploadResults: Map<string, Result>) {
+function reportFailedUploads(uploadResults: Map<string, Result>, themeFileSystem: ThemeFileSystem) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
+      themeFileSystem.errors.set(key, result.errors?.asset ?? ['temp'])
+      themeFileSystem.emitEvent('change', {
+        fileKey: key,
+        errors: new Map([[key, result.errors?.asset ?? ['Failed to upload']]]),
+        onContent: () => {},
+        onSync: () => {},
+      })
       const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
       outputWarn(`Failed to upload file ${key}:`)
       outputInfo(`${errorMessage}`)

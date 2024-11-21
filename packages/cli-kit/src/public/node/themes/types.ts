@@ -105,6 +105,11 @@ export interface ThemeFileSystem extends VirtualFileSystem {
    * Map of file keys to errors.
    */
   errors: Map<string, string[]>
+
+  /**
+   * Emits an event to the event emitter.
+   */
+  emitEvent: <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => void
 }
 
 /**

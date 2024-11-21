@@ -25,5 +25,6 @@ export function fakeThemeFileSystem(
     addEventListener: () => {},
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, options?.filters),
     startWatcher: async () => {},
+    emitEvent: () => {},
   }
 }

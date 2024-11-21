@@ -115,6 +115,7 @@ You can run this command only in a directory that matches the [default Shopify t
   }
 
   async run(): Promise<void> {
+    console.log('adsf')
     const parsed = await this.parse(Dev)
     let flags = parsed.flags as typeof parsed.flags & FlagValues
     const {ignore = [], only = []} = flags

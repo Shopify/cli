@@ -244,6 +244,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },
+    emitEvent,
     startWatcher: async (themeId: string, adminSession: AdminSession) => {
       const {default: chokidar} = await import('chokidar')
 
