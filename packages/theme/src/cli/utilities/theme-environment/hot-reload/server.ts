@@ -2,6 +2,7 @@ import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
+import {serializeCookies} from '../cookies.js'
 import {
   createError,
   createEventStream,
@@ -9,6 +10,8 @@ import {
   getProxyRequestHeaders,
   getQuery,
   sendError,
+  setResponseHeaders,
+  setResponseStatus,
   type H3Error,
 } from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
@@ -101,13 +104,18 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
           triggerHotReload(fileKey.replace(extension, ''), ctx)
         })
       } else {
-        // Otherwise, just full refresh directly:
-        triggerHotReload(fileKey, ctx)
+        onSync(() => {
+          // Otherwise, just full refresh directly:
+          triggerHotReload(fileKey, ctx)
+        })
       }
     } else if (needsTemplateUpdate(fileKey)) {
-      // Update in-memory templates for hot reloading:
-      onContent((content) => {
-        if (extension === '.json') saveSectionsFromJson(fileKey, content)
+      onSync(() => {
+        // Update in-memory templates for hot reloading:
+        if (extension === '.json') {
+          saveSectionsFromJson(fileKey, ctx.localThemeFileSystem.files.get(fileKey)?.value ?? '')
+        }
+
         triggerHotReload(fileKey, ctx)
       })
     } else {
@@ -167,6 +175,32 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
     const endpoint = event.path.split('?')[0]
 
     if (endpoint === '/__hot-reload/subscribe') {
+      setResponseHeaders(event, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      })
+
+      if (event.method === 'OPTIONS') {
+        setResponseStatus(event, 204)
+        return null
+      }
+
+      // const didHandleCors = handleCors(event, {
+      //   origin: '*',
+      //   preflight: {
+      //     statusCode: 204,
+      //   },
+      //   methods: '*',
+      // })
+      // if (didHandleCors) {
+      //   return
+      // }
+
+      console.log('HOT RELOAD SUBSCRIBE', event.method)
+
       const eventStream = createEventStream(event)
 
       eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
@@ -311,8 +345,22 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
     }
   }
 
+  console.log('HOT RELOAD SECTIONS', sectionsToUpdate)
   if (sectionsToUpdate.size > 0) {
-    emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+    const sectionNames = [...sectionsToUpdate]
+    emitHotReloadEvent({
+      type: 'section',
+      key,
+      sectionNames,
+      replaceTemplates: Object.fromEntries(
+        sectionNames.map((name) => {
+          const sectionKey = `sections/${name}.liquid`
+          return [sectionKey, ctx.localThemeFileSystem.files.get(sectionKey)?.value ?? '']
+        }),
+      ),
+      token: ctx.session.storefrontToken,
+      cookies: serializeCookies(ctx.session.sessionCookies ?? {}),
+    })
   } else {
     emitHotReloadEvent({type: 'full', key})
   }

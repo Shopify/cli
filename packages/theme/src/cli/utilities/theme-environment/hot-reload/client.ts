@@ -9,7 +9,10 @@ export type HotReloadEvent =
   | {
       type: 'section'
       key: string
-      names: string[]
+      token: string
+      cookies: string
+      sectionNames: string[]
+      replaceTemplates: {[key: string]: string}
     }
   | {
       type: 'css'
@@ -150,13 +153,13 @@ function hotReloadScript() {
       }
     },
     section: async (data) => {
-      const elements = data.names.flatMap((name) =>
-        Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
-      )
+      const elements = data.sectionNames
+        .map(([name]) => Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)))
+        .flat()
 
       if (elements.length > 0) {
         await refreshSections(data, elements)
-        logInfo(`Updated sections for "${data.key}":`, data.names)
+        logInfo(`Updated sections for "${data.key}":`, data.sectionNames)
       } else {
         // No sections found. Possible scenarios:
         // - The section has been removed.
