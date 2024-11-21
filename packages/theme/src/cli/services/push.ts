@@ -1,5 +1,4 @@
 /* eslint-disable tsdoc/syntax */
-import {formatSummary, renderOffensesText, sortOffenses} from './check.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
 import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
@@ -8,6 +7,7 @@ import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -15,15 +15,14 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
-  renderInfo,
   renderSuccess,
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {themeCheckRun} from '@shopify/theme-check-node'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {Severity} from '@shopify/theme-check-node'
 
 interface PushOptions {
   path: string
@@ -99,7 +98,7 @@ export interface PushFlags {
   /** Increase the verbosity of the output. */
   verbose?: boolean
 
-  /** Require theme check to pass before pushing. */
+  /** Require theme check to pass without errors before pushing. Warnings are allowed. */
   strict?: boolean
 }
 
@@ -110,20 +109,14 @@ export interface PushFlags {
  */
 export async function push(flags: PushFlags): Promise<void> {
   if (flags.strict) {
-    const {offenses, theme} = await themeCheckRun(flags.path ?? cwd(), undefined)
+    const outputType = flags.json ?? false ? 'json' : 'text'
+    const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
 
     if (offenses.length > 0) {
-      const offensesByFile = sortOffenses(offenses)
-      renderOffensesText(offensesByFile, flags.path ?? cwd())
-
-      // Use renderSuccess when theres no offenses
-      const render = offenses.length ? renderInfo : renderSuccess
-
-      render({
-        headline: 'Theme Check Summary.',
-        body: formatSummary(offenses, offensesByFile, theme),
-      })
-      throw new AbortError('Theme check failed. Please fix the issues before pushing.')
+      const errorOffenses = offenses.filter((offense) => offense.severity === Severity.ERROR)
+      if (errorOffenses.length > 0) {
+        throw new AbortError('Theme check failed. Please fix the errors before pushing.')
+      }
     }
   }
 
