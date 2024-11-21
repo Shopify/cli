@@ -172,8 +172,27 @@ async function init(options: InitOptions) {
     tasks.push(
       {
         title: `Installing dependencies with ${packageManager}`,
-        task: async () => {
-          await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
+        task: async (_ctx, _task, updateFooter) => {
+          const t0 = Date.now()
+          let command = ''
+          const updateLoop = setInterval(() => {
+            if (!command) return
+            updateFooter([
+              "Executing",
+              {command},
+              "(running",
+              `${((Date.now() - t0) / 1000).toFixed(1)}s)`,
+            ])
+          }, 817)
+          await getDeepInstallNPMTasks({
+            from: templateScaffoldDir,
+            packageManager,
+            reportCallback: (message: string) => {
+              command = message
+            },
+          })
+          updateFooter(undefined)
+          clearInterval(updateLoop)
         },
       },
       {

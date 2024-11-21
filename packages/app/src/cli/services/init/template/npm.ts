@@ -58,9 +58,11 @@ async function packagePath(packageName: string): Promise<string> {
 export async function getDeepInstallNPMTasks({
   from,
   packageManager,
+  reportCallback,
 }: {
   from: string
   packageManager: PackageManager
+  reportCallback: (message: string) => void
 }): Promise<void> {
   /**
    * Installation of dependencies using Yarn on Windows might lead
@@ -72,5 +74,5 @@ export async function getDeepInstallNPMTasks({
    * Reported issue: https://github.com/yarnpkg/yarn/issues/7212
    */
   const args = platform() === 'win32' && packageManager === 'yarn' ? ['--network-concurrency', '1'] : []
-  return installNodeModules({directory: normalizePath(from), packageManager, args})
+  return installNodeModules({directory: normalizePath(from), packageManager, args, reportCallback})
 }

@@ -182,6 +182,7 @@ interface InstallNodeModulesOptions {
   stdout?: Writable
   stderr?: Writable
   signal?: AbortSignal
+  reportCallback?: (message: string) => void
 }
 
 export async function installNodeModules(options: InstallNodeModulesOptions): Promise<void> {
@@ -196,6 +197,7 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
   if (options.args) {
     args = args.concat(options.args)
   }
+  options.reportCallback?.([options.packageManager, ...args].join(' '))
   await runWithTimer('cmd_all_timing_network_ms')(async () => {
     await exec(options.packageManager, args, execOptions)
   })
