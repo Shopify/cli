@@ -107,20 +107,15 @@ export async function dev(options: DevOptions) {
   await renderDevSetupProgress()
   await serverStart()
   const results = await uploadResults
-  console.log('server started')
 
   for (const [key, res] of results.entries()) {
-    console.log(key, res.success)
     if (!res.success) {
-      console.log(key, res.errors?.asset)
       ctx.localThemeFileSystem.emitEvent('change', {
         fileKey: key,
-        errors: new Map([[key, res.errors?.asset ?? ['Failed to upload']]]),
+        uploadErrors: new Map([[key, res.errors?.asset ?? ['Failed to upload']]]),
         onContent: () => {},
         onSync: () => {},
       })
-    } else {
-      console.log('success', key)
     }
   }
 

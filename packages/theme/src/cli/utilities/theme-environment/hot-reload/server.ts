@@ -92,7 +92,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  */
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
-    if (ctx.localThemeFileSystem.errors.has(fileKey)) {
+    if (ctx.localThemeFileSystem.uploadErrors.has(fileKey)) {
       triggerHotReload(fileKey, ctx)
       return
     }

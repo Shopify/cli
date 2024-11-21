@@ -35,8 +35,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
           html = injectHotReloadScript(html)
         }
 
-        if (ctx.localThemeFileSystem.errors.size > 0) {
-          html = injectErrorIntoHtml(html, ctx.localThemeFileSystem.errors)
+        if (ctx.localThemeFileSystem.uploadErrors.size > 0) {
+          html = injectErrorIntoHtml(html, ctx.localThemeFileSystem.uploadErrors)
         }
 
         return html

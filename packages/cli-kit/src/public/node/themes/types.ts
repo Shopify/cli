@@ -5,7 +5,7 @@ import {AdminSession} from '../session.js'
  */
 export type Key = string
 
-export type ThemeFSEventName = 'add' | 'change' | 'unlink' | 'error'
+export type ThemeFSEventName = 'add' | 'change' | 'unlink'
 
 type ThemeFSEvent =
   | {
@@ -16,7 +16,7 @@ type ThemeFSEvent =
       type: 'add' | 'change'
       payload: {
         fileKey: Key
-        errors: Map<Key, string[]>
+        uploadErrors: Map<Key, string[]>
         onContent: (fn: (content: string) => void) => void
         onSync: (fn: () => void) => void
       }
@@ -104,7 +104,7 @@ export interface ThemeFileSystem extends VirtualFileSystem {
   /**
    * Map of file keys to errors.
    */
-  errors: Map<string, string[]>
+  uploadErrors: Map<string, string[]>
 
   /**
    * Emits an event to the event emitter.
