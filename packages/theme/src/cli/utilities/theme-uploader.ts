@@ -415,10 +415,10 @@ async function handleFailedUploads(
 function reportFailedUploads(uploadResults: Map<string, Result>, themeFileSystem: ThemeFileSystem) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
-      themeFileSystem.uploadErrors.set(key, result.errors?.asset ?? ['temp'])
+      themeFileSystem.uploadErrors.set(key, result.errors?.asset ?? ['Failed to upload'])
       themeFileSystem.emitEvent('change', {
         fileKey: key,
-        uploadErrors: new Map([[key, result.errors?.asset ?? ['Failed to upload']]]),
+        uploadErrors: themeFileSystem.uploadErrors,
         onContent: () => {},
         onSync: () => {},
       })
