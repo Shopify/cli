@@ -24,6 +24,7 @@ interface UpdateExtensionDraftOptions {
   stdout: Writable
   stderr: Writable
   appConfiguration: AppConfigurationWithoutPath
+  bundlePath: string
 }
 
 export async function updateExtensionDraft({
@@ -34,10 +35,12 @@ export async function updateExtensionDraft({
   stdout,
   stderr,
   appConfiguration,
+  bundlePath,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
-    const content = await readFile(extension.outputPath)
+    const outputPath = extension.getOutputPathForDirectory(bundlePath)
+    const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
   }
