@@ -148,7 +148,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
-        if (!result?.success) {
+        if (result?.success) {
+          uploadErrors.delete(fileKey)
+        } else {
           uploadErrors.set(fileKey, result?.errors?.asset ?? ['Response was not successful.'])
         }
 
