@@ -97,6 +97,10 @@ export default class Push extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    strict: Flags.boolean({
+      description: 'Push theme files to the remote theme, but fail if there are theme check offenses.',
+      env: 'SHOPIFY_FLAG_STRICT',
+    }),
   }
 
   async run(): Promise<void> {
@@ -120,6 +124,7 @@ export default class Push extends ThemeCommand {
       force: flags.force,
       noColor: flags['no-color'],
       verbose: flags.verbose,
+      strict: flags.strict,
     }
 
     await push(pushFlags)
