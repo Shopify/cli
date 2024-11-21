@@ -43,7 +43,6 @@ export class ESBuildContextManager {
   async createContexts(extensions: ExtensionInstance[]) {
     const promises = extensions.map(async (extension) => {
       const {main, assets} = extension.getBundleExtensionStdinContent()
-      const contexts: BuildContext[] = []
       const mainOutputPath = extension.getOutputPathForDirectory(this.outputPath)
       const esbuildOptions = await this.extensionEsBuildOptions(
         {
@@ -53,26 +52,21 @@ export class ESBuildContextManager {
         },
         mainOutputPath,
       )
-      const context = await esContext(esbuildOptions)
-      contexts.push(context)
+      const mainContextPromise = esContext(esbuildOptions)
 
-      if (assets) {
-        await Promise.all(
-          assets.map(async (asset) => {
-            const esbuildOptions = await this.extensionEsBuildOptions(
-              {
-                contents: asset.content,
-                resolveDir: extension.directory,
-                loader: 'ts',
-              },
-              joinPath(dirname(mainOutputPath), asset.outputFileName),
-            )
-            const context = await esContext(esbuildOptions)
-            contexts.push(context)
-          }),
+      const assetContextPromises = (assets ?? []).map(async (asset) => {
+        const esbuildOptions = await this.extensionEsBuildOptions(
+          {
+            contents: asset.content,
+            resolveDir: extension.directory,
+            loader: 'ts',
+          },
+          joinPath(dirname(mainOutputPath), asset.outputFileName),
         )
-      }
-      this.contexts[extension.handle] = contexts
+        return esContext(esbuildOptions)
+      })
+
+      this.contexts[extension.handle] = await Promise.all(assetContextPromises.concat(mainContextPromise))
     })
 
     await Promise.all(promises)
