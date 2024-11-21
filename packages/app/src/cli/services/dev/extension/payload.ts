@@ -92,11 +92,12 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
     return Promise.all(
       extensionPoints.map(async (extensionPoint) => {
         const {target, resource} = extensionPoint
-        const assets = await extractAssetsFromBuildManifest(extensionPoint.build_manifest, url, extension)
 
         return {
           ...extensionPoint,
-          assets,
+          ...(extensionPoint.build_manifest
+            ? {assets: await extractAssetsFromBuildManifest(extensionPoint.build_manifest, url, extension)}
+            : {}),
           surface: getExtensionPointTargetSurface(target),
           root: {
             url: `${url}/${target}`,
@@ -111,7 +112,7 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string) {
 }
 
 async function extractAssetsFromBuildManifest(buildManifest: BuildManifest, url: string, extension: ExtensionInstance) {
-  if (!buildManifest.assets) return {}
+  if (!buildManifest?.assets) return {}
   const assets: {[key: string]: Asset} = {}
 
   for (const [name, asset] of Object.entries(buildManifest.assets)) {

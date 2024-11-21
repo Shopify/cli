@@ -148,11 +148,11 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: 'dist/test-ui-extension.js',
+                filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
               should_render: {
-                filepath: 'dist/test-ui-extension-conditions.js',
+                filepath: 'test-ui-extension-conditions.js',
                 module: './src/ShouldRender.js',
               },
             },
@@ -212,7 +212,7 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: 'dist/test-ui-extension.js',
+                filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
             },
@@ -272,7 +272,7 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: 'dist/test-ui-extension.js',
+                filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
             },
@@ -332,7 +332,7 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: 'dist/test-ui-extension.js',
+                filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
             },
@@ -395,11 +395,11 @@ describe('ui_extension', async () => {
           build_manifest: {
             assets: {
               main: {
-                filepath: 'dist/test-ui-extension.js',
+                filepath: 'test-ui-extension.js',
                 module: './src/ExtensionPointA.js',
               },
               should_render: {
-                filepath: 'dist/test-ui-extension-conditions.js',
+                filepath: 'test-ui-extension-conditions.js',
                 module: './src/ShouldRender.js',
               },
             },
@@ -522,6 +522,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             {
               target: 'EXTENSION::POINT::A',
               module: './src/ExtensionPointA.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    filepath: 'test-ui-extension.js',
+                    module: './src/ExtensionPointA.js',
+                  },
+                },
+              },
             },
           ],
         })
@@ -536,7 +544,18 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(loadLocales.loadLocalesConfig).toBeCalledWith(tmpDir, uiExtension.configuration.type)
         expect(deployConfig).toStrictEqual({
           localization,
-          extension_points: uiExtension.configuration.extension_points,
+          extension_points: uiExtension.configuration.extension_points?.map((extPoint) => ({
+            ...extPoint,
+            build_manifest: {
+              ...extPoint.build_manifest,
+              assets: {
+                main: {
+                  filepath: 'dist/test-ui-extension.js',
+                  module: extPoint.module,
+                },
+              },
+            },
+          })),
 
           // Ensure nested capabilities are updated
           capabilities: {

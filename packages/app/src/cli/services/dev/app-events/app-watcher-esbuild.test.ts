@@ -120,7 +120,7 @@ describe('app-watcher-esbuild', () => {
     // Given
     const manager = new ESBuildContextManager(options)
     await manager.createContexts([extension1])
-    const spyContext = vi.spyOn(manager.contexts.h1!, 'rebuild').mockResolvedValue({} as any)
+    const spyContext = vi.spyOn(manager.contexts.h1![0]!, 'rebuild').mockResolvedValue({} as any)
     const spyCopy = vi.spyOn(fs, 'copyFile').mockResolvedValue()
 
     // When
