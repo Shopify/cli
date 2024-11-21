@@ -80,8 +80,6 @@ function injectErrorIntoHtml(html: string, errors: Map<string, string[]>): strin
 }
 
 function getErrorSection(errors: Map<string, string[]>) {
-  const color = 'orangered'
-
   const errorContent = Array.from(errors.entries())
     .map(
       ([fileKey, messages]) => `
@@ -121,6 +119,7 @@ function getErrorSection(errors: Map<string, string[]>) {
           max-height: 80%;
           box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
           position: relative;
+          overflow-y: auto;
         "
       >
         ${errorContent}
