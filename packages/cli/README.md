@@ -2119,6 +2119,7 @@ FLAGS
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
+      --strict               Push theme files to the remote theme, but fail if there are theme check offenses.
       --verbose              Increase the verbosity of the output.
 
 DESCRIPTION

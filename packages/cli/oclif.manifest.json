@@ -5782,6 +5782,13 @@
           "name": "store",
           "type": "option"
         },
+        "strict": {
+          "allowNo": false,
+          "description": "Push theme files to the remote theme, but fail if there are theme check offenses.",
+          "env": "SHOPIFY_FLAG_STRICT",
+          "name": "strict",
+          "type": "boolean"
+        },
         "theme": {
           "char": "t",
           "description": "Theme ID or name of the remote theme.",

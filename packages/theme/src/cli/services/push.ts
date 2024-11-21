@@ -1,4 +1,5 @@
 /* eslint-disable tsdoc/syntax */
+import {formatSummary, renderOffensesText, sortOffenses} from './check.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
 import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
@@ -14,12 +15,15 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
+  renderInfo,
   renderSuccess,
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {themeCheckRun} from '@shopify/theme-check-node'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface PushOptions {
   path: string
@@ -94,6 +98,9 @@ export interface PushFlags {
 
   /** Increase the verbosity of the output. */
   verbose?: boolean
+
+  /** Require theme check to pass before pushing. */
+  strict?: boolean
 }
 
 /**
@@ -102,6 +109,24 @@ export interface PushFlags {
  * @param flags - The flags for the push operation.
  */
 export async function push(flags: PushFlags): Promise<void> {
+  if (flags.strict) {
+    const {offenses, theme} = await themeCheckRun(flags.path ?? cwd(), undefined)
+
+    if (offenses.length > 0) {
+      const offensesByFile = sortOffenses(offenses)
+      renderOffensesText(offensesByFile, flags.path ?? cwd())
+
+      // Use renderSuccess when theres no offenses
+      const render = offenses.length ? renderInfo : renderSuccess
+
+      render({
+        headline: 'Theme Check Summary.',
+        body: formatSummary(offenses, offensesByFile, theme),
+      })
+      throw new AbortError('Theme check failed. Please fix the issues before pushing.')
+    }
+  }
+
   const {path} = flags
 
   configureCLIEnvironment({
