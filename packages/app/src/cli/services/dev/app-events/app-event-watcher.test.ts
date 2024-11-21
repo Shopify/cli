@@ -323,7 +323,7 @@ describe('app-event-watcher build extension errors', () => {
       }
 
       const mockManager = new MockESBuildContextManager()
-      mockManager.contexts.h1.rebuild.mockRejectedValueOnce(esbuildError)
+      mockManager.rebuildContext = vi.fn().mockRejectedValueOnce(esbuildError)
 
       const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
       const app = testAppLinked({
