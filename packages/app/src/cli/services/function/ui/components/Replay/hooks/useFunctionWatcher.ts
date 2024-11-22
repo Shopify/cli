@@ -90,7 +90,7 @@ export function useFunctionWatcher({
         },
       })
 
-      await appWatcher.start({stdout: customStdout, stderr: customStdout, signal: watchAbortController.signal})
+      await appWatcher.start({stdout: customStdout, stderr: customStdout, signal: watchAbortController.signal}, false)
     }
 
     // eslint-disable-next-line promise/catch-or-return, @typescript-eslint/no-floating-promises
