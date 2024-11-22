@@ -3,6 +3,8 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {getESBuildOptions} from '../../extensions/bundle.js'
 import {BuildContext, context as esContext} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {copyFile} from '@shopify/cli-kit/node/fs'
+import {dirname} from '@shopify/cli-kit/node/path'
 
 export interface DevAppWatcherOptions {
   dotEnvVariables: {[key: string]: string}
@@ -63,6 +65,22 @@ export class ESBuildContextManager {
     })
 
     await Promise.all(promises)
+  }
+
+  async rebuildContext(extension: ExtensionInstance) {
+    const context = this.contexts[extension.handle]
+    if (!context) return
+    await context.rebuild()
+
+    // The default output path for a extension is now inside `.shopify/bundle/<ext_id>/dist`,
+    // all extensions output need to be under the same directory so that it can all be zipped together.
+
+    // But historically the output was inside each extension's directory.
+    // To avoid breaking flows that depend on this, we copy the output to the old location.
+    // This also makes it easier to access sourcemaps or other built artifacts.
+    const outputPath = dirname(extension.getOutputPathForDirectory(this.outputPath))
+    const copyPath = dirname(extension.outputPath)
+    await copyFile(outputPath, copyPath)
   }
 
   async updateContexts(appEvent: AppEvent) {

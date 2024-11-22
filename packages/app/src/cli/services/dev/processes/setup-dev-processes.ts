@@ -143,6 +143,7 @@ export async function setupDevProcesses({
           apiKey,
           developerPlatformClient,
           proxyUrl: network.proxyUrl,
+          appWatcher,
         }),
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,

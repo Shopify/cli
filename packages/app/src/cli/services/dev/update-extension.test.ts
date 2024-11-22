@@ -51,8 +51,9 @@ describe('updateExtensionDraft()', () => {
         directory: tmpDir,
       })
 
-      await mkdir(joinPath(tmpDir, 'dist'))
-      await writeFile(mockExtension.outputPath, 'test content')
+      await mkdir(joinPath(tmpDir, 'mock-handle', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -62,6 +63,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -93,6 +95,7 @@ describe('updateExtensionDraft()', () => {
       stdout,
       stderr,
       appConfiguration: placeholderAppConfiguration,
+      bundlePath: 'dir',
     })
 
     expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -136,6 +139,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -173,6 +177,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -211,6 +216,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -253,8 +259,9 @@ describe('updateExtensionDraft()', () => {
         type: 'web_pixel_extension',
       })
 
-      await mkdir(joinPath(tmpDir, 'dist'))
-      await writeFile(mockExtension.outputPath, 'test content')
+      await mkdir(joinPath(tmpDir, mockExtension.handle, 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -264,6 +271,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')
