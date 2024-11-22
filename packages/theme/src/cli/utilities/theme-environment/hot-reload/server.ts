@@ -109,8 +109,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       }
     } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
-      onContent((content) => {
-        if (extension === '.json') saveSectionsFromJson(fileKey, content)
+      onSync(() => {
+        if (extension === '.json')
+          saveSectionsFromJson(fileKey, ctx.localThemeFileSystem.files.get(fileKey)?.value ?? '')
         triggerHotReload(fileKey, ctx)
       })
     } else {
