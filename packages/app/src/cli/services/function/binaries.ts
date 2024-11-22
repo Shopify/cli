@@ -131,8 +131,8 @@ export function functionRunnerBinary() {
 }
 
 export async function downloadBinary(bin: DownloadableBinary) {
-  const isInstalled = await fileExists(bin.path)
-  if (isInstalled) {
+  const isDownloaded = await fileExists(bin.path)
+  if (isDownloaded) {
     return
   }
 
@@ -155,7 +155,7 @@ export async function downloadBinary(bin: DownloadableBinary) {
       }
 
       // Download to a temp location and then move the file only after it's fully processed
-      // so the `isInstalled` check above will continue to return false if the file hasn't
+      // so the `isDownloaded` check above will continue to return false if the file hasn't
       // been fully processed.
       await inTemporaryDirectory(async (tmpDir) => {
         const tmpFile = joinPath(tmpDir, 'binary')
