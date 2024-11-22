@@ -11,6 +11,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 
 vi.mock('./system.js')
+vi.mock('./notifications-system.js')
 
 beforeEach(() => {
   vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
