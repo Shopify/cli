@@ -119,7 +119,7 @@ export class AppEventWatcher extends EventEmitter {
       })
   }
 
-  async start(options?: OutputContextOptions, buildExtensionsFirst?: boolean) {
+  async start(options?: OutputContextOptions, buildExtensionsFirst = true) {
     if (this.started) return
     this.started = true
 
