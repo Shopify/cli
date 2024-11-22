@@ -4,6 +4,7 @@ import {getCurrentCommandId} from './global-context.js'
 import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
+import {isTruthy} from './context/utilities.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {
   NotificationKey,
@@ -50,10 +51,13 @@ export type Notifications = zod.infer<typeof NotificationsSchema>
  * Shows notifications to the user if they meet the criteria specified in the notifications.json file.
  *
  * @param currentSurfaces - The surfaces present in the current project (usually for app extensions).
+ * @param environment - Process environment variables.
  * @returns - A promise that resolves when the notifications have been shown.
  */
-export async function showNotificationsIfNeeded(currentSurfaces?: string[]): Promise<void> {
+export async function showNotificationsIfNeeded(currentSurfaces?: string[], environment = process.env): Promise<void> {
   try {
+    if (isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST)) return
+
     const notifications = await getNotifications()
     const commandId = getCurrentCommandId()
     const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
