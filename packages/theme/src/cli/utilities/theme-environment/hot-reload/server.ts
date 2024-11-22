@@ -315,7 +315,7 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
     }
   }
 
-  if (sectionsToUpdate.size > 0) {
+  if (sectionsToUpdate.size > 0 && !ctx.localThemeFileSystem.uploadErrors.has(key)) {
     emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
   } else {
     emitHotReloadEvent({type: 'full', key})
