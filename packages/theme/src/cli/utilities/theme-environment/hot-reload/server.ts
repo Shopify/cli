@@ -3,7 +3,15 @@ import {render} from '../storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
-import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
+import {serializeCookies} from '../cookies.js'
+import {
+  createEventStream,
+  defineEventHandler,
+  getProxyRequestHeaders,
+  getQuery,
+  setResponseHeaders,
+  setResponseStatus,
+} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
@@ -95,7 +103,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
         })
       } else {
         // Otherwise, just full refresh directly:
-        triggerHotReload(fileKey, ctx)
+        onSync(() => {
+          triggerHotReload(fileKey, ctx)
+        })
       }
     } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
@@ -158,6 +168,15 @@ export function emitHotReloadEvent(event: HotReloadEvent) {
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
     const endpoint = event.path.split('?')[0]
+
+    setResponseHeaders(event, {
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-cache',
+    })
+    if (event.method === 'OPTIONS') {
+      setResponseStatus(event, 204)
+      return null
+    }
 
     if (endpoint === '/__hot-reload/subscribe') {
       const eventStream = createEventStream(event)
@@ -298,7 +317,22 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
   }
 
   if (sectionsToUpdate.size > 0) {
-    emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+    // emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+    const sectionNames = [...sectionsToUpdate]
+    emitHotReloadEvent({
+      type: 'section',
+      key,
+      sectionNames,
+      names: sectionNames,
+      replaceTemplates: Object.fromEntries(
+        sectionNames.map((name) => {
+          const sectionKey = `sections/${name}.liquid`
+          return [sectionKey, ctx.localThemeFileSystem.files.get(sectionKey)?.value ?? '']
+        }),
+      ),
+      token: ctx.session.storefrontToken,
+      cookies: serializeCookies(ctx.session.sessionCookies ?? {}),
+    })
   } else {
     emitHotReloadEvent({type: 'full', key})
   }
