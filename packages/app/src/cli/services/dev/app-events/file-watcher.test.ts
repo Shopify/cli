@@ -4,6 +4,7 @@ import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
   testAppLinked,
+  testFunctionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -12,10 +13,12 @@ import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
+const functionExtension = await testFunctionExtension({dir: '/extensions/my-function'})
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
 
@@ -30,7 +33,7 @@ interface TestCaseSingleEvent {
   name: string
   fileSystemEvent: string
   path: string
-  expectedEvent: WatcherEvent
+  expectedEvent?: WatcherEvent
 }
 
 /**
@@ -127,6 +130,12 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       startTime: expect.any(Array),
     },
   },
+  {
+    name: 'change in function extension is ignored if not in watch list',
+    fileSystemEvent: 'change',
+    path: '/extensions/my-function/src/cargo.lock',
+    expectedEvent: undefined,
+  },
 ]
 
 const multiEventTestCases: TestCaseMultiEvent[] = [
@@ -168,7 +177,7 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
 
 const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
 const defaultApp = testApp({
-  allExtensions: [extension1, extension1B, extension2, posExtension, appAccessExtension],
+  allExtensions: [extension1, extension1B, extension2, posExtension, appAccessExtension, functionExtension],
   directory: '/',
   configuration: {scopes: '', extension_directories: ['/extensions'], path: '/shopify.app.toml'},
 })
@@ -202,17 +211,7 @@ describe('file-watcher events', () => {
 
       // Then
       expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
-        ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/*.test.*',
-          '**/dist/**',
-          '**/*.swp',
-          '**/generated/**',
-          joinPath(dir, '/extensions/ext1/a_folder'),
-          joinPath(dir, '/extensions/ext1/a_file.txt'),
-          joinPath(dir, '/extensions/ext1/**/nested/**'),
-        ],
+        ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
         ignoreInitial: true,
         persistent: true,
       })
@@ -232,18 +231,23 @@ describe('file-watcher events', () => {
 
       // When
       const onChange = vi.fn()
-      await startFileWatcher(defaultApp, outputOptions, onChange)
+      await startFileWatcher(defaultApp, outputOptions, onChange, 0)
 
       // Then
       await flushPromises()
 
       // use waitFor to so that we can test the debouncers and timeouts
-      await vi.waitFor(
-        () => {
-          expect(onChange).toHaveBeenCalledWith([expectedEvent])
-        },
-        {timeout: 2000, interval: 100},
-      )
+      if (expectedEvent) {
+        await vi.waitFor(
+          () => {
+            expect(onChange).toHaveBeenCalledWith([expectedEvent])
+          },
+          {timeout: 2000, interval: 100},
+        )
+      } else {
+        await sleep(0.01)
+        expect(onChange).not.toHaveBeenCalled()
+      }
     },
   )
 

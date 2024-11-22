@@ -478,6 +478,7 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     type: 'product_discounts',
     build: {
       command: 'echo "hello world"',
+      watch: ['src/**/*.rs'],
     },
     api_version: '2022-07',
     configuration_ui: true,

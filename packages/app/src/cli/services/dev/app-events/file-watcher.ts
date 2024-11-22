@@ -1,15 +1,17 @@
 /* eslint-disable no-case-declarations */
 import {AppInterface} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
-import {dirname, isSubpath, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {dirname, isSubpath, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
 import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
+import ignore from 'ignore'
 import {Writable} from 'stream'
 
+const EXTENSION_CREATION_TIMEOUT = 60000
 /**
  * Event emitted by the file watcher
  *
@@ -57,6 +59,7 @@ export async function startFileWatcher(
   app: AppInterface,
   options: OutputContextOptions,
   onChange: (events: WatcherEvent[]) => void,
+  debounceTime = 500,
 ) {
   const {default: chokidar} = await import('chokidar')
 
@@ -71,7 +74,7 @@ export async function startFileWatcher(
    * Debounced function to emit the accumulated events.
    * This function will be called at most once every 500ms to avoid emitting too many events in a short period.
    */
-  const debouncedEmit = debounce(emitEvents, 500)
+  const debouncedEmit = debounce(emitEvents, debounceTime)
 
   /**
    * Emits the accumulated events and resets the current events list.
@@ -84,6 +87,9 @@ export async function startFileWatcher(
     outputDebug(message, options.stdout)
     onChange(events)
   }
+
+  // Each extension has its own ignore instance to avoid conflicts
+  let ignored: {[key: string]: ignore.Ignore | undefined} = {}
 
   /**
    * Adds a new event to the current events list and schedules the debounced emit function.
@@ -99,6 +105,17 @@ export async function startFileWatcher(
       const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
       if (!isAValidWatchedPath) return
     }
+
+    if (event.type === 'extension_folder_created') {
+      ignored[event.path] = createIgnoreInstance(event.path)
+    }
+
+    // If the event is ignored by the custom gitignore patterns, don't push it
+    if (event.extensionPath !== 'unknown' && ignored[event.extensionPath]) {
+      const relative = relativePath(event.extensionPath, event.path)
+      if (ignored[event.extensionPath]?.ignores(relative)) return
+    }
+
     // If the event is already in the list, don't push it again
     if (currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
     currentEvents.push(event)
@@ -118,20 +135,12 @@ export async function startFileWatcher(
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
   // Read .gitignore files from extension directories and add the patterns to the ignored list
-  const customGitIgnoredPatterns = getCustomGitIgnorePatterns(extensionPaths)
+  ignored = createIgnoredInstances(extensionPaths)
 
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   // PENDING: Use .gitgnore from app and extensions to ignore files.
   const watcher = chokidar.watch(watchPaths, {
-    ignored: [
-      '**/node_modules/**',
-      '**/.git/**',
-      '**/*.test.*',
-      '**/dist/**',
-      '**/*.swp',
-      '**/generated/**',
-      ...customGitIgnoredPatterns,
-    ],
+    ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
     persistent: true,
     ignoreInitial: true,
   })
@@ -142,11 +151,12 @@ export async function startFileWatcher(
     const isConfigAppPath = path === appConfigurationPath
     const extensionPath =
       extensionPaths.find((dir) => isSubpath(dir, path)) ?? (isConfigAppPath ? app.directory : 'unknown')
-    const isToml = path.endsWith('.toml')
+    const isExtensionToml = path.endsWith('.extension.toml')
+    const isUnknownExtension = extensionPath === 'unknown'
 
     outputDebug(`🌀: ${event} ${path.replace(app.directory, '')}\n`)
 
-    if (extensionPath === 'unknown' && !isToml) {
+    if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
       // Ignore an event if it's not part of an existing extension
       // Except if it is a toml file (either app config or extension config)
       return
@@ -154,7 +164,12 @@ export async function startFileWatcher(
 
     switch (event) {
       case 'change':
-        if (isToml) {
+        if (isUnknownExtension) {
+          // If the extension path is unknown, it means the extension was just created.
+          // We need to wait for the lock file to disappear before triggering the event.
+          return
+        }
+        if (isExtensionToml || isConfigAppPath) {
           pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           pushEvent({type: 'file_updated', path, extensionPath, startTime})
@@ -164,7 +179,7 @@ export async function startFileWatcher(
         // If it's a normal non-toml file, just report a file_created event.
         // If a toml file was added, a new extension(s) is being created.
         // We need to wait for the lock file to disappear before triggering the event.
-        if (!isToml) {
+        if (!isExtensionToml) {
           pushEvent({type: 'file_created', path, extensionPath, startTime})
           break
         }
@@ -179,9 +194,9 @@ export async function startFileWatcher(
             extensionPaths.push(realPath)
             pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
           }
-          if (totalWaitedTime >= 20000) {
+          if (totalWaitedTime >= EXTENSION_CREATION_TIMEOUT) {
             clearInterval(intervalId)
-            options.stderr.write(`Extension creation detection timeout at path: ${path}\nYou might need to restart dev`)
+            options.stderr.write(`Error loading new extension at path: ${path}.\n Please restart the process.`)
           }
         }, 200)
         break
@@ -191,7 +206,7 @@ export async function startFileWatcher(
 
         if (isConfigAppPath) {
           pushEvent({type: 'app_config_deleted', path, extensionPath, startTime})
-        } else if (isToml) {
+        } else if (isExtensionToml) {
           // When a toml is deleted, we can consider every extension in that folder was deleted.
           extensionPaths = extensionPaths.filter((extPath) => extPath !== extensionPath)
           pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
@@ -224,23 +239,24 @@ const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptio
   })
 }
 
-/**
- * Returns the custom gitignore patterns for the given extension directories.
- *
- * @param extensionDirectories - The extension directories to get the custom gitignore patterns from
- * @returns The custom gitignore patterns
- */
-function getCustomGitIgnorePatterns(extensionDirectories: string[]): string[] {
-  return extensionDirectories
-    .map((dir) => {
-      const gitIgnorePath = joinPath(dir, '.gitignore')
-      if (!fileExistsSync(gitIgnorePath)) return []
-      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
-      return gitIgnoreContent
-        .split('\n')
-        .map((pattern) => pattern.trim())
-        .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
-        .map((pattern) => joinPath(dir, pattern))
-    })
-    .flat()
+// Creates an ignore instance for each extension directory if a .gitignore file exists
+// Returns a map of extension paths to ignore instances
+function createIgnoredInstances(extensionDirectories: string[]): {[key: string]: ignore.Ignore | undefined} {
+  const ignored: {[key: string]: ignore.Ignore | undefined} = {}
+  for (const dir of extensionDirectories) {
+    ignored[dir] = createIgnoreInstance(dir)
+  }
+  return ignored
+}
+
+// Returns an ignore instance for the given path if a .gitignore file exists, otherwise undefined
+function createIgnoreInstance(path: string): ignore.Ignore | undefined {
+  const gitIgnorePath = joinPath(path, '.gitignore')
+  if (!fileExistsSync(gitIgnorePath)) return undefined
+  const gitIgnoreContent = readFileSync(gitIgnorePath)
+    .toString()
+    .split('\n')
+    .map((pattern) => pattern.trim())
+    .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
+  return ignore.default().add(gitIgnoreContent)
 }

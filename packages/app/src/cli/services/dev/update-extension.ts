@@ -38,8 +38,9 @@ export async function updateExtensionDraft({
   bundlePath,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
+  const outputPath = extension.getOutputPathForDirectory(bundlePath)
+
   if (extension.features.includes('esbuild')) {
-    const outputPath = extension.getOutputPathForDirectory(bundlePath)
     const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
@@ -58,7 +59,7 @@ export async function updateExtensionDraft({
     serialized_script: encodedFile,
   }
   if (extension.isFunctionExtension) {
-    const compiledFiles = await readFile(extension.outputPath, {encoding: 'base64'})
+    const compiledFiles = await readFile(outputPath, {encoding: 'base64'})
     draftableConfig.uploaded_files = {'dist/index.wasm': compiledFiles}
   }
   const extensionInput: ExtensionUpdateDraftMutationVariables = {
