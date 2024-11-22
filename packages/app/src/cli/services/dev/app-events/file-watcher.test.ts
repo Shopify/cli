@@ -1,6 +1,5 @@
-import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
+import {FileWatcher, OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {
-  testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
   testAppLinked,
@@ -176,7 +175,7 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
 ]
 
 const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-const defaultApp = testApp({
+const defaultApp = testAppLinked({
   allExtensions: [extension1, extension1B, extension2, posExtension, appAccessExtension, functionExtension],
   directory: '/',
   configuration: {scopes: '', extension_directories: ['/extensions'], path: '/shopify.app.toml'},
@@ -207,7 +206,8 @@ describe('file-watcher events', () => {
       })
 
       // When
-      await startFileWatcher(app, outputOptions, vi.fn())
+      const watcher = new FileWatcher(app, outputOptions, vi.fn())
+      await watcher.start()
 
       // Then
       expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
@@ -231,7 +231,8 @@ describe('file-watcher events', () => {
 
       // When
       const onChange = vi.fn()
-      await startFileWatcher(defaultApp, outputOptions, onChange, 0)
+      const watcher = new FileWatcher(defaultApp, outputOptions, onChange, 0)
+      await watcher.start()
 
       // Then
       await flushPromises()
@@ -264,7 +265,8 @@ describe('file-watcher events', () => {
 
       // When
       const onChange = vi.fn()
-      await startFileWatcher(defaultApp, outputOptions, onChange)
+      const watcher = new FileWatcher(defaultApp, outputOptions, onChange, 0)
+      await watcher.start()
 
       // Then
       await flushPromises()
