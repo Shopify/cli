@@ -10,12 +10,24 @@ import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
 const FUNCTION_RUNNER_VERSION = 'v6.3.0'
-const JAVY_VERSION = 'v3.2.0'
+const JAVY_VERSION = 'v4.0.0'
+// The Javy plugin version does not need to match the Javy version. It should
+// match the plugin version used in the function-runner version specified above.
+const JAVY_PLUGIN_VERSION = 'v3.2.0'
+
+interface DownloadableBinary {
+  path: string
+  name: string
+  version: string
+
+  downloadUrl(processPlatform: string, processArch: string): string
+  processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void>
+}
 
 // The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
 // Javy and function-runner for now. Those methods may not continue to have the same logic in the future. If they
-// diverge, make `Binary` an abstract class and create subclasses to handle the different logic polymorphically.
-class DownloadableBinary {
+// diverge, create different classes to handle the different logic polymorphically.
+class Executable implements DownloadableBinary {
   readonly name: string
   readonly version: string
   readonly path: string
@@ -71,31 +83,58 @@ class DownloadableBinary {
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
-    const gunzip = gzip.createGunzip()
-    await stream.pipeline(responseStream, gunzip, outputStream)
+    return gunzipResponse(responseStream, outputStream)
+  }
+}
+
+class JavyPlugin implements DownloadableBinary {
+  readonly name: string
+  readonly version: string
+  readonly path: string
+
+  constructor() {
+    this.name = 'javy_quickjs_provider_v3'
+    this.version = JAVY_PLUGIN_VERSION
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'javy_quickjs_provider_v3.wasm')
+  }
+
+  downloadUrl(_processPlatform: string, _processArch: string) {
+    return `https://github.com/bytecodealliance/javy/releases/download/${this.version}/plugin.wasm.gz`
+  }
+
+  async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
+    return gunzipResponse(responseStream, outputStream)
   }
 }
 
 let _javy: DownloadableBinary
+let _javyPlugin: DownloadableBinary
 let _functionRunner: DownloadableBinary
 
 export function javyBinary() {
   if (!_javy) {
-    _javy = new DownloadableBinary('javy', JAVY_VERSION, 'bytecodealliance/javy')
+    _javy = new Executable('javy', JAVY_VERSION, 'bytecodealliance/javy')
   }
   return _javy
 }
 
+export function javyPluginBinary() {
+  if (!_javyPlugin) {
+    _javyPlugin = new JavyPlugin()
+  }
+  return _javyPlugin
+}
+
 export function functionRunnerBinary() {
   if (!_functionRunner) {
-    _functionRunner = new DownloadableBinary('function-runner', FUNCTION_RUNNER_VERSION, 'Shopify/function-runner')
+    _functionRunner = new Executable('function-runner', FUNCTION_RUNNER_VERSION, 'Shopify/function-runner')
   }
   return _functionRunner
 }
 
-export async function installBinary(bin: DownloadableBinary) {
-  const isInstalled = await fileExists(bin.path)
-  if (isInstalled) {
+export async function downloadBinary(bin: DownloadableBinary) {
+  const isDownloaded = await fileExists(bin.path)
+  if (isDownloaded) {
     return
   }
 
@@ -118,7 +157,7 @@ export async function installBinary(bin: DownloadableBinary) {
       }
 
       // Download to a temp location and then move the file only after it's fully processed
-      // so the `isInstalled` check above will continue to return false if the file hasn't
+      // so the `isDownloaded` check above will continue to return false if the file hasn't
       // been fully processed.
       await inTemporaryDirectory(async (tmpDir) => {
         const tmpFile = joinPath(tmpDir, 'binary')
@@ -131,4 +170,9 @@ export async function installBinary(bin: DownloadableBinary) {
     async () => {},
     2,
   )
+}
+
+async function gunzipResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
+  const gunzip = gzip.createGunzip()
+  await stream.pipeline(responseStream, gunzip, outputStream)
 }

@@ -1,10 +1,11 @@
-import {javyBinary, functionRunnerBinary, installBinary} from './binaries.js'
+import {javyBinary, functionRunnerBinary, downloadBinary, javyPluginBinary} from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
 import {gzipSync} from 'zlib'
 
 const javy = javyBinary()
+const javyPlugin = javyPluginBinary()
 const functionRunner = functionRunnerBinary()
 
 vi.mock('@shopify/cli-kit/node/http', async () => {
@@ -117,18 +118,48 @@ describe('javy', () => {
     })
   })
 
-  test('installs Javy', async () => {
+  test('downloads Javy', async () => {
     // Given
     await removeFile(javy.path)
     await expect(fileExists(javy.path)).resolves.toBeFalsy()
     vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy binary')))
 
     // When
-    await installBinary(javy)
+    await downloadBinary(javy)
 
     // Then
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(javy.path)).resolves.toBeTruthy()
+  })
+})
+
+describe('javy-plugin', () => {
+  test('properties are set correctly', () => {
+    expect(javyPlugin.name).toBe('javy_quickjs_provider_v3')
+    expect(javyPlugin.version).match(/^v\d.\d.\d$/)
+    expect(javyPlugin.path).toMatch(/(\/|\\)javy_quickjs_provider_v3.wasm$/)
+  })
+
+  test('downloadUrl returns the correct URL', () => {
+    // When
+    const url = javyPlugin.downloadUrl('', '')
+
+    // Then
+    expect(url).toMatch(/https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/plugin.wasm.gz/)
+  })
+
+  test('downloads javy-plugin', async () => {
+    // Given
+    await removeFile(javyPlugin.path)
+    await expect(fileExists(javyPlugin.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy-plugin binary')))
+
+    // When
+    await downloadBinary(javyPlugin)
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(javyPlugin.path)).resolves.toBeTruthy()
   })
 })
 
@@ -234,14 +265,14 @@ describe('functionRunner', () => {
     })
   })
 
-  test('installs function-runner', async () => {
+  test('downloads function-runner', async () => {
     // Given
     await removeFile(functionRunner.path)
     await expect(fileExists(functionRunner.path)).resolves.toBeFalsy()
     vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('function-runner binary')))
 
     // When
-    await installBinary(functionRunner)
+    await downloadBinary(functionRunner)
 
     // Then
     expect(fetch).toHaveBeenCalledOnce()
