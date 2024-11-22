@@ -1,4 +1,4 @@
-import {dev, DevOptions, renderLinks} from './dev.js'
+import {dev, DevOptions, openURLSafely, renderLinks} from './dev.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
@@ -11,7 +11,8 @@ import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {openURL} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -21,6 +22,16 @@ vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/theme-environment.js')
 vi.mock('../utilities/theme-fs-empty.js')
 vi.mock('../utilities/theme-fs.js')
+vi.mock('@shopify/cli-kit/node/colors', () => ({
+  default: {
+    bold: (str: string) => str,
+    cyan: (str: string) => str,
+    gray: (str: string) => str,
+  },
+}))
+vi.mock('@shopify/cli-kit/node/system', () => ({
+  openURL: vi.fn(),
+}))
 
 describe('dev', () => {
   const store = 'my-store.myshopify.com'
@@ -95,50 +106,83 @@ describe('dev', () => {
     })
   })
 
-  describe('renderLinks', async () => {
-    test('renders "dev" command links', async () => {
-      // Given
-      const themeId = theme.id.toString()
+  test('renders "dev" command links', async () => {
+    // Given
+    const themeId = theme.id.toString()
+    const host = '127.0.0.1'
+    const port = '9292'
+    const urls = {
+      local: `http://${host}:${port}`,
+      giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
+      themeEditor: `https://${store}/admin/themes/${themeId}/editor`,
+      preview: `https://${store}/?preview_theme_id=${themeId}`,
+    }
 
-      // When
-      renderLinks(store, themeId)
+    // When
+    renderLinks(urls)
 
-      // Then
-      expect(renderSuccess).toHaveBeenCalledWith({
-        body: [
-          {
-            list: {
-              items: ['http://127.0.0.1:9292'],
-              title: {
-                bold: 'Preview your theme',
+    // Then
+    expect(renderSuccess).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            title: 'Preview your theme (t)',
+            items: [
+              {
+                link: {
+                  url: 'http://127.0.0.1:9292',
+                },
               },
+            ],
+          },
+        },
+      ],
+      nextSteps: [
+        [
+          {
+            link: {
+              label: `Share your theme preview (p)`,
+              url: `https://${store}/?preview_theme_id=${themeId}`,
+            },
+          },
+          {
+            subdued: `https://${store}/?preview_theme_id=${themeId}`,
+          },
+        ],
+        [
+          {
+            link: {
+              label: `Customize your theme at the theme editor (e)`,
+              url: `https://${store}/admin/themes/${themeId}/editor`,
             },
           },
         ],
-        nextSteps: [
-          [
-            {
-              link: {
-                label: 'Preview your gift cards',
-                url: 'http://127.0.0.1:9292/gift_cards/[store_id]/preview',
-              },
+        [
+          {
+            link: {
+              label: 'Preview your gift cards (g)',
+              url: 'http://127.0.0.1:9292/gift_cards/[store_id]/preview',
             },
-          ],
-          [
-            {
-              link: {
-                label: 'Customize your theme at the theme editor',
-                url: 'https://my-store.myshopify.com/admin/themes/123/editor',
-              },
-            },
-          ],
-          [
-            'Share your theme preview',
-            {
-              subdued: '\nhttps://my-store.myshopify.com/?preview_theme_id=123',
-            },
-          ],
+          },
         ],
+      ],
+    })
+  })
+  describe('openURLSafely', () => {
+    test('calls renderWarning when openURL fails', async () => {
+      // Given
+      const error = new Error('Failed to open URL')
+      vi.mocked(openURL).mockRejectedValueOnce(error)
+
+      // When
+      openURLSafely('http://127.0.0.1:9292', 'localhost')
+
+      // Then
+      await vi.waitFor(() => {
+        expect(renderWarning).toHaveBeenCalledWith({
+          headline: 'Failed to open localhost.',
+          body: error.stack ?? error.message,
+        })
       })
     })
   })
