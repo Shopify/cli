@@ -13,7 +13,7 @@ const FUNCTION_RUNNER_VERSION = 'v6.3.0'
 const JAVY_VERSION = 'v4.0.0'
 // The Javy plugin version does not need to match the Javy version. It should
 // match the plugin version used in the function-runner version specified above.
-const JAVY_PLUGIN_VERSION = 'v4.0.0'
+const JAVY_PLUGIN_VERSION = 'v3.2.0'
 
 interface DownloadableBinary {
   path: string
