@@ -123,7 +123,7 @@ export async function generateCertificate({
   const certPath = joinPath(appDirectory, '.shopify', 'localhost.pem')
 
   outputInfo(outputContent`🔐 Checking ${mkcertSnippet} root certificate. You may be prompted for your password.`)
-  await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
+  await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, '0.0.0.0'])
   outputInfo(outputContent`${outputToken.successIcon()} ${mkcertSnippet} is installed`)
 
   return {keyContent: await readFile(keyPath), certContent: await readFile(certPath)}

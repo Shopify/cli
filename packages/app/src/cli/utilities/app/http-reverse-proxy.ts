@@ -1,5 +1,5 @@
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import * as http from 'http'
 import * as https from 'https'
 import type Server from 'http-proxy'

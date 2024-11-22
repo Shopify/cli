@@ -254,5 +254,5 @@ export const startProxyServer: DevProcessFunction<{
   localhostCert?: LocalhostCert
 }> = async ({abortSignal}, {port, rules, localhostCert}) => {
   const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert)
-  await server.listen(port)
+  await server.listen(port, '0.0.0.0')
 }

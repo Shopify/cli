@@ -41,7 +41,7 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -153,9 +153,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const {webs, ...network} = await setupNetworkingOptions(
+    app.directory,
     app.webs,
-    localApp.directory,
-    localApp.webs,
     graphiqlPort,
     commandOptions.tunnel,
     tunnelClient,
@@ -324,7 +323,10 @@ async function setupNetworkingOptions(
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(remoteAppConfig),
   ])
-  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+
+  const proxyUrl = usingLocalhost ? `https://0.0.0.0:${proxyPort}` : frontendUrl
+
+  outputInfo(`Proxy URL: ${proxyUrl}`)
 
   let frontendPort = frontendConfig?.configuration.port
   if (frontendConfig) {
