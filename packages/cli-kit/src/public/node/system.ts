@@ -18,6 +18,8 @@ export interface ExecOptions {
   stdio?: 'inherit'
   input?: string
   signal?: AbortSignal
+  detached?: boolean
+  unref?: boolean
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
 }
@@ -69,6 +71,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
       treeKill(pid, 'SIGTERM')
     }
   })
+  if (options?.unref) commandProcess.unref()
   try {
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,6 +111,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
+    detached: options?.detached,
     // Setting this to false makes it possible to kill the main process
     // and all its sub-processes with Ctrl+C on Windows
     windowsHide: false,
