@@ -257,10 +257,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {organization: organization!, apps, hasMorePages}
   }
 
-  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+  async appsForOrg(organizationId: string, term = ''): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
     const query = ListApps
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
-    const minimalOrganizationApps = result.apps.map((app) => {
+    const variables = {
+      query: term
+        .split(' ')
+        .filter((word) => word)
+        .map((word) => `title:${word}`)
+        .join(' '),
+    }
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    if (!result.appsConnection) {
+      throw new BugError('Server failed to retrieve apps')
+    }
+    const minimalOrganizationApps = result.appsConnection.edges.map((edge) => {
+      const app = edge.node
       return {
         id: app.id,
         apiKey: app.key,
@@ -270,7 +281,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
     return {
       apps: minimalOrganizationApps,
-      hasMorePages: false,
+      hasMorePages: result.appsConnection.pageInfo.hasNextPage,
     }
   }
 

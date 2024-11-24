@@ -9,13 +9,17 @@ import {
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {BugError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/api/app-management')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -185,5 +189,70 @@ describe('versionDeepLink', () => {
 
     // Then
     expect(got).toEqual('https://dev.shopify.com/dashboard/1/apps/2/versions/3')
+  })
+})
+
+describe('searching for apps', () => {
+  test.each([
+    ['without a term if none is provided', undefined, ''],
+    ['without a term if a blank string is provided', '', ''],
+    ['with a single term passed in the query', 'test-app', 'title:test-app'],
+    ['with multiple terms passed in the query', 'test app', 'title:test title:app'],
+  ])('searches for apps by name %s', async (_: string, query: string | undefined, queryVariable: string) => {
+    // Given
+    const orgId = '1'
+    const appName = 'test-app'
+    const apps = [testOrganizationApp({title: appName})]
+    const mockedFetchAppsResponse = {
+      appsConnection: {
+        edges: apps.map((app, index) => ({
+          node: {
+            ...app,
+            key: `key-${index}`,
+            activeRelease: {
+              id: 'gid://shopify/Release/1',
+              version: {
+                name: app.title,
+                appModules: [],
+              },
+            },
+          },
+        })),
+        pageInfo: {
+          hasNextPage: false,
+        },
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedFetchAppsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const got = await client.appsForOrg(orgId, query)
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(orgId, ListApps, 'token', {query: queryVariable})
+    expect(got).toEqual({
+      apps: apps.map((app, index) => ({
+        apiKey: `key-${index}`,
+        id: app.id,
+        organizationId: app.organizationId,
+        title: app.title,
+      })),
+      hasMorePages: false,
+    })
+  })
+
+  test("Throws a BugError if the response doesn't contain the expected data", async () => {
+    // Given
+    const orgId = '1'
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({})
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+
+    // Then
+    await expect(client.appsForOrg(orgId)).rejects.toThrow(BugError)
   })
 })
