@@ -24,7 +24,6 @@ export interface EnsureDeploymentIdsPresenceOptions {
 
 export interface RemoteSource {
   uuid: string
-  uid?: string
   type: string
   id: string
   title: string
