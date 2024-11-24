@@ -268,7 +268,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
     if (!result.appsConnection) {
-      throw new AbortError('Server failed to retrieve apps')
+      throw new BugError('Server failed to retrieve apps')
     }
     const minimalOrganizationApps = result.appsConnection.edges.map((edge) => {
       const app = edge.node

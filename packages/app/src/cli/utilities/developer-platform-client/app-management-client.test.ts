@@ -15,6 +15,7 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {BugError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
@@ -240,5 +241,18 @@ describe('searching for apps', () => {
       })),
       hasMorePages: false,
     })
+  })
+
+  test("Throws a BugError if the response doesn't contain the expected data", async () => {
+    // Given
+    const orgId = '1'
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({})
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+
+    // Then
+    await expect(client.appsForOrg(orgId)).rejects.toThrow(BugError)
   })
 })
