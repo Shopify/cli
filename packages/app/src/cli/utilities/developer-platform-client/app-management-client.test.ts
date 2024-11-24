@@ -192,7 +192,12 @@ describe('versionDeepLink', () => {
 })
 
 describe('searching for apps', () => {
-  async function appSearchTest({query, queryVariable}: {query?: string; queryVariable: string}) {
+  test.each([
+    ['without a term if none is provided', undefined, ''],
+    ['without a term if a blank string is provided', '', ''],
+    ['with a single term passed in the query', 'test-app', 'title:test-app'],
+    ['with multiple terms passed in the query', 'test app', 'title:test title:app'],
+  ])('searches for apps by name %s', async (_: string, query: string | undefined, queryVariable: string) => {
     // Given
     const orgId = '1'
     const appName = 'test-app'
@@ -235,17 +240,5 @@ describe('searching for apps', () => {
       })),
       hasMorePages: false,
     })
-  }
-
-  test('passes in a blank search if none is provided', async () => {
-    await appSearchTest({query: undefined, queryVariable: ''})
-  })
-
-  test('searches for apps by name with a single term passed in the query', async () => {
-    await appSearchTest({query: 'test-app', queryVariable: 'title:test-app'})
-  })
-
-  test('searches for apps by name with multiple terms passes in the query', async () => {
-    await appSearchTest({query: 'test app', queryVariable: 'title:test title:app'})
   })
 })
