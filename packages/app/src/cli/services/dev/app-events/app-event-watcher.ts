@@ -95,6 +95,7 @@ export class AppEventWatcher extends EventEmitter {
   private readonly esbuildManager: ESBuildContextManager
   private started = false
   private ready = false
+  private initialEvents: ExtensionEvent[] = []
 
   constructor(
     app: AppLinkedInterface,
@@ -118,7 +119,7 @@ export class AppEventWatcher extends EventEmitter {
       })
   }
 
-  async start(options?: OutputContextOptions) {
+  async start(options?: OutputContextOptions, buildExtensionsFirst = true) {
     if (this.started) return
     this.started = true
 
@@ -133,7 +134,10 @@ export class AppEventWatcher extends EventEmitter {
     await this.esbuildManager.createContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
     // Initial build of all extensions
-    await this.buildExtensions(this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext})))
+    if (buildExtensionsFirst) {
+      this.initialEvents = this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
+      await this.buildExtensions(this.initialEvents)
+    }
 
     // Start the file system watcher
     await startFileWatcher(this.app, this.options, (events) => {
@@ -161,7 +165,7 @@ export class AppEventWatcher extends EventEmitter {
     })
 
     this.ready = true
-    this.emit('ready', this.app)
+    this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})
   }
 
   /**
@@ -183,9 +187,10 @@ export class AppEventWatcher extends EventEmitter {
    * @param listener - The listener function to add
    * @returns The AppEventWatcher instance
    */
-  onStart(listener: (app: AppLinkedInterface) => Promise<void> | void) {
+  onStart(listener: (appEvent: AppEvent) => Promise<void> | void) {
     if (this.ready) {
-      listener(this.app)?.catch(() => {})
+      const event: AppEvent = {app: this.app, extensionEvents: this.initialEvents, startTime: [0, 0], path: ''}
+      listener(event)?.catch(() => {})
     } else {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       this.once('ready', listener)
@@ -220,7 +225,7 @@ export class AppEventWatcher extends EventEmitter {
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts[ext.handle]) {
-            await this.esbuildManager.contexts[ext.handle]?.rebuild()
+            await this.esbuildManager.rebuildContext(ext)
           } else {
             await this.buildExtension(ext)
           }

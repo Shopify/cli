@@ -3,7 +3,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
 import {flowTemplateExtensionFiles} from '../../utilities/extensions/flow-template.js'
-import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
+import {context as esContext, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -21,13 +21,6 @@ interface BundleOptions {
   stdin: StdinOptions
   stdout: Writable
   stderr: Writable
-
-  /**
-   * When provided, the bundling process keeps running and notifying about changes.
-   * When ESBuild detects changes in any of the modules of the graph it re-bundles it
-   * and calls this watch function.
-   */
-  watch?: (result: BuildResult | null) => Promise<void>
 
   /**
    * This signal allows the caller to stop the watching process.
@@ -64,19 +57,9 @@ interface BundleOptions {
 export async function bundleExtension(options: BundleOptions, processEnv = process.env) {
   const esbuildOptions = getESBuildOptions(options, processEnv)
   const context = await esContext(esbuildOptions)
-  if (options.watch) {
-    await context.watch()
-  } else {
-    const result = await context.rebuild()
-    onResult(result, options)
-    await context.dispose()
-  }
-
-  if (options.watchSignal) {
-    options.watchSignal.addEventListener('abort', async () => {
-      await context.dispose()
-    })
-  }
+  const result = await context.rebuild()
+  onResult(result, options)
+  await context.dispose()
 }
 
 export async function bundleThemeExtension(
@@ -152,18 +135,6 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
     plugins: getPlugins(options.stdin.resolveDir, processEnv),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-  }
-  if (options.watch) {
-    const watch = options.watch
-    esbuildOptions.plugins?.push({
-      name: 'rebuild-plugin',
-      setup(build) {
-        build.onEnd(async (result) => {
-          onResult(result, options)
-          await watch(result)
-        })
-      },
-    })
   }
 
   if (options.sourceMaps) {

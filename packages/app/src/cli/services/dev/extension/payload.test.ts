@@ -45,7 +45,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: ExtensionDevOptions = {
+      const options: Omit<ExtensionDevOptions, 'appWatcher'> = {
         signal,
         stdout,
         stderr,
@@ -69,7 +69,7 @@ describe('getUIExtensionPayload', () => {
       }
 
       // When
-      const got = await getUIExtensionPayload(uiExtension, {
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
         ...options,
         currentDevelopmentPayload: development,
       })
@@ -128,7 +128,7 @@ describe('getUIExtensionPayload', () => {
       const development: Partial<UIExtensionPayload['development']> = {}
 
       // When
-      const got = await getUIExtensionPayload(uiExtension, {
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
         ...options,
         currentDevelopmentPayload: development,
       })
@@ -195,7 +195,7 @@ describe('getUIExtensionPayload', () => {
       const development: Partial<UIExtensionPayload['development']> = {}
 
       // When
-      const got = await getUIExtensionPayload(uiExtension, {
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
         ...options,
         currentDevelopmentPayload: development,
         url: 'http://tunnel-url.com',
@@ -276,7 +276,7 @@ describe('getUIExtensionPayload', () => {
       const development: Partial<UIExtensionPayload['development']> = {}
 
       // When
-      const got = await getUIExtensionPayload(uiExtension, {
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
         ...options,
         currentDevelopmentPayload: development,
         url: 'http://tunnel-url.com',

@@ -90,7 +90,7 @@ jobs:
         run: pnpm nx run features:test
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
-        if: failure()
+        if: ${{ failure() && !cancelled() }}
         with:
           payload: |
             {

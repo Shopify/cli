@@ -1,5 +1,5 @@
 import {runFunction} from './runner.js'
-import {functionRunnerBinary, installBinary} from './binaries.js'
+import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -10,7 +10,7 @@ vi.mock('./binaries.js', async (importOriginal) => {
   const original = await importOriginal<typeof import('./binaries.js')>()
   return {
     ...original,
-    installBinary: vi.fn().mockResolvedValue(undefined),
+    downloadBinary: vi.fn().mockResolvedValue(undefined),
   }
 })
 
@@ -23,7 +23,7 @@ describe('runFunction', () => {
     await runFunction({functionExtension})
 
     // Then
-    expect(installBinary).toHaveBeenCalledOnce()
+    expect(downloadBinary).toHaveBeenCalledOnce()
   })
 
   test('runs function with options', async () => {

@@ -1,7 +1,7 @@
 import {Replay} from './Replay.js'
 import {useFunctionWatcher} from './hooks/useFunctionWatcher.js'
 import {FunctionRunFromRunner} from './types.js'
-import {testFunctionExtension, testApp} from '../../../../../models/app/app.test-data.js'
+import {testFunctionExtension, testAppLinked} from '../../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
 import {FunctionRunData} from '../../../replay.js'
@@ -85,7 +85,7 @@ describe('Replay', () => {
       <Replay
         selectedRun={SELECTED_RUN}
         abortController={new AbortController()}
-        app={testApp()}
+        app={testAppLinked()}
         extension={extension}
       />,
     )
@@ -109,7 +109,7 @@ describe('Replay', () => {
       <Replay
         selectedRun={SELECTED_RUN}
         abortController={new AbortController()}
-        app={testApp()}
+        app={testAppLinked()}
         extension={extension}
       />,
     )
@@ -129,7 +129,12 @@ describe('Replay', () => {
     vi.mocked(useFunctionWatcher).mockImplementation(mockedUseFunctionWatcher)
 
     const renderInstanceReplay = render(
-      <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
+      <Replay
+        selectedRun={SELECTED_RUN}
+        abortController={abortController}
+        app={testAppLinked()}
+        extension={extension}
+      />,
     )
 
     const promise = renderInstanceReplay.waitUntilExit()
@@ -155,7 +160,12 @@ describe('Replay', () => {
     vi.mocked(useFunctionWatcher).mockImplementation(mockedUseFunctionWatcher)
 
     const renderInstanceReplay = render(
-      <Replay selectedRun={SELECTED_RUN} abortController={abortController} app={testApp()} extension={extension} />,
+      <Replay
+        selectedRun={SELECTED_RUN}
+        abortController={abortController}
+        app={testAppLinked()}
+        extension={extension}
+      />,
     )
 
     const promise = renderInstanceReplay.waitUntilExit()

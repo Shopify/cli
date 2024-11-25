@@ -8,13 +8,15 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import {
   DeveloperPlatformClient,
   Paginateable,
-  ActiveAppVersion,
+  AppVersion,
+  AppVersionWithContext,
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
   DevSessionOptions,
   filterDisabledFlags,
   ClientName,
+  AppModuleVersion,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -43,7 +45,6 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema as AppVersionByTagSchemaInterface} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
@@ -257,10 +258,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {organization: organization!, apps, hasMorePages}
   }
 
-  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+  async appsForOrg(organizationId: string, term = ''): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
     const query = ListApps
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
-    const minimalOrganizationApps = result.apps.map((app) => {
+    const variables = {
+      query: term
+        .split(' ')
+        .filter((word) => word)
+        .map((word) => `title:${word}`)
+        .join(' '),
+    }
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    if (!result.appsConnection) {
+      throw new BugError('Server failed to retrieve apps')
+    }
+    const minimalOrganizationApps = result.appsConnection.edges.map((edge) => {
+      const app = edge.node
       return {
         id: app.id,
         apiKey: app.key,
@@ -270,7 +282,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
     return {
       apps: minimalOrganizationApps,
-      hasMorePages: false,
+      hasMorePages: result.appsConnection.pageInfo.hasNextPage,
     }
   }
 
@@ -380,7 +392,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(
     appIdentifiers: MinimalAppIdentifiers,
-    activeAppVersion?: ActiveAppVersion,
+    activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
 
@@ -389,7 +401,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app.appModuleVersions.forEach((mod) => {
       const registration = {
         id: mod.registrationId,
-        uid: mod.registrationUid!,
         uuid: mod.registrationUuid!,
         title: mod.registrationTitle,
         type: mod.type,
@@ -442,7 +453,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersionByTag(
     {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
     tag: string,
-  ): Promise<AppVersionByTagSchemaInterface> {
+  ): Promise<AppVersionWithContext> {
     const query = AppVersions
     const variables = {appId}
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
@@ -460,33 +471,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const versionInfo = result2.version
 
     return {
-      app: {
-        appVersion: {
-          id: parseInt(versionInfo.id, 10),
-          uuid: versionInfo.id,
-          versionTag: versionInfo.metadata.versionTag,
-          location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join(
-            '/',
-          ),
-          message: '',
-          appModuleVersions: versionInfo.appModules.map((mod: ReleasedAppModuleFragment) => {
-            return {
-              registrationId: mod.uuid,
-              registrationUid: mod.uuid,
-              registrationUuid: mod.uuid,
-              registrationTitle: mod.handle,
-              type: mod.specification.externalIdentifier,
-              config: JSON.stringify(mod.config),
-              specification: {
-                ...mod.specification,
-                identifier: mod.specification.externalIdentifier,
-                options: {managementExperience: 'cli'},
-                experience: experience(mod.specification.identifier),
-              },
-            }
-          }),
-        },
-      },
+      id: parseInt(versionInfo.id, 10),
+      uuid: versionInfo.id,
+      versionTag: versionInfo.metadata.versionTag,
+      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
+      message: '',
+      appModuleVersions: versionInfo.appModules.map(appModuleVersion),
     }
   }
 
@@ -528,25 +518,26 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+  async activeAppVersion(app: MinimalAppIdentifiers): Promise<AppVersion> {
     const result = await this.activeAppVersionRawResult(app)
     return {
-      appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
-        return {
-          registrationId: mod.userIdentifier,
-          registrationUid: mod.userIdentifier,
-          registrationUuid: mod.userIdentifier,
-          registrationTitle: mod.handle,
-          type: mod.specification.externalIdentifier,
-          config: mod.config,
-          specification: {
-            ...mod.specification,
-            identifier: mod.specification.identifier,
-            options: {managementExperience: 'cli'},
-            experience: experience(mod.specification.identifier),
-          },
-        }
-      }),
+      // appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
+      //   return {
+      //     registrationId: mod.userIdentifier,
+      //     registrationUid: mod.userIdentifier,
+      //     registrationUuid: mod.userIdentifier,
+      //     registrationTitle: mod.handle,
+      //     type: mod.specification.externalIdentifier,
+      //     config: mod.config,
+      //     specification: {
+      //       ...mod.specification,
+      //       identifier: mod.specification.identifier,
+      //       options: {managementExperience: 'cli'},
+      //       experience: experience(mod.specification.identifier),
+      //     },
+      //   }
+      // }),
+      appModuleVersions: result.app.activeRelease.version.appModules.map(appModuleVersion),
       ...result.app.activeRelease,
     }
   }
@@ -795,22 +786,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
-    if (result.devSessionCreate?.userErrors?.length) {
-      const error = result.devSessionCreate.userErrors.map((err) => err.message).join('\n')
-      throw new AbortError(error)
-    }
-    return result
+    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
   async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
-    if (result.devSessionUpdate?.userErrors?.length) {
-      const error = result.devSessionUpdate.userErrors.map((err) => err.message).join('\n')
-      throw new AbortError(error)
-    }
-    return result
+    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
   async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
@@ -978,4 +959,20 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
       convertableToPartnerTest: true,
     } as OrganizationStore
   })
+}
+
+function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
+  return {
+    registrationId: mod.uuid,
+    registrationUuid: mod.uuid,
+    registrationTitle: mod.handle,
+    type: mod.specification.externalIdentifier,
+    config: mod.config,
+    specification: {
+      ...mod.specification,
+      identifier: mod.specification.identifier,
+      options: {managementExperience: 'cli'},
+      experience: experience(mod.specification.identifier),
+    },
+  }
 }

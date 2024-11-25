@@ -16,7 +16,8 @@ export enum ExtensionsPayloadStoreEvent {
 }
 
 export async function getExtensionsPayloadStoreRawPayload(
-  options: ExtensionsPayloadStoreOptions,
+  options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
+  bundlePath: string,
 ): Promise<ExtensionsEndpointPayload> {
   return {
     app: {
@@ -37,7 +38,7 @@ export async function getExtensionsPayloadStoreRawPayload(
       url: new URL('/extensions/dev-console', options.url).toString(),
     },
     store: options.storeFqdn,
-    extensions: await Promise.all(options.extensions.map((extension) => getUIExtensionPayload(extension, options))),
+    extensions: await Promise.all(options.extensions.map((ext) => getUIExtensionPayload(ext, bundlePath, options))),
   }
 }
 
@@ -130,7 +131,8 @@ export class ExtensionsPayloadStore extends EventEmitter {
 
   async updateExtension(
     extension: ExtensionInstance,
-    options: ExtensionDevOptions,
+    options: Omit<ExtensionDevOptions, 'appWatcher'>,
+    bundlePath: string,
     development?: Partial<UIExtensionPayload['development']>,
   ) {
     const payloadExtensions = this.rawPayload.extensions
@@ -144,9 +146,9 @@ export class ExtensionsPayloadStore extends EventEmitter {
       return
     }
 
-    payloadExtensions[index] = await getUIExtensionPayload(extension, {
+    payloadExtensions[index] = await getUIExtensionPayload(extension, bundlePath, {
       ...this.options,
-      currentDevelopmentPayload: development || {status: payloadExtensions[index]?.development.status},
+      currentDevelopmentPayload: development ?? {status: payloadExtensions[index]?.development.status},
       currentLocalizationPayload: payloadExtensions[index]?.localization,
     })
 

@@ -21,7 +21,7 @@ import {OrganizationApp, MinimalAppIdentifiers} from '../../models/organization.
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
-import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 import {setPathValue} from '@shopify/cli-kit/common/object'
@@ -281,7 +281,7 @@ const options = async (params: {
   remoteApp?: OrganizationApp
   release?: boolean
   developerPlatformClient?: DeveloperPlatformClient
-  activeAppVersion?: ActiveAppVersion
+  activeAppVersion?: AppVersion
 }) => {
   return {
     app: await LOCAL_APP(params.uiExtensions),

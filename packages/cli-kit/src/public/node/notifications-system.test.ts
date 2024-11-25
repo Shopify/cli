@@ -334,7 +334,7 @@ describe('notifications-system', () => {
     vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
-    await showNotificationsIfNeeded()
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
 
     // Then
     expect(renderInfo).toHaveBeenCalled()
@@ -346,7 +346,7 @@ describe('notifications-system', () => {
     vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
-    await showNotificationsIfNeeded()
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
 
     // Then
     expect(renderWarning).toHaveBeenCalled()
@@ -358,7 +358,7 @@ describe('notifications-system', () => {
     vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
-    await expect(showNotificationsIfNeeded()).rejects.toThrowError()
+    await expect(showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})).rejects.toThrowError()
 
     // Then
     expect(renderError).toHaveBeenCalled()

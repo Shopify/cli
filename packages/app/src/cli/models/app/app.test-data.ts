@@ -11,7 +11,13 @@ import {
   getAppVersionedSchema,
 } from './app.js'
 import {ExtensionTemplate} from './template.js'
-import {Organization, OrganizationStore, MinimalAppIdentifiers, OrganizationApp} from '../organization.js'
+import {
+  Organization,
+  OrganizationStore,
+  MinimalAppIdentifiers,
+  OrganizationApp,
+  MinimalOrganizationApp,
+} from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -21,8 +27,9 @@ import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
-  ActiveAppVersion,
+  AppVersion,
   AppVersionIdentifiers,
+  AppVersionWithContext,
   AssetUrlSchema,
   CreateAppOptions,
   DeveloperPlatformClient,
@@ -41,7 +48,6 @@ import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../service
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
   MigrateFlowExtensionSchema,
@@ -1118,21 +1124,17 @@ const emptyAppVersions = {
   },
 }
 
-const emptyActiveAppVersion: ActiveAppVersion = {
+const emptyActiveAppVersion: AppVersion = {
   appModuleVersions: [],
 }
 
-const appVersionByTagResponse: AppVersionByTagSchema = {
-  app: {
-    appVersion: {
-      id: 1,
-      uuid: 'uuid',
-      versionTag: 'version-tag',
-      location: 'location',
-      message: 'MESSAGE',
-      appModuleVersions: [],
-    },
-  },
+const appVersionByTagResponse: AppVersionWithContext = {
+  id: 1,
+  uuid: 'uuid',
+  versionTag: 'version-tag',
+  location: 'location',
+  message: 'MESSAGE',
+  appModuleVersions: [],
 }
 
 const appVersionsDiffResponse: AppVersionsDiffSchema = {
@@ -1307,7 +1309,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
-    appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
+    appVersionByTag: (_app: MinimalOrganizationApp, _tag: string) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),

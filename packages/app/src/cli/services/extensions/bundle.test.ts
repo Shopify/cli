@@ -4,7 +4,6 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
-import {AbortController} from '@shopify/cli-kit/node/abort'
 import {glob, inTemporaryDirectory, mkdir, touchFileSync} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 
@@ -178,66 +177,6 @@ describe('bundleExtension()', () => {
 
     const plugins = options.plugins?.map(({name}) => name)
     expect(plugins).not.toContain('shopify:deduplicate-react')
-  })
-
-  test('stops the ESBuild when the abort signal receives an event', async () => {
-    // Given
-    const extension = await testUIExtension()
-    const app = testApp({
-      directory: '/project',
-      dotenv: {
-        path: '/project/.env',
-        variables: {
-          FOO: 'BAR',
-        },
-      },
-      allExtensions: [extension],
-    })
-    const stdout: any = {
-      write: vi.fn(),
-    }
-    const stderr: any = {
-      write: vi.fn(),
-    }
-    const esbuildDispose = vi.fn()
-    const esbuildWatch = vi.fn()
-    const esbuildRebuild = vi.fn()
-
-    vi.mocked(esContext).mockResolvedValue({
-      dispose: esbuildDispose,
-      rebuild: esbuildRebuild,
-      watch: esbuildWatch,
-      serve: vi.fn(),
-      cancel: vi.fn(),
-    })
-    const abortController = new AbortController()
-
-    // When
-    await bundleExtension({
-      env: app.dotenv?.variables ?? {},
-      outputPath: extension.outputPath,
-      minify: true,
-      environment: 'production',
-      stdin: {
-        contents: 'console.log("mock stdin content")',
-        resolveDir: 'mock/resolve/dir',
-        loader: 'tsx',
-      },
-      stdout,
-      stderr,
-      watch: async (_result) => {},
-      watchSignal: abortController.signal,
-    })
-    abortController.abort()
-
-    // Then
-    const call = vi.mocked(esContext).mock.calls[0]!
-    const options = call[0]
-    const plugins = options.plugins?.map(({name}) => name)
-    expect(esbuildDispose).toHaveBeenCalledOnce()
-    expect(esbuildWatch).toHaveBeenCalled()
-    expect(esbuildRebuild).not.toHaveBeenCalled()
-    expect(plugins).toContain('rebuild-plugin')
   })
 
   async function esbuildResultFixture() {

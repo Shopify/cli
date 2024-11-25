@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
-  ActiveAppVersion,
+  AppVersion,
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
@@ -10,6 +10,7 @@ import {
   DevSessionOptions,
   filterDisabledFlags,
   ClientName,
+  AppVersionWithContext,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -364,7 +365,7 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(
     {apiKey}: MinimalAppIdentifiers,
-    _activeAppVersion?: ActiveAppVersion,
+    _activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
@@ -375,9 +376,17 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsQuery, variables)
   }
 
-  async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionByTagSchema> {
+  async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionWithContext> {
     const input: AppVersionByTagVariables = {apiKey, versionTag}
-    return this.request(AppVersionByTagQuery, input)
+    const result: AppVersionByTagSchema = await this.request(AppVersionByTagQuery, input)
+    const appVersion = result.app.appVersion
+    return {
+      ...appVersion,
+      appModuleVersions: appVersion.appModuleVersions.map((appModuleVersion) => ({
+        ...appModuleVersion,
+        config: appModuleVersion.config ? JSON.parse(appModuleVersion.config) : undefined,
+      })),
+    }
   }
 
   async appVersionsDiff(
@@ -388,7 +397,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsDiffQuery, variables)
   }
 
-  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {
+  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<AppVersion | undefined> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
