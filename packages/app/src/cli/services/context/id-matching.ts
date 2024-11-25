@@ -69,7 +69,7 @@ function matchByNameAndType(
 /**
  * Automatically match local and remote sources if they have the same UID
  */
-function matchByUID(
+function matchByUUID(
   local: LocalSource[],
   remote: RemoteSource[],
 ): {
@@ -84,9 +84,9 @@ function matchByUID(
   const {matched, toCreate, toConfirm, toManualMatch} = matchByNameAndType(notMigratedExtensions, remote)
 
   local.forEach((localSource) => {
-    const possibleMatch = remote.find((remoteSource) => remoteSource.uid === localSource.uid)
+    const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uid!
+    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
   })
 
   toCreate.concat(local.filter((elem) => !matched[elem.localIdentifier]))
@@ -212,15 +212,14 @@ export async function automaticMatchmaking(
   identifiers: IdentifiersExtensions,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<MatchResult> {
-  const useUidMatching = developerPlatformClient.supportsAtomicDeployments
+  const useUuidMatching = developerPlatformClient.supportsAtomicDeployments
   const ids = getExtensionIds(localSources, identifiers)
   const localIds = Object.values(ids)
 
   const existsRemotely = (local: LocalSource) =>
     remoteSources.some((remote) => {
       if (remote.type !== developerPlatformClient.toExtensionGraphQLType(local.graphQLType)) return false
-      const remoteIdField = useUidMatching ? 'uid' : 'uuid'
-      return ids[local.localIdentifier] === remote[remoteIdField]
+      return ids[local.localIdentifier] === remote.uuid
     })
 
   const {migrated: migratedFunctions, pending: pendingAfterMigratingFunctions} = migrateLegacyFunctions(
@@ -230,8 +229,8 @@ export async function automaticMatchmaking(
   )
   const {local, remote} = pendingAfterMigratingFunctions
 
-  const {matched, toCreate, toConfirm, toManualMatch} = useUidMatching
-    ? matchByUID(local, remote)
+  const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
+    ? matchByUUID(local, remote)
     : matchByNameAndType(local, remote)
 
   return {

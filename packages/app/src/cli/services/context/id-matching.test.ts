@@ -10,7 +10,6 @@ vi.mock('../dev/create-extension')
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
-  uid: 'UID_A',
   id: 'A',
   title: 'EXTENSION_A',
   type: 'CHECKOUT_POST_PURCHASE',
@@ -18,7 +17,6 @@ const REGISTRATION_A: RemoteSource = {
 
 const REGISTRATION_A_2: RemoteSource = {
   uuid: 'UUID_A_2',
-  uid: 'UID_A_2',
   id: 'A_2',
   title: 'EXTENSION_A_2',
   type: 'CHECKOUT_POST_PURCHASE',
@@ -26,7 +24,6 @@ const REGISTRATION_A_2: RemoteSource = {
 
 const REGISTRATION_A_3: RemoteSource = {
   uuid: 'UUID_A_3',
-  uid: 'UID_A_3',
   id: 'A_3',
   title: 'EXTENSION_A_3',
   type: 'CHECKOUT_POST_PURCHASE',
@@ -41,7 +38,6 @@ const REGISTRATION_A_4: RemoteSource = {
 
 const REGISTRATION_B: RemoteSource = {
   uuid: 'UUID_B',
-  uid: 'UID_B',
   id: 'B',
   title: 'EXTENSION_B',
   type: 'SUBSCRIPTION_MANAGEMENT',
@@ -49,7 +45,6 @@ const REGISTRATION_B: RemoteSource = {
 
 const REGISTRATION_C: RemoteSource = {
   uuid: 'UUID_C',
-  uid: 'UID_C',
   id: 'C',
   title: 'EXTENSION_C',
   type: 'THEME_APP_EXTENSION',
@@ -57,7 +52,6 @@ const REGISTRATION_C: RemoteSource = {
 
 const REGISTRATION_D: RemoteSource = {
   uuid: 'UUID_D',
-  uid: 'UID_D',
   id: 'D',
   title: 'EXTENSION_D',
   type: 'WEB_PIXEL_EXTENSION',
@@ -65,7 +59,6 @@ const REGISTRATION_D: RemoteSource = {
 
 const REGISTRATION_FUNCTION_A: RemoteSource = {
   uuid: 'FUNCTION_UUID_A',
-  uid: 'FUNCTION_UID_A',
   id: 'FUNCTION_A',
   title: 'FUNCTION A',
   type: 'FUNCTION',
@@ -107,7 +100,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
-    uid: 'UID_A',
+    uid: 'UUID_A',
   })
 
   EXTENSION_A_2 = await testUIExtension({
@@ -131,7 +124,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
-    uid: 'UID_A_2',
+    uid: 'UIUD_A_2',
   })
 
   EXTENSION_B = await testUIExtension({
@@ -155,7 +148,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
-    uid: 'UID_B',
+    uid: 'UUID_B',
   })
 
   EXTENSION_B_2 = await testUIExtension({
@@ -179,7 +172,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
-    uid: 'UID_B_2',
+    uid: 'UUID_B_2',
   })
 
   EXTENSION_C = await testUIExtension({
@@ -203,7 +196,7 @@ beforeAll(async () => {
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
-    uid: 'UID_C',
+    uid: 'UUID_C',
   })
 
   EXTENSION_D = await testUIExtension({
@@ -228,7 +221,7 @@ beforeAll(async () => {
     outputPath: '',
     entrySourceFilePath: '',
     devUUID: 'devUUID',
-    uid: 'UID_D',
+    uid: 'UUID_D',
   })
 
   FUNCTION_A = await testFunctionExtension({
@@ -794,7 +787,7 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
 
     // Then
     const expected = {
-      identifiers: {'extension-a': 'UID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toConfirm: [],
       toCreate: [EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
