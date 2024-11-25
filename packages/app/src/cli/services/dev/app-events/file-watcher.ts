@@ -11,7 +11,10 @@ import {debounce} from '@shopify/cli-kit/common/function'
 import ignore from 'ignore'
 import {Writable} from 'stream'
 
-const EXTENSION_CREATION_TIMEOUT = 60000
+const EXTENSION_CREATION_TIMEOUT_IN_MS = 60000
+const EXTENSION_CREATION_WAIT_INTERVAL_IN_MS = 500
+const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
+
 /**
  * Event emitted by the file watcher
  *
@@ -59,7 +62,7 @@ export async function startFileWatcher(
   app: AppInterface,
   options: OutputContextOptions,
   onChange: (events: WatcherEvent[]) => void,
-  debounceTime = 500,
+  debounceTime = DEFAULT_DEBOUNCE_TIME_IN_MS,
 ) {
   const {default: chokidar} = await import('chokidar')
 
@@ -89,7 +92,7 @@ export async function startFileWatcher(
   }
 
   // Each extension has its own ignore instance to avoid conflicts
-  let ignored: {[key: string]: ignore.Ignore | undefined} = {}
+  const ignored: {[key: string]: ignore.Ignore | undefined} = {}
 
   /**
    * Adds a new event to the current events list and schedules the debounced emit function.
@@ -106,6 +109,7 @@ export async function startFileWatcher(
       if (!isAValidWatchedPath) return
     }
 
+    // When creating a new extension, also create a new Ignore instance.
     if (event.type === 'extension_folder_created') {
       ignored[event.path] = createIgnoreInstance(event.path)
     }
@@ -134,8 +138,10 @@ export async function startFileWatcher(
   // Watch the extensions root directories and the app configuration file, nothing else.
   const watchPaths = [appConfigurationPath, ...extensionDirectories]
 
-  // Read .gitignore files from extension directories and add the patterns to the ignored list
-  ignored = createIgnoredInstances(extensionPaths)
+  // For each extension directory, create an "Ignore" instance to ignore files based on the .gitignore file
+  for (const dir of extensionDirectories) {
+    ignored[dir] = createIgnoreInstance(dir)
+  }
 
   // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
   // PENDING: Use .gitgnore from app and extensions to ignore files.
@@ -188,17 +194,17 @@ export async function startFileWatcher(
         const intervalId = setInterval(() => {
           if (fileExistsSync(joinPath(realPath, configurationFileNames.lockFile))) {
             outputDebug(`Waiting for extension to complete creation: ${path}\n`)
-            totalWaitedTime += 500
+            totalWaitedTime += EXTENSION_CREATION_WAIT_INTERVAL_IN_MS
           } else {
             clearInterval(intervalId)
             extensionPaths.push(realPath)
             pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
           }
-          if (totalWaitedTime >= EXTENSION_CREATION_TIMEOUT) {
+          if (totalWaitedTime >= EXTENSION_CREATION_TIMEOUT_IN_MS) {
             clearInterval(intervalId)
             options.stderr.write(`Error loading new extension at path: ${path}.\n Please restart the process.`)
           }
-        }, 200)
+        }, EXTENSION_CREATION_WAIT_INTERVAL_IN_MS)
         break
       case 'unlink':
         // Ignore shoplock files
@@ -239,17 +245,7 @@ const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptio
   })
 }
 
-// Creates an ignore instance for each extension directory if a .gitignore file exists
-// Returns a map of extension paths to ignore instances
-function createIgnoredInstances(extensionDirectories: string[]): {[key: string]: ignore.Ignore | undefined} {
-  const ignored: {[key: string]: ignore.Ignore | undefined} = {}
-  for (const dir of extensionDirectories) {
-    ignored[dir] = createIgnoreInstance(dir)
-  }
-  return ignored
-}
-
-// Returns an ignore instance for the given path if a .gitignore file exists, otherwise undefined
+// Creates an "Ignore" instance for the given path if a .gitignore file exists, otherwise undefined
 function createIgnoreInstance(path: string): ignore.Ignore | undefined {
   const gitIgnorePath = joinPath(path, '.gitignore')
   if (!fileExistsSync(gitIgnorePath)) return undefined
