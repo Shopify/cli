@@ -21,6 +21,7 @@ import {
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  MinimalAppIdentifiersPossiblyExcludingId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -92,6 +93,7 @@ import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
+import {AppFromApiKey} from '../../api/graphql/app-management/generated/app-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
@@ -217,7 +219,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  async appFromId(appIdentifiers: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
@@ -871,8 +873,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
-    return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
+  private async activeAppVersionRawResult({
+    id,
+    organizationId,
+    apiKey,
+  }: MinimalAppIdentifiersPossiblyExcludingId): Promise<ActiveAppReleaseQuery> {
+    if (id) {
+      return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
+    } else {
+      return appManagementRequestDoc(organizationId, AppFromApiKey, await this.token(), {apiKey})
+    }
   }
 
   private async organizationBetaFlags(

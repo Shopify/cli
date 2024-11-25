@@ -3,6 +3,7 @@ import {AppManagementClient} from './developer-platform-client/app-management-cl
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  MinimalAppIdentifiersPossiblyExcludingId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -213,7 +214,7 @@ export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (app: MinimalAppIdentifiers) => Promise<OrganizationApp | undefined>
+  appFromId: (app: MinimalAppIdentifiersPossiblyExcludingId) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
