@@ -74,8 +74,7 @@ export async function linkedAppContext({
   if (!remoteApp) {
     const apiKey = configState.basicConfiguration.client_id
     const organizationId = configState.basicConfiguration.organization_id
-    const id = configState.basicConfiguration.app_id
-    remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId, id})
+    remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId})
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
