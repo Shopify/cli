@@ -87,7 +87,15 @@ export class FileWatcher {
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp', '**/generated/**'],
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/*.test.*',
+        '**/dist/**',
+        '**/*.swp',
+        '**/generated/**',
+        '**/.gitignore',
+      ],
       persistent: true,
       ignoreInitial: true,
     })
