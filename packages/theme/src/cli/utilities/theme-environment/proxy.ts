@@ -272,7 +272,9 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       redirect: 'manual',
     },
     async onResponse(event, response) {
-      logRequestLine(event, response)
+      if (!ctx.options.silence) {
+        logRequestLine(event, response)
+      }
 
       patchProxiedResponseHeaders(ctx, event, response)
 

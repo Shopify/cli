@@ -35,6 +35,7 @@ export interface DevOptions {
   ignore: string[]
   only: string[]
   notify?: string
+  silence?: boolean
 }
 
 export async function dev(options: DevOptions) {
@@ -91,6 +92,7 @@ export async function dev(options: DevOptions) {
       noDelete: options.noDelete,
       ignore: options.ignore,
       only: options.only,
+      silence: options.silence ?? false,
     },
   }
 

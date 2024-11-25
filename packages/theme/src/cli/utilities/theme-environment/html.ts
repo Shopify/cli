@@ -25,7 +25,9 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {
-        logRequestLine(event, response)
+        if (!ctx.options.silence) {
+          logRequestLine(event, response)
+        }
 
         let html = await patchRenderingResponse(ctx, event, response)
 

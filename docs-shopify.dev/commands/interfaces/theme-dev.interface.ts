@@ -76,6 +76,12 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
+   * Disable request logs.
+   * @environment SHOPIFY_FLAG_SILENCE
+   */
+  '--silence'?: ''
+
+  /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */

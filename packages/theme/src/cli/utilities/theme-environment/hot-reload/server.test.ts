@@ -330,6 +330,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
       liveReload: 'hot-reload',
       open: false,
       themeEditorSync: false,
+      silence: false,
     },
   }
 

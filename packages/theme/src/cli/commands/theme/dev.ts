@@ -112,6 +112,10 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
+    silence: Flags.boolean({
+      description: 'Disable request logs.',
+      env: 'SHOPIFY_FLAG_SILENCE',
+    }),
   }
 
   async run(): Promise<void> {
@@ -153,6 +157,7 @@ You can run this command only in a directory that matches the [default Shopify t
       ignore,
       only,
       notify: flags.notify,
+      silence: flags.silence,
     })
   }
 }
