@@ -3,7 +3,6 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -16,6 +15,7 @@ import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -141,13 +141,7 @@ async function handleDevSessionResult(
 ) {
   if (result.status === 'updated') {
     await printSuccess(`✅ Updated`, processOptions.stdout)
-    const scopeChanges = event?.extensionEvents.find((eve) => eve.extension.handle === 'app-access')
-    if (scopeChanges) {
-      await printWarning(`🔄 Action required`, processOptions.stdout)
-      const scopesURL = await buildAppURLForWeb(processOptions.storeFqdn, processOptions.apiKey)
-      const message = outputContent`└  Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`
-      await printWarning(message.value, processOptions.stdout)
-    }
+    await printActionRequiredMessages(processOptions, event)
   } else if (result.status === 'created') {
     isDevSessionReady = true
     await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
@@ -160,6 +154,30 @@ async function handleDevSessionResult(
   // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
   // async nature of the process.
   if (!isDevSessionReady && !isUnitTest()) throw new AbortError('Failed to create dev session')
+}
+
+/**
+ * Some extensions may require the user to take some action after an update in the dev session.
+ * This function will print those action messages to the terminal.
+ */
+async function printActionRequiredMessages(processOptions: DevSessionProcessOptions, event?: AppEvent) {
+  if (!event) return
+  const extensionEvents = event.extensionEvents ?? []
+  const warningMessages = getArrayRejectingUndefined(
+    await Promise.all(
+      extensionEvents.map((eve) =>
+        eve.extension.getDevSessionActionUpdateMessage(event.app.configuration, processOptions.storeFqdn),
+      ),
+    ),
+  )
+
+  if (warningMessages.length) {
+    await printWarning(`🔄 Action required`, processOptions.stdout)
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    warningMessages.forEach(async (message) => {
+      await printWarning(outputContent`└ ${message}`.value, processOptions.stdout)
+    })
+  }
 }
 
 /**

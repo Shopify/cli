@@ -4,7 +4,7 @@ import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath} from '../app/app.js'
+import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
@@ -62,6 +62,11 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  getDevSessionActionUpdateMessage?: (
+    config: TConfiguration,
+    appConfig: CurrentAppConfiguration,
+    storeFqdn: string,
+  ) => Promise<string>
 
   /**
    * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
@@ -167,6 +172,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
+    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
   }
   const merged = {...defaults, ...spec}
 
@@ -212,6 +218,11 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
+  getDevSessionActionUpdateMessage?: (
+    config: TConfiguration,
+    appConfig: CurrentAppConfiguration,
+    storeFqdn: string,
+  ) => Promise<string>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -224,6 +235,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
+    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
   })
 }
 
