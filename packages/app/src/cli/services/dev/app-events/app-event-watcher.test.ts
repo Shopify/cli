@@ -11,7 +11,7 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -260,7 +260,6 @@ describe('app-event-watcher', () => {
 
           const mockManager = new MockESBuildContextManager()
           const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
-
           const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
           const emitSpy = vi.spyOn(watcher, 'emit')
           await watcher.start({stdout, stderr, signal: abortController.signal})
@@ -290,6 +289,7 @@ describe('app-event-watcher', () => {
             extensionEvents: expect.arrayContaining(extensionEvents),
             startTime: expect.anything(),
             path: expect.anything(),
+            appWasReloaded: needsAppReload,
           })
 
           const initialEvents = app.realExtensions.map((eve) => ({
@@ -426,7 +426,7 @@ class MockFileWatcher extends FileWatcher {
   private readonly events: WatcherEvent[]
   private listener?: (events: WatcherEvent[]) => void
 
-  constructor(app: AppInterface, options: OutputContextOptions, events: WatcherEvent[]) {
+  constructor(app: AppLinkedInterface, options: OutputContextOptions, events: WatcherEvent[]) {
     super(app, options)
     this.events = events
   }
