@@ -80,7 +80,10 @@ export async function updateAppIdentifiers(
   })
 
   const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
-  const writeToFile = !contentIsEqual && (command === 'deploy' || command === 'release')
+  const writeToFile =
+    !contentIsEqual &&
+    (command === 'deploy' || command === 'release') &&
+    !developerPlatformClient.supportsAtomicDeployments
   dotenvFile.variables = updatedVariables
 
   if (writeToFile) {

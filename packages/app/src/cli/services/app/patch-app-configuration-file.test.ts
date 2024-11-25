@@ -48,7 +48,7 @@ describe('patchAppConfigurationFile', () => {
         },
       }
 
-      await patchAppConfigurationFile({path: configPath, patch, schema})
+      patchAppConfigurationFile({path: configPath, patch, schema})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -85,7 +85,7 @@ api_version = "2023-04"
         },
       }
 
-      await patchAppConfigurationFile({path: configPath, patch, schema})
+      patchAppConfigurationFile({path: configPath, patch, schema})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -125,7 +125,7 @@ dev_store_url = "example.myshopify.com"
         },
       }
 
-      await patchAppConfigurationFile({path: configPath, patch, schema})
+      patchAppConfigurationFile({path: configPath, patch, schema})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)
@@ -164,7 +164,7 @@ random_toml_field = "random_value"
       )
       const patch = {name: 123}
 
-      await patchAppConfigurationFile({path: configPath, patch, schema: undefined})
+      patchAppConfigurationFile({path: configPath, patch, schema: undefined})
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile)

@@ -109,7 +109,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       dev_store_url: store.shopDomain,
     }
     const patch = {build: {dev_store_url: store.shopDomain}}
-    await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
+    patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {

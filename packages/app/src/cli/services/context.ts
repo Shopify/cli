@@ -180,7 +180,7 @@ async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
   if (includeConfigOnDeploy === undefined) return
 
   const patch = {build: {include_config_on_deploy: undefined}}
-  await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
+  patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
 
   includeConfigOnDeploy ? renderInfoAboutIncludeConfigOnDeploy() : renderWarningAboutIncludeConfigOnDeploy()
 }
@@ -219,7 +219,7 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
   const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
+  patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 

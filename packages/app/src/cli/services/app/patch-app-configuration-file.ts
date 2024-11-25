@@ -1,8 +1,9 @@
 import {addDefaultCommentsToToml} from './write-app-configuration-file.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
-import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
+import {writeFileSync} from 'fs'
 
 export interface PatchTomlOptions {
   path: string
@@ -22,8 +23,8 @@ export interface PatchTomlOptions {
  * @param patch - The patch to apply to the app configuration file.
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  */
-export async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
-  const tomlContents = await readFile(path)
+export function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions) {
+  const tomlContents = readFileSync(path).toString()
   const configuration = decodeToml(tomlContents)
 
   // Deep merge the configuration with the patch.
@@ -37,7 +38,7 @@ export async function patchAppConfigurationFile({path, patch, schema}: PatchToml
 
   let encodedString = encodeToml(updatedConfig)
   encodedString = addDefaultCommentsToToml(encodedString)
-  await writeFile(path, encodedString)
+  writeFileSync(path, encodedString)
 }
 
 export function replaceArrayStrategy(_: unknown[], newArray: unknown[]): unknown[] {

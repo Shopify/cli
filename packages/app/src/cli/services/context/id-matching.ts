@@ -54,7 +54,7 @@ function matchByNameAndType(
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid
   })
 
-  const pendingLocal = local.filter((elem) => !matched[elem.localIdentifier])
+  const pendingLocal = local.filter((elem) => matched[elem.localIdentifier] === undefined)
   const pendingRemote = remote.filter((registration) => !Object.values(matched).includes(registration.uuid))
 
   // Now we try to find a match between a local source and remote one if they have

@@ -215,7 +215,7 @@ export async function writeFile(
  * @param data - Content to be written.
  */
 export function writeFileSync(path: string, data: string): void {
-  outputDebug(outputContent`File-writing some content to file at ${outputToken.path(path)}...`)
+  outputDebug(outputContent`Sync-writing some content to file at ${outputToken.path(path)}...`)
   fsWriteFileSync(path, data)
 }
 

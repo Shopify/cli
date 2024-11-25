@@ -357,7 +357,8 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
-          uuid: identifiers?.extensions[module.localIdentifier] ?? undefined,
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+          uuid: identifiers?.extensions[module.localIdentifier] || undefined,
           assets: module.configuration.uid ?? module.handle,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
