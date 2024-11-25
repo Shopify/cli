@@ -5,9 +5,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type PublicApiVersionsQueryVariables = Types.Exact<{[key: string]: never}>
 
-export type PublicApiVersionsQuery = {
-  publicApiVersions: {displayName: string; handle: string; supported: boolean}[]
-}
+export type PublicApiVersionsQuery = {publicApiVersions: {handle: string}[]}
 
 export const PublicApiVersions = {
   kind: 'Document',
@@ -25,9 +23,7 @@ export const PublicApiVersions = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                {kind: 'Field', name: {kind: 'Name', value: 'displayName'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
-                {kind: 'Field', name: {kind: 'Name', value: 'supported'}},
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
               ],
             },
