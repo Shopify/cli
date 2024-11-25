@@ -12,7 +12,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {PublicApiVersionsQuery} from '../../api/graphql/webhooks/generated/public-api-versions.js'
 import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/available-topics.js'
-import {CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -369,14 +369,24 @@ describe('sendSampleWebhook', () => {
         errors: [],
       },
     }
+    const expectedVariables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
+    }
+    const token = 'token'
     vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
-    client.token = () => Promise.resolve('token')
+    client.token = () => Promise.resolve(token)
     const result = await client.sendSampleWebhook(input)
 
     // Then
+    expect(webhooksRequest).toHaveBeenCalledWith(CliTesting, token, expectedVariables)
     expect(result.sendSampleWebhook.samplePayload).toEqual(mockedResponse.cliTesting?.samplePayload)
     expect(result.sendSampleWebhook.headers).toEqual(mockedResponse.cliTesting?.headers)
     expect(result.sendSampleWebhook.success).toEqual(true)
@@ -401,14 +411,24 @@ describe('sendSampleWebhook', () => {
         errors: [],
       },
     }
+    const expectedVariables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
+    }
+    const token = 'token'
     vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
-    client.token = () => Promise.resolve('token')
+    client.token = () => Promise.resolve(token)
     const result = await client.sendSampleWebhook(input)
 
     // Then
+    expect(webhooksRequest).toHaveBeenCalledWith(CliTesting, token, expectedVariables)
     expect(result.sendSampleWebhook.samplePayload).toEqual('{}')
     expect(result.sendSampleWebhook.headers).toEqual('{}')
     expect(result.sendSampleWebhook.success).toEqual(true)

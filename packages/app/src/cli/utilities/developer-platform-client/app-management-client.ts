@@ -46,7 +46,11 @@ import {
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
-import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {
+  SampleWebhook,
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {
@@ -724,15 +728,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
       topic: input.topic,
     }
     const result = await webhooksRequest(query, await this.token(), variables)
-
-    return {
-      sendSampleWebhook: {
-        samplePayload: result.cliTesting?.samplePayload ?? '{}',
-        headers: result.cliTesting?.headers ?? '{}',
-        success: result.cliTesting?.success ?? false,
-        userErrors: result.cliTesting?.errors?.map((error) => ({message: error, fields: []})) ?? [],
-      },
+    let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
+    const cliTesting = result.cliTesting
+    if (cliTesting) {
+      sendSampleWebhook = {
+        samplePayload: cliTesting.samplePayload ?? '{}',
+        headers: cliTesting.headers ?? '{}',
+        success: cliTesting.success,
+        userErrors: cliTesting.errors.map((error) => ({message: error, fields: []})),
+      }
     }
+    return {sendSampleWebhook}
   }
 
   async apiVersions(): Promise<PublicApiVersionsSchema> {
