@@ -902,12 +902,12 @@ interface DiffAppModulesOutput {
 }
 
 export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
-  const currentModuleUids = currentModules.map((mod) => mod.uuid)
-  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.uuid)
-  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.uuid))
-  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.uuid))
-  const addedUids = added.map((mod) => mod.uuid)
-  const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uuid))
+  const currentModuleUids = currentModules.map((mod) => mod.userIdentifier)
+  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.userIdentifier)
+  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.userIdentifier))
+  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.userIdentifier))
+  const removedUids = removed.map((mod) => mod.userIdentifier)
+  const updated = currentModules.filter((mod) => !removedUids.includes(mod.userIdentifier))
   return {added, removed, updated}
 }
 
@@ -946,8 +946,8 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
 
 function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
   return {
-    registrationId: mod.uuid,
-    registrationUuid: mod.uuid,
+    registrationId: mod.userIdentifier,
+    registrationUuid: mod.userIdentifier,
     registrationTitle: mod.handle,
     type: mod.specification.externalIdentifier,
     config: mod.config,

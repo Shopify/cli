@@ -16,6 +16,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
@@ -47,6 +48,7 @@ const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
 function moduleFromExtension(extension: ExtensionInstance) {
   return {
     uuid: extension.uid,
+    userIdentifier: extension.uid,
     handle: extension.handle,
     config: extension.configuration,
     specification: {
@@ -75,6 +77,36 @@ describe('diffAppModules', () => {
     expect(added).toEqual([moduleC])
     expect(removed).toEqual([moduleA])
     expect(updated).toEqual([moduleB])
+  })
+
+  // This test considers the case where there are local and remote modules, which may have slightly different properties
+  test('extracts the added, removed and updated modules before deployment', async () => {
+    // Given
+    const [remoteModuleA, remoteModuleB] = [moduleFromExtension(extensionA), moduleFromExtension(extensionB)]
+    // Under some circumstances, local UUID may differ from remote.
+    // So we are testing that diffing happens based on the shared userIdentifier
+    // property, not the UUID.
+    const localModuleB = {
+      ...remoteModuleB,
+      uuid: randomUUID(),
+    }
+    const localModuleC = {
+      ...moduleFromExtension(extensionC),
+      uuid: randomUUID(),
+    }
+
+    const before = [remoteModuleA, remoteModuleB]
+    const after = [localModuleB, localModuleC]
+
+    // When
+    const {added, removed, updated} = diffAppModules({currentModules: before, selectedVersionModules: after})
+
+    // Then
+    expect(added).toEqual([localModuleC])
+    expect(removed).toEqual([remoteModuleA])
+    // Updated returns the remote module, not the local one. This shouldn't matter
+    // as the module identifiers are the same.
+    expect(updated).toEqual([remoteModuleB])
   })
 })
 
