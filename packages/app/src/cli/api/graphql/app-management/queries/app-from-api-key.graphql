@@ -1,0 +1,5 @@
+query AppFromApiKey($apiKey: String!) {
+  app: appByKey(key: $apiKey) {
+    ...AppVersionInfo
+  }
+}

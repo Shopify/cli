@@ -89,7 +89,6 @@ embedded = false
 `
       expect(configuration).toEqual({
         client_id: 'api-key',
-        app_id: '1',
         name: 'app1',
         application_url: '',
         embedded: true,

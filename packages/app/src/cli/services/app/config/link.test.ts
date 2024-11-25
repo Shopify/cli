@@ -85,7 +85,6 @@ describe('link', () => {
       expect(fileExistsSync(joinPath(tmp, 'shopify.app.default-value.toml'))).toBeTruthy()
       expect(configuration).toEqual({
         client_id: '12345',
-        app_id: '1',
         name: 'app1',
         extension_directories: [],
         application_url: 'https://example.com',
@@ -165,7 +164,6 @@ embedded = false
 `
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       extension_directories: [],
       application_url: 'https://example.com',
@@ -274,7 +272,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -407,7 +404,6 @@ url = "https://api-client-config.com/preferences"
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'new-title',
       application_url: 'https://api-client-config.com',
       embedded: false,
@@ -539,7 +535,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'my app',
       application_url: 'https://myapp.com',
       embedded: true,
@@ -631,7 +626,6 @@ embedded = false
 `
     expect(configuration).toEqual({
       client_id: 'different-api-key',
-      app_id: '1',
       name: 'my app',
       application_url: 'https://myapp.com',
       embedded: true,
@@ -712,7 +706,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       extension_directories: [],
       name: 'app1',
       application_url: 'https://example.com',
@@ -779,7 +772,6 @@ embedded = false
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -825,7 +817,6 @@ test('fetches the remote app when an api key is provided', async () => {
     expect(content).toContain('name = "app1"')
     expect(configuration).toEqual({
       client_id: 'api-key',
-      app_id: '1',
       extension_directories: [],
       name: 'app1',
       application_url: 'https://example.com',
@@ -933,7 +924,6 @@ embedded = false
 `
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -995,7 +985,6 @@ embedded = false
 
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -1062,7 +1051,6 @@ embedded = false
 
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       extension_directories: [],
       name: 'app1',
       application_url: 'https://example.com',
@@ -1185,7 +1173,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -1310,7 +1297,6 @@ embedded = false
 
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://my-app-url.com',
       embedded: true,
