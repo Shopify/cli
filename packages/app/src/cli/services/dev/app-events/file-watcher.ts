@@ -10,6 +10,11 @@ import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
 import {Writable} from 'stream'
 
+const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
+const EXTENSION_CREATION_TIMEOUT_IN_MS = 60000
+const EXTENSION_CREATION_CHECK_INTERVAL_IN_MS = 200
+const FILE_DELETE_TIMEOUT_IN_MS = 500
+
 /**
  * Event emitted by the file watcher
  *
@@ -41,48 +46,81 @@ export interface OutputContextOptions {
   signal: AbortSignal
 }
 
-/**
- * Watch for changes in the given app directory.
- *
- * It will watch for changes in the active config file and the extension directories.
- * When possible, changes will be interpreted to detect new/deleted extensions
- *
- * Changes to toml files will be reported as different events to other file changes.
- *
- * @param app - The app to watch
- * @param options - The output options
- * @param onChange - The callback to call when a change is detected
- */
-export async function startFileWatcher(
-  app: AppInterface,
-  options: OutputContextOptions,
-  onChange: (events: WatcherEvent[]) => void,
-) {
-  const {default: chokidar} = await import('chokidar')
+export class FileWatcher {
+  private currentEvents: WatcherEvent[] = []
+  private extensionPaths: string[]
+  private readonly watchPaths: string[]
+  private readonly customGitIgnoredPatterns: string[]
+  private readonly app: AppInterface
+  private readonly options: OutputContextOptions
+  private onChangeCallback?: (events: WatcherEvent[]) => void
+  private watcher?: FSWatcher
+  private readonly debouncedEmit: () => void
 
-  const appConfigurationPath = app.configuration.path
-  const extensionDirectories = [...(app.configuration.extension_directories ?? ['extensions'])].map((directory) => {
-    return joinPath(app.directory, directory)
-  })
+  constructor(app: AppInterface, options: OutputContextOptions, debounceTime: number = DEFAULT_DEBOUNCE_TIME_IN_MS) {
+    this.app = app
+    this.options = options
 
-  let currentEvents: WatcherEvent[] = []
+    // Current active extension paths (not defined in the main app configuration file)
+    // If a change happens outside of these paths, it will be ignored unless is for a new extension being created
+    // When a new extension is created, the path is added to this list
+    // When an extension is deleted, the path is removed from this list
+    // For every change, the corresponding extensionPath will be also reported in the event
+    this.extensionPaths = app.realExtensions
+      .map((ext) => normalizePath(ext.directory))
+      .filter((dir) => dir !== app.directory)
 
-  /**
-   * Debounced function to emit the accumulated events.
-   * This function will be called at most once every 300ms to avoid emitting too many events in a short period.
-   */
-  const debouncedEmit = debounce(emitEvents, 300, {leading: true, trailing: true})
+    const extensionDirectories = [...(app.configuration.extension_directories ?? ['extensions'])].map((directory) => {
+      return joinPath(app.directory, directory)
+    })
+
+    this.watchPaths = [app.configuration.path, ...extensionDirectories]
+
+    // Read .gitignore files from extension directories and add the patterns to the ignored list
+    this.customGitIgnoredPatterns = this.getCustomGitIgnorePatterns()
+
+    /**
+     * Debounced function to emit the accumulated events.
+     * This function will be called at most once every 500ms to avoid emitting too many events in a short period.
+     */
+    this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: true, trailing: true})
+  }
+
+  onChange(listener: (events: WatcherEvent[]) => void) {
+    this.onChangeCallback = listener
+  }
+
+  async start(): Promise<void> {
+    const {default: chokidar} = await import('chokidar')
+
+    this.watcher = chokidar.watch(this.watchPaths, {
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/*.test.*',
+        '**/dist/**',
+        '**/*.swp',
+        '**/generated/**',
+        ...this.customGitIgnoredPatterns,
+      ],
+      persistent: true,
+      ignoreInitial: true,
+    })
+
+    this.watcher.on('all', this.handleFileEvent)
+    this.options.signal.addEventListener('abort', this.close)
+  }
 
   /**
    * Emits the accumulated events and resets the current events list.
    * It also logs the number of events emitted and their paths for debugging purposes.
    */
-  function emitEvents() {
-    const events = currentEvents
-    currentEvents = []
+  private readonly emitEvents = () => {
+    const events = this.currentEvents
+    this.currentEvents = []
     const message = `🔉 ${events.length} EVENTS EMITTED in files: ${events.map((event) => event.path).join('\n')}`
-    outputDebug(message, options.stdout)
-    onChange(events)
+    outputDebug(message, this.options.stdout)
+    this.onChangeCallback?.(events)
   }
 
   /**
@@ -91,73 +129,39 @@ export async function startFileWatcher(
    *
    * @param event - The event to be added
    */
-  function pushEvent(event: WatcherEvent) {
-    const extension = app.realExtensions.find((ext) => ext.directory === event.extensionPath)
+  private pushEvent(event: WatcherEvent) {
+    const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
     const watchPaths = extension?.devSessionWatchPaths
+
     // If the affected extension defines custom watch paths, ignore the event if it's not in the list
     if (watchPaths) {
       const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
       if (!isAValidWatchedPath) return
     }
+
     // If the event is already in the list, don't push it again
-    if (currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
-    currentEvents.push(event)
-    debouncedEmit()
+    if (this.currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
+    this.currentEvents.push(event)
+    this.debouncedEmit()
   }
 
-  // Current active extension paths (not defined in the main app configuration file)
-  // If a change happens outside of these paths, it will be ignored unless is for a new extension being created
-  // When a new extension is created, the path is added to this list
-  // When an extension is deleted, the path is removed from this list
-  // For every change, the corresponding extensionPath will be also reported in the event
-  let extensionPaths = app.realExtensions
-    .map((ext) => normalizePath(ext.directory))
-    .filter((dir) => dir !== app.directory)
-
-  // Watch the extensions root directories and the app configuration file, nothing else.
-  const watchPaths = [appConfigurationPath, ...extensionDirectories]
-
-  // Read .gitignore files from extension directories and add the patterns to the ignored list
-  const customGitIgnoredPatterns = getCustomGitIgnorePatterns(extensionPaths)
-
-  // Create watcher ignoring node_modules, git, test files, dist folders, vim swap files
-  // PENDING: Use .gitgnore from app and extensions to ignore files.
-  const watcher = chokidar.watch(watchPaths, {
-    ignored: [
-      '**/node_modules/**',
-      '**/.git/**',
-      '**/*.test.*',
-      '**/dist/**',
-      '**/*.swp',
-      '**/generated/**',
-      ...customGitIgnoredPatterns,
-    ],
-    persistent: true,
-    ignoreInitial: true,
-  })
-
-  // Start chokidar watcher for 'all' events
-  watcher.on('all', (event, path) => {
+  private readonly handleFileEvent = (event: string, path: string) => {
     const startTime = startHRTime()
-    const isConfigAppPath = path === appConfigurationPath
+    const isConfigAppPath = path === this.app.configuration.path
     const extensionPath =
-      extensionPaths.find((dir) => isSubpath(dir, path)) ?? (isConfigAppPath ? app.directory : 'unknown')
+      this.extensionPaths.find((dir) => isSubpath(dir, path)) ?? (isConfigAppPath ? this.app.directory : 'unknown')
     const isToml = path.endsWith('.toml')
 
-    outputDebug(`🌀: ${event} ${path.replace(app.directory, '')}\n`)
+    outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
 
-    if (extensionPath === 'unknown' && !isToml) {
-      // Ignore an event if it's not part of an existing extension
-      // Except if it is a toml file (either app config or extension config)
-      return
-    }
+    if (extensionPath === 'unknown' && !isToml) return
 
     switch (event) {
       case 'change':
         if (isToml) {
-          pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
+          this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
-          pushEvent({type: 'file_updated', path, extensionPath, startTime})
+          this.pushEvent({type: 'file_updated', path, extensionPath, startTime})
         }
         break
       case 'add':
@@ -165,7 +169,7 @@ export async function startFileWatcher(
         // If a toml file was added, a new extension(s) is being created.
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isToml) {
-          pushEvent({type: 'file_created', path, extensionPath, startTime})
+          this.pushEvent({type: 'file_created', path, extensionPath, startTime})
           break
         }
         let totalWaitedTime = 0
@@ -173,35 +177,36 @@ export async function startFileWatcher(
         const intervalId = setInterval(() => {
           if (fileExistsSync(joinPath(realPath, configurationFileNames.lockFile))) {
             outputDebug(`Waiting for extension to complete creation: ${path}\n`)
-            totalWaitedTime += 500
+            totalWaitedTime += EXTENSION_CREATION_CHECK_INTERVAL_IN_MS
           } else {
             clearInterval(intervalId)
-            extensionPaths.push(realPath)
-            pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
+            this.extensionPaths.push(realPath)
+            this.pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
           }
-          if (totalWaitedTime >= 20000) {
+          if (totalWaitedTime >= EXTENSION_CREATION_TIMEOUT_IN_MS) {
             clearInterval(intervalId)
-            options.stderr.write(`Extension creation detection timeout at path: ${path}\nYou might need to restart dev`)
+            this.options.stderr.write(
+              `Extension creation detection timeout at path: ${path}\nYou might need to restart dev`,
+            )
           }
-        }, 200)
+        }, EXTENSION_CREATION_CHECK_INTERVAL_IN_MS)
         break
       case 'unlink':
         // Ignore shoplock files
         if (path.endsWith(configurationFileNames.lockFile)) break
 
         if (isConfigAppPath) {
-          pushEvent({type: 'app_config_deleted', path, extensionPath, startTime})
+          this.pushEvent({type: 'app_config_deleted', path, extensionPath, startTime})
         } else if (isToml) {
           // When a toml is deleted, we can consider every extension in that folder was deleted.
-          extensionPaths = extensionPaths.filter((extPath) => extPath !== extensionPath)
-          pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
+          this.extensionPaths = this.extensionPaths.filter((extPath) => extPath !== extensionPath)
+          this.pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
         } else {
-          // This could be an extension delete event, Wait 500ms to see if the toml is deleted or not.
           setTimeout(() => {
             // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
-            if (!extensionPaths.includes(extensionPath)) return
-            pushEvent({type: 'file_deleted', path, extensionPath, startTime})
-          }, 500)
+            if (!this.extensionPaths.includes(extensionPath)) return
+            this.pushEvent({type: 'file_deleted', path, extensionPath, startTime})
+          }, FILE_DELETE_TIMEOUT_IN_MS)
         }
         break
       // These events are ignored
@@ -209,38 +214,33 @@ export async function startFileWatcher(
       case 'unlinkDir':
         break
     }
-  })
+  }
 
-  listenForAbortOnWatcher(watcher, options)
-}
+  /**
+   * Returns the custom gitignore patterns for the given extension directories.
+   *
+   * @returns The custom gitignore patterns
+   */
+  private getCustomGitIgnorePatterns(): string[] {
+    return this.extensionPaths
+      .map((dir) => {
+        const gitIgnorePath = joinPath(dir, '.gitignore')
+        if (!fileExistsSync(gitIgnorePath)) return []
+        const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+        return gitIgnoreContent
+          .split('\n')
+          .map((pattern) => pattern.trim())
+          .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
+          .map((pattern) => joinPath(dir, pattern))
+      })
+      .flat()
+  }
 
-const listenForAbortOnWatcher = (watcher: FSWatcher, options: OutputContextOptions) => {
-  options.signal.addEventListener('abort', () => {
-    outputDebug(`Closing file watcher`, options.stdout)
-    watcher
-      .close()
-      .then(() => outputDebug(`File watching closed`, options.stdout))
-      .catch((error: Error) => outputDebug(`File watching failed to close: ${error.message}`, options.stderr))
-  })
-}
-
-/**
- * Returns the custom gitignore patterns for the given extension directories.
- *
- * @param extensionDirectories - The extension directories to get the custom gitignore patterns from
- * @returns The custom gitignore patterns
- */
-function getCustomGitIgnorePatterns(extensionDirectories: string[]): string[] {
-  return extensionDirectories
-    .map((dir) => {
-      const gitIgnorePath = joinPath(dir, '.gitignore')
-      if (!fileExistsSync(gitIgnorePath)) return []
-      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
-      return gitIgnoreContent
-        .split('\n')
-        .map((pattern) => pattern.trim())
-        .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
-        .map((pattern) => joinPath(dir, pattern))
-    })
-    .flat()
+  private readonly close = () => {
+    outputDebug(`Closing file watcher`, this.options.stdout)
+    this.watcher
+      ?.close()
+      .then(() => outputDebug(`File watching closed`, this.options.stdout))
+      .catch((error: Error) => outputDebug(`File watching failed to close: ${error.message}`, this.options.stderr))
+  }
 }

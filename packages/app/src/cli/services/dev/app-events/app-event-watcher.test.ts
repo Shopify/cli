@@ -1,5 +1,5 @@
 import {AppEvent, AppEventWatcher, EventType, ExtensionEvent} from './app-event-watcher.js'
-import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
+import {OutputContextOptions, WatcherEvent, FileWatcher} from './file-watcher.js'
 import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {
   testAppAccessConfigExtension,
@@ -11,6 +11,7 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -18,7 +19,6 @@ import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
-vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('./app-watcher-esbuild.js')
 
@@ -235,7 +235,6 @@ describe('app-event-watcher when receiving a file event', () => {
         const mockedApp = testAppLinked({allExtensions: finalExtensions})
         vi.mocked(loadApp).mockResolvedValue(mockedApp)
         vi.mocked(reloadApp).mockResolvedValue(mockedApp)
-        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
 
@@ -245,7 +244,9 @@ describe('app-event-watcher when receiving a file event', () => {
           configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
         })
 
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
+        const mockManager = new MockESBuildContextManager()
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
         const emitSpy = vi.spyOn(watcher, 'emit')
         await watcher.start()
 
@@ -305,7 +306,6 @@ describe('app-event-watcher build extension errors', () => {
         extensionPath: '/extensions/ui_extension_1',
         startTime: [0, 0],
       }
-      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
       // Given
       const esbuildError = {
@@ -325,9 +325,10 @@ describe('app-event-watcher build extension errors', () => {
         allExtensions: [extension1],
         configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
       })
+      const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 
       // When
-      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager)
+      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
       const stderr = {write: vi.fn()} as unknown as Writable
       const stdout = {write: vi.fn()} as unknown as Writable
 
@@ -358,7 +359,6 @@ describe('app-event-watcher build extension errors', () => {
         extensionPath: '/extensions/flow_action',
         startTime: [0, 0],
       }
-      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
       // Given
       const esbuildError = {message: 'Build failed'}
@@ -371,7 +371,9 @@ describe('app-event-watcher build extension errors', () => {
       })
 
       // When
-      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
+      const mockManager = new MockESBuildContextManager()
+      const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
       const stderr = {write: vi.fn()} as unknown as Writable
       const stdout = {write: vi.fn()} as unknown as Writable
 
@@ -402,4 +404,26 @@ class MockESBuildContextManager extends ESBuildContextManager {
   async createContexts(extensions: ExtensionInstance[]) {}
   async updateContexts(appEvent: AppEvent) {}
   async deleteContexts(extensions: ExtensionInstance[]) {}
+}
+
+// Mock class for FileWatcher
+// Used to trigger mocked file system events immediately after the watcher is started.
+class MockFileWatcher extends FileWatcher {
+  private readonly events: WatcherEvent[]
+  private listener?: (events: WatcherEvent[]) => void
+
+  constructor(app: AppInterface, options: OutputContextOptions, events: WatcherEvent[]) {
+    super(app, options)
+    this.events = events
+  }
+
+  async start(): Promise<void> {
+    if (this.listener) {
+      this.listener(this.events)
+    }
+  }
+
+  onChange(listener: (events: WatcherEvent[]) => void) {
+    this.listener = listener
+  }
 }
