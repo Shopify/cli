@@ -119,7 +119,7 @@ async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
   const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
   const updatedEvents = diff.updated.map((ext) => ({type: EventType.Updated, extension: ext}))
   const extensionEvents = [...createdEvents, ...deletedEvents, ...updatedEvents]
-  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path}
+  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path, appWasReloaded: true}
 }
 
 /*

@@ -80,6 +80,7 @@ export interface AppEvent {
   extensionEvents: ExtensionEvent[]
   path: string
   startTime: [number, number]
+  appWasReloaded?: boolean
 }
 
 type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
@@ -150,6 +151,7 @@ export class AppEventWatcher extends EventEmitter {
           if (!appEvent || appEvent.extensionEvents.length === 0) return
 
           this.app = appEvent.app
+          if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
