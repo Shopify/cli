@@ -48,7 +48,10 @@ export async function importExtensions(options: ImportOptions) {
   const choices = extensions.map((ext) => {
     return {label: ext.title, value: ext.uuid}
   })
-  choices.push({label: 'All', value: 'All'})
+  
+  if (extensions.length > 1) {
+    choices.push({label: 'All', value: 'All'})
+  }
   const promptAnswer = await renderSelectPrompt({message: 'Extensions to migrate', choices})
 
   const extensionsToMigrate =
