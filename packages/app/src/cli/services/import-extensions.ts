@@ -48,7 +48,7 @@ export async function importExtensions(options: ImportOptions) {
   const choices = extensions.map((ext) => {
     return {label: ext.title, value: ext.uuid}
   })
-  
+
   if (extensions.length > 1) {
     choices.push({label: 'All', value: 'All'})
   }

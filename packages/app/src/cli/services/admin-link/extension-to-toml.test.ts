@@ -75,7 +75,7 @@ handle = "bulk-action-title"
   target = "admin.product.selection.link"
 `)
   })
-  test('correctly builds a toml string for bulk_action extension with path in an embedded app', () => {
+  test('correctly builds a toml string for bulk_action extension with no path in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -107,6 +107,41 @@ handle = "bulk-action-title"
   [[extensions.targeting]]
   text = "bulk action label"
   url = "app://"
+  target = "admin.product.selection.link"
+`)
+  })
+  test('correctly builds a toml string for bulk_action extension with no path but search query in an embedded app', () => {
+    // Given
+    const appConfig = {
+      path: '',
+      name: 'app 1',
+      client_id: '12345',
+      application_url: 'http://example.com',
+      embedded: true,
+    }
+    const extension1: ExtensionRegistration = {
+      id: '26237698049',
+      uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
+      title: 'Bulk action title',
+      type: 'bulk_action',
+      draftVersion: {
+        context: 'PRODUCTS#ACTION',
+        config: '{"text":"bulk action label","url":"https://google.es?foo=bar"}',
+      },
+    }
+
+    // When
+    const got = buildTomlObject(extension1, [], appConfig)
+
+    // Then
+    expect(got).toEqual(`[[extensions]]
+type = "admin_link"
+name = "Bulk action title"
+handle = "bulk-action-title"
+
+  [[extensions.targeting]]
+  text = "bulk action label"
+  url = "app://?foo=bar"
   target = "admin.product.selection.link"
 `)
   })
