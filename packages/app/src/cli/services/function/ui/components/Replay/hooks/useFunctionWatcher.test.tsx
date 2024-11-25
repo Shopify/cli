@@ -1,9 +1,8 @@
 import {useFunctionWatcher} from './useFunctionWatcher.js'
 import {FunctionRunData} from '../../../../replay.js'
-import {testApp, testFunctionExtension} from '../../../../../../models/app/app.test-data.js'
-import {setupExtensionWatcher} from '../../../../../dev/extension/bundler.js'
+import {testAppLinked, testFunctionExtension} from '../../../../../../models/app/app.test-data.js'
 import {runFunction} from '../../../../runner.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
@@ -40,7 +39,7 @@ const SELECTED_RUN = {
 } as FunctionRunData
 
 const ABORT_CONTROLLER = new AbortController()
-const APP = testApp()
+const APP = testAppLinked()
 const EXTENSION = await testFunctionExtension()
 
 const EXEC_RESPONSE = {
@@ -83,13 +82,13 @@ describe('useFunctionWatcher', () => {
         abortController: ABORT_CONTROLLER,
         app: APP,
         extension: EXTENSION,
+        appWatcher: new AppEventWatcher(APP),
       }),
     )
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
     // Then
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(runFunction).toHaveBeenCalledOnce()
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
   })
@@ -99,6 +98,8 @@ describe('useFunctionWatcher', () => {
     vi.mocked(runFunction)
       .mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
       .mockImplementationOnce(runFunctionMockImplementation(SECOND_EXEC_RESPONSE))
+    const appWatcher = new AppEventWatcher(APP)
+    const event = {extensionEvents: [{type: EventType.Updated, extension: EXTENSION}]}
 
     // When
     const hook = renderHook(() =>
@@ -107,22 +108,23 @@ describe('useFunctionWatcher', () => {
         abortController: ABORT_CONTROLLER,
         app: APP,
         extension: EXTENSION,
+        appWatcher,
       }),
     )
+
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
 
-    // .mock.calls returns an array of the calls, which each contain the arguments
-    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onChange()
+    appWatcher.emit('all', event)
+    await vi.advanceTimersByTimeAsync(0)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
 
     // Then
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(runFunction).toHaveBeenCalledTimes(2)
   })
 
@@ -130,6 +132,12 @@ describe('useFunctionWatcher', () => {
     // Given
     const expectedError = new Error('error!')
     vi.mocked(runFunction).mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
+    const appWatcher = new AppEventWatcher(APP)
+    const event = {
+      extensionEvents: [
+        {type: EventType.Updated, extension: EXTENSION, buildResult: {status: 'error', error: expectedError.message}},
+      ],
+    }
 
     // When
     const hook = renderHook(() =>
@@ -138,46 +146,19 @@ describe('useFunctionWatcher', () => {
         abortController: ABORT_CONTROLLER,
         app: APP,
         extension: EXTENSION,
+        appWatcher,
       }),
     )
 
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
-    // .mock.calls returns an array of the calls, which each contain the arguments
-    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
+    appWatcher.emit('all', event)
+    await vi.advanceTimersByTimeAsync(0)
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
     expect(hook.lastResult?.error).toEqual('Error while reloading and building extension: error!')
-  })
-
-  test('renders fatal error in onReloadAndBuildError', async () => {
-    // Given
-    const expectedError = new AbortError('abort!')
-    vi.mocked(runFunction).mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
-
-    // When
-    const hook = renderHook(() =>
-      useFunctionWatcher({
-        selectedRun: SELECTED_RUN,
-        abortController: ABORT_CONTROLLER,
-        app: APP,
-        extension: EXTENSION,
-      }),
-    )
-
-    // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
-
-    // .mock.calls returns an array of the calls, which each contain the arguments
-    await vi.mocked(setupExtensionWatcher).mock.calls[0]![0].onReloadAndBuildError(expectedError)
-
-    // Then
-    expect(runFunction).toHaveBeenCalledOnce()
-    expect(setupExtensionWatcher).toHaveBeenCalledOnce()
-    expect(hook.lastResult?.error).toEqual('Fatal error while reloading and building extension: abort!')
   })
 })
 
