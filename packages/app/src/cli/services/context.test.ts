@@ -11,6 +11,7 @@ import * as patchAppConfigurationFile from './app/patch-app-configuration-file.j
 import {DeployOptions} from './deploy.js'
 import {
   MinimalAppIdentifiers,
+  MinimalAppIdentifiersPossiblyExcludingId,
   Organization,
   OrganizationApp,
   OrganizationSource,
@@ -100,7 +101,7 @@ const deployOptions = (app: AppLinkedInterface, reset = false, force = false): D
 function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     ...extras,
-    async appFromId({apiKey}: MinimalAppIdentifiers) {
+    async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId) {
       for (const app of [APP1, APP2]) {
         if (apiKey === app.apiKey) return app
       }
