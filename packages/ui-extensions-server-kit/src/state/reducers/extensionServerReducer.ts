@@ -11,6 +11,17 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
         Object.keys(extension.assets).forEach(
           (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
         )
+        extension.extensionPoints?.forEach((extPoint, i) => {
+          if (!extPoint || typeof extPoint === 'string') return
+
+          Object.keys(extPoint.assets || {}).forEach(
+            // @ts-expect-error should be okay
+            (asset) => {
+              extension.extensionPoints[i].assets[asset].url = assetToString(extPoint.assets[asset])
+              debugger
+            },
+          )
+        })
         return extension
       })
       return {
@@ -26,6 +37,14 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
         Object.keys(extension.assets).forEach(
           (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
         )
+        extension.extensionPoints?.forEach((extPoint, i) => {
+          if (!extPoint || typeof extPoint === 'string') return
+
+          Object.keys(extPoint.assets || {}).forEach(
+            // @ts-expect-error should be okay
+            (asset) => (extension.extensionPoints[i].assets[asset].url = assetToString(extPoint.assets[asset])),
+          )
+        })
         return extension
       })
       return {
@@ -48,7 +67,27 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
 
               assets[asset] = resourceURL
             })
-            return set(extension, (ext) => ext.assets, assets)
+
+            const extensionPoints = extension.extensionPoints?.map((extPoint) => {
+              if (extPoint && typeof extPoint === 'object') {
+                const assets: ExtensionPayload['assets'] = {}
+                Object.keys(extPoint.assets || {}).forEach((asset) => {
+                  if (!extPoint.assets) return
+
+                  assets[asset] = {
+                    ...extPoint.assets[asset],
+                    lastUpdated: Date.now(),
+                    url: assetToString(extPoint.assets[asset]),
+                  }
+                })
+
+                return {...extPoint, assets}
+              }
+
+              return extPoint
+            })
+
+            return {...extension, assets, extensionPoints} as ExtensionPayload
           }
           return extension
         }),
