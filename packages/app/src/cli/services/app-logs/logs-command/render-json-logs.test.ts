@@ -2,7 +2,7 @@ import {renderJsonLogs} from './render-json-logs.js'
 import {pollAppLogs} from './poll-app-logs.js'
 import {handleFetchAppLogsError} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
@@ -52,7 +52,7 @@ describe('renderJsonLogs', () => {
       organizationId: 'organizationId',
     })
 
-    expect(outputInfo).toHaveBeenNthCalledWith(
+    expect(outputResult).toHaveBeenNthCalledWith(
       1,
       JSON.stringify({
         shopId: '1',
@@ -62,7 +62,7 @@ describe('renderJsonLogs', () => {
         storeName: 'storeName',
       }),
     )
-    expect(outputInfo).toHaveBeenNthCalledWith(
+    expect(outputResult).toHaveBeenNthCalledWith(
       2,
       JSON.stringify({
         shopId: '1',
@@ -98,7 +98,7 @@ describe('renderJsonLogs', () => {
       organizationId: 'organizationId',
     })
 
-    expect(outputInfo).not.toHaveBeenCalled()
+    expect(outputResult).not.toHaveBeenCalled()
   })
 
   test('should handle error response and retry as expected', async () => {

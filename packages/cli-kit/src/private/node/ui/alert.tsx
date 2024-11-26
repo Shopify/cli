@@ -1,6 +1,6 @@
 import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
-import {consoleError, consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
+import {LogLevel} from '../../../public/node/output.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
 
@@ -9,13 +9,6 @@ const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
   warning: 'warn',
   success: 'info',
   error: 'error',
-}
-
-const typeToLogger: {[key in AlertProps['type']]: Logger} = {
-  info: consoleLog,
-  warning: consoleWarn,
-  success: consoleLog,
-  error: consoleError,
 }
 
 export interface AlertOptions extends AlertProps {
@@ -47,6 +40,6 @@ export function alert({
       orderedNextSteps={orderedNextSteps}
       customSections={customSections}
     />,
-    {logLevel: typeToLogLevel[type], logger: typeToLogger[type], renderOptions},
+    {logLevel: typeToLogLevel[type], renderOptions},
   )
 }

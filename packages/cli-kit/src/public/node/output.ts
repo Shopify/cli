@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {currentProcessIsGlobal} from './is-global.js'
@@ -21,6 +20,7 @@ import {
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
+import {consoleLog, consoleWarn} from '../../private/node/output.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
@@ -245,20 +245,32 @@ export function collectLog(key: string, content: OutputMessage): void {
 }
 
 export const clearCollectedLogs = (): void => {
-  // console.log('clearCollectLogs')
   collectedLogs = {}
-  // console.log(collectedLogs)
 }
 
 /**
- * Ouputs information to the user.
- * Info messages don't get additional formatting.
- * Note: Info messages are sent through the standard output.
+ * Outputs command result information to the user.
+ * Result messages don't get additional formatting.
+ * Note: By default, result messages are logged at info level to stdout.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputInfo(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputResult(content: OutputMessage, logger: Logger = consoleLog): void {
+  const message = stringifyMessage(content)
+  if (isUnitTest()) collectLog('info', content)
+  outputWhereAppropriate('info', logger, message)
+}
+
+/**
+ * Logs information at the info level.
+ * Info messages don't get additional formatting.
+ * Note: By default, info messages are sent through the standard error.
+ *
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
+ */
+export function outputInfo(content: OutputMessage, logger: Logger = consoleWarn): void {
   const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
   outputWhereAppropriate('info', logger, message)
@@ -267,12 +279,12 @@ export function outputInfo(content: OutputMessage, logger: Logger = consoleLog):
 /**
  * Outputs a success message to the user.
  * Success messages receive a special formatting to make them stand out in the console.
- * Note: Success messages are sent through the standard output.
+ * Note: Success messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputSuccess(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputSuccess(content: OutputMessage, logger: Logger = consoleWarn): void {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', logger, message)
@@ -281,35 +293,35 @@ export function outputSuccess(content: OutputMessage, logger: Logger = consoleLo
 /**
  * Outputs a completed message to the user.
  * Completed message receive a special formatting to make them stand out in the console.
- * Note: Completed messages are sent through the standard output.
+ * Note: Completed messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputCompleted(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputCompleted(content: OutputMessage, logger: Logger = consoleWarn): void {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
   outputWhereAppropriate('info', logger, message)
 }
 
 /**
- * Ouputs debug information to the user. By default these output is hidden unless the user calls the CLI with --verbose.
+ * Logs a message at the debug level. By default these output is hidden unless the user calls the CLI with --verbose.
  * Debug messages don't get additional formatting.
- * Note: Debug messages are sent through the standard output.
+ * Note: By default, debug messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
 }
 
 /**
- * Outputs a warning message to the user.
+ * Logs a message at the warning level.
  * Warning messages receive a special formatting to make them stand out in the console.
- * Note: Warning messages are sent through the standard output.
+ * Note: By default, warning messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
@@ -324,7 +336,7 @@ export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn)
  * Prints a new line in the terminal.
  */
 export function outputNewline(): void {
-  console.log()
+  consoleWarn('')
 }
 
 /**
@@ -366,33 +378,6 @@ export interface OutputProcess {
 }
 
 /**
- * Prints a log message in the console.
- *
- * @param message - The message to print.
- */
-export function consoleLog(message: string): void {
-  process.stdout.write(`${withOrWithoutStyle(message)}\n`)
-}
-
-/**
- * Prints an error message in the console.
- *
- * @param message - The message to print.
- */
-export function consoleError(message: string): void {
-  process.stderr.write(`${withOrWithoutStyle(message)}\n`)
-}
-
-/**
- * Prints a warning message in the console.
- *
- * @param message - The message to print.
- */
-export function consoleWarn(message: string): void {
-  process.stderr.write(`${withOrWithoutStyle(message)}\n`)
-}
-
-/**
  * Writes a message to the appropiated logger.
  *
  * @param logLevel - The log level to use to determine if the message should be output.
@@ -406,20 +391,6 @@ export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, messa
     } else {
       logger(message, logLevel)
     }
-  }
-}
-
-/**
- * Returns a colored or uncolored version of a message, depending on the environment.
- *
- * @param message - The message to color or not.
- * @returns The message with or without colors.
- */
-function withOrWithoutStyle(message: string): string {
-  if (shouldDisplayColors()) {
-    return message
-  } else {
-    return unstyled(message)
   }
 }
 
@@ -459,5 +430,3 @@ export function formatSection(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
   return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
 }
-
-/* eslint-enable no-console */

@@ -29,7 +29,7 @@ const i18nManager = new I18nManager({
   locale: 'en',
   onError(error) {
     // eslint-disable-next-line no-console
-    console.log(error)
+    console.error(error)
   },
 })
 

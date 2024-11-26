@@ -4,7 +4,7 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import colors from '@shopify/cli-kit/node/colors'
-import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputResult, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
@@ -94,7 +94,7 @@ export default async function versionList(options: VersionListOptions) {
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, remoteApp, options.json)
 
   if (options.json) {
-    return outputInfo(JSON.stringify(appVersions, null, 2))
+    return outputResult(JSON.stringify(appVersions, null, 2))
   }
 
   renderCurrentlyUsedConfigInfo({
