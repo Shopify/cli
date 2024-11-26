@@ -245,9 +245,7 @@ export function collectLog(key: string, content: OutputMessage): void {
 }
 
 export const clearCollectedLogs = (): void => {
-  // console.log('clearCollectLogs')
   collectedLogs = {}
-  // console.log(collectedLogs)
 }
 
 /**
@@ -258,7 +256,7 @@ export const clearCollectedLogs = (): void => {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputInfo(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputInfo(content: OutputMessage, logger: Logger = consoleWarn): void {
   const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
   outputWhereAppropriate('info', logger, message)
@@ -300,7 +298,7 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
@@ -324,7 +322,7 @@ export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn)
  * Prints a new line in the terminal.
  */
 export function outputNewline(): void {
-  console.log()
+  console.warn()
 }
 
 /**
@@ -366,7 +364,7 @@ export interface OutputProcess {
 }
 
 /**
- * Prints a log message in the console.
+ * Prints a log message in the console to stdout.
  *
  * @param message - The message to print.
  */
@@ -375,7 +373,7 @@ export function consoleLog(message: string): void {
 }
 
 /**
- * Prints an error message in the console.
+ * Prints an error message in the console to stderr.
  *
  * @param message - The message to print.
  */
@@ -384,7 +382,7 @@ export function consoleError(message: string): void {
 }
 
 /**
- * Prints a warning message in the console.
+ * Prints a warning message in the console to stderr.
  *
  * @param message - The message to print.
  */
