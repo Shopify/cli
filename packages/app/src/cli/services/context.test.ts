@@ -101,7 +101,7 @@ const deployOptions = (app: AppLinkedInterface, reset = false, force = false): D
 function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     ...extras,
-    async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId) {
+    async appFromIdentifiers({apiKey}: MinimalAppIdentifiersPossiblyExcludingId) {
       for (const app of [APP1, APP2]) {
         if (apiKey === app.apiKey) return app
       }

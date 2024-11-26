@@ -1,4 +1,4 @@
-import {appFromId} from './context.js'
+import {appFromIdentifiers} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
@@ -74,7 +74,7 @@ export async function linkedAppContext({
   if (!remoteApp) {
     const apiKey = configState.basicConfiguration.client_id
     const organizationId = configState.basicConfiguration.organization_id
-    remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId})
+    remoteApp = await appFromIdentifiers({apiKey, developerPlatformClient, organizationId})
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 

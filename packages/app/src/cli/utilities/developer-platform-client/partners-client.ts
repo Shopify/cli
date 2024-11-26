@@ -264,7 +264,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
     const variables: FindAppQueryVariables = {apiKey}
     const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
     const app = res.app

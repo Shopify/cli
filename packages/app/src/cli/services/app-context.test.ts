@@ -1,7 +1,7 @@
 import {linkedAppContext} from './app-context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
-import {appFromId} from './context.js'
+import {appFromIdentifiers} from './context.js'
 
 import * as localStorage from './local-storage.js'
 import {fetchOrgFromId} from './dev/fetch.js'
@@ -35,7 +35,7 @@ const mockRemoteApp = testOrganizationApp({
 
 beforeEach(() => {
   vi.mocked(fetchSpecifications).mockResolvedValue([])
-  vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
+  vi.mocked(appFromIdentifiers).mockResolvedValue(mockRemoteApp)
   vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
 })
 
@@ -118,7 +118,7 @@ describe('linkedAppContext', () => {
   test('updates cached app info when remoteApp matches', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: 'test-api-key-new'})
+      vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: 'test-api-key-new'})
       const content = `client_id="test-api-key-new"`
       await writeAppConfig(tmp, content)
       localStorage.setCachedAppInfo({
@@ -156,7 +156,7 @@ describe('linkedAppContext', () => {
       await writeAppConfig(tmp, content)
       const newClientId = 'new-api-key'
 
-      vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: newClientId})
+      vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: newClientId})
 
       // When
       const result = await linkedAppContext({
@@ -170,7 +170,7 @@ describe('linkedAppContext', () => {
       expect(link).not.toHaveBeenCalled()
       expect(result.remoteApp.apiKey).toBe(newClientId)
       expect(result.app.configuration.client_id).toEqual('new-api-key')
-      expect(appFromId).toHaveBeenCalledWith(expect.objectContaining({apiKey: newClientId}))
+      expect(appFromIdentifiers).toHaveBeenCalledWith(expect.objectContaining({apiKey: newClientId}))
     })
   })
 
