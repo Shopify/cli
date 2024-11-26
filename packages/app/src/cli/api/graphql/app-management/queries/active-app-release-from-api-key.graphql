@@ -1,4 +1,4 @@
-query AppFromApiKey($apiKey: String!) {
+query ActiveAppReleaseFromApiKey($apiKey: String!) {
   app: appByKey(key: $apiKey) {
     ...AppVersionInfo
   }
