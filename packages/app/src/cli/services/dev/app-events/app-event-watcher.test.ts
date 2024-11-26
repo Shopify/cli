@@ -2,7 +2,6 @@ import {AppEvent, AppEventWatcher, EventType, ExtensionEvent} from './app-event-
 import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
 import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {
-  testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
   testAppLinked,
@@ -11,7 +10,7 @@ import {
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {loadApp} from '../../../models/app/loader.js'
+import {loadApp, reloadApp} from '../../../models/app/loader.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -233,7 +232,9 @@ describe('app-event-watcher when receiving a file event', () => {
     async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
       // Given
       await inTemporaryDirectory(async (tmpDir) => {
-        vi.mocked(loadApp).mockResolvedValue(testApp({allExtensions: finalExtensions}))
+        const mockedApp = testAppLinked({allExtensions: finalExtensions})
+        vi.mocked(loadApp).mockResolvedValue(mockedApp)
+        vi.mocked(reloadApp).mockResolvedValue(mockedApp)
         vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
@@ -286,15 +287,9 @@ describe('app-event-watcher when receiving a file event', () => {
         })
 
         if (needsAppReload) {
-          expect(loadApp).toHaveBeenCalledWith({
-            specifications: expect.anything(),
-            directory: expect.anything(),
-            // The app is loaded with the same configuration file
-            userProvidedConfigName: 'shopify.app.custom.toml',
-            remoteFlags: expect.anything(),
-          })
+          expect(reloadApp).toHaveBeenCalled()
         } else {
-          expect(loadApp).not.toHaveBeenCalled()
+          expect(reloadApp).not.toHaveBeenCalled()
         }
       })
     },

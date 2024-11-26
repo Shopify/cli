@@ -69,9 +69,9 @@ export async function startFileWatcher(
 
   /**
    * Debounced function to emit the accumulated events.
-   * This function will be called at most once every 500ms to avoid emitting too many events in a short period.
+   * This function will be called at most once every 200ms to avoid emitting too many events in a short period.
    */
-  const debouncedEmit = debounce(emitEvents, 500)
+  const debouncedEmit = debounce(emitEvents, 200)
 
   /**
    * Emits the accumulated events and resets the current events list.

@@ -9,6 +9,7 @@ import {
   AppLoaderMode,
   getAppConfigurationState,
   loadConfigForAppCreation,
+  resetDidCheckForGlobalCLIWarning,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -328,6 +329,7 @@ wrong = "property"
 
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
+    resetDidCheckForGlobalCLIWarning()
     vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
     vi.mocked(localCLIVersion).mockResolvedValue('3.65.0')
     const mockOutput = mockAndCaptureOutput()
@@ -2353,6 +2355,7 @@ wrong = "property"
       devDependencies: {},
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+    await writeFile(joinPath(tmpDir, '.gitignore'), '')
 
     await loadTestingApp()
 
@@ -2364,7 +2367,7 @@ wrong = "property"
       cmd_app_all_configs_any: true,
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
-      cmd_app_linked_config_git_tracked: false,
+      cmd_app_linked_config_git_tracked: true,
       cmd_app_linked_config_source: 'cached',
       cmd_app_warning_api_key_deprecation_displayed: false,
       app_extensions_any: false,
