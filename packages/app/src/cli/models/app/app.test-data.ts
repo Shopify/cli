@@ -1319,7 +1319,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromId: (_app: MinimalAppIdentifiersPossiblyExcludingId) => Promise.resolve(testOrganizationApp()),
+    appFromIdentifiers: (_app: MinimalAppIdentifiersPossiblyExcludingId) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),

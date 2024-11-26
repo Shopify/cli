@@ -18,7 +18,7 @@ beforeEach(async () => {})
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
+    async appFromIdentifiers({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
