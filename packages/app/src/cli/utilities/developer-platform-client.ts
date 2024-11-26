@@ -241,9 +241,9 @@ export interface DeveloperPlatformClient {
   ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
-  sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>
-  apiVersions: () => Promise<PublicApiVersionsSchema>
-  topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
+  sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
+  apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
+  topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>
   migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
   migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>

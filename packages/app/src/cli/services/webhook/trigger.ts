@@ -19,6 +19,7 @@ export interface WebhookTriggerInput {
   clientSecret?: string
   path: string
   config?: string
+  organizationId: string
 }
 
 interface WebhookTriggerOptions {
@@ -29,6 +30,7 @@ interface WebhookTriggerOptions {
   clientSecret: string
   apiKey?: string
   developerPlatformClient: DeveloperPlatformClient
+  organizationId: string
 }
 
 /**
@@ -45,8 +47,8 @@ export async function webhookTriggerService(input: WebhookTriggerInput) {
 }
 
 async function validateAndCollectFlags(input: WebhookTriggerInput): Promise<WebhookTriggerOptions> {
-  const apiVersion = await collectApiVersion(input.developerPlatformClient, input.apiVersion)
-  const topic = await collectTopic(input.developerPlatformClient, apiVersion, input.topic)
+  const apiVersion = await collectApiVersion(input.developerPlatformClient, input.apiVersion, input.organizationId)
+  const topic = await collectTopic(input.developerPlatformClient, apiVersion, input.topic, input.organizationId)
   const [address, deliveryMethod] = await collectAddressAndMethod(input.deliveryMethod, input.address)
   const clientCredentials = await collectCredentials(input, deliveryMethod)
 
@@ -58,6 +60,7 @@ async function validateAndCollectFlags(input: WebhookTriggerInput): Promise<Webh
     apiKey: clientCredentials.apiKey,
     clientSecret: clientCredentials.clientSecret,
     developerPlatformClient: input.developerPlatformClient,
+    organizationId: input.organizationId,
   }
 }
 
@@ -70,7 +73,7 @@ async function sendSample(options: WebhookTriggerOptions) {
     shared_secret: options.clientSecret,
     api_key: options.apiKey,
   }
-  const sample = await getWebhookSample(options.developerPlatformClient, variables)
+  const sample = await getWebhookSample(options.developerPlatformClient, variables, options.organizationId)
 
   if (!sample.success) {
     consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)

@@ -717,7 +717,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appPreviewMode')
   }
 
-  async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+  async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
     const query = CliTesting
     const variables = {
       address: input.address,
@@ -727,7 +727,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       sharedSecret: input.shared_secret,
       topic: input.topic,
     }
-    const result = await webhooksRequest(query, await this.token(), variables)
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
     let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
     const cliTesting = result.cliTesting
     if (cliTesting) {
@@ -741,15 +741,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {sendSampleWebhook}
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
-    const result = await webhooksRequest(PublicApiVersions, await this.token(), {})
+  async apiVersions(organizationId: string): Promise<PublicApiVersionsSchema> {
+    const result = await webhooksRequest(organizationId, PublicApiVersions, await this.token(), {})
     return {publicApiVersions: result.publicApiVersions.map((version) => version.handle)}
   }
 
-  async topics({api_version: apiVersion}: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+  async topics(
+    {api_version: apiVersion}: WebhookTopicsVariables,
+    organizationId: string,
+  ): Promise<WebhookTopicsSchema> {
     const query = AvailableTopics
     const variables = {apiVersion}
-    const result = await webhooksRequest(query, await this.token(), variables)
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
 
     return {
       webhookTopics: result.availableTopics ?? [],

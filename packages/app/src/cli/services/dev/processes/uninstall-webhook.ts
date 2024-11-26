@@ -10,6 +10,7 @@ interface SendWebhookOptions {
   storeFqdn: string
   apiSecret: string
   webhooksPath: string
+  organizationId: string
 }
 
 export interface SendWebhookProcess extends BaseProcess<SendWebhookOptions> {
@@ -23,6 +24,7 @@ export const sendWebhook: DevProcessFunction<SendWebhookOptions> = async ({stdou
     address: `http://localhost:${options.deliveryPort}${options.webhooksPath}`,
     sharedSecret: options.apiSecret,
     storeFqdn: options.storeFqdn,
+    organizationId: options.organizationId,
   })
 }
 
@@ -31,12 +33,14 @@ export function setupSendUninstallWebhookProcess({
   remoteAppUpdated,
   backendPort,
   frontendPort,
+  organizationId,
   ...options
 }: Pick<SendWebhookOptions, 'developerPlatformClient' | 'storeFqdn' | 'apiSecret'> & {
   remoteAppUpdated: boolean
   backendPort: number
   frontendPort: number
   webs: Web[]
+  organizationId: string
 }): SendWebhookProcess | undefined {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   const webhooksPath =
@@ -52,6 +56,7 @@ export function setupSendUninstallWebhookProcess({
     options: {
       deliveryPort: backendConfig ? backendPort : frontendPort,
       webhooksPath,
+      organizationId,
       ...options,
     },
   }

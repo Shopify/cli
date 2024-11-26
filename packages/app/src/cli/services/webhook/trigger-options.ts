@@ -59,13 +59,15 @@ export async function collectCredentials(
  *
  * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID or undefined api-version
+ * @param organizationId - Organization ID required by the API to verify permissions
  * @returns api-version
  */
 export async function collectApiVersion(
   developerPlatformClient: DeveloperPlatformClient,
   apiVersion: string | undefined,
+  organizationId: string,
 ): Promise<string> {
-  const apiVersions = await requestApiVersions(developerPlatformClient)
+  const apiVersions = await requestApiVersions(developerPlatformClient, organizationId)
   if (apiVersion) return parseApiVersionFlag(apiVersion, apiVersions)
   return apiVersionPrompt(apiVersions)
 }
@@ -76,18 +78,19 @@ export async function collectApiVersion(
  * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID api-version
  * @param topic - topic or undefined
+ * @param organizationId - Organization ID required by the API to verify permissions
  * @returns topic
  */
 export async function collectTopic(
   developerPlatformClient: DeveloperPlatformClient,
   apiVersion: string,
   topic: string | undefined,
+  organizationId: string,
 ): Promise<string> {
+  const topics = await requestTopics(developerPlatformClient, apiVersion, organizationId)
   if (topic) {
-    return parseTopicFlag(topic, apiVersion, await requestTopics(developerPlatformClient, apiVersion))
+    return parseTopicFlag(topic, apiVersion, topics)
   }
-
-  const topics = await requestTopics(developerPlatformClient, apiVersion)
   return topicPrompt(topics)
 }
 
