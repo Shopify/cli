@@ -28,16 +28,7 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
 }
 
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
-  // Remove app_id if organization_id is not present.
-  // This will become unnecessary when we remove app_id from App Management apps.
-  let configCopy = config
-  if (typeof config === 'object' && config !== null && config !== undefined) {
-    if ('app_id' in config && !('organization_id' in config)) {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const {app_id, ...rest} = config
-      configCopy = rest
-    }
-  }
+  const configCopy = config
 
   if (schema === null || schema === undefined) return null
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
