@@ -4,11 +4,11 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
-export type AppFromApiKeyQueryVariables = Types.Exact<{
+export type ActiveAppReleaseFromApiKeyQueryVariables = Types.Exact<{
   apiKey: Types.Scalars['String']['input']
 }>
 
-export type AppFromApiKeyQuery = {
+export type ActiveAppReleaseFromApiKeyQuery = {
   app: {
     id: string
     key: string
@@ -29,13 +29,13 @@ export type AppFromApiKeyQuery = {
   }
 }
 
-export const AppFromApiKey = {
+export const ActiveAppReleaseFromApiKey = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: {kind: 'Name', value: 'AppFromApiKey'},
+      name: {kind: 'Name', value: 'ActiveAppReleaseFromApiKey'},
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -161,4 +161,4 @@ export const AppFromApiKey = {
       },
     },
   ],
-} as unknown as DocumentNode<AppFromApiKeyQuery, AppFromApiKeyQueryVariables>
+} as unknown as DocumentNode<ActiveAppReleaseFromApiKeyQuery, ActiveAppReleaseFromApiKeyQueryVariables>
