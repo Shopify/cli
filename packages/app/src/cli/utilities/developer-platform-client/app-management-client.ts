@@ -93,7 +93,7 @@ import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
-import {AppFromApiKey} from '../../api/graphql/app-management/generated/app-from-api-key.js'
+import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
@@ -881,7 +881,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (id) {
       return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
     } else {
-      return appManagementRequestDoc(organizationId, AppFromApiKey, await this.token(), {apiKey})
+      return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
     }
   }
 
