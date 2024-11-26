@@ -118,7 +118,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
-export type BuildFunctionExtensionOptions = ExtensionBuildOptions
+type BuildFunctionExtensionOptions = ExtensionBuildOptions
 
 /**
  * Builds a function extension
