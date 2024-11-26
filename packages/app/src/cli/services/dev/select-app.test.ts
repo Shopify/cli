@@ -41,7 +41,7 @@ const APPS = [
 function mockDeveloperPlatformClient() {
   const developerPlatformClient = testDeveloperPlatformClient({
     createApp: async () => ({...APP1, newApp: true}),
-    async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId) {
+    async appFromIdentifiers({apiKey}: MinimalAppIdentifiersPossiblyExcludingId) {
       if (apiKey === APP1.apiKey) return APP1
       if (apiKey === APP2.apiKey) return APP2
       throw new Error(`App with client ID ${apiKey} not found`)

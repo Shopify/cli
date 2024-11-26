@@ -8,7 +8,7 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromIdentifiers} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
@@ -53,7 +53,7 @@ const DEFAULT_REMOTE_CONFIGURATION = {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
+    async appFromIdentifiers({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
@@ -810,8 +810,8 @@ test('fetches the remote app when an api key is provided', async () => {
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
     vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
-    vi.mocked(appFromId).mockImplementation(async ({apiKey}: {apiKey: string}) => {
-      return (await developerPlatformClient.appFromId({id: apiKey, apiKey, organizationId: '1'}))!
+    vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
+      return (await developerPlatformClient.appFromIdentifiers({id: apiKey, apiKey, organizationId: '1'}))!
     })
 
     // When

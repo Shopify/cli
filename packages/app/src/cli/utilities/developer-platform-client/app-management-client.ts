@@ -219,7 +219,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appIdentifiers: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers(
+    appIdentifiers: MinimalAppIdentifiersPossiblyExcludingId,
+  ): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')

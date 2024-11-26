@@ -214,7 +214,7 @@ export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (app: MinimalAppIdentifiersPossiblyExcludingId) => Promise<OrganizationApp | undefined>
+  appFromIdentifiers: (app: MinimalAppIdentifiersPossiblyExcludingId) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
