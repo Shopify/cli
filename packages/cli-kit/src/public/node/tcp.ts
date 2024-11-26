@@ -37,8 +37,9 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
  * @returns A promise that resolves with a boolean indicating if the port is available.
  */
 export async function checkPortAvailability(portNumber: number): Promise<boolean> {
-  return (await port.checkPort(portNumber)) === portNumber
+  return (await port.checkPort(portNumber, DEFAULT_HOST)) === portNumber
 }
+const DEFAULT_HOST = '::'
 
 /**
  * Given a function, it runs it and retries in case of failiure up to the provided number of times.
