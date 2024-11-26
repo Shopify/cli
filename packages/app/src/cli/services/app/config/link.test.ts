@@ -13,7 +13,11 @@ import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
+import {
+  MinimalAppIdentifiers,
+  MinimalAppIdentifiersPossiblyExcludingId,
+  OrganizationApp,
+} from '../../../models/organization.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -49,7 +53,7 @@ const DEFAULT_REMOTE_CONFIGURATION = {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+    async appFromId({apiKey}: MinimalAppIdentifiersPossiblyExcludingId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
