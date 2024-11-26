@@ -475,7 +475,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       uuid: versionInfo.id,
       versionTag: versionInfo.metadata.versionTag,
       location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
-      message: '',
+      message: versionInfo.metadata.message ?? '',
       appModuleVersions: versionInfo.appModules.map(appModuleVersion),
     }
   }
@@ -544,6 +544,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     appModules,
     organizationId,
     versionTag,
+    message,
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
@@ -556,6 +557,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
+
     const variables = {
       appId,
       name: updatedName,
@@ -570,7 +572,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      metadata: versionTag ? {versionTag} : {},
+      metadata: {versionTag, message},
     }
 
     const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
