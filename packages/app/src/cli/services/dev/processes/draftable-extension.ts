@@ -33,20 +33,23 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
   await installJavy(app)
 
+  const draftableExtensions = app.draftableExtensions.map((ext) => ext.handle)
+
   async function refreshToken() {
     await developerPlatformClient.refreshToken()
   }
 
-  const handleAppEvent = (event: AppEvent) => {
+  const handleAppEvent = async (event: AppEvent) => {
     const extensionEvents = event.extensionEvents
       .filter((ev) => ev.type === EventType.Updated)
       .filter((ev) => ev.buildResult?.status === 'ok')
+      .filter((ev) => draftableExtensions.includes(ev.extension.handle))
 
-    for (const extensionEvent of extensionEvents) {
+    const promises = extensionEvents.map(async (extensionEvent) => {
       const extension = extensionEvent.extension
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-      return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
+      await useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
         return performActionWithRetryAfterRecovery(
           async () =>
             updateExtensionDraft({
@@ -62,7 +65,8 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
           refreshToken,
         )
       })
-    }
+    })
+    await Promise.all(promises)
   }
 
   appWatcher.onEvent(handleAppEvent).onStart(handleAppEvent)
