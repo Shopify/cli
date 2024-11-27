@@ -16,7 +16,9 @@ import {
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
   AppCreationDefaultOptions,
+  AppLinkedInterface,
 } from './app.js'
+import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -42,16 +44,13 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename, relativePath, relativizePath, sniffForJson} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
-import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
+import ignore from 'ignore'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -202,6 +201,8 @@ export class AppErrors {
 interface AppLoaderConstructorArgs<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   mode?: AppLoaderMode
   loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  // Used when reloading an app, to avoid some expensive steps during loading.
+  previousApp?: AppLinkedInterface
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -251,6 +252,21 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
   return loader.loaded()
 }
 
+export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
+  const state = await getAppConfigurationState(app.directory, basename(app.configuration.path))
+  if (state.state !== 'connected-app') {
+    throw new AbortError('Error loading the app, please check your app configuration.')
+  }
+  const loadedConfiguration = await loadAppConfigurationFromState(state, app.specifications, app.remoteFlags ?? [])
+
+  const loader = new AppLoader({
+    loadedConfiguration,
+    previousApp: app,
+  })
+
+  return loader.loaded()
+}
+
 export async function loadAppUsingConfigurationState<TConfig extends AppConfigurationState>(
   configState: TConfig,
   {
@@ -293,20 +309,20 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-let alreadyShownCLIWarning = false
-
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private readonly mode: AppLoaderMode
   private readonly errors: AppErrors = new AppErrors()
   private readonly specifications: TModuleSpec[]
   private readonly remoteFlags: Flag[]
   private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  private readonly previousApp: AppLinkedInterface | undefined
 
-  constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
+  constructor({mode, loadedConfiguration, previousApp}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'
     this.specifications = loadedConfiguration.specifications
     this.remoteFlags = loadedConfiguration.remoteFlags
     this.loadedConfiguration = loadedConfiguration
+    this.previousApp = previousApp
   }
 
   async loaded() {
@@ -319,15 +335,21 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const extensions = await this.loadExtensions(directory, configuration)
 
     const packageJSONPath = joinPath(directory, 'package.json')
-    const name = await loadAppName(directory)
-    const nodeDependencies = await getDependencies(packageJSONPath)
-    const packageManager = await getPackageManager(directory)
-    await this.showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
+
+    // These don't need to be processed again if the app is being reloaded
+    const name = this.previousApp?.name ?? (await loadAppName(directory))
+    const nodeDependencies = this.previousApp?.nodeDependencies ?? (await getDependencies(packageJSONPath))
+    const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
+    const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
+
+    if (!this.previousApp) {
+      await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
+    }
+
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
     )
-    const usesWorkspaces = await appUsesWorkspaces(directory)
 
     const appClass = new App({
       name,
@@ -389,35 +411,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     decode: (input: any) => any = decodeToml,
   ) {
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
-  }
-
-  private async showMultipleCLIWarningIfNeeded(directory: string, dependencies: {[key: string]: string}) {
-    // Show the warning if:
-    // - There is a global installation
-    // - The project has a local CLI dependency
-    // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
-    // - The warning hasn't been shown yet during the current command execution
-
-    const localVersion = dependencies['@shopify/cli'] && (await localCLIVersion(directory))
-    const globalVersion = await globalCLIVersion()
-
-    if (localVersion && globalVersion && !sniffForJson() && !alreadyShownCLIWarning) {
-      const currentInstallation = currentProcessIsGlobal() ? 'global installation' : 'local dependency'
-
-      const warningContent = {
-        headline: `Two Shopify CLI installations found – using ${currentInstallation}`,
-        body: [
-          `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected.
-We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json, unless you want to use different versions across multiple apps.`,
-        ],
-        link: {
-          label: 'See Shopify CLI documentation.',
-          url: 'https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency',
-        },
-      }
-      renderInfo(warningContent)
-      alreadyShownCLIWarning = true
-    }
   }
 
   private validateWebs(webs: Web[]): void {
@@ -647,6 +640,7 @@ We recommend removing the @shopify/cli and @shopify/app dependencies from your p
     )
 
     // get all the keys from appConfiguration that aren't used by any of the results
+
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
@@ -945,9 +939,7 @@ async function loadAppConfigurationFromState<
     case 'connected-app': {
       let gitTracked = false
       try {
-        gitTracked = !(
-          await checkIfIgnoredInGitRepository(configState.appDirectory, [configState.configurationPath])
-        )[0]
+        gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
         // leave as false
@@ -973,6 +965,16 @@ async function loadAppConfigurationFromState<
     specifications,
     remoteFlags,
   }
+}
+
+async function checkIfGitTracked(appDirectory: string, configurationPath: string) {
+  const gitIgnorePath = joinPath(appDirectory, '.gitignore')
+  if (!fileExistsSync(gitIgnorePath)) return true
+  const gitIgnoreContent = await readFile(gitIgnorePath)
+  const ignored = ignore.default().add(gitIgnoreContent)
+  const relative = relativePath(appDirectory, configurationPath)
+  const isTracked = !ignored.ignores(relative)
+  return isTracked
 }
 
 async function getConfigurationPath(appDirectory: string, configName: string | undefined) {

@@ -13,7 +13,7 @@ vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../dev/fetch.js')
 vi.mock('../../../utilities/developer-platform-client.js')
-
+vi.mock('../../../models/app/validation/multi-cli-warning.js')
 beforeEach(async () => {})
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {

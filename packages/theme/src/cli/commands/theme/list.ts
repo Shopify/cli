@@ -5,13 +5,14 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class List extends ThemeCommand {
   static description = 'Lists the themes in your store, along with their IDs and statuses.'
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     password: themeFlags.password,
     store: themeFlags.store,
     role: Flags.custom<Role>({
@@ -26,11 +27,6 @@ export default class List extends ThemeCommand {
     id: Flags.integer({
       description: 'Only list theme with the given ID.',
       env: 'SHOPIFY_FLAG_ID',
-    }),
-    json: Flags.boolean({
-      description: 'Output the theme list as JSON.',
-      default: false,
-      env: 'SHOPIFY_FLAG_JSON',
     }),
     environment: themeFlags.environment,
   }

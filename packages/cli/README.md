@@ -344,7 +344,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
-  -j, --json               Output the function run result as a JSON object.
+  -j, --json               Output the result as JSON.
   -l, --log=<value>        Specifies a log identifier to replay instead of selecting from a list. The identifier is
                            provided in the output of `shopify app dev` and is the suffix of the log file name.
   -w, --[no-]watch         Re-run the function when the source code changes.
@@ -373,7 +373,7 @@ FLAGS
   -c, --config=<value>  The name of the app configuration.
   -e, --export=<value>  Name of the WebAssembly export to invoke.
   -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
-  -j, --json            Log the run result as a JSON object.
+  -j, --json            Output the result as JSON.
       --no-color        Disable color output.
       --path=<value>    The path to your function directory.
       --verbose         Increase the verbosity of the output.
@@ -496,11 +496,11 @@ Print basic information about your app and extensions.
 
 ```
 USAGE
-  $ shopify app info [-c <value>] [--json] [--no-color] [--path <value>] [--verbose] [--web-env]
+  $ shopify app info [-c <value>] [-j] [--no-color] [--path <value>] [--verbose] [--web-env]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-      --json            format output as JSON
+  -j, --json            Output the result as JSON.
       --no-color        Disable color output.
       --path=<value>    The path to your app directory.
       --verbose         Increase the verbosity of the output.
@@ -554,7 +554,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
-  -j, --json               Log the run result as a JSON object.
+  -j, --json               Output the result as JSON.
   -s, --store=<value>...   Store URL. Must be an existing development or Shopify Plus sandbox store.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
@@ -629,13 +629,12 @@ List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [FILE] [--client-id <value> | -c <value>] [--json] [--no-color] [--path <value>]
-    [--verbose]
+  $ shopify app versions list [FILE] [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
+  -j, --json               Output the result as JSON.
       --client-id=<value>  The Client ID to fetch versions for.
-      --json               Output the versions list as JSON.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
       --verbose            Increase the verbosity of the output.
@@ -1871,16 +1870,16 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [-d] [-e <value>] [--json] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+  $ shopify theme info [-d] [-e <value>] [-j] [--no-color] [--password <value>] [-s <value>] [-t <value>]
     [--verbose]
 
 FLAGS
   -d, --development          Retrieve info from your development theme.
   -e, --environment=<value>  The environment to apply to the current command.
+  -j, --json                 Output the result as JSON.
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
                              (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
-      --json                 Output the theme info as JSON.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --verbose              Increase the verbosity of the output.
@@ -1948,15 +1947,15 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [-e <value>] [--id <value>] [--json] [--name <value>] [--no-color] [--password <value>]
+  $ shopify theme list [-e <value>] [--id <value>] [-j] [--name <value>] [--no-color] [--password <value>]
     [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
+  -j, --json                 Output the result as JSON.
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
                              (example.myshopify.com, https://example.myshopify.com).
       --id=<value>           Only list theme with the given ID.
-      --json                 Output the theme list as JSON.
       --name=<value>         Only list themes that contain the given name.
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
@@ -2106,7 +2105,7 @@ FLAGS
   -a, --allow-live           Allow push to a live theme.
   -d, --development          Push theme files from your remote development theme.
   -e, --environment=<value>  The environment to apply to the current command.
-  -j, --json                 Output JSON instead of a UI.
+  -j, --json                 Output the result as JSON.
   -l, --live                 Push theme files from your remote live theme.
   -n, --nodelete             Prevent deleting remote files that don't exist locally.
   -o, --only=<value>...      Download only the specified files (Multiple flags allowed).

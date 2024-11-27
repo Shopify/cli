@@ -3,7 +3,7 @@ import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class FunctionReplay extends AppCommand {
@@ -17,6 +17,7 @@ export default class FunctionReplay extends AppCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    ...jsonFlag,
     'api-key': Flags.string({
       hidden: true,
       description: "Application's API key",
@@ -34,12 +35,6 @@ export default class FunctionReplay extends AppCommand {
       description:
         'Specifies a log identifier to replay instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.',
       env: 'SHOPIFY_FLAG_LOG',
-    }),
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'Output the function run result as a JSON object.',
-      env: 'SHOPIFY_FLAG_JSON',
     }),
     watch: Flags.boolean({
       char: 'w',

@@ -39,6 +39,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     },
   },
   application_url: 'http://example.com',
+  embedded: false,
   auth: {
     redirect_urls: ['https://google.com'],
   },

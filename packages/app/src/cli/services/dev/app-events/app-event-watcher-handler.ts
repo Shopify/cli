@@ -3,11 +3,10 @@ import {AppEvent, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {appDiff} from './app-diffing.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {loadApp} from '../../../models/app/loader.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {reloadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
-import {basename} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 /**
  * Transforms an array of WatcherEvents from the file system into a processed AppEvent.
@@ -114,7 +113,7 @@ function AppConfigDeletedHandler(_input: HandlerInput): AppEvent {
  * - When an extension toml is updated
  */
 async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
-  const newApp = await reloadApp(app)
+  const newApp = await reload(app)
   const diff = appDiff(app, newApp, true)
   const createdEvents = diff.created.map((ext) => ({type: EventType.Created, extension: ext}))
   const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
@@ -127,17 +126,12 @@ async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
  * Reload the app and returns it
  * Prints the time to reload the app to stdout
  */
-export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
+async function reload(app: AppLinkedInterface): Promise<AppLinkedInterface> {
   const start = startHRTime()
   try {
-    const newApp = await loadApp({
-      specifications: app.specifications,
-      directory: app.directory,
-      userProvidedConfigName: basename(app.configuration.path),
-      remoteFlags: app.remoteFlags,
-    })
+    const newApp = await reloadApp(app)
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`)
-    return newApp as AppLinkedInterface
+    return newApp
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     throw new Error(`Error reloading app: ${error.message}`)

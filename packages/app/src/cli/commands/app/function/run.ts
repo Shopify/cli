@@ -2,7 +2,7 @@ import {functionFlags, inFunctionContext, getOrGenerateSchemaPath} from '../../.
 import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -20,6 +20,7 @@ export default class FunctionRun extends AppCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    ...jsonFlag,
     input: Flags.string({
       char: 'i',
       description: 'The input JSON to pass to the function. If omitted, standard input is used.',
@@ -30,12 +31,6 @@ export default class FunctionRun extends AppCommand {
       hidden: false,
       description: 'Name of the WebAssembly export to invoke.',
       env: 'SHOPIFY_FLAG_EXPORT',
-    }),
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'Log the run result as a JSON object.',
-      env: 'SHOPIFY_FLAG_JSON',
     }),
   }
 

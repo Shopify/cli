@@ -7,7 +7,7 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Logs extends AppCommand {
   static summary = 'Stream detailed logs for your Shopify app.'
@@ -26,6 +26,7 @@ export default class Logs extends AppCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     'api-key': Dev.flags['api-key'],
     'client-id': Dev.flags['client-id'],
     store: Flags.string({
@@ -45,11 +46,6 @@ export default class Logs extends AppCommand {
       description: 'Filters output to the specified status (success or failure).',
       options: ['success', 'failure'],
       env: 'SHOPIFY_FLAG_STATUS',
-    }),
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Log the run result as a JSON object.',
-      env: 'SHOPIFY_FLAG_JSON',
     }),
   }
 
