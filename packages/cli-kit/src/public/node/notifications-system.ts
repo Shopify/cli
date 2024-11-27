@@ -5,7 +5,7 @@ import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
-import {sniffForJson} from './path.js'
+import {jsonOutputEnabled} from './environment.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {
   NotificationKey,
@@ -79,7 +79,7 @@ export async function showNotificationsIfNeeded(
 }
 
 function skipNotifications(environment: NodeJS.ProcessEnv): boolean {
-  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || sniffForJson()
+  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || jsonOutputEnabled()
 }
 
 /**

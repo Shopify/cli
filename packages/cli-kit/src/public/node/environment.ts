@@ -1,4 +1,6 @@
 import {nonRandomUUID} from './crypto.js'
+import {isTruthy} from './context/utilities.js'
+import {sniffForJson} from './path.js'
 import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
 
 /**
@@ -69,4 +71,13 @@ export function getIdentityTokenInformation(): {accessToken: string; refreshToke
     refreshToken,
     userId: nonRandomUUID(identityToken),
   }
+}
+
+/**
+ * Checks if the JSON output is enabled via flag (--json or -j) or environment variable (SHOPIFY_FLAG_JSON).
+ *
+ * @returns True if the JSON output is enabled, false otherwise.
+ */
+export function jsonOutputEnabled(): boolean {
+  return sniffForJson() || isTruthy(getEnvironmentVariables().SHOPIFY_FLAG_JSON)
 }
