@@ -44,6 +44,10 @@ export default class Init extends AppCommand {
       description: 'Which flavor of the given template to use.',
       env: 'SHOPIFY_FLAG_TEMPLATE_FLAVOR',
     }),
+    channel: Flags.string({
+      description: 'The name for the new channel app.',
+      env: 'SHOPIFY_FLAG_CHANNEL',
+    }),
     'package-manager': Flags.string({
       char: 'd',
       env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
@@ -81,6 +85,7 @@ export default class Init extends AppCommand {
     const promptAnswers = await initPrompt({
       template: flags.template,
       flavor: flags.flavor,
+      channel: flags.channel,
     })
 
     let selectAppResult: SelectAppOrNewAppNameResult
@@ -91,6 +96,10 @@ export default class Init extends AppCommand {
       appName = selectedApp.title
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
+    } else if (flags.channel) {
+      const org = await selectOrg()
+      selectAppResult = {result: 'new', name: flags.channel, org}
+      appName = flags.channel
     } else {
       const org = await selectOrg()
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
