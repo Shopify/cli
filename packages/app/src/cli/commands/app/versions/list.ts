@@ -3,7 +3,7 @@ import versionList from '../../../services/versions-list.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 
 export default class VersionsList extends AppCommand {
@@ -18,6 +18,7 @@ export default class VersionsList extends AppCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     'api-key': Flags.string({
       hidden: true,
       description: "Application's API key to fetch versions for.",
@@ -29,11 +30,6 @@ export default class VersionsList extends AppCommand {
       description: 'The Client ID to fetch versions for.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
-    }),
-    json: Flags.boolean({
-      description: 'Output the versions list as JSON.',
-      default: false,
-      env: 'SHOPIFY_FLAG_JSON',
     }),
   }
 

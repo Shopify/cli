@@ -135,6 +135,16 @@ export const globalFlags = {
   }),
 }
 
+export const jsonFlag = {
+  json: Flags.boolean({
+    char: 'j',
+    description: 'Output the result as JSON.',
+    hidden: false,
+    default: false,
+    env: 'SHOPIFY_FLAG_JSON',
+  }),
+}
+
 /**
  * Clear the CLI cache, used to store some API responses and handle notifications status
  */
