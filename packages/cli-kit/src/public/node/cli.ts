@@ -1,5 +1,6 @@
 import {isTruthy} from './context/utilities.js'
 import {cacheClear} from '../../private/node/conf-store.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {Flags} from '@oclif/core'
 
 /**
@@ -141,7 +142,7 @@ export const jsonFlag = {
     description: 'Output the result as JSON.',
     hidden: false,
     default: false,
-    env: 'SHOPIFY_FLAG_JSON',
+    env: environmentVariables.json,
   }),
 }
 

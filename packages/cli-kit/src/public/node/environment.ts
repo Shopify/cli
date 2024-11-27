@@ -80,5 +80,5 @@ export function getIdentityTokenInformation(): {accessToken: string; refreshToke
  * @returns True if the JSON output is enabled, false otherwise.
  */
 export function jsonOutputEnabled(environment = getEnvironmentVariables()): boolean {
-  return sniffForJson() || isTruthy(environment.SHOPIFY_FLAG_JSON)
+  return sniffForJson() || isTruthy(environment[environmentVariables.json])
 }
