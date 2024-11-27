@@ -13,7 +13,7 @@ export interface appfunctionreplay {
   '-c, --config <value>'?: string
 
   /**
-   * Output the function run result as a JSON object.
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
   '-j, --json'?: ''
