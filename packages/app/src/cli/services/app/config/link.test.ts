@@ -582,11 +582,12 @@ test('the local configuration is discarded if the client_id is different from th
         scopes: 'write_products',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
+        embedded: false,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
         },
-      } as CurrentAppConfiguration,
+      },
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
@@ -1358,7 +1359,8 @@ test('the api client configuration is deep merged with the remote app_config ext
           api_version: '2023-04',
         },
         application_url: 'https://myapp.com',
-      } as CurrentAppConfiguration,
+        embedded: true,
+      },
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
