@@ -50,8 +50,11 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
 
   try {
     redirectUrl = new URL(locationHeader, storeUrl)
-  } catch {
-    return false
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
   }
 
   const storeOrigin = new URL(storeUrl).origin
