@@ -2353,6 +2353,7 @@ wrong = "property"
       devDependencies: {},
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+    await writeFile(joinPath(tmpDir, '.gitignore'), '')
 
     await loadTestingApp()
 
@@ -2364,7 +2365,7 @@ wrong = "property"
       cmd_app_all_configs_any: true,
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
-      cmd_app_linked_config_git_tracked: false,
+      cmd_app_linked_config_git_tracked: true,
       cmd_app_linked_config_source: 'cached',
       cmd_app_warning_api_key_deprecation_displayed: false,
       app_extensions_any: false,
@@ -2387,6 +2388,43 @@ wrong = "property"
       app_web_frontend_any: false,
       app_web_frontend_count: 0,
     })
+  })
+
+  test.skipIf(runningOnWindows)(`git_tracked metadata is false when ignored by the gitignore`, async () => {
+    const {webDirectory} = await writeConfig(linkedAppConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+    await writeFile(joinPath(tmpDir, '.gitignore'), 'shopify.app.toml')
+
+    await loadTestingApp()
+
+    expect(metadata.getAllPublicMetadata()).toEqual(
+      expect.objectContaining({
+        cmd_app_linked_config_git_tracked: false,
+      }),
+    )
+  })
+
+  test.skipIf(runningOnWindows)(`git_tracked metadata is true when there is no gitignore`, async () => {
+    const {webDirectory} = await writeConfig(linkedAppConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await loadTestingApp()
+
+    expect(metadata.getAllPublicMetadata()).toEqual(
+      expect.objectContaining({
+        cmd_app_linked_config_git_tracked: true,
+      }),
+    )
   })
 })
 

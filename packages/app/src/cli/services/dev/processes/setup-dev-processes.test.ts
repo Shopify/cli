@@ -28,7 +28,7 @@ import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {reloadApp} from '../app-events/app-event-watcher-handler.js'
+import * as loader from '../../../models/app/loader.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
@@ -42,7 +42,6 @@ vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/theme')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('../app-events/app-event-watcher-handler.js')
 
 beforeEach(() => {
   // mocked for draft extensions
@@ -68,7 +67,6 @@ beforeEach(() => {
     role: 'theme',
     processing: false,
   })
-  vi.mocked(reloadApp).mockResolvedValue(testAppLinked())
 })
 
 const appContextResult = {
@@ -130,7 +128,7 @@ describe('setup-dev-processes', () => {
         allExtensions: [previewable, draftable, theme],
       },
     })
-    vi.mocked(reloadApp).mockResolvedValue(localApp)
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -313,6 +311,7 @@ describe('setup-dev-processes', () => {
       },
     }
     const localApp = testAppWithConfig()
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -406,7 +405,7 @@ describe('setup-dev-processes', () => {
         allExtensions: [previewable, draftable, theme, functionExtension],
       },
     })
-    vi.mocked(reloadApp).mockResolvedValue(localApp)
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -502,6 +501,8 @@ describe('setup-dev-processes', () => {
       },
     })
 
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
       apiSecretKeys: [{secret: 'api-secret'}],
@@ -594,7 +595,7 @@ describe('setup-dev-processes', () => {
         ],
       },
     })
-    vi.mocked(reloadApp).mockResolvedValue(localApp)
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
