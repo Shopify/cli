@@ -767,7 +767,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the function run result as a JSON object.",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -869,7 +869,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Log the run result as a JSON object.",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -1383,7 +1383,8 @@
         },
         "json": {
           "allowNo": false,
-          "description": "format output as JSON",
+          "char": "j",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -1583,8 +1584,9 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Log the run result as a JSON object.",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },
@@ -1877,8 +1879,10 @@
         },
         "json": {
           "allowNo": false,
-          "description": "Output the versions list as JSON.",
+          "char": "j",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },
@@ -5047,8 +5051,10 @@
         },
         "json": {
           "allowNo": false,
-          "description": "Output the theme info as JSON.",
+          "char": "j",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },
@@ -5236,8 +5242,10 @@
         },
         "json": {
           "allowNo": false,
-          "description": "Output the theme list as JSON.",
+          "char": "j",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },
@@ -5710,8 +5718,9 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output JSON instead of a UI.",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },

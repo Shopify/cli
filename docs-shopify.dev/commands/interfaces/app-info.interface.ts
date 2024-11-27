@@ -7,10 +7,10 @@ export interface appinfo {
   '-c, --config <value>'?: string
 
   /**
-   * format output as JSON
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
-  '--json'?: ''
+  '-j, --json'?: ''
 
   /**
    * Disable color output.

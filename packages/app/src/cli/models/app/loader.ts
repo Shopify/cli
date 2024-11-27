@@ -42,7 +42,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename, relativePath, relativizePath, sniffForJson} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
@@ -52,6 +52,7 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
+import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -401,7 +402,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const localVersion = dependencies['@shopify/cli'] && (await localCLIVersion(directory))
     const globalVersion = await globalCLIVersion()
 
-    if (localVersion && globalVersion && !sniffForJson() && !alreadyShownCLIWarning) {
+    if (localVersion && globalVersion && !jsonOutputEnabled() && !alreadyShownCLIWarning) {
       const currentInstallation = currentProcessIsGlobal() ? 'global installation' : 'local dependency'
 
       const warningContent = {
