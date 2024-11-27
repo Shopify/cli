@@ -11,12 +11,11 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
-import {describe, expect, test, vi} from 'vitest'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {Writable} from 'stream'
 
 vi.mock('./file-watcher.js')
 vi.mock('../../../models/app/loader.js')
@@ -226,165 +225,175 @@ const testCases: TestCase[] = [
   },
 ]
 
-describe('app-event-watcher when receiving a file event', () => {
-  test.each(testCases)(
-    'The event $name returns the expected AppEvent',
-    async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
-      // Given
+describe('app-event-watcher', () => {
+  let abortController: AbortController
+  let stdout: any
+  let stderr: any
+
+  beforeEach(() => {
+    stdout = {write: vi.fn()}
+    stderr = {write: vi.fn()}
+    abortController = new AbortController()
+  })
+
+  afterEach(() => {
+    abortController.abort()
+  })
+  describe('when receiving a file event', () => {
+    test.each(testCases)(
+      'The event $name returns the expected AppEvent',
+      async ({fileWatchEvent, initialExtensions, finalExtensions, extensionEvents, needsAppReload}) => {
+        // Given
+        await inTemporaryDirectory(async (tmpDir) => {
+          const mockedApp = testAppLinked({allExtensions: finalExtensions})
+          vi.mocked(loadApp).mockResolvedValue(mockedApp)
+          vi.mocked(reloadApp).mockResolvedValue(mockedApp)
+          vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
+
+          const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+
+          // When
+          const app = testAppLinked({
+            allExtensions: initialExtensions,
+            configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          })
+
+          const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
+          const emitSpy = vi.spyOn(watcher, 'emit')
+          await watcher.start({stdout, stderr, signal: abortController.signal})
+
+          await flushPromises()
+
+          // Wait until emitSpy has been called at least once
+          // We need this because there are I/O operations that make the test finish before the event is emitted
+          await new Promise<void>((resolve, reject) => {
+            const initialTime = Date.now()
+            const checkEmitSpy = () => {
+              const allCalled = emitSpy.mock.calls.some((call) => call[0] === 'all')
+              const readyCalled = emitSpy.mock.calls.some((call) => call[0] === 'ready')
+              if (allCalled && readyCalled) {
+                resolve()
+              } else if (Date.now() - initialTime < 3000) {
+                setTimeout(checkEmitSpy, 100)
+              } else {
+                reject(new Error('Timeout waiting for emitSpy to be called'))
+              }
+            }
+            checkEmitSpy()
+          })
+
+          expect(emitSpy).toHaveBeenCalledWith('all', {
+            app: expect.objectContaining({realExtensions: finalExtensions}),
+            extensionEvents: expect.arrayContaining(extensionEvents),
+            startTime: expect.anything(),
+            path: expect.anything(),
+          })
+
+          const initialEvents = app.realExtensions.map((eve) => ({
+            type: EventType.Updated,
+            extension: eve,
+            buildResult: {status: 'ok', handle: eve.handle},
+          }))
+          expect(emitSpy).toHaveBeenCalledWith('ready', {
+            app,
+            extensionEvents: expect.arrayContaining(initialEvents),
+          })
+
+          if (needsAppReload) {
+            expect(reloadApp).toHaveBeenCalled()
+          } else {
+            expect(reloadApp).not.toHaveBeenCalled()
+          }
+        })
+      },
+    )
+  })
+
+  describe('app-event-watcher build extension errors', () => {
+    test('esbuild errors are logged with a custom format', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        const mockedApp = testAppLinked({allExtensions: finalExtensions})
-        vi.mocked(loadApp).mockResolvedValue(mockedApp)
-        vi.mocked(reloadApp).mockResolvedValue(mockedApp)
+        const fileWatchEvent: WatcherEvent = {
+          type: 'file_updated',
+          path: '/extensions/ui_extension_1/src/file.js',
+          extensionPath: '/extensions/ui_extension_1',
+          startTime: [0, 0],
+        }
         vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
-        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        // Given
+        const esbuildError = {
+          errors: [
+            {
+              text: 'Syntax error',
+              location: {file: 'test.js', line: 1, column: 2, lineText: 'console.log(aa);'},
+            },
+          ],
+        }
 
-        // When
+        const mockManager = new MockESBuildContextManager()
+        mockManager.rebuildContext = vi.fn().mockRejectedValueOnce(esbuildError)
+
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
-          allExtensions: initialExtensions,
+          allExtensions: [extension1],
           configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
         })
 
-        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
-        const emitSpy = vi.spyOn(watcher, 'emit')
-        await watcher.start()
+        // When
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager)
+
+        await watcher.start({stdout, stderr, signal: abortController.signal})
 
         await flushPromises()
 
-        // Wait until emitSpy has been called at least once
-        // We need this because there are I/O operations that make the test finish before the event is emitted
-        await new Promise<void>((resolve, reject) => {
-          const initialTime = Date.now()
-          const checkEmitSpy = () => {
-            const allCalled = emitSpy.mock.calls.some((call) => call[0] === 'all')
-            const readyCalled = emitSpy.mock.calls.some((call) => call[0] === 'ready')
-            if (allCalled && readyCalled) {
-              resolve()
-            } else if (Date.now() - initialTime < 3000) {
-              setTimeout(checkEmitSpy, 100)
-            } else {
-              reject(new Error('Timeout waiting for emitSpy to be called'))
-            }
-          }
-          checkEmitSpy()
-        })
-
-        expect(emitSpy).toHaveBeenCalledWith('all', {
-          app: expect.objectContaining({realExtensions: finalExtensions}),
-          extensionEvents: expect.arrayContaining(extensionEvents),
-          startTime: expect.anything(),
-          path: expect.anything(),
-        })
-
-        const initialEvents = app.realExtensions.map((eve) => ({
-          type: EventType.Updated,
-          extension: eve,
-          buildResult: {status: 'ok', handle: eve.handle},
-        }))
-        expect(emitSpy).toHaveBeenCalledWith('ready', {
-          app,
-          extensionEvents: expect.arrayContaining(initialEvents),
-        })
-
-        if (needsAppReload) {
-          expect(reloadApp).toHaveBeenCalled()
-        } else {
-          expect(reloadApp).not.toHaveBeenCalled()
-        }
-      })
-    },
-  )
-})
-
-describe('app-event-watcher build extension errors', () => {
-  test('esbuild errors are logged with a custom format', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const fileWatchEvent: WatcherEvent = {
-        type: 'file_updated',
-        path: '/extensions/ui_extension_1/src/file.js',
-        extensionPath: '/extensions/ui_extension_1',
-        startTime: [0, 0],
-      }
-      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
-
-      // Given
-      const esbuildError = {
-        errors: [
-          {
-            text: 'Syntax error',
-            location: {file: 'test.js', line: 1, column: 2, lineText: 'console.log(aa);'},
-          },
-        ],
-      }
-
-      const mockManager = new MockESBuildContextManager()
-      mockManager.rebuildContext = vi.fn().mockRejectedValueOnce(esbuildError)
-
-      const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
-      const app = testAppLinked({
-        allExtensions: [extension1],
-        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
-      })
-
-      // When
-      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager)
-      const stderr = {write: vi.fn()} as unknown as Writable
-      const stdout = {write: vi.fn()} as unknown as Writable
-
-      await watcher.start({stdout, stderr, signal: new AbortSignal()})
-
-      await flushPromises()
-
-      // Then
-      expect(stderr.write).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `[ERROR] Syntax error
+        // Then
+        expect(stderr.write).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `[ERROR] Syntax error
 
     test.js:1:2:
       1 │ console.log(aa);
         ╵   ^
 
 `,
-        ),
-      )
-    })
-  })
-
-  test('general build errors are logged as plain messages', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const fileWatchEvent: WatcherEvent = {
-        type: 'file_updated',
-        path: '/extensions/flow_action/src/file.js',
-        extensionPath: '/extensions/flow_action',
-        startTime: [0, 0],
-      }
-      vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
-
-      // Given
-      const esbuildError = {message: 'Build failed'}
-      flowExtension.buildForBundle = vi.fn().mockRejectedValueOnce(esbuildError)
-
-      const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
-      const app = testAppLinked({
-        allExtensions: [flowExtension],
-        configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          ),
+        )
       })
+    })
 
-      // When
-      const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
-      const stderr = {write: vi.fn()} as unknown as Writable
-      const stdout = {write: vi.fn()} as unknown as Writable
+    test('general build errors are logged as plain messages', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const fileWatchEvent: WatcherEvent = {
+          type: 'file_updated',
+          path: '/extensions/flow_action/src/file.js',
+          extensionPath: '/extensions/flow_action',
+          startTime: [0, 0],
+        }
+        vi.mocked(startFileWatcher).mockImplementation(async (app, options, onChange) => onChange([fileWatchEvent]))
 
-      await watcher.start({stdout, stderr, signal: new AbortSignal()})
+        // Given
+        const esbuildError = {message: 'Build failed'}
+        flowExtension.buildForBundle = vi.fn().mockRejectedValueOnce(esbuildError)
 
-      await flushPromises()
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [flowExtension],
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+        })
 
-      // Then
-      expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
+        // When
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, new MockESBuildContextManager())
+
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+
+        await flushPromises()
+
+        // Then
+        expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
+      })
     })
   })
 })
-
 // Mock class for ESBuildContextManager
 // It handles the ESBuild contexts for the extensions that are being watched
 class MockESBuildContextManager extends ESBuildContextManager {
