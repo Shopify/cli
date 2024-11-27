@@ -82,7 +82,6 @@
                 "./context/local.js",
                 "./custom-oclif-loader.js",
                 "@oclif/core",
-                "../../private/node/constants.js",
                 "./path.js",
                 "./system.js",
                 "./ui.js"
@@ -91,6 +90,7 @@
                 "@oclif/core",
                 "./context/utilities.js",
                 "../../private/node/conf-store.js",
+                "../../private/node/constants.js",
                 "url"
               ]
             }

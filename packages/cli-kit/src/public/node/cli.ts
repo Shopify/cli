@@ -1,5 +1,6 @@
 import {isTruthy} from './context/utilities.js'
 import {cacheClear} from '../../private/node/conf-store.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {Flags} from '@oclif/core'
 
 /**
@@ -132,6 +133,16 @@ export const globalFlags = {
     hidden: false,
     description: 'Increase the verbosity of the output.',
     env: 'SHOPIFY_FLAG_VERBOSE',
+  }),
+}
+
+export const jsonFlag = {
+  json: Flags.boolean({
+    char: 'j',
+    description: 'Output the result as JSON.',
+    hidden: false,
+    default: false,
+    env: environmentVariables.json,
   }),
 }
 

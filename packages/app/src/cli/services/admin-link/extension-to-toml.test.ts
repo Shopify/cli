@@ -3,8 +3,16 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {describe, expect, test} from 'vitest'
 
 describe('extension-to-toml', () => {
-  test('correctly builds a toml string for a app_link', () => {
+  test('correctly builds a toml string for a app_link extension on a non embedded app', () => {
     // Given
+    const appConfig = {
+      path: '',
+      name: 'app 1',
+      client_id: '12345',
+      application_url: 'http://example.com',
+      embedded: false,
+    }
+
     const extension1: ExtensionRegistration = {
       id: '26237698049',
       uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
@@ -17,7 +25,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [], appConfig)
 
     // Then
     expect(got).toEqual(`[[extensions]]
@@ -32,8 +40,15 @@ handle = "admin-link-title"
 `)
   })
 
-  test('correctly builds a toml string for a bulk_action', () => {
+  test('correctly builds a toml string for bulk_action extension with path in an embedded app', () => {
     // Given
+    const appConfig = {
+      path: '',
+      name: 'app 1',
+      client_id: '12345',
+      application_url: 'http://example.com',
+      embedded: true,
+    }
     const extension1: ExtensionRegistration = {
       id: '26237698049',
       uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
@@ -41,12 +56,12 @@ handle = "admin-link-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es"}',
+        config: '{"text":"bulk action label","url":"https://google.es/action/product?product_id=123#hash"}',
       },
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildTomlObject(extension1, [], appConfig)
 
     // Then
     expect(got).toEqual(`[[extensions]]
@@ -56,7 +71,77 @@ handle = "bulk-action-title"
 
   [[extensions.targeting]]
   text = "bulk action label"
-  url = "https://google.es"
+  url = "app://action/product?product_id=123#hash"
+  target = "admin.product.selection.link"
+`)
+  })
+  test('correctly builds a toml string for bulk_action extension with no path in an embedded app', () => {
+    // Given
+    const appConfig = {
+      path: '',
+      name: 'app 1',
+      client_id: '12345',
+      application_url: 'http://example.com',
+      embedded: true,
+    }
+    const extension1: ExtensionRegistration = {
+      id: '26237698049',
+      uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
+      title: 'Bulk action title',
+      type: 'bulk_action',
+      draftVersion: {
+        context: 'PRODUCTS#ACTION',
+        config: '{"text":"bulk action label","url":"https://google.es/"}',
+      },
+    }
+
+    // When
+    const got = buildTomlObject(extension1, [], appConfig)
+
+    // Then
+    expect(got).toEqual(`[[extensions]]
+type = "admin_link"
+name = "Bulk action title"
+handle = "bulk-action-title"
+
+  [[extensions.targeting]]
+  text = "bulk action label"
+  url = "app://"
+  target = "admin.product.selection.link"
+`)
+  })
+  test('correctly builds a toml string for bulk_action extension with no path but search query in an embedded app', () => {
+    // Given
+    const appConfig = {
+      path: '',
+      name: 'app 1',
+      client_id: '12345',
+      application_url: 'http://example.com',
+      embedded: true,
+    }
+    const extension1: ExtensionRegistration = {
+      id: '26237698049',
+      uuid: 'ad9947a9-bc0b-4855-82da-008aefbc1c71',
+      title: 'Bulk action title',
+      type: 'bulk_action',
+      draftVersion: {
+        context: 'PRODUCTS#ACTION',
+        config: '{"text":"bulk action label","url":"https://google.es?foo=bar"}',
+      },
+    }
+
+    // When
+    const got = buildTomlObject(extension1, [], appConfig)
+
+    // Then
+    expect(got).toEqual(`[[extensions]]
+type = "admin_link"
+name = "Bulk action title"
+handle = "bulk-action-title"
+
+  [[extensions.targeting]]
+  text = "bulk action label"
+  url = "app://?foo=bar"
   target = "admin.product.selection.link"
 `)
   })

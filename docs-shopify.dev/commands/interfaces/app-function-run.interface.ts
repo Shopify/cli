@@ -19,7 +19,7 @@ export interface appfunctionrun {
   '-i, --input <value>'?: string
 
   /**
-   * Log the run result as a JSON object.
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
   '-j, --json'?: ''

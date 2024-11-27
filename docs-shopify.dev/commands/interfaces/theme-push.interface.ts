@@ -25,7 +25,7 @@ export interface themepush {
   '-x, --ignore <value>'?: string
 
   /**
-   * Output JSON instead of a UI.
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
   '-j, --json'?: ''

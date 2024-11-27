@@ -3,7 +3,7 @@ import {Format, info} from '../../services/info.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class AppInfo extends AppCommand {
@@ -21,11 +21,7 @@ export default class AppInfo extends AppCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    json: Flags.boolean({
-      hidden: false,
-      description: 'format output as JSON',
-      env: 'SHOPIFY_FLAG_JSON',
-    }),
+    ...jsonFlag,
     'web-env': Flags.boolean({
       hidden: false,
       description: 'Outputs environment variables necessary for running and deploying web/.',

@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -43,6 +43,7 @@ export default class Push extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...themeFlags,
+    ...jsonFlag,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -79,11 +80,6 @@ export default class Push extends ThemeCommand {
       description: 'Skip downloading the specified files (Multiple flags allowed).',
       multiple: true,
       env: 'SHOPIFY_FLAG_IGNORE',
-    }),
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output JSON instead of a UI.',
-      env: 'SHOPIFY_FLAG_JSON',
     }),
     'allow-live': Flags.boolean({
       char: 'a',

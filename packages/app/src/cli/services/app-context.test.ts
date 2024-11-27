@@ -92,6 +92,7 @@ describe('linkedAppContext', () => {
           name: 'test-app',
           application_url: 'https://test-app.com',
           path: joinPath(tmp, 'shopify.app.toml'),
+          embedded: false,
         },
       })
 
@@ -195,6 +196,7 @@ describe('linkedAppContext', () => {
           name: 'test-app',
           application_url: 'https://test-app.com',
           path: joinPath(tmp, 'shopify.app.toml'),
+          embedded: false,
         },
       })
 
