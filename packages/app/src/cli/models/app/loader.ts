@@ -18,6 +18,7 @@ import {
   AppCreationDefaultOptions,
   AppLinkedInterface,
 } from './app.js'
+import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -48,11 +49,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
-import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
-import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 import ignore from 'ignore'
 
 const defaultExtensionDirectory = 'extensions/*'
@@ -312,12 +309,6 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-let didCheckForGlobalCLIWarning = false
-
-export function resetDidCheckForGlobalCLIWarning() {
-  didCheckForGlobalCLIWarning = false
-}
-
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private readonly mode: AppLoaderMode
   private readonly errors: AppErrors = new AppErrors()
@@ -351,7 +342,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
     const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
 
-    await this.showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
+    if (!this.previousApp) {
+      await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
+    }
+
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
@@ -417,37 +411,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     decode: (input: any) => any = decodeToml,
   ) {
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
-  }
-
-  private async showMultipleCLIWarningIfNeeded(directory: string, dependencies: {[key: string]: string}) {
-    // Show the warning if:
-    // - There is a global installation
-    // - The project has a local CLI dependency
-    // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
-
-    // If we've already checked for multiple CLI installations, don't check again, even if the warning was not shown
-    if (didCheckForGlobalCLIWarning) return
-    didCheckForGlobalCLIWarning = true
-
-    const localVersion = dependencies['@shopify/cli'] && (await localCLIVersion(directory))
-    const globalVersion = await globalCLIVersion()
-
-    if (localVersion && globalVersion && !jsonOutputEnabled()) {
-      const currentInstallation = currentProcessIsGlobal() ? 'global installation' : 'local dependency'
-
-      const warningContent = {
-        headline: `Two Shopify CLI installations found – using ${currentInstallation}`,
-        body: [
-          `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected.
-We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json, unless you want to use different versions across multiple apps.`,
-        ],
-        link: {
-          label: 'See Shopify CLI documentation.',
-          url: 'https://shopify.dev/docs/apps/build/cli-for-apps#switch-to-a-global-executable-or-local-dependency',
-        },
-      }
-      renderInfo(warningContent)
-    }
   }
 
   private validateWebs(webs: Web[]): void {

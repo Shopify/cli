@@ -9,7 +9,6 @@ import {
   AppLoaderMode,
   getAppConfigurationState,
   loadConfigForAppCreation,
-  resetDidCheckForGlobalCLIWarning,
 } from './loader.js'
 import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -329,7 +328,6 @@ wrong = "property"
 
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
-    resetDidCheckForGlobalCLIWarning()
     vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
     vi.mocked(localCLIVersion).mockResolvedValue('3.65.0')
     const mockOutput = mockAndCaptureOutput()
