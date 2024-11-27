@@ -121,7 +121,6 @@ import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
@@ -345,7 +344,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       } catch (_e) {
         throw new AbortError([
           'Failed to fetch extension templates from',
-          {link: {url: TEMPLATE_JSON_URL}},
+          {link: {url: jsonPath ? jsonPath : TEMPLATE_JSON_URL}},
           {char: '.'},
           'This likely means a problem with your internet connection.',
         ])
