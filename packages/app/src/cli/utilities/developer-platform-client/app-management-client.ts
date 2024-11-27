@@ -118,7 +118,6 @@ import {
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
@@ -132,6 +131,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
+import {readFile} from 'fs/promises'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -324,16 +324,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    let response
     let templates: GatedExtensionTemplate[]
+    const jsonPath = process.env.TEMPLATE_JSON_PATH
     try {
-      response = await fetch(TEMPLATE_JSON_URL)
-      templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+      if (jsonPath) {
+        const templateFile = await readFile(jsonPath, 'utf8')
+        templates = JSON.parse(templateFile) as GatedExtensionTemplate[]
+      } else {
+        const response = await fetch(TEMPLATE_JSON_URL)
+        templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+      }
     } catch (_e) {
       throw new AbortError(
         [
           'Failed to fetch extension templates from',
-          {link: {url: TEMPLATE_JSON_URL}},
+          {link: {url: jsonPath ? jsonPath : TEMPLATE_JSON_URL}},
           {char: '.'},
           'This likely means a problem with your internet connection.',
         ],
