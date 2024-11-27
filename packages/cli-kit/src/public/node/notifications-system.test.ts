@@ -402,4 +402,16 @@ describe('showNotificationsIfNeeded', () => {
     // Then
     expect(renderInfo).not.toHaveBeenCalled()
   })
+
+  test('notifications are skipped when using SHOPIFY_FLAG_JSON', async () => {
+    // Given
+    const notifications = [infoNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false', SHOPIFY_FLAG_JSON: 'true'})
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
 })

@@ -79,7 +79,7 @@ export async function showNotificationsIfNeeded(
 }
 
 function skipNotifications(environment: NodeJS.ProcessEnv): boolean {
-  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || jsonOutputEnabled()
+  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || jsonOutputEnabled(environment)
 }
 
 /**
