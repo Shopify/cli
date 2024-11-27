@@ -1,10 +1,12 @@
 import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
+import {sniffForJson} from './path.js'
 import {cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
 vi.mock('../../private/node/conf-store.js')
+vi.mock('./path.js')
 
 const betweenVersins1and2: Notification = {
   id: 'betweenVersins1and2',
@@ -258,7 +260,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('notifications-system filter notifications', () => {
+describe('filterNotifications', () => {
   test.each(testCases)('Filter for %name', ({input, commandId, version, date, surfaces, output}) => {
     // When
     const result = filterNotifications(input, commandId, surfaces, new Date(date), version)
@@ -327,7 +329,7 @@ describe('notifications-system filter notifications', () => {
   })
 })
 
-describe('notifications-system', () => {
+describe('showNotificationsIfNeeded', () => {
   test('an info notification triggers a renderInfo call', async () => {
     // Given
     const notifications = [infoNotification]
@@ -362,5 +364,42 @@ describe('notifications-system', () => {
 
     // Then
     expect(renderError).toHaveBeenCalled()
+  })
+
+  test('notifications are skipped on CI', async () => {
+    // Given
+    const notifications = [infoNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false', CI: 'true'})
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+
+  test('notifications are skipped on tests', async () => {
+    // Given
+    const notifications = [infoNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'true'})
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+
+  test('notifications are skipped when using --json flag', async () => {
+    // Given
+    const notifications = [infoNotification]
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(sniffForJson).mockReturnValue(true)
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
   })
 })

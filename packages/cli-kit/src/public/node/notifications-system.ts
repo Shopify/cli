@@ -5,6 +5,7 @@ import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
+import {sniffForJson} from './path.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {
   NotificationKey,
@@ -54,9 +55,12 @@ export type Notifications = zod.infer<typeof NotificationsSchema>
  * @param environment - Process environment variables.
  * @returns - A promise that resolves when the notifications have been shown.
  */
-export async function showNotificationsIfNeeded(currentSurfaces?: string[], environment = process.env): Promise<void> {
+export async function showNotificationsIfNeeded(
+  currentSurfaces?: string[],
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<void> {
   try {
-    if (isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST)) return
+    if (skipNotifications(environment)) return
 
     const notifications = await getNotifications()
     const commandId = getCurrentCommandId()
@@ -72,6 +76,10 @@ export async function showNotificationsIfNeeded(currentSurfaces?: string[], envi
     const {sendErrorToBugsnag} = await import('./error-handler.js')
     await sendErrorToBugsnag(errorMessage, 'unexpected_error')
   }
+}
+
+function skipNotifications(environment: NodeJS.ProcessEnv): boolean {
+  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || sniffForJson()
 }
 
 /**
