@@ -2391,6 +2391,43 @@ wrong = "property"
       app_web_frontend_count: 0,
     })
   })
+
+  test.skipIf(runningOnWindows)(`git_tracked metadata is false when ignored by the gitignore`, async () => {
+    const {webDirectory} = await writeConfig(linkedAppConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+    await writeFile(joinPath(tmpDir, '.gitignore'), 'shopify.app.toml')
+
+    await loadTestingApp()
+
+    expect(metadata.getAllPublicMetadata()).toEqual(
+      expect.objectContaining({
+        cmd_app_linked_config_git_tracked: false,
+      }),
+    )
+  })
+
+  test.skipIf(runningOnWindows)(`git_tracked metadata is true when there is no gitignore`, async () => {
+    const {webDirectory} = await writeConfig(linkedAppConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await loadTestingApp()
+
+    expect(metadata.getAllPublicMetadata()).toEqual(
+      expect.objectContaining({
+        cmd_app_linked_config_git_tracked: true,
+      }),
+    )
+  })
 })
 
 describe('getAppConfigurationFileName', () => {

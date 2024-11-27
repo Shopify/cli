@@ -1006,7 +1006,7 @@ async function loadAppConfigurationFromState<
 
 async function checkIfGitTracked(appDirectory: string, configurationPath: string) {
   const gitIgnorePath = joinPath(appDirectory, '.gitignore')
-  if (!fileExistsSync(gitIgnorePath)) return false
+  if (!fileExistsSync(gitIgnorePath)) return true
   const gitIgnoreContent = await readFile(gitIgnorePath)
   const ignored = ignore.default().add(gitIgnoreContent)
   const relative = relativePath(appDirectory, configurationPath)
