@@ -45,7 +45,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
       .filter((ev) => ev.buildResult?.status === 'ok')
       .filter((ev) => draftableExtensions.includes(ev.extension.handle))
 
-    // for (const extensionEvent of extensionEvents) {
     const promises = extensionEvents.map(async (extensionEvent) => {
       const extension = extensionEvent.extension
       const registrationId = remoteExtensions[extension.localIdentifier]
