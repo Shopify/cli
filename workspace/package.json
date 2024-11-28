@@ -20,7 +20,7 @@
     "fast-glob": "^3.3.1",
     "git-diff": "^2.0.6",
     "pathe": "^1.1.1",
-    "simple-git": "3.19.1",
+    "simple-git": "3.27.0",
     "tempy": "3.0.0"
   }
 }
