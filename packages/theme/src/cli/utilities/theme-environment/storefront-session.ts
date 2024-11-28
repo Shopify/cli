@@ -45,9 +45,21 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
     )
   }
 
-  const isValidRedirect = new RegExp(`^${storeUrl}/?$`, 'i')
+  const locationHeader = response.headers.get('location') ?? ''
+  let redirectUrl: URL
 
-  return response.status === 302 && isValidRedirect.test(response.headers.get('location') ?? '')
+  try {
+    redirectUrl = new URL(locationHeader, storeUrl)
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
+  }
+
+  const storeOrigin = new URL(storeUrl).origin
+
+  return response.status === 302 && redirectUrl.origin === storeOrigin
 }
 
 export async function getStorefrontSessionCookies(
