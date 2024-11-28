@@ -11,7 +11,8 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
     method: 'GET',
   })
 
-  return response.url.endsWith('/password')
+  const redirectLocation = new URL(response.url)
+  return redirectLocation.pathname.endsWith('/password')
 }
 
 /**

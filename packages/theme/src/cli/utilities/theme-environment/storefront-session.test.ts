@@ -83,6 +83,21 @@ describe('Storefront API', () => {
       // Then
       expect(isProtected).toBe(false)
     })
+
+    test('ignores query params', async () => {
+      // Given
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(response({status: 200, url: 'https://store.myshopify.com/random?a=b'}))
+        .mockResolvedValueOnce(response({status: 200, url: 'https://store.myshopify.com/password?a=b'}))
+
+      // When
+      const redirectToRandomPath = await isStorefrontPasswordProtected('store.myshopify.com')
+      const redirectToPasswordPath = await isStorefrontPasswordProtected('store.myshopify.com')
+
+      // Then
+      expect(redirectToRandomPath).toBe(false)
+      expect(redirectToPasswordPath).toBe(true)
+    })
   })
 
   describe('getStorefrontSessionCookies', () => {
