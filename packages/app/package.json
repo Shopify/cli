@@ -84,7 +84,7 @@
     "@types/react-dom": "18.2.0",
     "@types/ws": "^8.5.5",
     "@vitest/coverage-istanbul": "^1.6.0",
-    "graphql": "^16.8.1",
+    "graphql": "^16.9.0",
     "graphql-tag": "^2.12.6"
   },
   "engines": {
