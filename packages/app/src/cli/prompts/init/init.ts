@@ -4,6 +4,7 @@ import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 export interface InitOptions {
   template?: string
   flavor?: string
+  channel?: string
 }
 
 interface InitOutput {
@@ -33,6 +34,7 @@ interface Template {
 export const templates = {
   remix: {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
+    // change to our connect app repo
     label: 'Build a Remix app (recommended)',
     visible: true,
     branches: {
@@ -67,6 +69,7 @@ const templateOptionsInOrder = ['remix', 'none'] as const
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let template = options.template
   const flavor = options.flavor
+  const channel = options.channel
 
   const defaults = {
     template: templates.remix.url,
@@ -98,7 +101,9 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     const selectedTemplate = templates[answers.templateType]
     selectedUrl = selectedTemplate.url
 
-    if (selectedTemplate.branches) {
+    if (channel) {
+      branch = 'main'
+    } else if (selectedTemplate.branches) {
       if (flavor) {
         branch = selectedTemplate.branches.options[flavor]?.branch
       } else {
