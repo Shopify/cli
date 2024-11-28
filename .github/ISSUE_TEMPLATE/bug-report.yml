@@ -59,7 +59,15 @@ body:
     attributes:
       label: Verbose output
       description: If you're using npm rerun the command with `-- --verbose` or if you're using yarn or pnpm rerun the command with `--verbose`
-      render: shell
+      value: |-
+        <details>
+          <summary>Verbose output</summary>
+
+          ```
+          Paste the output here!
+          ```
+
+        </details>
     validations:
       required: true
   - type: textarea
