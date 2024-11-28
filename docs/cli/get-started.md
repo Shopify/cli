@@ -7,8 +7,8 @@ This wiki contains documentation that's useful for contributors of the project.
 
 If you'd like to contribute to this project, the following system dependencies need to be present in the environment.
 
-- [Node](https://nodejs.org/en/) (v18.20 or higher)
-- [PNPM](https://pnpm.io/)
+- [Node](https://nodejs.org/en/) (v14 or higher)
+- [PNPM](https://pnpm.io/) (v8)
 
 ### Set up
 
