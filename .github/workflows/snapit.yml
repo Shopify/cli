@@ -6,7 +6,7 @@ on:
       - created
 
 env:
-  PNPM_VERSION: '8.15.7'
+  PNPM_VERSION: '9.14.2'
 
 jobs:
   snapit:

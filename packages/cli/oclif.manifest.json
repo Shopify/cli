@@ -5791,6 +5791,13 @@
           "name": "store",
           "type": "option"
         },
+        "strict": {
+          "allowNo": false,
+          "description": "Require theme check to pass without errors before pushing. Warnings are allowed.",
+          "env": "SHOPIFY_FLAG_STRICT_PUSH",
+          "name": "strict",
+          "type": "boolean"
+        },
         "theme": {
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
