@@ -156,6 +156,7 @@ export async function setupDevProcesses({
       webs: reloadedApp.webs,
       backendPort: network.backendPort,
       frontendPort: network.frontendPort,
+      organizationId: remoteApp.organizationId,
       developerPlatformClient,
       storeFqdn,
       apiSecret,

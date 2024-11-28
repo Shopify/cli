@@ -474,15 +474,18 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(FindAppPreviewModeQuery, input)
   }
 
-  async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+  async sendSampleWebhook(
+    input: SendSampleWebhookVariables,
+    _organizationId: string,
+  ): Promise<SendSampleWebhookSchema> {
     return this.request(sendSampleWebhookMutation, input)
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
+  async apiVersions(_organizationId: string): Promise<PublicApiVersionsSchema> {
     return this.request(GetApiVersionsQuery)
   }
 
-  async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+  async topics(input: WebhookTopicsVariables, _organizationId: string): Promise<WebhookTopicsSchema> {
     return this.request(getTopicsQuery, input)
   }
 

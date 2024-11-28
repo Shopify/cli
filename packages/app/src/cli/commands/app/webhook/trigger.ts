@@ -109,6 +109,7 @@ export default class WebhookTrigger extends AppCommand {
       clientSecret: flags['client-secret'] || flags['shared-secret'],
       path: flags.path,
       config: flags.config,
+      organizationId: appContextResult.organization.id,
     }
 
     await webhookTriggerService(usedFlags)

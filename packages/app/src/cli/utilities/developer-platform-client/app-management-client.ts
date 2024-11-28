@@ -46,7 +46,11 @@ import {
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
-import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {
+  SampleWebhook,
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {
@@ -100,6 +104,9 @@ import {FetchSpecifications} from '../../api/graphql/app-management/generated/sp
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
 import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
+import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
+import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -115,6 +122,7 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -711,25 +719,46 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appPreviewMode')
   }
 
-  async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    outputDebug('⚠️ sendSampleWebhook is not implemented')
-    return {
-      sendSampleWebhook: {
-        samplePayload: '',
-        headers: '{}',
-        success: true,
-        userErrors: [],
-      },
+  async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
+    const query = CliTesting
+    const variables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
     }
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+    let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
+    const cliTesting = result.cliTesting
+    if (cliTesting) {
+      sendSampleWebhook = {
+        samplePayload: cliTesting.samplePayload ?? '{}',
+        headers: cliTesting.headers ?? '{}',
+        success: cliTesting.success,
+        userErrors: cliTesting.errors.map((error) => ({message: error, fields: []})),
+      }
+    }
+    return {sendSampleWebhook}
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
-    outputDebug('⚠️ apiVersions is not implemented')
-    return {publicApiVersions: ['unstable']}
+  async apiVersions(organizationId: string): Promise<PublicApiVersionsSchema> {
+    const result = await webhooksRequest(organizationId, PublicApiVersions, await this.token(), {})
+    return {publicApiVersions: result.publicApiVersions.map((version) => version.handle)}
   }
 
-  async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
-    throw new BugError('Not implemented: topics')
+  async topics(
+    {api_version: apiVersion}: WebhookTopicsVariables,
+    organizationId: string,
+  ): Promise<WebhookTopicsSchema> {
+    const query = AvailableTopics
+    const variables = {apiVersion}
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+
+    return {
+      webhookTopics: result.availableTopics ?? [],
+    }
   }
 
   async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {

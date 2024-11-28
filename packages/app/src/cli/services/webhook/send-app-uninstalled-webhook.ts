@@ -13,12 +13,13 @@ interface SendUninstallWebhookToAppServerOptions {
   storeFqdn: string
   address: string
   sharedSecret: string
+  organizationId: string
 }
 
 export async function sendUninstallWebhookToAppServer(
   options: SendUninstallWebhookToAppServerOptions,
 ): Promise<boolean> {
-  const apiVersions = await requestApiVersions(options.developerPlatformClient)
+  const apiVersions = await requestApiVersions(options.developerPlatformClient, options.organizationId)
   const variables: SendSampleWebhookVariables = {
     topic: 'app/uninstalled',
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -27,7 +28,7 @@ export async function sendUninstallWebhookToAppServer(
     delivery_method: DELIVERY_METHOD.LOCALHOST,
     shared_secret: options.sharedSecret,
   }
-  const sample = await getWebhookSample(options.developerPlatformClient, variables)
+  const sample = await getWebhookSample(options.developerPlatformClient, variables, options.organizationId)
 
   options.stdout.write('Sending APP_UNINSTALLED webhook to app server')
 
