@@ -54,23 +54,10 @@ export default class AppGenerateExtension extends AppCommand {
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),
-    reset: Flags.boolean({
-      hidden: false,
-      description: 'Reset all your settings.',
-      env: 'SHOPIFY_FLAG_RESET',
-      default: false,
-      exclusive: ['config'],
-    }),
     'api-key': Flags.string({
       hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
   }
@@ -107,7 +94,7 @@ export default class AppGenerateExtension extends AppCommand {
 
     const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
-      clientId: flags['client-id'] || flags['api-key'],
+      clientId: flags['client-id'] ?? flags['api-key'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })

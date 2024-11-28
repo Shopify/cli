@@ -31,12 +31,6 @@ export default class Build extends AppCommand {
       env: 'SHOPIFY_FLAG_API_KEY',
       exclusive: ['config'],
     }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: "Application's Client ID that will be exposed at build time.",
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
   }
 
   async run(): Promise<AppCommandOutput> {
@@ -44,7 +38,7 @@ export default class Build extends AppCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
+    const apiKey = flags['client-id'] ?? flags['api-key']
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -52,8 +46,8 @@ export default class Build extends AppCommand {
 
     const {app} = await linkedAppContext({
       directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: false,
+      clientId: apiKey,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

@@ -24,6 +24,8 @@ export default class FunctionBuild extends AppCommand {
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
+      apiKey: flags['client-id'],
+      reset: flags.reset,
       callback: async (app, _, ourFunction) => {
         await buildFunctionExtension(ourFunction, {
           app,

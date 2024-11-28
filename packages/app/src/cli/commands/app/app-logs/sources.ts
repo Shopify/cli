@@ -21,8 +21,8 @@ export default class Sources extends AppCommand {
 
     const {app} = await linkedAppContext({
       directory: flags.path,
-      clientId: undefined,
-      forceRelink: false,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

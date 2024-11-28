@@ -25,12 +25,6 @@ export default class VersionsList extends AppCommand {
       env: 'SHOPIFY_FLAG_API_KEY',
       exclusive: ['config'],
     }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID to fetch versions for.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
   }
 
   static args = {
@@ -42,12 +36,12 @@ export default class VersionsList extends AppCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
+    const apiKey = flags['client-id'] ?? flags['api-key']
 
     const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
-      forceRelink: false,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

@@ -27,10 +27,12 @@ export async function inFunctionContext({
   userProvidedConfigName,
   apiKey,
   callback,
+  reset,
 }: {
   path: string
   userProvidedConfigName?: string
   apiKey?: string
+  reset?: boolean
   callback: (
     app: AppLinkedInterface,
     developerPlatformClient: DeveloperPlatformClient,
@@ -40,7 +42,7 @@ export async function inFunctionContext({
   const {app, developerPlatformClient} = await linkedAppContext({
     directory: path,
     clientId: apiKey,
-    forceRelink: false,
+    forceRelink: reset ?? false,
     userProvidedConfigName,
   })
 

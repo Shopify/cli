@@ -19,4 +19,17 @@ export const appFlags = {
     description: 'The name of the app configuration.',
     env: 'SHOPIFY_FLAG_APP_CONFIG',
   }),
+  'client-id': Flags.string({
+    hidden: false,
+    description: 'The Client ID of your app.',
+    env: 'SHOPIFY_FLAG_CLIENT_ID',
+    exclusive: ['config'],
+  }),
+  reset: Flags.boolean({
+    hidden: false,
+    description: 'Reset all your settings.',
+    env: 'SHOPIFY_FLAG_RESET',
+    default: false,
+    exclusive: ['config'],
+  }),
 }
