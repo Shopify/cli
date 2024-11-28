@@ -173,7 +173,7 @@
     "@types/which": "3.0.4",
     "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0",
-    "ts-morph": "^17.0.1",
+    "ts-morph": "^24.0.0",
     "typedoc": "^0.25.7",
     "typescript": "5.2.2"
   },
