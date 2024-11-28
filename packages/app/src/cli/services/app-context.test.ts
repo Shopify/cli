@@ -13,10 +13,12 @@ import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
+vi.mock('../models/app/validation/multi-cli-warning.js')
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
 vi.mock('./dev/fetch.js')
+
 async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
   const packageJsonPath = joinPath(tmp, 'package.json')
