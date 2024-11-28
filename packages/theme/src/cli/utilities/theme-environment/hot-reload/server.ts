@@ -11,8 +11,6 @@ import {
   getQuery,
   sendError,
   type H3Error,
-  setResponseHeaders,
-  setResponseStatus,
 } from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
@@ -171,15 +169,6 @@ export function emitHotReloadEvent(event: HotReloadEvent) {
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
     const endpoint = event.path.split('?')[0]
-
-    setResponseHeaders(event, {
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'no-cache',
-    })
-    if (event.method === 'OPTIONS') {
-      setResponseStatus(event, 204)
-      return null
-    }
 
     if (endpoint === '/__hot-reload/subscribe') {
       const eventStream = createEventStream(event)
