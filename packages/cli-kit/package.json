@@ -171,7 +171,7 @@
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",
-    "@vitest/coverage-istanbul": "^1.6.0",
+    "@vitest/coverage-istanbul": "^2.1.6",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.25.7",
