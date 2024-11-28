@@ -25,6 +25,7 @@ export interface UserErrors {
   fields: string[]
 }
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const sendSampleWebhookMutation = `
   mutation samplePayload($topic: String!, $api_version: String!, $address: String!, $delivery_method: String!, $shared_secret: String!, $api_key: String) {
     sendSampleWebhook(input: {topic: $topic, apiVersion: $api_version, address: $address, deliveryMethod: $delivery_method, sharedSecret: $shared_secret, apiKey: $api_key}) {
