@@ -97,14 +97,19 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
       } else {
         // Otherwise, just full refresh directly:
         onSync(() => {
+          // Note: onSync is only required for OSE.
+          // CLI serves assets from local disk so it doesn't need cloud syncing.
+          // However, OSE currently gets assets from SFR, so it needs to wait
+          // until the asset is synced to the cloud before triggering a hot reload.
+          // Once OSE can intercept asset requests via Service Worker, it will
+          // start serving assets from local disk and won't need to wait for syncs.
           triggerHotReload(fileKey, ctx)
         })
       }
     } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
-      onSync(() => {
-        if (extension === '.json')
-          saveSectionsFromJson(fileKey, ctx.localThemeFileSystem.files.get(fileKey)?.value ?? '')
+      onContent((content) => {
+        if (extension === '.json') saveSectionsFromJson(fileKey, content)
         triggerHotReload(fileKey, ctx)
       })
     } else {
