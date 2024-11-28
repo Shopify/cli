@@ -14,9 +14,7 @@ describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {
     test('returns true when the request is redirected to the password page', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(
-        response({status: 302, headers: {location: 'https://store.myshopify.com/password'}}),
-      )
+      vi.mocked(fetch).mockResolvedValue(response({status: 200, url: 'https://store.myshopify.com/password'}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
@@ -25,13 +23,12 @@ describe('Storefront API', () => {
       expect(isProtected).toBe(true)
       expect(fetch).toBeCalledWith('https://store.myshopify.com', {
         method: 'GET',
-        redirect: 'manual',
       })
     })
 
     test('returns false when request is not redirected', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 200}))
+      vi.mocked(fetch).mockResolvedValue(response({status: 200, url: 'https://store.myshopify.com'}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
@@ -40,13 +37,12 @@ describe('Storefront API', () => {
       expect(isProtected).toBe(false)
       expect(fetch).toBeCalledWith('https://store.myshopify.com', {
         method: 'GET',
-        redirect: 'manual',
       })
     })
 
     test('returns false when store redirects to a different domain', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(response({status: 302, headers: {location: 'https://store.myshopify.se'}}))
+      vi.mocked(fetch).mockResolvedValue(response({status: 200, url: 'https://store.myshopify.se'}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
@@ -57,9 +53,7 @@ describe('Storefront API', () => {
 
     test('returns false when store redirects to a different URI', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(
-        response({status: 302, headers: {location: 'https://store.myshopify.com/random'}}),
-      )
+      vi.mocked(fetch).mockResolvedValue(response({status: 200, url: 'https://store.myshopify.com/random'}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
@@ -70,9 +64,7 @@ describe('Storefront API', () => {
 
     test('return true when store redirects to /<locale>/password', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(
-        response({status: 302, headers: {location: 'https://store.myshopify.com/fr-CA/password'}}),
-      )
+      vi.mocked(fetch).mockResolvedValue(response({status: 200, url: 'https://store.myshopify.com/fr-CA/password'}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
@@ -83,9 +75,7 @@ describe('Storefront API', () => {
 
     test('returns false if response is not a 302', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValue(
-        response({status: 301, headers: {location: 'https://store.myshopify.com/random'}}),
-      )
+      vi.mocked(fetch).mockResolvedValue(response({status: 200, url: 'https://store.myshopify.com/random'}))
 
       // When
       const isProtected = await isStorefrontPasswordProtected('store.myshopify.com')
@@ -195,7 +185,12 @@ describe('Storefront API', () => {
 
   // Tests rely on this function because the 'packages/theme' package cannot
   // directly access node-fetch and they use: new Response('OK', {status: 200})
-  function response(mock: {status: number; headers?: {[key: string]: string}; text?: () => Promise<string>}) {
+  function response(mock: {
+    status: number
+    url?: string
+    headers?: {[key: string]: string}
+    text?: () => Promise<string>
+  }) {
     const setCookieHeader = (mock.headers ?? {})['set-cookie'] ?? ''
     const setCookieArray = [setCookieHeader]
 

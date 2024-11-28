@@ -9,12 +9,9 @@ export class ShopifyEssentialError extends Error {}
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
-    redirect: 'manual',
   })
 
-  if (response.status !== 302) return false
-
-  return response.headers.get('location')?.endsWith('/password') ?? false
+  return response.url.endsWith('/password')
 }
 
 /**
