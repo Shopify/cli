@@ -55,7 +55,7 @@
     "jest-websocket-mock": "^2.4.0",
     "jsdom": "^20.0.3",
     "react": "^17.0.2",
-    "typescript": "5.2.2",
+    "typescript": "5.7.2",
     "vi-fetch": "^0.8.0",
     "vite": "^5.3.1"
   },
