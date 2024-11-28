@@ -6,7 +6,7 @@ import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {createAbortCatchError} from '../errors.js'
-import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener} from 'h3'
+import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {createServer} from 'node:http'
 import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -102,7 +102,13 @@ function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWor
   app.use(
     defineLazyEventHandler(async () => {
       await initialWork
-      return defineEventHandler(() => {})
+      return defineEventHandler((event) => {
+        handleCors(event, {
+          origin: '*',
+          methods: '*',
+          preflight: {statusCode: 204},
+        })
+      })
     }),
   )
 

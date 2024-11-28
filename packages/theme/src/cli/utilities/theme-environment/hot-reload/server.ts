@@ -4,14 +4,7 @@ import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-e
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
 import {serializeCookies} from '../cookies.js'
-import {
-  createEventStream,
-  defineEventHandler,
-  getProxyRequestHeaders,
-  getQuery,
-  setResponseHeaders,
-  setResponseStatus,
-} from 'h3'
+import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
@@ -92,7 +85,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  * HotReload if needed.
  */
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
-  const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
+  const handleFileUpdate = ({fileKey, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
 
     if (isAsset(fileKey)) {
@@ -169,15 +162,6 @@ export function emitHotReloadEvent(event: HotReloadEvent) {
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
     const endpoint = event.path.split('?')[0]
-
-    setResponseHeaders(event, {
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'no-cache',
-    })
-    if (event.method === 'OPTIONS') {
-      setResponseStatus(event, 204)
-      return null
-    }
 
     if (endpoint === '/__hot-reload/subscribe') {
       const eventStream = createEventStream(event)
