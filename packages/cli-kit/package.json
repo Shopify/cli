@@ -163,7 +163,7 @@
   },
   "devDependencies": {
     "@types/commondir": "^1.0.0",
-    "@types/diff": "^5.0.3",
+    "@types/diff": "^6.0.0",
     "@types/fs-extra": "9.0.13",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.195",
