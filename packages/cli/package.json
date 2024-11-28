@@ -101,7 +101,7 @@
     ]
   },
   "dependencies": {
-    "@ast-grep/napi": "0.11.0",
+    "@ast-grep/napi": "0.30.1",
     "esbuild": "0.19.8"
   },
   "devDependencies": {
@@ -114,8 +114,8 @@
     "@shopify/plugin-did-you-mean": "3.70.0",
     "@shopify/theme": "3.70.0",
     "@shopify/cli-hydrogen": "9.0.2",
-    "@types/node": "18.19.3",
-    "@typescript-eslint/eslint-plugin": "7.13.1",
+    "@types/node": "18.19.67",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1"
