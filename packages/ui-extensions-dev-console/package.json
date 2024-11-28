@@ -52,7 +52,7 @@
     "react-transition-group": "^4.4.5"
   },
   "devDependencies": {
-    "@shopify/react-testing": "^3.0.0",
+    "@shopify/react-testing": "^6.0.0",
     "@shopify/ui-extensions-test-utils": "3.26.0",
     "@types/node": "18.19.3",
     "@types/qrcode.react": "^1.0.2",
