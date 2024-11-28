@@ -44,7 +44,7 @@
     "@shopify/react-i18n": "^6.1.0",
     "@shopify/ui-extensions-server-kit": "5.2.1",
     "copy-to-clipboard": "^3.3.3",
-    "qrcode.react": "^1.0.1",
+    "qrcode.react": "^4.1.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router-dom": "^6.14.2",
