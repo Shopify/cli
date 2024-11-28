@@ -1,12 +1,13 @@
 import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {itemToString} from '@shopify/cli-kit/node/output'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
-import {Severity, type Offense, check} from '@shopify/theme-check-node'
+import {Severity, type Offense, check, path as pathUtils} from '@shopify/theme-check-node'
 
 /**
  * Returns a code snippet from a file. All line numbers given MUST be zero indexed
  */
-function getSnippet(absolutePath: string, startLine: number, endLine: number) {
+function getSnippet(uri: string, startLine: number, endLine: number) {
+  const absolutePath = pathUtils.fsPath(uri)
   const fileContent = readFileSync(absolutePath).toString()
   const lines = fileContent.split('\n')
   const snippetLines = lines.slice(startLine, endLine + 1)
@@ -45,9 +46,9 @@ function severityToToken(severity: Severity) {
  */
 function formatOffenses(offenses: Offense[]): TokenItem {
   const offenseBodies = offenses.map((offense, index) => {
-    const {message, absolutePath, start, end, check, severity} = offense
+    const {message, uri, start, end, check, severity} = offense
     // Theme check line numbers are zero indexed, but intuitively 1-indexed
-    const codeSnippet = getSnippet(absolutePath, start.line, end.line)
+    const codeSnippet = getSnippet(uri, start.line, end.line)
 
     // Ensure enough padding between offenses
     const offensePadding = index === offenses.length - 1 ? '' : '\n\n'
