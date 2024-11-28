@@ -2,7 +2,9 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     versioning-strategy: increase
-    directory: "/"
+    directories:
+      - "/"
+      - "packages/*"
     schedule:
       interval: "weekly"
     labels:
@@ -38,21 +40,3 @@ updates:
         patterns:
           - "nx"
           - "@nx/*"
-  - package-ecosystem: "bundler"
-    versioning-strategy: increase
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-    open-pull-requests-limit: 100
-    pull-request-branch-name:
-      separator: "-"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      minor_versions:
-        update-types:
-          - 'minor'
-          - 'patch'
