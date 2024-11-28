@@ -37,7 +37,7 @@
     "fs-extra": "^9.1.0",
     "pathe": "1.1.1",
     "rimraf": "^3.0.2",
-    "tempy": "^1.0.1",
+    "tempy": "^3.1.0",
     "fast-glob": "^3.3.1"
   },
   "engines": {
