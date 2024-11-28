@@ -39,6 +39,8 @@ export default class FunctionRun extends AppCommand {
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
+      apiKey: flags['client-id'],
+      reset: flags.reset,
       callback: async (app, developerPlatformClient, ourFunction) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 

@@ -35,8 +35,8 @@ export default class AppInfo extends AppCommand {
 
     const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
-      clientId: undefined,
-      forceRelink: false,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
       unsafeReportMode: true,
     })

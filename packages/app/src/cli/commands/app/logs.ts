@@ -28,7 +28,6 @@ export default class Logs extends AppCommand {
     ...appFlags,
     ...jsonFlag,
     'api-key': Dev.flags['api-key'],
-    'client-id': Dev.flags['client-id'],
     store: Flags.string({
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
@@ -36,7 +35,6 @@ export default class Logs extends AppCommand {
       multiple: true,
       parse: async (input) => normalizeStoreFqdn(input),
     }),
-    reset: Dev.flags.reset,
     source: Flags.string({
       description: 'Filters output to the specified log source.',
       env: 'SHOPIFY_FLAG_SOURCE',
@@ -52,7 +50,7 @@ export default class Logs extends AppCommand {
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Logs)
 
-    const apiKey = flags['client-id'] || flags['api-key']
+    const apiKey = flags['client-id'] ?? flags['api-key']
 
     await checkFolderIsValidApp(flags.path)
 

@@ -24,12 +24,6 @@ export default class FunctionReplay extends AppCommand {
       env: 'SHOPIFY_FLAG_API_KEY',
       exclusive: ['config'],
     }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: "Application's Client ID",
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
     log: Flags.string({
       char: 'l',
       description:
@@ -51,12 +45,13 @@ export default class FunctionReplay extends AppCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
+    const apiKey = flags['client-id'] ?? flags['api-key']
 
     const app = await inFunctionContext({
       path: flags.path,
       apiKey,
       userProvidedConfigName: flags.config,
+      reset: flags.reset,
       callback: async (app, _, ourFunction) => {
         await replay({
           app,

@@ -86,14 +86,15 @@ Build the app, including extensions.
 
 ```
 USAGE
-  $ shopify app build [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+  $ shopify app build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
     [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>                  The name of the app configuration.
-      --client-id=<value>               Application's Client ID that will be exposed at build time.
+      --client-id=<value>               The Client ID of your app.
       --no-color                        Disable color output.
       --path=<value>                    The path to your app directory.
+      --reset                           Reset all your settings.
       --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
       --verbose                         Increase the verbosity of the output.
 
@@ -115,13 +116,14 @@ Fetch your app configuration from the Partner Dashboard.
 
 ```
 USAGE
-  $ shopify app config link [--client-id <value>] [-c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app config link [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
@@ -140,16 +142,17 @@ Activate an app configuration.
 
 ```
 USAGE
-  $ shopify app config use [CONFIG] [--no-color] [--path <value>] [--reset] [--verbose]
+  $ shopify app config use [CONFIG] [--client-id <value> | ] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 ARGUMENTS
   CONFIG  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
 
 FLAGS
-  --no-color      Disable color output.
-  --path=<value>  The path to your app directory.
-  --reset         Reset current configuration.
-  --verbose       Increase the verbosity of the output.
+  --client-id=<value>  The Client ID of your app.
+  --no-color           Disable color output.
+  --path=<value>       The path to your app directory.
+  --reset              Reset all your settings.
+  --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Activate an app configuration.
@@ -275,14 +278,17 @@ Pull app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env pull [-c <value>] [--env-file <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app env pull [--client-id <value> | -c <value>] [--env-file <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>    The name of the app configuration.
-      --env-file=<value>  Specify an environment file to update if the update flag is set
-      --no-color          Disable color output.
-      --path=<value>      The path to your app directory.
-      --verbose           Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --env-file=<value>   Specify an environment file to update if the update flag is set
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Pull app and extensions environment variables.
@@ -299,13 +305,15 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [-c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app env show [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Display app and extensions environment variables.
@@ -319,13 +327,15 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [-c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app function build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Compile a function to wasm.
@@ -340,7 +350,7 @@ Replays a function run from an app log.
 ```
 USAGE
   $ shopify app function replay [--client-id <value> | -c <value>] [-j] [-l <value>] [--no-color] [--path <value>]
-    [--verbose] [-w]
+    [--reset | ] [--verbose] [-w]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -348,9 +358,10 @@ FLAGS
   -l, --log=<value>        Specifies a log identifier to replay instead of selecting from a list. The identifier is
                            provided in the output of `shopify app dev` and is the suffix of the log file name.
   -w, --[no-]watch         Re-run the function when the source code changes.
-      --client-id=<value>  Application's Client ID
+      --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
@@ -367,16 +378,19 @@ Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [-c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose]
+  $ shopify app function run [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  -e, --export=<value>  Name of the WebAssembly export to invoke.
-  -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
-  -j, --json            Output the result as JSON.
-      --no-color        Disable color output.
-      --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+  -e, --export=<value>     Name of the WebAssembly export to invoke.
+  -i, --input=<value>      The input JSON to pass to the function. If omitted, standard input is used.
+  -j, --json               Output the result as JSON.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Run a function locally for testing.
@@ -392,13 +406,15 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
+  $ shopify app function schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--stdout]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID to fetch the schema with.
+      --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
       --stdout             Output the schema to stdout instead of writing to a file.
       --verbose            Increase the verbosity of the output.
 
@@ -418,13 +434,16 @@ Generate GraphQL types for a JavaScript function.
 
 ```
 USAGE
-  $ shopify app function typegen [-c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app function typegen [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+  [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
@@ -477,13 +496,15 @@ Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+  [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
@@ -496,15 +517,18 @@ Print basic information about your app and extensions.
 
 ```
 USAGE
-  $ shopify app info [-c <value>] [-j] [--no-color] [--path <value>] [--verbose] [--web-env]
+  $ shopify app info [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose] [--web-env]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  -j, --json            Output the result as JSON.
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the output.
-      --web-env         Outputs environment variables necessary for running and deploying web/.
+  -c, --config=<value>     The name of the app configuration.
+  -j, --json               Output the result as JSON.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+      --web-env            Outputs environment variables necessary for running and deploying web/.
 
 DESCRIPTION
   Print basic information about your app and extensions.
@@ -584,13 +608,15 @@ Print out a list of sources that may be used with the logs command.
 
 ```
 USAGE
-  $ shopify app logs sources [-c <value>] [--no-color] [--path <value>] [--verbose]
+  $ shopify app logs sources [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Print out a list of sources that may be used with the logs command.
@@ -629,14 +655,16 @@ List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [FILE] [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--verbose]
+  $ shopify app versions list [FILE] [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
   -j, --json               Output the result as JSON.
-      --client-id=<value>  The Client ID to fetch versions for.
+      --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
@@ -655,8 +683,8 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 ```
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
-    [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>]
-    [--shared-secret <value>] [--topic <value>]
+    [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>] [--reset |
+    ] [--shared-secret <value>] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -690,6 +718,9 @@ FLAGS
 
   --path=<value>
       The path to your app directory.
+
+  --reset
+      Reset all your settings.
 
   --shared-secret=<value>
       Deprecated. Please use client-secret.
