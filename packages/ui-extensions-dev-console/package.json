@@ -40,7 +40,7 @@
     }
   },
   "dependencies": {
-    "@shopify/polaris-icons": "^8.0.0",
+    "@shopify/polaris-icons": "^9.3.0",
     "@shopify/react-i18n": "^6.1.0",
     "@shopify/ui-extensions-server-kit": "5.2.1",
     "copy-to-clipboard": "^3.3.3",
