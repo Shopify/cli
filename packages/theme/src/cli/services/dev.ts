@@ -97,7 +97,7 @@ export async function dev(options: DevOptions) {
     session.storefrontPassword = await storefrontPasswordPromise
   }
 
-  const {serverStart, renderDevSetupProgress} = setupDevServer(options.theme, ctx)
+  const {serverStart, renderDevSetupProgress, uploadResults} = setupDevServer(options.theme, ctx)
 
   if (!options['theme-editor-sync']) {
     session.storefrontPassword = await storefrontPasswordPromise
@@ -105,6 +105,18 @@ export async function dev(options: DevOptions) {
 
   await renderDevSetupProgress()
   await serverStart()
+  const results = await uploadResults
+
+  for (const [key, res] of results.entries()) {
+    if (!res.success) {
+      ctx.localThemeFileSystem.emitEvent('change', {
+        fileKey: key,
+        uploadErrors: new Map([[key, res.errors?.asset ?? ['Failed to upload']]]),
+        onContent: () => {},
+        onSync: () => {},
+      })
+    }
+  }
 
   renderLinks(urls)
   if (options.open) {

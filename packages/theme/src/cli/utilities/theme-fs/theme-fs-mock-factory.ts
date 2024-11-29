@@ -9,6 +9,7 @@ export function fakeThemeFileSystem(
   return {
     root,
     files,
+    uploadErrors: new Map(),
     unsyncedFileKeys: new Set(),
     ready: () => Promise.resolve(),
     delete: async (fileKey: string) => {
@@ -24,5 +25,6 @@ export function fakeThemeFileSystem(
     addEventListener: () => {},
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, options?.filters),
     startWatcher: async () => {},
+    emitEvent: () => {},
   }
 }

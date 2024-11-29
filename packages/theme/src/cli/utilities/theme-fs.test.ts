@@ -59,12 +59,14 @@ describe('theme-fs', () => {
           fsEntry({checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'}),
         ]),
         unsyncedFileKeys: new Set(),
+        emitEvent: expect.any(Function),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
         applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
+        uploadErrors: expect.any(Map),
         startWatcher: expect.any(Function),
       })
     })
@@ -82,12 +84,14 @@ describe('theme-fs', () => {
         root,
         files: new Map(),
         unsyncedFileKeys: new Set(),
+        emitEvent: expect.any(Function),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
         read: expect.any(Function),
         applyIgnoreFilters: expect.any(Function),
         addEventListener: expect.any(Function),
+        uploadErrors: expect.any(Map),
         startWatcher: expect.any(Function),
       })
     })
