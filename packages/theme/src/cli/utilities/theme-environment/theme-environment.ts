@@ -22,6 +22,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 
   return {
     workPromise,
+    uploadResults: envSetup.workPromise.then((res) => res.uploadResults),
     serverStart: server.start,
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
@@ -49,7 +50,14 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
     .catch(abort)
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise).catch(abort),
+    workPromise: uploadPromise
+      .then((result) => {
+        return {
+          workPromise: result.workPromise,
+          uploadResults: result.uploadResults,
+        }
+      })
+      .catch(abort),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise

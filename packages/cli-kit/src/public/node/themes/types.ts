@@ -16,6 +16,7 @@ type ThemeFSEvent =
       type: 'add' | 'change'
       payload: {
         fileKey: Key
+        uploadErrors: Map<Key, string[]>
         onContent: (fn: (content: string) => void) => void
         onSync: (fn: () => void) => void
       }
@@ -99,6 +100,16 @@ export interface ThemeFileSystem extends VirtualFileSystem {
    * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
    */
   applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
+
+  /**
+   * Map of file keys to errors.
+   */
+  uploadErrors: Map<string, string[]>
+
+  /**
+   * Emits an event to the event emitter.
+   */
+  emitEvent: <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => void
 }
 
 /**

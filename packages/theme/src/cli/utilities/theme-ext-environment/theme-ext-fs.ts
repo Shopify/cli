@@ -66,6 +66,7 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
 
     emitEvent(eventName, {
       fileKey,
+      uploadErrors: new Map<string, string[]>(),
       onContent: (fn) => {
         contentPromise
           .then((content) => {
