@@ -1,11 +1,9 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {list} from '../../services/list.js'
 import {ALLOWED_ROLES, Role} from '../../utilities/theme-selector/fetch.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {execa} from 'execa'
 
 export default class List extends ThemeCommand {
   static description = 'Lists the themes in your store, along with their IDs and statuses.'
@@ -32,10 +30,30 @@ export default class List extends ThemeCommand {
   }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(List)
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+    // const list = ['msg 1', 'msg 2', 'msg 3']
 
-    await list(adminSession, flags)
+    // const flags = getMultiEnvFlags()
+
+    // for (flag in flags) {
+    //   validateFlags() //
+
+    //   console.log(flag)
+    //   // out2 = execa('shopify', ['theme', 'list', flag])
+    // }
+
+    console.log('???2')
+    try {
+      const {stdout} = await execa('shopify', ['theme', 'list'])
+
+      console.log(stdout)
+    } catch (error) {
+      console.error('>>', error)
+    }
+
+    // const {flags} = await this.parse(List)
+    // const store = ensureThemeStore(flags)
+    // const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+
+    // await list(adminSession, flags)
   }
 }

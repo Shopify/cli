@@ -705,6 +705,9 @@ importers:
       chokidar:
         specifier: 3.5.3
         version: 3.5.3
+      execa:
+        specifier: 7.2.0
+        version: 7.2.0
       h3:
         specifier: 1.12.0
         version: 1.12.0
