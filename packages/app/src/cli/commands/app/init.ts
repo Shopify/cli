@@ -7,7 +7,6 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
-import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -109,7 +108,7 @@ export default class Init extends AppCommand {
       cmd_create_app_template_url: promptAnswers.template,
     }))
 
-    const result = await initService({
+    const {app} = await initService({
       name: appName,
       selectedAppOrNameResult: selectAppResult,
       packageManager: inferredPackageManager,
@@ -121,14 +120,6 @@ export default class Init extends AppCommand {
       postCloneActions: {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
-    })
-
-    const {app} = await linkedAppContext({
-      directory: result.outputDirectory,
-      clientId: undefined,
-      forceRelink: false,
-      userProvidedConfigName: undefined,
-      unsafeReportMode: false,
     })
 
     return {app}
