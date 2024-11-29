@@ -26,16 +26,19 @@ interface GraphQLRequestBaseOptions<TResult> {
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
   variables?: Variables
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export interface GraphQLResponseOptions<T> {
@@ -49,7 +52,7 @@ export interface GraphQLResponseOptions<T> {
  * @param options - GraphQL request options.
  */
 async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
-  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions} = options
+  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler} = options
   const headers = {
     ...addedHeaders,
     ...buildHeaders(token),
@@ -63,6 +66,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     const response = await retryAwareRequest(
       {request: () => client.rawRequest<TResult>(queryAsString, variables), url},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+      unauthorizedHandler,
     )
 
     if (responseOptions?.onResponse) {

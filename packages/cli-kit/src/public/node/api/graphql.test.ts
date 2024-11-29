@@ -54,7 +54,7 @@ describe('graphqlRequest', () => {
       request: expect.any(Function),
       url: mockedAddress,
     }
-    expect(retryAwareRequest).toHaveBeenCalledWith(receivedObject, expect.any(Function))
+    expect(retryAwareRequest).toHaveBeenCalledWith(receivedObject, expect.any(Function), undefined)
   })
 })
 
@@ -95,6 +95,7 @@ describe('graphqlRequestDoc', () => {
         url: mockedAddress,
       },
       expect.any(Function),
+      undefined,
     )
     expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledWith(
       'mockApi',
