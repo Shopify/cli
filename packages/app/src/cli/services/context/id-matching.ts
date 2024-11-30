@@ -22,7 +22,9 @@ interface MatchResult {
  * Filter function to match a local and a remote source by type and handle
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.handle)
+  return (
+    remote.type.toLowerCase() === local.graphQLType.toLowerCase() && slugify(remote.title) === slugify(local.handle)
+  )
 }
 
 /**
@@ -52,7 +54,7 @@ function matchByNameAndType(
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid
   })
 
-  const pendingLocal = local.filter((elem) => !matched[elem.localIdentifier])
+  const pendingLocal = local.filter((elem) => matched[elem.localIdentifier] === undefined)
   const pendingRemote = remote.filter((registration) => !Object.values(matched).includes(registration.uuid))
 
   // Now we try to find a match between a local source and remote one if they have
@@ -76,7 +78,10 @@ function matchByUUID(
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
-  const matched: IdentifiersExtensions = {}
+  const notMigratedExtensions = local.filter((localSource) => localSource.uid === 'pending-migration')
+  // Generate a new UUID in the extension TOML
+
+  const {matched, toCreate, toConfirm, toManualMatch} = matchByNameAndType(notMigratedExtensions, remote)
 
   local.forEach((localSource) => {
     const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
@@ -84,9 +89,9 @@ function matchByUUID(
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
   })
 
-  const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
+  toCreate.concat(local.filter((elem) => !matched[elem.localIdentifier]))
 
-  return {matched, toCreate, toConfirm: [], toManualMatch: {local: [], remote: []}}
+  return {matched, toCreate, toConfirm, toManualMatch}
 }
 
 function migrateLegacyFunctions(

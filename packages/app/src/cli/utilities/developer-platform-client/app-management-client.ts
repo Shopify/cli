@@ -529,6 +529,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async activeAppVersion(app: MinimalAppIdentifiers): Promise<AppVersion> {
     const result = await this.activeAppVersionRawResult(app)
     return {
+      // appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
+      //   return {
+      //     registrationId: mod.userIdentifier,
+      //     registrationUid: mod.userIdentifier,
+      //     registrationUuid: mod.userIdentifier,
+      //     registrationTitle: mod.handle,
+      //     type: mod.specification.externalIdentifier,
+      //     config: mod.config,
+      //     specification: {
+      //       ...mod.specification,
+      //       identifier: mod.specification.identifier,
+      //       options: {managementExperience: 'cli'},
+      //       experience: experience(mod.specification.identifier),
+      //     },
+      //   }
+      // }),
       appModuleVersions: result.app.activeRelease.version.appModules.map(appModuleVersion),
       ...result.app.activeRelease,
     }
@@ -577,6 +593,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             specificationIdentifier: mod.specificationIdentifier,
             handle: mod.handle,
             config: JSON.parse(mod.config),
+            // uuid: mod.uuid,
           }
         }),
       },

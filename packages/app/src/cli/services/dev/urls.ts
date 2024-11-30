@@ -219,7 +219,7 @@ export async function updateURLs(
         : {}),
     }
 
-    await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
+    patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
   }
 }
 
@@ -266,7 +266,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       }
       const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
       const path = options.localApp.configuration.path
-      await patchAppConfigurationFile({path, patch, schema: options.localApp.configSchema})
+      patchAppConfigurationFile({path, patch, schema: options.localApp.configSchema})
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }
