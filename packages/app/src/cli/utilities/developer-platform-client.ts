@@ -54,7 +54,7 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isAppManagementEnabled} from '@shopify/cli-kit/node/context/local'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -77,7 +77,7 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
+  if (isAppManagementEnabled()) clients.push(new AppManagementClient())
   return clients
 }
 
@@ -117,7 +117,7 @@ export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) {
+  if (isAppManagementEnabled()) {
     if (organization) return selectDeveloperPlatformClientByOrg(organization)
     return selectDeveloperPlatformClientByConfig(configuration)
   }
