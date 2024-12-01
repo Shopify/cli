@@ -4,7 +4,6 @@ import {
   isDevelopment,
   isShopify,
   isUnitTest,
-  isAppManagementEnabled,
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
@@ -97,30 +96,6 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
-  })
-})
-
-describe('isAppManagementEnabled', () => {
-  test('returns true when USE_APP_MANAGEMENT_API is truthy', () => {
-    // Given
-    const env = {USE_APP_MANAGEMENT_API: '1'}
-
-    // When
-    const got = isAppManagementEnabled(env)
-
-    // Then
-    expect(got).toBe(true)
-  })
-
-  test('returns false when USE_APP_MANAGEMENT_API is falsy', () => {
-    // Given
-    const env = {USE_APP_MANAGEMENT_API: '0'}
-
-    // When
-    const got = isAppManagementEnabled(env)
-
-    // Then
-    expect(got).toBe(false)
   })
 })
 
