@@ -6,7 +6,6 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdirSync, touchFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {isAppManagementEnabled} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -15,18 +14,16 @@ interface BundleOptions {
   identifiers?: Identifiers
 }
 
-export async function bundleAndBuildExtensions(options: BundleOptions, systemEnvironment = process.env) {
+export async function bundleAndBuildExtensions(options: BundleOptions) {
   await inTemporaryDirectory(async (tmpDir) => {
     const bundleDirectory = joinPath(tmpDir, 'bundle')
     mkdirSync(bundleDirectory)
     await touchFile(joinPath(bundleDirectory, '.shopify'))
 
-    if (isAppManagementEnabled(systemEnvironment)) {
-      // Include manifest in bundle
-      const appManifest = await options.app.manifest()
-      const manifestPath = joinPath(bundleDirectory, 'manifest.json')
-      writeFileSync(manifestPath, JSON.stringify(appManifest, null, 2))
-    }
+    // Include manifest in bundle
+    const appManifest = await options.app.manifest()
+    const manifestPath = joinPath(bundleDirectory, 'manifest.json')
+    writeFileSync(manifestPath, JSON.stringify(appManifest, null, 2))
 
     // Force the download of the javy binary in advance to avoid later problems,
     // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
