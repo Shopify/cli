@@ -56,9 +56,6 @@ export interface PushFlags {
   /** Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com). */
   store?: string
 
-  /** The environment to apply to the current command. */
-  environment?: string
-
   /** Theme ID or name of the remote theme. */
   theme?: string
 

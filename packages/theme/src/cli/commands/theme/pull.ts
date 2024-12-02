@@ -61,7 +61,6 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     const pullFlags: PullFlags = {
       path: flags.path,
       password: flags.password,
-      environment: flags.environment,
       store: flags.store,
       theme: flags.theme,
       development: flags.development,
