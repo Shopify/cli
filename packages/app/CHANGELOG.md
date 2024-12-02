@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 3.71.0
+
+### Patch Changes
+
+- 1c9d74988e: Update Javy invocation to use Javy plugin
+- 08f3ddba1f: Update Javy to 3.2.0 and function-runner to 6.3.0
+- 93d65a6c38: Remove PHP template from app creation options
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5107f4e805]
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [ff994c34d3]
+- Updated dependencies [1e267a2e04]
+- Updated dependencies [7017b9e31c]
+- Updated dependencies [5531731c11]
+- Updated dependencies [057e2c6189]
+- Updated dependencies [9548a34471]
+- Updated dependencies [33f713e06e]
+  - @shopify/theme@3.71.0
+  - @shopify/cli-kit@3.71.0
+  - @shopify/plugin-cloudflare@3.71.0
+
 ## 3.70.0
 
 ### Minor Changes

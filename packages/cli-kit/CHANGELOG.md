@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.71.0
+
+### Patch Changes
+
+- 5fd19d2920: Improve display of links for terminals that don't support hyperlinks
+- 5531731c11: Skip notifications when using --json, -j or SHOPIFY_FLAG_JSON
+
 ## 3.70.0
 
 ### Minor Changes

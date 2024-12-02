@@ -1,5 +1,23 @@
 # @shopify/theme
 
+## 3.71.0
+
+### Minor Changes
+
+- 5107f4e805: Add `--strict` flag to `theme push` command, which will report `theme check` warnings and abort the operation if there are errors.
+- 057e2c6189: Add shortcut keys to theme dev commands
+
+### Patch Changes
+
+- ff994c34d3: Fix password validation to support localized URLs when authenticating storefronts.
+- 1e267a2e04: Update `shopify theme dev` to no longer display redundant URLs
+- 7017b9e31c: Improve storefront password detection for password-protected shops with redirects
+- 9548a34471: Fix password validation to handle capitalized store names on `shopify theme dev`
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [5531731c11]
+  - @shopify/cli-kit@3.71.0
+
 ## 3.70.0
 
 ### Minor Changes
