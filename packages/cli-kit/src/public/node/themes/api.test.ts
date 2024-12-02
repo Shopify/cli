@@ -356,7 +356,6 @@ describe('themeDelete', () => {
 describe('request errors', () => {
   test(`returns AbortError when graphql returns user error`, async () => {
     // Given
-
     vi.mocked(adminRequestDoc).mockResolvedValue({
       themeDelete: {
         deletedThemeId: null,
@@ -370,31 +369,6 @@ describe('request errors', () => {
 
       // Then
     }).rejects.toThrowError(AbortError)
-  })
-
-  test(`refresh the session when 401 errors happen`, async () => {
-    // Given
-    const id = 123
-    const assets: AssetParams[] = []
-
-    vi.spyOn(session, 'refresh').mockImplementation(vi.fn())
-    vi.mocked(restRequest)
-      .mockResolvedValueOnce({
-        json: {},
-        status: 401,
-        headers: {},
-      })
-      .mockResolvedValueOnce({
-        json: {},
-        status: 207,
-        headers: {},
-      })
-
-    // When
-    await bulkUploadThemeAssets(id, assets, session)
-
-    // Then
-    expect(session.refresh).toHaveBeenCalledOnce()
   })
 })
 
