@@ -54,7 +54,7 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners without USE_APP_MANAGEMENT_API', async () => {
+  test('returns fetched organizations from Partners when App Management is disabled', async () => {
     // Given
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),
@@ -74,7 +74,7 @@ describe('fetchOrganizations', async () => {
     expect(appManagementClient.organizations).not.toHaveBeenCalled()
   })
 
-  test('returns fetched organizations from Partners and App Management with USE_APP_MANAGEMENT_API', async () => {
+  test('returns fetched organizations from Partners and App Management when App Management is enabled', async () => {
     // Given
     vi.stubEnv('USE_APP_MANAGEMENT_API', '1')
     const partnersClient: PartnersClient = testDeveloperPlatformClient({

@@ -1,6 +1,6 @@
 import {allAPIs, API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isAppManagementEnabled} from '../../../public/node/context/local.js'
 
 /**
  * Generate a flat array with all the default scopes for all the APIs plus
@@ -35,11 +35,9 @@ function defaultApiScopes(api: API, systemEnvironment = process.env): string[] {
     case 'partners':
       return ['cli']
     case 'business-platform':
-      return isTruthy(systemEnvironment.USE_APP_MANAGEMENT_API)
-        ? ['destinations', 'store-management']
-        : ['destinations']
+      return isAppManagementEnabled(systemEnvironment) ? ['destinations', 'store-management'] : ['destinations']
     case 'app-management':
-      return isTruthy(systemEnvironment.USE_APP_MANAGEMENT_API) ? ['app-management'] : []
+      return isAppManagementEnabled(systemEnvironment) ? ['app-management'] : []
     default:
       throw new BugError(`Unknown API: ${api}`)
   }

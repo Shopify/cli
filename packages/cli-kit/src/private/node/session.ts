@@ -16,7 +16,7 @@ import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
+import {firstPartyDev, isAppManagementEnabled, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -26,7 +26,6 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isSpin} from '@shopify/cli-kit/node/context/spin'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
@@ -310,7 +309,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  * @param partnersToken - Partners token.
  */
 async function ensureUserHasPartnerAccount(partnersToken: string, userId: string | undefined) {
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
+  if (isAppManagementEnabled()) return
 
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken, userId))) {
