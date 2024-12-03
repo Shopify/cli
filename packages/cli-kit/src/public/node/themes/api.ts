@@ -119,15 +119,7 @@ export async function bulkUploadThemeAssets(
 
 function prepareFilesForUpload(assets: AssetParams[]): OnlineStoreThemeFilesUpsertFileInput[] {
   return assets.map((asset) => {
-    if (asset.value) {
-      return {
-        filename: asset.key,
-        body: {
-          type: 'TEXT' as const,
-          value: asset.value,
-        },
-      }
-    } else if (asset.attachment) {
+    if (asset.attachment) {
       return {
         filename: asset.key,
         body: {
@@ -136,7 +128,13 @@ function prepareFilesForUpload(assets: AssetParams[]): OnlineStoreThemeFilesUpse
         },
       }
     } else {
-      unexpectedGraphQLError('Asset must have a value or attachment')
+      return {
+        filename: asset.key,
+        body: {
+          type: 'TEXT' as const,
+          value: asset.value ?? '',
+        },
+      }
     }
   })
 }
