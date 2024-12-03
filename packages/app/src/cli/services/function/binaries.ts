@@ -164,7 +164,7 @@ export async function downloadBinary(bin: DownloadableBinary) {
         const outputStream = createFileWriteStream(tmpFile)
         await bin.processResponse(responseStream, outputStream)
         await chmod(tmpFile, 0o775)
-        await moveFile(tmpFile, bin.path)
+        await moveFile(tmpFile, bin.path, {overwrite: true})
       })
     },
     async () => {},
