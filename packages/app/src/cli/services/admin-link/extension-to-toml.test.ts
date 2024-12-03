@@ -36,7 +36,7 @@ handle = "admin-link-title"
   [[extensions.targeting]]
   text = "admin link label"
   url = "https://google.es"
-  target = "admin.collection.item.link"
+  target = "admin.collection-details.action.link"
 `)
   })
 
@@ -72,7 +72,7 @@ handle = "bulk-action-title"
   [[extensions.targeting]]
   text = "bulk action label"
   url = "app://action/product?product_id=123#hash"
-  target = "admin.product.selection.link"
+  target = "admin.product-index.selection-action.link"
 `)
   })
   test('correctly builds a toml string for bulk_action extension with no path in an embedded app', () => {
@@ -107,7 +107,7 @@ handle = "bulk-action-title"
   [[extensions.targeting]]
   text = "bulk action label"
   url = "app://"
-  target = "admin.product.selection.link"
+  target = "admin.product-index.selection-action.link"
 `)
   })
   test('correctly builds a toml string for bulk_action extension with no path but search query in an embedded app', () => {
@@ -142,7 +142,7 @@ handle = "bulk-action-title"
   [[extensions.targeting]]
   text = "bulk action label"
   url = "app://?foo=bar"
-  target = "admin.product.selection.link"
+  target = "admin.product-index.selection-action.link"
 `)
   })
 })

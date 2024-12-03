@@ -10,7 +10,7 @@ describe('admin link utils', () => {
     const target = contextToTarget(context)
 
     // Then
-    expect(target).toEqual('admin.collection.item.link')
+    expect(target).toEqual('admin.collection-details.action.link')
   })
   test('correctly parses from context `ORDERS#INDEX` to target', () => {
     // Given
@@ -20,6 +20,16 @@ describe('admin link utils', () => {
     const target = contextToTarget(context)
 
     // Then
-    expect(target).toEqual('admin.order.index.link')
+    expect(target).toEqual('admin.order-index.action.link')
+  })
+  test('correctly parses from context `CUSTOMERS#ACTION` to target', () => {
+    // Given
+    const context = 'CUSTOMERS#ACTION'
+
+    // When
+    const target = contextToTarget(context)
+
+    // Then
+    expect(target).toEqual('admin.customer-index.selection-action.link')
   })
 })
