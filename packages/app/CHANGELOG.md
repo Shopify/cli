@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.71.1
+
+### Patch Changes
+
+- 4b93d76290: Fix error when downloading Javy plugin in parallel
+  - @shopify/cli-kit@3.71.1
+  - @shopify/theme@3.71.1
+  - @shopify/plugin-cloudflare@3.71.1
+
 ## 3.71.0
 
 ### Patch Changes
