@@ -198,7 +198,8 @@ export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
     const javy = javyBinary()
-    await downloadBinary(javy)
+    const plugin = javyPluginBinary()
+    await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
   }
 }
 
