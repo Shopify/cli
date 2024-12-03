@@ -23,7 +23,6 @@ import taxCalculationSpec from './specifications/tax_calculation.js'
 import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
-import channelConfigAppExtension from './specifications/channel_config_app_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import customDataSpec, {CustomDataSpecIdentifier} from './specifications/custom_data.js'
 
@@ -67,7 +66,6 @@ function loadSpecifications() {
     flowActionSpecification,
     flowTemplateSpec,
     flowTriggerSpecification,
-    channelConfigAppExtension,
     paymentExtensionSpec,
     posUISpec,
     productSubscriptionSpec,
