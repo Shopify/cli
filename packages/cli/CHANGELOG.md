@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.71.0
+
+### Patch Changes
+
+- 93d65a6c38: Remove PHP template from app creation options
+
 ## 3.70.0
 
 ### Minor Changes
