@@ -3,7 +3,7 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
 
-const L10N_FILE_SIZE_LIMIT = 16 * 1024
+const L10N_FILE_SIZE_LIMIT = 32 * 1024
 const L10N_BUNDLE_SIZE_LIMIT = 256 * 1024
 
 export async function loadLocalesConfig(extensionPath: string, extensionIdentifier: string) {
