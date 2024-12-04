@@ -5,7 +5,6 @@ import {ExecaChildProcess, execa} from 'execa'
 export interface ExecOptions {
   cwd?: string
   env?: NodeJS.ProcessEnv
-  detached?: boolean
 }
 
 /**
