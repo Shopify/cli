@@ -120,7 +120,7 @@ function getProxyServerWebsocketUpgradeListener(
 function getProxyServerRequestListener(
   rules: {[key: string]: string},
   proxy: Server,
-): http.RequestListener<typeof http.IncomingMessage, typeof http.ServerResponse> | undefined {
+): http.RequestListener | undefined {
   return function (req, res) {
     const target = match(rules, req)
     if (target) {
@@ -129,8 +129,8 @@ function getProxyServerRequestListener(
       })
     }
 
-    outputDebug(`
-Reverse HTTP proxy error - Invalid path: ${req.url}
+    outputDebug(outputContent`
+Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
 These are the allowed paths:
 ${outputToken.json(JSON.stringify(rules))}
 `)

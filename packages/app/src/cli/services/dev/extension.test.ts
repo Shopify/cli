@@ -1,10 +1,11 @@
 import * as store from './extension/payload/store.js'
 import * as server from './extension/server.js'
 import * as websocket from './extension/websocket.js'
-import * as bundler from './extension/bundler.js'
 import {devUIExtensions, ExtensionDevOptions} from './extension.js'
 import {ExtensionsEndpointPayload} from './extension/payload/models.js'
 import {WebsocketConnection} from './extension/websocket/models.js'
+import {AppEventWatcher} from './app-events/app-event-watcher.js'
+import {testAppLinked} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 import {Server} from 'http'
 
@@ -12,6 +13,7 @@ describe('devUIExtensions()', () => {
   const serverCloseSpy = vi.fn()
   const websocketCloseSpy = vi.fn()
   const bundlerCloseSpy = vi.fn()
+  const app = testAppLinked()
 
   const options = {
     mock: 'options',
@@ -20,6 +22,7 @@ describe('devUIExtensions()', () => {
     stdout: process.stdout,
     stderr: process.stderr,
     checkoutCartUrl: 'mock/path/from/extensions',
+    appWatcher: new AppEventWatcher(app, 'url', 'path'),
   } as unknown as ExtensionDevOptions
 
   function spyOnEverything() {
@@ -37,9 +40,6 @@ describe('devUIExtensions()', () => {
     vi.spyOn(websocket, 'setupWebsocketConnection').mockReturnValue({
       close: websocketCloseSpy,
     } as unknown as WebsocketConnection)
-    vi.spyOn(bundler, 'setupBundlerAndFileWatcher').mockResolvedValue({
-      close: bundlerCloseSpy,
-    })
   }
 
   test('initializes the payload store', async () => {
@@ -85,20 +85,6 @@ describe('devUIExtensions()', () => {
     })
   })
 
-  test('initializes the bundler and file watcher', async () => {
-    // GIVEN
-    spyOnEverything()
-
-    // WHEN
-    await devUIExtensions(options)
-
-    // THEN
-    expect(bundler.setupBundlerAndFileWatcher).toHaveBeenCalledWith({
-      devOptions: options,
-      payloadStore: {mock: 'payload-store'},
-    })
-  })
-
   test('closes the http server, websocket and bundler when the process aborts', async () => {
     // GIVEN
     spyOnEverything()
@@ -114,7 +100,6 @@ describe('devUIExtensions()', () => {
 
     abortEventCallback()
 
-    expect(bundlerCloseSpy).toHaveBeenCalledOnce()
     expect(websocketCloseSpy).toHaveBeenCalledOnce()
     expect(serverCloseSpy).toHaveBeenCalledOnce()
   })

@@ -18,7 +18,7 @@ export class LocalStorage<T extends {[key: string]: any}> {
    * @param key - The key to get.
    * @returns The value.
    */
-  get<TKey extends keyof T>(key: TKey): T[TKey] {
+  get<TKey extends keyof T>(key: TKey): T[TKey] | undefined {
     return this.config.get(key)
   }
 

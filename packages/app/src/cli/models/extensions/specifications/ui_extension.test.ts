@@ -1,20 +1,37 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {placeholderAppConfiguration, testDeveloperPlatformClient} from '../../app/app.test-data.js'
+import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {describe, expect, test, vi} from 'vitest'
 
-const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
-
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
-    extensionPoints?: {target: string; module: string; label?: string; default_placement_reference?: string}[]
+    extensionPoints?: {
+      target: string
+      module: string
+      label?: string
+      default_placement_reference?: string
+      should_render?: {
+        module: string
+      }
+      build_manifest?: {
+        assets: {
+          main: {
+            filepath: string
+            module: string
+          }
+          should_render?: {
+            filepath: string
+            module: string
+          }
+        }
+      }
+    }[]
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
@@ -85,9 +102,13 @@ describe('ui_extension', async () => {
           {
             target: 'EXTENSION::POINT::A',
             module: './src/ExtensionPointA.js',
+            should_render: {
+              module: './src/ShouldRender.js',
+            },
           },
         ],
         api_version: '2023-01' as const,
+        handle: 'test-ui-extension',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -123,6 +144,19 @@ describe('ui_extension', async () => {
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
           capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              should_render: {
+                filepath: 'test-ui-extension-conditions.js',
+                module: './src/ShouldRender.js',
+              },
+            },
+          },
         },
       ])
     })
@@ -142,6 +176,7 @@ describe('ui_extension', async () => {
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
+        handle: 'test-ui-extension',
         capabilities: {
           block_progress: false,
           network_access: false,
@@ -173,6 +208,15 @@ describe('ui_extension', async () => {
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
           capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
         },
       ])
     })
@@ -192,6 +236,7 @@ describe('ui_extension', async () => {
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
+        handle: 'test-ui-extension',
         capabilities: {
           block_progress: false,
           network_access: false,
@@ -223,6 +268,142 @@ describe('ui_extension', async () => {
           metafields: [],
           default_placement_reference: undefined,
           capabilities: {allow_direct_linking: true},
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
+        },
+      ])
+    })
+
+    test('targeting object accepts preloads', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            preloads: {chat: '/chat', not_supported: '/hello'},
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {chat: '/chat'},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
+        },
+      ])
+    })
+
+    test('build_manifest includes should_render asset when should_render.module is present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            should_render: {
+              module: './src/ShouldRender.js',
+            },
+            preloads: {chat: '/chat', not_supported: '/hello'},
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {chat: '/chat'},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              should_render: {
+                filepath: 'test-ui-extension-conditions.js',
+                module: './src/ShouldRender.js',
+              },
+            },
+          },
         },
       ])
     })
@@ -341,6 +522,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             {
               target: 'EXTENSION::POINT::A',
               module: './src/ExtensionPointA.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    filepath: 'test-ui-extension.js',
+                    module: './src/ExtensionPointA.js',
+                  },
+                },
+              },
             },
           ],
         })
@@ -348,7 +537,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // When
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
-          developerPlatformClient,
           appConfiguration: placeholderAppConfiguration,
         })
 
@@ -356,7 +544,18 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         expect(loadLocales.loadLocalesConfig).toBeCalledWith(tmpDir, uiExtension.configuration.type)
         expect(deployConfig).toStrictEqual({
           localization,
-          extension_points: uiExtension.configuration.extension_points,
+          extension_points: uiExtension.configuration.extension_points?.map((extPoint) => ({
+            ...extPoint,
+            build_manifest: {
+              ...extPoint.build_manifest,
+              assets: {
+                main: {
+                  filepath: 'dist/test-ui-extension.js',
+                  module: extPoint.module,
+                },
+              },
+            },
+          })),
 
           // Ensure nested capabilities are updated
           capabilities: {
@@ -387,16 +586,32 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             {
               target: 'EXTENSION::POINT::A',
               module: './src/ExtensionPointA.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    module: './src/ExtensionPointA.js',
+                    filepath: '/test-ui-extension.js',
+                  },
+                },
+              },
             },
             {
               target: 'EXTENSION::POINT::B',
               module: './src/ExtensionPointB.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    module: './src/ExtensionPointB.js',
+                    filepath: '/test-ui-extension.js',
+                  },
+                },
+              },
             },
           ],
         })
 
         // When
-        const stdInContent = uiExtension.getBundleExtensionStdinContent()
+        const stdInContent = uiExtension.getBundleExtensionStdinContent().main
 
         // Then
         expect(stdInContent).toContain(`import './src/ExtensionPointA.js';`)

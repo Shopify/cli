@@ -65,7 +65,7 @@ beforeEach(async () => {
 })
 
 describe('link', () => {
-  test('does not ask for a name when it is provided as a flag', async () => {
+  test('does not ask for a name when it is provided as a flag, returns the remote app and the linked state', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const developerPlatformClient = buildDeveloperPlatformClient()
@@ -78,7 +78,7 @@ describe('link', () => {
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
-      const configuration = await link(options)
+      const {configuration, state, remoteApp} = await link(options)
 
       // Then
       expect(selectConfigName).not.toHaveBeenCalled()
@@ -104,6 +104,17 @@ describe('link', () => {
         },
         path: expect.stringMatching(/\/shopify.app.default-value.toml$/),
       })
+
+      expect(state).toEqual({
+        state: 'connected-app',
+        basicConfiguration: configuration,
+        appDirectory: options.directory,
+        configurationPath: expect.stringMatching(/\/shopify.app.default-value.toml$/),
+        configSource: 'flag',
+        configurationFileName: 'shopify.app.default-value.toml',
+      })
+
+      expect(remoteApp).toEqual(mockRemoteApp({developerPlatformClient}))
     })
   })
 })
@@ -126,7 +137,7 @@ test('does not ask for a name when the selected app is already linked', async ()
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(remoteApp)
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     expect(selectConfigName).not.toHaveBeenCalled()
@@ -214,7 +225,7 @@ test('creates a new shopify.app.toml file when it does not exist using existing 
     })
 
     // When
-    const configuration = await link(options)
+    const {configuration, state} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -285,6 +296,14 @@ embedded = false
       },
     })
     expect(content).toEqual(expectedContent)
+    expect(state).toEqual({
+      state: 'connected-app',
+      basicConfiguration: configuration,
+      appDirectory: options.directory,
+      configurationPath: expect.stringMatching(/\/shopify.app.toml$/),
+      configSource: 'cached',
+      configurationFileName: 'shopify.app.toml',
+    })
   })
 })
 
@@ -325,7 +344,7 @@ test('uses the api client configuration in case there is no configuration app mo
     vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(undefined)
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -468,7 +487,7 @@ test('creates a new shopify.app.staging.toml file when shopify.app.toml already 
     vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
@@ -563,11 +582,12 @@ test('the local configuration is discarded if the client_id is different from th
         scopes: 'write_products',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
+        embedded: false,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
         },
-      } as CurrentAppConfiguration,
+      },
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
@@ -586,7 +606,7 @@ test('the local configuration is discarded if the client_id is different from th
     vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
@@ -650,7 +670,7 @@ test('updates the shopify.app.toml when it already exists and is unlinked', asyn
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -732,7 +752,7 @@ test('does not render success banner if shouldRenderSuccess is false', async () 
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
     // When
-    const configuration = await link(options, false)
+    const {configuration} = await link(options, false)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -799,7 +819,7 @@ test('fetches the remote app when an api key is provided', async () => {
     })
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -883,7 +903,7 @@ test('skips config name question if re-linking to existing current app schema', 
     vi.mocked(getCachedCommandInfo).mockReturnValue({askConfigName: false, selectedToml: 'shopify.app.foo.toml'})
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
     const content = await readFile(joinPath(tmp, 'shopify.app.foo.toml'))
 
     expect(selectConfigName).not.toHaveBeenCalled()
@@ -949,7 +969,7 @@ test('generates the file when there is no shopify.app.toml', async () => {
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -1015,7 +1035,7 @@ test('uses scopes on platform if defined', async () => {
     vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -1115,7 +1135,7 @@ test('fetches the privacy compliance webhooks from the configuration module', as
     vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -1260,7 +1280,7 @@ test('simplifies the webhook config using relative paths', async () => {
     vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
     // When
-    const configuration = await link(options)
+    const {configuration} = await link(options)
 
     // Then
     const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -1339,7 +1359,8 @@ test('the api client configuration is deep merged with the remote app_config ext
           api_version: '2023-04',
         },
         application_url: 'https://myapp.com',
-      } as CurrentAppConfiguration,
+        embedded: true,
+      },
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
@@ -1550,6 +1571,85 @@ redirect_urls = [ "https://example.com/callback1" ]
 
 [webhooks]
 api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+    expect(content).toEqual(expectedContent)
+  })
+})
+
+test('existing config is respected when isNewApp is true, config is current and client_id is not the same as remote app', async () => {
+  await inTemporaryDirectory(async (tmp) => {
+    // Given
+    const developerPlatformClient = buildDeveloperPlatformClient()
+    const options: LinkOptions = {
+      directory: tmp,
+      developerPlatformClient,
+      isNewApp: true,
+      configName: 'shopify.app.toml',
+    }
+    const localApp = {
+      configuration: {
+        path: joinPath(tmp, 'shopify.app.toml'),
+        name: 'my app',
+        client_id: 'invalid_client_id_from_template',
+        webhooks: {
+          api_version: '2023-04',
+          subscriptions: [{topics: ['products/create'], uri: 'https://my-app.com/webhooks'}],
+        },
+        application_url: 'https://myapp.com',
+        build: {
+          automatically_update_urls_on_dev: true,
+          dev_store_url: 'my-store.myshopify.com',
+          include_config_on_deploy: true,
+        },
+        access_scopes: {
+          scopes: 'write_products',
+        },
+      } as CurrentAppConfiguration,
+    }
+
+    vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+    vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+    const remoteConfiguration = {
+      ...DEFAULT_REMOTE_CONFIGURATION,
+      handle: 'handle',
+    }
+    vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
+
+    // When
+    await link(options)
+
+    // Then
+    const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+    const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+handle = "handle"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://my-app.com/webhooks"
 
 [pos]
 embedded = false

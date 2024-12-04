@@ -1,14 +1,15 @@
 import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
-import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class AppGenerateExtension extends Command {
+export default class AppGenerateExtension extends AppCommand {
   static summary = 'Generate a new app Extension.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
@@ -53,23 +54,10 @@ export default class AppGenerateExtension extends Command {
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),
-    reset: Flags.boolean({
-      hidden: false,
-      description: 'Reset all your settings.',
-      env: 'SHOPIFY_FLAG_RESET',
-      default: false,
-      exclusive: ['config'],
-    }),
     'api-key': Flags.string({
       hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
   }
@@ -82,12 +70,11 @@ export default class AppGenerateExtension extends Command {
     return 'app scaffold extension'
   }
 
-  public async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(AppGenerateExtension)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
 
     await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
@@ -100,20 +87,31 @@ export default class AppGenerateExtension extends Command {
         headline: ['The flag --type has been deprecated in favor of --template.'],
         body: ['Please use --template instead.'],
       })
-      return
+      process.exit(2)
     }
 
     await checkFolderIsValidApp(flags.path)
 
+    const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
+      directory: flags.path,
+      clientId: flags['client-id'] ?? flags['api-key'],
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
     await generate({
       directory: flags.path,
       reset: flags.reset,
-      apiKey,
       name: flags.name,
       cloneUrl: flags['clone-url'],
       template: flags.template,
       flavor: flags.flavor,
-      configName: flags.config,
+      app,
+      specifications,
+      remoteApp,
+      developerPlatformClient,
     })
+
+    return {app}
   }
 }

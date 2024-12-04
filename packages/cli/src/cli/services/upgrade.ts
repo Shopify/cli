@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-invalid-void-type */
 import {
   addNPMDependencies,
   findUpAndReadPackageJson,
@@ -66,6 +67,7 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   const packageJsonDevDependencies = packageJson.devDependencies || {}
   const allDependencies = {...packageJsonDependencies, ...packageJsonDevDependencies}
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   let resolvedCLIVersion = allDependencies[await cliDependency()]!
   const resolvedAppVersion = allDependencies['@shopify/app']?.replace(/[\^~]/, '')
 

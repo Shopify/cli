@@ -1,43 +1,4 @@
-import {
-  CreateAppMutation,
-  CreateAppMutationVariables,
-  CreateAppMutationSchema,
-} from './app-management-client/graphql/create-app.js'
-import {
-  ActiveAppReleaseQuery,
-  ActiveAppReleaseQueryVariables,
-  ActiveAppReleaseQuerySchema,
-} from './app-management-client/graphql/active-app-release.js'
-import {SpecificationsQuery, SpecificationsQuerySchema} from './app-management-client/graphql/specifications.js'
-import {
-  AppVersionsQuery,
-  AppVersionsQueryVariables,
-  AppVersionsQuerySchema,
-} from './app-management-client/graphql/app-versions.js'
-import {
-  CreateAppVersionMutation,
-  CreateAppVersionMutationSchema,
-  CreateAppVersionMutationVariables,
-} from './app-management-client/graphql/create-app-version.js'
-import {
-  ReleaseVersionMutation,
-  ReleaseVersionMutationSchema,
-  ReleaseVersionMutationVariables,
-} from './app-management-client/graphql/release-version.js'
-import {AppsQuery, AppsQuerySchema} from './app-management-client/graphql/apps.js'
-import {
-  OrganizationQuery,
-  OrganizationQuerySchema,
-  OrganizationQueryVariables,
-} from './app-management-client/graphql/organization.js'
-import {UserInfoQuery, UserInfoQuerySchema} from './app-management-client/graphql/user-info.js'
-import {CreateAssetURLMutation, CreateAssetURLMutationSchema} from './app-management-client/graphql/create-asset-url.js'
-import {
-  AppVersionByIdQuery,
-  AppVersionByIdQuerySchema,
-  AppVersionByIdQueryVariables,
-  AppModule as AppModuleReturnType,
-} from './app-management-client/graphql/app-version-by-id.js'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   OrganizationBetaFlagsQuerySchema,
   OrganizationBetaFlagsQueryVariables,
@@ -47,13 +8,15 @@ import {RemoteSpecification} from '../../api/graphql/extension_specifications.js
 import {
   DeveloperPlatformClient,
   Paginateable,
-  ActiveAppVersion,
+  AppVersion,
+  AppVersionWithContext,
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
   DevSessionOptions,
   filterDisabledFlags,
   ClientName,
+  AppModuleVersion,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -82,9 +45,12 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema as AppVersionByTagSchemaInterface} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
-import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {
+  SampleWebhook,
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {
@@ -123,29 +89,46 @@ import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
-import {FunctionUploadUrlGenerateMutation} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
+import {
+  ActiveAppRelease,
+  ActiveAppReleaseQuery,
+  ReleasedAppModuleFragment,
+} from '../../api/graphql/app-management/generated/active-app-release.js'
+import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
+import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
+import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
+import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
+import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
+import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
+import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
+import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
+import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
+import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
+import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {appManagementRequest} from '@shopify/cli-kit/node/api/app-management'
+import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
   businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
-  businessPlatformRequest,
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 
-const TEMPLATE_JSON_URL = 'https://raw.githubusercontent.com/Shopify/extensions-templates/main/templates.json'
+const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
-type Properties = NonNullable<OrgType['properties']>
-type ShopEdge = NonNullable<Properties['edges'][number]>
+type AccessibleShops = NonNullable<OrgType['accessibleShops']>
+type ShopEdge = NonNullable<AccessibleShops['edges'][number]>
 type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
@@ -153,11 +136,11 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
-  public clientName = ClientName.AppManagement
-  public webUiName = 'Developer Dashboard'
-  public requiresOrganization = true
-  public supportsAtomicDeployments = true
-  public supportsDevSessions = true
+  public readonly clientName = ClientName.AppManagement
+  public readonly webUiName = 'Developer Dashboard'
+  public readonly requiresOrganization = true
+  public readonly supportsAtomicDeployments = true
+  public readonly supportsDevSessions = true
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -166,7 +149,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${input}`)
+    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
   }
 
   async session(): Promise<PartnersSession> {
@@ -174,10 +157,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
-      const userInfoResult = await businessPlatformRequest<UserInfoQuerySchema>(
-        UserInfoQuery,
-        await this.businessPlatformToken(),
-      )
+      const userInfoResult = await businessPlatformRequestDoc(UserInfo, await this.businessPlatformToken())
       const {token, userId} = await ensureAuthenticatedAppManagement()
       if (userInfoResult.currentUserAccount) {
         this._session = {
@@ -259,13 +239,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const base64Id = encodedGidFromId(orgId)
-    const variables: OrganizationQueryVariables = {organizationId: base64Id}
-    const organizationResult = await businessPlatformRequest<OrganizationQuerySchema>(
-      OrganizationQuery,
+    const variables = {organizationId: base64Id}
+    const organizationResult = await businessPlatformRequestDoc(
+      FindOrganizations,
       await this.businessPlatformToken(),
       variables,
     )
-    const org = organizationResult.currentUserAccount.organization
+    const org = organizationResult.currentUserAccount?.organization
     if (!org) {
       return
     }
@@ -286,10 +266,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {organization: organization!, apps, hasMorePages}
   }
 
-  async appsForOrg(organizationId: string, _term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
-    const query = AppsQuery
-    const result = await appManagementRequest<AppsQuerySchema>(organizationId, query, await this.token())
-    const minimalOrganizationApps = result.apps.map((app) => {
+  async appsForOrg(organizationId: string, term = ''): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+    const query = ListApps
+    const variables = {
+      query: term
+        .split(' ')
+        .filter((word) => word)
+        .map((word) => `title:${word}`)
+        .join(' '),
+    }
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    if (!result.appsConnection) {
+      throw new BugError('Server failed to retrieve apps')
+    }
+    const minimalOrganizationApps = result.appsConnection.edges.map((edge) => {
+      const app = edge.node
       return {
         id: app.id,
         apiKey: app.key,
@@ -299,13 +290,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
     return {
       apps: minimalOrganizationApps,
-      hasMorePages: false,
+      hasMorePages: result.appsConnection.pageInfo.hasNextPage,
     }
   }
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
-    const query = SpecificationsQuery
-    const result = await appManagementRequest<SpecificationsQuerySchema>(organizationId, query, await this.token())
+    const query = FetchSpecifications
+    const result = await appManagementRequestDoc(organizationId, query, await this.token())
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -318,6 +309,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           registrationLimit: spec.uidStrategy.appModuleLimit,
         },
         experience: experience(spec.identifier),
+        validationSchema: spec.validationSchema,
       }),
     )
   }
@@ -334,7 +326,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           'Failed to fetch extension templates from',
           {link: {url: TEMPLATE_JSON_URL}},
           {char: '.'},
-          'This likely means a problem with GitHub.',
+          'This likely means a problem with your internet connection.',
         ],
         [
           {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
@@ -364,9 +356,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<OrganizationApp> {
     const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray)
 
-    const mutation = CreateAppMutation
-    const result = await appManagementRequest<CreateAppMutationSchema>(org.id, mutation, await this.token(), variables)
-    if (result.appCreate.userErrors?.length > 0) {
+    const mutation = CreateApp
+    const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
+    if (!result.appCreate.app || result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
     }
@@ -402,13 +394,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`No organization found`)
     }
 
-    const shopArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     return mapBusinessPlatformStoresToOrganizationStores(shopArray)
   }
 
   async appExtensionRegistrations(
     appIdentifiers: MinimalAppIdentifiers,
-    activeAppVersion?: ActiveAppVersion,
+    activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
 
@@ -417,7 +409,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app.appModuleVersions.forEach((mod) => {
       const registration = {
         id: mod.registrationId,
-        uid: mod.registrationUid!,
         uuid: mod.registrationUuid!,
         title: mod.registrationTitle,
         type: mod.type,
@@ -438,14 +429,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
-    const query = AppVersionsQuery
-    const variables: AppVersionsQueryVariables = {appId: id}
-    const result = await appManagementRequest<AppVersionsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-    )
+    const query = AppVersions
+    const variables = {appId: id}
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
     return {
       app: {
         id: result.app.id,
@@ -475,15 +461,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersionByTag(
     {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
     tag: string,
-  ): Promise<AppVersionByTagSchemaInterface> {
-    const query = AppVersionsQuery
-    const variables: AppVersionsQueryVariables = {appId}
-    const result = await appManagementRequest<AppVersionsQuerySchema>(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-    )
+  ): Promise<AppVersionWithContext> {
+    const query = AppVersions
+    const variables = {appId}
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
     if (!result.app) {
       throw new AbortError(`App not found for API key: ${apiKey}`)
     }
@@ -492,44 +473,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`Version not found for tag: ${tag}`)
     }
 
-    const query2 = AppVersionByIdQuery
-    const variables2: AppVersionByIdQueryVariables = {versionId: version.id}
-    const result2 = await appManagementRequest<AppVersionByIdQuerySchema>(
-      organizationId,
-      query2,
-      await this.token(),
-      variables2,
-    )
+    const query2 = AppVersionById
+    const variables2 = {versionId: version.id}
+    const result2 = await appManagementRequestDoc(organizationId, query2, await this.token(), variables2)
     const versionInfo = result2.version
 
     return {
-      app: {
-        appVersion: {
-          id: parseInt(versionInfo.id, 10),
-          uuid: versionInfo.id,
-          versionTag: versionInfo.metadata.versionTag,
-          location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join(
-            '/',
-          ),
-          message: '',
-          appModuleVersions: versionInfo.appModules.map((mod: AppModuleReturnType) => {
-            return {
-              registrationId: mod.uuid,
-              registrationUid: mod.uuid,
-              registrationUuid: mod.uuid,
-              registrationTitle: mod.handle,
-              type: mod.specification.externalIdentifier,
-              config: JSON.stringify(mod.config),
-              specification: {
-                ...mod.specification,
-                identifier: mod.specification.externalIdentifier,
-                options: {managementExperience: 'cli'},
-                experience: experience(mod.specification.identifier),
-              },
-            }
-          }),
-        },
-      },
+      id: parseInt(versionInfo.id, 10),
+      uuid: versionInfo.id,
+      versionTag: versionInfo.metadata.versionTag,
+      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
+      message: versionInfo.metadata.message ?? '',
+      appModuleVersions: versionInfo.appModules.map(appModuleVersion),
     }
   }
 
@@ -537,21 +492,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app: MinimalOrganizationApp,
     {versionId}: AppVersionIdentifiers,
   ): Promise<AppVersionsDiffSchema> {
-    const variables: AppVersionByIdQueryVariables = {versionId}
+    const variables = {versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
       this.activeAppVersionRawResult(app),
-      appManagementRequest<AppVersionByIdQuerySchema>(
-        app.organizationId,
-        AppVersionByIdQuery,
-        await this.token(),
-        variables,
-      ),
+      appManagementRequestDoc(app.organizationId, AppVersionById, await this.token(), variables),
     ])
     const currentModules = currentVersion.app.activeRelease.version.appModules
     const selectedVersionModules = selectedVersion.version.appModules
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
 
-    function formattedModule(mod: AppModuleReturnType) {
+    function formattedModule(mod: ReleasedAppModuleFragment) {
       return {
         uuid: mod.uuid,
         registrationTitle: mod.handle,
@@ -576,39 +526,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async activeAppVersion(app: MinimalAppIdentifiers): Promise<ActiveAppVersion> {
+  async activeAppVersion(app: MinimalAppIdentifiers): Promise<AppVersion> {
     const result = await this.activeAppVersionRawResult(app)
     return {
-      appModuleVersions: result.app.activeRelease.version.appModules.map((mod) => {
-        return {
-          registrationId: mod.uuid,
-          registrationUid: mod.uuid,
-          registrationUuid: mod.uuid,
-          registrationTitle: mod.handle,
-          type: mod.specification.externalIdentifier,
-          config: mod.config,
-          specification: {
-            ...mod.specification,
-            identifier: mod.specification.identifier,
-            options: {managementExperience: 'cli'},
-            experience: experience(mod.specification.identifier),
-          },
-        }
-      }),
+      appModuleVersions: result.app.activeRelease.version.appModules.map(appModuleVersion),
       ...result.app.activeRelease,
     }
   }
 
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
-    throw new BugError('Not implemented: functionUploadUrl')
-  }
-
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const result = await appManagementRequest<CreateAssetURLMutationSchema>(
-      organizationId,
-      CreateAssetURLMutation,
-      await this.token(),
-    )
+    const result = await appManagementRequestDoc(organizationId, CreateAssetUrl, await this.token())
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
@@ -625,6 +552,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     appModules,
     organizationId,
     versionTag,
+    message,
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
@@ -637,7 +565,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
-    const variables: CreateAppVersionMutationVariables = {
+
+    const variables = {
       appId,
       name: updatedName,
       appSource: {
@@ -651,15 +580,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      metadata: versionTag ? {versionTag} : {},
+      metadata: {versionTag, message},
     }
 
-    const result = await appManagementRequest<CreateAppVersionMutationSchema>(
-      organizationId,
-      CreateAppVersionMutation,
-      await this.token(),
-      variables,
-    )
+    const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
@@ -685,10 +609,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
     if (noRelease) return versionResult
 
-    const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId: version.id}
-    const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
+    const releaseVariables = {appId, versionId: version.id}
+    const releaseResult = await appManagementRequestDoc(
       organizationId,
-      ReleaseVersionMutation,
+      ReleaseVersion,
       await this.token(),
       releaseVariables,
     )
@@ -708,13 +632,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     app: MinimalOrganizationApp
     version: AppVersionIdentifiers
   }): Promise<AppReleaseSchema> {
-    const releaseVariables: ReleaseVersionMutationVariables = {appId, versionId}
-    const releaseResult = await appManagementRequest<ReleaseVersionMutationSchema>(
+    const releaseVariables = {appId, versionId}
+    const releaseResult = await appManagementRequestDoc(
       organizationId,
-      ReleaseVersionMutation,
+      ReleaseVersion,
       await this.token(),
       releaseVariables,
     )
+    if (!releaseResult.appReleaseCreate?.release) {
+      throw new AbortError('Failed to release version')
+    }
     return {
       appRelease: {
         appVersion: {
@@ -754,7 +681,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       throw new AbortError(`No organization found`)
     }
 
-    const bpStoresArray = organization.properties?.edges.map((value) => value.node as ShopNode) ?? []
+    const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
 
     return {
@@ -792,25 +719,46 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appPreviewMode')
   }
 
-  async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    outputWarn('⚠️ sendSampleWebhook is not implemented')
-    return {
-      sendSampleWebhook: {
-        samplePayload: '',
-        headers: '{}',
-        success: true,
-        userErrors: [],
-      },
+  async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
+    const query = CliTesting
+    const variables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
     }
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+    let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
+    const cliTesting = result.cliTesting
+    if (cliTesting) {
+      sendSampleWebhook = {
+        samplePayload: cliTesting.samplePayload ?? '{}',
+        headers: cliTesting.headers ?? '{}',
+        success: cliTesting.success,
+        userErrors: cliTesting.errors.map((error) => ({message: error, fields: []})),
+      }
+    }
+    return {sendSampleWebhook}
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
-    outputWarn('⚠️ apiVersions is not implemented')
-    return {publicApiVersions: ['unstable']}
+  async apiVersions(organizationId: string): Promise<PublicApiVersionsSchema> {
+    const result = await webhooksRequest(organizationId, PublicApiVersions, await this.token(), {})
+    return {publicApiVersions: result.publicApiVersions.map((version) => version.handle)}
   }
 
-  async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
-    throw new BugError('Not implemented: topics')
+  async topics(
+    {api_version: apiVersion}: WebhookTopicsVariables,
+    organizationId: string,
+  ): Promise<WebhookTopicsSchema> {
+    const query = AvailableTopics
+    const variables = {apiVersion}
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+
+    return {
+      webhookTopics: result.availableTopics ?? [],
+    }
   }
 
   async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
@@ -822,7 +770,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    outputWarn('⚠️ updateURLs is not implemented')
+    outputDebug('⚠️ updateURLs is not implemented')
     return {appUpdate: {userErrors: []}}
   }
 
@@ -852,20 +800,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    const result = await appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
-    if (result.devSessionCreate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionCreate.userErrors, null, 2))
-    }
-    return result
+    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
   async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    const result = await appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
-    if (result.devSessionUpdate?.userErrors?.length) {
-      throw new AbortError(JSON.stringify(result.devSessionUpdate.userErrors, null, 2))
-    }
-    return result
+    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
   async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
@@ -873,13 +813,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
 
-  private async activeAppVersionRawResult({
-    id,
-    organizationId,
-  }: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuerySchema> {
-    const query = ActiveAppReleaseQuery
-    const variables: ActiveAppReleaseQueryVariables = {appId: id}
-    return appManagementRequest<ActiveAppReleaseQuerySchema>(organizationId, query, await this.token(), variables)
+  async getCreateDevStoreLink(orgId: string): Promise<string> {
+    const url = `https://${await developerDashboardFqdn()}/dashboard/${orgId}/stores`
+    return (
+      `Looks like you don't have a dev store in the organization you selected. ` +
+      `Keep going — create a dev store on the Developer Dashboard:\n${url}\n`
+    )
+  }
+
+  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
+    return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
   }
 
   private async organizationBetaFlags(
@@ -979,23 +922,23 @@ export async function versionDeepLink(organizationId: string, appId: string, ver
 }
 
 interface DiffAppModulesInput {
-  currentModules: AppModuleReturnType[]
-  selectedVersionModules: AppModuleReturnType[]
+  currentModules: ReleasedAppModuleFragment[]
+  selectedVersionModules: ReleasedAppModuleFragment[]
 }
 
 interface DiffAppModulesOutput {
-  added: AppModuleReturnType[]
-  removed: AppModuleReturnType[]
-  updated: AppModuleReturnType[]
+  added: ReleasedAppModuleFragment[]
+  removed: ReleasedAppModuleFragment[]
+  updated: ReleasedAppModuleFragment[]
 }
 
 export function diffAppModules({currentModules, selectedVersionModules}: DiffAppModulesInput): DiffAppModulesOutput {
-  const currentModuleUids = currentModules.map((mod) => mod.uuid)
-  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.uuid)
-  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.uuid))
-  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.uuid))
-  const addedUids = added.map((mod) => mod.uuid)
-  const updated = selectedVersionModules.filter((mod) => !addedUids.includes(mod.uuid))
+  const currentModuleUids = currentModules.map((mod) => mod.userIdentifier)
+  const selectedVersionModuleUids = selectedVersionModules.map((mod) => mod.userIdentifier)
+  const added = selectedVersionModules.filter((mod) => !currentModuleUids.includes(mod.userIdentifier))
+  const removed = currentModules.filter((mod) => !selectedVersionModuleUids.includes(mod.userIdentifier))
+  const removedUids = removed.map((mod) => mod.userIdentifier)
+  const updated = currentModules.filter((mod) => !removedUids.includes(mod.userIdentifier))
   return {added, removed, updated}
 }
 
@@ -1022,7 +965,7 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
   return storesArray.map((store: ShopNode) => {
     const {externalId, primaryDomain, name} = store
     return {
-      shopId: externalId,
+      shopId: externalId ? idFromEncodedGid(externalId) : undefined,
       link: primaryDomain,
       shopDomain: primaryDomain,
       shopName: name,
@@ -1030,4 +973,20 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
       convertableToPartnerTest: true,
     } as OrganizationStore
   })
+}
+
+function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
+  return {
+    registrationId: mod.userIdentifier,
+    registrationUuid: mod.userIdentifier,
+    registrationTitle: mod.handle,
+    type: mod.specification.externalIdentifier,
+    config: mod.config,
+    specification: {
+      ...mod.specification,
+      identifier: mod.specification.identifier,
+      options: {managementExperience: 'cli'},
+      experience: experience(mod.specification.identifier),
+    },
+  }
 }

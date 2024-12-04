@@ -74,6 +74,10 @@ export function clearCurrentConfigFile(
 ): void {
   const normalized = normalizePath(directory)
   const savedApp = config.get(normalized)
+  if (!savedApp) {
+    return
+  }
+
   config.set(normalized, {
     ...savedApp,
     configFile: undefined,

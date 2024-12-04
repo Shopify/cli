@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath} from '../app/app.js'
+import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
+import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -17,6 +20,8 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
+  | 'localization'
+  | 'generates_source_maps'
 
 export interface TransformationConfig {
   [key: string]: string
@@ -30,6 +35,16 @@ export interface CustomTransformationConfig {
 type ExtensionExperience = 'extension' | 'configuration'
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
+export enum AssetIdentifier {
+  ShouldRender = 'should_render',
+  Main = 'main',
+}
+
+export interface Asset {
+  identifier: AssetIdentifier
+  outputFileName: string
+  content: string
+}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -45,7 +60,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
-  getBundleExtensionStdinContent?: (config: TConfiguration) => string
+  getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,
     directory: string,
@@ -57,6 +72,11 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  getDevSessionActionUpdateMessage?: (
+    config: TConfiguration,
+    appConfig: CurrentAppConfiguration,
+    storeFqdn: string,
+  ) => Promise<string>
 
   /**
    * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
@@ -162,6 +182,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
+    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
   }
   const merged = {...defaults, ...spec}
 
@@ -207,6 +228,11 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
+  getDevSessionActionUpdateMessage?: (
+    config: TConfiguration,
+    appConfig: CurrentAppConfiguration,
+    storeFqdn: string,
+  ) => Promise<string>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -219,6 +245,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
+    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
   })
 }
 
@@ -271,8 +298,13 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
-    deployConfig: async (config, _) => {
-      return config
+    deployConfig: async (config, directory) => {
+      let parsedConfig = configWithoutFirstClassFields(config)
+      if (appModuleFeatures?.includes('localization')) {
+        const localization = await loadLocalesConfig(directory, identifier)
+        parsedConfig = {...parsedConfig, localization}
+      }
+      return parsedConfig
     },
   })
 }
@@ -397,8 +429,25 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
       result[key] = defaultAppConfigReverseTransform(innerSchema, content)
     } else {
       if (content[key] !== undefined) result[key] = content[key]
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete content[key]
     }
     return result
   }, {})
+}
+
+/**
+ * Remove the first class fields from the config.
+ *
+ * These are the fields that are not part of the specific extension contract, but are added automatically to all modules tomls.
+ * So it must be cleaned before validation or deployment.
+ * (this was initially done automatically by zod, but is not supported by JSON Schema & contracts)
+ *
+ * @param config - The config to remove the first class fields from
+ *
+ * @returns The config without the first class fields
+ */
+export function configWithoutFirstClassFields(config: JsonMapType): JsonMapType {
+  const {type, handle, uid, path, extensions, ...configWithoutFirstClassFields} = config
+  return configWithoutFirstClassFields
 }

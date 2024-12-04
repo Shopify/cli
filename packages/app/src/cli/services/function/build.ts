@@ -1,4 +1,5 @@
-import {installBinary, javyBinary} from './binaries.js'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import {downloadBinary, javyBinary, javyPluginBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -7,7 +8,7 @@ import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
+import {build as esBuild, BuildResult} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -167,12 +168,23 @@ export async function runJavy(
   extra: string[] = [],
 ) {
   const javy = javyBinary()
-  await installBinary(javy)
+  const plugin = javyPluginBinary()
+  await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
 
   // Using the `build` command we want to emit:
   //
-  //    `javy build -C dynamic -C wit=<path> -C wit-world=val -o <path> <function.js>`
-  const args = ['build', '-C', 'dynamic', ...extra, '-o', fun.outputPath, 'dist/function.js']
+  //    `javy build -C dynamic -C plugin=path/to/javy_quickjs_provider_v3.wasm -C wit=<path> -C wit-world=val -o <path> <function.js>`
+  const args = [
+    'build',
+    '-C',
+    'dynamic',
+    '-C',
+    `plugin=${plugin.path}`,
+    ...extra,
+    '-o',
+    fun.outputPath,
+    'dist/function.js',
+  ]
 
   return exec(javy.path, args, {
     cwd: fun.directory,
@@ -186,15 +198,12 @@ export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
     const javy = javyBinary()
-    await installBinary(javy)
+    await downloadBinary(javy)
   }
 }
 
 export interface JavyBuilder {
-  bundle(
-    fun: ExtensionInstance<FunctionConfigType>,
-    options: JSFunctionBuildOptions,
-  ): Promise<BuildResult<BuildOptions>>
+  bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<BuildResult>
   compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<void>
 }
 

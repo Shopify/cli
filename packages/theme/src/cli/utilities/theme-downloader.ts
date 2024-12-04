@@ -1,6 +1,8 @@
+import {batchedTasks, Task} from './batching.js'
+import {MAX_GRAPHQL_THEME_FILES} from '../constants.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
-import {ThemeFileSystem, Theme, Checksum} from '@shopify/cli-kit/node/themes/types'
+import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface DownloadOptions {
@@ -29,7 +31,7 @@ function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFil
 
   const remoteKeys = new Set(remoteChecksums.map((checksum) => checksum.key))
 
-  const localKeys = Array.from(themeFileSystem.files.keys())
+  const localKeys = themeFileSystem.applyIgnoreFilters([...themeFileSystem.files.values()]).map(({key}) => key)
   const localFilesToBeDeleted = localKeys.filter((key) => !remoteKeys.has(key))
 
   return localFilesToBeDeleted.map((key) => {
@@ -45,44 +47,39 @@ function buildDownloadTasks(
   theme: Theme,
   themeFileSystem: ThemeFileSystem,
   session: AdminSession,
-) {
-  const checksums = themeFileSystem.applyIgnoreFilters(remoteChecksums)
+): Task[] {
+  let checksums = themeFileSystem.applyIgnoreFilters(remoteChecksums)
 
-  return checksums
-    .map((checksum) => {
-      const remoteChecksumValue = checksum.checksum
-      const localAsset = themeFileSystem.files.get(checksum.key)
+  // Filter out files we already have
+  checksums = checksums.filter((checksum) => {
+    const remoteChecksumValue = checksum.checksum
+    const localAsset = themeFileSystem.files.get(checksum.key)
 
-      if (localAsset?.checksum === remoteChecksumValue) {
-        return
-      }
+    if (localAsset?.checksum === remoteChecksumValue) {
+      return false
+    } else {
+      return true
+    }
+  })
 
-      const progress = progressPct(remoteChecksums, checksum)
-      const title = `Pulling theme "${theme.name}" (#${theme.id}) from ${session.storeFqdn} [${progress}%]`
+  const filenames = checksums.map((checksum) => checksum.key)
 
-      return {
-        title,
-        task: async () => downloadFile(theme, themeFileSystem, checksum, session),
-      }
-    })
-    .filter(notNull)
+  const batches = batchedTasks(filenames, MAX_GRAPHQL_THEME_FILES, (batchedFilenames, i) => {
+    const title = `Downloading files ${i}..${i + batchedFilenames.length} / ${filenames.length} files`
+    return {
+      title,
+      task: async () => downloadFiles(theme, themeFileSystem, batchedFilenames, session),
+    }
+  })
+  return batches
 }
 
-async function downloadFile(theme: Theme, fileSystem: ThemeFileSystem, checksum: Checksum, session: AdminSession) {
-  const themeAsset = await fetchThemeAsset(theme.id, checksum.key, session)
+async function downloadFiles(theme: Theme, fileSystem: ThemeFileSystem, filenames: string[], session: AdminSession) {
+  const assets = await fetchThemeAssets(theme.id, filenames, session)
+  if (!assets) return
 
-  if (!themeAsset) return
-
-  await fileSystem.write(themeAsset)
-}
-
-function progressPct(themeChecksums: Checksum[], checksum: Checksum): number {
-  const current = themeChecksums.indexOf(checksum) + 1
-  const total = themeChecksums.length
-
-  return Math.round((current / total) * 100)
-}
-
-function notNull<T>(value: T | null | undefined): value is T {
-  return value !== null && value !== undefined
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  assets.forEach(async (asset: ThemeAsset) => {
+    await fileSystem.write(asset)
+  })
 }

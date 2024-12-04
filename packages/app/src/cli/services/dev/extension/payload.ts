@@ -1,33 +1,40 @@
 import {getLocalization} from './localization.js'
-import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
+import {Asset, DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
-export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
+export type GetUIExtensionPayloadOptions = Omit<ExtensionDevOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
   currentLocalizationPayload?: UIExtensionPayload['localization']
 }
 
 export async function getUIExtensionPayload(
   extension: ExtensionInstance,
+  bundlePath: string,
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
   return useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
+    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
     const renderer = await getUIExtensionRendererVersion(extension)
+
+    const extensionPoints = await getExtensionPoints(extension, url)
+
     const defaultConfig = {
       assets: {
         main: {
           name: 'main',
           url: `${url}/assets/${extension.outputFileName}`,
-          lastUpdated: (await fileLastUpdatedTimestamp(extension.outputPath)) ?? 0,
+          lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
         },
       },
       capabilities: {
@@ -53,7 +60,7 @@ export async function getUIExtensionPayload(
         status: options.currentDevelopmentPayload?.status || 'success',
         ...(options.currentDevelopmentPayload || {status: 'success'}),
       },
-      extensionPoints: getExtensionPoints(extension.configuration.extension_points, url),
+      extensionPoints,
       localization: localization ?? null,
       metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
       type: extension.configuration.type,
@@ -78,23 +85,46 @@ export async function getUIExtensionPayload(
   })
 }
 
-function getExtensionPoints(extensionPoints: ExtensionInstance['configuration']['extension_points'], url: string) {
-  if (isNewExtensionPointsSchema(extensionPoints)) {
-    return extensionPoints.map((extensionPoint) => {
-      const {target, resource} = extensionPoint
+async function getExtensionPoints(extension: ExtensionInstance, url: string) {
+  const extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
 
-      return {
-        ...extensionPoint,
-        surface: getExtensionPointTargetSurface(target),
-        root: {
-          url: `${url}/${target}`,
-        },
-        resource: resource || {url: ''},
-      }
-    })
+  if (isNewExtensionPointsSchema(extensionPoints)) {
+    return Promise.all(
+      extensionPoints.map(async (extensionPoint) => {
+        const {target, resource} = extensionPoint
+
+        return {
+          ...extensionPoint,
+          ...(extensionPoint.build_manifest
+            ? {assets: await extractAssetsFromBuildManifest(extensionPoint.build_manifest, url, extension)}
+            : {}),
+          surface: getExtensionPointTargetSurface(target),
+          root: {
+            url: `${url}/${target}`,
+          },
+          resource: resource || {url: ''},
+        }
+      }),
+    )
   }
 
   return extensionPoints
+}
+
+async function extractAssetsFromBuildManifest(buildManifest: BuildManifest, url: string, extension: ExtensionInstance) {
+  if (!buildManifest?.assets) return {}
+  const assets: {[key: string]: Asset} = {}
+
+  for (const [name, asset] of Object.entries(buildManifest.assets)) {
+    assets[name] = {
+      name,
+      url: `${url}${joinPath('/assets/', asset.filepath)}`,
+      // eslint-disable-next-line no-await-in-loop
+      lastUpdated: (await fileLastUpdatedTimestamp(joinPath(dirname(extension.outputPath), asset.filepath))) ?? 0,
+    }
+  }
+
+  return assets
 }
 
 export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionPoints is DevNewExtensionPointSchema[] {

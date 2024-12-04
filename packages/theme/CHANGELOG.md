@@ -1,5 +1,92 @@
 # @shopify/theme
 
+## 3.71.0
+
+### Minor Changes
+
+- 5107f4e805: Add `--strict` flag to `theme push` command, which will report `theme check` warnings and abort the operation if there are errors.
+- 057e2c6189: Add shortcut keys to theme dev commands
+
+### Patch Changes
+
+- ff994c34d3: Fix password validation to support localized URLs when authenticating storefronts.
+- 1e267a2e04: Update `shopify theme dev` to no longer display redundant URLs
+- 7017b9e31c: Improve storefront password detection for password-protected shops with redirects
+- 9548a34471: Fix password validation to handle capitalized store names on `shopify theme dev`
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [5531731c11]
+  - @shopify/cli-kit@3.71.0
+
+## 3.70.0
+
+### Minor Changes
+
+- ade20307dc: Removes Ruby implementation of the `theme push` command
+- b981aea41c: Removes the Ruby implementation of the `theme push` command
+
+### Patch Changes
+
+- 404cd2674c: Added a warning to help users troubleshoot when a development theme is missing required files
+- 5aecb3eecb: Prevent the `shopify theme dev` command from terminating by refreshing the session
+- 82786bc78c: Bump Shopify/theme-tools packages
+- 57abf0b31c: Fix the theme ID mismatch error, where the live theme ID is returned instead of the development theme ID
+- eccb52dccd: Fixes an issue in the `theme push` command where a confirmation prompt is rendered to users who provide the `--allow-live` flag
+- 7d89068e32: Fix an issue in `app dev` where host themes would have empty files
+- 8120536219: Show an error when the `config/settings_schema.json` file cannot be parsed.
+- Updated dependencies [03b39a67b3]
+- Updated dependencies [33477dd9d7]
+  - @shopify/cli-kit@3.70.0
+
+## 3.69.0
+
+### Minor Changes
+
+- 82dd1daf8: Add a new option to create a theme on `shopify theme push`
+- 371d53d3e: Remove `legacy` flag and `Ruby` implementation for the following commands:
+  - `shopify theme console`
+  - `shopify theme dev`
+  - `shopify theme push`
+  - `shopify theme pull`
+
+### Patch Changes
+
+- a7f7dc300: Fix hot reloading of `.css.liquid` and `.js.liquid` assets.
+- 1fe7024e6: Fix the issue that prevents password-protected storefronts with an ampersand `&` from logging in, and improve the password prompt message to disambiguate passwords
+- c75c8e201: Remove the warning message from the ignore-module because some files can only be ignored using backward-compatible patterns
+- 87b52747d: Remove Liquid syntax error prettifier to avoid breaking the rest of the document.
+- 8c6906c06: Fix an issue with `shopify theme dev --theme-editor-sync` to prevent showing a remote file deletion error when the file has already been removed
+- 3b6159e8a: Use the new implementation of shopify theme share that no longer depends on Ruby to work.
+  This also fixes the command so it no longer ignores `.shopifyignore`.
+- 265d3e178: Handle background async errors and avoid process exit in some scenarios.
+- a38952cd6: Improved warning message on shopify theme push --json by removing reference to [object Object]
+- df7b178da: Avoid process exit when failing to delete a file from the remote theme.
+- 707b901a7: Make `shopify theme dev` more resilient to HTTP errors with the Admin API
+- 3f10612f0: Fix CDN URls in .css.liquid files
+- 41bfd221f: Fix cart requests in the local proxy to avoid 401-Unauthorized errors
+- a6abeb289: Show preview url for gift cards in the initial server logs.
+- d9fff2c30: Update the ignore module (`--only`/`--ignore`/`.shopifyignore`) to be backward compatible with (Ruby) Shopify CLI 2
+- 89250c301: Fix ignore patterns
+- 1f5d13cf1: Fix serving local assets from the root path for backward compatibility.
+- 51178f2f6: Fix `shopify theme pull --only <value>` so it does not delete ignored files
+- Updated dependencies [283aa815c]
+  - @shopify/cli-kit@3.69.0
+
+## 3.68.0
+
+### Patch Changes
+
+- fc7d5ce58: Fix content in SVG files
+- cce54b10b: Fix Theme Access authentication on `shopify theme dev` and `shopify theme console` commands
+- 53459a23f: Fixes a bug where some users were unable to intialize their app dev command with theme app extensions
+- 492225c47: Fix cart/add request in development.
+- dc30dca87: Fix encoding of certain characters in HTML responses in the new theme dev server.
+- a2f31c249: Fix hot reload on sections
+- a1887fc14: Fix serving local assets that contain non-printable characters.
+- d6c661f06: Update checksum calculation to no longer minify assets before calculating
+- Updated dependencies [4d89691ad]
+  - @shopify/cli-kit@3.68.0
+
 ## 3.67.0
 
 ### Minor Changes

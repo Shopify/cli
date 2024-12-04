@@ -1,3 +1,3 @@
-theme:console
+theme console
 
-theme:console --url /products/classic-leather-jacket
+theme console --url /products/classic-leather-jacket

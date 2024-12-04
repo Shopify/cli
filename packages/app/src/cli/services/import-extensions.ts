@@ -1,11 +1,11 @@
-import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {getExtensions} from './fetch-extensions.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../models/extensions/schemas.js'
+import {OrganizationApp} from '../models/organization.js'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
@@ -13,19 +13,19 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 interface ImportOptions {
-  app: AppInterface
-  apiKey?: string
-  developerPlatformClient?: DeveloperPlatformClient
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
+  buildTomlObject: (
+    ext: ExtensionRegistration,
+    allExtensions: ExtensionRegistration[],
+    appConfig: CurrentAppConfiguration,
+  ) => string
 }
 
 export async function importExtensions(options: ImportOptions) {
-  const developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  const [remoteApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
-
-  await logMetadataForLoadedContext(remoteApp)
+  const {remoteApp, developerPlatformClient} = options
 
   const initialRemoteExtensions = await developerPlatformClient.appExtensionRegistrations({
     id: remoteApp.apiKey,
@@ -48,16 +48,20 @@ export async function importExtensions(options: ImportOptions) {
   const choices = extensions.map((ext) => {
     return {label: ext.title, value: ext.uuid}
   })
-  choices.push({label: 'All', value: 'All'})
+
+  if (extensions.length > 1) {
+    choices.push({label: 'All', value: 'All'})
+  }
   const promptAnswer = await renderSelectPrompt({message: 'Extensions to migrate', choices})
 
   const extensionsToMigrate =
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     promptAnswer === 'All' ? extensions : [extensions.find((ext) => ext?.uuid === promptAnswer)!]
 
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = options.buildTomlObject(ext, extensionRegistrations)
+    const tomlObject = options.buildTomlObject(ext, extensionRegistrations, options.app.configuration)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     const handle = slugify(ext.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH))

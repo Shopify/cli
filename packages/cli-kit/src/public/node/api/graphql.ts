@@ -1,6 +1,6 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
-import {runWithTimer} from '../metadata.js'
+import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {GraphQLClient, rawRequest, RequestDocument, resolveRequestDocument, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -26,16 +26,19 @@ interface GraphQLRequestBaseOptions<TResult> {
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
   variables?: Variables
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export interface GraphQLResponseOptions<T> {
@@ -49,13 +52,13 @@ export interface GraphQLResponseOptions<T> {
  * @param options - GraphQL request options.
  */
 async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
-  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions} = options
+  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler} = options
   const headers = {
     ...addedHeaders,
     ...buildHeaders(token),
   }
 
-  debugLogRequestInfo(api, queryAsString, variables, headers)
+  debugLogRequestInfo(api, queryAsString, url, variables, headers)
   const clientOptions = {agent: await httpsAgent(), headers}
   const client = new GraphQLClient(url, clientOptions)
 
@@ -63,10 +66,23 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     const response = await retryAwareRequest(
       {request: () => client.rawRequest<TResult>(queryAsString, variables), url},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+      unauthorizedHandler,
     )
 
     if (responseOptions?.onResponse) {
       responseOptions.onResponse(response)
+    }
+
+    try {
+      const requestId = response.headers.get('x-request-id')
+      await addPublicMetadata(async () => {
+        return {
+          cmd_all_last_graphql_request_id: requestId ?? undefined,
+        }
+      })
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // no problem if unable to get request ID.
     }
 
     return response.data

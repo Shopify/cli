@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
-import {Ajv, ErrorObject, SchemaObject} from 'ajv'
+import {Ajv, ErrorObject, SchemaObject, ValidateFunction} from 'ajv'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
 
-type AjvError = ErrorObject<string, {[key: string]: unknown}, unknown>
+type AjvError = ErrorObject<string, {[key: string]: unknown}>
 
 /**
  * Normalises a JSON Schema by standardising it's internal implementation.
@@ -21,6 +22,8 @@ export async function normaliseJsonSchema(schema: string): Promise<SchemaObject>
   return parsedSchema
 }
 
+const validatorsCache = new Map<string, ValidateFunction>()
+
 /**
  * Given a subject object and a JSON schema contract, validate the subject against the contract.
  *
@@ -28,14 +31,21 @@ export async function normaliseJsonSchema(schema: string): Promise<SchemaObject>
  *
  * @param subject - The object to validate.
  * @param schema - The JSON schema to validate against.
+ * @param identifier - The identifier of the schema being validated, used to cache the validator.
  * @returns The result of the validation. If the state is 'error', the errors will be in a zod-like format.
  */
 export function jsonSchemaValidate(
   subject: object,
   schema: SchemaObject,
+  identifier: string,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
   const ajv = new Ajv({allowUnionTypes: true})
-  const validator = ajv.compile(schema)
+
+  ajv.addKeyword('x-taplo')
+
+  const validator = validatorsCache.get(identifier) ?? ajv.compile(schema)
+  validatorsCache.set(identifier, validator)
+
   validator(subject)
 
   // Errors from the contract are post-processed to be more zod-like and to deal with unions better
@@ -78,7 +88,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     }
 
     if (error.params.type) {
-      const expectedType = error.params.type
+      const expectedType = error.params.type as string
       const actualType = getPathValue(subject, path.join('.'))
       return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
     }
@@ -152,7 +162,8 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
  * @returns A simplified list of errors.
  */
 function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: SchemaObject): AjvError[] {
-  const ajv = new Ajv()
+  const ajv = new Ajv({allowUnionTypes: true})
+  ajv.addKeyword('x-taplo')
   let errors = rawErrors
 
   const resolvedUnionErrors = new Set()

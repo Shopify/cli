@@ -1,11 +1,11 @@
 import {inFunctionContext, functionFlags} from '../../../services/function/common.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {appFlags} from '../../../flags.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
-export default class FunctionBuild extends Command {
+export default class FunctionBuild extends AppCommand {
   static summary = 'Compile a function to wasm.'
 
   static descriptionWithMarkdown = `Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.`
@@ -18,12 +18,15 @@ export default class FunctionBuild extends Command {
     ...functionFlags,
   }
 
-  public async run() {
+  public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(FunctionBuild)
-    await inFunctionContext({
+
+    const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
+      apiKey: flags['client-id'],
+      reset: flags.reset,
+      callback: async (app, _, ourFunction) => {
         await buildFunctionExtension(ourFunction, {
           app,
           stdout: process.stdout,
@@ -32,7 +35,9 @@ export default class FunctionBuild extends Command {
           environment: 'production',
         })
         renderSuccess({headline: 'Function built successfully.'})
+        return app
       },
     })
+    return {app}
   }
 }

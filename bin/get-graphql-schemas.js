@@ -25,8 +25,25 @@ const schemas = [
   },
   {
     repo: 'shopify',
-    pathToFile: 'db/graphql/app_dev_schema_unstable_public.graphql',
+    pathToFile: 'areas/core/shopify/db/graphql/app_dev_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
+    branch: 'dd',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
+    localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
+    branch: 'dd',
   }
 ]
 
@@ -69,15 +86,17 @@ function extractPassword(output) {
 async function fetchFileForSchema(schema, octokit) {
   try {
     // Fetch the file content from the repository
+    const branch = schema.branch ?? BRANCH
+    console.log(`\nFetching ${OWNER}/${schema.repo}#${branch}: ${schema.pathToFile} ...`)
     const {data} = await octokit.repos.getContent({
+      mediaType: { format: "raw" },
       owner: OWNER,
       repo: schema.repo,
       path: schema.pathToFile,
-      ref: BRANCH,
+      ref: branch,
     })
 
-    // Decode the base64 content
-    const content = Buffer.from(data.content, 'base64').toString('utf-8')
+    const content = Buffer.from(data).toString('utf-8')
 
     // Define the local path where the file will be saved
     const localFilePath = schema.localPath

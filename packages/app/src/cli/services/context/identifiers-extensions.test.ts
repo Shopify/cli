@@ -21,13 +21,14 @@ import {
   testSingleWebhookSubscriptionExtension,
   testAppAccessConfigExtension,
 } from '../../models/app/app.test-data.js'
-import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
+import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient, Flag} from '../../utilities/developer-platform-client.js'
 import {ExtensionCreateSchema} from '../../api/graphql/extension_create.js'
 import appPOSSpec from '../../models/extensions/specifications/app_config_point_of_sale.js'
 import appWebhookSubscriptionSpec from '../../models/extensions/specifications/app_config_webhook_subscription.js'
+import {getModulesToMigrate} from '../dev/migrate-app-module.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
@@ -180,7 +181,7 @@ vi.mock('./prompts', async () => {
 vi.mock('./id-matching')
 vi.mock('./id-manual-matching')
 vi.mock('../dev/migrate-to-ui-extension')
-
+vi.mock('../dev/migrate-app-module')
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
     directory: 'EXTENSION_A',
@@ -291,7 +292,7 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-  vi.mocked(getUIExtensionsToMigrate).mockReturnValue([])
+  vi.mocked(getModulesToMigrate).mockReturnValue([])
 })
 
 describe('matchmaking returns more remote sources than local', () => {
@@ -321,6 +322,7 @@ describe('matchmaking returns more remote sources than local', () => {
       validMatches: {
         EXTENSION_A: 'UUID_A',
       },
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed', async () => {
@@ -382,6 +384,7 @@ describe('matchmaking returns ok with pending manual matches', () => {
         EXTENSION_A: 'UUID_A',
         EXTENSION_A_2: 'UUID_A_2',
       },
+      didMigrateDashboardExtensions: false,
     })
   })
 
@@ -453,6 +456,7 @@ describe('matchmaking returns ok with pending manual matches and manual match fa
       validMatches: {
         EXTENSION_A: 'UUID_A',
       },
+      didMigrateDashboardExtensions: false,
     })
     expect(manualMatchIds).toBeCalledWith({
       local: [EXTENSION_A, EXTENSION_A_2],
@@ -517,6 +521,7 @@ describe('matchmaking returns ok with pending some pending to create', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [EXTENSION_A, EXTENSION_A_2],
       validMatches: {},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: Create the pending extensions and succeeds', async () => {
@@ -586,6 +591,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
       validMatches: {
         'extension-b': 'UUID_B',
       },
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed', async () => {
@@ -636,6 +642,7 @@ describe('matchmaking returns ok with some pending confirmation', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [EXTENSION_B],
       validMatches: {},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: creates non confirmed as new extensions', async () => {
@@ -687,6 +694,7 @@ describe('matchmaking returns ok with nothing pending', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [],
       validMatches: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: does not create any extension', async () => {
@@ -748,6 +756,7 @@ describe('includes functions', () => {
       dashboardOnlyExtensions: [],
       extensionsToCreate: [],
       validMatches: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
+      didMigrateDashboardExtensions: false,
     })
   })
   test('deployConfirmed: does not create any extension', async () => {
@@ -825,7 +834,7 @@ describe('ensureExtensionsIds: Migrates extension', () => {
       {local: EXTENSION_A, remote: REGISTRATION_A},
       {local: EXTENSION_A_2, remote: REGISTRATION_A_2},
     ]
-    vi.mocked(getUIExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
+    vi.mocked(getModulesToMigrate).mockReturnValueOnce(extensionsToMigrate)
 
     // When / Then
     await expect(() =>
@@ -853,18 +862,28 @@ describe('ensureExtensionsIds: Migrates extension', () => {
       {local: EXTENSION_A, remote: REGISTRATION_A},
       {local: EXTENSION_A_2, remote: REGISTRATION_A_2},
     ]
-    vi.mocked(getUIExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
+    vi.mocked(getModulesToMigrate).mockReturnValueOnce(extensionsToMigrate)
     vi.mocked(extensionMigrationPrompt).mockResolvedValueOnce(true)
     const opts = options([EXTENSION_A, EXTENSION_A_2])
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
 
     // When
-    await ensureExtensionsIds(opts, {
+    const result = await ensureExtensionsIds(opts, {
       extensionRegistrations: remoteExtensions,
       dashboardManagedExtensionRegistrations: [],
     })
 
     // Then
+    expect(result).toEqual({
+      didMigrateDashboardExtensions: true,
+      dashboardOnlyExtensions: [],
+      extensionsToCreate: [],
+      validMatches: {
+        EXTENSION_A: 'UUID_A',
+        EXTENSION_A_2: 'UUID_A_2',
+      },
+    })
+
     expect(migrateExtensionsToUIExtension).toBeCalledWith(
       extensionsToMigrate,
       opts.appId,
@@ -1117,7 +1136,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     ]
     const app = options(localSources, [], {
       includeDeployConfig: true,
-      flags: [Flag.DeclarativeWebhooks],
+      flags: [],
     }).app
     const appId = 'appId'
 
@@ -1195,7 +1214,7 @@ describe('ensureNonUuidManagedExtensionsIds: for extensions managed in the TOML'
     const remoteSources = [webhookSubscriptionExtension]
     const app = options(localSources, [], {
       includeDeployConfig: true,
-      flags: [Flag.DeclarativeWebhooks],
+      flags: [],
     }).app
     const appId = 'appId'
 

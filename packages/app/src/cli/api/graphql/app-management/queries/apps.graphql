@@ -1,0 +1,22 @@
+query listApps($query: String) {
+  appsConnection(query: $query, first: 50) {
+    edges {
+      node {
+        id
+        key
+        activeRelease {
+          id
+            version {
+              name
+                appModules {
+                  ...ReleasedAppModule
+                }
+            }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+    }
+  }
+}

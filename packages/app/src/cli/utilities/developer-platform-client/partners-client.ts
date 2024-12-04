@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
-  ActiveAppVersion,
+  AppVersion,
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
@@ -9,6 +10,7 @@ import {
   DevSessionOptions,
   filterDisabledFlags,
   ClientName,
+  AppVersionWithContext,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -151,10 +153,6 @@ import {
   DevStoresByOrgQuery,
   DevStoresByOrgQueryVariables,
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
-import {
-  FunctionUploadUrlGenerate,
-  FunctionUploadUrlGenerateMutation,
-} from '../../api/graphql/partners/generated/function-upload-url-generate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -177,7 +175,7 @@ function getAppVars(
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
       requestedAccessScopes: scopesArray ?? [],
@@ -186,7 +184,7 @@ function getAppVars(
   } else {
     return {
       org: parseInt(org.id, 10),
-      title: `${name}`,
+      title: name,
       appUrl: MAGIC_URL,
       redir: [MAGIC_REDIRECT_URL],
       requestedAccessScopes: scopesArray ?? [],
@@ -209,11 +207,11 @@ interface OrgAndAppsResponse {
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
-  public clientName = ClientName.Partners
-  public webUiName = 'Partner Dashboard'
-  public supportsAtomicDeployments = false
-  public requiresOrganization = false
-  public supportsDevSessions = false
+  public readonly clientName = ClientName.Partners
+  public readonly webUiName = 'Partner Dashboard'
+  public readonly supportsAtomicDeployments = false
+  public readonly requiresOrganization = false
+  public readonly supportsDevSessions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -367,7 +365,7 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(
     {apiKey}: MinimalAppIdentifiers,
-    _activeAppVersion?: ActiveAppVersion,
+    _activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
     const variables: AllAppExtensionRegistrationsQueryVariables = {apiKey}
     return this.request(AllAppExtensionRegistrationsQuery, variables)
@@ -378,9 +376,17 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsQuery, variables)
   }
 
-  async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionByTagSchema> {
+  async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionWithContext> {
     const input: AppVersionByTagVariables = {apiKey, versionTag}
-    return this.request(AppVersionByTagQuery, input)
+    const result: AppVersionByTagSchema = await this.request(AppVersionByTagQuery, input)
+    const appVersion = result.app.appVersion
+    return {
+      ...appVersion,
+      appModuleVersions: appVersion.appModuleVersions.map((appModuleVersion) => ({
+        ...appModuleVersion,
+        config: appModuleVersion.config ? JSON.parse(appModuleVersion.config) : undefined,
+      })),
+    }
   }
 
   async appVersionsDiff(
@@ -391,7 +397,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsDiffQuery, variables)
   }
 
-  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<ActiveAppVersion | undefined> {
+  async activeAppVersion({apiKey}: MinimalAppIdentifiers): Promise<AppVersion | undefined> {
     const variables: ActiveAppVersionQueryVariables = {apiKey}
     const result = await this.request<ActiveAppVersionQuerySchema>(ActiveAppVersionQuery, variables)
     const version = result.app.activeAppVersion
@@ -405,10 +411,6 @@ export class PartnersClient implements DeveloperPlatformClient {
         }
       }),
     }
-  }
-
-  async functionUploadUrl(): Promise<FunctionUploadUrlGenerateMutation> {
-    return this.requestDoc(FunctionUploadUrlGenerate)
   }
 
   async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
@@ -472,15 +474,18 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(FindAppPreviewModeQuery, input)
   }
 
-  async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+  async sendSampleWebhook(
+    input: SendSampleWebhookVariables,
+    _organizationId: string,
+  ): Promise<SendSampleWebhookSchema> {
     return this.request(sendSampleWebhookMutation, input)
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
+  async apiVersions(_organizationId: string): Promise<PublicApiVersionsSchema> {
     return this.request(GetApiVersionsQuery)
   }
 
-  async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+  async topics(input: WebhookTopicsVariables, _organizationId: string): Promise<WebhookTopicsSchema> {
     return this.request(getTopicsQuery, input)
   }
 
@@ -540,6 +545,14 @@ export class PartnersClient implements DeveloperPlatformClient {
   async devSessionDelete(_input: unknown): Promise<any> {
     // Dev Sessions are not supported in partners client.
     return Promise.resolve()
+  }
+
+  async getCreateDevStoreLink(orgId: string): Promise<string> {
+    const url = `https://${await partnersFqdn()}/dashboard/${orgId}/stores`
+    return (
+      `Looks like you don't have a dev store in the Partners org you selected. ` +
+      `Keep going — create a dev store on Shopify Partners:\n${url}\n`
+    )
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {

@@ -4,7 +4,6 @@ import {startAnalytics} from '../../../private/node/analytics.js'
 import {outputDebug, outputWarn} from '../../../public/node/output.js'
 import {getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
 import Command from '../../../public/node/base-command.js'
-import {initDemoRecorder} from '../../../private/node/demo-recorder.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {Hook} from '@oclif/core'
 
@@ -15,7 +14,6 @@ export declare interface CommandContent {
 }
 // This hook is called before each command run. More info: https://oclif.io/docs/hooks
 export const hook: Hook.Prerun = async (options) => {
-  initDemoRecorder()
   const commandContent = parseCommandContent({
     id: options.Command.id,
     aliases: options.Command.aliases,
@@ -51,7 +49,7 @@ function parseNormalCommand(id: string, aliases: string[]): CommandContent {
  * @returns Command content with the name of the command or undefined otherwise
  */
 function parseCreateCommand(pluginAlias?: string): CommandContent | undefined {
-  if (!pluginAlias || !pluginAlias.startsWith('@shopify/create-')) {
+  if (!pluginAlias?.startsWith('@shopify/create-')) {
     return undefined
   }
 

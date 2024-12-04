@@ -6,17 +6,27 @@ import {
   encodedGidFromId,
   versionDeepLink,
 } from './app-management-client.js'
-import {AppModule} from './app-management-client/graphql/app-version-by-id.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
+import {PublicApiVersionsQuery} from '../../api/graphql/webhooks/generated/public-api-versions.js'
+import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/available-topics.js'
+import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {BugError} from '@shopify/cli-kit/node/error'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/cli-kit/node/api/webhooks')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -41,9 +51,10 @@ const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
   minimumCliVersion: '1.0.0',
 }
 
-function moduleFromExtension(extension: ExtensionInstance): AppModule {
+function moduleFromExtension(extension: ExtensionInstance) {
   return {
     uuid: extension.uid,
+    userIdentifier: extension.uid,
     handle: extension.handle,
     config: extension.configuration,
     specification: {
@@ -62,8 +73,8 @@ describe('diffAppModules', () => {
       moduleFromExtension(extensionB),
       moduleFromExtension(extensionC),
     ]
-    const currentModules: AppModule[] = [moduleA, moduleB]
-    const selectedVersionModules: AppModule[] = [moduleB, moduleC]
+    const currentModules = [moduleA, moduleB]
+    const selectedVersionModules = [moduleB, moduleC]
 
     // When
     const {added, removed, updated} = diffAppModules({currentModules, selectedVersionModules})
@@ -72,6 +83,36 @@ describe('diffAppModules', () => {
     expect(added).toEqual([moduleC])
     expect(removed).toEqual([moduleA])
     expect(updated).toEqual([moduleB])
+  })
+
+  // This test considers the case where there are local and remote modules, which may have slightly different properties
+  test('extracts the added, removed and updated modules before deployment', async () => {
+    // Given
+    const [remoteModuleA, remoteModuleB] = [moduleFromExtension(extensionA), moduleFromExtension(extensionB)]
+    // Under some circumstances, local UUID may differ from remote.
+    // So we are testing that diffing happens based on the shared userIdentifier
+    // property, not the UUID.
+    const localModuleB = {
+      ...remoteModuleB,
+      uuid: randomUUID(),
+    }
+    const localModuleC = {
+      ...moduleFromExtension(extensionC),
+      uuid: randomUUID(),
+    }
+
+    const before = [remoteModuleA, remoteModuleB]
+    const after = [localModuleB, localModuleC]
+
+    // When
+    const {added, removed, updated} = diffAppModules({currentModules: before, selectedVersionModules: after})
+
+    // Then
+    expect(added).toEqual([localModuleC])
+    expect(removed).toEqual([remoteModuleA])
+    // Updated returns the remote module, not the local one. This shouldn't matter
+    // as the module identifiers are the same.
+    expect(updated).toEqual([remoteModuleB])
   })
 })
 
@@ -186,5 +227,244 @@ describe('versionDeepLink', () => {
 
     // Then
     expect(got).toEqual('https://dev.shopify.com/dashboard/1/apps/2/versions/3')
+  })
+})
+
+describe('searching for apps', () => {
+  test.each([
+    ['without a term if none is provided', undefined, ''],
+    ['without a term if a blank string is provided', '', ''],
+    ['with a single term passed in the query', 'test-app', 'title:test-app'],
+    ['with multiple terms passed in the query', 'test app', 'title:test title:app'],
+  ])('searches for apps by name %s', async (_: string, query: string | undefined, queryVariable: string) => {
+    // Given
+    const orgId = '1'
+    const appName = 'test-app'
+    const apps = [testOrganizationApp({title: appName})]
+    const mockedFetchAppsResponse = {
+      appsConnection: {
+        edges: apps.map((app, index) => ({
+          node: {
+            ...app,
+            key: `key-${index}`,
+            activeRelease: {
+              id: 'gid://shopify/Release/1',
+              version: {
+                name: app.title,
+                appModules: [],
+              },
+            },
+          },
+        })),
+        pageInfo: {
+          hasNextPage: false,
+        },
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedFetchAppsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const got = await client.appsForOrg(orgId, query)
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(orgId, ListApps, 'token', {query: queryVariable})
+    expect(got).toEqual({
+      apps: apps.map((app, index) => ({
+        apiKey: `key-${index}`,
+        id: app.id,
+        organizationId: app.organizationId,
+        title: app.title,
+      })),
+      hasMorePages: false,
+    })
+  })
+
+  test("Throws a BugError if the response doesn't contain the expected data", async () => {
+    // Given
+    const orgId = '1'
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({})
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+
+    // Then
+    await expect(client.appsForOrg(orgId)).rejects.toThrow(BugError)
+  })
+})
+
+describe('apiVersions', () => {
+  test('fetches available public API versions', async () => {
+    // Given
+    const orgId = '1'
+    const mockedResponse: PublicApiVersionsQuery = {
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    }
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const apiVersions = await client.apiVersions(orgId)
+
+    // Then
+    expect(apiVersions.publicApiVersions.length).toEqual(mockedResponse.publicApiVersions.length)
+    expect(apiVersions.publicApiVersions).toEqual(mockedResponse.publicApiVersions.map((version) => version.handle))
+  })
+})
+
+describe('topics', () => {
+  test('fetches available topics for a valid API version', async () => {
+    // Given
+    const orgId = '1'
+    const mockedResponse: AvailableTopicsQuery = {availableTopics: ['app/uninstalled', 'products/created']}
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const topics = await client.topics({api_version: '2024-07'}, orgId)
+
+    // Then
+    expect(topics.webhookTopics.length).toEqual(mockedResponse.availableTopics?.length)
+    expect(topics.webhookTopics).toEqual(mockedResponse.availableTopics)
+  })
+
+  test('returns an empty list when failing', async () => {
+    // Given
+    const orgId = '1'
+    const mockedResponse: AvailableTopicsQuery = {availableTopics: null}
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const topics = await client.topics({api_version: 'invalid'}, orgId)
+
+    // Then
+    expect(topics.webhookTopics.length).toEqual(0)
+  })
+})
+
+describe('sendSampleWebhook', () => {
+  test('succeeds for local delivery', async () => {
+    // Given
+    const orgId = '1'
+    const input: SendSampleWebhookVariables = {
+      address: 'http://localhost:3000/webhooks',
+      api_key: 'abc123',
+      api_version: '2025-01',
+      delivery_method: 'localhost',
+      shared_secret: 'secret',
+      topic: 'app/uninstalled',
+    }
+    const mockedResponse: CliTestingMutation = {
+      cliTesting: {
+        headers: `{"Content-Type":"application/json"}`,
+        samplePayload: `{"id": 42,"name":"test"}`,
+        success: true,
+        errors: [],
+      },
+    }
+    const expectedVariables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
+    }
+    const token = 'token'
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve(token)
+    const result = await client.sendSampleWebhook(input, orgId)
+
+    // Then
+    expect(webhooksRequest).toHaveBeenCalledWith(orgId, CliTesting, token, expectedVariables)
+    expect(result.sendSampleWebhook.samplePayload).toEqual(mockedResponse.cliTesting?.samplePayload)
+    expect(result.sendSampleWebhook.headers).toEqual(mockedResponse.cliTesting?.headers)
+    expect(result.sendSampleWebhook.success).toEqual(true)
+    expect(result.sendSampleWebhook.userErrors).toEqual([])
+  })
+
+  test('succeeds for remote delivery', async () => {
+    // Given
+    const orgId = '1'
+    const input: SendSampleWebhookVariables = {
+      address: 'https://webhooks.test',
+      api_key: 'abc123',
+      api_version: '2025-01',
+      delivery_method: 'http',
+      shared_secret: 'secret',
+      topic: 'app/uninstalled',
+    }
+    const mockedResponse: CliTestingMutation = {
+      cliTesting: {
+        headers: '{}',
+        samplePayload: '{}',
+        success: true,
+        errors: [],
+      },
+    }
+    const expectedVariables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
+    }
+    const token = 'token'
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve(token)
+    const result = await client.sendSampleWebhook(input, orgId)
+
+    // Then
+    expect(webhooksRequest).toHaveBeenCalledWith(orgId, CliTesting, token, expectedVariables)
+    expect(result.sendSampleWebhook.samplePayload).toEqual('{}')
+    expect(result.sendSampleWebhook.headers).toEqual('{}')
+    expect(result.sendSampleWebhook.success).toEqual(true)
+    expect(result.sendSampleWebhook.userErrors).toEqual([])
+  })
+
+  test('handles API failures', async () => {
+    // Given
+    const orgId = '1'
+    const input: SendSampleWebhookVariables = {
+      address: 'https://webhooks.test',
+      api_key: 'abc123',
+      api_version: 'invalid',
+      delivery_method: 'http',
+      shared_secret: 'secret',
+      topic: 'app/uninstalled',
+    }
+    const mockedResponse: CliTestingMutation = {
+      cliTesting: {
+        headers: '{}',
+        samplePayload: '{}',
+        success: false,
+        errors: ['Invalid api_version'],
+      },
+    }
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const result = await client.sendSampleWebhook(input, orgId)
+
+    // Then
+    expect(result.sendSampleWebhook.samplePayload).toEqual('{}')
+    expect(result.sendSampleWebhook.headers).toEqual('{}')
+    expect(result.sendSampleWebhook.success).toEqual(false)
+    expect(result.sendSampleWebhook.userErrors).toEqual([{message: 'Invalid api_version', fields: []}])
   })
 })

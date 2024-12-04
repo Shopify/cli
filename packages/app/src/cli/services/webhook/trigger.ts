@@ -1,12 +1,26 @@
-import {DELIVERY_METHOD, WebhookTriggerFlags} from './trigger-flags.js'
+import {DELIVERY_METHOD} from './trigger-flags.js'
 import {getWebhookSample, SendSampleWebhookVariables, UserErrors} from './request-sample.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {collectAddressAndMethod, collectApiVersion, collectCredentials, collectTopic} from './trigger-options.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {loadApp} from '../../models/app/loader.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
+
+export interface WebhookTriggerInput {
+  app: AppLinkedInterface
+  developerPlatformClient: DeveloperPlatformClient
+  remoteApp: OrganizationApp
+  topic?: string
+  apiVersion?: string
+  deliveryMethod?: string
+  address?: string
+  clientId?: string
+  clientSecret?: string
+  path: string
+  config?: string
+  organizationId: string
+}
 
 interface WebhookTriggerOptions {
   topic: string
@@ -16,6 +30,7 @@ interface WebhookTriggerOptions {
   clientSecret: string
   apiKey?: string
   developerPlatformClient: DeveloperPlatformClient
+  organizationId: string
 }
 
 /**
@@ -25,28 +40,17 @@ interface WebhookTriggerOptions {
  *
  * @param flags - Passed flags
  */
-export async function webhookTriggerService(flags: WebhookTriggerFlags) {
-  const app: AppInterface = await loadApp({
-    directory: flags.path,
-    userProvidedConfigName: flags.config,
-    specifications: await loadLocalExtensionsSpecifications(),
-  })
-  const developerPlatformClient: DeveloperPlatformClient =
-    flags.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: app.configuration})
-  const options: WebhookTriggerOptions = await validateAndCollectFlags(flags, developerPlatformClient, app)
+export async function webhookTriggerService(input: WebhookTriggerInput) {
+  const options: WebhookTriggerOptions = await validateAndCollectFlags(input)
 
   await sendSample(options)
 }
 
-async function validateAndCollectFlags(
-  flags: WebhookTriggerFlags,
-  developerPlatformClient: DeveloperPlatformClient,
-  app: AppInterface,
-): Promise<WebhookTriggerOptions> {
-  const apiVersion = await collectApiVersion(developerPlatformClient, flags.apiVersion)
-  const topic = await collectTopic(developerPlatformClient, apiVersion, flags.topic)
-  const [address, deliveryMethod] = await collectAddressAndMethod(flags.deliveryMethod, flags.address)
-  const clientCredentials = await collectCredentials(flags.clientId, flags.clientSecret, app, deliveryMethod)
+async function validateAndCollectFlags(input: WebhookTriggerInput): Promise<WebhookTriggerOptions> {
+  const apiVersion = await collectApiVersion(input.developerPlatformClient, input.apiVersion, input.organizationId)
+  const topic = await collectTopic(input.developerPlatformClient, apiVersion, input.topic, input.organizationId)
+  const [address, deliveryMethod] = await collectAddressAndMethod(input.deliveryMethod, input.address)
+  const clientCredentials = await collectCredentials(input, deliveryMethod)
 
   return {
     topic,
@@ -55,7 +59,8 @@ async function validateAndCollectFlags(
     address,
     apiKey: clientCredentials.apiKey,
     clientSecret: clientCredentials.clientSecret,
-    developerPlatformClient: clientCredentials.developerPlatformClient ?? developerPlatformClient,
+    developerPlatformClient: input.developerPlatformClient,
+    organizationId: input.organizationId,
   }
 }
 
@@ -68,7 +73,7 @@ async function sendSample(options: WebhookTriggerOptions) {
     shared_secret: options.clientSecret,
     api_key: options.apiKey,
   }
-  const sample = await getWebhookSample(options.developerPlatformClient, variables)
+  const sample = await getWebhookSample(options.developerPlatformClient, variables, options.organizationId)
 
   if (!sample.success) {
     consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)

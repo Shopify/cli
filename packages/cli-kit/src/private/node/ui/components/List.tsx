@@ -65,7 +65,7 @@ const List: FunctionComponent<ListProps> = ({
   const ListItem: FunctionComponent<ListItemProps> = ({item, color, bullet, index, ordered}) => {
     return (
       <Box key={index} marginLeft={margin ? 2 : 0}>
-        <Text color={color}>{`${ordered ? `${index + 1}.` : bullet}`}</Text>
+        <Text color={color}>{ordered ? `${index + 1}.` : bullet}</Text>
 
         <Box flexGrow={1} marginLeft={1}>
           <Text color={color}>

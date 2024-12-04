@@ -1,27 +1,13 @@
 import {themeFlags} from '../../flags.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
-import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
-import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
-import {push} from '../../services/push.js'
-import {hasRequiredThemeDirectories} from '../../utilities/theme-fs.js'
-import {currentDirectoryConfirmed} from '../../utilities/theme-ui.js'
+import ThemeCommand from '../../utilities/theme-command.js'
+import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {LIVE_THEME_ROLE, Role, UNPUBLISHED_THEME_ROLE, promptThemeName} from '@shopify/cli-kit/node/themes/utils'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {createTheme} from '@shopify/cli-kit/node/themes/api'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
-  static usage = ['theme:push', 'theme:push --unpublished --json']
+  static usage = ['theme push', 'theme push --unpublished --json']
 
   static descriptionWithMarkdown = `Uploads your local theme files to Shopify, overwriting the remote version if specified.
 
@@ -57,6 +43,7 @@ export default class Push extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...themeFlags,
+    ...jsonFlag,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -79,7 +66,7 @@ export default class Push extends ThemeCommand {
     }),
     nodelete: Flags.boolean({
       char: 'n',
-      description: 'Runs the push command without deleting local files.',
+      description: `Prevent deleting remote files that don't exist locally.`,
       env: 'SHOPIFY_FLAG_NODELETE',
     }),
     only: Flags.string({
@@ -94,11 +81,6 @@ export default class Push extends ThemeCommand {
       multiple: true,
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output JSON instead of a UI.',
-      env: 'SHOPIFY_FLAG_JSON',
-    }),
     'allow-live': Flags.boolean({
       char: 'a',
       description: 'Allow push to a live theme.',
@@ -109,149 +91,42 @@ export default class Push extends ThemeCommand {
       description: 'Publish as the live theme after uploading.',
       env: 'SHOPIFY_FLAG_PUBLISH',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for the `shopify theme push` command.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
     force: Flags.boolean({
       hidden: true,
       char: 'f',
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    strict: Flags.boolean({
+      description: 'Require theme check to pass without errors before pushing. Warnings are allowed.',
+      env: 'SHOPIFY_FLAG_STRICT_PUSH',
+    }),
   }
-
-  static cli2Flags = [
-    'theme',
-    'development',
-    'live',
-    'unpublished',
-    'nodelete',
-    'only',
-    'ignore',
-    'json',
-    'allow-live',
-    'publish',
-    'force',
-    'development-theme-id',
-  ]
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
-    const {path, force} = flags
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    const workingDirectory = path ? resolvePath(path) : cwd()
-    if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await currentDirectoryConfirmed(force))) {
-      return
+    const pushFlags: PushFlags = {
+      path: flags.path,
+      password: flags.password,
+      store: flags.store,
+      environment: flags.environment,
+      theme: flags.theme,
+      development: flags.development,
+      live: flags.live,
+      unpublished: flags.unpublished,
+      nodelete: flags.nodelete,
+      only: flags.only,
+      ignore: flags.ignore,
+      json: flags.json,
+      allowLive: flags['allow-live'],
+      publish: flags.publish,
+      force: flags.force,
+      noColor: flags['no-color'],
+      verbose: flags.verbose,
+      strict: flags.strict,
     }
 
-    if (!flags.legacy && !flags.password) {
-      const {path, nodelete, publish, json, force, ignore, only} = flags
-
-      const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
-      if (!selectedTheme) {
-        return
-      }
-
-      await push(selectedTheme, adminSession, {
-        path,
-        nodelete,
-        publish,
-        json,
-        force,
-        ignore,
-        only,
-      })
-
-      return
-    }
-
-    const flagsForCli2 = flags as typeof flags & FlagValues
-
-    showEmbeddedCLIWarning()
-
-    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-
-    const targetTheme = await (flagsForCli2.development
-      ? developmentThemeManager.findOrCreate()
-      : developmentThemeManager.fetch())
-
-    if (targetTheme) {
-      if (flagsForCli2.development) {
-        flagsForCli2.theme = `${targetTheme.id}`
-        flagsForCli2.development = false
-      }
-      if (useEmbeddedThemeCLI()) {
-        flagsForCli2['development-theme-id'] = targetTheme.id
-      }
-    }
-
-    const flagsToPass = this.passThroughFlags(flagsForCli2, {
-      allowedFlags: Push.cli2Flags,
-    })
-    const command = ['theme', 'push', flagsForCli2.path, ...flagsToPass]
-
-    await execCLI2(command, {store, adminToken: adminSession.token})
+    await push(pushFlags)
   }
-}
-
-export interface ThemeSelectionOptions {
-  live?: boolean
-  development?: boolean
-  unpublished?: boolean
-  theme?: string
-  'allow-live'?: boolean
-}
-
-export async function createOrSelectTheme(
-  adminSession: AdminSession,
-  flags: ThemeSelectionOptions,
-): Promise<Theme | undefined> {
-  const {live, development, unpublished, theme} = flags
-
-  if (development) {
-    const themeManager = new DevelopmentThemeManager(adminSession)
-    return themeManager.findOrCreate()
-  } else if (unpublished) {
-    const themeName = theme || (await promptThemeName('Name of the new theme'))
-    return createTheme(
-      {
-        name: themeName,
-        role: UNPUBLISHED_THEME_ROLE,
-      },
-      adminSession,
-    )
-  } else {
-    const selectedTheme = await findOrSelectTheme(adminSession, {
-      header: 'Select a theme to push to:',
-      filter: {
-        live,
-        theme,
-      },
-    })
-
-    if (await confirmPushToTheme(selectedTheme.role as Role, flags['allow-live'], adminSession.storeFqdn)) {
-      return selectedTheme
-    }
-  }
-}
-
-async function confirmPushToTheme(themeRole: Role, allowLive: boolean | undefined, storeFqdn: string) {
-  if (themeRole === LIVE_THEME_ROLE) {
-    if (allowLive) {
-      return true
-    }
-
-    const options: RenderConfirmationPromptOptions = {
-      message: `Push theme files to the ${themeRole} theme on ${storeFqdn}?`,
-      confirmationMessage: 'Yes, confirm changes',
-      cancellationMessage: 'Cancel',
-    }
-
-    return renderConfirmationPrompt(options)
-  }
-  return true
 }

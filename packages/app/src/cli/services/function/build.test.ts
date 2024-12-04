@@ -1,5 +1,5 @@
 import {buildGraphqlTypes, bundleExtension, runJavy, ExportJavyBuilder, jsExports} from './build.js'
-import {javyBinary} from './binaries.js'
+import {javyBinary, javyPluginBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -143,7 +143,16 @@ describe('runJavy', () => {
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
       javyBinary().path,
-      ['build', '-C', 'dynamic', '-o', joinPath(ourFunction.directory, 'dist/index.wasm'), 'dist/function.js'],
+      [
+        'build',
+        '-C',
+        'dynamic',
+        '-C',
+        `plugin=${javyPluginBinary().path}`,
+        '-o',
+        joinPath(ourFunction.directory, 'dist/index.wasm'),
+        'dist/function.js',
+      ],
       {
         cwd: ourFunction.directory,
         stderr: 'inherit',
@@ -229,6 +238,8 @@ describe('ExportJavyBuilder', () => {
             'build',
             '-C',
             'dynamic',
+            '-C',
+            `plugin=${javyPluginBinary().path}`,
             '-C',
             expect.stringContaining('wit='),
             '-C',

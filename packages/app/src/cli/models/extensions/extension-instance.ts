@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
@@ -20,17 +21,17 @@ import {
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
-import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath} from '../app/app.js'
+import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export const CONFIG_EXTENSION_IDS = [
   AppAccessSpecIdentifier,
@@ -112,6 +113,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
+  get isSourceMapGeneratingExtension() {
+    return this.features.includes('generates_source_maps')
+  }
+
   get isAppConfigExtension() {
     return ['single', 'dynamic'].includes(this.specification.uidStrategy)
   }
@@ -129,7 +134,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    return `${this.handle}.js`
+    return this.isFunctionExtension ? 'index.wasm' : `${this.handle}.js`
   }
 
   constructor(options: {
@@ -152,7 +157,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.uid = this.configuration.uid ?? randomUUID()
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
-      this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
+      this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
     }
 
     if (this.isFunctionExtension) {
@@ -194,25 +199,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async deployConfig({
     apiKey,
-    developerPlatformClient,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient, appConfiguration})
-    return this.commonDeployConfig(apiKey, appConfiguration)
-  }
-
-  async functionDeployConfig({
-    apiKey,
-    developerPlatformClient,
-  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, developerPlatformClient)
-    return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
-  }
-
-  async commonDeployConfig(
-    apiKey: string,
-    appConfiguration: AppConfigurationWithoutPath,
-  ): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
@@ -236,6 +224,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.buildValidation(this)
   }
 
+  async keepBuiltSourcemapsLocally(bundleDirectory: string, extensionId: string): Promise<void> {
+    if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
+
+    const inputPath = joinPath(bundleDirectory, extensionId)
+
+    const pathsToMove = await glob(`**/${this.handle}.js.map`, {
+      cwd: inputPath,
+      absolute: true,
+      followSymbolicLinks: false,
+    })
+
+    const pathToMove = pathsToMove[0]
+    if (pathToMove === undefined) return Promise.resolve()
+
+    const outputPath = joinPath(this.directory, 'dist', basename(pathToMove))
+    await moveFile(pathToMove, outputPath, {overwrite: true})
+    outputDebug(`Source map for ${this.localIdentifier} created: ${outputPath}`)
+  }
+
   async publishURL(options: {orgId: string; appId: string; extensionId?: string}) {
     const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
@@ -247,8 +254,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (this.specification.getBundleExtensionStdinContent) {
       return this.specification.getBundleExtensionStdinContent(this.configuration)
     }
-    const relativeImportPath = this.entrySourceFilePath?.replace(this.directory, '')
-    return `import '.${relativeImportPath}';`
+    const relativeImportPath = this.entrySourceFilePath.replace(this.directory, '')
+    return {main: `import '.${relativeImportPath}';`}
   }
 
   shouldFetchCartUrl(): boolean {
@@ -263,6 +270,22 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   get buildCommand() {
     const config = this.configuration as unknown as FunctionConfigType
     return config.build.command
+  }
+
+  // Paths to be watched in a dev session
+  // Return undefiend if there aren't custom configured paths. (everything is watched)
+  // If there are, include some default paths.
+  get devSessionWatchPaths() {
+    const config = this.configuration as unknown as FunctionConfigType
+    if (!config.build || !config.build.watch) return undefined
+
+    const watchPaths = [config.build.watch].flat().map((path) => joinPath(this.directory, path))
+
+    watchPaths.push(joinPath(this.directory, 'locales', '**.json'))
+    watchPaths.push(joinPath(this.directory, '**', '!(.)*.graphql'))
+    watchPaths.push(joinPath(this.directory, '**.toml'))
+
+    return watchPaths
   }
 
   get watchBuildPaths() {
@@ -308,7 +331,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isJavaScript() {
-    return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
+    return Boolean(this.entrySourceFilePath.endsWith('.js') || this.entrySourceFilePath.endsWith('.ts'))
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
@@ -330,19 +353,29 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
-    const extensionId = identifiers?.extensions[this.localIdentifier] ?? this.configuration.uid ?? this.handle
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
+    const extensionId = this.getOutputFolderId(identifiers?.extensions[this.localIdentifier])
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionId)
     }
 
     await this.build(options)
-
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
     }
+
+    await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId)
+  }
+
+  getOutputFolderId(extensionId?: string) {
+    return extensionId ?? this.configuration.uid ?? this.handle
+  }
+
+  getOutputPathForDirectory(directory: string, extensionId?: string) {
+    const id = this.getOutputFolderId(extensionId)
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
+    return joinPath(directory, id, outputFile)
   }
 
   get singleTarget() {
@@ -363,7 +396,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionBundleConfigOptions): Promise<BundleConfig | undefined> {
-    const configValue = await this.deployConfig({apiKey, developerPlatformClient, appConfiguration})
+    const configValue = await this.deployConfig({apiKey, appConfiguration})
     if (!configValue) return undefined
 
     const result = {
@@ -385,6 +418,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
+  async getDevSessionActionUpdateMessage(
+    appConfig: CurrentAppConfiguration,
+    storeFqdn: string,
+  ): Promise<string | undefined> {
+    if (!this.specification.getDevSessionActionUpdateMessage) return undefined
+    return this.specification.getDevSessionActionUpdateMessage(this.configuration, appConfig, storeFqdn)
+  }
+
   private buildHandle() {
     switch (this.specification.uidStrategy) {
       case 'single':
@@ -402,7 +443,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
 interface ExtensionDeployConfigOptions {
   apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
   appConfiguration: AppConfigurationWithoutPath
 }
 

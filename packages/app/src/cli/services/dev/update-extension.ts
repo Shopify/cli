@@ -24,6 +24,7 @@ interface UpdateExtensionDraftOptions {
   stdout: Writable
   stderr: Writable
   appConfiguration: AppConfigurationWithoutPath
+  bundlePath: string
 }
 
 export async function updateExtensionDraft({
@@ -34,10 +35,12 @@ export async function updateExtensionDraft({
   stdout,
   stderr,
   appConfiguration,
+  bundlePath,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
+  const outputPath = extension.getOutputPathForDirectory(bundlePath)
   if (extension.features.includes('esbuild')) {
-    const content = await readFile(extension.outputPath)
+    const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
   }
@@ -47,15 +50,20 @@ export async function updateExtensionDraft({
     // When updating just the theme extension draft, upload the files as part of the config.
     config = await themeExtensionConfig(extension)
   } else {
-    config = (await extension.deployConfig({apiKey, developerPlatformClient, appConfiguration})) || {}
+    config = (await extension.deployConfig({apiKey, appConfiguration})) || {}
   }
 
+  const draftableConfig: {[key: string]: unknown} = {
+    ...config,
+    serialized_script: encodedFile,
+  }
+  if (extension.isFunctionExtension) {
+    const compiledFiles = await readFile(outputPath, {encoding: 'base64'})
+    draftableConfig.uploaded_files = {'dist/index.wasm': compiledFiles}
+  }
   const extensionInput: ExtensionUpdateDraftMutationVariables = {
     apiKey,
-    config: JSON.stringify({
-      ...config,
-      serialized_script: encodedFile,
-    }),
+    config: JSON.stringify(draftableConfig),
     handle: extension.handle,
     context: extension.contextValue,
     registrationId,

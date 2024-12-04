@@ -2,14 +2,17 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+
+export class ShopifyEssentialError extends Error {}
 
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
-    redirect: 'manual',
   })
 
-  return response.status === 302
+  const redirectLocation = new URL(response.url)
+  return redirectLocation.pathname.endsWith('/password')
 }
 
 /**
@@ -17,12 +20,19 @@ export async function isStorefrontPasswordProtected(storeURL: string): Promise<b
  * If the password is correct, SFR will respond with a 302 to redirect to the storefront
  */
 export async function isStorefrontPasswordCorrect(password: string | undefined, store: string) {
-  const response = await fetch(`${prependHttps(store)}/password`, {
+  const storeUrl = prependHttps(store)
+  const params = new URLSearchParams()
+
+  params.append('form_type', 'storefront_password')
+  params.append('utf8', '✓')
+  params.append('password', password ?? '')
+
+  const response = await fetch(`${storeUrl}/password`, {
     headers: {
       'cache-control': 'no-cache',
       'content-type': 'application/x-www-form-urlencoded',
     },
-    body: `form_type=storefront_password&utf8=%E2%9C%93&password=${password}`,
+    body: params.toString(),
     method: 'POST',
     redirect: 'manual',
   })
@@ -32,7 +42,22 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
       `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
     )
   }
-  return response.status === 302 && response.headers.get('location') === `${prependHttps(store)}/`
+
+  const locationHeader = response.headers.get('location') ?? ''
+  let redirectUrl: URL
+
+  try {
+    redirectUrl = new URL(locationHeader, storeUrl)
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
+  }
+
+  const storeOrigin = new URL(storeUrl).origin
+
+  return response.status === 302 && redirectUrl.origin === storeOrigin
 }
 
 export async function getStorefrontSessionCookies(
@@ -43,16 +68,6 @@ export async function getStorefrontSessionCookies(
 ): Promise<{[key: string]: string}> {
   const cookieRecord: {[key: string]: string} = {}
   const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
-
-  if (!shopifyEssential) {
-    /**
-     * SFR should always define a _shopify_essential, so an error at this point
-     * is likely a Shopify error or firewall issue.
-     */
-    throw new AbortError(
-      'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
-    )
-  }
 
   cookieRecord._shopify_essential = shopifyEssential
 
@@ -65,12 +80,6 @@ export async function getStorefrontSessionCookies(
   }
 
   const storefrontDigest = await enrichSessionWithStorefrontPassword(shopifyEssential, storeUrl, password, headers)
-
-  if (!storefrontDigest) {
-    throw new AbortError(
-      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
-    )
-  }
 
   cookieRecord.storefront_digest = storefrontDigest
 
@@ -98,6 +107,21 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const shopifyEssential = getCookie(setCookies, '_shopify_essential')
 
+  /**
+   * SFR should always define a _shopify_essential, so an error at this point
+   * is likely a Shopify error or firewall issue.
+   */
+  if (!shopifyEssential) {
+    outputDebug(
+      `Failed to obtain _shopify_essential cookie.\n
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
+       -Body: ${await response.text()}`,
+    )
+    throw new ShopifyEssentialError(
+      'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+    )
+  }
+
   return shopifyEssential
 }
 
@@ -122,6 +146,17 @@ async function enrichSessionWithStorefrontPassword(
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
+
+  if (!storefrontDigest) {
+    outputDebug(
+      `Failed to obtain storefront_digest cookie.\n
+       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
+       -Body: ${await response.text()}`,
+    )
+    throw new AbortError(
+      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+    )
+  }
 
   return storefrontDigest
 }

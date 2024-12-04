@@ -4,23 +4,25 @@ import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
-import Demo from './cli/commands/demo/index.js'
-import Catalog from './cli/commands/demo/catalog.js'
-import GenerateFile from './cli/commands/demo/generate-file.js'
-import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
+import List from './cli/commands/notifications/list.js'
+import Generate from './cli/commands/notifications/generate.js'
+import ClearCache from './cli/commands/cache/clear.js'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
-import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
+import {runCLI} from '@shopify/cli-kit/node/cli'
+import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
+import {renderFatalError} from '@shopify/cli-kit/node/ui'
+import {FatalError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
@@ -28,6 +30,7 @@ export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunne
 export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
+export {push, pull, fetchStoreThemes} from '@shopify/theme'
 
 export const HydrogenInitHook = HydrogenHooks.init
 
@@ -38,7 +41,11 @@ export const HydrogenInitHook = HydrogenHooks.init
 // the error stack and manually call exit so that the cleanup code is called. This
 // makes sure that there are no lingering tunnel processes.
 process.on('uncaughtException', (err) => {
-  fs.writeSync(process.stderr.fd, `${err.stack || err.message || err}\n`)
+  if (err instanceof FatalError) {
+    renderFatalError(err)
+  } else {
+    fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
+  }
   process.exit(1)
 })
 const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']
@@ -60,18 +67,13 @@ interface RunShopifyCLIOptions {
 }
 
 async function runShopifyCLI({development}: RunShopifyCLIOptions) {
-  if (!development) {
-    // If we run a local CLI instead, don't run the global one again after!
-    const ranLocalInstead = await useLocalCLIIfDetected(import.meta.url)
-    if (ranLocalInstead) {
-      return
-    }
-  }
-
-  await runCLI({
-    moduleURL: import.meta.url,
-    development,
-  })
+  await runCLI(
+    {
+      moduleURL: import.meta.url,
+      development,
+    },
+    launchCLI,
+  )
 }
 
 // Hide plugins command
@@ -83,7 +85,7 @@ PluginPluginsCommands['plugins:install'].description = ''
 const appCommands = Object.keys(AppCommands) as (keyof typeof AppCommands)[]
 appCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(AppCommands[command] as any).customPluginName = '@shopify/app'
+  ;(AppCommands[command] as unknown as any).customPluginName = '@shopify/app'
 })
 
 const themeCommands = Object.keys(ThemeCommands) as (keyof typeof ThemeCommands)[]
@@ -130,15 +132,14 @@ export const COMMANDS: any = {
   help: HelpCommand,
   'auth:logout': Logout,
   'debug:command-flags': CommandFlags,
-  demo: Demo,
-  'demo:catalog': Catalog,
-  'demo:generate-file': GenerateFile,
-  'demo:print-ai-prompt': PrintAIPrompt,
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
   'docs:generate': DocsGenerate,
+  'notifications:list': List,
+  'notifications:generate': Generate,
+  'cache:clear': ClearCache,
 }
 
 export default runShopifyCLI

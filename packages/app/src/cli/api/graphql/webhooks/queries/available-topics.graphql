@@ -1,0 +1,3 @@
+query availableTopics($apiVersion: String!) {
+  availableTopics(apiVersion: $apiVersion)
+}

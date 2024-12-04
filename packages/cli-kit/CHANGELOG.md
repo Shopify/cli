@@ -1,5 +1,34 @@
 # @shopify/cli-kit
 
+## 3.71.0
+
+### Patch Changes
+
+- 5fd19d2920: Improve display of links for terminals that don't support hyperlinks
+- 5531731c11: Skip notifications when using --json, -j or SHOPIFY_FLAG_JSON
+
+## 3.70.0
+
+### Minor Changes
+
+- 33477dd9d7: Notification system
+
+### Patch Changes
+
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+
+## 3.69.0
+
+### Minor Changes
+
+- 283aa815c: Remove support for access_code based Shopify authentication within the CLI
+
+## 3.68.0
+
+### Patch Changes
+
+- 4d89691ad: Fix a bug when building empty theme assets
+
 ## 3.67.0
 
 ### Minor Changes

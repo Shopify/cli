@@ -88,6 +88,7 @@ const generateExtensionPrompts = async (
     })
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
   const name = options.name || (await promptName(options.directory, extensionTemplate.defaultName))

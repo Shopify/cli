@@ -16,11 +16,11 @@ import {
   testFunctionExtension,
   testWebhookExtensions,
   testEditorExtensionCollection,
+  testAppAccessConfigExtension,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -39,6 +39,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     },
   },
   application_url: 'http://example.com',
+  embedded: false,
   auth: {
     redirect_urls: ['https://google.com'],
   },
@@ -360,34 +361,13 @@ describe('allExtensions', () => {
     webhooks: WebhooksConfig
   }
 
-  test('filters declarative webhook config when flag is not enabled', async () => {
-    const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
-    const app = await testApp(
-      {
-        configuration: CORRECT_CURRENT_APP_SCHEMA,
-        allExtensions: webhookExtensions,
-      },
-      'current',
-    )
-
-    const webhookConfig = app.allExtensions.find((ext) => ext.handle === 'webhooks')!
-      .configuration as unknown as WebhookTestConfig
-    const privacyConfig = app.allExtensions.find((ext) => ext.handle === 'privacy-compliance-webhooks')!
-      .configuration as unknown as WebhookTestConfig
-
-    expect(webhookConfig.webhooks.subscriptions!.length).toStrictEqual(0)
-    expect(webhookConfig.webhooks.privacy_compliance).toBeDefined()
-    expect(privacyConfig.webhooks.subscriptions!.length).toStrictEqual(0)
-    expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
-  })
-
   test('keeps declarative webhook config when flag is enabled', async () => {
     const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
-    const app = await testApp(
+    const app = testApp(
       {
         configuration: CORRECT_CURRENT_APP_SCHEMA,
         allExtensions: webhookExtensions,
-        remoteFlags: [Flag.DeclarativeWebhooks],
+        remoteFlags: [],
       },
       'current',
     )
@@ -401,6 +381,62 @@ describe('allExtensions', () => {
     expect(webhookConfig.webhooks.privacy_compliance).toBeDefined()
     expect(privacyConfig.webhooks.subscriptions!.length).not.toStrictEqual(0)
     expect(privacyConfig.webhooks.privacy_compliance).toBeDefined()
+  })
+
+  test('includes configuration extensions when include_config_on_deploy is enabled', async () => {
+    const configExtension = await testAppAccessConfigExtension()
+    const app = testApp(
+      {
+        configuration: CORRECT_CURRENT_APP_SCHEMA,
+        allExtensions: [configExtension],
+      },
+      'current',
+    )
+
+    expect(app.allExtensions).toContain(configExtension)
+  })
+
+  test('does not include configuration extensions when include_config_on_deploy is disabled', async () => {
+    const configuration = {
+      ...CORRECT_CURRENT_APP_SCHEMA,
+      build: {
+        automatically_update_urls_on_dev: true,
+        dev_store_url: 'https://google.com',
+        include_config_on_deploy: false,
+      },
+    }
+    const configExtension = await testAppAccessConfigExtension()
+    const app = testApp(
+      {
+        configuration,
+        allExtensions: [configExtension],
+      },
+      'current',
+    )
+
+    expect(app.allExtensions).toHaveLength(0)
+  })
+
+  test('includes configuration extensions when using App Management API, ignoring include_config_on_deploy', async () => {
+    const configuration = {
+      ...CORRECT_CURRENT_APP_SCHEMA,
+      organization_id: '12345',
+      build: {
+        automatically_update_urls_on_dev: true,
+        dev_store_url: 'https://google.com',
+        include_config_on_deploy: false,
+      },
+    }
+    const configExtension = await testAppAccessConfigExtension()
+    const app = testApp(
+      {
+        configuration,
+        allExtensions: [configExtension],
+      },
+      'current',
+    )
+
+    expect(app.allExtensions).toContain(configExtension)
   })
 })
 

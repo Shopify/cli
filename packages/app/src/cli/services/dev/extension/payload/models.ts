@@ -1,4 +1,5 @@
 import {Localization} from '../localization.js'
+import {BuildManifest} from '../../../../models/extensions/specifications/ui_extension.js'
 import type {NewExtensionPointSchemaType, ApiVersionSchemaType} from '../../../../models/extensions/schemas.js'
 
 interface ExtensionsPayloadInterface {
@@ -25,8 +26,17 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
     url: string
   }
 }
+export interface Asset {
+  name: string
+  url: string
+  lastUpdated: number
+}
 
 export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType {
+  build_manifest: BuildManifest
+  assets: {
+    [name: string]: Asset
+  }
   root: {
     url: string
   }
@@ -37,10 +47,7 @@ export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType 
 
 export interface UIExtensionPayload {
   assets: {
-    main: {
-      url: string
-      lastUpdated: number
-    }
+    main: Asset
   }
   capabilities?: Capabilities
   development: {

@@ -1,0 +1,34 @@
+query activeAppRelease($appId: ID!) {
+  app(id: $appId) {
+    id
+    key
+    activeRoot {
+      clientCredentials {
+        secrets {
+          key
+        }
+      }
+    }
+    activeRelease {
+      id
+      version {
+        name
+        appModules {
+          ...ReleasedAppModule
+        }
+      }
+    }
+  }
+}
+
+fragment ReleasedAppModule on AppModule {
+  uuid
+  userIdentifier
+  handle
+  config
+  specification {
+    identifier
+    externalIdentifier
+    name
+  }
+}

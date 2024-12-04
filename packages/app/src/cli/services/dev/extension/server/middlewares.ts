@@ -86,7 +86,10 @@ export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewar
       })
     }
 
-    const buildDirectory = extension.outputPath.replace(`${extension.outputFileName}`, '')
+    const bundlePath = devOptions.appWatcher.buildOutputPath
+    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
+
+    const buildDirectory = extensionOutputPath.replace(extension.outputFileName, '')
 
     return fileServerMiddleware(request, response, next, {
       filePath: joinPath(buildDirectory, assetPath),
@@ -183,6 +186,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
         return
       }
     }
+    const bundlePath = devOptions.appWatcher.buildOutputPath
 
     response.setHeader('content-type', 'application/json')
     response.end(
@@ -201,7 +205,7 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
           url: new URL('/extensions/dev-console', devOptions.url).toString(),
         },
         store: devOptions.storeFqdn,
-        extension: await getUIExtensionPayload(extension, devOptions),
+        extension: await getUIExtensionPayload(extension, bundlePath, devOptions),
       }),
     )
   }

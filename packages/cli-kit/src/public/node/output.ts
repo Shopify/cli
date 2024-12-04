@@ -20,7 +20,6 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
-import {recordUIEvent} from '../../private/node/demo-recorder.js'
 import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
@@ -149,6 +148,7 @@ export function outputContent(
     if (i >= keys.length) {
       return
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const token = keys[i]!
 
     if (typeof token === 'string') {
@@ -392,31 +392,20 @@ export function consoleWarn(message: string): void {
   console.warn(withOrWithoutStyle(message))
 }
 
-interface OutputWhereAppropriateOptions {
-  skipUIEvent?: boolean
-}
-
 /**
  * Writes a message to the appropiated logger.
  *
  * @param logLevel - The log level to use to determine if the message should be output.
  * @param logger - The logger to use to output the message.
  * @param message - The message to output.
- * @param options - Additional options.
  */
-export function outputWhereAppropriate(
-  logLevel: LogLevel,
-  logger: Logger,
-  message: string,
-  options: OutputWhereAppropriateOptions = {skipUIEvent: false},
-): void {
+export function outputWhereAppropriate(logLevel: LogLevel, logger: Logger, message: string): void {
   if (shouldOutput(logLevel)) {
     if (logger instanceof Writable) {
       logger.write(message)
     } else {
       logger(message, logLevel)
     }
-    if (!options?.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }
 }
 

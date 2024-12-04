@@ -49,7 +49,7 @@ export const AppDeploy = gql`
 export interface AppModuleSettings {
   uid?: string
   uuid?: string
-  specificationIdentifier?: string
+  specificationIdentifier: string
   config: string
   context: string
   handle: string
@@ -76,9 +76,9 @@ export interface AppDeploySchema {
     appVersion: {
       uuid: string
       id: number
-      versionTag: string
+      versionTag?: string | null
       location: string
-      message: string
+      message?: string | null
       appModuleVersions: {
         uuid: string
         registrationUuid: string
@@ -89,7 +89,7 @@ export interface AppDeploySchema {
       }[]
     }
     userErrors: {
-      field: string[]
+      field?: string[] | null
       message: string
       category: string
       details: ErrorDetail[]

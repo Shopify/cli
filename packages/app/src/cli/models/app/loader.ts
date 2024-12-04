@@ -15,12 +15,15 @@ import {
   LegacyAppConfiguration,
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
+  AppCreationDefaultOptions,
+  AppLinkedInterface,
 } from './app.js'
+import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
@@ -41,14 +44,13 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename, relativePath, relativizePath, sniffForJson} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
+import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
+import ignore from 'ignore'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -199,6 +201,8 @@ export class AppErrors {
 interface AppLoaderConstructorArgs<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
   mode?: AppLoaderMode
   loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  // Used when reloading an app, to avoid some expensive steps during loading.
+  previousApp?: AppLinkedInterface
 }
 
 export async function checkFolderIsValidApp(directory: string) {
@@ -207,6 +211,21 @@ export async function checkFolderIsValidApp(directory: string) {
   throw new AbortError(
     outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
   )
+}
+
+export async function loadConfigForAppCreation(directory: string, name: string): Promise<AppCreationDefaultOptions> {
+  const state = await getAppConfigurationState(directory)
+  const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
+  const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
+
+  const loader = new AppLoader({loadedConfiguration})
+  const webs = await loader.loadWebs(directory)
+
+  return {
+    isLaunchable: webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend)),
+    scopesArray: getAppScopesArray(config),
+    name,
+  }
 }
 
 /**
@@ -233,6 +252,42 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
   return loader.loaded()
 }
 
+export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
+  const state = await getAppConfigurationState(app.directory, basename(app.configuration.path))
+  if (state.state !== 'connected-app') {
+    throw new AbortError('Error loading the app, please check your app configuration.')
+  }
+  const loadedConfiguration = await loadAppConfigurationFromState(state, app.specifications, app.remoteFlags ?? [])
+
+  const loader = new AppLoader({
+    loadedConfiguration,
+    previousApp: app,
+  })
+
+  return loader.loaded()
+}
+
+export async function loadAppUsingConfigurationState<TConfig extends AppConfigurationState>(
+  configState: TConfig,
+  {
+    specifications,
+    remoteFlags,
+    mode,
+  }: {
+    specifications: RemoteAwareExtensionSpecification[]
+    remoteFlags?: Flag[]
+    mode: AppLoaderMode
+  },
+): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
+  const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
+
+  const loader = new AppLoader({
+    mode,
+    loadedConfiguration,
+  })
+  return loader.loaded()
+}
+
 /**
  * Given basic information about an app's configuration state, what should the validated configuration type be?
  */
@@ -254,20 +309,20 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-let alreadyShownCLIWarning = false
-
 class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
-  private mode: AppLoaderMode
-  private errors: AppErrors = new AppErrors()
-  private specifications: TModuleSpec[]
-  private remoteFlags: Flag[]
-  private loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  private readonly mode: AppLoaderMode
+  private readonly errors: AppErrors = new AppErrors()
+  private readonly specifications: TModuleSpec[]
+  private readonly remoteFlags: Flag[]
+  private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
+  private readonly previousApp: AppLinkedInterface | undefined
 
-  constructor({mode, loadedConfiguration}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
+  constructor({mode, loadedConfiguration, previousApp}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
     this.mode = mode ?? 'strict'
     this.specifications = loadedConfiguration.specifications
     this.remoteFlags = loadedConfiguration.remoteFlags
     this.loadedConfiguration = loadedConfiguration
+    this.previousApp = previousApp
   }
 
   async loaded() {
@@ -280,15 +335,21 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const extensions = await this.loadExtensions(directory, configuration)
 
     const packageJSONPath = joinPath(directory, 'package.json')
-    const name = await loadAppName(directory)
-    const nodeDependencies = await getDependencies(packageJSONPath)
-    const packageManager = await getPackageManager(directory)
-    this.showGlobalCLIWarningIfNeeded(nodeDependencies, packageManager)
+
+    // These don't need to be processed again if the app is being reloaded
+    const name = this.previousApp?.name ?? (await loadAppName(directory))
+    const nodeDependencies = this.previousApp?.nodeDependencies ?? (await getDependencies(packageJSONPath))
+    const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
+    const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
+
+    if (!this.previousApp) {
+      await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
+    }
+
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
       configuration.web_directories,
     )
-    const usesWorkspaces = await appUsesWorkspaces(directory)
 
     const appClass = new App({
       name,
@@ -305,6 +366,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       remoteFlags: this.remoteFlags,
     })
 
+    // Show CLI notifications that are targetted for when your app has specific extension types
+    const extensionTypes = appClass.realExtensions.map((module) => module.type)
+    await showNotificationsIfNeeded(extensionTypes)
+
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
     await logMetadataForLoadedApp(appClass, {
@@ -313,6 +378,23 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     })
 
     return appClass
+  }
+
+  async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+    const defaultWebDirectory = '**'
+    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
+      return joinPath(appDirectory, webGlob, configurationFileNames.web)
+    })
+    webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
+    const webTomlPaths = await glob(webConfigGlobs)
+
+    const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
+    this.validateWebs(webs)
+
+    const webTomlsInStandardLocation = await glob(joinPath(appDirectory, `web/**/${configurationFileNames.web}`))
+    const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
+
+    return {webs, usedCustomLayout}
   }
 
   private findSpecificationForType(type: string) {
@@ -331,56 +413,15 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
-  private showGlobalCLIWarningIfNeeded(nodeDependencies: {[key: string]: string}, packageManager: string) {
-    const hasLocalCLI = nodeDependencies['@shopify/cli'] !== undefined
-    // Show the warning IFF:
-    // - The current process is global
-    // - The project has a local CLI
-    // - The user didn't include the --json flag (to avoid showing the warning in scripts or CI/CD pipelines)
-    if (currentProcessIsGlobal() && hasLocalCLI && !sniffForJson() && !alreadyShownCLIWarning) {
-      const warningContent = {
-        headline: 'You are running a global installation of Shopify CLI',
-        body: [
-          `This project has Shopify CLI as a local dependency in package.json. If you prefer to use that version, run the command with your package manager (e.g. ${packageManager} run shopify).`,
-        ],
-        link: {
-          label: 'For more information, see Shopify CLI documentation',
-          url: 'https://shopify.dev/docs/apps/tools/cli',
-        },
-      }
-      renderInfo(warningContent)
-      alreadyShownCLIWarning = true
-    }
-  }
-
-  private async loadWebs(
-    appDirectory: string,
-    webDirectories?: string[],
-  ): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
-    const defaultWebDirectory = '**'
-    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
-      return joinPath(appDirectory, webGlob, configurationFileNames.web)
-    })
-    webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
-    const webTomlPaths = await glob(webConfigGlobs)
-
-    const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
-    this.validateWebs(webs)
-
-    const webTomlsInStandardLocation = await glob(joinPath(appDirectory, `web/**/${configurationFileNames.web}`))
-    const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
-
-    return {webs, usedCustomLayout}
-  }
-
   private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
-      if (websOfType.length > 1) {
+      if (websOfType[1]) {
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
-          joinPath(websOfType[1]!.directory, configurationFileNames.web),
+
+          joinPath(websOfType[1].directory, configurationFileNames.web),
         )
       }
     })
@@ -506,20 +547,21 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
-          const {extensions, ...restConfig} = mergedConfig
-          if (!restConfig.handle) {
+
+          // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
+          if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+              outputContent`Missing handle for extension "${mergedConfig.name}" at ${relativePath(
                 appDirectory,
                 configurationPath,
               )}`,
               undefined,
               configurationPath,
             )
-            restConfig.handle = 'unknown-handle'
+            mergedConfig.handle = 'unknown-handle'
           }
-          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
+          return this.createExtensionInstance(mergedConfig.type, mergedConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
@@ -598,6 +640,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     )
 
     // get all the keys from appConfiguration that aren't used by any of the results
+
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
@@ -620,7 +663,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   ) {
     if (!extensionInstance) return
 
-    const configContent = await extensionInstance.commonDeployConfig(apiKey, appConfiguration)
+    const configContent = await extensionInstance.deployConfig({apiKey, appConfiguration})
     return configContent ? extensionInstance : undefined
   }
 
@@ -631,7 +674,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         await Promise.all(
           ['index']
             .flatMap((name) => [`${name}.js`, `${name}.jsx`, `${name}.ts`, `${name}.tsx`])
-            .flatMap((fileName) => [`src/${fileName}`, `${fileName}`])
+            .flatMap((fileName) => [`src/${fileName}`, fileName])
             .map((relativePath) => joinPath(directory, relativePath))
             .map(async (sourcePath) => ((await fileExists(sourcePath)) ? sourcePath : undefined)),
         )
@@ -748,7 +791,7 @@ interface AppConfigurationStateBasics {
   configurationFileName: AppConfigurationFileName
 }
 
-type AppConfigurationStateLinked = AppConfigurationStateBasics & {
+export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
   state: 'connected-app'
   basicConfiguration: BasicAppConfigurationWithoutModules
 }
@@ -896,9 +939,7 @@ async function loadAppConfigurationFromState<
     case 'connected-app': {
       let gitTracked = false
       try {
-        gitTracked = !(
-          await checkIfIgnoredInGitRepository(configState.appDirectory, [configState.configurationPath])
-        )[0]
+        gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
         // leave as false
@@ -924,6 +965,16 @@ async function loadAppConfigurationFromState<
     specifications,
     remoteFlags,
   }
+}
+
+async function checkIfGitTracked(appDirectory: string, configurationPath: string) {
+  const gitIgnorePath = joinPath(appDirectory, '.gitignore')
+  if (!fileExistsSync(gitIgnorePath)) return true
+  const gitIgnoreContent = await readFile(gitIgnorePath)
+  const ignored = ignore.default().add(gitIgnoreContent)
+  const relative = relativePath(appDirectory, configurationPath)
+  const isTracked = !ignored.ignores(relative)
+  return isTracked
 }
 
 async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
@@ -1025,11 +1076,12 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
     return
   } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
     return 'frontend'
-  } else if (backendWebs.length === 0) {
+  } else if (!backendWebs[0]) {
     outputDebug('Unable to decide project type as no web backend')
     return
   }
-  const {directory} = backendWebs[0]!
+
+  const {directory} = backendWebs[0]
 
   const nodeConfigFile = joinPath(directory, 'package.json')
   const rubyConfigFile = joinPath(directory, 'Gemfile')

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
@@ -16,7 +17,6 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {setPathValue} from '@shopify/cli-kit/common/object'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -111,7 +111,7 @@ export function getAppVersionedSchema(
   allowDynamicallySpecifiedConfigs = false,
 ): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const schema = specs.reduce((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema as any)
+  const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
 
   if (allowDynamicallySpecifiedConfigs) {
     return schema.passthrough()
@@ -226,6 +226,8 @@ export interface AppConfigurationInterface<
   remoteFlags: Flag[]
 }
 
+export type AppLinkedInterface = AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
+
 export interface AppInterface<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
@@ -328,10 +330,6 @@ export class App<
   }
 
   get allExtensions() {
-    if (!this.remoteFlags.includes(Flag.DeclarativeWebhooks)) {
-      this.filterDeclarativeWebhooksConfig()
-    }
-
     if (this.includeConfigOnDeploy) return this.realExtensions
     return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
@@ -342,15 +340,23 @@ export class App<
     )
   }
 
+  get appManagementApiEnabled() {
+    if (isLegacyAppSchema(this.configuration)) return false
+    return this.configuration.organization_id !== undefined
+  }
+
   async manifest(): Promise<JsonMapType> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
-        const config = await module.commonDeployConfig('', this.configuration)
+        const config = await module.deployConfig({
+          apiKey: String(this.configuration.client_id ?? ''),
+          appConfiguration: this.configuration,
+        })
         return {
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
-          assets: module.uid,
+          assets: module.configuration.uid ?? module.handle,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
         }
@@ -428,22 +434,8 @@ export class App<
 
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
+    if (this.appManagementApiEnabled) return true
     return this.configuration.build?.include_config_on_deploy
-  }
-
-  private filterDeclarativeWebhooksConfig() {
-    const webhooksConfigIndex = this.realExtensions.findIndex((ext) => ext.handle === 'webhooks')
-    const complianceWebhooksConfigIndex = this.realExtensions.findIndex(
-      (ext) => ext.handle === 'privacy-compliance-webhooks',
-    )
-
-    if (webhooksConfigIndex > -1) {
-      setPathValue(this.realExtensions, `${webhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
-    }
-
-    if (complianceWebhooksConfigIndex > -1) {
-      setPathValue(this.realExtensions, `${complianceWebhooksConfigIndex}.configuration.webhooks.subscriptions`, [])
-    }
   }
 }
 

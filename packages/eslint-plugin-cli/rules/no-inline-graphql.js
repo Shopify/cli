@@ -121,17 +121,17 @@ const knownFailures = {
     'f48a44e2dae39f1b33ac685971740e3705f2754de5fdf1d6f1fbb3492bc62be2',
   'packages/app/src/cli/api/graphql/app_active_version.ts':
     '685d858cf3ad636fe8d771707715dd9a793e4aa4529f843eac3df625efd4d5be',
-  'packages/app/src/cli/api/graphql/app_deploy.ts': 'c03098a2d4ed2ea442881b9d7d82a566945e43574a87b5177526bad1d17e5c75',
-  'packages/app/src/cli/api/graphql/app_release.ts': 'db4b83d94aa75ac0f16b6cb86aea89758bfa8e4193f563a9d0b71f7875086e37',
+  'packages/app/src/cli/api/graphql/app_deploy.ts': 'ff060a322caebf8722fc2f0e2e1cec08fbb861fb258af2417fc430006b2c903e',
+  'packages/app/src/cli/api/graphql/app_release.ts': '3acace031157856c88dc57506d81364c084fb5ca66ab5c6ff59393ab5255846d',
   'packages/app/src/cli/api/graphql/app_version_by_tag.ts':
-    '8f2ea27ed7f8d1f3e480f546b0221d02bba582b20e3c1334eac89d1350cad4b9',
+    'a3231389ceb20eec4cab51186678b032e52d8f3e4df3078ce1a33c8ae83ac7fa',
   'packages/app/src/cli/api/graphql/app_versions_diff.ts':
     '233e2abb837d4cad52e985b373784314129163bf530a6caa501af2b711717b09',
   'packages/app/src/cli/api/graphql/convert_dev_to_transfer_disabled_store.ts':
     '0261459f988f5ba947ba52dc90dd049032196595cad5be8b7042ad1d0a22277c',
   'packages/app/src/cli/api/graphql/create_app.ts': '13fdc528f39a5e6d589c7834e03f916528f00b431e69b8148c6237229be1dc2c',
   'packages/app/src/cli/api/graphql/current_account_info.ts':
-    '2de25fd9e0363380ad42fd6ed2ec75f1817a47d342fbf77f5d447cff6f8a990a',
+    'e25977539cec28a33c0c32c75973ac5a78e3b4b5e504aa3d14d01291c5b42c14',
   'packages/app/src/cli/api/graphql/development_preview.ts':
     'db9e18b48c6cb6c76f8d03be74b902f8711c08d1512e26ed6e5884cafee62bfe',
   'packages/app/src/cli/api/graphql/extension_create.ts':
@@ -143,7 +143,7 @@ const knownFailures = {
   'packages/app/src/cli/api/graphql/extension_migrate_to_ui_extension.ts':
     'dd3fb42d0b9327de627bd02295de9e08087266885777602a34b44bdc460c0285',
   'packages/app/src/cli/api/graphql/extension_specifications.ts':
-    '9078c6fe4e0f48eea7d69e4253f1377fae58cc1ede4bd4f95b615d6b8b415b81',
+    'a514090fe981495a67123ccc7fcb74169d97f5b33551f9b8ebbbe6476bb66faa',
   'packages/app/src/cli/api/graphql/find_app.ts': '699def43534d0fdb4988b91e74a890778026960fd31662fecd86384ecfc05370',
   'packages/app/src/cli/api/graphql/find_app_preview_mode.ts':
     '8311925b338d4aba1957974bb815cfa8c5d8272226f68b8e74a69d91acc9c8cb',
@@ -161,7 +161,7 @@ const knownFailures = {
   'packages/app/src/cli/api/graphql/get_variant_id.ts':
     '805a7d8fb4b66ae23dc45cc37d401350c3d8eab4e262bd90e70afceb48be10de',
   'packages/app/src/cli/api/graphql/get_versions_list.ts':
-    '41193418b611eb6bb524dd893542e09fc7b3bab9739b816b432ad2a7084edb56',
+    '36b6f90c6687ba50b84b31de9fa28b4e9d0cadb732cab6c0d83664b627f2969d',
   'packages/app/src/cli/api/graphql/subscribe_to_app_logs.ts':
     '47ba882dc6bb2487cf6d047aa1f4b45c2eed96017faf80af45f8f954017983bf',
   'packages/app/src/cli/api/graphql/template_specifications.ts':

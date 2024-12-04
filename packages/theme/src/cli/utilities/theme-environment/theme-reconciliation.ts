@@ -1,7 +1,9 @@
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
+import {batchedRequests} from '../batching.js'
+import {MAX_GRAPHQL_THEME_FILES} from '../../constants.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchThemeAsset, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -38,8 +40,10 @@ export async function reconcileJsonFiles(
 
   outputDebug('Initiating theme asset reconciliation process')
 
-  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} =
-    await identifyFilesToReconcile(remoteChecksums, localThemeFileSystem)
+  const {filesOnlyPresentLocally, filesOnlyPresentOnRemote, filesWithConflictingChecksums} = identifyFilesToReconcile(
+    remoteChecksums,
+    localThemeFileSystem,
+  )
 
   if (
     filesOnlyPresentLocally.length === 0 &&
@@ -159,12 +163,22 @@ async function performFileReconciliation(
   const {localFilesToDelete, filesToDownload, remoteFilesToDelete} = partitionedFiles
 
   const deleteLocalFiles = localFilesToDelete.map((file) => localThemeFileSystem.delete(file.key))
-  const downloadRemoteFiles = filesToDownload.map(async (file) => {
-    const asset = await fetchThemeAsset(targetTheme.id, file.key, session)
-    if (asset) {
-      return localThemeFileSystem.write(asset)
-    }
+
+  const downloadRemoteFiles = batchedRequests(filesToDownload, MAX_GRAPHQL_THEME_FILES, async (chunk) => {
+    const assets = await fetchThemeAssets(
+      targetTheme.id,
+      chunk.map((file) => file.key),
+      session,
+    )
+    return Promise.all(
+      assets.map((asset) => {
+        if (asset) {
+          return localThemeFileSystem.write(asset)
+        }
+      }),
+    )
   })
+
   const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
 
   await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])

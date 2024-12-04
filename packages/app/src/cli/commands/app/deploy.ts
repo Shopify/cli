@@ -1,18 +1,17 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
+import {getAppConfigurationState} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
-import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Deploy extends Command {
+export default class Deploy extends AppCommand {
   static summary = 'Deploy your Shopify app.'
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.
@@ -31,19 +30,6 @@ export default class Deploy extends Command {
       hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
-    reset: Flags.boolean({
-      hidden: false,
-      description: 'Reset all your settings.',
-      env: 'SHOPIFY_FLAG_RESET',
-      default: false,
       exclusive: ['config'],
     }),
     force: Flags.boolean({
@@ -77,7 +63,7 @@ export default class Deploy extends Command {
     }),
   }
 
-  async run(): Promise<void> {
+  async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Deploy)
 
     await metadata.addPublicMetadata(() => ({
@@ -100,19 +86,25 @@ export default class Deploy extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const app: AppInterface = await loadApp({
-      directory: flags.path,
-      userProvidedConfigName: flags.config,
-      specifications: await loadLocalExtensionsSpecifications(),
-    })
-
     const requiredNonTTYFlags = ['force']
-    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
+    const configurationState = await getAppConfigurationState(flags.path, flags.config)
+    if (configurationState.state === 'template-only' && !apiKey) {
+      requiredNonTTYFlags.push('client-id')
+    }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    await deploy({
+    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+      directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
+    })
+
+    const result = await deploy({
       app,
-      apiKey,
+      remoteApp,
+      organization,
+      developerPlatformClient,
       reset: flags.reset,
       force: flags.force,
       noRelease: flags['no-release'],
@@ -120,5 +112,7 @@ export default class Deploy extends Command {
       version: flags.version,
       commitReference: flags['source-control-url'],
     })
+
+    return {app: result.app}
   }
 }

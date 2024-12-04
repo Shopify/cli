@@ -16,7 +16,6 @@ export const environmentVariables = {
   alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
   alwaysLogMetrics: 'SHOPIFY_CLI_ALWAYS_LOG_METRICS',
   deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
-  accessCodeAuth: 'SHOPIFY_CLI_ACCESS_CODE_AUTH',
   enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
   env: 'SHOPIFY_CLI_ENV',
   firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
@@ -45,6 +44,8 @@ export const environmentVariables = {
   refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
   otelURL: 'SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT',
   themeKitAccessDomain: 'SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN',
+  json: 'SHOPIFY_FLAG_JSON',
+  useAppManagement: 'USE_APP_MANAGEMENT_API',
 }
 
 export const defaultThemeKitAccessDomain = 'theme-kit-access.shopifyapps.com'
@@ -81,3 +82,6 @@ export const sessionConstants = {
 export const bugsnagApiKey = '9e1e6889176fd0c795d5c659225e0fae'
 
 export const reportingRateLimit = {limit: 300, timeout: {days: 1}}
+
+export const themeKitAccessDomain =
+  process.env[environmentVariables.themeKitAccessDomain] ?? defaultThemeKitAccessDomain

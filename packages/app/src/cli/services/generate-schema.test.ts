@@ -1,15 +1,7 @@
 import {generateSchemaService} from './generate-schema.js'
-import * as localEnvironment from './context.js'
-import * as identifiers from '../models/app/identifiers.js'
-import {
-  testApp,
-  testDeveloperPlatformClient,
-  testFunctionExtension,
-  testOrganizationApp,
-} from '../models/app/app.test-data.js'
+import {testAppLinked, testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
-import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
+import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -36,7 +28,7 @@ describe('generateSchemaService', () => {
   test('Save the latest GraphQL schema to ./[extension]/schema.graphql when stdout flag is ABSENT', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const app = testApp()
+      const app = testAppLinked()
       const extension = await testFunctionExtension({})
       const apiKey = 'api-key'
       const path = tmpDir
@@ -45,7 +37,6 @@ describe('generateSchemaService', () => {
       await generateSchemaService({
         app,
         extension,
-        apiKey,
         path,
         stdout: false,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -60,9 +51,8 @@ describe('generateSchemaService', () => {
   test('Print the latest GraphQL schema to stdout when stdout flag is PRESENT', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const app = testApp()
+      const app = testAppLinked()
       const extension = await testFunctionExtension()
-      const apiKey = 'api-key'
       const path = tmpDir
       const stdout = true
       const mockOutput = vi.fn()
@@ -72,7 +62,6 @@ describe('generateSchemaService', () => {
       await generateSchemaService({
         app,
         extension,
-        apiKey,
         path,
         stdout,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -87,7 +76,7 @@ describe('generateSchemaService', () => {
     test('Uses ApiSchemaDefinitionQuery when not using targets', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        const app = testApp()
+        const app = testAppLinked()
         const extension = await testFunctionExtension({
           config: {
             name: 'test function extension',
@@ -113,7 +102,6 @@ describe('generateSchemaService', () => {
         await generateSchemaService({
           app,
           extension,
-          apiKey,
           path,
           stdout: false,
           developerPlatformClient,
@@ -131,7 +119,7 @@ describe('generateSchemaService', () => {
     test('Uses TargetSchemaDefinitionQuery when targets present', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        const app = testApp()
+        const app = testAppLinked()
         const extension = await testFunctionExtension({
           config: {
             name: 'test function extension',
@@ -163,7 +151,6 @@ describe('generateSchemaService', () => {
         await generateSchemaService({
           app,
           extension,
-          apiKey,
           path,
           stdout: false,
           developerPlatformClient,
@@ -181,7 +168,7 @@ describe('generateSchemaService', () => {
 
   test('aborts if a schema could not be generated', async () => {
     // Given
-    const app = testApp()
+    const app = testAppLinked()
     const extension = await testFunctionExtension()
     const apiKey = 'api-key'
     const developerPlatformClient = testDeveloperPlatformClient({
@@ -192,7 +179,6 @@ describe('generateSchemaService', () => {
     const result = generateSchemaService({
       app,
       extension,
-      apiKey,
       path: '',
       stdout: true,
       developerPlatformClient,
@@ -200,130 +186,5 @@ describe('generateSchemaService', () => {
 
     // Then
     await expect(result).rejects.toThrow(AbortError)
-  })
-
-  describe('API key', () => {
-    const apiKey = 'api-key'
-    const identifiersApiKey = 'identifier-api-key'
-    const promptApiKey = 'prompt-api-key'
-
-    const getAppIdentifiers = identifiers.getAppIdentifiers as MockedFunction<typeof identifiers.getAppIdentifiers>
-    const fetchOrCreateOrganizationApp = localEnvironment.fetchOrCreateOrganizationApp as MockedFunction<
-      typeof localEnvironment.fetchOrCreateOrganizationApp
-    >
-
-    beforeEach(async () => {
-      getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
-      fetchOrCreateOrganizationApp.mockResolvedValue(
-        testOrganizationApp({
-          apiKey: promptApiKey,
-        }),
-      )
-      vi.mocked(isTerminalInteractive).mockReturnValue(true)
-    })
-
-    test('uses options API key if provided', async () => {
-      // Given
-      const app = testApp()
-      const extension = await testFunctionExtension()
-      const {
-        configuration: {api_version: version},
-        type,
-      } = extension
-      const developerPlatformClient = testDeveloperPlatformClient()
-
-      // When
-      await generateSchemaService({
-        app,
-        extension,
-        apiKey,
-        path: '',
-        stdout: true,
-        developerPlatformClient,
-      })
-
-      // Then
-      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
-        apiKey,
-        version,
-        type,
-      })
-    })
-
-    test('uses app identifier API key, if options API key is not provided', async () => {
-      // Given
-      const app = testApp()
-      const extension = await testFunctionExtension()
-      const {
-        configuration: {api_version: version},
-        type,
-      } = extension
-      const developerPlatformClient = testDeveloperPlatformClient()
-
-      // When
-      await generateSchemaService({
-        app,
-        extension,
-        path: '',
-        stdout: true,
-        developerPlatformClient,
-      })
-
-      // Then
-      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
-        apiKey: identifiersApiKey,
-        version,
-        type,
-      })
-    })
-
-    test('prompts for app if no API key is provided in interactive mode', async () => {
-      // Given
-      const app = testApp()
-      const extension = await testFunctionExtension()
-      const {
-        configuration: {api_version: version},
-        type,
-      } = extension
-      getAppIdentifiers.mockReturnValue({app: undefined})
-      const developerPlatformClient = testDeveloperPlatformClient()
-
-      // When
-      await generateSchemaService({
-        app,
-        extension,
-        path: '',
-        stdout: true,
-        developerPlatformClient,
-      })
-
-      // Then
-      expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
-        apiKey: promptApiKey,
-        version,
-        type,
-      })
-    })
-
-    test('aborts if no API key is provided in non-interactive mode', async () => {
-      // Given
-      const app = testApp()
-      const extension = await testFunctionExtension()
-      getAppIdentifiers.mockReturnValue({app: undefined})
-      vi.mocked(isTerminalInteractive).mockReturnValue(false)
-      const developerPlatformClient = testDeveloperPlatformClient()
-
-      // When
-      const result = generateSchemaService({
-        app,
-        extension,
-        path: '',
-        stdout: true,
-        developerPlatformClient: testDeveloperPlatformClient(),
-      })
-
-      await expect(result).rejects.toThrow()
-      expect(developerPlatformClient.apiSchemaDefinition).not.toHaveBeenCalled()
-    })
   })
 })

@@ -3,7 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/cli-kit/src",
   "projectType": "library",
-  "tags": ["scope:foundation"],
+  "tags": [
+    "scope:foundation"
+  ],
   "targets": {
     "clean": {
       "executor": "nx:run-commands",
@@ -14,8 +16,12 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
-      "inputs": ["{projectRoot}/src/**/*"],
+      "outputs": [
+        "{workspaceRoot}/dist"
+      ],
+      "inputs": [
+        "{projectRoot}/src/**/*"
+      ],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
         "cwd": "packages/cli-kit"
@@ -23,7 +29,9 @@
     },
     "docs:generate": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/docs"],
+      "outputs": [
+        "{workspaceRoot}/docs"
+      ],
       "options": {
         "command": "node ./scripts/generate-docs.js",
         "cwd": "packages/cli-kit"
@@ -31,28 +39,15 @@
     },
     "docs:open": {
       "executor": "nx:run-commands",
-      "dependsOn": ["docs:generate"],
+      "dependsOn": [
+        "docs:generate"
+      ],
       "options": {
         "command": "open ../../docs/api/cli-kit/index.html",
         "cwd": "packages/cli-kit"
       }
     },
     "lint": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["lint:js"],
-      "options": {
-        "cwd": "packages/cli-kit",
-        "commands": []
-      }
-    },
-    "lint:ruby": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bundle exec rake rubocop",
-        "cwd": "packages/cli-kit/assets/cli-ruby"
-      }
-    },
-    "lint:js": {
       "executor": "nx:run-commands",
       "options": {
         "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
@@ -61,40 +56,19 @@
     },
     "lint:fix": {
       "executor": "nx:run-commands",
-      "dependsOn": ["lint:js:fix"],
-      "options": {
-        "cwd": "packages/cli-kit",
-        "commands": []
-      }
-    },
-    "lint:js:fix": {
-      "executor": "nx:run-commands",
       "options": {
         "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
         "cwd": "packages/cli-kit"
       }
     },
-    "lint:ruby:fix": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bundle exec rake rubocop -a",
-        "cwd": "packages/cli-kit/assets/cli-ruby"
-      }
-    },
     "test": {
       "executor": "nx:run-commands",
-      "dependsOn": ["test:js"],
+      "dependsOn": [
+        "test:js"
+      ],
       "options": {
         "commands": [],
         "cwd": "packages/cli-kit"
-      }
-    },
-    "test:ruby": {
-      "executor": "nx:run-commands",
-      "dependsOn": [],
-      "options": {
-        "command": "bundle exec rake test",
-        "cwd": "packages/cli-kit/assets/cli-ruby"
       }
     },
     "test:js": {
@@ -106,7 +80,9 @@
     },
     "test:coverage": {
       "executor": "nx:run-commands",
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build"
+      ],
       "options": {
         "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
         "cwd": "packages/cli-kit"
@@ -131,6 +107,68 @@
       "options": {
         "command": "FORCE_HYPERLINK=0 node --loader ts-node/esm ./bin/refresh-documentation.ts",
         "cwd": "packages/cli-kit"
+      }
+    },
+    "graphql-codegen": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "graphql-codegen:formatting"
+      ]
+    },
+    "graphql-codegen:formatting": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "graphql-codegen:postfix"
+      ],
+      "inputs": [
+        {
+          "dependentTasksOutputFiles": "**/*.ts"
+        }
+      ],
+      "outputs": [
+        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
+      ],
+      "options": {
+        "commands": [
+          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix"
+        ],
+        "cwd": "packages/cli-kit"
+      }
+    },
+    "graphql-codegen:generate:admin": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"
+      ],
+      "outputs": [
+        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
+      ],
+      "options": {
+        "commands": [
+          "pnpm exec graphql-codegen --project=admin"
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "graphql-codegen:postfix": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "graphql-codegen:generate:admin"
+      ],
+      "inputs": [
+        {
+          "dependentTasksOutputFiles": "**/*.ts"
+        }
+      ],
+      "outputs": [
+        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
+      ],
+      "options": {
+        "commands": [
+          "find ./packages/cli-kit/src/cli/api/graphql/admin/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+        ],
+        "cwd": "{workspaceRoot}"
       }
     }
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
@@ -122,14 +123,6 @@ export async function createAsNewAppPrompt(): Promise<boolean> {
     message: 'Create this project as a new app on Shopify?',
     confirmationMessage: 'Yes, create it as a new app',
     cancellationMessage: 'No, connect it to an existing app',
-  })
-}
-
-export async function reuseDevConfigPrompt(): Promise<boolean> {
-  return renderConfirmationPrompt({
-    message: 'Deploy to the same org and app as you used for dev?',
-    confirmationMessage: 'Yes, deploy in the same way',
-    cancellationMessage: 'No, use a different org or app',
   })
 }
 

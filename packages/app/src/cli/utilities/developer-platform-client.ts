@@ -25,7 +25,6 @@ import {
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
-import {AppVersionByTagSchema} from '../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
@@ -55,8 +54,7 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {FunctionUploadUrlGenerateMutation} from '../api/graphql/partners/generated/function-upload-url-generate.js'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isAppManagementEnabled} from '@shopify/cli-kit/node/context/local'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -79,7 +77,7 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
+  if (isAppManagementEnabled()) clients.push(new AppManagementClient())
   return clients
 }
 
@@ -119,7 +117,7 @@ export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) {
+  if (isAppManagementEnabled()) {
     if (organization) return selectDeveloperPlatformClientByOrg(organization)
     return selectDeveloperPlatformClientByConfig(configuration)
   }
@@ -155,15 +153,22 @@ interface AppModuleVersionSpecification {
 export interface AppModuleVersion {
   registrationId: string
   registrationUuid?: string
-  registrationUid?: string
   registrationTitle: string
   config?: object
   type: string
   specification?: AppModuleVersionSpecification
 }
 
-export interface ActiveAppVersion {
+export interface AppVersion {
   appModuleVersions: AppModuleVersion[]
+}
+
+export type AppVersionWithContext = AppVersion & {
+  id: number
+  uuid: string
+  versionTag?: string | null
+  location: string
+  message: string
 }
 
 export type AppDeployOptions = AppDeployVariables & {
@@ -180,35 +185,31 @@ export interface DevSessionOptions {
 
 type WithUserErrors<T> = T & {
   userErrors: {
-    field: string[]
+    field?: string[] | null
     message: string
   }[]
 }
 
 export type AssetUrlSchema = WithUserErrors<{
-  assetUrl: string
+  assetUrl?: string | null
 }>
 
-export enum Flag {
-  DeclarativeWebhooks,
-}
+export enum Flag {}
 
-const FlagMap: {[key: string]: Flag} = {
-  '5b25141b': Flag.DeclarativeWebhooks,
-}
+const FlagMap: {[key: string]: Flag} = {}
 
 export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
-  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const defaultActiveFlags: Flag[] = []
   const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
   return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
 
 export interface DeveloperPlatformClient {
-  clientName: string
-  webUiName: string
-  supportsAtomicDeployments: boolean
-  requiresOrganization: boolean
-  supportsDevSessions: boolean
+  readonly clientName: string
+  readonly webUiName: string
+  readonly supportsAtomicDeployments: boolean
+  readonly requiresOrganization: boolean
+  readonly supportsDevSessions: boolean
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
@@ -224,13 +225,12 @@ export interface DeveloperPlatformClient {
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
-    activeAppVersion?: ActiveAppVersion,
+    activeAppVersion?: AppVersion,
   ) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
-  activeAppVersion: (app: MinimalAppIdentifiers) => Promise<ActiveAppVersion | undefined>
-  appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionByTagSchema>
+  activeAppVersion: (app: MinimalAppIdentifiers) => Promise<AppVersion | undefined>
+  appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>
-  functionUploadUrl: () => Promise<FunctionUploadUrlGenerateMutation>
   generateSignedUploadUrl: (app: MinimalAppIdentifiers) => Promise<AssetUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
@@ -241,9 +241,9 @@ export interface DeveloperPlatformClient {
   ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
-  sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>
-  apiVersions: () => Promise<PublicApiVersionsSchema>
-  topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
+  sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
+  apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
+  topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>
   migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
   migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
@@ -257,4 +257,5 @@ export interface DeveloperPlatformClient {
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
+  getCreateDevStoreLink: (input: string) => Promise<string>
 }

@@ -1,5 +1,107 @@
 # @shopify/app
 
+## 3.71.0
+
+### Patch Changes
+
+- 1c9d74988e: Update Javy invocation to use Javy plugin
+- 08f3ddba1f: Update Javy to 3.2.0 and function-runner to 6.3.0
+- 93d65a6c38: Remove PHP template from app creation options
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5107f4e805]
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [ff994c34d3]
+- Updated dependencies [1e267a2e04]
+- Updated dependencies [7017b9e31c]
+- Updated dependencies [5531731c11]
+- Updated dependencies [057e2c6189]
+- Updated dependencies [9548a34471]
+- Updated dependencies [33f713e06e]
+  - @shopify/theme@3.71.0
+  - @shopify/cli-kit@3.71.0
+  - @shopify/plugin-cloudflare@3.71.0
+
+## 3.70.0
+
+### Minor Changes
+
+- a52719a831: Always ask to enable `include_config_on_deploy` and warn about deprecation
+- 33477dd9d7: Notification system
+- d060df761a: Enable local file systen sourcemap generation for UI extensions
+
+### Patch Changes
+
+- 82786bc78c: Bump Shopify/theme-tools packages
+- 851867cbb2: adding optional preloads to ui extension targets
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+- 8f44866aaa: Updated Javy to 3.1.2
+- Updated dependencies [404cd2674c]
+- Updated dependencies [ade20307dc]
+- Updated dependencies [5aecb3eecb]
+- Updated dependencies [82786bc78c]
+- Updated dependencies [57abf0b31c]
+- Updated dependencies [eccb52dccd]
+- Updated dependencies [7d89068e32]
+- Updated dependencies [03b39a67b3]
+- Updated dependencies [8120536219]
+- Updated dependencies [b981aea41c]
+- Updated dependencies [33477dd9d7]
+  - @shopify/theme@3.70.0
+  - @shopify/cli-kit@3.70.0
+  - @shopify/plugin-cloudflare@3.70.0
+
+## 3.69.0
+
+### Minor Changes
+
+- 371d53d3e: Remove `legacy` flag and `Ruby` implementation for configuring `theme app extensions` via the `shopify app dev` command
+
+### Patch Changes
+
+- 0b297075f: Removed deprecated extension templates
+- Updated dependencies [a7f7dc300]
+- Updated dependencies [82dd1daf8]
+- Updated dependencies [1fe7024e6]
+- Updated dependencies [371d53d3e]
+- Updated dependencies [c75c8e201]
+- Updated dependencies [87b52747d]
+- Updated dependencies [8c6906c06]
+- Updated dependencies [283aa815c]
+- Updated dependencies [3b6159e8a]
+- Updated dependencies [265d3e178]
+- Updated dependencies [a38952cd6]
+- Updated dependencies [df7b178da]
+- Updated dependencies [707b901a7]
+- Updated dependencies [3f10612f0]
+- Updated dependencies [41bfd221f]
+- Updated dependencies [a6abeb289]
+- Updated dependencies [d9fff2c30]
+- Updated dependencies [89250c301]
+- Updated dependencies [1f5d13cf1]
+- Updated dependencies [51178f2f6]
+  - @shopify/theme@3.69.0
+  - @shopify/cli-kit@3.69.0
+  - @shopify/plugin-cloudflare@3.69.0
+
+## 3.68.0
+
+### Patch Changes
+
+- 5548552e2: Updates Javy to version 3.1.1
+- 53459a23f: Fixes a bug where some users were unable to intialize their app dev command with theme app extensions
+- Updated dependencies [fc7d5ce58]
+- Updated dependencies [cce54b10b]
+- Updated dependencies [53459a23f]
+- Updated dependencies [4d89691ad]
+- Updated dependencies [492225c47]
+- Updated dependencies [dc30dca87]
+- Updated dependencies [a2f31c249]
+- Updated dependencies [a1887fc14]
+- Updated dependencies [d6c661f06]
+  - @shopify/theme@3.68.0
+  - @shopify/cli-kit@3.68.0
+  - @shopify/plugin-cloudflare@3.68.0
+
 ## 3.67.0
 
 ### Minor Changes

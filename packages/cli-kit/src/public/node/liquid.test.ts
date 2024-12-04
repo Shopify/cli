@@ -51,4 +51,40 @@ describe('recursiveLiquidTemplateCopy', () => {
       expect(JSON.parse(outPackageJson)).toEqual(packageJson)
     })
   })
+
+  test('ignores files and folders in .cli-liquid-bypass', async () => {
+    const bypassPatterns = ['ignored.liquid', 'ignored-folder']
+
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const from = joinPath(tmpDir, 'from')
+      const ignoredFolder = joinPath(from, 'ignored-folder')
+      const to = joinPath(tmpDir, 'to')
+      await mkdir(from)
+      await mkdir(ignoredFolder)
+      await mkdir(to)
+
+      const bypassFile = joinPath(from, '.cli-liquid-bypass')
+      const ignoredFile = joinPath(from, 'ignored.liquid')
+      const folderIgnoredFile = joinPath(ignoredFolder, 'ignored2.liquid')
+      const processedFile = joinPath(from, 'processed.md.liquid')
+      await writeFile(bypassFile, bypassPatterns.join('\n'))
+      await writeFile(ignoredFile, '# {{variable}}')
+      await writeFile(folderIgnoredFile, '# {{variable}}')
+      await writeFile(processedFile, '# {{variable}}')
+
+      // When
+      await recursiveLiquidTemplateCopy(from, to, {variable: 'test'})
+
+      // Then
+      const outFile = joinPath(to, 'ignored.liquid')
+      const outFolderFile = joinPath(to, 'ignored-folder/ignored2.liquid')
+      const outProcessedFile = joinPath(to, 'processed.md')
+
+      await expect(readFile(outFile)).resolves.toEqual('# {{variable}}')
+      await expect(readFile(outFolderFile)).resolves.toEqual('# {{variable}}')
+      await expect(readFile(outProcessedFile)).resolves.toEqual('# test')
+    })
+  })
 })

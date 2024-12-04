@@ -1,9 +1,9 @@
-import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
+import {linkedAppContext} from '../app-context.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
@@ -25,14 +25,26 @@ export const functionFlags = {
 export async function inFunctionContext({
   path,
   userProvidedConfigName,
+  apiKey,
   callback,
+  reset,
 }: {
   path: string
   userProvidedConfigName?: string
-  callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<void>
+  apiKey?: string
+  reset?: boolean
+  callback: (
+    app: AppLinkedInterface,
+    developerPlatformClient: DeveloperPlatformClient,
+    ourFunction: ExtensionInstance<FunctionConfigType>,
+  ) => Promise<AppLinkedInterface>
 }) {
-  const specifications = await loadLocalExtensionsSpecifications()
-  const app: AppInterface = await loadApp({specifications, directory: path, userProvidedConfigName})
+  const {app, developerPlatformClient} = await linkedAppContext({
+    directory: path,
+    clientId: apiKey,
+    forceRelink: reset ?? false,
+    userProvidedConfigName,
+  })
 
   const allFunctions = app.allExtensions.filter(
     (ext) => ext.isFunctionExtension,
@@ -40,14 +52,14 @@ export async function inFunctionContext({
   const ourFunction = allFunctions.find((fun) => fun.directory === path)
 
   if (ourFunction) {
-    return callback(app, ourFunction)
+    return callback(app, developerPlatformClient, ourFunction)
   } else if (isTerminalInteractive()) {
     const selectedFunction = await renderAutocompletePrompt({
       message: 'Which function?',
       choices: allFunctions.map((shopifyFunction) => ({label: shopifyFunction.handle, value: shopifyFunction})),
     })
 
-    return callback(app, selectedFunction)
+    return callback(app, developerPlatformClient, selectedFunction)
   } else {
     throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
   }
@@ -55,7 +67,8 @@ export async function inFunctionContext({
 
 export async function getOrGenerateSchemaPath(
   extension: ExtensionInstance<FunctionConfigType>,
-  app: AppInterface,
+  app: AppLinkedInterface,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<string | undefined> {
   const path = joinPath(extension.directory, 'schema.graphql')
   if (await fileExists(path)) {
@@ -64,6 +77,7 @@ export async function getOrGenerateSchemaPath(
 
   await generateSchemaService({
     app,
+    developerPlatformClient,
     extension,
     stdout: false,
     path: extension.directory,

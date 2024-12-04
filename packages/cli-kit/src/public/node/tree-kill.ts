@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable jsdoc/require-throws */
 /* eslint-disable no-restricted-imports */
 
 import {outputDebug} from './output.js'
-import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {exec, spawn} from 'child_process'
 
 interface ProcessTree {
@@ -31,7 +31,6 @@ export function treeKill(
     ((error?: Error) => {
       if (error) outputDebug(`Failed to kill process ${pid}: ${error}`)
     })
-  printEventsJson()
   adaptedTreeKill(pid, killSignal, killRoot, after)
 }
 
@@ -58,7 +57,8 @@ function adaptedTreeKill(
 
   if (Number.isNaN(rootPid)) {
     if (callback) {
-      return callback(new Error('pid must be a number'))
+      callback(new Error('pid must be a number'))
+      return
     } else {
       throw new Error('pid must be a number')
     }
@@ -69,7 +69,7 @@ function adaptedTreeKill(
   tree[rootPid] = []
 
   // A set of pids to visit. We use it to recursively find all the children pids
-  const pidsToProcess: Set<string> = new Set()
+  const pidsToProcess = new Set<string>()
   pidsToProcess.add(rootPid)
 
   switch (process.platform) {
@@ -123,7 +123,7 @@ function killAll(
   killRoot: boolean,
   callback: AfterKillCallback,
 ): void {
-  const killed: Set<string> = new Set()
+  const killed = new Set<string>()
   try {
     Object.keys(tree).forEach(function (pid) {
       tree[pid]!.forEach(function (pidpid) {
@@ -140,13 +140,14 @@ function killAll(
   } catch (err: unknown) {
     if (callback) {
       // @ts-ignore
-      return callback(err)
+      callback(err)
+      return
     } else {
       throw err
     }
   }
   if (callback) {
-    return callback()
+    callback()
   }
 }
 
@@ -194,7 +195,8 @@ function buildProcessTree(
     if (code !== 0) {
       // no more parent processes
       if (pidsToProcess.size === 0) {
-        return cb()
+        cb()
+        return
       }
       return
     }

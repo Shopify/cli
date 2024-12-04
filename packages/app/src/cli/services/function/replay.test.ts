@@ -1,14 +1,13 @@
 import {FunctionRunData, replay} from './replay.js'
 import {renderReplay} from './ui.js'
 import {runFunction} from './runner.js'
-import {testApp, testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
+import {testAppLinked, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {describe, expect, beforeAll, beforeEach, test, vi} from 'vitest'
+import {describe, expect, beforeAll, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {readdirSync} from 'fs'
@@ -24,8 +23,6 @@ vi.mock('./ui.js')
 vi.mock('./runner.js')
 
 describe('replay', () => {
-  const developerPlatformClient = testDeveloperPlatformClient()
-  const apiKey = 'apiKey'
   const defaultConfig = {
     name: 'MyFunction',
     type: 'product_discounts',
@@ -45,10 +42,6 @@ describe('replay', () => {
     extension = await testFunctionExtension({config: defaultConfig})
   })
 
-  beforeEach(() => {
-    vi.mocked(ensureConnectedAppFunctionContext).mockResolvedValue({apiKey, developerPlatformClient})
-  })
-
   test('runs selected function', async () => {
     // Given
     const file1 = createFunctionRunFile({handle: extension.handle})
@@ -59,7 +52,7 @@ describe('replay', () => {
 
     // When
     await replay({
-      app: testApp(),
+      app: testAppLinked(),
       extension,
       stdout: false,
       path: 'test-path',
@@ -81,7 +74,7 @@ describe('replay', () => {
 
     // When
     await replay({
-      app: testApp(),
+      app: testAppLinked(),
       extension,
       stdout: false,
       path: 'test-path',
@@ -103,7 +96,7 @@ describe('replay', () => {
 
     // When
     await replay({
-      app: testApp(),
+      app: testAppLinked(),
       extension,
       stdout: false,
       path: 'test-path',
@@ -121,7 +114,7 @@ describe('replay', () => {
     // When/Then
     await expect(async () => {
       await replay({
-        app: testApp(),
+        app: testAppLinked(),
         extension,
         stdout: false,
         path: 'test-path',
@@ -141,7 +134,7 @@ describe('replay', () => {
 
     // When
     await replay({
-      app: testApp(),
+      app: testAppLinked(),
       extension,
       stdout: false,
       path: 'test-path',
@@ -163,7 +156,7 @@ describe('replay', () => {
     // When
     await expect(async () =>
       replay({
-        app: testApp(),
+        app: testAppLinked(),
         extension,
         stdout: false,
         path: 'test-path',
@@ -189,7 +182,7 @@ describe('replay', () => {
 
     // When
     await replay({
-      app: testApp(),
+      app: testAppLinked(),
       extension,
       stdout: false,
       path: 'test-path',
@@ -212,7 +205,7 @@ describe('replay', () => {
     // When
     await expect(async () =>
       replay({
-        app: testApp(),
+        app: testAppLinked(),
         extension,
         stdout: false,
         path: 'test-path',
@@ -235,7 +228,7 @@ describe('replay', () => {
 
     // When
     await replay({
-      app: testApp(),
+      app: testAppLinked(),
       extension,
       stdout: false,
       path: 'test-path',

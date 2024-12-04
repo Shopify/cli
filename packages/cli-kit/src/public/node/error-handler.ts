@@ -6,14 +6,13 @@ import {
   AbortSilentError,
   CancelExecution,
   errorMapper,
-  shouldReportError,
+  shouldReportErrorAsUnexpected,
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
-import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -30,14 +29,13 @@ export async function errorHandler(
       outputInfo(`✨  ${error.message}`)
     }
   } else if (error instanceof AbortSilentError) {
-    printEventsJson()
+    /* empty */
   } else {
     return errorMapper(error)
       .then((error) => {
         return handler(error)
       })
       .then((mappedError) => {
-        printEventsJson()
         return reportError(mappedError, config)
       })
   }
@@ -46,7 +44,7 @@ export async function errorHandler(
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
   // categorise the error first
   let exitMode: CommandExitMode = 'expected_error'
-  if (shouldReportError(error)) exitMode = 'unexpected_error'
+  if (shouldReportErrorAsUnexpected(error)) exitMode = 'unexpected_error'
 
   if (config !== undefined) {
     // Log an analytics event when there's an error
@@ -161,7 +159,7 @@ export function cleanStackFrameFilePath({
     ? currentFilePath
     : path.joinPath(projectRoot, currentFilePath)
 
-  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.indexOf(pluginPath) === 0)[0]
+  const matchingPluginPath = pluginLocations.filter(({pluginPath}) => fullLocation.startsWith(pluginPath))[0]
 
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
@@ -232,7 +230,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   const miscData = {} as {[key: string]: unknown}
   const appKeys = ['api_key', 'partner_id', 'project_type']
   const commandKeys = ['command']
-  const environmentKeys = ['cli_version', 'node_version', 'ruby_version', 'uname']
+  const environmentKeys = ['cli_version', 'node_version', 'uname']
 
   Object.entries(allMetadata).forEach(([key, value]) => {
     if (key.startsWith('app_') || appKeys.includes(key)) {

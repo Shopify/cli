@@ -1,5 +1,43 @@
 # @shopify/cli
 
+## 3.71.0
+
+### Patch Changes
+
+- 93d65a6c38: Remove PHP template from app creation options
+
+## 3.70.0
+
+### Minor Changes
+
+- 33477dd9d7: Notification system
+
+### Patch Changes
+
+- 2720923007: Fix files ignored when using negate patterns
+- 55307bb536: Remove ruby version from theme info command
+- 7da2c4dbde: Bump cli-hydrogen to 9.0.2
+- 1623765ac9: Fix issue where you could not use multipass passwords with theme dev
+- 57bb933980: Fix theme dev command deleting remote files even if using --nodelete flag
+- 58768c3b64: Improve language around --nodelete flags for push and pull commands
+
+## 3.69.0
+
+### Minor Changes
+
+- 0b587dff5: Improve user logging for render requests
+
+### Patch Changes
+
+- 581abd8d4: Improve user logging by adding status codes and event methods
+- 8df131c3e: Fix syntax for theme command documentation
+
+## 3.68.0
+
+### Minor Changes
+
+- 2200be0ae: force a minor CLI 3.68.0 release from patch changes
+
 ## 3.67.0
 
 ### Minor Changes

@@ -54,6 +54,12 @@ export interface appwebhooktrigger {
   '--path <value>'?: string
 
   /**
+   * Reset all your settings.
+   * @environment SHOPIFY_FLAG_RESET
+   */
+  '--reset'?: ''
+
+  /**
    * Deprecated. Please use client-secret.
    * @environment SHOPIFY_FLAG_SHARED_SECRET
    */

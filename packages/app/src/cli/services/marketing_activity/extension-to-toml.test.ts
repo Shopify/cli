@@ -43,7 +43,7 @@ describe('extension-to-toml', () => {
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "marketing_activity"
-name = "test mae"
+name = "mae @ test! 123"
 handle = "mae-test-123"
 title = "test mae"
 description = "test mae description"

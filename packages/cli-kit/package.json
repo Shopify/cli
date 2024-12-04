@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.67.0",
+  "version": "3.71.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -49,14 +49,9 @@
     "docs:generate": "nx docs:generate",
     "docs:open": "nx docs:open",
     "lint": "nx lint",
-    "lint:ruby": "nx lint:ruby",
-    "lint:js": "nx lint:js",
     "lint:fix": "nx lint:fix",
-    "lint:js:fix": "nx lint:js:fix",
-    "lint:ruby:fix": "nx lint:ruby:fix",
     "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx test",
-    "test:ruby": "nx test:ruby",
     "test:js": "nx test:js",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
@@ -68,7 +63,8 @@
       "../../.eslintrc.cjs"
     ],
     "ignorePatterns": [
-      "**/vendor/otel-js/**/*.ts"
+      "**/vendor/otel-js/**/*.ts",
+      "**/vendor/dev_server/**/*.ts"
     ],
     "overrides": [
       {
@@ -86,7 +82,6 @@
                 "./context/local.js",
                 "./custom-oclif-loader.js",
                 "@oclif/core",
-                "../../private/node/constants.js",
                 "./path.js",
                 "./system.js",
                 "./ui.js"
@@ -94,7 +89,9 @@
               "static": [
                 "@oclif/core",
                 "./context/utilities.js",
-                "../../private/node/demo-recorder.js"
+                "../../private/node/conf-store.js",
+                "../../private/node/constants.js",
+                "url"
               ]
             }
           ]
@@ -131,7 +128,6 @@
     "execa": "7.2.0",
     "fast-glob": "3.3.1",
     "figures": "5.0.0",
-    "find-process": "1.4.7",
     "find-up": "6.3.0",
     "form-data": "4.0.0",
     "fs-extra": "11.1.0",
@@ -142,13 +138,13 @@
     "ink": "4.4.1",
     "is-interactive": "2.0.0",
     "jose": "5.8.0",
-    "kill-port-process": "3.1.0",
     "latest-version": "7.0.0",
     "liquidjs": "10.9.2",
     "lodash": "4.17.21",
     "macaddress": "0.5.3",
     "minimatch": "9.0.3",
     "mrmime": "1.0.1",
+    "network-interfaces": "1.1.0",
     "node-abort-controller": "3.1.1",
     "node-fetch": "3.3.2",
     "open": "8.4.2",

@@ -1,5 +1,4 @@
 import {reportAnalyticsEvent} from './analytics.js'
-import * as ruby from './ruby.js'
 import * as os from './os.js'
 import {
   analyticsDisabled,
@@ -18,11 +17,10 @@ import {addPublicMetadata} from './metadata.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 vi.mock('./context/local.js')
-vi.mock('./ruby.js')
 vi.mock('./os.js')
 vi.mock('../../store.js')
 vi.mock('../../public/node/crypto.js')
@@ -44,7 +42,6 @@ describe('event tracking', () => {
     vi.mocked(hashString).mockReturnValue('hashed-macaddress')
     vi.mocked(isUnitTest).mockReturnValue(true)
     vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
-    vi.mocked(ruby.version).mockResolvedValue('3.1.1')
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
   })
@@ -67,6 +64,8 @@ describe('event tracking', () => {
       // Given
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+      setLastSeenAuthMethod('partners_token')
+      setLastSeenUserIdAfterAuth('cached-user-id')
 
       // Log some timings from the command, confirm that submitted timings are always rounded down
       await addPublicMetadata(() => ({
@@ -95,7 +94,7 @@ describe('event tracking', () => {
         success: true,
         uname: 'darwin arm64',
         cli_version: version,
-        ruby_version: '3.1.1',
+        ruby_version: '',
         node_version: process.version.replace('v', ''),
         is_employee: false,
         env_plugin_installed_any_custom: true,
@@ -106,7 +105,8 @@ describe('event tracking', () => {
         cmd_all_timing_active_ms: 49,
         cmd_all_timing_network_ms: 30,
         cmd_all_timing_prompts_ms: 20,
-        user_id: 'unknown',
+        user_id: 'cached-user-id',
+        env_auth_method: 'partners_token',
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
@@ -143,7 +143,7 @@ describe('event tracking', () => {
         success: false,
         uname: 'darwin arm64',
         cli_version: version,
-        ruby_version: '3.1.1',
+        ruby_version: '',
         node_version: process.version.replace('v', ''),
         is_employee: false,
         user_id: 'cached-user-id',

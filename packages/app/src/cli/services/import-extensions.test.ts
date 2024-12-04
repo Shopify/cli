@@ -1,8 +1,7 @@
 import {importExtensions} from './import-extensions.js'
-import {fetchAppAndIdentifiers} from './context.js'
 import {getExtensions} from './fetch-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
-import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
+import {testAppLinked, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -55,6 +54,16 @@ const marketingActivityExtension: ExtensionRegistration = {
   },
 }
 
+const subscriptionLinkExtension: ExtensionRegistration = {
+  id: 'idD',
+  title: 'titleD',
+  uuid: 'uuidD',
+  type: 'subscription_link',
+  activeVersion: {
+    config: '{}',
+  },
+}
+
 describe('import-extensions', () => {
   beforeEach(() => {
     // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
@@ -63,18 +72,28 @@ describe('import-extensions', () => {
 
   test('importing an extension creates a folder and toml file', async () => {
     // Given
-    vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB, marketingActivityExtension])
+    vi.mocked(getExtensions).mockResolvedValue([
+      flowExtensionA,
+      flowExtensionB,
+      marketingActivityExtension,
+      subscriptionLinkExtension,
+    ])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {
-      const app = testApp({directory: tmpDir})
+      const app = testAppLinked({directory: tmpDir})
 
       await importExtensions({
         app,
+        remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
+        extensionTypes: [
+          'flow_action_definition',
+          'flow_trigger_definition',
+          'marketing_activity_extension',
+          'subscription_link',
+        ],
         buildTomlObject,
       })
 
@@ -92,29 +111,42 @@ describe('import-extensions', () => {
 
       const tomlPathC = joinPath(tmpDir, 'extensions', 'title-c', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathC)).toBe(false)
+
+      const tomlPathD = joinPath(tmpDir, 'extensions', 'title-d', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathD)).toBe(false)
     })
   })
 
   test('selecting All imports all extensions', async () => {
     // Given
-    vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
-    vi.mocked(getExtensions).mockResolvedValue([flowExtensionA, flowExtensionB, marketingActivityExtension])
+    vi.mocked(getExtensions).mockResolvedValue([
+      flowExtensionA,
+      flowExtensionB,
+      marketingActivityExtension,
+      subscriptionLinkExtension,
+    ])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {
-      const app = testApp({directory: tmpDir})
+      const app = testAppLinked({directory: tmpDir})
 
       await importExtensions({
         app,
+        remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
+        extensionTypes: [
+          'flow_action_definition',
+          'flow_trigger_definition',
+          'marketing_activity_extension',
+          'subscription_link',
+        ],
         buildTomlObject,
       })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
-        body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b\n• "titleC" at: extensions/title-c',
+        body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b\n• "titleC" at: extensions/title-c\n• "titleD" at: extensions/title-d',
       })
 
       // Then
@@ -126,21 +158,29 @@ describe('import-extensions', () => {
 
       const tomlPathC = joinPath(tmpDir, 'extensions', 'title-c', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathC)).toBe(true)
+
+      const tomlPathD = joinPath(tmpDir, 'extensions', 'title-d', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathD)).toBe(true)
     })
   })
 
   test('Show message if there are not extensions to migrate', async () => {
     // Given
-    vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getExtensions).mockResolvedValue([])
 
     // When
     await inTemporaryDirectory(async (tmpDir) => {
-      const app = testApp({directory: tmpDir})
+      const app = testAppLinked({directory: tmpDir})
       await importExtensions({
         app,
+        remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'marketing_activity_extension'],
+        extensionTypes: [
+          'flow_action_definition',
+          'flow_trigger_definition',
+          'marketing_activity_extension',
+          'subscription_link',
+        ],
         buildTomlObject,
       })
 
@@ -159,6 +199,9 @@ describe('import-extensions', () => {
 
       const tomlPathC = joinPath(tmpDir, 'extensions', 'title-c', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathC)).toBe(false)
+
+      const tomlPathD = joinPath(tmpDir, 'extensions', 'title-d', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathD)).toBe(false)
     })
   })
 })

@@ -13,9 +13,12 @@ export type Scalars = {
   Boolean: {input: boolean; output: boolean}
   Int: {input: number; output: number}
   Float: {input: number; output: number}
+  AccessRoleAssignee: {input: any; output: any}
   /** The ID for a AccessRole. */
   AccessRoleID: {input: any; output: any}
   AccessRoleRecordId: {input: any; output: any}
+  /** The ID for a ActionAudit. */
+  ActionAuditID: {input: any; output: any}
   GlobalID: {input: string; output: string}
   /** The ID for a Group. */
   GroupID: {input: any; output: any}
@@ -23,6 +26,8 @@ export type Scalars = {
   ISO8601Date: {input: any; output: any}
   /** An ISO 8601-encoded datetime */
   ISO8601DateTime: {input: any; output: any}
+  /** The ID for a LegalEntity. */
+  LegalEntityID: {input: any; output: any}
   /** The ID for a OrganizationDomain. */
   OrganizationDomainID: {input: any; output: any}
   /** The ID for a Organization. */
@@ -38,7 +43,7 @@ export type Scalars = {
   /** The ID for a StoreAdditionRequest. */
   StoreAdditionRequestID: {input: any; output: any}
   /** An RFC 3986 and RFC 3987 compliant URI string. */
-  URL: {input: any; output: any}
+  URL: {input: string; output: string}
 }
 
-export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'PRODUCTION'
+export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'DEVELOPMENT_SUPERSET' | 'PRODUCTION'

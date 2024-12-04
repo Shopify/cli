@@ -1,13 +1,13 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
-import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
+import {dev} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import type {LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
@@ -90,11 +90,6 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Skip hot reloading any files that match the specified pattern.',
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    legacy: Flags.boolean({
-      hidden: true,
-      description: 'Use the legacy Ruby implementation for the `shopify theme dev` command.',
-      env: 'SHOPIFY_FLAG_LEGACY',
-    }),
     force: Flags.boolean({
       hidden: true,
       char: 'f',
@@ -119,31 +114,13 @@ You can run this command only in a directory that matches the [default Shopify t
     }),
   }
 
-  static cli2Flags = [
-    'host',
-    'live-reload',
-    'poll',
-    'theme-editor-sync',
-    'overwrite-json',
-    'port',
-    'theme',
-    'nodelete',
-    'only',
-    'ignore',
-    'force',
-    'notify',
-  ]
-
   async run(): Promise<void> {
-    showEmbeddedCLIWarning()
-    showDeprecationWarnings(this.argv)
-
     const parsed = await this.parse(Dev)
     let flags = parsed.flags as typeof parsed.flags & FlagValues
-    const store = ensureThemeStore(flags)
     const {ignore = [], only = []} = flags
 
-    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password, Boolean(flags.legacy))
+    const store = ensureThemeStore(flags)
+    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     let theme: Theme
 
@@ -159,11 +136,8 @@ You can run this command only in a directory that matches the [default Shopify t
       flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
     }
 
-    const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
-
     await dev({
       adminSession,
-      storefrontToken,
       directory: flags.path,
       store,
       password: flags.password,
@@ -174,8 +148,6 @@ You can run this command only in a directory that matches the [default Shopify t
       'live-reload': flags['live-reload'] as LiveReload,
       force: flags.force,
       open: flags.open,
-      flagsToPass,
-      legacy: flags.legacy,
       'theme-editor-sync': flags['theme-editor-sync'],
       noDelete: flags.nodelete,
       ignore,

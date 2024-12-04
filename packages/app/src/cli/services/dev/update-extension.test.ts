@@ -1,6 +1,7 @@
 import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {
   placeholderAppConfiguration,
+  testFunctionExtension,
   testDeveloperPlatformClient,
   testPaymentExtensions,
   testThemeExtensions,
@@ -12,9 +13,11 @@ import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
+vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
@@ -48,8 +51,9 @@ describe('updateExtensionDraft()', () => {
         directory: tmpDir,
       })
 
-      await mkdir(joinPath(tmpDir, 'dist'))
-      await writeFile(mockExtension.outputPath, 'test content')
+      await mkdir(joinPath(tmpDir, 'mock-handle', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -59,6 +63,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -90,6 +95,7 @@ describe('updateExtensionDraft()', () => {
       stdout,
       stderr,
       appConfiguration: placeholderAppConfiguration,
+      bundlePath: 'dir',
     })
 
     expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -133,6 +139,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -170,6 +177,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -181,6 +189,53 @@ describe('updateExtensionDraft()', () => {
           theme_extension: {
             files: {[filepath]: base64Content},
           },
+        }),
+      })
+    })
+  })
+
+  test('updates draft successfully for function app extension', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testFunctionExtension({dir: tmpDir})
+      const moduleId = 'moduleId'
+
+      vi.mocked(randomUUID).mockReturnValue(moduleId)
+
+      const filepath = 'index.wasm'
+      const content = 'test content'
+      const base64Content = Buffer.from(content).toString('base64')
+      await mkdir(joinPath(mockExtension.directory, 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await mkdir(dirname(outputPath))
+      await writeFile(outputPath, content)
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
+        apiKey,
+        context: '',
+        handle: mockExtension.handle,
+        registrationId,
+        config: JSON.stringify({
+          title: 'test function extension',
+          module_id: moduleId,
+          description: 'description',
+          app_key: 'mock-api-key',
+          api_type: 'product_discounts',
+          api_version: '2022-07',
+          enable_creation_ui: true,
+          localization: {},
+          uploaded_files: {'dist/index.wasm': base64Content},
         }),
       })
     })
@@ -206,8 +261,9 @@ describe('updateExtensionDraft()', () => {
         type: 'web_pixel_extension',
       })
 
-      await mkdir(joinPath(tmpDir, 'dist'))
-      await writeFile(mockExtension.outputPath, 'test content')
+      await mkdir(joinPath(tmpDir, mockExtension.handle, 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -217,6 +273,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')

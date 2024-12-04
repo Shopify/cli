@@ -10,6 +10,7 @@ vi.mock('@shopify/cli-kit/node/system')
 
 const address = 'http://localhost:3000/test/path'
 const storeFqdn = 'test-store.myshopify.io'
+const organizationId = 'organizationId'
 
 describe('sendUninstallWebhookToAppServer', () => {
   test('requests sample and API versions, triggers local webhook', async () => {
@@ -22,6 +23,7 @@ describe('sendUninstallWebhookToAppServer', () => {
       sharedSecret: 'sharedSecret',
       storeFqdn,
       developerPlatformClient: testDeveloperPlatformClient(),
+      organizationId,
     })
 
     expect(result).toBe(true)
@@ -45,6 +47,7 @@ describe('sendUninstallWebhookToAppServer', () => {
       sharedSecret: 'sharedSecret',
       storeFqdn,
       developerPlatformClient,
+      organizationId,
     })
 
     expect(result).toBe(false)
@@ -68,6 +71,7 @@ describe('sendUninstallWebhookToAppServer', () => {
       sharedSecret: 'sharedSecret',
       storeFqdn,
       developerPlatformClient,
+      organizationId,
     })
 
     expect(result).toBe(true)

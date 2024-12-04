@@ -2,9 +2,9 @@ import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
+import {logRequestLine} from '../log-request-line.js'
 import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -12,8 +12,6 @@ import type {DevServerContext} from './types.js'
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
-    outputInfo(`${event.method} ${event.path}`)
-
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
     return render(ctx.session, {
@@ -27,9 +25,9 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {
-        let html = await patchRenderingResponse(ctx, event, response)
+        logRequestLine(event, response)
 
-        html = prettifySyntaxErrors(html)
+        let html = await patchRenderingResponse(ctx, event, response)
 
         assertThemeId(response, html, String(theme.id))
 
@@ -65,24 +63,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return errorPageHtml
       })
   })
-}
-
-export function prettifySyntaxErrors(html: string) {
-  return html.replace(/Liquid(?: syntax)? error \([^\n]+(?:\n|<)/g, getErrorSection)
-}
-
-function getErrorSection(error: string) {
-  const html = String.raw
-  const color = 'orangered'
-
-  return html`
-    <div
-      id="section-error"
-      style="border: solid thick ${color}; background: color(from ${color} srgb r g b / 0.2); padding: 20px;"
-    >
-      <pre>${error}</pre>
-    </div>
-  `
 }
 
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {

@@ -1,17 +1,21 @@
-/* eslint-disable no-case-declarations */
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
-import {AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {fileExistsSync, mkdir, readFileSync, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -19,12 +23,14 @@ interface DevSessionOptions {
   storeFqdn: string
   apiKey: string
   url: string
-  app: AppInterface
+  app: AppLinkedInterface
   organizationId: string
   appId: string
+  appWatcher: AppEventWatcher
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
+  url: string
   bundlePath: string
   stdout: Writable
   stderr: Writable
@@ -35,7 +41,23 @@ export interface DevSessionProcess extends BaseProcess<DevSessionOptions> {
   type: 'dev-session'
 }
 
+interface UserError {
+  message: string
+  on: JsonMapType
+  field?: string[] | null
+  category: string
+}
+
+type DevSessionResult =
+  | {status: 'updated' | 'created' | 'aborted'}
+  | {status: 'remote-error'; error: UserError[]}
+  | {status: 'unknown-error'; error: Error}
+
 let bundleControllers: AbortController[] = []
+
+// Current status of the dev session
+// Since the watcher can emit events before the dev session is ready, we need to keep track of the status
+let isDevSessionReady = false
 
 export async function setupDevSessionProcess({
   app,
@@ -45,7 +67,7 @@ export async function setupDevSessionProcess({
 }: Omit<DevSessionOptions, 'extensions'>): Promise<DevSessionProcess | undefined> {
   return {
     type: 'dev-session',
-    prefix: 'extensions',
+    prefix: 'dev-session',
     function: pushUpdatesForDevSession,
     options: {
       app,
@@ -60,93 +82,102 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient, app} = options
+  const {developerPlatformClient, appWatcher} = options
 
+  isDevSessionReady = false
   const refreshToken = async () => {
     return developerPlatformClient.refreshToken()
   }
 
-  const bundlePath = joinPath(app.directory, '.shopify', 'bundle')
-  if (fileExistsSync(bundlePath)) await rmdir(bundlePath, {force: true})
-  await mkdir(bundlePath)
+  const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
-  const processOptions = {...options, stderr, stdout, signal, bundlePath}
-  const appWatcher = new AppEventWatcher(app, processOptions)
+  await printLogMessage('Preparing dev session', processOptions.stdout)
 
-  outputWarn('-----> Using DEV SESSIONS <-----')
-  processOptions.stdout.write('Preparing dev session...')
-
-  await initialBuild(processOptions)
-  await bundleExtensionsAndUpload(processOptions, false)
-
-  appWatcher.onEvent(async (event) => {
-    // Cancel any ongoing bundle and upload process
-    bundleControllers.forEach((controller) => controller.abort())
-    // Remove aborted controllers from array:
-    bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
-
-    const promises = event.extensionEvents.map(async (eve) => {
-      switch (eve.type) {
-        case EventType.Created:
-        case EventType.UpdatedSourceFile:
-          const message = eve.type === EventType.Created ? '✅ Extension created ' : '🔄 Extension Updated'
-          processOptions.stdout.write(`${message} ->> ${eve.extension.handle}`)
-          return eve.extension.buildForBundle(
-            {...processOptions, app: event.app, environment: 'development'},
-            processOptions.bundlePath,
-            undefined,
-          )
-        case EventType.Deleted:
-          processOptions.stdout.write(`❌ Extension deleted ->> ${eve.extension.handle}`)
-          return rmdir(joinPath(processOptions.bundlePath, eve.extension.handle), {force: true})
-        case EventType.Updated:
-          processOptions.stdout.write(`🔄 Extension Updated ->> ${eve.extension.handle}`)
-          break
+  appWatcher
+    .onEvent(async (event) => {
+      if (!isDevSessionReady) {
+        await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)
+        return
       }
+
+      // If there are any errors build errors, don't update the dev session
+      const anyError = event.extensionEvents.some((eve) => eve.buildResult?.status === 'error')
+      if (anyError) return
+
+      // Cancel any ongoing bundle and upload process
+      bundleControllers.forEach((controller) => controller.abort())
+      // Remove aborted controllers from array:
+      bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
+
+      // For each extension event, print a message to the terminal
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      event.extensionEvents.forEach(async (eve) => {
+        const outputPrefix = eve.extension.isAppConfigExtension ? 'app-config' : eve.extension.handle
+        const message = `${eve.extension.isAppConfigExtension ? 'App config' : 'Extension'} ${eve.type}`
+        await useConcurrentOutputContext({outputPrefix, stripAnsi: false}, () => processOptions.stdout.write(message))
+      })
+
+      const networkStartTime = startHRTime()
+      await performActionWithRetryAfterRecovery(async () => {
+        const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
+        await handleDevSessionResult(result, {...processOptions, app: event.app}, event)
+        const endTime = endHRTimeInMs(event.startTime)
+        const endNetworkTime = endHRTimeInMs(networkStartTime)
+        outputDebug(`✅ Event handled [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`, processOptions.stdout)
+      }, refreshToken)
     })
-    try {
-      await Promise.all(promises)
-      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      processOptions.stderr.write('Error building extensions')
-      processOptions.stderr.write(error.message)
-    }
+    .onStart(async (event) => {
+      await performActionWithRetryAfterRecovery(async () => {
+        const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
+        await handleDevSessionResult(result, {...processOptions, app: event.app})
+      }, refreshToken)
+    })
+}
 
-    const networkStartTime = startHRTime()
-    await performActionWithRetryAfterRecovery(async () => {
-      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app}, true)
-      const endTime = endHRTimeInMs(event.startTime)
-      const endNetworkTime = endHRTimeInMs(networkStartTime)
-      if (result) {
-        processOptions.stdout.write(`✅ Session updated [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`)
-      } else {
-        processOptions.stdout.write(
-          `❌ Session update aborted (new change detected) [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`,
-        )
-      }
-    }, refreshToken)
-  })
+async function handleDevSessionResult(
+  result: DevSessionResult,
+  processOptions: DevSessionProcessOptions,
+  event?: AppEvent,
+) {
+  if (result.status === 'updated') {
+    await printSuccess(`✅ Updated`, processOptions.stdout)
+    await printActionRequiredMessages(processOptions, event)
+  } else if (result.status === 'created') {
+    isDevSessionReady = true
+    await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
+  } else if (result.status === 'aborted') {
+    outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
+  } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
+    await processUserErrors(result.error, processOptions, processOptions.stdout)
+  }
 
-  // Start watching for changes in the app
-  await appWatcher.start()
-  processOptions.stdout.write(`Dev session ready, watching for changes in your app`)
+  // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
+  // async nature of the process.
+  if (!isDevSessionReady && !isUnitTest()) throw new AbortError('Failed to create dev session')
 }
 
 /**
- * Build all extensions for the initial bundle
- * All subsequent changes in extensions will trigger individual builds
- *
- * @param options - The options for the process
+ * Some extensions may require the user to take some action after an update in the dev session.
+ * This function will print those action messages to the terminal.
  */
-async function initialBuild(options: DevSessionProcessOptions) {
-  const allPromises = options.app.realExtensions.map((extension) => {
-    return extension.buildForBundle(
-      {...options, app: options.app, environment: 'development'},
-      options.bundlePath,
-      undefined,
-    )
-  })
-  await Promise.all(allPromises)
+async function printActionRequiredMessages(processOptions: DevSessionProcessOptions, event?: AppEvent) {
+  if (!event) return
+  const extensionEvents = event.extensionEvents ?? []
+  const warningMessages = getArrayRejectingUndefined(
+    await Promise.all(
+      extensionEvents.map((eve) =>
+        eve.extension.getDevSessionActionUpdateMessage(event.app.configuration, processOptions.storeFqdn),
+      ),
+    ),
+  )
+
+  if (warningMessages.length) {
+    await printWarning(`🔄 Action required`, processOptions.stdout)
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    warningMessages.forEach(async (message) => {
+      await printWarning(outputContent`└ ${message}`.value, processOptions.stdout)
+    })
+  }
 }
 
 /**
@@ -157,13 +188,13 @@ async function initialBuild(options: DevSessionProcessOptions) {
  * @param options - The options for the process
  * @param updating - Whether the dev session is being updated or created
  */
-async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, updating: boolean) {
+async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Promise<DevSessionResult> {
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
   bundleControllers.push(currentBundleController)
 
-  if (currentBundleController.signal.aborted) return false
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   outputDebug('Bundling and uploading extensions', options.stdout)
   const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
 
@@ -173,14 +204,14 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 
   // Create zip file with everything
-  if (currentBundleController.signal.aborted) return false
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   await zip({
     inputDirectory: options.bundlePath,
     outputZipPath: bundleZipPath,
   })
 
   // Get a signed URL to upload the zip file
-  if (currentBundleController.signal.aborted) return false
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
     apiKey: options.appId,
     organizationId: options.organizationId,
@@ -188,7 +219,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   })
 
   // Upload the zip file
-  if (currentBundleController.signal.aborted) return false
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   const form = formData()
   const buffer = readFileSync(bundleZipPath)
   form.append('my_upload', buffer)
@@ -201,17 +232,68 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions, upda
   const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
   // Create or update the dev session
-  if (currentBundleController.signal.aborted) return false
+  if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
-    if (updating) {
-      await options.developerPlatformClient.devSessionUpdate(payload)
+    if (isDevSessionReady) {
+      const result = await options.developerPlatformClient.devSessionUpdate(payload)
+      const errors = result.devSessionUpdate?.userErrors ?? []
+      if (errors.length) return {status: 'remote-error', error: errors}
+      return {status: 'updated'}
     } else {
-      await options.developerPlatformClient.devSessionCreate(payload)
+      const result = await options.developerPlatformClient.devSessionCreate(payload)
+      const errors = result.devSessionCreate?.userErrors ?? []
+      if (errors.length) return {status: 'remote-error', error: errors}
+      return {status: 'created'}
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    options.stderr.write('❌ Dev Session Error')
-    options.stderr.write(error.message)
+    if (error.statusCode === 401) {
+      // Re-throw the error so the recovery procedure can be executed
+      throw new Error('Unauthorized')
+    } else {
+      return {status: 'unknown-error', error}
+    }
   }
-  return true
+}
+
+async function processUserErrors(
+  errors: UserError[] | Error | string,
+  options: DevSessionProcessOptions,
+  stdout: Writable,
+) {
+  if (typeof errors === 'string') {
+    await printError(errors, stdout)
+  } else if (errors instanceof Error) {
+    await printError(errors.message, stdout)
+  } else {
+    for (const error of errors) {
+      const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
+      // If we have information about the extension that caused the error, use the handle as prefix in the output.
+      const extension = options.app.allExtensions.find((ext) => ext.uid === on?.user_identifier)
+      // eslint-disable-next-line no-await-in-loop
+      await printError(error.message, stdout, extension?.handle ?? 'dev-session')
+    }
+  }
+}
+
+async function printWarning(message: string, stdout: Writable) {
+  await printLogMessage(outputContent`${outputToken.yellow(message)}`.value, stdout)
+}
+
+async function printError(message: string, stdout: Writable, prefix?: string) {
+  const header = outputToken.errorText(`❌ Error`)
+  const content = outputToken.errorText(`└  ${message}`)
+  await printLogMessage(outputContent`${header}`.value, stdout, prefix)
+  await printLogMessage(outputContent`${content}`.value, stdout, prefix)
+}
+
+async function printSuccess(message: string, stdout: Writable) {
+  await printLogMessage(outputContent`${outputToken.green(message)}`.value, stdout)
+}
+
+// Helper function to print to terminal using output context with stripAnsi disabled.
+async function printLogMessage(message: string, stdout: Writable, prefix?: string) {
+  await useConcurrentOutputContext({outputPrefix: prefix ?? 'dev-session', stripAnsi: false}, () => {
+    stdout.write(message)
+  })
 }
