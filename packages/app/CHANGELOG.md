@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.71.3
+
+### Patch Changes
+
+- d5b0856f78: Increase extension localization file size limit
+- 73eb727757: Fix function drafts not working during dev
+  - @shopify/cli-kit@3.71.3
+  - @shopify/theme@3.71.3
+  - @shopify/plugin-cloudflare@3.71.3
+
 ## 3.71.2
 
 ### Patch Changes
