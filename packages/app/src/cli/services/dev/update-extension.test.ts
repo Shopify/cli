@@ -206,7 +206,7 @@ describe('updateExtensionDraft()', () => {
       const content = 'test content'
       const base64Content = Buffer.from(content).toString('base64')
       await mkdir(joinPath(mockExtension.directory, 'dist'))
-      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      const outputPath = mockExtension.outputPath
       await mkdir(dirname(outputPath))
       await writeFile(outputPath, content)
 
