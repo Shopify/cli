@@ -1,7 +1,7 @@
 import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {sniffForJson} from './path.js'
-import {cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {cacheRetrieve} from '../../private/node/conf-store.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
@@ -333,7 +333,7 @@ describe('showNotificationsIfNeeded', () => {
   test('an info notification triggers a renderInfo call', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
@@ -345,7 +345,7 @@ describe('showNotificationsIfNeeded', () => {
   test('a warning notification triggers a renderWarning call', async () => {
     // Given
     const notifications = [warningNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
@@ -357,7 +357,7 @@ describe('showNotificationsIfNeeded', () => {
   test('an error notification triggers a renderError call and throws an error', async () => {
     // Given
     const notifications = [errorNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
 
     // When
     await expect(showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})).rejects.toThrowError()
@@ -369,7 +369,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped on CI', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false', CI: 'true'})
@@ -381,7 +381,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped on tests', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'true'})
@@ -393,7 +393,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped when using --json flag', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
     vi.mocked(sniffForJson).mockReturnValue(true)
 
     // When
@@ -406,7 +406,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped when using SHOPIFY_FLAG_JSON', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false', SHOPIFY_FLAG_JSON: 'true'})

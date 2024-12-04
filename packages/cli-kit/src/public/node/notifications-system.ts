@@ -7,19 +7,17 @@ import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
 import {jsonOutputEnabled} from './environment.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {
-  NotificationKey,
-  NotificationsKey,
-  cacheRetrieve,
-  cacheRetrieveOrRepopulate,
-  cacheStore,
-} from '../../private/node/conf-store.js'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
-const CACHE_DURATION_IN_MS = 3600 * 1000
+const EMPTY_CACHE_MESSAGE = 'Cache is empty'
 
-function url(): string {
+/**
+ * Returns the URL to retrieve the notifications.
+ *
+ * @returns - The value from SHOPIFY_CLI_NOTIFICATIONS_URL or the default URL (https://cdn.shopify.com/static/cli/notifications.json).
+ */
+export function notificationsUrl(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
 }
 
@@ -72,6 +70,7 @@ export async function showNotificationsIfNeeded(
     if (error.message === 'abort') throw new AbortSilentError()
     const errorMessage = `Error retrieving notifications: ${error.message}`
     outputDebug(errorMessage)
+    if (error.message === EMPTY_CACHE_MESSAGE) return
     // This is very prone to becoming a circular dependency, so we import it dynamically
     const {sendErrorToBugsnag} = await import('./error-handler.js')
     await sendErrorToBugsnag(errorMessage, 'unexpected_error')
@@ -113,25 +112,16 @@ async function renderNotifications(notifications: Notification[]) {
 }
 
 /**
- * Get notifications list from cache (refreshed every hour) or fetch it if not present.
+ * Get notifications list from cache, that is updated in the background from bin/fetch-notifications.json.
  *
  * @returns A Notifications object.
  */
 export async function getNotifications(): Promise<Notifications> {
-  const cacheKey: NotificationsKey = `notifications-${url()}`
-  const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, CACHE_DURATION_IN_MS)
+  const cacheKey: NotificationsKey = `notifications-${notificationsUrl()}`
+  const rawNotifications = cacheRetrieve(cacheKey)?.value as unknown as string
+  if (!rawNotifications) throw new Error(EMPTY_CACHE_MESSAGE)
   const notifications: object = JSON.parse(rawNotifications)
   return NotificationsSchema.parse(notifications)
-}
-
-/**
- * Fetch notifications from GitHub.
- */
-async function fetchNotifications(): Promise<string> {
-  outputDebug(`No cached notifications found. Fetching them...`)
-  const response = await fetch(url(), {signal: AbortSignal.timeout(3 * 1000)})
-  if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
-  return response.text() as unknown as string
 }
 
 /**
