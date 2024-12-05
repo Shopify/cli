@@ -61,7 +61,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then
@@ -82,7 +82,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then
@@ -103,7 +103,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(remoteTheme, adminSession, remote, local, {
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, {
       ...uploadOptions,
       nodelete: true,
     })
@@ -121,7 +121,7 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -142,7 +142,7 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -160,7 +160,7 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(remoteTheme, adminSession, [], themeFileSystem, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, [], themeFileSystem, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then
@@ -180,7 +180,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -220,7 +220,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -256,7 +256,7 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -300,7 +300,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -401,7 +401,7 @@ describe('theme-uploader', () => {
     const themeFileSystem = fakeThemeFileSystem('tmp', files)
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -434,7 +434,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -486,7 +486,7 @@ describe('theme-uploader', () => {
       ])
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(
+    const {renderThemeSyncProgress} = await uploadTheme(
       remoteTheme,
       adminSession,
       remoteChecksums,
@@ -543,7 +543,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, local, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then
@@ -576,7 +576,7 @@ describe('theme-uploader', () => {
     )
 
     // When
-    const {renderThemeSyncProgress} = uploadTheme(remoteTheme, adminSession, remote, localTheme, uploadOptions)
+    const {renderThemeSyncProgress} = await uploadTheme(remoteTheme, adminSession, remote, localTheme, uploadOptions)
     await renderThemeSyncProgress()
 
     // Then

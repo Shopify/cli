@@ -120,23 +120,6 @@ export type Scalars = {
   UtcOffset: {input: any; output: any}
 }
 
-/** The input fields for the theme file body. */
-export type OnlineStoreThemeFileBodyInput = {
-  /** The input type of the theme file body. */
-  type: OnlineStoreThemeFileBodyInputType
-  /** The body of the theme file. */
-  value: Scalars['String']['input']
-}
-
-/** The input type for a theme file body. */
-export type OnlineStoreThemeFileBodyInputType =
-  /** The base64 encoded body of a theme file. */
-  | 'BASE64'
-  /** The text body of the theme file. */
-  | 'TEXT'
-  /** The url of the body of a theme file. */
-  | 'URL'
-
 /** Type of a theme file operation result. */
 export type OnlineStoreThemeFileResultType =
   /** Operation was malformed or invalid. */
@@ -153,14 +136,6 @@ export type OnlineStoreThemeFileResultType =
   | 'TIMEOUT'
   /** Operation could not be processed due to issues with input data. */
   | 'UNPROCESSABLE_ENTITY'
-
-/** The input fields for the file to create or update. */
-export type OnlineStoreThemeFilesUpsertFileInput = {
-  /** The body of the theme file. */
-  body: OnlineStoreThemeFileBodyInput
-  /** The filename of the theme file. */
-  filename: Scalars['String']['input']
-}
 
 /** The input fields for Theme attributes to update. */
 export type OnlineStoreThemeInput = {
