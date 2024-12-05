@@ -119,6 +119,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     specifications: app.specifications ?? [],
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
+    hiddenConfig: app.hiddenConfig ?? {},
   })
 
   if (app.updateDependencies) {

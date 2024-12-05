@@ -3,8 +3,11 @@ import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
+import {configurationFileNames} from '../constants.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {appendFile, readFile} from '@shopify/cli-kit/node/fs'
 
 /**
  * Input options for the `storeContext` function.
@@ -34,8 +37,13 @@ export async function storeContext({
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
 
+  const devStoreUrlFromAppConfig = app.configuration.build?.dev_store_url
+  const devStoreUrlFromHiddenConfig = app.hiddenConfig.dev_store_url
+
+  const cachedStoreURL = devStoreUrlFromAppConfig ?? devStoreUrlFromHiddenConfig
+
   // If forceReselectStore is true, ignore the cached storeFqdn in the app configuration.
-  const cachedStoreInToml = forceReselectStore ? undefined : app.configuration.build?.dev_store_url
+  const cachedStoreInToml = forceReselectStore ? undefined : cachedStoreURL
 
   // An explicit storeFqdn has preference over anything else.
   const storeFqdnToUse = storeFqdn ?? cachedStoreInToml
@@ -53,6 +61,12 @@ export async function storeContext({
   await logMetadata(selectedStore, forceReselectStore)
   selectedStore.shopDomain = await normalizeStoreFqdn(selectedStore.shopDomain)
 
+  // Save the selected store in the hidden config file
+  if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
+    await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
+    await addHiddenConfigToGitIgnoreIfNeeded(app.directory)
+  }
+
   return selectedStore
 }
 
@@ -65,4 +79,17 @@ async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean)
   await metadata.addSensitiveMetadata(() => ({
     store_fqdn: selectedStore.shopDomain,
   }))
+}
+
+/**
+ * Adds the hidden config folder to the .gitignore file if it's not already there.
+ *
+ * This should be part of a larger mitration in the future.
+ */
+async function addHiddenConfigToGitIgnoreIfNeeded(appDirectory: string) {
+  const gitIgnorePath = joinPath(appDirectory, '.gitignore')
+  const gitIgnoreContent = await readFile(gitIgnorePath)
+  if (!gitIgnoreContent.includes(configurationFileNames.hiddenFolder)) {
+    await appendFile(gitIgnorePath, `\n${configurationFileNames.hiddenFolder}/*\n`)
+  }
 }
