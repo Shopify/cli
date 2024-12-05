@@ -4,6 +4,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {PipelineSource} from 'stream'
+import {pipeline} from 'stream/promises'
 import stream from 'node:stream/promises'
 import fs from 'node:fs'
 import * as gzip from 'node:zlib'
@@ -13,7 +14,7 @@ const FUNCTION_RUNNER_VERSION = 'v6.3.0'
 const JAVY_VERSION = 'v4.0.0'
 // The Javy plugin version does not need to match the Javy version. It should
 // match the plugin version used in the function-runner version specified above.
-const JAVY_PLUGIN_VERSION = 'v3.2.0'
+const JAVY_PLUGIN_VERSION = 'v1'
 
 interface DownloadableBinary {
   path: string
@@ -93,17 +94,17 @@ class JavyPlugin implements DownloadableBinary {
   readonly path: string
 
   constructor() {
-    this.name = 'javy_quickjs_provider_v3'
+    this.name = 'shopify_functions_javy_v1'
     this.version = JAVY_PLUGIN_VERSION
-    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'javy_quickjs_provider_v3.wasm')
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'shopify_functions_javy_v1.wasm')
   }
 
   downloadUrl(_processPlatform: string, _processArch: string) {
-    return `https://github.com/bytecodealliance/javy/releases/download/${this.version}/plugin.wasm.gz`
+    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${JAVY_PLUGIN_VERSION}.wasm`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
-    return gunzipResponse(responseStream, outputStream)
+    return pipeline(responseStream, outputStream)
   }
 }
 
