@@ -30,11 +30,10 @@ describe('extension-to-toml', () => {
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Admin link title"
+name = "Admin link label"
 handle = "admin-link-title"
 
   [[extensions.targeting]]
-  text = "admin link label"
   url = "https://google.es"
   target = "admin.collection-details.action.link"
 `)
@@ -66,11 +65,10 @@ handle = "admin-link-title"
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Bulk action title"
+name = "Bulk action label"
 handle = "bulk-action-title"
 
   [[extensions.targeting]]
-  text = "bulk action label"
   url = "app://action/product?product_id=123#hash"
   target = "admin.product-index.selection-action.link"
 `)
@@ -101,11 +99,10 @@ handle = "bulk-action-title"
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Bulk action title"
+name = "Bulk action label"
 handle = "bulk-action-title"
 
   [[extensions.targeting]]
-  text = "bulk action label"
   url = "app://"
   target = "admin.product-index.selection-action.link"
 `)
@@ -136,11 +133,10 @@ handle = "bulk-action-title"
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Bulk action title"
+name = "Bulk action label"
 handle = "bulk-action-title"
 
   [[extensions.targeting]]
-  text = "bulk action label"
   url = "app://?foo=bar"
   target = "admin.product-index.selection-action.link"
 `)
