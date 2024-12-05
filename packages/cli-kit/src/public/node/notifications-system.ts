@@ -112,7 +112,7 @@ async function renderNotifications(notifications: Notification[]) {
 }
 
 /**
- * Get notifications list from cache, that is updated in the background from bin/fetch-notifications.json.
+ * Get notifications list from cache, that is updated in the background from the fetch-notifications.json script.
  *
  * @returns A Notifications object.
  */

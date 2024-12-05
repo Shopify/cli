@@ -10,9 +10,7 @@ import {Command, Hook} from '@oclif/core'
 export const hook: Hook.Postrun = async ({config, Command}) => {
   await detectStopCommand(Command as unknown as typeof Command)
   await reportAnalyticsEvent({config, exitMode: 'ok'})
-  await exec('node', ['./packages/cli-kit/bin/fetch-notifications.js'], {
-    background: true,
-  })
+  await exec('node', [require.resolve('@shopify/cli-kit/assets/fetch-notifications.js')], {background: true})
   deprecationsHook(Command)
 
   const command = Command.id.replace(/:/g, ' ')
