@@ -152,10 +152,10 @@ const knownFailures = {
     '867f01113c20386d6a438dd56a6d241199e407eab928ab1ad9a7f233cd35c1be',
   'packages/app/src/cli/api/graphql/find_store_by_domain.ts':
     '0824f5baaab1ad419a7fa1d64824e306bd369430da47c7457ed72e74a1e94a9a',
-  'packages/app/src/cli/api/graphql/functions/api_schema_definition.ts':
-    '9ebbab831a66a2e49a8c2dac3185bb58c4688655040c6d14a9b2fb41a004bca8',
+    'packages/app/src/cli/api/graphql/functions/api_schema_definition.ts':
+    'e71100cf61919831681da1be8f12cd9067c4e3f2faf04c1b88b764fd8a275b82',
   'packages/app/src/cli/api/graphql/functions/target_schema_definition.ts':
-    '0469c1fe724568f031a52c5bda54d56d8c3b23d7e8a54a86a684f72028d71b46',
+    'd338c5d187ca8a1e1e68892987d780e540426faeba89df2dd9d8c96e193f5c13',
   'packages/app/src/cli/api/graphql/generate_signed_upload_url.ts':
     '848e40bf6b44331de0fe1dc1b0753593c1d47f9705ebe988a1b8ad5638d267ef',
   'packages/app/src/cli/api/graphql/get_variant_id.ts':

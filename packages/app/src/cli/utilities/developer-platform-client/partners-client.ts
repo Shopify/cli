@@ -99,12 +99,10 @@ import {
 } from '../../api/graphql/template_specifications.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {
-  TargetSchemaDefinitionQueryVariables,
   TargetSchemaDefinitionQuerySchema,
   TargetSchemaDefinitionQuery,
 } from '../../api/graphql/functions/target_schema_definition.js'
 import {
-  ApiSchemaDefinitionQueryVariables,
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQuery,
 } from '../../api/graphql/functions/api_schema_definition.js'
@@ -153,6 +151,8 @@ import {
   DevStoresByOrgQuery,
   DevStoresByOrgQueryVariables,
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -505,13 +505,37 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(CurrentAccountInfoQuery)
   }
 
-  async targetSchemaDefinition(input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
-    const response: TargetSchemaDefinitionQuerySchema = await this.request(TargetSchemaDefinitionQuery, input)
+  async targetSchemaDefinition(
+    input: SchemaDefinitionByTargetQueryVariables,
+    apiKey: string,
+    _organizationId: string,
+    _appId?: string,
+  ): Promise<string | null> {
+    // Ensures compatibility with existing partners requests
+    // Can remove once migrated to AMF
+    const transformedInput = {
+      target: input.handle,
+      version: input.version,
+      apiKey,
+    }
+
+    const response: TargetSchemaDefinitionQuerySchema = await this.request(
+      TargetSchemaDefinitionQuery,
+      transformedInput,
+    )
     return response.definition
   }
 
-  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
-    const response: ApiSchemaDefinitionQuerySchema = await this.request(ApiSchemaDefinitionQuery, input)
+  async apiSchemaDefinition(
+    input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string},
+    apiKey: string,
+    _organizationId: string,
+    _appId?: string,
+  ): Promise<string | null> {
+    const response: ApiSchemaDefinitionQuerySchema = await this.request(ApiSchemaDefinitionQuery, {
+      ...input,
+      apiKey,
+    })
     return response.definition
   }
 
