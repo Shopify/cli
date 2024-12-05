@@ -29,6 +29,7 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
     targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
     verification_session_url: zod.string().url().optional(),
     ui_extension_handle: zod.string().optional(),
+    supports_moto: zod.boolean(),
     encryption_certificate_fingerprint: zod
       .string()
       .min(1, {message: "Encryption certificate fingerprint can't be blank"}),
@@ -72,6 +73,7 @@ export interface CreditCardPaymentsAppExtensionDeployConfigType extends BasePaym
   supports_3ds: boolean
 
   // CreditCard-specific fields
+  supports_moto: boolean
   start_verification_session_url?: string
   ui_extension_registration_uuid?: string
   ui_extension_handle?: string
@@ -106,6 +108,7 @@ export function creditCardDeployConfigToCLIConfig(
     supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
+    supports_moto: config.supports_moto,
     supports_deferred_payments: config.supports_deferred_payments,
     supports_installments: config.supports_installments,
     verification_session_url: config.start_verification_session_url,
@@ -132,6 +135,7 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     supported_buyer_contexts: config.supported_buyer_contexts,
     test_mode_available: config.test_mode_available,
     supports_3ds: config.supports_3ds,
+    supports_moto: config.supports_moto,
     supports_deferred_payments: config.supports_deferred_payments,
     encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     supports_installments: config.supports_installments,
