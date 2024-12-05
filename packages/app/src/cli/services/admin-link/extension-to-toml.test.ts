@@ -20,7 +20,7 @@ describe('extension-to-toml', () => {
       type: 'app_link',
       draftVersion: {
         context: 'COLLECTIONS#SHOW',
-        config: '{"text":"admin link label","url":"https://google.es"}',
+        config: '{"text":"Admin link label","url":"https://google.es"}',
       },
     }
 
@@ -55,7 +55,7 @@ handle = "admin-link-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es/action/product?product_id=123#hash"}',
+        config: '{"text":"Bulk action label","url":"https://google.es/action/product?product_id=123#hash"}',
       },
     }
 
@@ -89,7 +89,7 @@ handle = "bulk-action-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es/"}',
+        config: '{"text":"Bulk action label","url":"https://google.es/"}',
       },
     }
 
@@ -123,7 +123,7 @@ handle = "bulk-action-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es?foo=bar"}',
+        config: '{"text":"Bulk action label","url":"https://google.es?foo=bar"}',
       },
     }
 
