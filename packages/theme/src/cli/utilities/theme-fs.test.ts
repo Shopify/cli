@@ -398,10 +398,19 @@ describe('theme-fs', () => {
         {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
         {key: 'templates/404.context.uk.json', checksum: '11'},
+        {key: 'blocks/block.liquid', checksum: '12'},
       ]
       // When
-      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
-        partitionThemeFiles(files)
+      const {
+        sectionLiquidFiles,
+        otherLiquidFiles,
+        templateJsonFiles,
+        otherJsonFiles,
+        configFiles,
+        staticAssetFiles,
+        contextualizedJsonFiles,
+        blockLiquidFiles,
+      } = partitionThemeFiles(files)
 
       // Then
       expect(sectionLiquidFiles).toEqual([{key: 'sections/announcement-bar.liquid', checksum: '10'}])
@@ -421,6 +430,8 @@ describe('theme-fs', () => {
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
       ])
+      expect(contextualizedJsonFiles).toEqual([{key: 'templates/404.context.uk.json', checksum: '11'}])
+      expect(blockLiquidFiles).toEqual([{key: 'blocks/block.liquid', checksum: '12'}])
     })
 
     test('should handle empty file array', () => {
