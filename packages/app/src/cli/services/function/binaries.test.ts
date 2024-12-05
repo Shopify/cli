@@ -135,9 +135,9 @@ describe('javy', () => {
 
 describe('javy-plugin', () => {
   test('properties are set correctly', () => {
-    expect(javyPlugin.name).toBe('javy_quickjs_provider_v3')
-    expect(javyPlugin.version).match(/^v\d.\d.\d$/)
-    expect(javyPlugin.path).toMatch(/(\/|\\)javy_quickjs_provider_v3.wasm$/)
+    expect(javyPlugin.name).toBe('shopify_functions_javy_v1')
+    expect(javyPlugin.version).match(/^v\d+$/)
+    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v1.wasm$/)
   })
 
   test('downloadUrl returns the correct URL', () => {
@@ -145,7 +145,9 @@ describe('javy-plugin', () => {
     const url = javyPlugin.downloadUrl('', '')
 
     // Then
-    expect(url).toMatch(/https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/plugin.wasm.gz/)
+    expect(url).toMatch(
+      /^https:\/\/cdn\.shopify\.com\/shopifycloud\/shopify-functions-javy-plugin\/shopify_functions_javy_v\d+\.wasm$/,
+    )
   })
 
   test('downloads javy-plugin', async () => {
