@@ -50,7 +50,7 @@
     "yaml": "2.3.2"
   },
   "devDependencies": {
-    "@types/node": "18.19.3",
+    "@types/node": "18.19.67",
     "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0"
   },

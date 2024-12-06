@@ -60,7 +60,7 @@
   "devDependencies": {
     "@shopify/cli-kit": "3.71.4",
     "@shopify/app": "3.71.4",
-    "@types/node": "18.19.3",
+    "@types/node": "18.19.67",
     "esbuild-plugin-copy": "^2.1.1",
     "@vitest/coverage-istanbul": "^1.6.0"
   },
