@@ -101,7 +101,7 @@
     ]
   },
   "dependencies": {
-    "@ast-grep/napi": "0.11.0",
+    "@ast-grep/napi": "0.31.0",
     "esbuild": "0.19.8"
   },
   "devDependencies": {
