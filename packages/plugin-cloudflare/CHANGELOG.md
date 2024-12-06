@@ -1,5 +1,12 @@
 # @shopify/plugin-cloudflare
 
+## 3.71.5
+
+### Patch Changes
+
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+
 ## 3.71.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.71.5
+
+### Patch Changes
+
+- 94a7d4ce4f: Fix bug preventing empty theme files from uploading
+
 ## 3.71.4
 
 ### Patch Changes
