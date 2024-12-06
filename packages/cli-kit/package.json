@@ -91,7 +91,8 @@
                 "./context/utilities.js",
                 "../../private/node/conf-store.js",
                 "../../private/node/constants.js",
-                "url"
+                "url",
+                "./cli-launcher.js"
               ]
             }
           ]
