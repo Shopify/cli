@@ -43,11 +43,11 @@
   "dependencies": {
     "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.71.4",
-    "@shopify/theme-check-node": "3.2.2",
-    "@shopify/theme-language-server-node": "2.2.2",
-    "chokidar": "3.5.3",
-    "h3": "1.12.0",
-    "yaml": "2.3.2"
+    "@shopify/theme-check-node": "3.3.0",
+    "@shopify/theme-language-server-node": "2.3.0",
+    "chokidar": "3.6.0",
+    "h3": "1.13.0",
+    "yaml": "2.6.1"
   },
   "devDependencies": {
     "@types/node": "18.19.3",
