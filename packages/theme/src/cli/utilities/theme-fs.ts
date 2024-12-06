@@ -46,6 +46,7 @@ const THEME_PARTITION_REGEX = {
 export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
   const unsyncedFileKeys = new Set<string>()
+  const uploadErrors = new Map<Key, string[]>()
   const filterPatterns = {
     ignoreFromFile: [] as string[],
     ignore: options?.filters?.ignore ?? [],
@@ -147,12 +148,10 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
-        if (!result?.success) {
-          throw new Error(
-            result?.errors?.asset
-              ? `\n\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
-              : 'Response was not successful.',
-          )
+        if (result?.success) {
+          uploadErrors.delete(fileKey)
+        } else {
+          uploadErrors.set(fileKey, result?.errors?.asset ?? ['Response was not successful.'])
         }
 
         unsyncedFileKeys.delete(fileKey)
@@ -164,6 +163,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     emitEvent(eventName, {
       fileKey,
+      uploadErrors,
       onContent: (fn) => {
         contentPromise
           .then((content) => {
@@ -223,6 +223,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     root,
     files,
     unsyncedFileKeys,
+    uploadErrors,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
       files.delete(fileKey)
@@ -245,6 +246,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     addEventListener: (eventName, cb) => {
       eventEmitter.on(eventName, cb)
     },
+    emitEvent,
     startWatcher: async (themeId: string, adminSession: AdminSession) => {
       const {default: chokidar} = await import('chokidar')
 
