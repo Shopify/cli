@@ -20,7 +20,6 @@ import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI} from '@shopify/cli-kit/node/cli'
-import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {FatalError} from '@shopify/cli-kit/node/error'
 import fs from 'fs'
@@ -67,13 +66,10 @@ interface RunShopifyCLIOptions {
 }
 
 async function runShopifyCLI({development}: RunShopifyCLIOptions) {
-  await runCLI(
-    {
-      moduleURL: import.meta.url,
-      development,
-    },
-    launchCLI,
-  )
+  await runCLI({
+    moduleURL: import.meta.url,
+    development,
+  })
 }
 
 // Hide plugins command
