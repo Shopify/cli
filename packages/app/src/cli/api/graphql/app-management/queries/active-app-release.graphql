@@ -1,22 +1,26 @@
 query activeAppRelease($appId: ID!) {
   app(id: $appId) {
-    id
-    key
-    activeRoot {
-      clientCredentials {
-        secrets {
-          key
-        }
+    ...AppVersionInfo
+  }
+}
+
+fragment AppVersionInfo on App {
+  id
+  key
+  activeRoot {
+    clientCredentials {
+      secrets {
+        key
       }
     }
-    activeRelease {
-      id
-      version {
-        name
+  }
+  activeRelease {
+    id
+    version {
+      name
         appModules {
           ...ReleasedAppModule
         }
-      }
     }
   }
 }

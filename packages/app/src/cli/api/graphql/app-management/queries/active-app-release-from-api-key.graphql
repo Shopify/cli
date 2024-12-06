@@ -1,0 +1,5 @@
+query ActiveAppReleaseFromApiKey($apiKey: String!) {
+  app: appByKey(key: $apiKey) {
+    ...AppVersionInfo
+  }
+}

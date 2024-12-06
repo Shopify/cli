@@ -18,6 +18,12 @@ export interface MinimalAppIdentifiers {
   organizationId: string
 }
 
+export interface MinimalAppIdentifiersPossiblyExcludingId {
+  id?: string
+  apiKey: string
+  organizationId: string
+}
+
 export type MinimalOrganizationApp = MinimalAppIdentifiers & {
   title: string
 }

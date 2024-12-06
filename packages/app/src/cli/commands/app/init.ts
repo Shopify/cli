@@ -1,7 +1,7 @@
 import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {appFromId, selectOrg} from '../../services/context.js'
+import {appFromIdentifiers, selectOrg} from '../../services/context.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
@@ -87,7 +87,7 @@ export default class Init extends AppCommand {
     let appName: string
     if (flags['client-id']) {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
-      const selectedApp = await appFromId({apiKey: flags['client-id'], developerPlatformClient})
+      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id'], developerPlatformClient})
       appName = selectedApp.title
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
@@ -158,7 +158,7 @@ async function selectAppOrNewAppName(
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)
 
-    const fullSelectedApp = await developerPlatformClient.appFromId(app)
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
     if (!fullSelectedApp) throw new AbortError(`App with id ${app.id} not found`)
     return {result: 'existing', app: fullSelectedApp}
   }
