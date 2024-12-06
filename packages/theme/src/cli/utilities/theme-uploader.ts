@@ -168,6 +168,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.sectionJsonFiles,
     ...fileSets.otherJsonFiles,
     ...fileSets.sectionLiquidFiles,
+    ...fileSets.blockLiquidFiles,
     ...fileSets.otherLiquidFiles,
     ...fileSets.configFiles,
     ...fileSets.staticAssetFiles,
@@ -237,7 +238,8 @@ function buildUploadJob(
     (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
     Promise.resolve(),
   )
-  // Wait for dependent files upload to be started before starting this one:
+
+  // Dependant and independant files are uploaded concurrently
   const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
   const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
@@ -289,6 +291,7 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
     independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
     // Follow order of dependencies:
     dependentFiles: [
+      fileSets.blockLiquidFiles,
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,
       fileSets.templateJsonFiles,
