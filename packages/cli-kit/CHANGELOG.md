@@ -1,5 +1,21 @@
 # @shopify/cli-kit
 
+## 3.71.4
+
+### Patch Changes
+
+- 94953a671e: Fix bug preventing empty theme files from uploading
+
+## 3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- a395820e7b: Fix dev for Ruby apps by avoiding the command safety check to raise an error when not found
+
+## 3.71.1
+
 ## 3.71.0
 
 ### Patch Changes
