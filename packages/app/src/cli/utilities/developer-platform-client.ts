@@ -56,6 +56,7 @@ import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-ses
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -77,14 +78,17 @@ export interface AppVersionIdentifiers {
 }
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
-  return isAppManagementDisabled() ? [new PartnersClient()] : [new PartnersClient(), new AppManagementClient()]
+  const clients: DeveloperPlatformClient[] = []
+  if (!isTruthy(process.env.DISABLE_PARTNERS_CLIENT)) clients.push(new PartnersClient())
+  if (!isAppManagementDisabled()) clients.push(new AppManagementClient())
+  return clients
 }
 
 /**
  * Attempts to load an app's configuration in order to select a developer platform client.
  *
  * The provided options are a subset of what is common across most services.
- *
+ *P
  * @param directory - The working directory for this command (possibly via `--path`)
  * @param configName - An optional configuration file name to force, provided by the developer
  * @param developerPlatformClient - An optional developer platform client to use, forced by the developer

@@ -344,7 +344,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       } catch (_e) {
         throw new AbortError([
           'Failed to fetch extension templates from',
-          {link: {url: jsonPath ? jsonPath : TEMPLATE_JSON_URL}},
+          {link: {url: templatesJsonPath ? templatesJsonPath : TEMPLATE_JSON_URL}},
           {char: '.'},
           'This likely means a problem with your internet connection.',
         ])
