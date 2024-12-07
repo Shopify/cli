@@ -2,6 +2,7 @@ import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
+import {serializeCookies} from '../cookies.js'
 import {
   createError,
   createEventStream,
@@ -102,7 +103,15 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
         })
       } else {
         // Otherwise, just full refresh directly:
-        triggerHotReload(fileKey, ctx)
+        onSync(() => {
+          // Note: onSync is only required for OSE.
+          // CLI serves assets from local disk so it doesn't need cloud syncing.
+          // However, OSE currently gets assets from SFR, so it needs to wait
+          // until the asset is synced to the cloud before triggering a hot reload.
+          // Once OSE can intercept asset requests via Service Worker, it will
+          // start serving assets from local disk and won't need to wait for syncs.
+          triggerHotReload(fileKey, ctx)
+        })
       }
     } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
@@ -312,7 +321,22 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
   }
 
   if (sectionsToUpdate.size > 0) {
-    emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+    // emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
+    const sectionNames = [...sectionsToUpdate]
+    emitHotReloadEvent({
+      type: 'section',
+      key,
+      sectionNames,
+      names: sectionNames,
+      replaceTemplates: Object.fromEntries(
+        sectionNames.map((name) => {
+          const sectionKey = `sections/${name}.liquid`
+          return [sectionKey, ctx.localThemeFileSystem.files.get(sectionKey)?.value ?? '']
+        }),
+      ),
+      token: ctx.session.storefrontToken,
+      cookies: serializeCookies(ctx.session.sessionCookies ?? {}),
+    })
   } else {
     emitHotReloadEvent({type: 'full', key})
   }
