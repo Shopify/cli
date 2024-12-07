@@ -117,6 +117,13 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
         ignored: DEFAULT_IGNORE_PATTERNS,
         persistent: !process.env.SHOPIFY_UNIT_TEST,
         ignoreInitial: true,
+        // Big files (e.g. Tailwind output) can take a while to write.
+        // Delaying the event until the file size doesn't change for a
+        // short period ensures that we get the fully written file:
+        awaitWriteFinish: {
+          stabilityThreshold: 400,
+          pollInterval: 100,
+        },
       })
 
       watcher
