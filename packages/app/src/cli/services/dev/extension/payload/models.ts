@@ -98,10 +98,6 @@ interface Capability {
   [key: string]: boolean | undefined
 }
 
-interface IframeCapability {
-  sources: string[] | undefined
-}
-
 interface Capabilities {
-  [key: string]: Capability | IframeCapability | boolean | undefined
+  [key: string]: Capability | boolean | undefined
 }
