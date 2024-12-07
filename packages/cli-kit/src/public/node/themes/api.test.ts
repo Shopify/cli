@@ -17,6 +17,7 @@ import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publi
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
 import {OnlineStoreThemeFileBodyInputType} from '../../../cli/api/graphql/admin/generated/types.js'
+import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {test, vi, expect, describe} from 'vitest'
 import {adminRequestDoc, restRequest, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -31,22 +32,21 @@ const sessions = {CLI: session, 'Theme Access': themeAccessSession}
 describe('fetchThemes', () => {
   test('returns store themes', async () => {
     // Given
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {
-        themes: [
-          {id: 123, name: 'store theme 1', processing: false},
-          {id: 456, name: 'store theme 2', processing: true},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themes: {
+        nodes: [
+          {id: 'gid://shopify/OnlineStoreTheme/123', name: 'store theme 1', role: 'UNPUBLISHED', processing: false},
+          {id: 'gid://shopify/OnlineStoreTheme/456', name: 'store theme 2', role: 'MAIN', processing: true},
         ],
+        pageInfo: {hasNextPage: false, endCursor: null},
       },
-      status: 200,
-      headers: {},
     })
 
     // When
     const themes = await fetchThemes(session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
+    expect(adminRequestDoc).toHaveBeenCalledWith(GetThemes, session, {after: null})
     expect(themes).toHaveLength(2)
 
     expect(themes[0]!.id).toEqual(123)
