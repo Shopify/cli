@@ -7,6 +7,7 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {DevServerSession} from '../utilities/theme-environment/types.js'
+import {logRequestLine} from '../utilities/log-request-line.js'
 import {describe, expect, test, vi} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
@@ -22,6 +23,7 @@ vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/theme-environment.js')
 vi.mock('../utilities/theme-fs-empty.js')
 vi.mock('../utilities/theme-fs.js')
+vi.mock('../utilities/log-request-line.js')
 vi.mock('@shopify/cli-kit/node/colors', () => ({
   default: {
     bold: (str: string) => str,
@@ -101,9 +103,33 @@ describe('dev', () => {
           ignore: [],
           noDelete: false,
           only: [],
+          silence: false,
         },
       })
     })
+  })
+
+  test('does not log requests and responses when the `-silence` option is true', async () => {
+    // Given
+    vi.mocked(initializeDevServerSession).mockResolvedValue(session)
+    vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+    vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
+    vi.mocked(emptyThemeExtFileSystem).mockReturnValue(localThemeExtensionFileSystem)
+    vi.mocked(logRequestLine).mockReturnValue(undefined)
+    vi.mocked(setupDevServer).mockReturnValue({
+      workPromise: Promise.resolve(),
+      renderDevSetupProgress: () => Promise.resolve(),
+      dispatchEvent: () => {},
+      serverStart: async () => ({close: async () => {}}),
+    })
+
+    const devOptions = {...options, silence: true}
+
+    // When
+    await dev(devOptions)
+
+    // Then
+    expect(logRequestLine).not.toHaveBeenCalled()
   })
 
   test('renders "dev" command links', async () => {
