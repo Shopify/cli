@@ -46,6 +46,10 @@ export const AdminLinkModulesMap = {
   admin_link: ['app_link', 'bulk_action'],
 }
 
+export const ProductConfigurationLinkModulesMap = {
+  product_configuration_link_extension: ['product_configuration_link'],
+}
+
 /**
  * Returns a list of local and remote extensions that need to be migrated.
  *
