@@ -30,6 +30,7 @@ const defaultMap = {
   ],
   marketing_activity: ['marketing_activity_extension'],
   subscription_link_extension: ['subscription_link'],
+  product_configuration_link_extension: ['product_configuration_link'],
 }
 
 const defaultIdentifiers = {
@@ -48,14 +49,19 @@ describe('getModulesToMigrate()', () => {
     const localExtension = getLocalExtension({type: 'payments_extension', localIdentifier: 'module-A'})
     const localExtensionB = getLocalExtension({type: 'marketing_activity', localIdentifier: 'module-B'})
     const localExtensionC = getLocalExtension({type: 'subscription_link_extension', localIdentifier: 'module-C'})
+    const localExtensionD = getLocalExtension({
+      type: 'product_configuration_link_extension',
+      localIdentifier: 'module-D',
+    })
     const remoteExtension = getRemoteExtension({type: 'payments_app_credit_card', title: 'module-A', uuid: 'yy'})
     const remoteExtensionB = getRemoteExtension({type: 'marketing_activity_extension', title: 'module-B', uuid: 'xx'})
     const remoteExtensionC = getRemoteExtension({type: 'subscription_link', title: 'module-C', uuid: 'zz'})
+    const remoteExtensionD = getRemoteExtension({type: 'product_configuration_link', title: 'module-D', uuid: 'zz'})
 
     // When
     const toMigrate = getModulesToMigrate(
-      [localExtension, localExtensionB, localExtensionC],
-      [remoteExtension, remoteExtensionB, remoteExtensionC],
+      [localExtension, localExtensionB, localExtensionC, localExtensionD],
+      [remoteExtension, remoteExtensionB, remoteExtensionC, remoteExtensionD],
       {},
       defaultMap,
     )
@@ -65,6 +71,7 @@ describe('getModulesToMigrate()', () => {
       {local: localExtension, remote: remoteExtension},
       {local: localExtensionB, remote: remoteExtensionB},
       {local: localExtensionC, remote: remoteExtensionC},
+      {local: localExtensionD, remote: remoteExtensionD},
     ])
   })
 

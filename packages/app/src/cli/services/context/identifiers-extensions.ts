@@ -17,6 +17,7 @@ import {
   UIModulesMap,
   SubscriptionModulesMap,
   AdminLinkModulesMap,
+  ProductConfigurationLinkModulesMap,
 } from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -56,6 +57,12 @@ export async function ensureExtensionsIds(
     dashboardExtensions,
     identifiers,
     AdminLinkModulesMap,
+  )
+  const productConfigurationLinkExtensionsToMigrate = getModulesToMigrate(
+    localExtensions,
+    dashboardExtensions,
+    identifiers,
+    ProductConfigurationLinkModulesMap,
   )
 
   let didMigrateDashboardExtensions = false
@@ -134,6 +141,20 @@ export async function ensureExtensionsIds(
       adminLinkExtensionsToMigrate,
       options.appId,
       'admin_link',
+      dashboardExtensions,
+      options.developerPlatformClient,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+    didMigrateDashboardExtensions = true
+  }
+
+  if (productConfigurationLinkExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(productConfigurationLinkExtensionsToMigrate, false)
+    if (!confirmedMigration) throw new AbortSilentError()
+    const newRemoteExtensions = await migrateAppModules(
+      productConfigurationLinkExtensionsToMigrate,
+      options.appId,
+      'product_configuration_link_extension',
       dashboardExtensions,
       options.developerPlatformClient,
     )
