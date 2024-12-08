@@ -133,7 +133,7 @@ async function getGithubPasswordFromDev() {
   }
 }
 
-async function fetchFiles() {
+async function withOctokit(func) {
   let password = undefined
   let tokenFromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
   if (!tokenFromEnv) {
@@ -145,11 +145,17 @@ async function fetchFiles() {
   const octokit = new Octokit({
     auth: authToken,
   })
+  return func(octokit)
+}
 
-  let allSuccess = true
-  for (const schema of schemas) {
-    allSuccess = await fetchFileForSchema(schema, octokit) && allSuccess
-  }
+async function fetchFiles() {
+  const allResults = await Promise.all(schemas.map(async (schema) => {
+    return withOctokit(async (octokit) => {
+      return fetchFileForSchema(schema, octokit)
+    })
+  }))
+
+  const allSuccess = allResults.every((result) => result)
 
   if (!allSuccess) {
     console.error('Failed to fetch all files')
@@ -161,7 +167,17 @@ async function fetchFilesFromSpin() {
   for (const schema of schemas) {
     const remotePath = `~/src/github.com/Shopify/${schema.repo}/${schema.pathToFile}`
     const localPath = schema.localPath
-    await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+    try {
+      await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+    } catch(e) {
+      if (e.message.match(/scp.*No such file or directory/)) {
+        // Assume we need to just fetch the file from GitHub
+        console.log(`Cannot find file for ${schema.repo} in Spin, fetching from GitHub instead...`)
+        await withOctokit(async (octokit) => {
+          await fetchFileForSchema(schema, octokit)
+        })
+      }
+    }
   }
 }
 
