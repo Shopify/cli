@@ -64,6 +64,16 @@ const subscriptionLinkExtension: ExtensionRegistration = {
   },
 }
 
+const productConfigurationLinkExtension: ExtensionRegistration = {
+  id: 'idE',
+  title: 'titleE',
+  uuid: 'uuidE',
+  type: 'product_configuration_link',
+  activeVersion: {
+    config: '{}',
+  },
+}
+
 describe('import-extensions', () => {
   beforeEach(() => {
     // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
@@ -77,6 +87,7 @@ describe('import-extensions', () => {
       flowExtensionB,
       marketingActivityExtension,
       subscriptionLinkExtension,
+      productConfigurationLinkExtension,
     ])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
 
@@ -93,6 +104,7 @@ describe('import-extensions', () => {
           'flow_trigger_definition',
           'marketing_activity_extension',
           'subscription_link',
+          'product_configuration_link',
         ],
         buildTomlObject,
       })
@@ -114,6 +126,9 @@ describe('import-extensions', () => {
 
       const tomlPathD = joinPath(tmpDir, 'extensions', 'title-d', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathD)).toBe(false)
+
+      const tomlPathE = joinPath(tmpDir, 'extensions', 'title-e', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathE)).toBe(false)
     })
   })
 
@@ -124,6 +139,7 @@ describe('import-extensions', () => {
       flowExtensionB,
       marketingActivityExtension,
       subscriptionLinkExtension,
+      productConfigurationLinkExtension,
     ])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
 
@@ -140,13 +156,14 @@ describe('import-extensions', () => {
           'flow_trigger_definition',
           'marketing_activity_extension',
           'subscription_link',
+          'product_configuration_link',
         ],
         buildTomlObject,
       })
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
-        body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b\n• "titleC" at: extensions/title-c\n• "titleD" at: extensions/title-d',
+        body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b\n• "titleC" at: extensions/title-c\n• "titleD" at: extensions/title-d\n• "titleE" at: extensions/title-e',
       })
 
       // Then
@@ -161,6 +178,9 @@ describe('import-extensions', () => {
 
       const tomlPathD = joinPath(tmpDir, 'extensions', 'title-d', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathD)).toBe(true)
+
+      const tomlPathE = joinPath(tmpDir, 'extensions', 'title-e', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathE)).toBe(true)
     })
   })
 
@@ -180,6 +200,7 @@ describe('import-extensions', () => {
           'flow_trigger_definition',
           'marketing_activity_extension',
           'subscription_link',
+          'product_configuration_link',
         ],
         buildTomlObject,
       })
@@ -202,6 +223,9 @@ describe('import-extensions', () => {
 
       const tomlPathD = joinPath(tmpDir, 'extensions', 'title-d', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathD)).toBe(false)
+
+      const tomlPathE = joinPath(tmpDir, 'extensions', 'title-e', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathE)).toBe(false)
     })
   })
 })
