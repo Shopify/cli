@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {downloadBinary, javyBinary, javyPluginBinary} from './binaries.js'
+import {downloadBinary, javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -7,7 +7,7 @@ import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -15,6 +15,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {Writable} from 'stream'
+import {execSync} from 'child_process'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
@@ -160,6 +161,24 @@ function getESBuildOptions(
     format: 'esm',
   }
   return esbuildOptions
+}
+
+export async function downloadWasmOpt() {
+  const wasmOpt = wasmOptBinary()
+  await Promise.all([downloadBinary(wasmOpt)])
+}
+
+export async function runWasmOpt(modulePath: string) {
+  await downloadWasmOpt()
+
+  const wasmOptDir = dirname(wasmOptBinary().path)
+  const command = `node wasm-opt.cjs ${modulePath}`
+  const args = ['-Oz', '--enable-bulk-memory', '-o', modulePath].join(' ')
+
+  console.log('Attempting to run wasm-opt with the following command:')
+  console.log(`${command} ${args}`)
+
+  execSync(`${command} ${args}`, {cwd: wasmOptDir})
 }
 
 export async function runJavy(
