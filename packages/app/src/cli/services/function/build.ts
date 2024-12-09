@@ -16,7 +16,6 @@ import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
-import {execSync} from 'child_process'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
@@ -196,13 +195,21 @@ export async function runWasmOpt(modulePath: string) {
   await downloadWasmOpt()
 
   const wasmOptDir = dirname(wasmOptBinary().path)
-  const command = `node wasm-opt.cjs ${modulePath}`
-  const args = ['-Oz', '--enable-bulk-memory', '-o', modulePath].join(' ')
 
-  console.log('Attempting to run wasm-opt with the following command:')
-  console.log(`${command} ${args}`)
+  const command = `node`
+  const args = [
+    // invoke the js-wrapped wasm-opt binary
+    wasmOptBinary().name,
+    modulePath,
+    // pass these options to wasm-opt
+    '-Oz',
+    '--enable-bulk-memory',
+    // overwrite our existing module with the optimized version
+    '-o',
+    modulePath,
+  ]
 
-  execSync(`${command} ${args}`, {cwd: wasmOptDir})
+  await exec(command, args, {cwd: wasmOptDir})
 }
 
 export async function runJavy(
