@@ -133,7 +133,7 @@ export async function handler(error: unknown): Promise<unknown> {
   } else if (typeof error === 'string') {
     fatal = new BugError(error)
   } else if (error instanceof Error) {
-    fatal = new BugError(error.message)
+    fatal = isGraphQLError(error) ? new AbortError(error.message) : new BugError(error.message)
     fatal.stack = error.stack
   } else {
     // errors can come in all shapes and sizes...
@@ -188,6 +188,9 @@ function isFatal(error: unknown): error is FatalError {
  */
 export function shouldReportErrorAsUnexpected(error: unknown): boolean {
   if (!isFatal(error)) {
+    if (isInternalGraphQLError(error)) {
+      return false
+    }
     // this means its not one of the CLI wrapped errors
     if (error instanceof Error) {
       const message = error.message
@@ -233,4 +236,32 @@ function errorMessageImpliesEnvironmentIssue(message: string): boolean {
   ]
   const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
   return anyMatches
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isInternalGraphQLError(error: any): boolean {
+  if (!isGraphQLError(error)) {
+    return false
+  }
+
+  const extensions = error?.errors?.[0]?.extensions
+
+  // App Management errors have a category that can be used to determine if the error is internal
+  const category: string | undefined = extensions?.app_errors?.errors?.[0]?.category
+  if (category) {
+    return category === 'internal'
+  }
+
+  // Partners errors have a code that can be used to determine if the error is internal
+  const code: string | undefined = extensions?.code
+  if (code) {
+    return parseInt(code, 10) >= 500
+  }
+
+  return true
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isGraphQLError(error: any): boolean {
+  return error?.name === 'GraphQLClientError'
 }
