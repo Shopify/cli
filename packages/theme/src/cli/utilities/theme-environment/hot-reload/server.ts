@@ -1,9 +1,8 @@
-import {getClientScripts, HotReloadEvent} from './client.js'
+import {getClientScripts, type HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
-import {serializeCookies} from '../cookies.js'
 import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
@@ -85,7 +84,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  * HotReload if needed.
  */
 export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
-  const handleFileUpdate = ({fileKey, onSync}: ThemeFSEventPayload) => {
+  const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
 
     if (isAsset(fileKey)) {
@@ -96,6 +95,8 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
         })
       } else {
         // Otherwise, just full refresh directly:
+        triggerHotReload(fileKey, ctx, {timing: false})
+
         onSync(() => {
           // Note: onSync is only required for OSE.
           // CLI serves assets from local disk so it doesn't need cloud syncing.
@@ -103,14 +104,21 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
           // until the asset is synced to the cloud before triggering a hot reload.
           // Once OSE can intercept asset requests via Service Worker, it will
           // start serving assets from local disk and won't need to wait for syncs.
-          triggerHotReload(fileKey, ctx)
+          triggerHotReload(fileKey, ctx, {timing: 'sync'})
         })
       }
     } else if (needsTemplateUpdate(fileKey)) {
       // Update in-memory templates for hot reloading:
       onContent((content) => {
         if (extension === '.json') saveSectionsFromJson(fileKey, content)
-        triggerHotReload(fileKey, ctx)
+        triggerHotReload(fileKey, ctx, {timing: false})
+      })
+
+      onSync(() => {
+        // Note: onSync is only required for OSE.
+        // Once we get replace_templates working with the SFR API for OSE,
+        // we can remove the onSync callback and just trigger a hot reload here.
+        triggerHotReload(fileKey, ctx, {timing: 'sync'})
       })
     } else {
       // Unknown files outside of assets. Wait for sync and reload:
@@ -156,9 +164,29 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
 // --- SSE Hot Reload ---
 
+interface EventFilter {
+  timing?: 'sync' | false
+}
+
 const eventEmitter = new EventEmitter()
-export function emitHotReloadEvent(event: HotReloadEvent) {
-  eventEmitter.emit('hot-reload', event)
+export function emitHotReloadEvent(event: HotReloadEvent, filter: EventFilter | undefined) {
+  eventEmitter.emit('hot-reload', event, filter)
+}
+
+/**
+ * The client can pass a filter in the query params to prevent getting certain events.
+ * This is useful to run different behavior for Online Store Editor, where events
+ * need to be triggered after syncing, vs pure CLI where we want to trigger them asap.
+ */
+function shouldIgnoreEvent(queryParam: EventFilter, filter?: EventFilter) {
+  if (queryParam.timing) {
+    // OSE will subscribe to `?timing=sync` to only get events after syncing:
+    // Only ignore events if the filter doesn't match or if it's specifically disabled.
+    if (filter?.timing === false || filter?.timing !== queryParam.timing) return true
+  } else if (filter?.timing) {
+    // CLI will subscribe without a filter param, so we ignore every event that has a filter set.
+    return true
+  }
 }
 
 /**
@@ -170,9 +198,12 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
     if (endpoint === '/__hot-reload/subscribe') {
       const eventStream = createEventStream(event)
+      const queryParams: EventFilter = getQuery(event)
 
-      eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
-        eventStream.push(JSON.stringify(event)).catch((error: Error) => {
+      eventEmitter.on('hot-reload', (event: HotReloadEvent, filter?: EventFilter) => {
+        if (shouldIgnoreEvent(queryParams, filter)) return
+
+        eventStream.push(JSON.stringify({...event, debug: {timing: filter?.timing}})).catch((error: Error) => {
           renderWarning({headline: 'Failed to send HotReload event.', body: error.stack})
         })
       })
@@ -262,25 +293,25 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function triggerHotReload(key: string, ctx: DevServerContext) {
+function triggerHotReload(key: string, ctx: DevServerContext, filter?: EventFilter) {
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
-    emitHotReloadEvent({type: 'full', key})
+    emitHotReloadEvent({type: 'full', key}, filter)
     return
   }
 
   const [type] = key.split('/')
 
   if (type === 'sections') {
-    hotReloadSections(key, ctx)
+    hotReloadSections(key, ctx, filter)
   } else if (type === 'assets' && key.endsWith('.css')) {
-    emitHotReloadEvent({type: 'css', key})
+    emitHotReloadEvent({type: 'css', key}, filter)
   } else {
-    emitHotReloadEvent({type: 'full', key})
+    emitHotReloadEvent({type: 'full', key}, filter)
   }
 }
 
-function hotReloadSections(key: string, ctx: DevServerContext) {
+function hotReloadSections(key: string, ctx: DevServerContext, filter?: EventFilter) {
   const sectionsToUpdate = new Set<string>()
 
   if (key.endsWith('.json')) {
@@ -309,22 +340,23 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
   if (sectionsToUpdate.size > 0) {
     // emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
     const sectionNames = [...sectionsToUpdate]
-    emitHotReloadEvent({
-      type: 'section',
-      key,
-      sectionNames,
-      names: sectionNames,
-      replaceTemplates: Object.fromEntries(
-        sectionNames.map((name) => {
-          const sectionKey = `sections/${name}.liquid`
-          return [sectionKey, ctx.localThemeFileSystem.files.get(sectionKey)?.value ?? '']
-        }),
-      ),
-      token: ctx.session.storefrontToken,
-      cookies: serializeCookies(ctx.session.sessionCookies ?? {}),
-    })
+    emitHotReloadEvent(
+      {
+        type: 'section',
+        key,
+        sectionNames,
+        names: sectionNames,
+        replaceTemplates: Object.fromEntries(
+          sectionNames.map((name) => {
+            const sectionKey = `sections/${name}.liquid`
+            return [sectionKey, ctx.localThemeFileSystem.files.get(sectionKey)?.value ?? '']
+          }),
+        ),
+      },
+      filter,
+    )
   } else {
-    emitHotReloadEvent({type: 'full', key})
+    emitHotReloadEvent({type: 'full', key}, filter)
   }
 }
 
