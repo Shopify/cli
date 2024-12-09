@@ -38,5 +38,5 @@ export default async function cleanup(webOutputDirectory: string, packageManager
   return Promise.all([
     ...gitPaths.map((path) => rmdir(path, {force: true})),
     ...unusedLockfiles.map((path) => unlinkFile(path)),
-  ]).then(() => {})
+  ])
 }
