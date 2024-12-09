@@ -30,6 +30,7 @@ export const environmentVariables = {
   verbose: 'SHOPIFY_FLAG_VERBOSE',
   noThemeBundling: 'SHOPIFY_CLI_NO_THEME_BUNDLING',
   bundledThemeCLI: 'SHOPIFY_CLI_BUNDLED_THEME_CLI',
+  neverUsePartnersApi: 'SHOPIFY_CLI_NEVER_USE_PARTNERS_API',
   // Variables to detect if the CLI is running in a cloud environment
   codespaces: 'CODESPACES',
   codespaceName: 'CODESPACE_NAME',

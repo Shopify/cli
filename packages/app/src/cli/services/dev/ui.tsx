@@ -18,7 +18,8 @@ export async function outputUpdateURLsResult(
   remoteApp: OrganizationApp,
   localApp: AppInterface,
 ) {
-  const dashboardURL = await partnersURL(remoteApp.organizationId, remoteApp.id)
+  // const dashboardURL = await partnersURL(remoteApp.organizationId, remoteApp.id)
+  const dashboardURL = 'LINK TO THE DASHBOARD GOES HERE'
   if (remoteApp.newApp) {
     renderInfo({
       headline: `For your convenience, we've given your app a default URL: ${urls.applicationUrl}.`,
