@@ -169,7 +169,7 @@ interface EventFilter {
 }
 
 const eventEmitter = new EventEmitter()
-export function emitHotReloadEvent(event: HotReloadEvent, filter: EventFilter | undefined) {
+export function emitHotReloadEvent(event: HotReloadEvent, filter?: EventFilter) {
   eventEmitter.emit('hot-reload', event, filter)
 }
 
