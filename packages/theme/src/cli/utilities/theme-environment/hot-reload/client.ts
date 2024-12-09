@@ -10,8 +10,6 @@ export type HotReloadEvent =
       type: 'section'
       key: string
       names: string[]
-      token: string
-      cookies: string
       sectionNames: string[]
       replaceTemplates: {[key: string]: string}
     }
@@ -37,8 +35,7 @@ type HotReloadActionMap = {
 }
 
 export function getClientScripts() {
-  return ''
-  // return injectFunction(hotReloadScript)
+  return injectFunction(hotReloadScript)
 }
 
 function injectFunction(fn: () => void) {
