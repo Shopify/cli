@@ -1,7 +1,7 @@
 import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension, bundleFlowTemplateExtension} from '../extensions/bundle.js'
-import {buildJSFunction} from '../function/build.js'
+import {buildJSFunction, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -175,6 +175,11 @@ export async function buildFunctionExtension(
     } else {
       await buildOtherFunction(extension, options)
     }
+
+    if (fileExistsSync(extension.outputPath)) {
+      await runWasmOpt(extension.outputPath)
+    }
+
     if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
       const base64Contents = await readFile(extension.outputPath, {encoding: 'base64'})
       await touchFile(bundlePath)
