@@ -66,7 +66,7 @@ export async function dev(options: DevOptions) {
   const urls = {
     local: `http://${host}:${port}`,
     giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
-    themeEditor: `https://${options.store}/admin/themes/${options.theme.id}/editor`,
+    themeEditor: `https://${options.store}/admin/themes/${options.theme.id}/editor?hr=${port}`,
     preview: `https://${options.store}/?preview_theme_id=${options.theme.id}`,
   }
 
@@ -192,8 +192,8 @@ export function renderLinks(urls: {local: string; giftCard: string; themeEditor:
       [
         {
           link: {
-            label: `Preview your gift cards ${chalk.cyan('(g)')}`,
-            url: urls.giftCard,
+            label: 'Customize your theme at the theme editor',
+            url: `${remoteUrl}/admin/themes/${themeId}/editor?hr=${port}`,
           },
         },
       ],
