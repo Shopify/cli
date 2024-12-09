@@ -7,6 +7,35 @@ interface ChannelConfigExtensionConfig {
   channel_definition_handle: string
   max_listing_variants: number
   publication_status_listing_level: string
+  channel_configs: {
+    handle: string
+    channel_definition_handle: string
+    max_listing_variants: number
+    publication_status_level: string
+    markets: {
+      handle: string
+      taxonomy_name: string
+      taxonomy_id: number
+      product_schema: string
+      languages: string[]
+    }[]
+  }[]
+  product_schema: {
+    handle: string
+    schema_fields: {
+      handle: string
+      resource_type: string
+      default_source_path: string
+      required_data_type: string
+      enforcement: string
+      can_overwrite: boolean
+      display: {
+        display_name: string
+        display_domain: string
+        display_order: number
+      }
+    }[]
+  }[]
 }
 
 /**
@@ -23,9 +52,8 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
         type: 'channel_config',
         name: extension.title,
         handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
-        channel_definition_handle: config.channel_definition_handle,
-        max_listing_variants: config.max_listing_variants,
-        publication_status_listing_level: config.publication_status_listing_level,
+        channel_configs: config.channel_configs,
+        product_schema: config.product_schema,
       },
     ],
   }
