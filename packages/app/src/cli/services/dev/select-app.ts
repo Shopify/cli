@@ -44,7 +44,7 @@ export async function selectOrCreateApp(
 
     if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
-    const fullSelectedApp = await developerPlatformClient.appFromId(app)
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return fullSelectedApp!
   }
