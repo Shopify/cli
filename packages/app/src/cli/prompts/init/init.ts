@@ -32,6 +32,20 @@ interface Template {
 // Eventually this list should be taken from a remote location
 // That way we don't have to update the CLI every time we add a template
 export const templates = {
+  channel: {
+    // Forked Private Repo
+    url: 'https://github.com/Shopify/app-channel-template-remix',
+    // url: 'https://github.com/Shopify/shopify-app-template-remix', // Public Repo
+    label: 'Build a sales channel app',
+    visible: true,
+    branches: {
+      prompt: 'For your sales channel app template, which language do you want?',
+      options: {
+        javascript: {branch: 'javascript', label: 'JavaScript'},
+        typescript: {branch: 'main', label: 'TypeScript'},
+      },
+    },
+  } as Template,
   remix: {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
     // change to our connect app repo
@@ -64,7 +78,7 @@ type PredefinedTemplate = keyof typeof templates
 const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
 export const visibleTemplates = allTemplates.filter((key) => templates[key].visible) as Readonly<PredefinedTemplate[]>
 
-const templateOptionsInOrder = ['remix', 'none'] as const
+const templateOptionsInOrder = ['remix', 'none', 'channel'] as const
 
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let template = options.template
