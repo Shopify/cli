@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.71.5
+
+### Patch Changes
+
+- 44844a7752: Update function-runner to v6.4.0
+- 78cbc67c26: Download Javy plugin ahead of time with Javy CLI
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+  - @shopify/plugin-cloudflare@3.71.5
+  - @shopify/theme@3.71.5
+
 ## 3.71.4
 
 ### Patch Changes
