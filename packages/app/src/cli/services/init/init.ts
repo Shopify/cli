@@ -180,7 +180,7 @@ async function init(options: InitOptions) {
       {
         title: 'Cleaning up',
         task: async () => {
-          await cleanup(templateScaffoldDir)
+          await cleanup(templateScaffoldDir, packageManager)
         },
       },
       {
