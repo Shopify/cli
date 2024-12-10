@@ -819,15 +819,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--disable-wasm-opt",
-                "value": "\"\"",
-                "description": "Disables the automatic optimization by wasm-opt after a function build",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_DISABLE_WASM_OPT"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -871,7 +862,7 @@
                 "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
               }
             ],
-            "value": "export interface appfunctionbuild {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disables the automatic optimization by wasm-opt after a function build\n   * @environment SHOPIFY_FLAG_DISABLE_WASM_OPT\n   */\n  '--disable-wasm-opt'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface appfunctionbuild {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

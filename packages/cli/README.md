@@ -328,13 +328,11 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--client-id <value> | -c <value>] [--disable-wasm-opt] [--no-color] [--path <value>]
-    [--reset | ] [--verbose]
+  $ shopify app function build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
       --client-id=<value>  The Client ID of your app.
-      --disable-wasm-opt   Disables the automatic optimization by wasm-opt after a function build
       --no-color           Disable color output.
       --path=<value>       The path to your function directory.
       --reset              Reset all your settings.

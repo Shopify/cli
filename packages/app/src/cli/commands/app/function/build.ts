@@ -4,7 +4,6 @@ import {appFlags} from '../../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {Flags} from '@oclif/core'
 
 export default class FunctionBuild extends AppCommand {
   static summary = 'Compile a function to wasm.'
@@ -17,10 +16,6 @@ export default class FunctionBuild extends AppCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
-    'disable-wasm-opt': Flags.boolean({
-      description: 'Disables the automatic optimization by wasm-opt after a function build',
-      env: 'SHOPIFY_FLAG_DISABLE_WASM_OPT',
-    }),
   }
 
   public async run(): Promise<AppCommandOutput> {
@@ -38,7 +33,6 @@ export default class FunctionBuild extends AppCommand {
           stderr: process.stderr,
           useTasks: true,
           environment: 'production',
-          disableWasmOpt: flags['disable-wasm-opt'],
         })
         renderSuccess({headline: 'Function built successfully.'})
         return app

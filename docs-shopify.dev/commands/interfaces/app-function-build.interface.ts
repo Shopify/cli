@@ -13,12 +13,6 @@ export interface appfunctionbuild {
   '-c, --config <value>'?: string
 
   /**
-   * Disables the automatic optimization by wasm-opt after a function build
-   * @environment SHOPIFY_FLAG_DISABLE_WASM_OPT
-   */
-  '--disable-wasm-opt'?: ''
-
-  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */

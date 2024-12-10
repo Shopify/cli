@@ -139,9 +139,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
-interface BuildFunctionExtensionOptions extends ExtensionBuildOptions {
-  disableWasmOpt?: boolean
-}
+type BuildFunctionExtensionOptions = ExtensionBuildOptions
 
 /**
  * Builds a function extension
