@@ -44,11 +44,10 @@ export function buildTomlObject(
     extensions: [
       {
         type: 'admin_link',
-        name: extension.title,
+        name: config.text,
         handle: slugify(extension.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH)),
         targeting: [
           {
-            text: config.text,
             url: config.url,
             target: contextToTarget(context),
           },

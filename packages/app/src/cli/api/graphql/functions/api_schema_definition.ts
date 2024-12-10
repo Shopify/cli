@@ -9,9 +9,3 @@ export const ApiSchemaDefinitionQuery = gql`
 export interface ApiSchemaDefinitionQuerySchema {
   definition: string | null
 }
-
-export interface ApiSchemaDefinitionQueryVariables {
-  apiKey: string
-  version: string
-  type: string
-}

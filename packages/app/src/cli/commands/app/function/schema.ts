@@ -46,13 +46,14 @@ export default class FetchSchema extends AppCommand {
       apiKey,
       reset: flags.reset,
       userProvidedConfigName: flags.config,
-      callback: async (app, developerPlatformClient, ourFunction) => {
+      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
         await generateSchemaService({
           app,
           extension: ourFunction,
           developerPlatformClient,
           stdout: flags.stdout,
           path: flags.path,
+          orgId,
         })
         return app
       },

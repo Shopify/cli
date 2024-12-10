@@ -1,5 +1,21 @@
 # @shopify/cli
 
+## 3.72.0
+
+## 3.71.5
+
+## 3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- 05a1eda9eb: Updated link extension import to match a target format similar to action extesions
+
+## 3.71.2
+
+## 3.71.1
+
 ## 3.71.0
 
 ### Patch Changes

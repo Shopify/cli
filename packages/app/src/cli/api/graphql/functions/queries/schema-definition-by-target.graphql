@@ -1,0 +1,9 @@
+query SchemaDefinitionByTarget($handle: String!, $version: String!) {
+  target(handle: $handle) {
+    api {
+      schema(version: $version) {
+        definition
+      }
+    }
+  }
+}
