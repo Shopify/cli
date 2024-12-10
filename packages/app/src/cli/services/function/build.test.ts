@@ -1,9 +1,9 @@
-import {buildGraphqlTypes, bundleExtension, runJavy, ExportJavyBuilder, jsExports} from './build.js'
-import {javyBinary, javyPluginBinary} from './binaries.js'
+import {buildGraphqlTypes, bundleExtension, runJavy, ExportJavyBuilder, jsExports, runWasmOpt} from './build.js'
+import {javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 
@@ -178,6 +178,27 @@ describe('runJavy', () => {
         stderr: 'inherit',
         stdout: 'inherit',
         signal,
+      },
+    )
+  })
+})
+
+describe('runWasmOpt', () => {
+  test('runs wasm-opt on the module', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    const modulePath = ourFunction.outputPath
+
+    // When
+    const got = runWasmOpt(modulePath)
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(
+      'node',
+      [wasmOptBinary().name, modulePath, '-Oz', '--enable-bulk-memory', '-o', modulePath],
+      {
+        cwd: dirname(wasmOptBinary().path),
       },
     )
   })

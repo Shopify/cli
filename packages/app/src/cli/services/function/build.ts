@@ -186,13 +186,9 @@ function getESBuildOptions(
   return esbuildOptions
 }
 
-export async function downloadWasmOpt() {
-  const wasmOpt = wasmOptBinary()
-  await Promise.all([downloadBinary(wasmOpt)])
-}
-
 export async function runWasmOpt(modulePath: string) {
-  await downloadWasmOpt()
+  const wasmOpt = wasmOptBinary()
+  await downloadBinary(wasmOpt)
 
   const wasmOptDir = dirname(wasmOptBinary().path)
 
