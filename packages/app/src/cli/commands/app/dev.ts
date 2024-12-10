@@ -149,6 +149,7 @@ If you're using the Ruby app template, then you need to complete the following s
     await checkFolderIsValidApp(flags.path)
 
     const appContextResult = await linkedAppContext({
+      // JG: loads teh app
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
