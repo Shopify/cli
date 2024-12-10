@@ -1,7 +1,8 @@
-import {rmdir, glob} from '@shopify/cli-kit/node/fs'
+import {rmdir, glob, fileExistsSync, unlinkFile} from '@shopify/cli-kit/node/fs'
+import {Lockfile, lockfilesByManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-export default async function cleanup(webOutputDirectory: string) {
+export default async function cleanup(webOutputDirectory: string, packageManager: PackageManager) {
   const gitPaths = await glob(
     [
       joinPath(webOutputDirectory, '**', '.git'),
@@ -20,5 +21,14 @@ export default async function cleanup(webOutputDirectory: string) {
     },
   )
 
-  return Promise.all(gitPaths.map((path) => rmdir(path, {force: true}))).then(() => {})
+  const gitPathPromises = gitPaths.map((path) => rmdir(path, {force: true}))
+
+  const lockfilePromises = Object.entries(lockfilesByManager)
+    .filter(([manager, lockfile]) => manager !== packageManager && lockfile)
+    .map(([_, lockfile]) => {
+      const path = joinPath(webOutputDirectory, lockfile as Lockfile)
+      if (fileExistsSync(path)) return unlinkFile(path)
+    }, [])
+
+  return Promise.all([...gitPathPromises, ...lockfilePromises])
 }
