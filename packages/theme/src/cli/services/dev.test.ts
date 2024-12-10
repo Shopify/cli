@@ -76,6 +76,7 @@ describe('dev', () => {
       vi.mocked(emptyThemeExtFileSystem).mockReturnValue(localThemeExtensionFileSystem)
       vi.mocked(setupDevServer).mockReturnValue({
         workPromise: Promise.resolve(),
+        uploadResults: Promise.resolve(new Map()),
         renderDevSetupProgress: () => Promise.resolve(),
         dispatchEvent: () => {},
         serverStart: async () => ({close: async () => {}}),
