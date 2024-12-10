@@ -23,15 +23,12 @@ export default async function cleanup(webOutputDirectory: string, packageManager
 
   const gitPathPromises = gitPaths.map((path) => rmdir(path, {force: true}))
 
-  const lockfilePromises =
-    packageManager === 'unknown'
-      ? []
-      : Object.entries(lockfilesByManager)
-          .filter(([manager, lockfile]) => manager !== packageManager && lockfile)
-          .map(([_, lockfile]) => {
-            const path = joinPath(webOutputDirectory, lockfile as Lockfile)
-            if (fileExistsSync(path)) return unlinkFile(path)
-          }, [])
+  const lockfilePromises = Object.entries(lockfilesByManager)
+    .filter(([manager, lockfile]) => manager !== packageManager && lockfile)
+    .map(([_, lockfile]) => {
+      const path = joinPath(webOutputDirectory, lockfile as Lockfile)
+      if (fileExistsSync(path)) return unlinkFile(path)
+    }, [])
 
   return Promise.all([...gitPathPromises, ...lockfilePromises])
 }

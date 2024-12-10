@@ -81,7 +81,7 @@ describe('cleanup', () => {
     })
   })
 
-  test('does not delete lockfiles for unknown package manager', async () => {
+  test('deletes all lockfiles for unknown package manager', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       await mockProjectFolder(tmpDir)
       await writeFile(joinPath(tmpDir, 'package-lock.json'), '{}')
@@ -93,10 +93,10 @@ describe('cleanup', () => {
       await cleanup(tmpDir, 'unknown')
 
       // Then
-      await expect(fileExists(joinPath(tmpDir, 'package-lock.json'))).resolves.toBe(true)
-      await expect(fileExists(joinPath(tmpDir, 'yarn.lock'))).resolves.toBe(true)
-      await expect(fileExists(joinPath(tmpDir, 'pnpm-lock.yaml'))).resolves.toBe(true)
-      await expect(fileExists(joinPath(tmpDir, 'bun.lockb'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(tmpDir, 'package-lock.json'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(tmpDir, 'yarn.lock'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(tmpDir, 'pnpm-lock.yaml'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(tmpDir, 'bun.lockb'))).resolves.toBe(false)
     })
   })
 })
