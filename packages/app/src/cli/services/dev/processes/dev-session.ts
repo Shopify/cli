@@ -79,6 +79,8 @@ export async function setupDevSessionProcess({
 }
 
 export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = async (
+  // this is the new dev??? consistent dev
+  // calls create dev session and the backend will do all that stuff
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
@@ -93,7 +95,8 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   await printLogMessage('Preparing dev session', processOptions.stdout)
 
-  appWatcher
+  appWatcher // when you make a change, the appwatcher will onEvent. The devsession will call bundleExtensionsAndUpload to the backend.
+
     .onEvent(async (event) => {
       if (!isDevSessionReady) {
         await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)

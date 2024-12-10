@@ -71,7 +71,7 @@ export interface DevOptions {
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
   await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config) // 7-8 processes running in parallel when dev is running: dev server, APP WATCHER, remix, etc.
   await actionsBeforeLaunchingDevProcesses(config)
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }

@@ -253,6 +253,9 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
 }
 
 export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
+  // loading the app is expensive. lots of local stuff that takes time.
+  // running dev causes changes in the app.
+  // reloading app should be easy bc we have all the info already (are we using git? app name etc)
   const state = await getAppConfigurationState(app.directory, basename(app.configuration.path))
   if (state.state !== 'connected-app') {
     throw new AbortError('Error loading the app, please check your app configuration.')
@@ -336,7 +339,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     const packageJSONPath = joinPath(directory, 'package.json')
 
-    // These don't need to be processed again if the app is being reloaded
+    // These don't need to be processed again if the app is being reloaded!!!
     const name = this.previousApp?.name ?? (await loadAppName(directory))
     const nodeDependencies = this.previousApp?.nodeDependencies ?? (await getDependencies(packageJSONPath))
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
@@ -812,7 +815,7 @@ type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationState
  * @param userProvidedConfigName - Some commands allow the manual specification of the config name to use. Otherwise, the function may prompt/use the cached preference.
  * @returns Detail about the app configuration state.
  */
-export async function getAppConfigurationState(
+export async function getAppConfigurationState( // mandatory before every load.
   workingDirectory: string,
   userProvidedConfigName?: string,
 ): Promise<AppConfigurationState> {

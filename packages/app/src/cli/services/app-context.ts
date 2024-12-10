@@ -53,7 +53,7 @@ export async function linkedAppContext({
   unsafeReportMode = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   // Get current app configuration state
-  let configState = await getAppConfigurationState(directory, userProvidedConfigName)
+  let configState = await getAppConfigurationState(directory, userProvidedConfigName) // loads toml and checks if its valid TOML format
   let remoteApp: OrganizationApp | undefined
 
   // If the app is not linked, force a link.
@@ -86,6 +86,7 @@ export async function linkedAppContext({
 
   // Load the local app using the configuration state and the remote app's specifications
   const localApp = await loadAppUsingConfigurationState(configState, {
+    // calls using the loader.ts
     specifications,
     remoteFlags: remoteApp.flags,
     mode: unsafeReportMode ? 'report' : 'strict',
@@ -101,6 +102,9 @@ export async function linkedAppContext({
   await logMetadata(remoteApp, forceRelink)
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+  // local app is what is in your file system
+  // remoteApp is what is in dd or partners. it has basic stuff in app - clientID name, secrets, flags, (ApiClient???)
+  // we can request version/release information from other comma
 }
 
 async function logMetadata(app: {organizationId: string; apiKey: string}, resetUsed: boolean) {

@@ -89,6 +89,10 @@ type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; e
  * App event watcher will emit events when changes are detected in the file system.
  */
 export class AppEventWatcher extends EventEmitter {
+  // This is a class. usually we use functions in this codebase
+  // other processes can subscribe to events emitted by AppWatcher
+
+  // EventEmitter is a node thing that makes anything emit events
   buildOutputPath: string
   private app: AppLinkedInterface
   private options: OutputContextOptions
@@ -124,6 +128,7 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   async start(options?: OutputContextOptions, buildExtensionsFirst = true) {
+    // starts filesystem watcher and processing events
     if (this.started) return
     this.started = true
 
@@ -145,7 +150,8 @@ export class AppEventWatcher extends EventEmitter {
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
     this.fileWatcher.onChange((events) => {
-      handleWatcherEvents(events, this.app, this.options)
+      // receives events from the file watcher
+      handleWatcherEvents(events, this.app, this.options) // transforms file system events into app events
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
           if (!appEvent || appEvent.extensionEvents.length === 0) return
@@ -171,7 +177,7 @@ export class AppEventWatcher extends EventEmitter {
     await this.fileWatcher.start()
 
     this.ready = true
-    this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})
+    this.emit('ready', {app: this.app, extensionEvents: this.initialEvents}) // ready event
   }
 
   /**
@@ -181,6 +187,7 @@ export class AppEventWatcher extends EventEmitter {
    * @returns The AppEventWatcher instance
    */
   onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
+    // anyone can call this to subscribe to this event 'all'
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     this.addListener('all', listener)
     return this

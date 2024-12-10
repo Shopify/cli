@@ -55,6 +55,7 @@ const eventsThatRequireReload: WatcherEvent['type'][] = ['extensions_config_upda
  * Events that require a full app reload are ignored here and handled manually before calling the handlers.
  */
 const handlers: {[key in WatcherEvent['type']]: Handler} = {
+  // this is a map of filesystem events to handlers. only the ones in eventsThatRequireReload trigger a reload.
   extension_folder_deleted: ExtensionFolderDeletedHandler,
   file_created: FileChangeHandler,
   file_deleted: FileChangeHandler,
@@ -129,7 +130,7 @@ async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
 async function reload(app: AppLinkedInterface): Promise<AppLinkedInterface> {
   const start = startHRTime()
   try {
-    const newApp = await reloadApp(app)
+    const newApp = await reloadApp(app) // this is calling the new reloadApp which takes previous app. updating app TOML for example.
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`)
     return newApp
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
