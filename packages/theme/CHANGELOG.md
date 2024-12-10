@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.72.1
+
+### Patch Changes
+
+- 4d722c64fc: Ensure git directory is clean when running `theme pull`
+- Updated dependencies [4d722c64fc]
+  - @shopify/cli-kit@3.72.1
+
 ## 3.72.0
 
 ### Patch Changes
