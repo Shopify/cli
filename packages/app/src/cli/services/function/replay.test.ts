@@ -29,6 +29,7 @@ describe('replay', () => {
     build: {
       command: 'make build',
       path: 'dist/index.wasm',
+      wasm_opt: true,
     },
     configuration_ui: true,
     api_version: '2022-07',
