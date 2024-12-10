@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.72.0
+
+### Minor Changes
+
+- 178c17e820: Bump minor version
+
+### Patch Changes
+
+- @shopify/cli-kit@3.72.0
+- @shopify/theme@3.72.0
+- @shopify/plugin-cloudflare@3.72.0
+
 ## 3.71.5
 
 ### Patch Changes
