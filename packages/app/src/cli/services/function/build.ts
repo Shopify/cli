@@ -200,6 +200,7 @@ export async function runWasmOpt(modulePath: string) {
     // pass these options to wasm-opt
     '-Oz',
     '--enable-bulk-memory',
+    '--strip-debug',
     // overwrite our existing module with the optimized version
     '-o',
     modulePath,
