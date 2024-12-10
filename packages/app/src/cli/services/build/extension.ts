@@ -139,7 +139,9 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
-type BuildFunctionExtensionOptions = ExtensionBuildOptions
+interface BuildFunctionExtensionOptions extends ExtensionBuildOptions {
+  disableWasmOpt?: boolean
+}
 
 /**
  * Builds a function extension
@@ -176,7 +178,7 @@ export async function buildFunctionExtension(
       await buildOtherFunction(extension, options)
     }
 
-    if (fileExistsSync(extension.outputPath)) {
+    if (fileExistsSync(extension.outputPath) && !options.disableWasmOpt) {
       await runWasmOpt(extension.outputPath)
     }
 

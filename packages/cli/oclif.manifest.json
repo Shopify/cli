@@ -782,6 +782,13 @@
           "name": "config",
           "type": "option"
         },
+        "disable-wasm-opt": {
+          "allowNo": false,
+          "description": "Disables the automatic optimization by wasm-opt after a function build",
+          "env": "SHOPIFY_FLAG_DISABLE_WASM_OPT",
+          "name": "disable-wasm-opt",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
