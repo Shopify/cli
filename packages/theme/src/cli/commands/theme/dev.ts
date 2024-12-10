@@ -4,6 +4,7 @@ import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
 import {dev} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {metafieldsPull} from '../../services/metafields-pull.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -154,5 +155,19 @@ You can run this command only in a directory that matches the [default Shopify t
       only,
       notify: flags.notify,
     })
+
+    // Only pull metafields if the environment is not set
+    // because ThemeAccessApp does not have access to all metafield definitions
+    if (!flags.environment) {
+      await metafieldsPull({
+        path: flags.path,
+        password: flags.password,
+        store: flags.store,
+        force: flags.force,
+        verbose: flags.verbose,
+        noColor: flags['no-color'],
+        silent: true,
+      })
+    }
   }
 }
