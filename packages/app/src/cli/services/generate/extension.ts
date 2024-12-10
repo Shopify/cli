@@ -246,7 +246,7 @@ async function uiExtensionInit({
 
         if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
           await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
         }
       },
@@ -299,7 +299,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
-    dependencies.push({name: '@shopify/shopify_function', version: '1.0.0'})
+    dependencies.push({name: '@shopify/shopify_function', version: '~1.0.0'})
   }
   return dependencies
 }
