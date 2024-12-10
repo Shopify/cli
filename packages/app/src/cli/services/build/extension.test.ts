@@ -173,7 +173,6 @@ describe('buildFunctionExtension', () => {
         signal,
         app,
         environment: 'production',
-        disableWasmOpt: true,
       }),
     ).resolves.toBeUndefined()
 
