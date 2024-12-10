@@ -11,10 +11,11 @@ import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
+import {configurationFileNames} from '../../constants.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, findPathUp, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
@@ -66,6 +67,15 @@ export const AppSchema = zod.object({
   extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
   web_directories: zod.array(zod.string()).optional(),
 })
+
+/**
+ * Hidden configuration for an app. Stored inside ./shopify/project.json
+ * This is a set of values that are needed by the CLI that are not part of the app configuration.
+ * These are not meant to be git tracked and the user doesn't need to know about their existence.
+ */
+export interface AppHiddenConfig {
+  dev_store_url?: string
+}
 
 /**
  * Utility schema that matches freshly minted or normal, linked, apps.
@@ -166,6 +176,10 @@ export function usesLegacyScopesBehavior(config: AppConfiguration) {
   return false
 }
 
+export function appHiddenConfigPath(appDirectory: string) {
+  return joinPath(appDirectory, configurationFileNames.hiddenFolder, configurationFileNames.hiddenConfig)
+}
+
 /**
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */
@@ -243,6 +257,7 @@ export interface AppInterface<
   realExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   errors?: AppErrors
+  hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -261,6 +276,7 @@ export interface AppInterface<
   creationDefaultOptions(): AppCreationDefaultOptions
   manifest: () => Promise<JsonMapType>
   removeExtension: (extensionHandle: string) => void
+  updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
 }
 
 type AppConstructor<
@@ -277,6 +293,7 @@ type AppConstructor<
   errors?: AppErrors
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  hiddenConfig: AppHiddenConfig
 }
 
 export class App<
@@ -298,6 +315,7 @@ export class App<
   configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
+  hiddenConfig: AppHiddenConfig
 
   constructor({
     name,
@@ -313,6 +331,7 @@ export class App<
     specifications,
     configSchema,
     remoteFlags,
+    hiddenConfig,
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
@@ -327,6 +346,7 @@ export class App<
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
+    this.hiddenConfig = hiddenConfig
   }
 
   get allExtensions() {
@@ -373,6 +393,11 @@ export class App<
   async updateDependencies() {
     const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
+  }
+
+  async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
+    this.hiddenConfig = {...this.hiddenConfig, ...values}
+    await writeFile(appHiddenConfigPath(this.directory), JSON.stringify(this.hiddenConfig, null, 2))
   }
 
   async preDeployValidation() {
