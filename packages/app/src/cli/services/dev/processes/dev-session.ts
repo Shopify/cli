@@ -109,11 +109,20 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       // Remove aborted controllers from array:
       bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
 
-      // For each extension event, print a message to the terminal
+      const appConfigEvents = event.extensionEvents.filter((eve) => eve.extension.isAppConfigExtension)
+      const nonAppConfigEvents = event.extensionEvents.filter((eve) => !eve.extension.isAppConfigExtension)
+
+      if (appConfigEvents.length) {
+        const outputPrefix = 'app-config'
+        const message = `App config updated`
+        await useConcurrentOutputContext({outputPrefix, stripAnsi: false}, () => processOptions.stdout.write(message))
+      }
+
+      // For each (non app config) extension event, print a message to the terminal
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      event.extensionEvents.forEach(async (eve) => {
-        const outputPrefix = eve.extension.isAppConfigExtension ? 'app-config' : eve.extension.handle
-        const message = `${eve.extension.isAppConfigExtension ? 'App config' : 'Extension'} ${eve.type}`
+      nonAppConfigEvents.forEach(async (eve) => {
+        const outputPrefix = eve.extension.handle
+        const message = `Extension ${eve.type}`
         await useConcurrentOutputContext({outputPrefix, stripAnsi: false}, () => processOptions.stdout.write(message))
       })
 
