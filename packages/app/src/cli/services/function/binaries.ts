@@ -94,9 +94,14 @@ class JavyPlugin implements DownloadableBinary {
   readonly path: string
 
   constructor() {
-    this.name = 'shopify_functions_javy_v1'
+    this.name = `shopify_functions_javy_${JAVY_PLUGIN_VERSION}`
     this.version = JAVY_PLUGIN_VERSION
-    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'shopify_functions_javy_v1.wasm')
+    this.path = joinPath(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      'bin',
+      `shopify_functions_javy_${JAVY_PLUGIN_VERSION}.wasm`,
+    )
   }
 
   downloadUrl(_processPlatform: string, _processArch: string) {
