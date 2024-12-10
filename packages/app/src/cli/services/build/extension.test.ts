@@ -28,6 +28,7 @@ describe('buildFunctionExtension', () => {
     build: {
       command: 'make build',
       path: 'dist/index.wasm',
+      wasm_opt: true,
     },
     configuration_ui: true,
     api_version: '2022-07',
@@ -162,7 +163,7 @@ describe('buildFunctionExtension', () => {
   test('skips wasm-opt execution when the disable-wasm-opt is true', async () => {
     // Given
     vi.mocked(fileExistsSync).mockResolvedValue(true)
-    extension.configuration.build.command = './scripts/build.sh argument'
+    extension.configuration.build.wasm_opt = false
 
     // When
     await expect(

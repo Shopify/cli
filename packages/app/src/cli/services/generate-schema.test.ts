@@ -93,6 +93,7 @@ describe('generateSchemaService', () => {
             type: 'api_type',
             build: {
               command: 'echo "hello world"',
+              wasm_opt: true,
             },
             api_version: 'unstable',
             configuration_ui: true,
@@ -148,6 +149,7 @@ describe('generateSchemaService', () => {
             ],
             build: {
               command: 'echo "hello world"',
+              wasm_opt: true,
             },
             api_version: 'unstable',
             configuration_ui: true,

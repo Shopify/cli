@@ -178,7 +178,8 @@ export async function buildFunctionExtension(
       await buildOtherFunction(extension, options)
     }
 
-    if (fileExistsSync(extension.outputPath) && !options.disableWasmOpt) {
+    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build.wasm_opt
+    if (fileExistsSync(extension.outputPath) && wasmOpt) {
       await runWasmOpt(extension.outputPath)
     }
 
