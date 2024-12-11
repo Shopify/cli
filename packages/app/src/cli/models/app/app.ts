@@ -10,6 +10,7 @@ import {EditorExtensionCollectionType} from '../extensions/specifications/editor
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
+import {AppDevelopmentSpecIdentifier} from '../extensions/specifications/app_config_development.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -336,7 +337,10 @@ export class App<
 
   get draftableExtensions() {
     return this.realExtensions.filter(
-      (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
+      (ext) =>
+        ext.isUUIDStrategyExtension ||
+        ext.specification.identifier === AppAccessSpecIdentifier ||
+        ext.specification.identifier === AppDevelopmentSpecIdentifier,
     )
   }
 

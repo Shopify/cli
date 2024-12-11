@@ -276,7 +276,7 @@ async function handleUpdatingOfPartnerUrls(
       })
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, network.proxyUrl, localApp)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }

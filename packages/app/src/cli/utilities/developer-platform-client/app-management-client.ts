@@ -115,6 +115,7 @@ import {
   SchemaDefinitionByApiTypeQuery,
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {AppDevelopmentSpecIdentifier} from '../../models/extensions/specifications/app_config_development.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -931,6 +932,14 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           config: {
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+          },
+        },
+        {
+          // Change the uid to AppDevelopmentSpecIdentifier
+          uid: 'app_development',
+          specificationIdentifier: AppDevelopmentSpecIdentifier,
+          config: {
+            tunnel_url: 'https://example.com',
           },
         },
       ],

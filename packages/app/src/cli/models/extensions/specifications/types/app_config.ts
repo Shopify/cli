@@ -27,4 +27,7 @@ export interface AppConfigurationUsedByCli {
   auth?: {
     redirect_urls: string[]
   }
+  development?: {
+    tunnel_url: string
+  }
 }
