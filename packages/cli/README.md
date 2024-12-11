@@ -66,6 +66,9 @@
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
+* [`shopify theme generate block`](#shopify-theme-generate-block)
+* [`shopify theme generate section`](#shopify-theme-generate-section)
+* [`shopify theme generate template`](#shopify-theme-generate-template)
 * [`shopify theme info`](#shopify-theme-info)
 * [`shopify theme init [name]`](#shopify-theme-init-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
@@ -1894,6 +1897,92 @@ DESCRIPTION
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
+```
+
+## `shopify theme generate block`
+
+Creates and adds a new block file to your local theme directory
+
+```
+USAGE
+  $ shopify theme generate block [-n <value>] [--no-color] [--path <value>] [-t text|image|video|product|collection]
+    [--verbose]
+
+FLAGS
+  -n, --name=<value>   Name of the block
+  -t, --type=<option>  Type of block to generate
+                       <options: text|image|video|product|collection>
+      --no-color       Disable color output.
+      --path=<value>   The path to your theme directory.
+      --verbose        Increase the verbosity of the output.
+
+DESCRIPTION
+  Creates and adds a new block file to your local theme directory
+
+  Creates a new "theme block" (https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.
+
+  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.
+
+  You can specify the type of block to generate using the `--type` flag. The block will be created with appropriate
+  default settings based on the type.
+```
+
+## `shopify theme generate section`
+
+Creates and adds a new section file to your local theme directory
+
+```
+USAGE
+  $ shopify theme generate section [-n <value>] [--no-color] [--path <value>] [-t
+    featured-collection|image-with-text|rich-text|custom] [--verbose]
+
+FLAGS
+  -n, --name=<value>   Name of the section
+  -t, --type=<option>  Type of section to generate
+                       <options: featured-collection|image-with-text|rich-text|custom>
+      --no-color       Disable color output.
+      --path=<value>   The path to your theme directory.
+      --verbose        Increase the verbosity of the output.
+
+DESCRIPTION
+  Creates and adds a new section file to your local theme directory
+
+  Creates a new "theme section" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.
+
+  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and
+  blocks.
+
+  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate
+  default settings and blocks based on the type.
+```
+
+## `shopify theme generate template`
+
+Creates and adds a new template file to your local theme directory
+
+```
+USAGE
+  $ shopify theme generate template [-n <value>] [--no-color] [--path <value>] [-t
+    product|collection|page|blog|article|custom] [--verbose]
+
+FLAGS
+  -n, --name=<value>   Name of the template
+  -t, --type=<option>  Type of template to generate
+                       <options: product|collection|page|blog|article|custom>
+      --no-color       Disable color output.
+      --path=<value>   The path to your theme directory.
+      --verbose        Increase the verbosity of the output.
+
+DESCRIPTION
+  Creates and adds a new template file to your local theme directory
+
+  Creates a new "theme template" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.
+
+  The template is created in the `templates` directory with the basic structure needed, including layout and content
+  sections.
+
+  You can specify the type of template to generate using the `--type` flag. The template will be created with
+  appropriate default sections based on the type.
 ```
 
 ## `shopify theme info`
