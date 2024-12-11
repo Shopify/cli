@@ -62,6 +62,7 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [QUERY]`](#shopify-search-query)
+* [`shopify test`](#shopify-test)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -1692,6 +1693,25 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify test`
+
+Test a Shopify storefront
+
+```
+USAGE
+  $ shopify test --url <value> [--no-color] [--verbose]
+
+FLAGS
+  --no-color     Disable color output.
+  --url=<value>  (required) The URL of the storefront to test
+  --verbose      Increase the verbosity of the output.
+
+DESCRIPTION
+  Test a Shopify storefront
+
+  This commands executes an end-to-end test suite for a Shopify storefront.
 ```
 
 ## `shopify theme check`
