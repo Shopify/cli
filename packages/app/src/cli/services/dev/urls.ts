@@ -194,7 +194,6 @@ export async function updateURLs(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
   localApp?: AppConfigurationInterface,
-  tunnelUrl?: string,
 ): Promise<void> {
   const variables: UpdateURLsVariables = {apiKey, ...urls}
   const result: UpdateURLsSchema = await developerPlatformClient.updateURLs(variables)
@@ -218,11 +217,6 @@ export async function updateURLs(
             },
           }
         : {}),
-      development: tunnelUrl
-        ? {
-            tunnel_url: tunnelUrl,
-          }
-        : {},
     }
 
     await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})

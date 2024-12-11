@@ -144,6 +144,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient,
     remoteApp.configuration,
   )
+
+  if (network.proxyUrl) {
+    const patch = {development: {tunnel_url: network.proxyUrl}}
+    await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
+  }
+
   app.webs = webs
 
   const cachedUpdateURLs = app.configuration.build?.automatically_update_urls_on_dev
@@ -276,7 +282,7 @@ async function handleUpdatingOfPartnerUrls(
       })
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp, network.proxyUrl)
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }
