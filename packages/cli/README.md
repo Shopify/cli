@@ -73,6 +73,7 @@
 * [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
+* [`shopify theme profile`](#shopify-theme-profile)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
@@ -2083,6 +2084,25 @@ DESCRIPTION
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
+```
+
+## `shopify theme profile`
+
+Profile the Liquid rendering of a theme page.
+
+```
+USAGE
+  $ shopify theme profile -u <value> [--no-color] [--verbose]
+
+FLAGS
+  -u, --url=<value>  (required) URL to the theme page to profile.
+      --no-color     Disable color output.
+      --verbose      Increase the verbosity of the output.
+
+DESCRIPTION
+  Profile the Liquid rendering of a theme page.
+
+  TODO
 ```
 
 ## `shopify theme publish`
