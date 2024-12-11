@@ -1,6 +1,7 @@
-import {createConfigExtensionSpecification, TransformationConfig} from '../specification.js'
+import {createConfigExtensionSpecification, CustomTransformationConfig} from '../specification.js'
+import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
 
 const AppDevelopmentSchema = zod.object({
   development: zod
@@ -10,8 +11,21 @@ const AppDevelopmentSchema = zod.object({
     .optional(),
 })
 
-const AppDevelopmentTransformConfig: TransformationConfig = {
-  tunnel_url: 'tunnel_url',
+const AppDevelopmentTransformConfig: CustomTransformationConfig = {
+  forward: (content, appConfiguration) => {
+    outputInfo(`development app content: ${JSON.stringify(content)}`)
+
+    let appUrl: string | undefined
+    if ('application_url' in appConfiguration) {
+      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+    }
+    return {
+      tunnel_url: appUrl,
+    }
+  },
+  reverse: () => ({
+    tunnel_url: 'https://tunnel-url.com',
+  }),
 }
 
 export const AppDevelopmentSpecIdentifier = 'app_development'
