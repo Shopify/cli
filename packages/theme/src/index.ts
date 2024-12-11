@@ -46,4 +46,5 @@ export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-
 // Expose core utilities for developers to build and expand on the CLI
 export {pull} from './cli/services/pull.js'
 export {push} from './cli/services/push.js'
+export {list} from './cli/services/list.js'
 export {publicFetchStoreThemes as fetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
