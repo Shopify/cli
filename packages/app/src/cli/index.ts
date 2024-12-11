@@ -17,7 +17,7 @@ import AppGenerateExtension from './commands/app/generate/extension.js'
 import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
-import Init from './commands/app/init.js'
+import AppInit from './commands/app/init.js'
 import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
@@ -26,7 +26,6 @@ import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
-import Demo from './commands/app/demo.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -35,12 +34,11 @@ export const commands: {[key: string]: typeof AppCommand} = {
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,
-  'app:demo': Demo,
   'app:logs': Logs,
   'app:logs:sources': Sources,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
-  'app:init': Init,
+  'app:init': AppInit,
   'app:release': Release,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
@@ -59,6 +57,7 @@ export const commands: {[key: string]: typeof AppCommand} = {
   'demo:watcher': DemoWatcher,
 }
 
+export const AppInitCommand = AppInit
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
 export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata

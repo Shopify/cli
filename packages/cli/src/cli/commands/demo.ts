@@ -1,24 +1,24 @@
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
-import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
-import {RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
+import {Flags} from '@oclif/core'
+import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {AppInitCommand} from '@shopify/app'
 import {renderInfo, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {execa} from 'execa'
 
-export default class Demo extends AppCommand {
+export default class Demo extends Command {
   static summary = 'Demo command to showcase CLI functionality'
 
-  static description = 'A sample command that demonstrates how to build CLI commands'
+  static description = 'Demo command that creates a new Shopify app'
 
   static flags = {
     ...globalFlags,
+    name: Flags.string({
+      char: 'n',
+      description: 'App name',
+      env: 'SHOPIFY_FLAG_NAME',
+    }),
   }
 
-  public async run(): Promise<AppCommandOutput> {
-    const currentDir = cwd()
-    // const {flags} = await this.parse(Demo)
-
+  async run(): Promise<void> {
     renderInfo({
       headline: 'Lets learn how to create and deploy a Shopify app!',
       body: `This is a demo command that demonstrates how to use the CLI commands to create and deploy a Shopify app.`,
@@ -44,18 +44,6 @@ export default class Demo extends AppCommand {
       },
     })
 
-    const defaultOpts = {stdio: 'inherit' as const}
-
-    const template = 'remix'
-    const flavor = 'javascript'
-    const appName = 'demo-app'
-    const appPath = joinPath(currentDir, appName)
-
-    const initArgs = [`--template=${template}`, `--flavor=${flavor}`, `--name=${appName}`, `--path=${appPath}`]
-    await execa('shopify', ['app', 'init', ...initArgs], defaultOpts)
-
-    return {
-      app: {} as AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>,
-    }
+    await AppInitCommand.run()
   }
 }
