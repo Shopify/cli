@@ -275,8 +275,8 @@ importers:
         specifier: 3.72.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 9.0.2
-        version: 9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.3
+        version: 9.0.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.72.0
         version: link:../cli-kit
@@ -6023,8 +6023,8 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-KRlBmgik6fdzIw8z9Xj31swE2dIgTFavCSTS/tonumlu2RX5DrT2M+OTjiQv8s6wLJn5a4Nn6/+5Ds/hKGaKEQ==}
+  /@shopify/cli-hydrogen@9.0.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-xqNx1P9aBao1eqT7nVdsiw8o7j5ZMpuVaZOnYNfVw7Wog2wNtghH8UI6Jb0TklnTon+imQtJKY5ErYlGfgSssQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
@@ -6052,7 +6052,7 @@ packages:
       '@graphql-codegen/cli': 5.0.2(@types/node@18.19.3)(graphql@16.8.1)(typescript@5.2.2)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.0
       chokidar: 3.5.3
@@ -6160,8 +6160,8 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-mCpseNEqDbR26fPmIKL83BDsYSxXu/eeWrRGTG8cdQhq1z+xbDn93w/So/gi0r0MRH2vYsPOzJOIUyiWWVawDQ==}
+  /@shopify/oxygen-cli@4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+    resolution: {integrity: sha512-Khph5joWTkwhAjh1Uq7/7widK1AMDnoQkT3JZboeUjzSH1M95XhOY7Hs57l6TNLsMHjkDG/8/nAzLkJ7mHNkkQ==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
