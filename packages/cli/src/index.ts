@@ -13,6 +13,7 @@ import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
+import Demo from './cli/commands/demo.js'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
@@ -122,6 +123,7 @@ export const COMMANDS: any = {
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,
   ...HydrogenCommands,
+  demo: Demo,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,
