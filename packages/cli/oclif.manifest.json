@@ -4791,6 +4791,54 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "test": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "This commands executes an end-to-end test suite for a Shopify storefront.",
+      "descriptionWithMarkdown": "This commands executes an end-to-end test suite for a Shopify storefront.",
+      "enableJsonFlag": false,
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "url": {
+          "aliases": [
+            "u"
+          ],
+          "description": "The URL of the storefront to test",
+          "env": "SHOPIFY_FLAG_TEST_URL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "url",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "test",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Test a Shopify storefront"
+    },
     "theme:check": {
       "aliases": [
       ],
