@@ -72,7 +72,7 @@ interface ExtensionInitOptions {
   uid: string | undefined
   onGetTemplateRepository: (url: string, destination: string) => Promise<void>
 }
-
+// This might become plural?
 export async function generateExtensionTemplate(
   options: GenerateExtensionTemplateOptions,
 ): Promise<GeneratedExtension> {
@@ -81,6 +81,7 @@ export async function generateExtensionTemplate(
   const extensionFlavor = options.extensionTemplate.supportedFlavors.find(
     (flavor) => flavor.value === extensionFlavorValue,
   )
+  // TODO For grouping we might want to setup directories/groups for extensions
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
   const url = options.cloneUrl || options.extensionTemplate.url
   const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
@@ -152,6 +153,7 @@ async function functionExtensionInit({
   uid,
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
+  // Here we'd want to write the ui extension handle in the function toml
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
   const taskList = []
 
@@ -168,6 +170,8 @@ async function functionExtensionInit({
         await recursiveLiquidTemplateCopy(templateDirectory, directory, {
           name,
           handle: slugify(name),
+          // TODO: This is where we'd want to write the ui extension handle in the function toml
+          uiExtensionHandle: slugify(name),
           flavor: extensionFlavor?.value,
           uid,
         })

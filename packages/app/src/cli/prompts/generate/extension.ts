@@ -2,7 +2,12 @@ import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderSelectPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -89,13 +94,26 @@ const generateExtensionPrompts = async (
   }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
   const name = options.name || (await promptName(options.directory, extensionTemplate.defaultName))
   const flavor = options.extensionFlavor ?? (await promptFlavor(extensionTemplate))
-  const extensionContent = {name, flavor}
+  const extensionContent = {
+    name,
+    flavor,
+    // extensionChildren [identifiers]
+  }
+  // TODO: here perhaps return a flag, that lets us know that there are possible next steps
 
   return {extensionTemplate, extensionContent}
+}
+
+const promptAddExtensionConfirmation = (): Promise<boolean> => {
+  return renderConfirmationPrompt({
+    message: 'Would you like to create the function extension?',
+    defaultValue: true,
+  })
 }
 
 async function promptName(directory: string, defaultName: string, number = 1): Promise<string> {
@@ -134,3 +152,4 @@ async function promptFlavor(extensionTemplate: ExtensionTemplate): Promise<Exten
 }
 
 export default generateExtensionPrompts
+export {promptAddExtensionConfirmation}
