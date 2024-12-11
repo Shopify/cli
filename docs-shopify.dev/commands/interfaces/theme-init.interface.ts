@@ -7,6 +7,12 @@ export interface themeinit {
   '-u, --clone-url <value>'?: string
 
   /**
+   * Uses the new framework theme as the default clone-url
+   * @environment SHOPIFY_FLAG_CLONE_URL
+   */
+  '-p, --dev-preview'?: ''
+
+  /**
    * Downloads the latest release of the `clone-url`
    * @environment SHOPIFY_FLAG_LATEST
    */
