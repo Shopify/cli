@@ -5163,6 +5163,255 @@
     "related": []
   },
   {
+    "name": "theme generate block",
+    "description": "Creates a new [theme block](/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of block to generate using the `--type` flag. The block will be created with appropriate default settings based on the type.",
+    "overviewPreviewDescription": "Creates and adds a new block file to your local theme directory",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme generate block",
+            "code": "shopify theme generate block [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme generate block"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme generate block` command:",
+        "type": "themegenerateblock",
+        "typeDefinitions": {
+          "themegenerateblock": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-block.interface.ts",
+            "name": "themegenerateblock",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-block.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-block.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-block.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-block.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "Name of the block",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_BLOCK_NAME"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-block.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --type <value>",
+                "value": "string",
+                "description": "Type of block to generate",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_BLOCK_TYPE"
+              }
+            ],
+            "value": "export interface themegenerateblock {\n  /**\n   * Name of the block\n   * @environment SHOPIFY_FLAG_BLOCK_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Type of block to generate\n   * @environment SHOPIFY_FLAG_BLOCK_TYPE\n   */\n  '-t, --type <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
+    "name": "theme generate section",
+    "description": "Creates a new [theme section](/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
+    "overviewPreviewDescription": "Creates and adds a new section file to your local theme directory",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme generate section",
+            "code": "shopify theme generate section [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme generate section"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme generate section` command:",
+        "type": "themegeneratesection",
+        "typeDefinitions": {
+          "themegeneratesection": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-section.interface.ts",
+            "name": "themegeneratesection",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-section.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-section.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-section.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-section.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "Name of the section",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_SECTION_NAME"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-section.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --type <value>",
+                "value": "string",
+                "description": "Type of section to generate",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_SECTION_TYPE"
+              }
+            ],
+            "value": "export interface themegeneratesection {\n  /**\n   * Name of the section\n   * @environment SHOPIFY_FLAG_SECTION_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Type of section to generate\n   * @environment SHOPIFY_FLAG_SECTION_TYPE\n   */\n  '-t, --type <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
+    "name": "theme generate template",
+    "description": "Creates a new [theme template](/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including layout and content sections.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default sections based on the type.",
+    "overviewPreviewDescription": "Creates and adds a new template file to your local theme directory",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme generate template",
+            "code": "shopify theme generate template [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme generate template"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme generate template` command:",
+        "type": "themegeneratetemplate",
+        "typeDefinitions": {
+          "themegeneratetemplate": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-template.interface.ts",
+            "name": "themegeneratetemplate",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-template.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-template.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your theme directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-template.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-template.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "Name of the template",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_TEMPLATE_NAME"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-generate-template.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --type <value>",
+                "value": "string",
+                "description": "Type of template to generate",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_TEMPLATE_TYPE"
+              }
+            ],
+            "value": "export interface themegeneratetemplate {\n  /**\n   * Name of the template\n   * @environment SHOPIFY_FLAG_TEMPLATE_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Type of template to generate\n   * @environment SHOPIFY_FLAG_TEMPLATE_TYPE\n   */\n  '-t, --type <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
     "name": "theme info",
     "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
     "overviewPreviewDescription": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",

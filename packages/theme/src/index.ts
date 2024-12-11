@@ -15,6 +15,9 @@ import Push from './cli/commands/theme/push.js'
 import Rename from './cli/commands/theme/rename.js'
 import Serve from './cli/commands/theme/serve.js'
 import Share from './cli/commands/theme/share.js'
+import GenerateBlock from './cli/commands/theme/generate/block.js'
+import GenerateSection from './cli/commands/theme/generate/section.js'
+import GenerateTemplate from './cli/commands/theme/generate/template.js'
 
 const COMMANDS = {
   'theme:init': Init,
@@ -34,6 +37,9 @@ const COMMANDS = {
   'theme:rename': Rename,
   'theme:serve': Serve,
   'theme:share': Share,
+  'theme:generate:block': GenerateBlock,
+  'theme:generate:section': GenerateSection,
+  'theme:generate:template': GenerateTemplate,
 }
 
 export default COMMANDS
