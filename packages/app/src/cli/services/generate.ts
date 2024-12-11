@@ -4,6 +4,7 @@ import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
+  promptAddExtensionConfirmation,
 } from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import {
@@ -39,16 +40,35 @@ interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
+  console.log('GENERATE', options)
+
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
-
+  // TODO:  from the first prompt answers we can get the next steps
+  // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
-
+  // Here we could check if the user wants to add a related extension
+  const addPromptConfirmation = await promptAddExtensionConfirmation()
+  // We can add an extra generated extension here.
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
+
+  // 1. Generate ui extension
+  // 2. We check the identifier
+  // 3. If the identifier has related extensions then the team who owns can add logic to add related extensions
+  // 4. This allows new prompts
+  // 4.1. Generate function settings
+  // 4.2. Function settings is meant to be used with a discount function, would you like us to generate one for you?
+  // 4.3. What is the name of your function?
+  // Generates both extensions
+  // if (addPromptConfirmation) {
+  //   // Generate related extensions
+  //   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
+  //   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
+  // }
 
   renderSuccessMessage(generatedExtension, app.packageManager)
 }
@@ -59,6 +79,7 @@ async function buildPromptOptions(
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
+  console.log('BUILDING PROMPT OPTIONS', arguments)
   const extensionTemplate = await handleTypeParameter(options.template, app, extensionTemplates, specifications)
   validateExtensionFlavor(extensionTemplate, options.flavor)
 
@@ -85,10 +106,12 @@ function checkLimits(
     const allValid = !limitReached(app, specifications, template)
     return allValid ? 'validTemplates' : 'templatesOverlimit'
   }
+
   return groupBy(extensionTemplates, iterateeFunction)
 }
 
 function limitReached(app: AppInterface, specifications: ExtensionSpecification[], template: ExtensionTemplate) {
+  // console.log('CHECKING LIMITS', specifications)
   const type = template.type
   const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
