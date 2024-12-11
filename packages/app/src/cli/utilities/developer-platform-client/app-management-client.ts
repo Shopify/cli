@@ -116,6 +116,7 @@ import {
   SchemaDefinitionByApiTypeQuery,
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {TunnelCreate, TunnelCreateMutation} from '../../api/graphql/app-management/generated/tunnel_create.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -264,6 +265,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       businessName: org.name,
       source: OrganizationSource.BusinessPlatform,
     }
+  }
+
+  async createTunnel(organizationId: string): Promise<TunnelCreateMutation> {
+    const query = TunnelCreate
+    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    return result
   }
 
   async orgAndApps(

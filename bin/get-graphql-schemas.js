@@ -32,7 +32,6 @@ const schemas = [
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
-    branch: 'dd',
   },
   {
     repo: 'shopify',
@@ -43,13 +42,11 @@ const schemas = [
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
-    branch: 'dd',
   },
   {
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
-    branch: 'dd',
   },
 ]
 

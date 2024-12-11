@@ -40,6 +40,10 @@ export default class AppInfo extends AppCommand {
       userProvidedConfigName: flags.config,
       unsafeReportMode: true,
     })
+
+    const tunnel = await developerPlatformClient.createTunnel(remoteApp.organizationId)
+    console.log(tunnel)
+
     outputInfo(
       await info(app, remoteApp, {
         format: (flags.json ? 'json' : 'text') as Format,
