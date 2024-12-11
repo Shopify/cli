@@ -1,4 +1,5 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
+import {workflowRegistry} from './generate/workflows/registry.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
@@ -24,7 +25,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
-interface GenerateOptions {
+export interface GenerateOptions {
   app: AppLinkedInterface
   specifications: RemoteAwareExtensionSpecification[]
   remoteApp: OrganizationApp
@@ -75,25 +76,16 @@ async function generate(options: GenerateOptions) {
   console.log('PROMPT ANSWERS', promptAnswers)
   // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
-  // Here we could check if the user wants to add a related extension
-  const addPromptConfirmation = await promptAddExtensionConfirmation()
+
   // We can add an extra generated extension here.
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  // 1. Generate ui extension
-  // 2. We check the identifier
-  // 3. If the identifier has related extensions then the team who owns can add logic to add related extensions
-  // 4. This allows new prompts
-  // 4.1. Generate function settings
-  // 4.2. Function settings is meant to be used with a discount function, would you like us to generate one for you?
-  // 4.3. What is the name of your function?
-  // Generates both extensions
-  if (addPromptConfirmation) {
-    // Generate related extensions
-    const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
-    const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
-  }
+  const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
+  await workflow?.afterGenerate({
+    generateOptions: options,
+    extensionTemplateOptions: generateExtensionOptions,
+  })
 
   renderSuccessMessage(generatedExtension, app.packageManager)
 }
