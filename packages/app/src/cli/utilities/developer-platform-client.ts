@@ -55,6 +55,7 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
+import {TunnelCreateMutation} from '../api/graphql/app-management/generated/tunnel_create.js'
 import {isAppManagementEnabled} from '@shopify/cli-kit/node/context/local'
 
 export enum ClientName {
@@ -268,4 +269,5 @@ export interface DeveloperPlatformClient {
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (input: string) => Promise<string>
+  createTunnel: (organizationId: string) => Promise<TunnelCreateMutation>
 }

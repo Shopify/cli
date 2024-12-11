@@ -1,0 +1,12 @@
+mutation tunnelCreate {
+  tunnelCreate {
+    tunnelUrl
+    userErrors {
+      field
+      message
+      category
+      code
+      on
+    }
+  }
+}
