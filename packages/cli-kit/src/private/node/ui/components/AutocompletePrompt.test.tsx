@@ -530,6 +530,95 @@ describe('AutocompletePrompt', async () => {
     expect(onEnter).toHaveBeenCalledWith('fifth')
   })
 
+  test('allows searching with malformed regex', async () => {
+    const onEnter = vi.fn()
+    const db = [...DATABASE, {label: 'with\\slash', value: 'with\\slash'}]
+
+    const search = async (term: string) => {
+      return {
+        data: db.filter((item) => item.label.includes(term)),
+      }
+    }
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={db}
+        onSubmit={onEnter}
+        search={search}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
+
+      [36m>[39m  [36mfirst[39m                                                                       [46m [49m
+         second                                                                      [46m [49m
+         third                                                                       [46m [49m
+         fourth                                                                      [46m [49m
+         fifth                                                                       [46m [49m
+         sixth                                                                       [46m [49m
+         seventh                                                                     [46m [49m
+         eighth                                                                      [46m [49m
+         ninth                                                                       [46m [49m
+         tenth                                                                       [46m [49m
+         eleventh                                                                    [46m [49m
+         twelfth                                                                     [46m [49m
+         thirteenth                                                                  [46m [49m
+         fourteenth                                                                  [100m [49m
+         fifteenth                                                                   [100m [49m
+         sixteenth                                                                   [100m [49m
+         seventeenth                                                                 [100m [49m
+         eighteenth                                                                  [100m [49m
+         nineteenth                                                                  [100m [49m
+         twentieth                                                                   [100m [49m
+         twenty-first                                                                [100m [49m
+         twenty-second                                                               [100m [49m
+         twenty-third                                                                [100m [49m
+         twenty-fourth                                                               [100m [49m
+         twenty-fifth                                                                [100m [49m
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+      "
+    `)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForContent(renderInstance, 'slash', '\\')
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?   [36m\\\\[46m█[49m[39m
+
+      [36m>[39m  [36mwith\\\\slash[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+      "
+    `)
+  })
+
   test('displays an error message if the search fails', async () => {
     const search = (_term: string) => {
       return Promise.reject(new Error('Something went wrong'))

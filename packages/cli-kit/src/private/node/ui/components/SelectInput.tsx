@@ -45,7 +45,14 @@ function highlightedLabel(label: string, term: string | undefined) {
     return label
   }
 
-  const regex = new RegExp(term, 'i')
+  let regex
+  try {
+    regex = new RegExp(term, 'i')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    // term is user provided and could be an invalid regex at that moment (e.g. ending in '\')
+    return label
+  }
   return label.replace(regex, (match) => {
     return chalk.bold(match)
   })
