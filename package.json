@@ -102,7 +102,8 @@
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
-    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
+    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare",
+    "typescript": "5.2.2"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",

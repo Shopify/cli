@@ -118,7 +118,8 @@
     "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
-    "espree": "9.6.1"
+    "espree": "9.6.1",
+    "typescript": "5.2.2"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

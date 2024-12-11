@@ -52,7 +52,8 @@
   "devDependencies": {
     "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^1.6.0",
-    "node-stream-zip": "^1.15.0"
+    "node-stream-zip": "^1.15.0",
+    "typescript": "5.2.2"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

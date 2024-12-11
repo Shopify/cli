@@ -13,7 +13,7 @@
     "**/.hg": true,
     "**/.svn": true,
     "**/node_modules/**": true,
-    "node_modules": true
+    "node_modules": false
   },
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
