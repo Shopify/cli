@@ -2,6 +2,7 @@ import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AppInitCommand} from '@shopify/app'
+import {renderTextPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 
 // just a chill demo
 //                                        .-+.   .-=:
@@ -72,33 +73,41 @@ export default class Demo extends Command {
     // process.env.USE_APP_MANAGEMENT = '1'
     // why isnt this shit working
 
-    // force selection for prompts
-    // maybe show info blurb between prompts
+    await renderInfo({
+      customSections: [
+        {
+          title: 'Lets learn how to create and deploy a Shopify app!',
+          body: {
+            list: {
+              items: [
+                'This demo will walk you through how to use the CLI commands to create and deploy a Shopify app.',
+                "We'll start by creating a new app and then we'll deploy it to the Shopify platform.",
+                {
+                  link: {
+                    label: 'Learn more about creating Shopify apps',
+                    url: 'https://shopify.dev/docs/apps/build/scaffold-app',
+                  },
+                },
+                {
+                  link: {
+                    label: 'Learn more about deploying Shopify apps',
+                    url: 'https://shopify.dev/docs/apps/launch/deployment/deploy-app-versions',
+                  },
+                },
+                {bold: 'Completion Time: 5 minutes'},
+              ],
+            },
+          },
+        },
+      ],
+    })
 
-    // renderInfo({
-    //   headline: 'Lets learn how to create and deploy a Shopify app!',
-    //   body: `This is a demo command that demonstrates how to use the CLI commands to create and deploy a Shopify app.`,
-    // })
-
-    // await renderTextPrompt({
-    //   message: 'Run the `shopify app init` command to get started:',
-    //   // defaultValue: 'expansive commerce app',
-    //   validate: (value) => {
-    //     if (value !== 'shopify app init') return 'Thats not the `shopify app init` command!'
-    //   },
-    // })
-
-    // await renderSelectPrompt({
-    //   choices: [
-    //     {label: 'Remix', value: 'remix'},
-    //     {label: 'Next.js', value: 'next'},
-    //     {label: 'Svelte', value: 'svelte'},
-    //   ],
-    //   message: 'Get started building your app:',
-    //   validate: (value) => {
-    //     if (value !== 'remix') return 'Thats not the `remix` template!'
-    //   },
-    // })
+    await renderTextPrompt({
+      message: 'Run the `shopify app init` command to get started:',
+      validate: (value) => {
+        if (value !== 'shopify app init') return 'Thats not the `shopify app init` command!'
+      },
+    })
 
     await AppInitCommand.run(['--demo-template-flavor', 'none', '--demo-is-app-new'])
   }

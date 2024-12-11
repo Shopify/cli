@@ -114,14 +114,7 @@ export default class Init extends AppCommand {
         const appName = await appNamePrompt(name)
         selectAppResult = {result: 'new', name: appName, org}
       } else {
-        selectAppResult = await selectAppOrNewAppName(
-          name,
-          apps,
-          hasMorePages,
-          organization,
-          developerPlatformClient,
-          flags['demo-is-app-new'],
-        )
+        selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
       }
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
@@ -174,7 +167,6 @@ async function selectAppOrNewAppName(
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
-  demoIsAppNew: boolean,
 ): Promise<SelectAppOrNewAppNameResult> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
