@@ -1933,6 +1933,7 @@ ARGUMENTS
 
 FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
+  -p, --dev-preview        Uses the new framework theme as the default clone-url
   -u, --clone-url=<value>  [default: https://github.com/Shopify/dawn.git] The Git URL to clone from. Defaults to
                            Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
       --no-color           Disable color output.

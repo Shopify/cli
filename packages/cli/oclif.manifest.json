@@ -5427,6 +5427,14 @@
           "name": "clone-url",
           "type": "option"
         },
+        "dev-preview": {
+          "allowNo": false,
+          "char": "p",
+          "description": "Uses the new framework theme as the default clone-url",
+          "env": "SHOPIFY_FLAG_CLONE_URL",
+          "name": "dev-preview",
+          "type": "boolean"
+        },
         "latest": {
           "allowNo": false,
           "char": "l",
