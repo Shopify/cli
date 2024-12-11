@@ -7,6 +7,9 @@ import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
+export const DEFAULT_THEME_REPO_URL = 'https://github.com/Shopify/dawn.git'
+export const FRAMEWORK_THEME_REPO_URL = 'https://github.com/Shopify/theme-blocks-accelerator.git'
+
 export default class Init extends ThemeCommand {
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
 
@@ -34,9 +37,8 @@ export default class Init extends ThemeCommand {
     path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
-      default: 'https://github.com/Shopify/dawn.git',
-      description:
-        "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
+      default: DEFAULT_THEME_REPO_URL,
+      description: `The Git URL to clone from. Defaults to Shopify's example theme, Dawn: ${DEFAULT_THEME_REPO_URL}`,
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
     latest: Flags.boolean({
@@ -44,13 +46,21 @@ export default class Init extends ThemeCommand {
       description: 'Downloads the latest release of the `clone-url`',
       env: 'SHOPIFY_FLAG_LATEST',
     }),
+    'dev-preview': Flags.boolean({
+      char: 'p',
+      default: false,
+      description: 'Uses the new framework theme as the default clone-url',
+      env: 'SHOPIFY_FLAG_CLONE_URL',
+    }),
   }
 
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
     const name = args.name || (await this.promptName(flags.path))
-    const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)
+
+    const cloneUrlProvided = flags['clone-url'] !== DEFAULT_THEME_REPO_URL
+    const repoUrl = !cloneUrlProvided && flags['dev-preview'] ? FRAMEWORK_THEME_REPO_URL : flags['clone-url']
 
     if (flags.latest) {
       await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
