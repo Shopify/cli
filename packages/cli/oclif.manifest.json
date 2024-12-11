@@ -226,6 +226,20 @@
       "strict": true,
       "summary": "Activate an app configuration."
     },
+    "app:demo": {
+      "aliases": [],
+      "args": {},
+      "description": "Demo command to showcase CLI functionality",
+      "enableJsonFlag": false,
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "app:demo",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "app:deploy": {
       "aliases": [],
       "args": {},
@@ -2399,20 +2413,6 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Watch and prints out changes to an app."
-    },
-    "demo": {
-      "aliases": [],
-      "args": {},
-      "description": "Demo command to showcase CLI functionality",
-      "enableJsonFlag": false,
-      "flags": {},
-      "hasDynamicHelp": false,
-      "hiddenAliases": [],
-      "id": "demo",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
     },
     "docs:generate": {
       "aliases": [],

@@ -4,7 +4,7 @@ import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
-import React, {ReactElement, useCallback, useEffect} from 'react'
+import React, {ReactElement, useCallback, useEffect, useState} from 'react'
 import {useApp} from 'ink'
 
 export interface SelectPromptProps<T> {
@@ -15,6 +15,7 @@ export interface SelectPromptProps<T> {
   defaultValue?: T
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
+  validate?: (value: T) => string | undefined
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -26,6 +27,7 @@ function SelectPrompt<T>({
   onSubmit,
   defaultValue,
   abortSignal,
+  validate,
 }: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
@@ -35,12 +37,25 @@ function SelectPrompt<T>({
     initialAnswer: undefined,
   })
 
+  const [error, setError] = useState<string | undefined>()
+  const color = promptState === PromptState.Error ? 'red' : 'cyan'
+
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
       setAnswer(answer)
+
+      if (validate) {
+        const validationError = validate(answer.value)
+        if (validationError) {
+          setError(validationError)
+          setPromptState(PromptState.Error)
+          return
+        }
+      }
+
       setPromptState(PromptState.Submitted)
     },
-    [setAnswer, setPromptState],
+    [setAnswer, setPromptState, validate],
   )
 
   useEffect(() => {
@@ -52,6 +67,7 @@ function SelectPrompt<T>({
 
   return (
     <PromptLayout
+      color={color}
       message={message}
       state={promptState}
       submittedAnswerLabel={answer?.label}
@@ -59,6 +75,7 @@ function SelectPrompt<T>({
       infoMessage={infoMessage}
       abortSignal={abortSignal}
       input={<SelectInput defaultValue={defaultValue} items={choices} onSubmit={submitAnswer} />}
+      error={error}
     />
   )
 }

@@ -20,6 +20,8 @@ interface PromptLayoutProps {
   state: PromptState
   submittedAnswerLabel?: string
   input: ReactElement
+  color?: string
+  error?: string
 }
 
 const PromptLayout = ({
@@ -31,6 +33,8 @@ const PromptLayout = ({
   state,
   input,
   submittedAnswerLabel,
+  color,
+  error,
 }: PromptLayoutProps): ReactElement | null => {
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
@@ -121,13 +125,19 @@ const PromptLayout = ({
       {state === PromptState.Submitted && submittedAnswerLabel ? (
         <Box>
           <Box marginRight={2}>
-            <Text color="cyan">{figures.tick}</Text>
+            <Text color={color}>{figures.tick}</Text>
           </Box>
-
-          <Text color="cyan">{submittedAnswerLabel}</Text>
+          <Text color={color}>{submittedAnswerLabel}</Text>
         </Box>
       ) : (
-        <Box marginTop={1}>{inputComponent}</Box>
+        <Box flexDirection="column">
+          <Box marginTop={1}>{inputComponent}</Box>
+          {state === PromptState.Error && error ? (
+            <Box marginLeft={3}>
+              <Text color="red">{error}</Text>
+            </Box>
+          ) : null}
+        </Box>
       )}
     </Box>
   )

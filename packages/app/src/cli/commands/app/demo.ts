@@ -1,10 +1,12 @@
-import Command from '@shopify/cli-kit/node/base-command'
+import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {execa} from 'execa'
 
-export default class Demo extends Command {
+export default class Demo extends AppCommand {
   static summary = 'Demo command to showcase CLI functionality'
 
   static description = 'A sample command that demonstrates how to build CLI commands'
@@ -13,7 +15,7 @@ export default class Demo extends Command {
     ...globalFlags,
   }
 
-  async run(): Promise<void> {
+  public async run(): Promise<AppCommandOutput> {
     const currentDir = cwd()
     // const {flags} = await this.parse(Demo)
 
@@ -30,6 +32,18 @@ export default class Demo extends Command {
       },
     })
 
+    await renderSelectPrompt({
+      choices: [
+        {label: 'Remix', value: 'remix'},
+        {label: 'Next.js', value: 'next'},
+        {label: 'Svelte', value: 'svelte'},
+      ],
+      message: 'Get started building your app:',
+      validate: (value) => {
+        if (value !== 'remix') return 'Thats not the `remix` template!'
+      },
+    })
+
     const defaultOpts = {stdio: 'inherit' as const}
 
     const template = 'remix'
@@ -39,5 +53,9 @@ export default class Demo extends Command {
 
     const initArgs = [`--template=${template}`, `--flavor=${flavor}`, `--name=${appName}`, `--path=${appPath}`]
     await execa('shopify', ['app', 'init', ...initArgs], defaultOpts)
+
+    return {
+      app: {} as AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>,
+    }
   }
 }
