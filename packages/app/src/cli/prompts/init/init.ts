@@ -4,6 +4,7 @@ import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 export interface InitOptions {
   template?: string
   flavor?: string
+  demoTemplateFlavor?: string
 }
 
 interface InitOutput {
@@ -84,6 +85,11 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
       }),
       message: 'Get started building your app:',
       defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
+      validate: (value) => {
+        if (options.demoTemplateFlavor && value !== options.demoTemplateFlavor) {
+          return 'Thats not "build an extension-only app"!'
+        }
+      },
     })
   }
 

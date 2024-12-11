@@ -317,6 +317,7 @@ export interface RenderConfirmationPromptOptions
   cancellationMessage?: string
   renderOptions?: RenderOptions
   defaultValue?: boolean
+  validate?: (value: boolean) => string | undefined
 }
 
 /**
@@ -347,6 +348,7 @@ export async function renderConfirmationPrompt({
   defaultValue = true,
   abortSignal,
   infoMessage,
+  validate,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   const choices = [
     {
@@ -370,6 +372,7 @@ export async function renderConfirmationPrompt({
     isConfirmationPrompt: true,
     abortSignal,
     infoMessage,
+    validate,
   })
 }
 

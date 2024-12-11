@@ -63,6 +63,16 @@ export default class Init extends AppCommand {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
+    'demo-template-flavor': Flags.string({
+      hidden: true,
+      description: 'The expected flavor of the template to use during a demo.',
+      env: 'SHOPIFY_FLAG_DEMO_TEMPLATE_FLAVOR',
+    }),
+    'demo-is-app-new': Flags.boolean({
+      hidden: true,
+      description: 'Whether the app is new during a demo.',
+      env: 'SHOPIFY_FLAG_DEMO_IS_APP_NEW',
+    }),
   }
 
   async run(): Promise<AppCommandOutput> {
@@ -81,6 +91,7 @@ export default class Init extends AppCommand {
     const promptAnswers = await initPrompt({
       template: flags.template,
       flavor: flags.flavor,
+      demoTemplateFlavor: flags['demo-template-flavor'],
     })
 
     let selectAppResult: SelectAppOrNewAppNameResult
@@ -95,7 +106,23 @@ export default class Init extends AppCommand {
       const org = await selectOrg()
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-      selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
+
+      if (flags['demo-is-app-new']) {
+        await createAsNewAppPrompt((value) => {
+          if (!value) return "That's not 'Yes, create it as a new app'!"
+        })
+        const appName = await appNamePrompt(name)
+        selectAppResult = {result: 'new', name: appName, org}
+      } else {
+        selectAppResult = await selectAppOrNewAppName(
+          name,
+          apps,
+          hasMorePages,
+          organization,
+          developerPlatformClient,
+          flags['demo-is-app-new'],
+        )
+      }
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 
@@ -147,6 +174,7 @@ async function selectAppOrNewAppName(
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
+  demoIsAppNew: boolean,
 ): Promise<SelectAppOrNewAppNameResult> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
