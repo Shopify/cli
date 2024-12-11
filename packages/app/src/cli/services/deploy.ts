@@ -100,14 +100,7 @@ export async function deploy(options: DeployOptions) {
           task: async () => {
             const appModules = await Promise.all(
               app.allExtensions.flatMap((ext) =>
-                ext.specification.identifier === 'app_development'
-                  ? undefined
-                  : ext.bundleConfig({
-                      identifiers,
-                      developerPlatformClient,
-                      apiKey,
-                      appConfiguration: app.configuration,
-                    }),
+                ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
               ),
             )
 
