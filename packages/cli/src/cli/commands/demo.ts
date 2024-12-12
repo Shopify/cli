@@ -59,6 +59,8 @@ import {readFile} from '@shopify/cli-kit/node/fs'
 //                                     .-+=-:...-=:
 //                                         .....
 
+const APP_NAME_REGEX = /^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,28}[a-z0-9]$/
+
 export default class Demo extends Command {
   static summary = 'Demo command to showcase CLI functionality'
 
@@ -196,6 +198,13 @@ export default class Demo extends Command {
           if (initialTOMLContents === currentTOMLContents) {
             return 'You indicated you made changes but the file has not changed. Please make changes to the file and try again.'
           }
+
+          const nameMatch = currentTOMLContents.match(/^name\s*=\s*"([^"]+)"/m)
+          const appName = nameMatch?.[1]
+
+          if (!appName || !APP_NAME_REGEX.test(appName)) {
+            return "App name can't start or end with hyphens and must be 1-30 lowercase letters, numbers or hyphens."
+          }
         }
       },
     })
@@ -215,6 +224,13 @@ export default class Demo extends Command {
           },
         },
       ],
+    })
+
+    await renderTextPrompt({
+      message: 'Run the `shopify app deploy` command to deploy your changes:',
+      validate: (value) => {
+        if (value !== 'shopify app deploy') return 'Thats not the `shopify app deploy` command!'
+      },
     })
 
     await AppDeployCommand.run(['--path', app.directory])
