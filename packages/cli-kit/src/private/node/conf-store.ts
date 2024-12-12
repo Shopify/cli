@@ -1,5 +1,6 @@
 import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
+import {isBrowswer} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 
 interface CacheValue<T> {
@@ -60,7 +61,7 @@ export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): st
  * @param session - Session.
  */
 export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  if (typeof window === 'undefined') {
+  if (isBrowswer()) {
     // eslint-disable-next-line no-console
     console.log('Setting storageSession...')
     sessionStorage.setItem('shopify-cli-web-session', session)
