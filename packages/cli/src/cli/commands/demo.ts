@@ -2,8 +2,11 @@ import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AppInitCommand} from '@shopify/app'
-import {renderTextPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderTextPrompt, renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {exec} from '@shopify/cli-kit/node/system'
+import {readFile} from '@shopify/cli-kit/node/fs'
 
 // just a chill demo
 //                                        .-+.   .-=:
@@ -139,6 +142,63 @@ export default class Demo extends Command {
           },
         },
       ],
+    })
+
+    const appConfigPath = joinPath(app.directory, 'shopify.app.toml')
+    const initialTOMLContents = await readFile(appConfigPath)
+    // await renderInfo({
+    //   body: ['Here is your app configuration:', {command: contents}],
+    // })
+
+    await exec('open', [appConfigPath])
+
+    await renderInfo({
+      body: ['You can now make changes to the app configuration file.'],
+      customSections: [
+        {
+          title: "Let's make changes to your app!",
+          body: {
+            list: {
+              items: [
+                'The TOML file is a configuration file that contains the settings for your app.',
+                'It lives in the root of your app directory and is named `shopify.app.toml`.',
+                {
+                  link: {
+                    label: 'Learn more about the TOML app configuration file and ',
+                    url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration',
+                  },
+                },
+                {
+                  link: {
+                    label: 'You can also learn about managing multiple TOML files in your app',
+                    url: 'https://shopify.dev/docs/apps/build/cli-for-apps/manage-app-config-files',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    })
+
+    await renderSelectPrompt({
+      message: 'Did you make changes to the app configuration file?',
+      choices: [
+        {label: 'Yes', value: 'Yes'},
+        {label: 'No', value: 'No'},
+      ],
+      validate: async (value) => {
+        if (value === 'No') {
+          return 'Please make changes to the file and try again.'
+        }
+
+        if (value === 'Yes') {
+          const currentTOMLContents = await readFile(appConfigPath)
+          if (initialTOMLContents === currentTOMLContents) {
+            return 'You indicated you made changes but the file has not changed. Please make changes to the file and try again.'
+          }
+        }
+      },
     })
   }
 }

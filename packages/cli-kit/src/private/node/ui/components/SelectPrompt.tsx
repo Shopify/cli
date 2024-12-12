@@ -15,7 +15,7 @@ export interface SelectPromptProps<T> {
   defaultValue?: T
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
-  validate?: (value: T) => string | undefined
+  validate?: (value: T) => string | undefined | Promise<string | undefined>
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -41,11 +41,11 @@ function SelectPrompt<T>({
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
 
   const submitAnswer = useCallback(
-    (answer: SelectItem<T>) => {
+    async (answer: SelectItem<T>) => {
       setAnswer(answer)
 
       if (validate) {
-        const validationError = validate(answer.value)
+        const validationError = await validate(answer.value)
         if (validationError) {
           setError(validationError)
           setPromptState(PromptState.Error)

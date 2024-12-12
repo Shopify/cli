@@ -317,7 +317,7 @@ export interface RenderConfirmationPromptOptions
   cancellationMessage?: string
   renderOptions?: RenderOptions
   defaultValue?: boolean
-  validate?: (value: boolean) => string | undefined
+  validate?: (value: boolean) => string | undefined | Promise<string | undefined>
 }
 
 /**
