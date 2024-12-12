@@ -1,8 +1,9 @@
 import {themeFlags} from '../../../flags.js'
 import ThemeCommand from '../../../utilities/theme-command.js'
+import {hasRequiredThemeDirectories} from '../../../utilities/theme-fs.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSelectPrompt, renderSuccess, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderSuccess, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 
 const SECTION_TYPES = ['featured-collection', 'image-with-text', 'rich-text', 'custom']
 
@@ -31,10 +32,25 @@ export default class GenerateSection extends ThemeCommand {
       options: [...SECTION_TYPES],
       env: 'SHOPIFY_FLAG_SECTION_TYPE',
     }),
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(GenerateSection)
+
+    if (!flags.force && !(await hasRequiredThemeDirectories(flags.path))) {
+      renderWarning({
+        body: [
+          'The current directory does not contain the required theme directories (config, layout, sections, templates).',
+        ],
+      })
+      return
+    }
 
     const name =
       flags.name ??
