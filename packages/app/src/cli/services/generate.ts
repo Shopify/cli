@@ -40,14 +40,39 @@ interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
-  console.log('GENERATE', options)
+  // console.log('GENERATE', options)
 
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
-  // TODO:  from the first prompt answers we can get the next steps
+
+  // Add related extension children for product discounts
+  if (promptAnswers.extensionTemplate.identifier === 'product_discounts') {
+    const settingsTemplate = extensionTemplates.find((template) => template.identifier === 'discount_function_settings')
+    if (settingsTemplate) {
+      const mockSettingsPromptAnswers: GenerateExtensionPromptOutput = {
+        extensionTemplate: settingsTemplate,
+        extensionContent: {
+          name: `${promptAnswers.extensionContent.name}-settings`,
+          flavor: 'react',
+          relatedExtensions: [],
+        },
+      }
+
+      // Generate the settings extension
+      const settingsGenerateOptions = buildGenerateOptions(
+        mockSettingsPromptAnswers,
+        app,
+        options,
+        developerPlatformClient,
+      )
+      await generateExtensionTemplate(settingsGenerateOptions)
+    }
+  }
+
+  console.log('PROMPT ANSWERS', promptAnswers)
   // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
   // Here we could check if the user wants to add a related extension
@@ -64,11 +89,11 @@ async function generate(options: GenerateOptions) {
   // 4.2. Function settings is meant to be used with a discount function, would you like us to generate one for you?
   // 4.3. What is the name of your function?
   // Generates both extensions
-  // if (addPromptConfirmation) {
-  //   // Generate related extensions
-  //   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
-  //   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
-  // }
+  if (addPromptConfirmation) {
+    // Generate related extensions
+    const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
+    const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
+  }
 
   renderSuccessMessage(generatedExtension, app.packageManager)
 }
@@ -79,7 +104,7 @@ async function buildPromptOptions(
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  console.log('BUILDING PROMPT OPTIONS', arguments)
+  // console.log('BUILDING PROMPT OPTIONS', arguments)
   const extensionTemplate = await handleTypeParameter(options.template, app, extensionTemplates, specifications)
   validateExtensionFlavor(extensionTemplate, options.flavor)
 
@@ -120,6 +145,7 @@ function limitReached(app: AppInterface, specifications: ExtensionSpecification[
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
   const {extensionContent} = promptAnswers
+  console.log('SAVING METADATA', promptAnswers)
   return metadata.addPublicMetadata(() => ({
     cmd_scaffold_template_flavor: extensionContent.flavor,
     cmd_scaffold_type: promptAnswers.extensionTemplate.identifier,

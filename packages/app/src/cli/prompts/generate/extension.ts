@@ -31,6 +31,11 @@ export interface GenerateExtensionPromptOutput {
 export interface GenerateExtensionContentOutput {
   name: string
   flavor?: ExtensionFlavorValue
+  relatedExtensions?: {
+    type: string
+    name: string
+    directory: string
+  }[]
 }
 
 export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
@@ -74,7 +79,7 @@ const generateExtensionPrompts = async (
   let extensionTemplates = options.extensionTemplates
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
-
+  console.log('EXTENSION TEMPLATES', extensionTemplates)
   if (!templateType) {
     if (extensionFlavor) {
       extensionTemplates = extensionTemplates.filter((template) =>
@@ -94,7 +99,6 @@ const generateExtensionPrompts = async (
   }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-
   const extensionTemplate = extensionTemplates.find((template) => template.identifier === templateType)!
 
   const name = options.name || (await promptName(options.directory, extensionTemplate.defaultName))
@@ -103,6 +107,7 @@ const generateExtensionPrompts = async (
     name,
     flavor,
     // extensionChildren [identifiers]
+    extensionChildren: extensionTemplate.relatedExtensions?.map((elem) => elem.name) ?? [],
   }
   // TODO: here perhaps return a flag, that lets us know that there are possible next steps
 
