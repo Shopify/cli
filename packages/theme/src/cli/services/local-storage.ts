@@ -66,8 +66,13 @@ export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalSto
 export function getDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
-  outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
+  if (typeof window === 'undefined') {
+    outputDebug(outputContent`Getting development theme...`)
+    return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
+  } else {
+    console.log('LocalStorage not available, skipping development themes...')
+    return undefined
+  }
 }
 
 export function setDevelopmentTheme(
