@@ -1,5 +1,5 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
-import {workflowRegistry} from './generate/workflows/registry.js'
+import {workflowRegistry, WorkflowResult} from './generate/workflows/registry.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
@@ -40,37 +40,11 @@ export interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
-  // console.log('GENERATE', options)
-
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
-
-  // Add related extension children for product discounts
-  if (promptAnswers.extensionTemplate.identifier === 'product_discounts') {
-    const settingsTemplate = extensionTemplates.find((template) => template.identifier === 'discount_function_settings')
-    if (settingsTemplate) {
-      const mockSettingsPromptAnswers: GenerateExtensionPromptOutput = {
-        extensionTemplate: settingsTemplate,
-        extensionContent: {
-          name: `${promptAnswers.extensionContent.name}-settings`,
-          flavor: 'react',
-          relatedExtensions: [],
-        },
-      }
-
-      // Generate the settings extension
-      const settingsGenerateOptions = buildGenerateOptions(
-        mockSettingsPromptAnswers,
-        app,
-        options,
-        developerPlatformClient,
-      )
-      await generateExtensionTemplate(settingsGenerateOptions)
-    }
-  }
 
   // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
@@ -80,13 +54,21 @@ async function generate(options: GenerateOptions) {
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
   const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
-  await workflow?.afterGenerate({
+  if (!workflow) {
+    renderSuccessMessage(generatedExtension, app.packageManager)
+  }
+
+  const workflowResult = await workflow?.afterGenerate({
     generateOptions: options,
     extensionTemplateOptions: generateExtensionOptions,
     generatedExtension,
   })
 
-  renderSuccessMessage(generatedExtension, app.packageManager)
+  if (!workflowResult?.success) {
+    //TODO: Cleanup extension?
+  }
+
+  renderSuccessMessage(generatedExtension, app.packageManager, workflowResult)
 }
 
 async function buildPromptOptions(
@@ -95,7 +77,6 @@ async function buildPromptOptions(
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  // console.log('BUILDING PROMPT OPTIONS', arguments)
   const extensionTemplate = await handleTypeParameter(options.template, app, extensionTemplates, specifications)
   validateExtensionFlavor(extensionTemplate, options.flavor)
 
@@ -157,11 +138,12 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager']) {
+function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager'], workflowResult?: WorkflowResult) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,
     packageManager,
+    workflowResult,
   )
   renderSuccess(formattedSuccessfulMessage)
 }
@@ -183,11 +165,13 @@ function formatSuccessfulRunMessage(
   extensionTemplate: ExtensionTemplate,
   extensionDirectory: string,
   depndencyManager: PackageManager,
+  workflowResult?: WorkflowResult,
 ): RenderAlertOptions {
+  const workflowMessage = workflowResult?.message
   const options: RenderAlertOptions = {
-    headline: ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
-    nextSteps: [],
-    reference: [],
+    headline: workflowMessage?.headline || ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
+    nextSteps: workflowMessage?.nextSteps || [],
+    reference: workflowMessage?.reference || [],
   }
 
   if (extensionTemplate.type !== 'function') {

@@ -21,5 +21,8 @@ export const editorExtensionCollection: Workflow = {
         }],
       },
     })
+    return {
+      success: true,
+    }
   },
 }
