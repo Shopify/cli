@@ -18,6 +18,23 @@
           "name": "client-id",
           "type": "option"
         },
+        "demo-is-app-new": {
+          "allowNo": false,
+          "description": "Whether the app is new during a demo.",
+          "env": "SHOPIFY_FLAG_DEMO_IS_APP_NEW",
+          "hidden": true,
+          "name": "demo-is-app-new",
+          "type": "boolean"
+        },
+        "demo-template-flavor": {
+          "description": "The expected flavor of the template to use during a demo.",
+          "env": "SHOPIFY_FLAG_DEMO_TEMPLATE_FLAVOR",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "demo-template-flavor",
+          "type": "option"
+        },
         "flavor": {
           "description": "Which flavor of the given template to use.",
           "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",

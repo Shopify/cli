@@ -26,6 +26,7 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+* [`shopify demo`](#shopify-demo)
 * [`shopify help [COMMAND]`](#shopify-help-command)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
@@ -853,6 +854,25 @@ DESCRIPTION
   available.
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
+```
+
+## `shopify demo`
+
+Demo command to showcase CLI functionality
+
+```
+USAGE
+  $ shopify demo [-n <value>] [--no-color] [--verbose]
+
+FLAGS
+  -n, --name=<value>  App name
+      --no-color      Disable color output.
+      --verbose       Increase the verbosity of the output.
+
+DESCRIPTION
+  Demo command to showcase CLI functionality
+
+  Demo command that creates a new Shopify app
 ```
 
 ## `shopify help [COMMAND]`
