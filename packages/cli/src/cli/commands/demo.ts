@@ -1,3 +1,4 @@
+import {AppInitDemoStrategy} from '../demo/app-init-demo-strategy.js'
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -109,6 +110,8 @@ export default class Demo extends Command {
       },
     })
 
-    await AppInitCommand.run(['--demo-template-flavor', 'none', '--demo-is-app-new'])
+    const appInitCommand = AppInitCommand
+    appInitCommand.setDemoStrategy(new AppInitDemoStrategy())
+    await appInitCommand.run([])
   }
 }

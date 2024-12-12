@@ -5,6 +5,10 @@ export interface InitOptions {
   template?: string
   flavor?: string
   demoTemplateFlavor?: string
+  flavorDemoAugmentation?: {
+    beforePrompt?: () => Promise<void>
+    validate?: (value: string) => string | undefined
+  }
 }
 
 interface InitOutput {
@@ -65,17 +69,17 @@ export const visibleTemplates = allTemplates.filter((key) => templates[key].visi
 
 const templateOptionsInOrder = ['remix', 'none'] as const
 
-// add a 'guiderail' flag to the options
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let template = options.template
   const flavor = options.flavor
+  const flavorDemoAugmentation = options.flavorDemoAugmentation
 
   const defaults = {
     template: templates.remix.url,
   } as const
 
-  // if we have a guiderail flag, use the guiderail value instead of somethign that comes from options or defaults
   if (!template) {
+    await flavorDemoAugmentation?.beforePrompt?.()
     template = await renderSelectPrompt({
       choices: templateOptionsInOrder.map((key) => {
         return {
@@ -85,11 +89,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
       }),
       message: 'Get started building your app:',
       defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
-      validate: (value) => {
-        if (options.demoTemplateFlavor && value !== options.demoTemplateFlavor) {
-          return 'Thats not "build an extension-only app"!'
-        }
-      },
+      validate: flavorDemoAugmentation?.validate,
     })
   }
 

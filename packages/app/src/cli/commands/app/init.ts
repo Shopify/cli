@@ -83,6 +83,7 @@ export default class Init extends AppCommand {
 
     const inferredPackageManager = inferPackageManager(flags['package-manager'])
     const name = flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path}))
+    this.demoStrategy?.beforeCommand?.()
 
     // Force user authentication before prompting.
     let developerPlatformClient = selectDeveloperPlatformClient()
@@ -92,6 +93,7 @@ export default class Init extends AppCommand {
       template: flags.template,
       flavor: flags.flavor,
       demoTemplateFlavor: flags['demo-template-flavor'],
+      flavorDemoAugmentation: this.demoStrategy?.promptAugmentations?.()?.templateFlavour,
     })
 
     let selectAppResult: SelectAppOrNewAppNameResult
@@ -141,6 +143,8 @@ export default class Init extends AppCommand {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
     })
+
+    this.demoStrategy?.afterCommand?.()
 
     return {app}
   }

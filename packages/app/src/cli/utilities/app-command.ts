@@ -1,5 +1,6 @@
 import {configurationFileNames} from '../constants.js'
 import {AppLinkedInterface} from '../models/app/app.js'
+import {DemoStrategy} from '@shopify/cli'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -18,4 +19,9 @@ export default abstract class AppCommand extends BaseCommand {
   }
 
   public abstract run(): Promise<AppCommandOutput>
+
+  public setDemoStrategy(strategy: DemoStrategy) {
+    this.demoStrategy = strategy
+    return this
+  }
 }

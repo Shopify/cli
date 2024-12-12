@@ -31,6 +31,7 @@ export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/pr
 export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
 export {push, pull, fetchStoreThemes} from '@shopify/theme'
+export {DemoStrategy} from './cli/demo/demo-strategy.js'
 
 export const HydrogenInitHook = HydrogenHooks.init
 
