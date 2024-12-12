@@ -1962,27 +1962,32 @@ Creates and adds a new template file to your local theme directory
 
 ```
 USAGE
-  $ shopify theme generate template [-n <value>] [--no-color] [--path <value>] [-t
-    product|collection|page|blog|article|custom] [--verbose]
+  $ shopify theme generate template [-x liquid|json] [-n <value>] [--no-color] [--path <value>] [-r
+    404|article|blog|cart|collection|customers|gift_card|list-collections|page|password|product|robots|search] [-t
+    basic] [--verbose]
 
 FLAGS
-  -n, --name=<value>   Name of the template
-  -t, --type=<option>  Type of template to generate
-                       <options: product|collection|page|blog|article|custom>
-      --no-color       Disable color output.
-      --path=<value>   The path to your theme directory.
-      --verbose        Increase the verbosity of the output.
+  -n, --name=<value>        Name of the template
+  -r, --resource=<option>   Resource type for the template
+                            <options: 404|article|blog|cart|collection|customers|gift_card|list-collections|page|passwor
+                            d|product|robots|search>
+  -t, --type=<option>       Type of template to generate
+                            <options: basic>
+  -x, --extension=<option>  File extension (liquid or json)
+                            <options: liquid|json>
+      --no-color            Disable color output.
+      --path=<value>        The path to your theme directory.
+      --verbose             Increase the verbosity of the output.
 
 DESCRIPTION
   Creates and adds a new template file to your local theme directory
 
   Creates a new "theme template" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.
 
-  The template is created in the `templates` directory with the basic structure needed, including layout and content
-  sections.
+  The template is created in the `templates` directory with the basic structure needed, including schema and settings.
 
   You can specify the type of template to generate using the `--type` flag. The template will be created with
-  appropriate default sections based on the type.
+  appropriate default settings based on the type.
 ```
 
 ## `shopify theme info`
