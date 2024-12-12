@@ -1,11 +1,11 @@
 import {themeFlags} from '../../../flags.js'
 import ThemeCommand from '../../../utilities/theme-command.js'
 import {hasRequiredThemeDirectories} from '../../../utilities/theme-fs.js'
+import {generateBlock} from '../../../services/generate/blocks.js'
+import {BLOCK_TYPES, promptForType} from '../../../utilities/generator.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSelectPrompt, renderSuccess, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
-
-const BLOCK_TYPES = ['text', 'image', 'video', 'product', 'collection']
+import {renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class GenerateBlock extends ThemeCommand {
   static summary = 'Creates and adds a new block file to your local theme directory'
@@ -58,16 +58,12 @@ export default class GenerateBlock extends ThemeCommand {
         message: 'Name of the block',
       }))
 
-    const choices = BLOCK_TYPES.map((type) => ({label: type, value: type}))
-    const type =
-      flags.type ??
-      (await renderSelectPrompt({
-        message: 'Type of block',
-        choices,
-      }))
+    const type = flags.type ?? (await promptForType('Type of block', BLOCK_TYPES))
 
-    renderSuccess({
-      body: [`Placeholder: Generating block with name: ${name}, type: ${type}`],
+    await generateBlock({
+      name,
+      type,
+      path: flags.path ?? '.',
     })
   }
 }
