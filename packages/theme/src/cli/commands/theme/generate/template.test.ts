@@ -15,7 +15,6 @@ const path = cwd()
 const defaultOptions = {
   path,
   name: 'test',
-  type: 'basic',
   extension: 'liquid',
   resource: 'product',
 }
@@ -41,7 +40,6 @@ describe('GenerateTemplate', () => {
       expect(renderTextPrompt).not.toHaveBeenCalled()
       expect(generateTemplate).toHaveBeenCalledWith({
         name: undefined,
-        type: 'basic',
         path,
         fileType: 'liquid',
         resource: 'product',
@@ -59,7 +57,6 @@ describe('GenerateTemplate', () => {
       expect(renderTextPrompt).not.toHaveBeenCalled()
       expect(generateTemplate).toHaveBeenCalledWith({
         name: 'custom',
-        type: 'basic',
         path,
         fileType: 'liquid',
         resource: 'product',
@@ -94,7 +91,6 @@ describe('GenerateTemplate', () => {
       })
       expect(generateTemplate).toHaveBeenCalledWith({
         name: undefined,
-        type: 'basic',
         path,
         fileType: 'liquid',
         resource: 'product',
@@ -121,7 +117,6 @@ describe('GenerateTemplate', () => {
       })
       expect(generateTemplate).toHaveBeenCalledWith({
         name: undefined,
-        type: 'basic',
         path,
         fileType: 'liquid',
         resource: 'product',
@@ -160,7 +155,6 @@ describe('GenerateTemplate', () => {
     expect(hasRequiredThemeDirectories).not.toHaveBeenCalled()
     expect(generateTemplate).toHaveBeenCalledWith({
       name: defaultOptions.name,
-      type: defaultOptions.type,
       path,
       fileType: defaultOptions.extension,
       resource: defaultOptions.resource,

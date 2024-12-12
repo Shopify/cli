@@ -19,7 +19,6 @@ describe('generateTemplate', () => {
         path: tmpDir,
         fileType: 'liquid',
         resource: 'product',
-        type: 'basic',
       }
 
       // When
@@ -62,7 +61,6 @@ describe('generateTemplate', () => {
         path: tmpDir,
         fileType: 'liquid',
         resource: 'product',
-        type: 'basic',
       }
 
       // When
@@ -84,7 +82,6 @@ describe('generateTemplate', () => {
         path: tmpDir,
         fileType: 'json',
         resource: 'collection',
-        type: 'basic',
       }
 
       // When
@@ -129,7 +126,6 @@ describe('generateTemplate', () => {
         path: tmpDir,
         fileType: 'json',
         resource: 'collection',
-        type: 'basic',
       }
 
       // When

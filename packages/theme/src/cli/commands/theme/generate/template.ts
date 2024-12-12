@@ -1,5 +1,4 @@
 import {
-  TEMPLATE_TYPES,
   TEMPLATE_RESOURCE_TYPES,
   FILE_TYPES,
   promptForType,
@@ -18,9 +17,7 @@ export default class GenerateTemplate extends ThemeCommand {
 
   static descriptionWithMarkdown = `Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.
 
-  The template is created in the \`templates\` directory with the basic structure needed, including schema and settings.
-
-  You can specify the type of template to generate using the \`--type\` flag. The template will be created with appropriate default settings based on the type.`
+  The template is created in the \`templates\` directory with the basic structure needed, including schema and settings.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -31,12 +28,6 @@ export default class GenerateTemplate extends ThemeCommand {
       char: 'n',
       description: 'Name of the template',
       env: 'SHOPIFY_FLAG_TEMPLATE_NAME',
-    }),
-    type: Flags.string({
-      char: 't',
-      description: 'Type of template to generate',
-      options: TEMPLATE_TYPES,
-      env: 'SHOPIFY_FLAG_TEMPLATE_TYPE',
     }),
     extension: Flags.string({
       char: 'x',
@@ -71,14 +62,12 @@ export default class GenerateTemplate extends ThemeCommand {
 
     const resource = flags.resource ?? (await promptForType('Resource type for the template', TEMPLATE_RESOURCE_TYPES))
     const fileType = flags.extension ?? (await promptForType('File extension', FILE_TYPES))
-    const type = flags.type ?? (await promptForType('Type of template', TEMPLATE_TYPES))
     const path = flags.path
 
     const name = await resolveTemplateName(flags.name, resource, fileType, path)
 
     await generateTemplate({
       name,
-      type,
       path,
       fileType,
       resource,
