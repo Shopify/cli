@@ -1,0 +1,14 @@
+query metafieldDefinitionsByOwnerType($ownerType: MetafieldOwnerType!) {
+  metafieldDefinitions(ownerType: $ownerType, first: 250) {
+    nodes {
+      key
+      name
+      namespace
+      description
+      type {
+        category
+        name
+      }
+    }
+  }
+}

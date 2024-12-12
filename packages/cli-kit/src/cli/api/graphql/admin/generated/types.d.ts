@@ -120,6 +120,67 @@ export type Scalars = {
   UtcOffset: {input: any; output: any}
 }
 
+/** Possible types of a metafield's owner resource. */
+export type MetafieldOwnerType =
+  /** The Api Permission metafield owner type. */
+  | 'API_PERMISSION'
+  /** The Article metafield owner type. */
+  | 'ARTICLE'
+  /** The Blog metafield owner type. */
+  | 'BLOG'
+  /** The Brand metafield owner type. */
+  | 'BRAND'
+  /** The Cart Transform metafield owner type. */
+  | 'CARTTRANSFORM'
+  /** The Collection metafield owner type. */
+  | 'COLLECTION'
+  /** The Company metafield owner type. */
+  | 'COMPANY'
+  /** The Company Location metafield owner type. */
+  | 'COMPANY_LOCATION'
+  /** The Customer metafield owner type. */
+  | 'CUSTOMER'
+  /** The Delivery Customization metafield owner type. */
+  | 'DELIVERY_CUSTOMIZATION'
+  /** The Delivery Method metafield owner type. */
+  | 'DELIVERY_METHOD'
+  /** The Delivery Option Generator metafield owner type. */
+  | 'DELIVERY_OPTION_GENERATOR'
+  /** The Discount metafield owner type. */
+  | 'DISCOUNT'
+  /** The draft order metafield owner type. */
+  | 'DRAFTORDER'
+  /** The Fulfillment Constraint Rule metafield owner type. */
+  | 'FULFILLMENT_CONSTRAINT_RULE'
+  /** The Gate Configuration metafield owner type. */
+  | 'GATE_CONFIGURATION'
+  /** The GiftCardTransaction metafield owner type. */
+  | 'GIFT_CARD_TRANSACTION'
+  /** The Location metafield owner type. */
+  | 'LOCATION'
+  /** The Market metafield owner type. */
+  | 'MARKET'
+  /** The Media Image metafield owner type. */
+  | 'MEDIA_IMAGE'
+  /** The Order metafield owner type. */
+  | 'ORDER'
+  /** The Order Routing Location Rule metafield owner type. */
+  | 'ORDER_ROUTING_LOCATION_RULE'
+  /** The Page metafield owner type. */
+  | 'PAGE'
+  /** The Payment Customization metafield owner type. */
+  | 'PAYMENT_CUSTOMIZATION'
+  /** The Product metafield owner type. */
+  | 'PRODUCT'
+  /** The Product Variant metafield owner type. */
+  | 'PRODUCTVARIANT'
+  /** The Selling Plan metafield owner type. */
+  | 'SELLING_PLAN'
+  /** The Shop metafield owner type. */
+  | 'SHOP'
+  /** The Validation metafield owner type. */
+  | 'VALIDATION'
+
 /** The input fields for the theme file body. */
 export type OnlineStoreThemeFileBodyInput = {
   /** The input type of the theme file body. */
