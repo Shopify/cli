@@ -24,8 +24,8 @@
       "types": "./dist/index.d.ts"
     },
     "./*": {
-      "node": "./dist/public/*.js",
-      "types": "./dist/public/*.d.ts"
+      "node": "./dist/public/common/*.js",
+      "types": "./dist/public/common/*.d.ts"
     },
     "./assets/*": "./assets/*",
     "./testing/*": {
