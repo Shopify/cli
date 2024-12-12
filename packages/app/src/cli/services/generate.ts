@@ -5,7 +5,6 @@ import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
-  promptAddExtensionConfirmation,
 } from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import {
@@ -73,7 +72,6 @@ async function generate(options: GenerateOptions) {
     }
   }
 
-  console.log('PROMPT ANSWERS', promptAnswers)
   // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
 
@@ -138,7 +136,6 @@ function limitReached(app: AppInterface, specifications: ExtensionSpecification[
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
   const {extensionContent} = promptAnswers
-  console.log('SAVING METADATA', promptAnswers)
   return metadata.addPublicMetadata(() => ({
     cmd_scaffold_template_flavor: extensionContent.flavor,
     cmd_scaffold_type: promptAnswers.extensionTemplate.identifier,
