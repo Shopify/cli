@@ -5326,6 +5326,15 @@
       "description": "Creates a new \"theme block\" (https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of block to generate using the `--type` flag. The block will be created with appropriate default settings based on the type.",
       "descriptionWithMarkdown": "Creates a new [theme block](https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of block to generate using the `--type` flag. The block will be created with appropriate default settings based on the type.",
       "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "type": "boolean"
+        },
         "name": {
           "char": "n",
           "description": "Name of the block",
@@ -5396,6 +5405,15 @@
       "description": "Creates a new \"theme section\" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
       "descriptionWithMarkdown": "Creates a new [theme section](https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
       "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "type": "boolean"
+        },
         "name": {
           "char": "n",
           "description": "Name of the section",
@@ -5465,6 +5483,15 @@
       "description": "Creates a new \"theme template\" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including layout and content sections.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default sections based on the type.",
       "descriptionWithMarkdown": "Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including layout and content sections.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default sections based on the type.",
       "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "type": "boolean"
+        },
         "name": {
           "char": "n",
           "description": "Name of the template",

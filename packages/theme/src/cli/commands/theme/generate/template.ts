@@ -1,9 +1,10 @@
 import {TEMPLATE_TYPES, promptForType} from '../../../utilities/generator.js'
 import {themeFlags} from '../../../flags.js'
 import ThemeCommand from '../../../utilities/theme-command.js'
+import {hasRequiredThemeDirectories} from '../../../utilities/theme-fs.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class GenerateTemplate extends ThemeCommand {
   static summary = 'Creates and adds a new template file to your local theme directory'
@@ -30,10 +31,25 @@ export default class GenerateTemplate extends ThemeCommand {
       options: [...TEMPLATE_TYPES],
       env: 'SHOPIFY_FLAG_TEMPLATE_TYPE',
     }),
+    force: Flags.boolean({
+      hidden: true,
+      char: 'f',
+      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(GenerateTemplate)
+
+    if (!flags.force && !(await hasRequiredThemeDirectories(flags.path))) {
+      renderWarning({
+        body: [
+          'The current directory does not contain the required theme directories (config, layout, sections, templates).',
+        ],
+      })
+      return
+    }
 
     const name =
       flags.name ??
