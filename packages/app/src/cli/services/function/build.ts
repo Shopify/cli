@@ -206,6 +206,8 @@ export async function runWasmOpt(modulePath: string) {
     modulePath,
   ]
 
+  outputDebug(`Wasm binary: ${wasmOptBinary().name}`)
+  outputDebug('Optimizing this wasm binary using wasm-opt.')
   await exec(command, args, {cwd: wasmOptDir})
 }
 
