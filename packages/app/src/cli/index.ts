@@ -26,7 +26,7 @@ import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
-import {init as initService} from './services/init/init.js'
+import initService from './services/init/init.js'
 
 /**
  * All app commands should extend AppCommand.

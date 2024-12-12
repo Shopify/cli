@@ -61,6 +61,7 @@ export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): st
  */
 export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   if (typeof window === 'undefined') {
+    // eslint-disable-next-line no-console
     console.log('Setting storageSession...')
     sessionStorage.setItem('shopify-cli-web-session', session)
   } else {

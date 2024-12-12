@@ -70,7 +70,8 @@ export function getDevelopmentTheme(
     outputDebug(outputContent`Getting development theme...`)
     return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
   } else {
-    console.log('LocalStorage not available, skipping development themes...')
+    // eslint-disable-next-line no-console
+    console.log('LocalStorage not available, skipping development theme...')
     return undefined
   }
 }

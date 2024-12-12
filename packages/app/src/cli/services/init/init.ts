@@ -49,7 +49,7 @@ interface InitOptions {
   }
 }
 
-export async function init(options: InitOptions) {
+async function init(options: InitOptions) {
   const packageManager: PackageManager = options.packageManager
   const hyphenizedName = hyphenate(options.name)
   const outputDirectory = joinPath(options.directory, hyphenizedName)
