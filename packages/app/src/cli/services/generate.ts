@@ -85,6 +85,7 @@ async function generate(options: GenerateOptions) {
   await workflow?.afterGenerate({
     generateOptions: options,
     extensionTemplateOptions: generateExtensionOptions,
+    generatedExtension,
   })
 
   renderSuccessMessage(generatedExtension, app.packageManager)

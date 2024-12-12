@@ -1,10 +1,11 @@
 import {editorExtensionCollection} from './editor-extension-collection.js'
 import {GenerateOptions} from '../../generate.js'
-import {GenerateExtensionTemplateOptions} from '../../generate/extension.js'
+import {GeneratedExtension, GenerateExtensionTemplateOptions} from '../../generate/extension.js'
 
 interface AfterGenerateOptions {
   generateOptions: GenerateOptions
   extensionTemplateOptions: GenerateExtensionTemplateOptions
+  generatedExtension: GeneratedExtension
 }
 
 export interface Workflow {
