@@ -46,13 +46,11 @@ async function generate(options: GenerateOptions) {
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
-  // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
 
-  // We can add an extra generated extension here.
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
-
+  renderSuccessMessage(generatedExtension, app.packageManager)
   const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
   if (!workflow) {
     renderSuccessMessage(generatedExtension, app.packageManager)
@@ -60,8 +58,9 @@ async function generate(options: GenerateOptions) {
 
   const workflowResult = await workflow?.afterGenerate({
     generateOptions: options,
-    extensionTemplateOptions: generateExtensionOptions,
     generatedExtension,
+    extensionTemplateOptions: generateExtensionOptions,
+    extensionTemplates: extensionTemplates,
   })
 
   if (!workflowResult?.success) {
@@ -71,7 +70,7 @@ async function generate(options: GenerateOptions) {
   renderSuccessMessage(generatedExtension, app.packageManager, workflowResult)
 }
 
-async function buildPromptOptions(
+export async function buildPromptOptions(
   extensionTemplates: ExtensionTemplate[],
   specifications: ExtensionSpecification[],
   app: AppInterface,
@@ -123,7 +122,7 @@ async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutpu
   }))
 }
 
-function buildGenerateOptions(
+export function buildGenerateOptions(
   promptAnswers: GenerateExtensionPromptOutput,
   app: AppInterface,
   options: GenerateOptions,
@@ -138,7 +137,11 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager'], workflowResult?: WorkflowResult) {
+function renderSuccessMessage(
+  extension: GeneratedExtension,
+  packageManager: AppInterface['packageManager'],
+  workflowResult?: WorkflowResult,
+) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,
@@ -169,7 +172,11 @@ function formatSuccessfulRunMessage(
 ): RenderAlertOptions {
   const workflowMessage = workflowResult?.message
   const options: RenderAlertOptions = {
-    headline: workflowMessage?.headline || ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
+    headline: workflowMessage?.headline || [
+      'Your extension was created in',
+      {filePath: extensionDirectory},
+      {char: '.'},
+    ],
     nextSteps: workflowMessage?.nextSteps || [],
     reference: workflowMessage?.reference || [],
   }

@@ -60,6 +60,7 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): Template
 export interface GeneratedExtension {
   directory: string
   extensionTemplate: ExtensionTemplate
+  handle: string
 }
 
 interface ExtensionInitOptions {
@@ -81,7 +82,6 @@ export async function generateExtensionTemplate(
   const extensionFlavor = options.extensionTemplate.supportedFlavors.find(
     (flavor) => flavor.value === extensionFlavorValue,
   )
-  // TODO For grouping we might want to setup directories/groups for extensions
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
   const url = options.cloneUrl || options.extensionTemplate.url
   const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
@@ -100,7 +100,11 @@ export async function generateExtensionTemplate(
       }),
   }
   await extensionInit(initOptions)
-  return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
+  return {
+    directory: relativizePath(directory),
+    extensionTemplate: options.extensionTemplate,
+    handle: slugify(extensionName),
+  }
 }
 
 async function extensionInit(options: ExtensionInitOptions) {
@@ -225,7 +229,7 @@ async function uiExtensionInit({
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
-
+  console.log('extensionName', name)
   const tasks = [
     {
       title: `Generating extension`,
