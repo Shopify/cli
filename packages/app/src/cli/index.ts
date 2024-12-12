@@ -26,6 +26,7 @@ import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
+import {init as initService} from './services/init/init.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -60,3 +61,4 @@ export const commands: {[key: string]: typeof AppCommand} = {
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
 export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata
+export {initService as init}

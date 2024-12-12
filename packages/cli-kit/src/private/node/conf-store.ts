@@ -60,8 +60,13 @@ export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): st
  * @param session - Session.
  */
 export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  outputDebug(outputContent`Setting session store...`)
-  config.set('sessionStore', session)
+  if (typeof window === 'undefined') {
+    console.log('Setting storageSession...')
+    sessionStorage.setItem('shopify-cli-web-session', session)
+  } else {
+    outputDebug(outputContent`Setting session store...`)
+    config.set('sessionStore', session)
+  }
 }
 
 /**
