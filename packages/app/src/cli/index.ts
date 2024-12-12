@@ -58,6 +58,7 @@ export const commands: {[key: string]: typeof AppCommand} = {
 }
 
 export const AppInitCommand = AppInit
+export const AppDeployCommand = Deploy
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
 export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata

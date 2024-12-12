@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {AppInitCommand} from '@shopify/app'
+import {AppInitCommand, AppDeployCommand} from '@shopify/app'
 import {renderTextPrompt, renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -113,8 +113,7 @@ export default class Demo extends Command {
       },
     })
 
-    const appInitCommand = AppInitCommand
-    const {app} = await appInitCommand.run([])
+    const {app} = await AppInitCommand.run([])
 
     const appLink = await appDeepLink({
       id: app?.configuration?.app_id,
@@ -200,6 +199,25 @@ export default class Demo extends Command {
         }
       },
     })
+
+    await renderInfo({
+      customSections: [
+        {
+          title: "Let's deploy our changes to our app!",
+          body: {
+            list: {
+              items: [
+                "By running the `shopify app deploy` command, we'll deploy our changes to the Shopify platform.",
+                'Under the hood, this command will create a new version of the app and deploy it.',
+                {bold: 'Completion Time: 2 minutes'},
+              ],
+            },
+          },
+        },
+      ],
+    })
+
+    await AppDeployCommand.run(['--path', app.directory])
   }
 }
 
