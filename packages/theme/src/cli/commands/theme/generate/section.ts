@@ -1,11 +1,12 @@
 import {themeFlags} from '../../../flags.js'
 import ThemeCommand from '../../../utilities/theme-command.js'
 import {hasRequiredThemeDirectories} from '../../../utilities/theme-fs.js'
+import {generateSection} from '../../../services/generate/sections.js'
+import {SECTION_TYPES, FILE_TYPES, promptForType} from '../../../utilities/generator.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSelectPrompt, renderSuccess, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
-
-const SECTION_TYPES = ['featured-collection', 'image-with-text', 'rich-text', 'custom']
+import {renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
+import {cwd} from '@shopify/cli-kit/node/path'
 
 export default class GenerateSection extends ThemeCommand {
   static summary = 'Creates and adds a new section file to your local theme directory'
@@ -31,6 +32,12 @@ export default class GenerateSection extends ThemeCommand {
       description: 'Type of section to generate',
       options: [...SECTION_TYPES],
       env: 'SHOPIFY_FLAG_SECTION_TYPE',
+    }),
+    extension: Flags.string({
+      char: 'x',
+      description: 'File extension (liquid or json)',
+      options: [...FILE_TYPES],
+      env: 'SHOPIFY_FLAG_SECTION_FILE_TYPE',
     }),
     force: Flags.boolean({
       hidden: true,
@@ -58,16 +65,15 @@ export default class GenerateSection extends ThemeCommand {
         message: 'Name of the section',
       }))
 
-    const choices = SECTION_TYPES.map((type) => ({label: type, value: type}))
-    const type =
-      flags.type ??
-      (await renderSelectPrompt({
-        message: 'Type of section',
-        choices,
-      }))
+    const type = flags.type ?? (await promptForType('Type of section', SECTION_TYPES))
 
-    renderSuccess({
-      body: [`Placeholder: Generating section with name: ${name}, type: ${type}`],
+    const fileType = flags.extension ?? (await promptForType('File extension', FILE_TYPES))
+
+    await generateSection({
+      name,
+      type,
+      path: flags.path ?? cwd(),
+      fileType,
     })
   }
 }
