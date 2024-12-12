@@ -29,5 +29,7 @@ export interface AppConfigurationUsedByCli {
   }
   development?: {
     tunnel_url: string
+    websocket_url: string
+    dev_console_url: string
   }
 }

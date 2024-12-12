@@ -141,9 +141,14 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   })
 }
 
-function getWebSocketUrl(url: ExtensionDevOptions['url']) {
+export function getWebSocketUrl(url: ExtensionDevOptions['url']) {
   const websocketURL = new URL('/extensions', url)
   websocketURL.protocol = 'wss:'
 
   return websocketURL.toString()
+}
+
+export function getDevConsoleUrl(url: ExtensionDevOptions['url']) {
+  const devConsoleUrl = new URL('/extensions/dev-console', url)
+  return devConsoleUrl.toString()
 }

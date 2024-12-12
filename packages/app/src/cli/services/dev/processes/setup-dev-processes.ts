@@ -19,6 +19,7 @@ import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
+import {getDevConsoleUrl} from '../extension.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -182,7 +183,8 @@ export async function setupDevProcesses({
 
   // Decide on the appropriate preview URL for a session with these processes
   const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
-  const previewUrl = anyPreviewableExtensions.length > 0 ? `${network.proxyUrl}/extensions/dev-console` : appPreviewUrl
+  const devConsoleUrl = getDevConsoleUrl(network.proxyUrl)
+  const previewUrl = anyPreviewableExtensions.length > 0 ? devConsoleUrl : appPreviewUrl
 
   return {
     processes: processesWithProxy,

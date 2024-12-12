@@ -940,6 +940,8 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           specificationIdentifier: AppDevelopmentSpecIdentifier,
           config: {
             tunnel_url: 'https://example.com',
+            websocket_url: 'wss://example.com/extensions',
+            dev_console_url: 'https://example.com/extensions/dev-console',
           },
         },
       ],

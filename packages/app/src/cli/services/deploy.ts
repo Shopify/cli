@@ -111,8 +111,6 @@ export async function deploy(options: DeployOptions) {
               ),
             )
 
-            outputInfo(`all app modules: ${JSON.stringify(appModules)}`)
-
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
               appId: remoteApp.id,
               apiKey,

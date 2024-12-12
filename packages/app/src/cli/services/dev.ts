@@ -25,6 +25,7 @@ import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {getDevConsoleUrl, getWebSocketUrl} from './dev/extension.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -146,7 +147,11 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   )
 
   if (network.proxyUrl) {
-    const patch = {development: {tunnel_url: network.proxyUrl}}
+    const websocketUrl = getWebSocketUrl(network.proxyUrl)
+    const devConsoleUrl = getDevConsoleUrl(network.proxyUrl)
+    const patch = {
+      development: {tunnel_url: network.proxyUrl, websocket_url: websocketUrl, dev_console_url: devConsoleUrl},
+    }
     await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
   }
 
