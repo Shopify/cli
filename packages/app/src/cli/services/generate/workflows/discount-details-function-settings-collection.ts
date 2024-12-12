@@ -2,8 +2,7 @@ import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {Workflow} from './registry.js'
 import {generateExtensionTemplate} from '../extension.js'
 import {generateExtensionPrompts} from '../../../prompts/generate/extension.js'
-import {buildGenerateOptions, renderSuccessMessage, buildPromptOptions} from '../../generate.js'
-import {GenerateExtensionPromptOutput} from '../../../prompts/generate/extension.js'
+import {buildGenerateOptions, buildPromptOptions} from '../../generate.js'
 
 export const discountDetailsFunctionSettingsCollection: Workflow = {
   afterGenerate: async (options) => {
@@ -34,7 +33,10 @@ export const discountDetailsFunctionSettingsCollection: Workflow = {
         developerPlatformClient,
       )
       const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
-      renderSuccessMessage(generatedExtension, app.packageManager)
+    }
+
+    return {
+      success: true,
     }
   },
 }
