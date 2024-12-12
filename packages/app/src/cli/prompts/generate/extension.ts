@@ -79,7 +79,6 @@ const generateExtensionPrompts = async (
   let extensionTemplates = options.extensionTemplates
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
-  console.log('EXTENSION TEMPLATES', extensionTemplates)
   if (!templateType) {
     if (extensionFlavor) {
       extensionTemplates = extensionTemplates.filter((template) =>

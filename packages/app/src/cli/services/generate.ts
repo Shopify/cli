@@ -1,10 +1,10 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
+import {workflowRegistry, WorkflowResult} from './generate/workflows/registry.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
-  promptAddExtensionConfirmation,
 } from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import {
@@ -24,7 +24,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
-interface GenerateOptions {
+export interface GenerateOptions {
   app: AppLinkedInterface
   specifications: RemoteAwareExtensionSpecification[]
   remoteApp: OrganizationApp
@@ -40,62 +40,35 @@ interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
-  // console.log('GENERATE', options)
-
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
-  // Add related extension children for product discounts
-  if (promptAnswers.extensionTemplate.identifier === 'product_discounts') {
-    const settingsTemplate = extensionTemplates.find((template) => template.identifier === 'discount_function_settings')
-    if (settingsTemplate) {
-      const mockSettingsPromptAnswers: GenerateExtensionPromptOutput = {
-        extensionTemplate: settingsTemplate,
-        extensionContent: {
-          name: `${promptAnswers.extensionContent.name}-settings`,
-          flavor: 'react',
-          relatedExtensions: [],
-        },
-      }
-
-      // Generate the settings extension
-      const settingsGenerateOptions = buildGenerateOptions(
-        mockSettingsPromptAnswers,
-        app,
-        options,
-        developerPlatformClient,
-      )
-      await generateExtensionTemplate(settingsGenerateOptions)
-    }
-  }
-
-  console.log('PROMPT ANSWERS', promptAnswers)
   // Call module related to that child extension
   await saveAnalyticsMetadata(promptAnswers, template)
-  // Here we could check if the user wants to add a related extension
-  const addPromptConfirmation = await promptAddExtensionConfirmation()
+
   // We can add an extra generated extension here.
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  // 1. Generate ui extension
-  // 2. We check the identifier
-  // 3. If the identifier has related extensions then the team who owns can add logic to add related extensions
-  // 4. This allows new prompts
-  // 4.1. Generate function settings
-  // 4.2. Function settings is meant to be used with a discount function, would you like us to generate one for you?
-  // 4.3. What is the name of your function?
-  // Generates both extensions
-  if (addPromptConfirmation) {
-    // Generate related extensions
-    const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
-    const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
+  const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
+  if (!workflow) {
+    renderSuccessMessage(generatedExtension, app.packageManager)
   }
 
-  renderSuccessMessage(generatedExtension, app.packageManager)
+  const workflowResult = await workflow?.afterGenerate({
+    generateOptions: options,
+    extensionTemplateOptions: generateExtensionOptions,
+    generatedExtension,
+  })
+
+  if (!workflowResult?.success) {
+    //TODO: Cleanup extension?
+  }
+
+  renderSuccessMessage(generatedExtension, app.packageManager, workflowResult)
 }
 
 async function buildPromptOptions(
@@ -104,7 +77,6 @@ async function buildPromptOptions(
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  // console.log('BUILDING PROMPT OPTIONS', arguments)
   const extensionTemplate = await handleTypeParameter(options.template, app, extensionTemplates, specifications)
   validateExtensionFlavor(extensionTemplate, options.flavor)
 
@@ -136,7 +108,6 @@ function checkLimits(
 }
 
 function limitReached(app: AppInterface, specifications: ExtensionSpecification[], template: ExtensionTemplate) {
-  // console.log('CHECKING LIMITS', specifications)
   const type = template.type
   const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
@@ -145,7 +116,6 @@ function limitReached(app: AppInterface, specifications: ExtensionSpecification[
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {
   const {extensionContent} = promptAnswers
-  console.log('SAVING METADATA', promptAnswers)
   return metadata.addPublicMetadata(() => ({
     cmd_scaffold_template_flavor: extensionContent.flavor,
     cmd_scaffold_type: promptAnswers.extensionTemplate.identifier,
@@ -168,11 +138,12 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager']) {
+function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager'], workflowResult?: WorkflowResult) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,
     packageManager,
+    workflowResult,
   )
   renderSuccess(formattedSuccessfulMessage)
 }
@@ -194,11 +165,13 @@ function formatSuccessfulRunMessage(
   extensionTemplate: ExtensionTemplate,
   extensionDirectory: string,
   depndencyManager: PackageManager,
+  workflowResult?: WorkflowResult,
 ): RenderAlertOptions {
+  const workflowMessage = workflowResult?.message
   const options: RenderAlertOptions = {
-    headline: ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
-    nextSteps: [],
-    reference: [],
+    headline: workflowMessage?.headline || ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
+    nextSteps: workflowMessage?.nextSteps || [],
+    reference: workflowMessage?.reference || [],
   }
 
   if (extensionTemplate.type !== 'function') {
