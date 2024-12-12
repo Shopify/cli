@@ -229,7 +229,6 @@ async function uiExtensionInit({
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
-  console.log('extensionName', name)
   const tasks = [
     {
       title: `Generating extension`,

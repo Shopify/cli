@@ -50,7 +50,8 @@ async function generate(options: GenerateOptions) {
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
-  renderSuccessMessage(generatedExtension, app.packageManager)
+
+
   const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
   if (!workflow) {
     renderSuccessMessage(generatedExtension, app.packageManager)
