@@ -17,7 +17,7 @@ export class AppInitDemoStrategy implements DemoStrategy {
           })
         },
         validate: (value: string) => {
-          if (value !== 'none') return "That's not a the `none` template flavour!" as string
+          if (value !== 'none') return "That's not the `none` template flavour!" as string
         },
       },
       // orgSwitcher: ...

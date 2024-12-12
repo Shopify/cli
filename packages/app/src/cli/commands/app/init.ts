@@ -7,6 +7,8 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
+import {AppInitDemoStrategy} from '../../demo/app-init-demo-strategy.js'
+import {DemoStrategy} from '../../demo/demo-strategy.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -74,6 +76,8 @@ export default class Init extends AppCommand {
       env: 'SHOPIFY_FLAG_DEMO_IS_APP_NEW',
     }),
   }
+
+  demoStrategy: DemoStrategy = new AppInitDemoStrategy()
 
   async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Init)
