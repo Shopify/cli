@@ -5486,9 +5486,22 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Creates a new \"theme template\" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including layout and content sections.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default sections based on the type.",
-      "descriptionWithMarkdown": "Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including layout and content sections.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default sections based on the type.",
+      "description": "Creates a new \"theme template\" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default settings based on the type.",
+      "descriptionWithMarkdown": "Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default settings based on the type.",
       "flags": {
+        "extension": {
+          "char": "x",
+          "description": "File extension (liquid or json)",
+          "env": "SHOPIFY_FLAG_TEMPLATE_FILE_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "extension",
+          "options": [
+            "liquid",
+            "json"
+          ],
+          "type": "option"
+        },
         "force": {
           "allowNo": false,
           "char": "f",
@@ -5524,6 +5537,30 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "resource": {
+          "char": "r",
+          "description": "Resource type for the template",
+          "env": "SHOPIFY_FLAG_TEMPLATE_RESOURCE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "resource",
+          "options": [
+            "404",
+            "article",
+            "blog",
+            "cart",
+            "collection",
+            "customers",
+            "gift_card",
+            "list-collections",
+            "page",
+            "password",
+            "product",
+            "robots",
+            "search"
+          ],
+          "type": "option"
+        },
         "type": {
           "char": "t",
           "description": "Type of template to generate",
@@ -5532,12 +5569,7 @@
           "multiple": false,
           "name": "type",
           "options": [
-            "product",
-            "collection",
-            "page",
-            "blog",
-            "article",
-            "custom"
+            "basic"
           ],
           "type": "option"
         },
