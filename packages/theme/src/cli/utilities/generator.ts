@@ -1,6 +1,6 @@
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
-export const BLOCK_TYPES = ['text', 'image', 'video', 'product', 'collection']
+export const BLOCK_TYPES = ['basic']
 export const SECTION_TYPES = ['featured-collection', 'image-with-text', 'rich-text', 'custom']
 export const TEMPLATE_TYPES = ['product', 'collection', 'page', 'blog', 'article', 'custom']
 
