@@ -930,7 +930,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           specificationIdentifier: AppAccessSpecIdentifier,
           config: {
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
-            ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+            ...(scopesArray && {required_scopes: scopesArray.map((scope) => scope.trim())}),
           },
         },
       ],
