@@ -73,7 +73,7 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailabl
   return templateSpecChoices.sort(compareChoices)
 }
 
-const generateExtensionPrompts = async (
+export const generateExtensionPrompts = async (
   options: GenerateExtensionPromptOptions,
 ): Promise<GenerateExtensionPromptOutput> => {
   let extensionTemplates = options.extensionTemplates
@@ -90,11 +90,15 @@ const generateExtensionPrompts = async (
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
-    // eslint-disable-next-line require-atomic-updates
-    templateType = await renderAutocompletePrompt({
-      message: 'Type of extension?',
-      choices: buildChoices(extensionTemplates, options.unavailableExtensions),
-    })
+    if (extensionTemplates.length === 1) {
+      templateType = extensionTemplates[0]?.identifier
+    } else {
+      // eslint-disable-next-line require-atomic-updates
+      templateType = await renderAutocompletePrompt({
+        message: 'Type of extension?',
+        choices: buildChoices(extensionTemplates, options.unavailableExtensions),
+      })
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -105,10 +109,7 @@ const generateExtensionPrompts = async (
   const extensionContent = {
     name,
     flavor,
-    // extensionChildren [identifiers]
-    extensionChildren: extensionTemplate.relatedExtensions?.map((elem) => elem.name) ?? [],
   }
-  // TODO: here perhaps return a flag, that lets us know that there are possible next steps
 
   return {extensionTemplate, extensionContent}
 }
