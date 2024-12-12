@@ -1,4 +1,4 @@
-import {generateSection} from './sections.js'
+import {generateSection, JSON_SECTION_HEADER} from './sections.js'
 import {describe, expect, test, vi} from 'vitest'
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -46,16 +46,17 @@ describe('generateSection', () => {
 
     await generateSection(mockJsonOptions)
 
-    const expectedContent = JSON.stringify(
-      {
-        type: 'header',
-        name: 'test-section',
-        settings: [],
-        order: [],
-      },
-      null,
-      2,
-    )
+    const expectedContent = `${JSON_SECTION_HEADER}
+${JSON.stringify(
+  {
+    type: 'header',
+    name: 'test-section',
+    settings: [],
+    order: [],
+  },
+  null,
+  2,
+)}`
 
     expect(writeFile).toHaveBeenCalledWith('theme/sections/test-section.json', expectedContent)
     expect(outputInfo).toHaveBeenCalledWith('Created section: theme/sections/test-section.json')
