@@ -1905,13 +1905,12 @@ Creates and adds a new block file to your local theme directory
 
 ```
 USAGE
-  $ shopify theme generate block [-n <value>] [--no-color] [--path <value>] [-t text|image|video|product|collection]
-    [--verbose]
+  $ shopify theme generate block [-n <value>] [--no-color] [--path <value>] [-t basic] [--verbose]
 
 FLAGS
   -n, --name=<value>   Name of the block
   -t, --type=<option>  Type of block to generate
-                       <options: text|image|video|product|collection>
+                       <options: basic>
       --no-color       Disable color output.
       --path=<value>   The path to your theme directory.
       --verbose        Increase the verbosity of the output.
@@ -1933,16 +1932,17 @@ Creates and adds a new section file to your local theme directory
 
 ```
 USAGE
-  $ shopify theme generate section [-n <value>] [--no-color] [--path <value>] [-t
-    featured-collection|image-with-text|rich-text|custom] [--verbose]
+  $ shopify theme generate section [-x liquid|json] [-n <value>] [--no-color] [--path <value>] [-t basic] [--verbose]
 
 FLAGS
-  -n, --name=<value>   Name of the section
-  -t, --type=<option>  Type of section to generate
-                       <options: featured-collection|image-with-text|rich-text|custom>
-      --no-color       Disable color output.
-      --path=<value>   The path to your theme directory.
-      --verbose        Increase the verbosity of the output.
+  -n, --name=<value>        Name of the section
+  -t, --type=<option>       Type of section to generate
+                            <options: basic>
+  -x, --extension=<option>  File extension (liquid or json)
+                            <options: liquid|json>
+      --no-color            Disable color output.
+      --path=<value>        The path to your theme directory.
+      --verbose             Increase the verbosity of the output.
 
 DESCRIPTION
   Creates and adds a new section file to your local theme directory

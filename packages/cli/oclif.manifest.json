@@ -5369,11 +5369,7 @@
           "multiple": false,
           "name": "type",
           "options": [
-            "text",
-            "image",
-            "video",
-            "product",
-            "collection"
+            "basic"
           ],
           "type": "option"
         },
@@ -5405,6 +5401,19 @@
       "description": "Creates a new \"theme section\" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
       "descriptionWithMarkdown": "Creates a new [theme section](https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
       "flags": {
+        "extension": {
+          "char": "x",
+          "description": "File extension (liquid or json)",
+          "env": "SHOPIFY_FLAG_SECTION_FILE_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "extension",
+          "options": [
+            "liquid",
+            "json"
+          ],
+          "type": "option"
+        },
         "force": {
           "allowNo": false,
           "char": "f",
@@ -5448,10 +5457,7 @@
           "multiple": false,
           "name": "type",
           "options": [
-            "featured-collection",
-            "image-with-text",
-            "rich-text",
-            "custom"
+            "basic"
           ],
           "type": "option"
         },
