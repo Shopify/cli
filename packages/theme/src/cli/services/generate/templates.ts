@@ -1,44 +1,50 @@
-import {FileType} from '../../utilities/generator.js'
-import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {FileType, TemplateResourceType, TemplateType} from '../../utilities/generator.js'
+import {writeFile, readFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface TemplateGeneratorOptions {
   name: string | undefined
+  type: TemplateType
   path: string
   fileType: FileType
-  resource: string
+  resource: TemplateResourceType
 }
 
 export async function generateTemplate(options: TemplateGeneratorOptions) {
-  let templatePath =
-    options.name === undefined
-      ? joinPath(options.path, 'templates', `${options.resource}.${options.fileType}`)
-      : joinPath(options.path, 'templates', `${options.resource}.${options.name}.${options.fileType}`)
+  const {content, filePath} = await getFileContent(options)
 
-  // eslint-disable-next-line no-await-in-loop
-  while (await fileExists(templatePath)) {
-    const filename = templatePath.split('/').pop()
-    // eslint-disable-next-line no-await-in-loop
-    const newName = await renderTextPrompt({
-      message: `Template ${filename} already exists. Please provide a new name:`,
-    })
-    templatePath = joinPath(options.path, 'templates', `${options.resource}.${newName}.${options.fileType}`)
-  }
-
-  // Write the file
-  const content =
-    options.fileType === 'liquid' ? generateLiquidTemplateContent(options) : generateJsonTemplateContent(options)
-
-  await writeFile(templatePath, content)
-  outputInfo(`Created template: ${templatePath}`)
+  await writeFile(filePath, content)
+  outputInfo(`Created template: ${filePath}`)
 }
 
-function generateLiquidTemplateContent(options: TemplateGeneratorOptions): string {
+/**
+ * Returns the content to write to the file and the path to write to.
+ * If the base template exists, it copies the base template and the path will point to resource.name.liquid|json
+ * If the base template does not exist, it generates the content and the path will point to resource.liquid|json
+ */
+async function getFileContent(options: TemplateGeneratorOptions): Promise<{content: string; filePath: string}> {
+  const baseTemplatePath = joinPath(options.path, 'templates', `${options.resource}.${options.fileType}`)
+  const baseTemplateExists = await fileExists(baseTemplatePath)
+
+  if (baseTemplateExists) {
+    const pathToWrite = joinPath(options.path, 'templates', `${options.resource}.${options.name}.${options.fileType}`)
+    return {content: await readFile(baseTemplatePath), filePath: pathToWrite}
+  } else {
+    return {content: generateFileContent(options), filePath: baseTemplatePath}
+  }
+}
+
+function generateFileContent(options: TemplateGeneratorOptions): string {
+  return options.fileType === 'liquid'
+    ? generateLiquidTemplateContent(options.resource)
+    : generateJsonTemplateContent(options.resource)
+}
+
+function generateLiquidTemplateContent(resource: TemplateResourceType): string {
   const baseSchema = {
-    name: options.resource,
-    type: options.resource,
+    name: resource,
+    type: resource,
     settings: [],
   }
 
@@ -47,11 +53,11 @@ ${JSON.stringify(baseSchema, null, 2)}
 {% endschema %}`
 }
 
-function generateJsonTemplateContent(options: TemplateGeneratorOptions): string {
+function generateJsonTemplateContent(resource: TemplateResourceType): string {
   const schema = {
     sections: {
       main: {
-        type: `main-${options.resource}`,
+        type: `main-${resource}`,
         settings: {},
       },
     },
