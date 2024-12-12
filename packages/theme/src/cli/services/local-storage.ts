@@ -1,6 +1,7 @@
 import {BugError} from '@shopify/cli-kit/node/error'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {isBrowswer} from '@shopify/cli-kit/node/system'
 
 type DevelopmentThemeId = string
 
@@ -66,14 +67,13 @@ export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalSto
 export function getDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
-  if (typeof window === 'undefined') {
-    outputDebug(outputContent`Getting development theme...`)
-    return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
-  } else {
+  if (isBrowswer()) {
     // eslint-disable-next-line no-console
     console.log('LocalStorage not available, skipping development theme...')
     return undefined
   }
+  outputDebug(outputContent`Getting development theme...`)
+  return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
 }
 
 export function setDevelopmentTheme(

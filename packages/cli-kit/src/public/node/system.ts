@@ -159,3 +159,12 @@ export function terminalSupportsPrompting(): boolean {
   }
   return Boolean(process.stdin.isTTY && process.stdout.isTTY)
 }
+
+/**
+ * Check if the current environment is a browser.
+ *
+ * @returns True if the current environment is a browser.
+ */
+export function isBrowswer(): boolean {
+  return typeof global !== 'undefined'
+}
