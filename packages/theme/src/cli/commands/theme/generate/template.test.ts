@@ -4,10 +4,12 @@ import {hasRequiredThemeDirectories} from '../../../utilities/theme-fs.js'
 import {renderSelectPrompt, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {cwd} from '@shopify/cli-kit/node/path'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../../utilities/theme-fs.js')
 vi.mock('../../../services/generate/templates.js')
+vi.mock('@shopify/cli-kit/node/fs')
 
 const path = cwd()
 const defaultOptions = {
@@ -21,52 +23,116 @@ const defaultOptions = {
 describe('GenerateTemplate', () => {
   beforeEach(() => {
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(renderSelectPrompt).mockReset()
+    vi.mocked(renderTextPrompt).mockReset()
   })
 
-  test('generates a template with provided flags', async () => {
-    // Given
-    const options = toFlags({...defaultOptions})
-    // When
-    await GenerateTemplate.run(options)
+  describe('template name resolution', () => {
+    test('sets name to undefined when base template does not exist', async () => {
+      // Given
+      vi.mocked(fileExists).mockResolvedValue(false)
+      const options = toFlags(defaultOptions)
 
-    // Then
-    expect(generateTemplate).toHaveBeenCalledWith({
-      name: defaultOptions.name,
-      type: defaultOptions.type,
-      path: defaultOptions.path,
-      fileType: defaultOptions.extension,
-      resource: defaultOptions.resource,
+      // When
+      await GenerateTemplate.run(options)
+
+      // Then
+      expect(renderTextPrompt).not.toHaveBeenCalled()
+      expect(generateTemplate).toHaveBeenCalledWith({
+        name: undefined,
+        type: 'basic',
+        path,
+        fileType: 'liquid',
+        resource: 'product',
+      })
+    })
+
+    test('uses provided name when base template exists', async () => {
+      // Given
+      const options = toFlags({...defaultOptions, name: 'custom'})
+
+      // When
+      await GenerateTemplate.run(options)
+
+      // Then
+      expect(renderTextPrompt).not.toHaveBeenCalled()
+      expect(generateTemplate).toHaveBeenCalledWith({
+        name: 'custom',
+        type: 'basic',
+        path,
+        fileType: 'liquid',
+        resource: 'product',
+      })
     })
   })
 
-  test('prompts for missing flags', async () => {
-    // Given
-    vi.mocked(renderTextPrompt).mockResolvedValueOnce('provided name')
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('provided type')
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('provided resource')
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('provided extension')
-    const options = toFlags({path})
+  describe('prompting for missing values', () => {
+    test('prompts for all values when none provided', async () => {
+      // Given
+      vi.mocked(renderSelectPrompt)
+        .mockResolvedValueOnce('product')
+        .mockResolvedValueOnce('liquid')
+        .mockResolvedValueOnce('basic')
+      const options = toFlags({path})
 
-    // When
-    await GenerateTemplate.run(options)
+      // When
+      await GenerateTemplate.run(options)
 
-    // Then
-    expect(renderTextPrompt).toHaveBeenCalledWith({
-      message: 'Name of the template',
+      // Then
+      expect(renderSelectPrompt).toHaveBeenCalledWith({
+        message: 'Resource type for the template',
+        choices: expect.any(Array),
+      })
+      expect(renderSelectPrompt).toHaveBeenCalledWith({
+        message: 'File extension',
+        choices: expect.any(Array),
+      })
+      expect(renderSelectPrompt).toHaveBeenCalledWith({
+        message: 'Type of template',
+        choices: expect.any(Array),
+      })
+      expect(generateTemplate).toHaveBeenCalledWith({
+        name: undefined,
+        type: 'basic',
+        path,
+        fileType: 'liquid',
+        resource: 'product',
+      })
     })
-    expect(generateTemplate).toHaveBeenCalledWith({
-      name: 'provided name',
-      type: 'provided type',
-      path,
-      fileType: 'provided extension',
-      resource: 'provided resource',
+
+    test('only prompts for missing values', async () => {
+      // Given
+      vi.mocked(renderSelectPrompt).mockResolvedValueOnce('basic')
+      const options = toFlags({
+        path,
+        resource: 'product',
+        extension: 'liquid',
+      })
+
+      // When
+      await GenerateTemplate.run(options)
+
+      // Then
+      expect(renderSelectPrompt).toHaveBeenCalledTimes(1)
+      expect(renderSelectPrompt).toHaveBeenCalledWith({
+        message: 'Type of template',
+        choices: expect.any(Array),
+      })
+      expect(generateTemplate).toHaveBeenCalledWith({
+        name: undefined,
+        type: 'basic',
+        path,
+        fileType: 'liquid',
+        resource: 'product',
+      })
     })
   })
 
   test('warns and exits if not in theme directory', async () => {
     // Given
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(false)
-    const options = toFlags({path})
+    const options = toFlags(defaultOptions)
 
     // When
     await GenerateTemplate.run(options)
@@ -82,7 +148,6 @@ describe('GenerateTemplate', () => {
 
   test('proceeds without validation if force flag is used', async () => {
     // Given
-    vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(false)
     const options = toFlags({
       ...defaultOptions,
       force: true,
