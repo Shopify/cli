@@ -4,6 +4,7 @@ import {TransformationConfig, createConfigExtensionSpecification} from '../speci
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const AppAccessSchema = zod.object({
   access: zod
@@ -50,6 +51,22 @@ const appAccessSpec = createConfigExtensionSpecification({
   getDevSessionActionUpdateMessage: async (_, appConfig, storeFqdn) => {
     const scopesURL = await buildAppURLForWeb(storeFqdn, appConfig.client_id)
     return outputContent`Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`.value
+  },
+  preDeployValidation: async (extension: any) => {
+    const scopes = extension.configuration.access_scopes.scopes
+    if (scopes !== undefined) {
+      const requiredScopes: string[] = scopes.split(',')
+      const formattedRequiredScopes = requiredScopes.map((s) => `"${s}"`).join(', ')
+      throw new AbortError(
+        `The 'scopes' configuration is deprecated and no longer supported. It has been replaced by 'required_scopes'`,
+        `In your 'shopify.app.toml' file, replace 'scopes' with 'required_scopes'.
+
+  - scopes: "${scopes}"
+  + required_scopes: [${formattedRequiredScopes}]
+        `,
+      )
+    }
+    return Promise.resolve()
   },
 })
 

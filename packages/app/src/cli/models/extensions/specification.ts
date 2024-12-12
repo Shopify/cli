@@ -233,6 +233,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     appConfig: CurrentAppConfiguration,
     storeFqdn: string,
   ) => Promise<string>
+  preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -246,6 +247,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
+    preDeployValidation: spec.preDeployValidation,
   })
 }
 
