@@ -112,6 +112,19 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
   }
 
+  // Auto migrate scopes to required_scopes
+  // TODO I have no idea if there's a better place to do this
+  if (app.configuration.access_scopes?.scopes) {
+    const required_scopes = app.configuration.access_scopes?.scopes.split(',')
+    const patch = {
+      access_scopes: {
+        scopes: undefined,
+        required_scopes: required_scopes,
+      },
+    }
+    await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
+  }
+
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
     await installAppDependencies(app)
   }
