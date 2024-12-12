@@ -1,11 +1,10 @@
-import {FileType, TemplateResourceType, TemplateType} from '../../utilities/generator.js'
+import {FileType, TemplateResourceType} from '../../utilities/generator.js'
 import {writeFile, readFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export interface TemplateGeneratorOptions {
   name: string | undefined
-  type: TemplateType
   path: string
   fileType: FileType
   resource: TemplateResourceType
