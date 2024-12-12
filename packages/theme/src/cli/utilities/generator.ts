@@ -1,3 +1,5 @@
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export const BLOCK_TYPES = ['basic']
@@ -35,4 +37,16 @@ export async function promptForType<T extends string>(message: string, types: Re
     choices,
   })
   return result
+}
+export async function checkBaseTemplateExists({
+  resource,
+  fileType,
+  path,
+}: {
+  resource: string
+  fileType: string
+  path: string
+}): Promise<boolean> {
+  const baseTemplatePath = joinPath(path, 'templates', `${resource}.${fileType}`)
+  return fileExists(baseTemplatePath)
 }

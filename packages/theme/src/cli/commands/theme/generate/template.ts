@@ -1,4 +1,10 @@
-import {TEMPLATE_TYPES, TEMPLATE_RESOURCE_TYPES, FILE_TYPES, promptForType} from '../../../utilities/generator.js'
+import {
+  TEMPLATE_TYPES,
+  TEMPLATE_RESOURCE_TYPES,
+  FILE_TYPES,
+  promptForType,
+  checkBaseTemplateExists,
+} from '../../../utilities/generator.js'
 import {themeFlags} from '../../../flags.js'
 import ThemeCommand from '../../../utilities/theme-command.js'
 import {hasRequiredThemeDirectories} from '../../../utilities/theme-fs.js'
@@ -6,7 +12,6 @@ import {generateTemplate} from '../../../services/generate/templates.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
-import {cwd} from '@shopify/cli-kit/node/path'
 
 export default class GenerateTemplate extends ThemeCommand {
   static summary = 'Creates and adds a new template file to your local theme directory'
@@ -64,21 +69,33 @@ export default class GenerateTemplate extends ThemeCommand {
       return
     }
 
-    const name =
-      flags.name ??
-      (await renderTextPrompt({
-        message: 'Name of the template',
-      }))
-    const type = flags.type ?? (await promptForType('Type of template', TEMPLATE_TYPES))
     const resource = flags.resource ?? (await promptForType('Resource type for the template', TEMPLATE_RESOURCE_TYPES))
     const fileType = flags.extension ?? (await promptForType('File extension', FILE_TYPES))
+    const type = flags.type ?? (await promptForType('Type of template', TEMPLATE_TYPES))
+    const path = flags.path
+
+    const name = await resolveTemplateName(flags.name, resource, fileType, path)
 
     await generateTemplate({
       name,
       type,
-      path: flags.path ?? cwd(),
+      path,
       fileType,
       resource,
     })
   }
+}
+
+async function resolveTemplateName(
+  name: string | undefined,
+  resource: string,
+  fileType: string,
+  path: string,
+): Promise<string | undefined> {
+  const baseTemplateExists = await checkBaseTemplateExists({resource, fileType, path})
+  if (!baseTemplateExists) {
+    return undefined
+  }
+
+  return name ?? renderTextPrompt({message: 'Name of the template'})
 }
