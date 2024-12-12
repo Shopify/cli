@@ -10,6 +10,16 @@ export interface SectionGeneratorOptions {
   fileType: FileType
 }
 
+export const JSON_SECTION_HEADER = `/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */`
+
 export async function generateSection(options: SectionGeneratorOptions) {
   const sectionPath = joinPath(options.path, 'sections', `${options.name}.${options.fileType}`)
 
@@ -45,5 +55,6 @@ function generateJsonSectionContent(options: SectionGeneratorOptions): string {
     order: [],
   }
 
-  return JSON.stringify(schema, null, 2)
+  return `${JSON_SECTION_HEADER}
+${JSON.stringify(schema, null, 2)}`
 }
