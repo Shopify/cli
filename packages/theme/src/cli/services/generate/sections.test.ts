@@ -11,14 +11,12 @@ vi.mock('@shopify/cli-kit/node/output')
 describe('generateSection', () => {
   const mockLiquidOptions = {
     name: 'test-section',
-    type: 'featured-collection',
     path: 'theme',
     fileType: 'liquid',
   } as const
 
   const mockJsonOptions = {
     name: 'test-section',
-    type: 'featured-collection',
     path: 'theme',
     fileType: 'json',
   } as const

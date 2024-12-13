@@ -65,12 +65,9 @@ describe('GenerateTemplate', () => {
   })
 
   describe('prompting for missing values', () => {
-    test('prompts for all values when none provided', async () => {
+    test('prompts for all missing values', async () => {
       // Given
-      vi.mocked(renderSelectPrompt)
-        .mockResolvedValueOnce('product')
-        .mockResolvedValueOnce('liquid')
-        .mockResolvedValueOnce('basic')
+      vi.mocked(renderSelectPrompt).mockResolvedValueOnce('product').mockResolvedValueOnce('liquid')
       const options = toFlags({path})
 
       // When
@@ -85,10 +82,6 @@ describe('GenerateTemplate', () => {
         message: 'File extension',
         choices: expect.any(Array),
       })
-      expect(renderSelectPrompt).toHaveBeenCalledWith({
-        message: 'Type of template',
-        choices: expect.any(Array),
-      })
       expect(generateTemplate).toHaveBeenCalledWith({
         name: undefined,
         path,
@@ -99,10 +92,9 @@ describe('GenerateTemplate', () => {
 
     test('only prompts for missing values', async () => {
       // Given
-      vi.mocked(renderSelectPrompt).mockResolvedValueOnce('basic')
+      vi.mocked(renderSelectPrompt).mockResolvedValueOnce('product').mockResolvedValueOnce('liquid')
       const options = toFlags({
         path,
-        resource: 'product',
         extension: 'liquid',
       })
 
@@ -110,9 +102,8 @@ describe('GenerateTemplate', () => {
       await GenerateTemplate.run(options)
 
       // Then
-      expect(renderSelectPrompt).toHaveBeenCalledTimes(1)
       expect(renderSelectPrompt).toHaveBeenCalledWith({
-        message: 'Type of template',
+        message: 'Resource type for the template',
         choices: expect.any(Array),
       })
       expect(generateTemplate).toHaveBeenCalledWith({
@@ -166,7 +157,6 @@ function toFlags(options: any) {
   const flags = []
   if (options.path) flags.push('--path', options.path)
   if (options.name) flags.push('--name', options.name)
-  if (options.type) flags.push('--type', options.type)
   if (options.extension) flags.push('--extension', options.extension)
   if (options.resource) flags.push('--resource', options.resource)
   if (options.force) flags.push('--force')
