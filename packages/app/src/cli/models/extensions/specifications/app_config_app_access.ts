@@ -14,6 +14,12 @@ const AppAccessSchema = zod.object({
           embedded_app_direct_api_access: zod.boolean().optional(),
         })
         .optional(),
+      google_identity_provider: zod
+        .object({
+          enabled: zod.boolean(),
+          service_account_email: zod.string(),
+        })
+        .optional(),
     })
     .optional(),
   access_scopes: zod
@@ -35,6 +41,7 @@ const AppAccessSchema = zod.object({
 export const AppAccessSpecIdentifier = 'app_access'
 
 const AppAccessTransformConfig: TransformationConfig = {
+  trusted_idp: 'access.trusted_idp',
   access: 'access',
   scopes: 'access_scopes.scopes',
   required_scopes: 'access_scopes.required_scopes',

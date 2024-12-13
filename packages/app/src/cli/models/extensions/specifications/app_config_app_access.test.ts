@@ -9,6 +9,10 @@ describe('app_config_app_access', () => {
       const object = {
         access: {
           admin: {direct_api_mode: 'online'},
+          google_identity_provider: {
+            enabled: true,
+            service_account_email: 'test@example.com',
+          },
         },
         access_scopes: {
           scopes: 'read_products,write_products',
@@ -29,6 +33,10 @@ describe('app_config_app_access', () => {
       expect(result).toMatchObject({
         access: {
           admin: {direct_api_mode: 'online'},
+          google_identity_provider: {
+            enabled: true,
+            service_account_email: 'test@example.com',
+          },
         },
         scopes: 'read_products,write_products',
         optional_scopes: ['read_customers'],
@@ -45,6 +53,10 @@ describe('app_config_app_access', () => {
       const object = {
         access: {
           admin: {direct_api_mode: 'offline'},
+          google_identity_provider: {
+            enabled: true,
+            service_account_email: 'test@example.com',
+          },
         },
         scopes: 'read_products,write_products',
         optional_scopes: ['read_customers'],
@@ -61,6 +73,10 @@ describe('app_config_app_access', () => {
       expect(result).toMatchObject({
         access: {
           admin: {direct_api_mode: 'offline'},
+          google_identity_provider: {
+            enabled: true,
+            service_account_email: 'test@example.com',
+          },
         },
         access_scopes: {
           scopes: 'read_products,write_products',
