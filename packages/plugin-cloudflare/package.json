@@ -47,7 +47,8 @@
   },
   "dependencies": {
     "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.72.0"
+    "@shopify/cli-kit": "3.72.0",
+    "typescript": "5.2.2"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^1.6.0"

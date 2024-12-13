@@ -6,6 +6,7 @@ import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
 import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
+import {AppDevelopmentSpecIdentifier} from './specifications/app_config_development.js'
 import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
 import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
@@ -35,6 +36,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export const CONFIG_EXTENSION_IDS = [
   AppAccessSpecIdentifier,
+  AppDevelopmentSpecIdentifier,
   AppHomeSpecIdentifier,
   AppProxySpecIdentifier,
   BrandingSpecIdentifier,

@@ -12,6 +12,7 @@ overrides:
   supports-hyperlinks: 3.1.0
   '@shopify/cli-hydrogen>@shopify/cli-kit': link:./packages/cli-kit
   '@shopify/cli-hydrogen>@shopify/plugin-cloudflare': link:./packages/plugin-cloudflare
+  typescript: 5.2.2
 
 importers:
 
@@ -252,6 +253,9 @@ importers:
       graphql-tag:
         specifier: ^2.12.6
         version: 2.12.6(graphql@16.8.1)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/cli:
     dependencies:
@@ -304,6 +308,9 @@ importers:
       espree:
         specifier: 9.6.1
         version: 9.6.1
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/cli-kit:
     dependencies:
@@ -552,6 +559,9 @@ importers:
       esbuild-plugin-copy:
         specifier: ^2.1.1
         version: 2.1.1(esbuild@0.19.8)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/eslint-plugin-cli:
     dependencies:
@@ -658,6 +668,9 @@ importers:
       tempy:
         specifier: ^1.0.1
         version: 1.0.1
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/plugin-cloudflare:
     dependencies:
@@ -667,6 +680,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.72.0
         version: link:../cli-kit
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
@@ -687,6 +703,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/theme:
     dependencies:
@@ -721,6 +740,9 @@ importers:
       node-stream-zip:
         specifier: ^1.15.0
         version: 1.15.0
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/ui-extensions-dev-console:
     dependencies:
@@ -8939,7 +8961,7 @@ packages:
     resolution: {integrity: sha512-kcZ6+W5QzcJ3P1Mt+83OUv/oHFqZHIx8DuxG6eZ5RGMERoLqp4BuGjhHLYGK+Kf5XVkQvqBSmAy/nGWN3qDgEA==}
     engines: {node: '>=14'}
     peerDependencies:
-      typescript: '>=4.9.5'
+      typescript: 5.2.2
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -12107,7 +12129,7 @@ packages:
     hasBin: true
     peerDependencies:
       '@types/node': '>=18'
-      typescript: '>=5.0.4'
+      typescript: 5.2.2
     dependencies:
       '@ericcornelissen/bash-parser': 0.5.2
       '@nodelib/fs.walk': 2.0.0
@@ -15156,7 +15178,7 @@ packages:
     resolution: {integrity: sha512-UQMIo7pb8WRomKR1/+MFVLTroIvDVtMX3K6OUir8ynLyzB8Jeriont2bTAtmNPa1ekAgN7YPDyf6V+ygrdU+eQ==}
     engines: {node: '>=16'}
     peerDependencies:
-      typescript: '>=4.2.0'
+      typescript: 5.2.2
     dependencies:
       typescript: 5.2.2
 
@@ -15194,7 +15216,7 @@ packages:
       '@swc/core': '>=1.2.50'
       '@swc/wasm': '>=1.2.50'
       '@types/node': '*'
-      typescript: '>=2.7'
+      typescript: 5.2.2
     peerDependenciesMeta:
       '@swc/core':
         optional: true
@@ -15225,7 +15247,7 @@ packages:
       '@swc/core': '>=1.2.50'
       '@swc/wasm': '>=1.2.50'
       '@types/node': '*'
-      typescript: '>=2.7'
+      typescript: 5.2.2
     peerDependenciesMeta:
       '@swc/core':
         optional: true
@@ -15280,7 +15302,7 @@ packages:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
     peerDependencies:
-      typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
+      typescript: 5.2.2
     dependencies:
       tslib: 1.14.1
       typescript: 5.2.2
@@ -15427,7 +15449,7 @@ packages:
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
-      typescript: 4.6.x || 4.7.x || 4.8.x || 4.9.x || 5.0.x || 5.1.x || 5.2.x || 5.3.x || 5.4.x
+      typescript: 5.2.2
     dependencies:
       lunr: 2.3.9
       marked: 4.3.0

@@ -27,4 +27,9 @@ export interface AppConfigurationUsedByCli {
   auth?: {
     redirect_urls: string[]
   }
+  development?: {
+    tunnel_url: string
+    websocket_url: string
+    dev_console_url: string
+  }
 }

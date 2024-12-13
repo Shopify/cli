@@ -8,6 +8,7 @@ import appWebhookSubscriptionSpec, {
 } from './specifications/app_config_webhook_subscription.js'
 import appBrandingSpec, {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
+import appDevelopmentSpec, {AppDevelopmentSpecIdentifier} from './specifications/app_config_development.js'
 import appPrivacyComplienceSpec, {
   PrivacyComplianceWebhooksSpecIdentifier,
 } from './specifications/app_config_privacy_compliance_webhooks.js'
@@ -30,6 +31,7 @@ import customDataSpec, {CustomDataSpecIdentifier} from './specifications/custom_
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
   AppAccessSpecIdentifier,
+  AppDevelopmentSpecIdentifier,
   WebhooksSpecIdentifier,
   WebhookSubscriptionSpecIdentifier,
   PrivacyComplianceWebhooksSpecIdentifier,
@@ -52,6 +54,7 @@ export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpec
 function loadSpecifications() {
   const configModuleSpecs = [
     appAccessSpec,
+    appDevelopmentSpec,
     appHomeSpec,
     appProxySpec,
     appBrandingSpec,
