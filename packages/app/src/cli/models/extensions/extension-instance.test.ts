@@ -32,7 +32,9 @@ function functionConfiguration(): FunctionConfigType {
     api_version: '2023-07',
     configuration_ui: true,
     metafields: [],
-    build: {},
+    build: {
+      wasm_opt: true,
+    },
   }
 }
 
@@ -41,6 +43,7 @@ describe('watchPaths', async () => {
     const config = functionConfiguration()
     config.build = {
       watch: 'src/single-path.foo',
+      wasm_opt: true,
     }
     const extensionInstance = await testFunctionExtension({
       config,
@@ -54,7 +57,9 @@ describe('watchPaths', async () => {
 
   test('returns default paths for javascript', async () => {
     const config = functionConfiguration()
-    config.build = {}
+    config.build = {
+      wasm_opt: true,
+    }
     const extensionInstance = await testFunctionExtension({
       config,
       entryPath: 'src/index.js',
@@ -86,6 +91,7 @@ describe('watchPaths', async () => {
     const config = functionConfiguration()
     config.build = {
       watch: ['src/**/*.rs', 'src/**/*.foo'],
+      wasm_opt: true,
     }
     const extensionInstance = await testFunctionExtension({
       config,
@@ -103,7 +109,9 @@ describe('watchPaths', async () => {
 
   test('returns null if not javascript and not configured', async () => {
     const config = functionConfiguration()
-    config.build = {}
+    config.build = {
+      wasm_opt: true,
+    }
     const extensionInstance = await testFunctionExtension({
       config,
     })

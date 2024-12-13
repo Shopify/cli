@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {downloadBinary, javyBinary, javyPluginBinary} from './binaries.js'
+import {downloadBinary, javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -7,7 +7,7 @@ import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -184,6 +184,31 @@ function getESBuildOptions(
     format: 'esm',
   }
   return esbuildOptions
+}
+
+export async function runWasmOpt(modulePath: string) {
+  const wasmOpt = wasmOptBinary()
+  await downloadBinary(wasmOpt)
+
+  const wasmOptDir = dirname(wasmOptBinary().path)
+
+  const command = `node`
+  const args = [
+    // invoke the js-wrapped wasm-opt binary
+    wasmOptBinary().name,
+    modulePath,
+    // pass these options to wasm-opt
+    '-Oz',
+    '--enable-bulk-memory',
+    '--strip-debug',
+    // overwrite our existing module with the optimized version
+    '-o',
+    modulePath,
+  ]
+
+  outputDebug(`Wasm binary: ${wasmOptBinary().name}`)
+  outputDebug('Optimizing this wasm binary using wasm-opt.')
+  await exec(command, args, {cwd: wasmOptDir})
 }
 
 export async function runJavy(
