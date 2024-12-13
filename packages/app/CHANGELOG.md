@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.72.1
+
+### Patch Changes
+
+- 35be492d91: Fix target subdomains when importing legacy links
+  - @shopify/cli-kit@3.72.1
+  - @shopify/theme@3.72.1
+  - @shopify/plugin-cloudflare@3.72.1
+
 ## 3.72.0
 
 ### Minor Changes
