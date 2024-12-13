@@ -1,7 +1,8 @@
 import {Workflow} from './registry.js'
+import {patchConfigurationFile} from './patch-configuration-file.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {patchConfigurationFile} from './patch-configuration-file.js'
+import {Flags} from '@oclif/core'
 
 export const editorExtensionCollection: Workflow = {
   afterGenerate: async (options) => {
@@ -16,13 +17,20 @@ export const editorExtensionCollection: Workflow = {
     await patchConfigurationFile({
       path: joinPath(options.generatedExtension.directory, 'shopify.extension.toml'),
       patch: {
-        extensions: [{
-          includes: extensions.split(',').map((handle) => handle.trim())
-        }],
+        extensions: [
+          {
+            includes: extensions.split(',').map((handle) => handle.trim()),
+          },
+        ],
       },
     })
     return {
       success: true,
     }
+  },
+  flags: {
+    'editor-collection-include': Flags.string({
+      description: 'The extension handles to include in the collection, comma separated.',
+    }),
   },
 }
