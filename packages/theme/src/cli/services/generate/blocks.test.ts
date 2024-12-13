@@ -11,7 +11,6 @@ vi.mock('@shopify/cli-kit/node/output')
 describe('generateBlock', () => {
   const mockOptions = {
     name: 'test-block',
-    type: 'basic',
     path: 'theme',
   } as const
 
