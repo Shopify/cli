@@ -5323,8 +5323,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Creates a new \"theme block\" (https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of block to generate using the `--type` flag. The block will be created with appropriate default settings based on the type.",
-      "descriptionWithMarkdown": "Creates a new [theme block](https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of block to generate using the `--type` flag. The block will be created with appropriate default settings based on the type.",
+      "description": "Creates a new \"theme block\" (https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.",
+      "descriptionWithMarkdown": "Creates a new [theme block](https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.",
       "flags": {
         "force": {
           "allowNo": false,
@@ -5361,18 +5361,6 @@
           "noCacheDefault": true,
           "type": "option"
         },
-        "type": {
-          "char": "t",
-          "description": "Type of block to generate",
-          "env": "SHOPIFY_FLAG_BLOCK_TYPE",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "type",
-          "options": [
-            "basic"
-          ],
-          "type": "option"
-        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -5398,8 +5386,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Creates a new \"theme section\" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
-      "descriptionWithMarkdown": "Creates a new [theme section](https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema, settings, and blocks.\n\n  You can specify the type of section to generate using the `--type` flag. The section will be created with appropriate default settings and blocks based on the type.",
+      "description": "Creates a new \"theme section\" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema and settings.",
+      "descriptionWithMarkdown": "Creates a new [theme section](https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema and settings.",
       "flags": {
         "extension": {
           "char": "x",
@@ -5449,18 +5437,6 @@
           "noCacheDefault": true,
           "type": "option"
         },
-        "type": {
-          "char": "t",
-          "description": "Type of section to generate",
-          "env": "SHOPIFY_FLAG_SECTION_TYPE",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "type",
-          "options": [
-            "basic"
-          ],
-          "type": "option"
-        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -5486,8 +5462,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Creates a new \"theme template\" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default settings based on the type.",
-      "descriptionWithMarkdown": "Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.\n\n  You can specify the type of template to generate using the `--type` flag. The template will be created with appropriate default settings based on the type.",
+      "description": "Creates a new \"theme template\" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.",
+      "descriptionWithMarkdown": "Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.",
       "flags": {
         "extension": {
           "char": "x",
@@ -5507,7 +5483,6 @@
           "char": "f",
           "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
           "env": "SHOPIFY_FLAG_FORCE",
-          "hidden": true,
           "name": "force",
           "type": "boolean"
         },
@@ -5558,18 +5533,6 @@
             "product",
             "robots",
             "search"
-          ],
-          "type": "option"
-        },
-        "type": {
-          "char": "t",
-          "description": "Type of template to generate",
-          "env": "SHOPIFY_FLAG_TEMPLATE_TYPE",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "type",
-          "options": [
-            "basic"
           ],
           "type": "option"
         },
