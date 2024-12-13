@@ -4,7 +4,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Profile extends ThemeCommand {
-  static summary = 'Profile the Liquid rendering of a theme page.'
+  static summary = 'Profile the Liquid rendering of a theme page, and return JSON profiling data.'
 
   static descriptionWithMarkdown = `TODO`
 
