@@ -5,7 +5,7 @@ import Dev from './cli/commands/theme/dev.js'
 import ThemeInfo from './cli/commands/theme/info.js'
 import Init from './cli/commands/theme/init.js'
 import LanguageServer from './cli/commands/theme/language-server.js'
-import ListCommnd from './cli/commands/theme/list.js'
+import ListCommand from './cli/commands/theme/list.js'
 import Open from './cli/commands/theme/open.js'
 import Package from './cli/commands/theme/package.js'
 import Publish from './cli/commands/theme/publish.js'
@@ -23,7 +23,7 @@ const COMMANDS = {
   'theme:dev': Dev,
   'theme:info': ThemeInfo,
   'theme:language-server': LanguageServer,
-  'theme:list': ListCommnd,
+  'theme:list': ListCommand,
   'theme:open': Open,
   'theme:package': Package,
   'theme:publish': Publish,
@@ -47,3 +47,4 @@ export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-
 export {pull} from './cli/services/pull.js'
 export {push} from './cli/services/push.js'
 export {publicFetchStoreThemes as fetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
+export {ListCommand, Pull as PullCommand}

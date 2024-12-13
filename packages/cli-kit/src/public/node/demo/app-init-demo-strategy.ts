@@ -1,8 +1,8 @@
-import {DemoStrategy, DemoContext} from './demo-strategy.js'
+import {DemoStrategy, DemoContext, DemoPromptAugmentation} from './demo-strategy.js'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export class AppInitDemoStrategy implements DemoStrategy {
-  async beforeCommand() {
+  async beforeCommand(): Promise<void> {
     await renderInfo({
       customSections: [
         {
@@ -23,7 +23,9 @@ export class AppInitDemoStrategy implements DemoStrategy {
     })
   }
 
-  promptAugmentations(_context?: DemoContext) {
+  promptAugmentations(_context?: DemoContext): {
+    [key: string]: DemoPromptAugmentation
+  } {
     return {
       templateFlavour: {
         beforePrompt: async () => {
@@ -106,7 +108,7 @@ export class AppInitDemoStrategy implements DemoStrategy {
     }
   }
 
-  async afterCommand() {
+  async afterCommand(): Promise<void> {
     await renderInfo({
       body: "Great! You've created your first app!",
     })

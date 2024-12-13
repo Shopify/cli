@@ -7,8 +7,8 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
-import {AppInitDemoStrategy} from '../../demo/app-init-demo-strategy.js'
-import {DemoStrategy} from '../../demo/demo-strategy.js'
+// ik we probably dont like barrels, but I'm lazy for HD
+import {DemoStrategy, AppInitDemoStrategy} from '@shopify/cli-kit/node/demo/index'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
