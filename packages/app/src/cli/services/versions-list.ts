@@ -88,7 +88,7 @@ interface VersionListOptions {
   json: boolean
 }
 
-export default async function versionList(options: VersionListOptions) {
+export default async function versionList(options: VersionListOptions): Promise<AppVersionLine[] | undefined> {
   const {remoteApp, developerPlatformClient, organization} = options
 
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, remoteApp, options.json)
@@ -125,4 +125,6 @@ export default async function versionList(options: VersionListOptions) {
   )
 
   outputInfo(outputContent`\nView all ${String(totalResults)} app versions in the ${link}`)
+
+  return appVersions
 }
