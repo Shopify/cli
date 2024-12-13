@@ -6,7 +6,7 @@ import {Flags} from '@oclif/core'
 import {chromium, Cookie, devices, type Page} from 'playwright'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import colors from '@shopify/cli-kit/node/colors'
-import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import assert from 'node:assert'
 
 const ANALYTICS_Y_COOKIE = '_shopify_y'
@@ -67,7 +67,9 @@ export default class Test extends BaseCommand {
       throw new Error(`Invalid device: ${flags.device}.\nValid devices are: ${Object.keys(devices).join(', ')}`)
     }
 
-    const browser = await chromium.launch({headless: !flags['no-headless']})
+    const browser = await chromium.launch({
+      headless: !flags['no-headless'],
+    })
     const context = await browser.newContext(devices[flags.device])
 
     const locators = await buildLocators({flags})
@@ -93,7 +95,9 @@ async function fullSuite({page, flags, locators}: {page: Page; flags: TestFlags;
 
   outputInfo(colors.blue`Full test`)
 
-  process.stdout.write(`    ├ ${pad(`Go to: ${baseUrl.substring(0, baseUrl.indexOf('?') ?? baseUrl.length)}`)}`)
+  const searchIndex = baseUrl.indexOf('?')
+
+  process.stdout.write(`    ├ ${pad(`Go to: ${searchIndex === -1 ? baseUrl : baseUrl.substring(0, searchIndex)}`)}`)
 
   try {
     await page.goto(baseUrl)
@@ -269,25 +273,25 @@ async function checkout({page, flags, locators}: {page: Page; flags: TestFlags; 
 
 async function acceptCookies({page, flags, locators}: {page: Page; flags: TestFlags; locators: Locators}) {
   try {
-    if (!findCookie(await page.context().cookies(), ANALYTICS_Y_COOKIE)) {
-      process.stdout.write(`    ├ ${pad('🍪 Cookie consent ')}`)
-      // there is no shopify analytics cookie, this means we need to accept cookies
-      const cookiesButton = await locators.acceptCookiesButton({page, flags})
-      await cookiesButton.first().click()
+    process.stdout.write(`    ├ ${pad('🍪 Cookie consent ')}`)
+    // there is no shopify analytics cookie, this means we need to accept cookies
+    const cookiesButton = await locators.acceptCookiesButton({page, flags})
+    await cookiesButton.first().click()
 
-      printStepSuccess()
-    }
+    printStepSuccess()
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     process.stdout.write('\n')
-    renderError({
+    renderWarning({
       headline: 'Unable to accept consent for cookies.',
       body: 'If you are using custom consent, you can skip this step by passing the --skip-cookies flag.',
     })
 
     if (flags.verbose) {
-      throw error
-    } else {
-      process.exit(1)
+      renderWarning({
+        headline: 'Cookie consent error.',
+        body: (error as Error)?.message,
+      })
     }
   }
 }
