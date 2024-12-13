@@ -16,7 +16,14 @@ import ClearCache from './cli/commands/cache/clear.js'
 import {versionService} from './cli/services/commands/version.js'
 import ThemeCommands, {list} from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
-import {init, selectDeveloperPlatformClient, appFromId, selectOrg, commands as AppCommands} from '@shopify/app'
+import {
+  init,
+  selectDeveloperPlatformClient,
+  appFromId,
+  selectOrg,
+  versionList,
+  commands as AppCommands,
+} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
@@ -145,6 +152,7 @@ export {ensureAuthenticatedPartners}
 export {selectDeveloperPlatformClient}
 export {appFromId}
 export {selectOrg}
+export {versionList}
 export {init as appInit}
 export {versionService}
 export default runShopifyCLI

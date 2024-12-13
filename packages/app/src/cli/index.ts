@@ -29,6 +29,7 @@ import AppCommand from './utilities/app-command.js'
 import initService from './services/init/init.js'
 import {selectDeveloperPlatformClient} from './utilities/developer-platform-client.js'
 import {appFromId, selectOrg} from './services/context.js'
+import versionList from './services/versions-list.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -67,3 +68,4 @@ export {initService as init}
 export {selectDeveloperPlatformClient}
 export {appFromId}
 export {selectOrg}
+export {versionList}
