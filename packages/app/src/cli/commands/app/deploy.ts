@@ -7,6 +7,8 @@ import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
+import {DemoStrategy} from '../../demo/demo-strategy.js'
+import {AppInitDemoStrategy} from '../../demo/app-init-demo-strategy.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -63,6 +65,8 @@ export default class Deploy extends AppCommand {
     }),
   }
 
+  demoStrategy: DemoStrategy = new AppInitDemoStrategy()
+
   async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Deploy)
 
@@ -99,6 +103,8 @@ export default class Deploy extends AppCommand {
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
+
+    await this.demoStrategy?.promptAugmentations?.()?.deployApp?.beforePrompt?.()
 
     const result = await deploy({
       app,

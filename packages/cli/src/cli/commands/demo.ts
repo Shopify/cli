@@ -76,13 +76,10 @@ export default class Demo extends Command {
   }
 
   async run(): Promise<void> {
-    // process.env.USE_APP_MANAGEMENT = '1'
-    // why isnt this shit working
-
     await renderInfo({
+      headline: 'Lets learn how to create and deploy a Shopify app!',
       customSections: [
         {
-          title: 'Lets learn how to create and deploy a Shopify app!',
           body: {
             list: {
               items: [
@@ -109,6 +106,7 @@ export default class Demo extends Command {
     })
 
     await renderTextPrompt({
+      noUnderline: true,
       message: 'Run the `shopify app init` command to get started:',
       validate: (value) => {
         if (value !== 'shopify app init') return 'Thats not the `shopify app init` command!'
@@ -123,9 +121,9 @@ export default class Demo extends Command {
     })
 
     await renderInfo({
+      headline: 'Good job you created an app!',
       customSections: [
         {
-          title: 'Good job you created an app!',
           body: {
             list: {
               items: [
@@ -227,6 +225,7 @@ export default class Demo extends Command {
     })
 
     await renderTextPrompt({
+      noUnderline: true,
       message: 'Run the `shopify app deploy` command to deploy your changes:',
       validate: (value) => {
         if (value !== 'shopify app deploy') return 'Thats not the `shopify app deploy` command!'

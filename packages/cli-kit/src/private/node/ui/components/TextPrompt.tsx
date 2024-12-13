@@ -21,6 +21,7 @@ export interface TextPromptProps {
   abortSignal?: AbortSignal
   preview?: (value: string) => TokenItem<InlineToken>
   initialAnswer?: string
+  noUnderline?: boolean
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -34,6 +35,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   abortSignal,
   preview,
   initialAnswer = '',
+  noUnderline = false,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -126,9 +128,11 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
               />
             </Box>
           </Box>
-          <Box marginLeft={3}>
-            <Text color={color}>{underline}</Text>
-          </Box>
+          {noUnderline ? null : (
+            <Box marginLeft={3}>
+              <Text color={color}>{underline}</Text>
+            </Box>
+          )}
           {promptState === PromptState.Error ? (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>

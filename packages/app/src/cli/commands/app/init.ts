@@ -65,16 +65,6 @@ export default class Init extends AppCommand {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
-    'demo-template-flavor': Flags.string({
-      hidden: true,
-      description: 'The expected flavor of the template to use during a demo.',
-      env: 'SHOPIFY_FLAG_DEMO_TEMPLATE_FLAVOR',
-    }),
-    'demo-is-app-new': Flags.boolean({
-      hidden: true,
-      description: 'Whether the app is new during a demo.',
-      env: 'SHOPIFY_FLAG_DEMO_IS_APP_NEW',
-    }),
   }
 
   demoStrategy: DemoStrategy = new AppInitDemoStrategy()
@@ -96,7 +86,6 @@ export default class Init extends AppCommand {
     const promptAnswers = await initPrompt({
       template: flags.template,
       flavor: flags.flavor,
-      demoTemplateFlavor: flags['demo-template-flavor'],
       flavorDemoAugmentation: this.demoStrategy?.promptAugmentations?.()?.templateFlavour,
     })
 
@@ -109,19 +98,20 @@ export default class Init extends AppCommand {
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
+      await this.demoStrategy?.promptAugmentations?.()?.selectOrg?.beforePrompt?.()
       const org = await selectOrg()
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
 
-      if (flags['demo-is-app-new']) {
-        await createAsNewAppPrompt((value) => {
-          if (!value) return "That's not 'Yes, create it as a new app'!"
-        })
-        const appName = await appNamePrompt(name)
-        selectAppResult = {result: 'new', name: appName, org}
-      } else {
-        selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
-      }
+      await this.demoStrategy?.promptAugmentations?.()?.selectApp?.beforePrompt?.()
+      selectAppResult = await selectAppOrNewAppName(
+        name,
+        apps,
+        hasMorePages,
+        organization,
+        developerPlatformClient,
+        this.demoStrategy,
+      )
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 
@@ -175,12 +165,16 @@ async function selectAppOrNewAppName(
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
+  demoStrategy?: DemoStrategy,
 ): Promise<SelectAppOrNewAppNameResult> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
-    createNewApp = await createAsNewAppPrompt()
+    createNewApp = await createAsNewAppPrompt((value: boolean) => {
+      if (!value) return "Please select 'Yes, create it as a new app' to continue." as string
+    })
   }
   if (createNewApp) {
+    await demoStrategy?.promptAugmentations?.()?.selectAppName?.beforePrompt?.()
     const name = await appNamePrompt(localAppName)
     return {result: 'new', name, org}
   } else {

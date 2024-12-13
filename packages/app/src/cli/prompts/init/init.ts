@@ -4,7 +4,6 @@ import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 export interface InitOptions {
   template?: string
   flavor?: string
-  demoTemplateFlavor?: string
   flavorDemoAugmentation?: {
     beforePrompt?: () => Promise<void>
     validate?: (value: string) => string | undefined
