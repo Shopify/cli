@@ -54,6 +54,7 @@ async function generate(options: GenerateOptions) {
   const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
   if (!workflow) {
     renderSuccessMessage(generatedExtension, app.packageManager)
+    return
   }
 
   const workflowResult = await workflow?.afterGenerate({
@@ -64,7 +65,7 @@ async function generate(options: GenerateOptions) {
   })
 
   if (!workflowResult?.success) {
-    //TODO: Cleanup extension?
+    // TODO: Cleanup extension?
   }
 
   renderSuccessMessage(generatedExtension, app.packageManager, workflowResult)
