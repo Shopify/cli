@@ -12,7 +12,7 @@ interface Options {
   name?: string
   id?: number
   json: boolean
-  ignoreDevelopmentThemes: boolean
+  ignoreDevelopmentThemes?: boolean
 }
 
 export async function list(adminSession: AdminSession, options: Options): Promise<string> {
