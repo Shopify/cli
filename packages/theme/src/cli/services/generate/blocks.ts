@@ -1,11 +1,9 @@
-import {BlockType} from '../../utilities/generator.js'
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export interface BlockGeneratorOptions {
   name: string
-  type: BlockType
   path: string
 }
 
