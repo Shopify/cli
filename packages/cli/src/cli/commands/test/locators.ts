@@ -34,7 +34,7 @@ export async function buildLocators({flags}: {flags: TestFlags}): Promise<Locato
     return locators
   } catch (error) {
     renderError({
-      headline: 'Unable to find locators file',
+      headline: 'Unable to find locators file.',
       body: `File: ${joinPath(cwd(), flags.locators)}`,
     })
 
