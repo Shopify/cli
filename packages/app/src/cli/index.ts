@@ -27,6 +27,8 @@ import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
 import initService from './services/init/init.js'
+import {selectDeveloperPlatformClient} from './utilities/developer-platform-client.js'
+import {appFromId} from './services/context.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -62,3 +64,5 @@ export const AppSensitiveMetadataHook = gatherSensitiveMetadata
 export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata
 export {initService as init}
+export {selectDeveloperPlatformClient}
+export {appFromId}
