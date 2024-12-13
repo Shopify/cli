@@ -32,4 +32,14 @@ describe('admin link utils', () => {
     // Then
     expect(target).toEqual('admin.customer-index.selection-action.link')
   })
+  test('correctly parses from context `DRAFT_ORDERS#SHOW` to target', () => {
+    // Given
+    const context = 'DRAFT_ORDERS#SHOW'
+
+    // When
+    const target = contextToTarget(context)
+
+    // Then
+    expect(target).toEqual('admin.draft-order-details.action.link')
+  })
 })
