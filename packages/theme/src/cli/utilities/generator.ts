@@ -2,9 +2,6 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
-export const BLOCK_TYPES = ['basic']
-export const SECTION_TYPES = ['basic']
-
 export const FILE_TYPES = ['liquid', 'json']
 
 export const TEMPLATE_RESOURCE_TYPES = [
@@ -23,8 +20,6 @@ export const TEMPLATE_RESOURCE_TYPES = [
   'search',
 ]
 
-export type BlockType = (typeof BLOCK_TYPES)[number]
-export type SectionType = (typeof SECTION_TYPES)[number]
 export type TemplateResourceType = (typeof TEMPLATE_RESOURCE_TYPES)[number]
 export type FileType = (typeof FILE_TYPES)[number]
 
