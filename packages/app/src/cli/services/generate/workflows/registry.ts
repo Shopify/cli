@@ -1,6 +1,6 @@
 import {editorExtensionCollection} from './editor-extension-collection.js'
 import {discountDetailsFunctionSettingsCollection} from './discount-details-function-settings-collection.js'
-import {productDiscountFunctionCollection} from './product-discount-function-collection.js'
+import {functionWithAdminUi} from './function-with-admin-ui.js'
 import {GeneratedExtension, GenerateExtensionTemplateOptions} from '../../generate/extension.js'
 import {GenerateOptions} from '../../generate.js'
 import {ExtensionTemplate} from '../../../models/app/template.js'
@@ -32,7 +32,10 @@ interface WorkflowRegistry {
 export const workflowRegistry: WorkflowRegistry = {
   editor_extension_collection: editorExtensionCollection,
   discount_details_function_settings: discountDetailsFunctionSettingsCollection,
-  product_discounts: productDiscountFunctionCollection,
+  product_discounts: functionWithAdminUi('discount_details_function_settings'),
+  order_discounts: functionWithAdminUi('discount_details_function_settings'),
+  shipping_discounts: functionWithAdminUi('discount_details_function_settings'),
+  cart_checkout_validation: functionWithAdminUi('validation_settings_ui'),
 }
 
 /**
