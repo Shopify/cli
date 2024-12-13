@@ -4,7 +4,7 @@ import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -63,6 +63,10 @@ async function installShopifyLibrary(tmpDir: string) {
   const shopifyFunction = joinPath(shopifyFunctionDir, 'index.ts')
   await mkdir(shopifyFunctionDir)
   await writeFile(shopifyFunction, '')
+
+  const runModule = joinPath(shopifyFunctionDir, 'run.ts')
+  await writeFile(runModule, '')
+
   return shopifyFunction
 }
 
@@ -112,7 +116,23 @@ describe('bundleExtension', () => {
       const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
 
       // Then
-      await expect(got).rejects.toThrow(/Could not find the Shopify Function runtime/)
+      await expect(got).rejects.toThrow(/Could not find the Shopify Functions JavaScript library/)
+    })
+  })
+
+  test('errors if shopify library lacks the run module', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const ourFunction = await testFunctionExtension({dir: tmpDir})
+      ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
+      const shopifyFunction = await installShopifyLibrary(tmpDir)
+      await removeFile(joinPath(shopifyFunction, '..', 'run.ts'))
+
+      // When
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      await expect(got).rejects.toThrow(/Could not find the Shopify Functions JavaScript library/)
     })
   })
 
@@ -173,6 +193,7 @@ describe('ExportJavyBuilder', () => {
         // Given
         const ourFunction = await testFunctionExtension({dir: tmpDir})
         ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
+        const shopifyFunction = await installShopifyLibrary(tmpDir)
 
         // When
         const got = builder.bundle(
@@ -210,6 +231,7 @@ describe('ExportJavyBuilder', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const ourFunction = await testFunctionExtension({dir: tmpDir})
+        const shopifyFunction = await installShopifyLibrary(tmpDir)
 
         // When
         const got = builder.bundle(ourFunction, {stdout, stderr, signal, app})
