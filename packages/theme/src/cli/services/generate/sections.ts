@@ -19,6 +19,8 @@ export const JSON_SECTION_HEADER = `/*
  * ------------------------------------------------------------
  */`
 
+// TODO: move name / path resolution logic upstream
+// TODO: Rather than throwing an error here we should prompt for name upstream
 export async function generateSection(options: SectionGeneratorOptions) {
   const sectionPath = joinPath(options.path, 'sections', `${options.name}.${options.fileType}`)
 

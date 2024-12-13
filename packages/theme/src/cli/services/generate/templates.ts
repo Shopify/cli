@@ -3,6 +3,8 @@ import {writeFile, readFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
+// TODO: move name / path resolution logic upstream
+// TODO: add type flag
 export interface TemplateGeneratorOptions {
   name: string | undefined
   path: string
