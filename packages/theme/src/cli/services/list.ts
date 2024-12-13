@@ -12,6 +12,7 @@ interface Options {
   name?: string
   id?: number
   json: boolean
+  ignoreDevelopmentThemes: boolean
 }
 
 export async function list(adminSession: AdminSession, options: Options): Promise<string> {
@@ -25,7 +26,7 @@ export async function list(adminSession: AdminSession, options: Options): Promis
   })
 
   let storeThemes = await fetchStoreThemes(adminSession)
-  const developmentTheme = getDevelopmentTheme()
+  const developmentTheme = options.ignoreDevelopmentThemes ? undefined : getDevelopmentTheme()
   const hostTheme = getHostTheme(store)
   if (filter.any()) {
     storeThemes = filterThemes(store, storeThemes, filter)
