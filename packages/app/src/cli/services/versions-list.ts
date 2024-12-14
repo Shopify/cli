@@ -88,13 +88,14 @@ interface VersionListOptions {
   json: boolean
 }
 
-export default async function versionList(options: VersionListOptions) {
+export default async function versionList(options: VersionListOptions): Promise<AppVersionLine[]> {
   const {remoteApp, developerPlatformClient, organization} = options
 
   const {appVersions, totalResults} = await fetchAppVersions(developerPlatformClient, remoteApp, options.json)
 
   if (options.json) {
-    return outputInfo(JSON.stringify(appVersions, null, 2))
+    outputInfo(JSON.stringify(appVersions, null, 2))
+    return appVersions
   }
 
   renderCurrentlyUsedConfigInfo({
@@ -105,7 +106,7 @@ export default async function versionList(options: VersionListOptions) {
 
   if (appVersions.length === 0) {
     outputInfo('No app versions found for this app')
-    return
+    return []
   }
 
   renderTable({
@@ -125,4 +126,6 @@ export default async function versionList(options: VersionListOptions) {
   )
 
   outputInfo(outputContent`\nView all ${String(totalResults)} app versions in the ${link}`)
+
+  return appVersions
 }
