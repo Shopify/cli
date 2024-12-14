@@ -63,7 +63,7 @@
     "chokidar": "3.5.3",
     "diff": "5.1.0",
     "esbuild": "0.19.8",
-    "express": "4.19.2",
+    "express": "4.20.0",
     "graphql-request": "5.2.0",
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
