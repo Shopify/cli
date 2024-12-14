@@ -1085,6 +1085,13 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
         path: 'discounts/rust/product-discounts/default',
       },
     ],
+    relatedExtensions: [
+      {
+        type: 'ui_extension',
+        name: 'discount_function_settings',
+        directory: 'discount_ui/discount_ui',
+      },
+    ],
   },
   {
     identifier: 'order_discounts',
@@ -1110,6 +1117,23 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
         name: 'JavaScript',
         value: 'vanilla-js',
         path: 'discounts/javascript/order-discounts/default',
+      },
+    ],
+  },
+  {
+    identifier: 'discount_function_settings',
+    name: 'Function - Discount settings',
+    defaultName: 'discount-function-settings',
+    group: 'Discounts and checkout',
+    supportLinks: [],
+    type: 'function',
+    url: 'https://github.com/Shopify/function-examples',
+    extensionPoints: [],
+    supportedFlavors: [
+      {
+        name: 'JavaScript',
+        value: 'vanilla-js',
+        path: 'discounts/javascript/discount-function-settings/default',
       },
     ],
   },
