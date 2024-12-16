@@ -667,7 +667,7 @@ importers:
         specifier: 1.13.0
         version: 1.13.0
       speedscope:
-        specifier: ^1.21.0
+        specifier: 1.21.0
         version: 1.21.0
       yaml:
         specifier: 2.7.0
