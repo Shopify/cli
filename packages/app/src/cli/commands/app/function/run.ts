@@ -41,7 +41,7 @@ export default class FunctionRun extends AppCommand {
       userProvidedConfigName: flags.config,
       apiKey: flags['client-id'],
       reset: flags.reset,
-      callback: async (app, developerPlatformClient, ourFunction) => {
+      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
         if (flags.export !== undefined) {
@@ -77,7 +77,7 @@ export default class FunctionRun extends AppCommand {
 
         const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
         const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
-        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, developerPlatformClient)
+        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, developerPlatformClient, orgId)
 
         await runFunction({
           functionExtension: ourFunction,

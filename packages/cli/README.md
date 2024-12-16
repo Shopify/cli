@@ -70,6 +70,7 @@
 * [`shopify theme init [name]`](#shopify-theme-init-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
+* [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
@@ -1996,6 +1997,32 @@ FLAGS
 
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
+```
+
+## `shopify theme metafields pull`
+
+Download metafields definitions from your shop into a local file.
+
+```
+USAGE
+  $ shopify theme metafields pull [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>]
+  [--verbose]
+
+FLAGS
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                             (example.myshopify.com, https://example.myshopify.com).
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --path=<value>         The path to your theme directory.
+      --verbose              Increase the verbosity of the output.
+
+DESCRIPTION
+  Download metafields definitions from your shop into a local file.
+
+  Retrieves metafields from Shopify Admin.
+
+  If the metafields file already exists, it will be overwritten.
 ```
 
 ## `shopify theme open`

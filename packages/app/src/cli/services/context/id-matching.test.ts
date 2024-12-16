@@ -233,6 +233,7 @@ beforeAll(async () => {
       build: {
         command: 'make build',
         path: 'dist/index.wasm',
+        wasm_opt: true,
       },
       configuration_ui: false,
       api_version: '2022-07',

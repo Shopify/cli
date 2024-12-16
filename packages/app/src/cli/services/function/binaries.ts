@@ -9,11 +9,13 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const FUNCTION_RUNNER_VERSION = 'v6.3.0'
+const FUNCTION_RUNNER_VERSION = 'v6.4.0'
 const JAVY_VERSION = 'v4.0.0'
 // The Javy plugin version does not need to match the Javy version. It should
 // match the plugin version used in the function-runner version specified above.
 const JAVY_PLUGIN_VERSION = 'v3.2.0'
+
+const BINARYEN_VERSION = '120.0.0'
 
 interface DownloadableBinary {
   path: string
@@ -107,9 +109,30 @@ class JavyPlugin implements DownloadableBinary {
   }
 }
 
+class WasmOptExecutable implements DownloadableBinary {
+  readonly name: string
+  readonly version: string
+  readonly path: string
+
+  constructor(name: string, version: string) {
+    this.name = name
+    this.version = version
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', name)
+  }
+
+  downloadUrl(_processPlatform: string, _processArch: string) {
+    return `https://cdn.jsdelivr.net/npm/binaryen@${this.version}/bin/wasm-opt`
+  }
+
+  async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
+    await stream.pipeline(responseStream, outputStream)
+  }
+}
+
 let _javy: DownloadableBinary
 let _javyPlugin: DownloadableBinary
 let _functionRunner: DownloadableBinary
+let _wasmOpt: DownloadableBinary
 
 export function javyBinary() {
   if (!_javy) {
@@ -130,6 +153,14 @@ export function functionRunnerBinary() {
     _functionRunner = new Executable('function-runner', FUNCTION_RUNNER_VERSION, 'Shopify/function-runner')
   }
   return _functionRunner
+}
+
+export function wasmOptBinary() {
+  if (!_wasmOpt) {
+    _wasmOpt = new WasmOptExecutable('wasm-opt.cjs', BINARYEN_VERSION)
+  }
+
+  return _wasmOpt
 }
 
 export async function downloadBinary(bin: DownloadableBinary) {

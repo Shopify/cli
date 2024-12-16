@@ -36,8 +36,8 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../models/app/template.js'
-import {TargetSchemaDefinitionQueryVariables} from '../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -248,8 +248,18 @@ export interface DeveloperPlatformClient {
   migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   currentAccountInfo: () => Promise<CurrentAccountInfoSchema>
-  targetSchemaDefinition: (input: TargetSchemaDefinitionQueryVariables) => Promise<string | null>
-  apiSchemaDefinition: (input: ApiSchemaDefinitionQueryVariables) => Promise<string | null>
+  targetSchemaDefinition: (
+    input: SchemaDefinitionByTargetQueryVariables,
+    apiKey: string,
+    organizationId: string,
+    appId?: string,
+  ) => Promise<string | null>
+  apiSchemaDefinition: (
+    input: SchemaDefinitionByApiTypeQueryVariables,
+    apiKey: string,
+    organizationId: string,
+    appId?: string,
+  ) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>

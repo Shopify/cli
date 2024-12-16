@@ -1,9 +1,8 @@
 import {generateSchemaService} from './generate-schema.js'
 import {testAppLinked, testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
-import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
 import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as output from '@shopify/cli-kit/node/output'
 
@@ -28,22 +27,27 @@ describe('generateSchemaService', () => {
   test('Save the latest GraphQL schema to ./[extension]/schema.graphql when stdout flag is ABSENT', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
+      const orgId = 'test'
+      const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
+      await mkdir(extensionDir)
+
       const app = testAppLinked()
-      const extension = await testFunctionExtension({})
-      const apiKey = 'api-key'
-      const path = tmpDir
+      const extension = await testFunctionExtension({
+        dir: tmpDir,
+      })
 
       // When
       await generateSchemaService({
         app,
         extension,
-        path,
+        path: tmpDir,
         stdout: false,
         developerPlatformClient: testDeveloperPlatformClient(),
+        orgId,
       })
 
       // Then
-      const outputFile = await readFile(joinPath(tmpDir, 'schema.graphql'))
+      const outputFile = await readFile(joinPath(extension.directory, 'schema.graphql'))
       expect(outputFile).toEqual('schema')
     })
   })
@@ -55,6 +59,7 @@ describe('generateSchemaService', () => {
       const extension = await testFunctionExtension()
       const path = tmpDir
       const stdout = true
+      const orgId = '123'
       const mockOutput = vi.fn()
       vi.spyOn(output, 'outputInfo').mockImplementation(mockOutput)
 
@@ -65,6 +70,7 @@ describe('generateSchemaService', () => {
         path,
         stdout,
         developerPlatformClient: testDeveloperPlatformClient(),
+        orgId,
       })
 
       // Then
@@ -75,52 +81,60 @@ describe('generateSchemaService', () => {
   describe('GraphQL query', () => {
     test('Uses ApiSchemaDefinitionQuery when not using targets', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        // Given
+        const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
+        await mkdir(extensionDir)
+
         const app = testAppLinked()
         const extension = await testFunctionExtension({
+          dir: tmpDir,
           config: {
             name: 'test function extension',
             description: 'description',
             type: 'api_type',
             build: {
               command: 'echo "hello world"',
+              wasm_opt: true,
             },
             api_version: 'unstable',
             configuration_ui: true,
             metafields: [],
           },
         })
-        const apiKey = 'api-key'
+
+        const orgId = 'test'
         const path = tmpDir
-        const {
-          configuration: {api_version: version},
-          type,
-        } = extension
+        const version = extension.configuration.api_version
         const developerPlatformClient = testDeveloperPlatformClient()
 
-        // When
         await generateSchemaService({
           app,
           extension,
           path,
           stdout: false,
           developerPlatformClient,
+          orgId,
         })
 
-        // Then
-        expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith({
-          apiKey,
-          version,
-          type,
-        })
+        expect(developerPlatformClient.apiSchemaDefinition).toHaveBeenCalledWith(
+          {
+            version,
+            type: extension.configuration.type,
+          },
+          app.configuration.client_id,
+          orgId,
+          app.configuration.app_id,
+        )
       })
     })
 
     test('Uses TargetSchemaDefinitionQuery when targets present', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        // Given
+        const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
+        await mkdir(extensionDir)
+
         const app = testAppLinked()
         const extension = await testFunctionExtension({
+          dir: tmpDir,
           config: {
             name: 'test function extension',
             description: 'description',
@@ -135,33 +149,38 @@ describe('generateSchemaService', () => {
             ],
             build: {
               command: 'echo "hello world"',
+              wasm_opt: true,
             },
             api_version: 'unstable',
             configuration_ui: true,
             metafields: [],
           },
         })
-        const apiKey = 'api-key'
+
         const path = tmpDir
         const expectedTarget = extension.configuration.targeting![0]!.target
         const version = extension.configuration.api_version
+        const orgId = 'test'
         const developerPlatformClient = testDeveloperPlatformClient()
 
-        // When
         await generateSchemaService({
           app,
           extension,
           path,
           stdout: false,
           developerPlatformClient,
+          orgId,
         })
 
-        // Then
-        expect(developerPlatformClient.targetSchemaDefinition).toHaveBeenCalledWith({
-          apiKey,
-          version,
-          target: expectedTarget,
-        })
+        expect(developerPlatformClient.targetSchemaDefinition).toHaveBeenCalledWith(
+          {
+            handle: expectedTarget,
+            version,
+          },
+          app.configuration.client_id,
+          orgId,
+          app.configuration.app_id,
+        )
       })
     })
   })
@@ -170,9 +189,9 @@ describe('generateSchemaService', () => {
     // Given
     const app = testAppLinked()
     const extension = await testFunctionExtension()
-    const apiKey = 'api-key'
+    const orgId = '123'
     const developerPlatformClient = testDeveloperPlatformClient({
-      apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve(null),
+      apiSchemaDefinition: () => Promise.resolve(null),
     })
 
     // When
@@ -182,6 +201,7 @@ describe('generateSchemaService', () => {
       path: '',
       stdout: true,
       developerPlatformClient,
+      orgId,
     })
 
     // Then

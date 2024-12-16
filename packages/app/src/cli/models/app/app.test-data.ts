@@ -55,8 +55,6 @@ import {
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
-import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -69,6 +67,8 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -501,6 +501,7 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     build: {
       command: 'echo "hello world"',
       watch: ['src/**/*.rs'],
+      wasm_opt: true,
     },
     api_version: '2022-07',
     configuration_ui: true,
@@ -1351,8 +1352,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
-    targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
-    apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables & {apiKey?: string}, _orgId: string) =>
+      Promise.resolve('schema'),
+    apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string}, _orgId: string) =>
+      Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),

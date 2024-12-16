@@ -7,6 +7,7 @@ import {renderWarning} from './ui.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import which from 'which'
+import {delimiter} from 'pathe'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -105,10 +106,11 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
   }
-  checkCommandSafety(command)
+  const executionCwd = options?.cwd ?? cwd()
+  checkCommandSafety(command, {cwd: executionCwd})
   const commandProcess = execa(command, args, {
     env,
-    cwd: options?.cwd,
+    cwd: executionCwd,
     input: options?.input,
     stdio: options?.background ? 'ignore' : options?.stdio,
     stdin: options?.stdin,
@@ -123,14 +125,18 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
   outputDebug(`
 Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
-  · Working directory: ${options?.cwd ?? cwd()}
+  · Working directory: ${executionCwd}
 `)
   return commandProcess
 }
 
-function checkCommandSafety(command: string) {
-  const commandDirectory = dirname(which.sync(command))
-  if (commandDirectory === cwd()) {
+function checkCommandSafety(command: string, _options: {cwd: string}): void {
+  const pathIncludingLocal = `${_options.cwd}${delimiter}${process.env.PATH}`
+  const commandPath = which.sync(command, {
+    nothrow: true,
+    path: pathIncludingLocal,
+  })
+  if (commandPath && dirname(commandPath) === _options.cwd) {
     const headline = ['Skipped run of unsecure binary', {command}, 'found in the current directory.']
     const body = 'Please remove that file or review your current PATH.'
     renderWarning({headline, body})

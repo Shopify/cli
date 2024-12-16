@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.71.0",
+  "version": "3.72.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -91,7 +91,8 @@
                 "./context/utilities.js",
                 "../../private/node/conf-store.js",
                 "../../private/node/constants.js",
-                "url"
+                "url",
+                "./cli-launcher.js"
               ]
             }
           ]

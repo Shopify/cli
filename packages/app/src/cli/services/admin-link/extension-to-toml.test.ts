@@ -20,7 +20,7 @@ describe('extension-to-toml', () => {
       type: 'app_link',
       draftVersion: {
         context: 'COLLECTIONS#SHOW',
-        config: '{"text":"admin link label","url":"https://google.es"}',
+        config: '{"text":"Admin link label","url":"https://google.es"}',
       },
     }
 
@@ -30,13 +30,12 @@ describe('extension-to-toml', () => {
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Admin link title"
+name = "Admin link label"
 handle = "admin-link-title"
 
   [[extensions.targeting]]
-  text = "admin link label"
   url = "https://google.es"
-  target = "admin.collection.item.link"
+  target = "admin.collection-details.action.link"
 `)
   })
 
@@ -56,7 +55,7 @@ handle = "admin-link-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es/action/product?product_id=123#hash"}',
+        config: '{"text":"Bulk action label","url":"https://google.es/action/product?product_id=123#hash"}',
       },
     }
 
@@ -66,13 +65,12 @@ handle = "admin-link-title"
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Bulk action title"
+name = "Bulk action label"
 handle = "bulk-action-title"
 
   [[extensions.targeting]]
-  text = "bulk action label"
   url = "app://action/product?product_id=123#hash"
-  target = "admin.product.selection.link"
+  target = "admin.product-index.selection-action.link"
 `)
   })
   test('correctly builds a toml string for bulk_action extension with no path in an embedded app', () => {
@@ -91,7 +89,7 @@ handle = "bulk-action-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es/"}',
+        config: '{"text":"Bulk action label","url":"https://google.es/"}',
       },
     }
 
@@ -101,13 +99,12 @@ handle = "bulk-action-title"
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Bulk action title"
+name = "Bulk action label"
 handle = "bulk-action-title"
 
   [[extensions.targeting]]
-  text = "bulk action label"
   url = "app://"
-  target = "admin.product.selection.link"
+  target = "admin.product-index.selection-action.link"
 `)
   })
   test('correctly builds a toml string for bulk_action extension with no path but search query in an embedded app', () => {
@@ -126,7 +123,7 @@ handle = "bulk-action-title"
       type: 'bulk_action',
       draftVersion: {
         context: 'PRODUCTS#ACTION',
-        config: '{"text":"bulk action label","url":"https://google.es?foo=bar"}',
+        config: '{"text":"Bulk action label","url":"https://google.es?foo=bar"}',
       },
     }
 
@@ -136,13 +133,12 @@ handle = "bulk-action-title"
     // Then
     expect(got).toEqual(`[[extensions]]
 type = "admin_link"
-name = "Bulk action title"
+name = "Bulk action label"
 handle = "bulk-action-title"
 
   [[extensions.targeting]]
-  text = "bulk action label"
   url = "app://?foo=bar"
-  target = "admin.product.selection.link"
+  target = "admin.product-index.selection-action.link"
 `)
   })
 })

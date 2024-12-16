@@ -153,13 +153,13 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.10.0
@@ -168,11 +168,11 @@ importers:
         specifier: 8.0.0
         version: 8.0.0
       '@shopify/theme':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.2.2
-        version: 3.2.2
+        specifier: 3.4.0
+        version: 3.4.0
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -272,22 +272,22 @@ importers:
         specifier: 5.1.2
         version: 5.1.2
       '@shopify/app':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 9.0.2
-        version: 9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.3
+        version: 9.0.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../theme
       '@types/node':
         specifier: 18.19.3
@@ -538,10 +538,10 @@ importers:
         version: 0.19.8
     devDependencies:
       '@shopify/app':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../cli-kit
       '@types/node':
         specifier: 18.19.3
@@ -665,7 +665,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -678,7 +678,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -694,14 +694,14 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.71.0
+        specifier: 3.72.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 3.2.2
-        version: 3.2.2
+        specifier: 3.4.0
+        version: 3.4.0
       '@shopify/theme-language-server-node':
-        specifier: 2.2.2
-        version: 2.2.2
+        specifier: 2.3.2
+        version: 2.3.2
       chokidar:
         specifier: 3.5.3
         version: 3.5.3
@@ -6023,8 +6023,8 @@ packages:
     requiresBuild: true
     optional: true
 
-  /@shopify/cli-hydrogen@9.0.2(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-KRlBmgik6fdzIw8z9Xj31swE2dIgTFavCSTS/tonumlu2RX5DrT2M+OTjiQv8s6wLJn5a4Nn6/+5Ds/hKGaKEQ==}
+  /@shopify/cli-hydrogen@9.0.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-xqNx1P9aBao1eqT7nVdsiw8o7j5ZMpuVaZOnYNfVw7Wog2wNtghH8UI6Jb0TklnTon+imQtJKY5ErYlGfgSssQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
@@ -6052,7 +6052,7 @@ packages:
       '@graphql-codegen/cli': 5.0.2(@types/node@18.19.3)(graphql@16.8.1)(typescript@5.2.2)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.0
       chokidar: 3.5.3
@@ -6153,15 +6153,15 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
-  /@shopify/liquid-html-parser@2.1.1:
-    resolution: {integrity: sha512-5shGZTB7tK28MzawqBb82n6fbn+77U6al5UrOcUruBUj3GNqHJWjzZVPtXq4fQHrFpXFu6l11x+z+ggdUHT0Ng==}
+  /@shopify/liquid-html-parser@2.2.0:
+    resolution: {integrity: sha512-hD0XV+Re9BC3yMOshHCwU94LagW7LQTWPdtpU0IE/pMbco+ke7Hir1Ad7eloHAgzR+6iw4LzDEFuHFpKZWmGKw==}
     dependencies:
       line-column: 1.0.2
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.5.3(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-mCpseNEqDbR26fPmIKL83BDsYSxXu/eeWrRGTG8cdQhq1z+xbDn93w/So/gi0r0MRH2vYsPOzJOIUyiWWVawDQ==}
+  /@shopify/oxygen-cli@4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+    resolution: {integrity: sha512-Khph5joWTkwhAjh1Uq7/7widK1AMDnoQkT3JZboeUjzSH1M95XhOY7Hs57l6TNLsMHjkDG/8/nAzLkJ7mHNkkQ==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
@@ -6272,10 +6272,10 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@3.2.2:
-    resolution: {integrity: sha512-rEbZ2kDzpOY+D7FUFi7VWQforLB99WJg8rCcJlzaJIAV4hkQpkjPPjzzXitg3JByVKzfLxocmIlysAVbmort1A==}
+  /@shopify/theme-check-common@3.4.0:
+    resolution: {integrity: sha512-raBezxKmlqy5sYJO2UYKc5b7hRVDeYPYfL9mBSqCqwa37jTkvy84U8G0IRjL8S/AfZWBHd2dJzhJ5RApONVijA==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.1.1
+      '@shopify/liquid-html-parser': 2.2.0
       cross-fetch: 4.0.0
       json-to-ast: 2.1.0
       jsonc-parser: 3.2.1
@@ -6288,22 +6288,22 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@3.2.2:
-    resolution: {integrity: sha512-NXNviVnkGVEf0roDMvZptMODG97x/HiPDlWtHb4v4oyxIvg23jo1rcu8b3u9GnLmxTzWJWcW3tXJhQDqfTeErA==}
+  /@shopify/theme-check-docs-updater@3.4.0:
+    resolution: {integrity: sha512-4CdHvM1NhZhAtAe1VTsHfxcq8f17wIQYiq/u5s+niisM7cIYeyx7UfU5+ioIn+zE8K3cN9C/0riTgsZCBpDXJA==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 3.2.2
+      '@shopify/theme-check-common': 3.4.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@3.2.2:
-    resolution: {integrity: sha512-X1mzKbNq0YlxRKsEKz/3MmS4CyHkiPNdCVXe/TzqwJlzumMQYtYxd+xMYT8n5nTG2Reuv/UhVXWbqhtNPbwBOw==}
+  /@shopify/theme-check-node@3.4.0:
+    resolution: {integrity: sha512-jekHMoktdD5xImSwsIPsFqn8c0TBejwypgjaEWyPqy6XF/QrPqCNtEstfsBRAWHLKqOgt/mFZumtN7Fmh2c4kQ==}
     dependencies:
-      '@shopify/theme-check-common': 3.2.2
-      '@shopify/theme-check-docs-updater': 3.2.2
+      '@shopify/theme-check-common': 3.4.0
+      '@shopify/theme-check-docs-updater': 3.4.0
       glob: 8.1.0
       vscode-uri: 3.0.8
       yaml: 2.3.2
@@ -6311,11 +6311,11 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-common@2.2.2:
-    resolution: {integrity: sha512-PPn6wfDnbvT++SGtET8DTb88kQWvkb9XKJ1t/b4r9cI0SOPtM+g2vcB336OdmddYeDfXCTnYwuEnBKfltEPTaQ==}
+  /@shopify/theme-language-server-common@2.3.2:
+    resolution: {integrity: sha512-GjrKjgjIL+QdQMbgcz9Xb4YG4Y6NHgqY0lsKghIhCJr0oedM5ICtFmYobLQE9YXabDnP3FqyfliGUcjVgIeyMA==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.1.1
-      '@shopify/theme-check-common': 3.2.2
+      '@shopify/liquid-html-parser': 2.2.0
+      '@shopify/theme-check-common': 3.4.0
       '@vscode/web-custom-data': 0.4.9
       vscode-json-languageservice: 5.3.11
       vscode-languageserver: 8.1.0
@@ -6325,12 +6325,12 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@2.2.2:
-    resolution: {integrity: sha512-e3QrLn0GIxQiBAI9g7/UKr56IZO8g1+kSHk2Mq3EIhW2Tcn6YXSMIDrw6jkL0MXtcCng6hHgOSgAdqD4roa7Zw==}
+  /@shopify/theme-language-server-node@2.3.2:
+    resolution: {integrity: sha512-LjqTln6NXkN+fIosBdDLrUzec+HsbPtfQ2xXd0cZOq3TMZeFCF4sgHw76L5YDoUp/FnPkJQlkG76g3ZokjkhXw==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.2.2
-      '@shopify/theme-check-node': 3.2.2
-      '@shopify/theme-language-server-common': 2.2.2
+      '@shopify/theme-check-docs-updater': 3.4.0
+      '@shopify/theme-check-node': 3.4.0
+      '@shopify/theme-language-server-common': 2.3.2
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -11332,6 +11332,7 @@ packages:
 
   /inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
     dependencies:
       once: 1.4.0
       wrappy: 1.0.2

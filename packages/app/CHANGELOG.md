@@ -1,5 +1,65 @@
 # @shopify/app
 
+## 3.72.0
+
+### Minor Changes
+
+- 178c17e820: Bump minor version
+
+### Patch Changes
+
+- @shopify/cli-kit@3.72.0
+- @shopify/theme@3.72.0
+- @shopify/plugin-cloudflare@3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- 44844a7752: Update function-runner to v6.4.0
+- 78cbc67c26: Download Javy plugin ahead of time with Javy CLI
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+  - @shopify/plugin-cloudflare@3.71.5
+  - @shopify/theme@3.71.5
+
+## 3.71.4
+
+### Patch Changes
+
+- Updated dependencies [94953a671e]
+  - @shopify/cli-kit@3.71.4
+  - @shopify/plugin-cloudflare@3.71.4
+  - @shopify/theme@3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- d5b0856f78: Increase extension localization file size limit
+- 73eb727757: Fix function drafts not working during dev
+  - @shopify/cli-kit@3.71.3
+  - @shopify/theme@3.71.3
+  - @shopify/plugin-cloudflare@3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- Updated dependencies [a395820e7b]
+  - @shopify/cli-kit@3.71.2
+  - @shopify/plugin-cloudflare@3.71.2
+  - @shopify/theme@3.71.2
+
+## 3.71.1
+
+### Patch Changes
+
+- 4b93d76290: Fix error when downloading Javy plugin in parallel
+  - @shopify/cli-kit@3.71.1
+  - @shopify/theme@3.71.1
+  - @shopify/plugin-cloudflare@3.71.1
+
 ## 3.71.0
 
 ### Patch Changes
