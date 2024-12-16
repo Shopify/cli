@@ -510,7 +510,6 @@ export class PartnersClient implements DeveloperPlatformClient {
     input: SchemaDefinitionByTargetQueryVariables,
     apiKey: string,
     _organizationId: string,
-    _appId?: string,
   ): Promise<string | null> {
     // Ensures compatibility with existing partners requests
     // Can remove once migrated to AMF

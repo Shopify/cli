@@ -21,7 +21,6 @@ interface GenerateSchemaOptions {
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, stdout, developerPlatformClient, app, orgId} = options
   const apiKey = app.configuration.client_id
-  const appId = app.configuration.app_id
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
   const definition = await (usingTargets
@@ -29,7 +28,6 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
         apiKey,
-        appId,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         target: targeting![0]!.target,
         version,
@@ -39,7 +37,6 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
         apiKey,
-        appId,
         type,
         version,
         orgId,
@@ -58,7 +55,6 @@ interface BaseGenerateSchemaOptions {
   localIdentifier: string
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
-  appId?: string
   version: string
   orgId: string
 }
@@ -70,7 +66,6 @@ interface GenerateSchemaFromTargetOptions extends BaseGenerateSchemaOptions {
 async function generateSchemaFromTarget({
   localIdentifier,
   developerPlatformClient,
-  appId,
   apiKey,
   target,
   version,
@@ -81,7 +76,7 @@ async function generateSchemaFromTarget({
     version,
   }
   // Api key required for partners reqs, can be removed once fully migrated to AMF
-  const definition = await developerPlatformClient.targetSchemaDefinition(variables, apiKey, orgId, appId)
+  const definition = await developerPlatformClient.targetSchemaDefinition(variables, apiKey, orgId)
 
   if (!definition) {
     throw new AbortError(
@@ -101,7 +96,6 @@ async function generateSchemaFromApiType({
   localIdentifier,
   developerPlatformClient,
   apiKey,
-  appId,
   version,
   type,
   orgId,
@@ -111,7 +105,7 @@ async function generateSchemaFromApiType({
     type,
   }
 
-  const definition = await developerPlatformClient.apiSchemaDefinition(variables, apiKey, orgId, appId)
+  const definition = await developerPlatformClient.apiSchemaDefinition(variables, apiKey, orgId)
 
   if (!definition) {
     throw new AbortError(

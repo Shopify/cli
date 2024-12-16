@@ -122,7 +122,6 @@ describe('generateSchemaService', () => {
           },
           app.configuration.client_id,
           orgId,
-          app.configuration.app_id,
         )
       })
     })
@@ -179,7 +178,6 @@ describe('generateSchemaService', () => {
           },
           app.configuration.client_id,
           orgId,
-          app.configuration.app_id,
         )
       })
     })
