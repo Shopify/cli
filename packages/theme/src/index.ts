@@ -47,4 +47,4 @@ export {ensureValidPassword} from './cli/utilities/theme-environment/storefront-
 export {pull} from './cli/services/pull.js'
 export {push} from './cli/services/push.js'
 export {publicFetchStoreThemes as fetchStoreThemes} from './cli/utilities/theme-selector/fetch.js'
-export {ListCommand, Pull as PullCommand}
+export {ListCommand, Pull as PullCommand, Dev as DevCommand}

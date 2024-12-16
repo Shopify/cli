@@ -2,12 +2,14 @@ import {Flags} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AppInitCommand, AppDeployCommand} from '@shopify/app'
-import {PullCommand} from '@shopify/theme'
-import {renderTextPrompt, renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {ListCommand, PullCommand, DevCommand} from '@shopify/theme'
+import {renderTextPrompt, renderInfo, renderSelectPrompt, renderText} from '@shopify/cli-kit/node/ui'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {exec} from '@shopify/cli-kit/node/system'
-import {readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {outputNewline} from '@shopify/cli-kit/node/output'
+import {PassThrough} from 'stream'
 // just a chill demo
 //                                        .-+.   .-=:
 //                                     --. -. -:..:.
@@ -262,83 +264,124 @@ function numberFromGid(gid: string): number {
 async function themeDemo() {
   // assume authenticated with correct store / permissions
 
-  // await renderInfo({
-  //   customSections: [
-  //     {
-  //       title: 'Lets learn how to use the Shopify CLI for Theme Development!',
-  //       body: {
-  //         list: {
-  //           items: [
-  //             "Let's start by listing all the themes on your store",
-  //             {
-  //               link: {
-  //                 label: 'Learn more about using the Shopify CLI for Theme Development',
-  //                 url: 'https://shopify.dev/docs/storefronts/themes/getting-started/customize',
-  //               },
-  //             },
-  //             {bold: 'Completion Time: 5 minutes'},
-  //           ],
-  //         },
-  //       },
-  //     },
-  //   ],
-  // })
+  await renderInfo({
+    customSections: [
+      {
+        title: 'Lets learn how to use the Shopify CLI for Theme Development!',
+        body: {
+          list: {
+            items: [
+              "Let's start by listing all the themes on your store",
+              {
+                link: {
+                  label: 'Learn more about using the Shopify CLI for Theme Development',
+                  url: 'https://shopify.dev/docs/storefronts/themes/getting-started/customize',
+                },
+              },
+              {bold: 'Completion Time: 5 minutes'},
+            ],
+          },
+        },
+      },
+    ],
+  })
 
-  // const currentStoreFlag = '--store montyteststore.myshopify.com'
-
-  // await renderTextPrompt({
-  //   message: [
-  //     'Run the',
-  //     {command: `shopify theme list ${currentStoreFlag}`},
-  //     'command to view all current themes on your store:',
-  //   ],
-  //   validate: (value) => {
-  //     if (value !== `shopify theme list ${currentStoreFlag}`)
-  //       return `Thats not the \`shopify theme list ${currentStoreFlag}\` command!`
-  //   },
-  // })
-
-  // await ListCommand.run([])
-
-  // outputNewline()
-  // await renderInfo({
-  //   customSections: [
-  //     {
-  //       title: 'Great! This command lists all of the current themes on your store.',
-  //       body: {
-  //         list: {
-  //           items: [
-  //             "Let's now choose a theme to work on",
-  //             'We will create a new theme directory and pull the code for your live theme into it',
-  //           ],
-  //         },
-  //       },
-  //     },
-  //   ],
-  // })
-
-  // await renderText({text: 'But first lets create a theme directory to house the code for our theme.'})
-
-  // await renderTextPrompt({
-  //   message: [
-  //     'Run the',
-  //     {command: `mkdir shopify-themes && cd shopify-themes`},
-  //     'command to create and enter a new theme directory',
-  //   ],
-  //   validate: (value) => {
-  //     if (value !== `mkdir shopify-themes && cd shopify-themes`)
-  //       return `Thats not the \`mkdir shopify-themes && cd shopify-themes\` command!`
-  //   },
-  // })
-
-  await exec('sh', ['-c', 'mkdir shopify-themes && cd shopify-themes'])
+  const currentStoreFlag = '--store montyteststore.myshopify.com'
 
   await renderTextPrompt({
-    message: ['Run the', {command: `shopify theme pull --live`}, 'command to pull the code for your live theme:'],
+    message: [
+      'Run the',
+      {command: `shopify theme list ${currentStoreFlag}`},
+      'command to view all current themes on your store:',
+    ],
     validate: (value) => {
-      if (value !== `shopify theme pull --live`) return `Thats not the \`shopify theme pull --live\` command!`
+      if (value !== `shopify theme list ${currentStoreFlag}`)
+        return `Thats not the \`shopify theme list ${currentStoreFlag}\` command!`
     },
   })
 
-  await PullCommand.run([])
+  await ListCommand.run([])
+
+  outputNewline()
+  await renderInfo({
+    customSections: [
+      {
+        title: 'Great! This command lists all of the current themes on your store.',
+        body: {
+          list: {
+            items: [
+              "Let's now choose a theme to work on",
+              'We will create a new theme directory and pull the code for your live theme into it',
+            ],
+          },
+        },
+      },
+    ],
+  })
+
+  await inTemporaryDirectory(async (_tmpDir) => {
+    process.chdir(_tmpDir)
+    await renderTextPrompt({
+      message: ['Run the', {command: `shopify theme pull --live`}, 'command to pull the code for your live theme:'],
+      validate: (value) => {
+        if (value !== `shopify theme pull --live`) return `Thats not the \`shopify theme pull --live\` command!`
+      },
+    })
+    await PullCommand.run(['--live', '--force', '--path', _tmpDir])
+
+    await renderTextPrompt({
+      message: ['Run the', {command: `ls`}, 'command to list the files in the theme directory:'],
+      validate: (value) => {
+        if (value !== `ls`) return `Thats not the \`ls\` command!`
+      },
+    })
+
+    // probably a better way to `ls` lol
+    const output = new PassThrough()
+    let outputString = ''
+    output.on('data', (data: unknown) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      outputString += (data as any).toString() as string
+    })
+    await exec('ls', [_tmpDir], {
+      stdout: output,
+      stdio: undefined,
+    })
+    await renderText({text: outputString.replaceAll('\n', '\t')})
+
+    await renderInfo({
+      customSections: [
+        {
+          title: 'We now have all our theme files to work with!',
+          body: {
+            list: {
+              items: [
+                'You can make edits to your theme files locally, and push them up to your store when ready.',
+                {
+                  link: {
+                    label: 'Learn more about the code contents of a shopify theme',
+                    url: 'https://shopify.dev/docs/storefronts/themes/architecture',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    })
+
+    await renderTextPrompt({
+      message: [
+        'Lets also spin up a local server to test our changes.',
+        'Run the',
+        {command: `shopify theme dev`},
+        'command to start the local server:',
+      ],
+      validate: (value) => {
+        if (value !== `shopify theme dev`) return `Thats not the \`shopify theme dev\` command!`
+      },
+    })
+
+    await DevCommand.run(['--path', _tmpDir])
+  })
 }
