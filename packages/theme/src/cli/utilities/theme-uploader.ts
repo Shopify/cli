@@ -17,10 +17,18 @@ interface UploadOptions {
 type ChecksumWithSize = Checksum & {size: number}
 type FileBatch = ChecksumWithSize[]
 
+/**
+ * Even though the API itself can handle a higher batch size, we limit the batch file count + bytesize
+ * to avoid timeout issues happening on the theme access proxy level.
+ *
+ * The higher the batch size, the longer the proxy request lasts. We should also generally avoid long running
+ * queries against our API (i.e. over 30 seconds). There is no specific reason for these values, but were
+ * previously used against the AssetController.
+ */
 // Limits for Bulk Requests
-export const MAX_BATCH_FILE_COUNT = 50
-// 10MB
-export const MAX_BATCH_BYTESIZE = 1024 * 1024 * 10
+export const MAX_BATCH_FILE_COUNT = 20
+// 1MB
+export const MAX_BATCH_BYTESIZE = 1024 * 1024
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
 export function uploadTheme(
