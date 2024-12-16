@@ -10,7 +10,7 @@ import {Command, Hook} from '@oclif/core'
 export const hook: Hook.Postrun = async ({config, Command}) => {
   await detectStopCommand(Command as unknown as typeof Command)
   await reportAnalyticsEvent({config, exitMode: 'ok'})
-  fetchNotificationsInBackground()
+  if (!Command.hidden) fetchNotificationsInBackground()
   deprecationsHook(Command)
 
   const command = Command.id.replace(/:/g, ' ')
