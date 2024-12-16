@@ -24,7 +24,7 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
     // Closest parent directory to contain a package.json file or node_modules directory
     // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
-    const npmPrefix = execaSync('npw', ['prefix'], {cwd: path}).stdout.trim()
+    const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
 
     // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
     const binDir = argv[1] ?? ''
