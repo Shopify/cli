@@ -3,12 +3,24 @@ import {join, resolve, dirname} from 'path'
 import {tmpdir} from 'os'
 import {fileURLToPath} from 'url'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {AdminSession, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 
-export async function profile(storeUrl: string, asJson: boolean) {
+export async function profile(
+  adminSession: AdminSession,
+  password: string | undefined,
+  storeDomain: string,
+  urlPath: string,
+  asJson: boolean,
+) {
   // Fetch the profiling from the Store
-  const url = new URL(storeUrl)
+  const url = new URL(`https://${storeDomain}/${urlPath}`)
   url.searchParams.append('profile_liquid', '1')
-  const response = await fetch(url)
+  const storefrontToken = await ensureAuthenticatedStorefront([], password)
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${storefrontToken}`,
+    },
+  })
   const profileJson = await response.text()
 
   if (asJson) {
