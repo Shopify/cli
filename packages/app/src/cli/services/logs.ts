@@ -8,7 +8,7 @@ import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {consoleLog} from '@shopify/cli-kit/node/output'
+import {consoleLog, consoleWarn} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 
@@ -67,7 +67,7 @@ export async function logs(commandOptions: LogsOptions) {
 
   if (commandOptions.format === 'json') {
     consoleLog(JSON.stringify({subscribedToStores: commandOptions.storeFqdns}))
-    consoleLog(JSON.stringify({message: 'Waiting for app logs...'}))
+    consoleWarn(JSON.stringify({message: 'Waiting for app logs...'}))
     await renderJsonLogs({
       options: {
         variables,
@@ -77,7 +77,7 @@ export async function logs(commandOptions: LogsOptions) {
       storeNameById: logsConfig.storeNameById,
     })
   } else {
-    consoleLog('Waiting for app logs...\n')
+    consoleWarn('Waiting for app logs...\n')
     await renderLogs({
       options: {
         variables,
