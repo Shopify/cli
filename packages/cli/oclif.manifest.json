@@ -5835,6 +5835,14 @@
       "description": "TODO",
       "descriptionWithMarkdown": "TODO",
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Return profiling data as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",

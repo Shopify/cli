@@ -4,7 +4,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Profile extends ThemeCommand {
-  static summary = 'Profile the Liquid rendering of a theme page, and return JSON profiling data.'
+  static summary = 'Profile the Liquid rendering of a theme page.'
 
   static descriptionWithMarkdown = `TODO`
 
@@ -18,11 +18,16 @@ export default class Profile extends ThemeCommand {
       env: 'SHOPIFY_FLAG_URL',
       required: true,
     }),
+    json: Flags.boolean({
+      char: 'j',
+      description: 'Return profiling data as JSON.',
+      env: 'SHOPIFY_FLAG_JSON',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Profile)
 
-    await profile(flags.url)
+    await profile(flags.url, flags.json)
   }
 }

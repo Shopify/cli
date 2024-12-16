@@ -2092,9 +2092,10 @@ Profile the Liquid rendering of a theme page.
 
 ```
 USAGE
-  $ shopify theme profile -u <value> [--no-color] [--verbose]
+  $ shopify theme profile -u <value> [-j] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json         Return profiling data as JSON.
   -u, --url=<value>  (required) URL to the theme page to profile.
       --no-color     Disable color output.
       --verbose      Increase the verbosity of the output.
