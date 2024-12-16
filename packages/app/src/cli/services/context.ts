@@ -63,7 +63,6 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
     }
   }
   const app = await developerPlatformClient.appFromIdentifiers({
-    id: options.id,
     apiKey: options.apiKey,
     organizationId,
   })
