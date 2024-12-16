@@ -16,23 +16,28 @@ let _isGlobal: boolean | undefined
  */
 export function currentProcessIsGlobal(argv = process.argv): boolean {
   // If we are running tests, we need to disable the cache
-  if (_isGlobal !== undefined && !isUnitTest()) return _isGlobal
+  try {
+    if (_isGlobal !== undefined && !isUnitTest()) return _isGlobal
 
-  // Path where the current project is (app/hydrogen)
-  const path = sniffForPath() ?? cwd()
+    // Path where the current project is (app/hydrogen)
+    const path = sniffForPath() ?? cwd()
 
-  // Closest parent directory to contain a package.json file or node_modules directory
-  // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
-  const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
+    // Closest parent directory to contain a package.json file or node_modules directory
+    // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
+    const npmPrefix = execaSync('npw', ['prefix'], {cwd: path}).stdout.trim()
 
-  // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
-  const binDir = argv[1] ?? ''
+    // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
+    const binDir = argv[1] ?? ''
 
-  // If binDir starts with npmPrefix, then we are running a local CLI
-  const isLocal = binDir.startsWith(npmPrefix.trim())
+    // If binDir starts with npmPrefix, then we are running a local CLI
+    const isLocal = binDir.startsWith(npmPrefix.trim())
 
-  _isGlobal = !isLocal
-  return _isGlobal
+    _isGlobal = !isLocal
+    return _isGlobal
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return false
+  }
 }
 
 /**
