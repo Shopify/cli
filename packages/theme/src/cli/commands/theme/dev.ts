@@ -8,6 +8,8 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {DemoStrategy} from '@shopify/cli-kit/node/demo/index'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import type {LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
@@ -114,6 +116,15 @@ You can run this command only in a directory that matches the [default Shopify t
     }),
   }
 
+  demoStrategy: DemoStrategy = {
+    beforeCommand: () => {
+      renderWarning({
+        headline: 'Note:',
+        body: 'Close the development server at any time by pressing Ctrl+C',
+      })
+    },
+  }
+
   async run(): Promise<void> {
     const parsed = await this.parse(Dev)
     let flags = parsed.flags as typeof parsed.flags & FlagValues
@@ -136,6 +147,7 @@ You can run this command only in a directory that matches the [default Shopify t
       flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
     }
 
+    this.demoStrategy?.beforeCommand?.()
     await dev({
       adminSession,
       directory: flags.path,
