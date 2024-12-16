@@ -5,8 +5,8 @@ import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
-import {jsonOutputEnabled} from './environment.js'
 import {exec} from './system.js'
+import {jsonOutputEnabled} from './environment.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -55,7 +55,7 @@ export async function showNotificationsIfNeeded(
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
   try {
-    if (skipNotifications(environment)) return
+    if (skipNotifications(environment) || jsonOutputEnabled(environment)) return
 
     const notifications = await getNotifications()
     const commandId = getCurrentCommandId()
@@ -74,8 +74,8 @@ export async function showNotificationsIfNeeded(
   }
 }
 
-function skipNotifications(environment: NodeJS.ProcessEnv): boolean {
-  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || jsonOutputEnabled(environment)
+function skipNotifications(environment: NodeJS.ProcessEnv = process.env): boolean {
+  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST)
 }
 
 /**
@@ -152,8 +152,15 @@ async function cacheNotifications(notifications: string): Promise<void> {
  *
  * @param currentCommand - The current Shopify command being run.
  * @param argv - The arguments passed to the current process.
+ * @param environment - Process environment variables.
  */
-export function fetchNotificationsInBackground(currentCommand: string, argv = process.argv): void {
+export function fetchNotificationsInBackground(
+  currentCommand: string,
+  argv = process.argv,
+  environment: NodeJS.ProcessEnv = process.env,
+): void {
+  if (skipNotifications(environment)) return
+
   let command = 'shopify'
   const args = ['notifications', 'list']
   // Run the Shopify command the same way as the current execution when it's not the global installation

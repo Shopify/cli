@@ -426,7 +426,7 @@ describe('showNotificationsIfNeeded', () => {
 describe('fetchNotificationsInBackground', () => {
   test('calls the expected Shopify binary for global installation', async () => {
     // Given / When
-    fetchNotificationsInBackground('theme:init', ['shopify', 'theme', 'init'])
+    fetchNotificationsInBackground('theme:init', ['shopify', 'theme', 'init'], {SHOPIFY_UNIT_TEST: 'false'})
 
     // Then
     expect(exec).toHaveBeenCalledWith('shopify', ['notifications', 'list'], expect.anything())
@@ -434,7 +434,9 @@ describe('fetchNotificationsInBackground', () => {
 
   test('calls the expected Shopify binary for local installation', async () => {
     // Given / When
-    fetchNotificationsInBackground('theme:init', ['npm', 'run', 'shopify', 'theme', 'init'])
+    fetchNotificationsInBackground('theme:init', ['npm', 'run', 'shopify', 'theme', 'init'], {
+      SHOPIFY_UNIT_TEST: 'false',
+    })
 
     // Then
     expect(exec).toHaveBeenCalledWith('npm', ['run', 'shopify', 'notifications', 'list'], expect.anything())
@@ -442,7 +444,9 @@ describe('fetchNotificationsInBackground', () => {
 
   test('calls the expected Shopify binary for dev environment', async () => {
     // Given / When
-    fetchNotificationsInBackground('theme:init', ['node', 'packages/cli/bin/dev.js', 'theme', 'init'])
+    fetchNotificationsInBackground('theme:init', ['node', 'packages/cli/bin/dev.js', 'theme', 'init'], {
+      SHOPIFY_UNIT_TEST: 'false',
+    })
 
     // Then
     expect(exec).toHaveBeenCalledWith('node', ['packages/cli/bin/dev.js', 'notifications', 'list'], expect.anything())
