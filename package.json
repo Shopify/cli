@@ -244,7 +244,8 @@
         "project": "**/*.ts!",
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "speedscope"
         ],
         "vite": {
           "config": [
