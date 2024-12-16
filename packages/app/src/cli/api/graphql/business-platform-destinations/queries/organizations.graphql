@@ -1,7 +1,7 @@
 query ListOrganizations {
   currentUserAccount {
     uuid
-    organizations {
+    organizations(hasPermission: "develop_apps") {
       nodes {
         id
         name
