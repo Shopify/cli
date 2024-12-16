@@ -253,13 +253,11 @@ export interface DeveloperPlatformClient {
     input: SchemaDefinitionByTargetQueryVariables,
     apiKey: string,
     organizationId: string,
-    appId?: string,
   ) => Promise<string | null>
   apiSchemaDefinition: (
     input: SchemaDefinitionByApiTypeQueryVariables,
     apiKey: string,
     organizationId: string,
-    appId?: string,
   ) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
