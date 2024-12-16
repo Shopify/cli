@@ -149,13 +149,22 @@ async function cacheNotifications(notifications: string): Promise<void> {
 
 /**
  * Fetch notifications in background as a detached process.
+ *
+ * @param currentCommand - The current Shopify command being run.
+ * @param argv - The arguments passed to the current process.
  */
-export function fetchNotificationsInBackground(): void {
+export function fetchNotificationsInBackground(currentCommand: string, argv = process.argv): void {
+  let command = 'shopify'
+  const args = ['notifications', 'list']
+  // Run the Shopify command the same way as the current execution when it's not the global installation
+  if (argv[0] && argv[0] !== 'shopify') {
+    command = argv[0]
+    const indexValue = currentCommand.split(':')[0] ?? ''
+    const index = argv.indexOf(indexValue)
+    if (index > 0) args.unshift(...argv.slice(1, index))
+  }
   // eslint-disable-next-line no-void
-  void exec('shopify', ['notifications', 'list'], {
-    background: true,
-    env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
-  })
+  void exec(command, args, {background: true, env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}})
 }
 
 /**

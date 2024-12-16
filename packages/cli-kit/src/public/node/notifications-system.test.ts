@@ -1,12 +1,19 @@
-import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
+import {
+  Notification,
+  fetchNotificationsInBackground,
+  filterNotifications,
+  showNotificationsIfNeeded,
+} from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {sniffForJson} from './path.js'
+import {exec} from './system.js'
 import {cacheRetrieve} from '../../private/node/conf-store.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
 vi.mock('../../private/node/conf-store.js')
 vi.mock('./path.js')
+vi.mock('./system.js')
 
 const betweenVersins1and2: Notification = {
   id: 'betweenVersins1and2',
@@ -413,5 +420,31 @@ describe('showNotificationsIfNeeded', () => {
 
     // Then
     expect(renderInfo).not.toHaveBeenCalled()
+  })
+})
+
+describe('fetchNotificationsInBackground', () => {
+  test('calls the expected Shopify binary for global installation', async () => {
+    // Given / When
+    fetchNotificationsInBackground('theme:init', ['shopify', 'theme', 'init'])
+
+    // Then
+    expect(exec).toHaveBeenCalledWith('shopify', ['notifications', 'list'], expect.anything())
+  })
+
+  test('calls the expected Shopify binary for local installation', async () => {
+    // Given / When
+    fetchNotificationsInBackground('theme:init', ['npm', 'run', 'shopify', 'theme', 'init'])
+
+    // Then
+    expect(exec).toHaveBeenCalledWith('npm', ['run', 'shopify', 'notifications', 'list'], expect.anything())
+  })
+
+  test('calls the expected Shopify binary for dev environment', async () => {
+    // Given / When
+    fetchNotificationsInBackground('theme:init', ['node', 'packages/cli/bin/dev.js', 'theme', 'init'])
+
+    // Then
+    expect(exec).toHaveBeenCalledWith('node', ['packages/cli/bin/dev.js', 'notifications', 'list'], expect.anything())
   })
 })
