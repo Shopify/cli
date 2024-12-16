@@ -21,7 +21,7 @@ import {
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
-  MinimalAppIdentifiersPossiblyExcludingId,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -89,7 +89,6 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
-  ActiveAppRelease,
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
@@ -219,9 +218,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromIdentifiers(
-    appIdentifiers: MinimalAppIdentifiersPossiblyExcludingId,
-  ): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers(appIdentifiers: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
@@ -875,16 +872,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private async activeAppVersionRawResult({
-    id,
-    organizationId,
-    apiKey,
-  }: MinimalAppIdentifiersPossiblyExcludingId): Promise<ActiveAppReleaseQuery> {
-    if (id) {
-      return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
-    } else {
-      return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
-    }
+  private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
+    return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
   }
 
   private async organizationBetaFlags(
