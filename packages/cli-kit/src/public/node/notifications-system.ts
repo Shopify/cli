@@ -6,18 +6,15 @@ import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
 import {jsonOutputEnabled} from './environment.js'
+import {exec} from './system.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
+import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
 
-/**
- * Returns the URL to retrieve the notifications.
- *
- * @returns - The value from SHOPIFY_CLI_NOTIFICATIONS_URL or the default URL (https://cdn.shopify.com/static/cli/notifications.json).
- */
-export function notificationsUrl(): string {
+function url(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
 }
 
@@ -112,16 +109,53 @@ async function renderNotifications(notifications: Notification[]) {
 }
 
 /**
- * Get notifications list from cache, that is updated in the background from the fetch-notifications.json script.
+ * Get notifications list from cache, that is updated in the background from bin/fetch-notifications.json.
  *
  * @returns A Notifications object.
  */
 export async function getNotifications(): Promise<Notifications> {
-  const cacheKey: NotificationsKey = `notifications-${notificationsUrl()}`
+  const cacheKey: NotificationsKey = `notifications-${url()}`
   const rawNotifications = cacheRetrieve(cacheKey)?.value as unknown as string
   if (!rawNotifications) throw new Error(EMPTY_CACHE_MESSAGE)
   const notifications: object = JSON.parse(rawNotifications)
   return NotificationsSchema.parse(notifications)
+}
+
+/**
+ * Fetch notifications from the CDN and chache them.
+ *
+ * @returns A string with the notifications.
+ */
+export async function fetchNotifications(): Promise<Notifications> {
+  outputDebug(`Fetching  notifications...`)
+  const response = await fetch(url(), {signal: AbortSignal.timeout(3 * 1000)})
+  if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
+  const rawNotifications = await response.text()
+  await cacheNotifications(rawNotifications)
+  const notifications: object = JSON.parse(rawNotifications)
+  return NotificationsSchema.parse(notifications)
+}
+
+/**
+ * Store the notifications in the cache.
+ *
+ * @param notifications - String with the notifications to cache.
+ * @returns A Notifications object.
+ */
+async function cacheNotifications(notifications: string): Promise<void> {
+  cacheStore(`notifications-${url()}`, notifications)
+  outputDebug(`Notifications from ${url()} stored in the cache`)
+}
+
+/**
+ * Fetch notifications in background as a detached process.
+ */
+export function fetchNotificationsInBackground(): void {
+  // eslint-disable-next-line no-void
+  void exec('shopify', ['notifications', 'list'], {
+    background: true,
+    env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+  })
 }
 
 /**
