@@ -149,13 +149,12 @@ async function withOctokit(func) {
 }
 
 async function fetchFiles() {
-  const allResults = await Promise.all(schemas.map(async (schema) => {
-    return withOctokit(async (octokit) => {
+  let allSuccess = true
+  for (const schema of schemas) {
+    allSuccess = allSuccess && await withOctokit(async (octokit) => {
       return fetchFileForSchema(schema, octokit)
     })
-  }))
-
-  const allSuccess = allResults.every((result) => result)
+  }
 
   if (!allSuccess) {
     console.error('Failed to fetch all files')
