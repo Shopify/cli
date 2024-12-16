@@ -175,6 +175,8 @@ async function fetchFilesFromSpin() {
         await withOctokit(async (octokit) => {
           await fetchFileForSchema(schema, octokit)
         })
+      } else {
+        throw e
       }
     }
   }
