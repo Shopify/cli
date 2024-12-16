@@ -186,6 +186,9 @@ export async function buildFunctionExtension(
       await touchFile(bundlePath)
       await writeFile(bundlePath, base64Contents)
     }
+  } catch (error) {
+    const errorMessage = (error as Error).message ?? 'Unknown error occurred'
+    throw new AbortError('Failed to build function.', errorMessage)
   } finally {
     await releaseLock()
   }
