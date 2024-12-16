@@ -73,7 +73,7 @@
 * [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
-* [`shopify theme profile`](#shopify-theme-profile)
+* [`shopify theme profile --url /products/classic-leather-jacket`](#shopify-theme-profile---url-productsclassic-leather-jacket)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
@@ -2086,24 +2086,27 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
 
-## `shopify theme profile`
+## `shopify theme profile --url /products/classic-leather-jacket`
 
 Profile the Liquid rendering of a theme page.
 
 ```
 USAGE
-  $ shopify theme profile -u <value> [-j] [--no-color] [--verbose]
+  $ shopify theme profile --url /products/classic-leather-jacket
 
 FLAGS
-  -j, --json         Return profiling data as JSON.
-  -u, --url=<value>  (required) URL to the theme page to profile.
-      --no-color     Disable color output.
-      --verbose      Increase the verbosity of the output.
+  -j, --json              Return profiling data as JSON.
+  -s, --store=<value>     Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                          (example.myshopify.com, https://example.myshopify.com).
+  -u, --url=<value>       (required) URL to the theme page to profile.
+      --no-color          Disable color output.
+      --password=<value>  Password generated from the Theme Access app.
+      --verbose           Increase the verbosity of the output.
 
 DESCRIPTION
   Profile the Liquid rendering of a theme page.
 
-  TODO
+  Profile the Shopify Liquid on a given page (URL).
 ```
 
 ## `shopify theme publish`

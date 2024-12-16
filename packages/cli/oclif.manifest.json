@@ -5832,8 +5832,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "TODO",
-      "descriptionWithMarkdown": "TODO",
+      "description": "Profile the Shopify Liquid on a given page (URL).",
+      "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page (URL).",
       "flags": {
         "json": {
           "allowNo": false,
@@ -5850,6 +5850,23 @@
           "hidden": false,
           "name": "no-color",
           "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
         },
         "url": {
           "char": "u",
@@ -5878,7 +5895,10 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Profile the Liquid rendering of a theme page."
+      "summary": "Profile the Liquid rendering of a theme page.",
+      "usage": [
+        "theme profile --url /products/classic-leather-jacket"
+      ]
     },
     "theme:publish": {
       "aliases": [
