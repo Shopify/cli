@@ -1366,6 +1366,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
+    createTunnel: (_input: string) => Promise.resolve({tunnelCreate: {tunnelUrl: 'tunnel-url', userErrors: []}}),
     devSessionUpdate: (_input: DevSessionOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     getCreateDevStoreLink: (_input: string) =>
