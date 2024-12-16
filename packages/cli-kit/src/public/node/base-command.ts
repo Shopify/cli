@@ -107,7 +107,6 @@ abstract class BaseCommand extends Command {
     await addFromParsedFlags(result.flags)
 
     // <==
-    console.log(result.flags)
     return {...result, ...{argv: result.argv as string[]}}
   }
 

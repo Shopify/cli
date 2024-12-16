@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {ALLOWED_ROLES, Role} from '../../utilities/theme-selector/fetch.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
@@ -35,13 +34,11 @@ export default class List extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
-    console.log('Were in the list command')
 
     if (flags.environment) {
       await Promise.all(
         flags.environment.map(async (env) => {
           const envConfig = await loadEnvironment(env, 'shopify.theme.toml')
-          console.log(`Environment config for ${env}:`, envConfig)
           const envFlags = {
             ...flags,
             ...envConfig,
