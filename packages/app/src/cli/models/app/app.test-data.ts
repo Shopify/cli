@@ -18,6 +18,7 @@ import {
   OrganizationApp,
   MinimalOrganizationApp,
   AppApiKeyAndOrgId,
+  OrganizationSource,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -176,6 +177,7 @@ export function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
+    source: OrganizationSource.BusinessPlatform,
   }
 }
 
