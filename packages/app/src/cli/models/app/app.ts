@@ -54,7 +54,6 @@ function removeTrailingPathSeparator(value: string[] | undefined) {
  */
 export const AppSchema = zod.object({
   client_id: zod.string(),
-  app_id: zod.string().optional(),
   organization_id: zod.string().optional(),
   build: zod
     .object({

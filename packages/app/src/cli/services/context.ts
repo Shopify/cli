@@ -51,7 +51,7 @@ interface AppFromIdOptions {
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export const appFromId = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
+export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
   let organizationId = options.organizationId
   let developerPlatformClient = options.developerPlatformClient
   if (!organizationId) {
@@ -62,8 +62,7 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
       organizationId = org.id
     }
   }
-  const app = await developerPlatformClient.appFromId({
-    id: options.id ?? 'no-id-available',
+  const app = await developerPlatformClient.appFromIdentifiers({
     apiKey: options.apiKey,
     organizationId,
   })

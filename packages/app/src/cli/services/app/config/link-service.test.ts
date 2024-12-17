@@ -1,7 +1,7 @@
 import link from './link.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
+import {AppApiKeyAndOrgId, OrganizationApp} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -18,7 +18,7 @@ beforeEach(async () => {})
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
@@ -89,7 +89,6 @@ embedded = false
 `
       expect(configuration).toEqual({
         client_id: 'api-key',
-        app_id: '1',
         name: 'app1',
         application_url: '',
         embedded: true,
