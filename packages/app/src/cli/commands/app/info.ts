@@ -40,7 +40,6 @@ export default class AppInfo extends AppCommand {
       userProvidedConfigName: flags.config,
       unsafeReportMode: true,
     })
-
     outputInfo(
       await info(app, remoteApp, {
         format: (flags.json ? 'json' : 'text') as Format,
