@@ -26,7 +26,7 @@ class RequestIDCollection {
   }
 
   /**
-   * Get all collected request IDs as a comma-separated string
+   * Get all collected request IDs
    */
   getRequestIds(): string[] {
     return this.requestIds
