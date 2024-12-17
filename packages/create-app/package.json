@@ -62,7 +62,7 @@
     "@shopify/app": "3.72.0",
     "@types/node": "18.19.3",
     "esbuild-plugin-copy": "^2.1.1",
-    "@vitest/coverage-istanbul": "^1.6.0"
+    "@vitest/coverage-istanbul": "2.1.8"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"
