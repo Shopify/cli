@@ -1,4 +1,4 @@
-import {requestIdsCollection} from './request-ids.js'
+import {MAX_REQUEST_IDS, requestIdsCollection} from './request-ids.js'
 import {describe, test, expect, beforeEach} from 'vitest'
 
 describe('RequestIDCollection', () => {
@@ -31,7 +31,7 @@ describe('RequestIDCollection', () => {
 
   test('limits collection to MAX_REQUEST_IDS', () => {
     // When
-   for (let i = 0; i < MAX_REQUEST_IDS + 20; i++) {
+    for (let i = 0; i < MAX_REQUEST_IDS + 20; i++) {
       requestIdsCollection.addRequestId(`request-${i}`)
     }
 
