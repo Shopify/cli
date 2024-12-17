@@ -3,7 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme profile',
-  description: `Profile the Shopify Liquid on a given page (URL).`,
+  description: `Profile the Shopify Liquid on a given page.
+
+  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.`,
   overviewPreviewDescription: `Profile the Liquid rendering of a theme page.`,
   type: 'command',
   isVisualComponent: false,

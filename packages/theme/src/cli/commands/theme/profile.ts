@@ -10,7 +10,9 @@ export default class Profile extends ThemeCommand {
 
   static usage = ['theme profile --url /products/classic-leather-jacket']
 
-  static descriptionWithMarkdown = `Profile the Shopify Liquid on a given page (URL).`
+  static descriptionWithMarkdown = `Profile the Shopify Liquid on a given page.
+
+  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.`
 
   static description = this.descriptionWithoutMarkdown()
 
