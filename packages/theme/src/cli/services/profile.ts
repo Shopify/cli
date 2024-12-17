@@ -24,14 +24,24 @@ export async function profile(password: string | undefined, storeDomain: string,
   }
 }
 
+async function resolveSpeedscope() {
+  if (import.meta.resolve) {
+    return import.meta.resolve('speedscope/dist/release/index.html')
+  } else {
+    try {
+      const speedscopePath = require.resolve('speedscope/package.json')
+      const speedscopeDir = speedscopePath.replace('/package.json', '')
+      return `file://${speedscopeDir}/dist/release/index.html`
+    } catch (error) {
+      throw new Error("Can't find Speedscope package")
+    }
+  }
+}
+
 async function openProfile(profileJson: string) {
   // Adapted from https://github.com/jlfwong/speedscope/blob/146477a8508a6d2da697cb0ea0a426ba81b3e8dc/bin/cli.js#L63
-  let urlToOpen
-  if (import.meta.resolve) {
-    urlToOpen = await import.meta.resolve('speedscope/dist/release/index.html')
-  } else {
-    throw "Can't find Speedscope"
-  }
+  let urlToOpen = await resolveSpeedscope()
+
   const filename = 'liquid-profile'
   const sourceBase64 = Buffer.from(profileJson).toString('base64')
   const jsSource = `speedscope.loadFileFromBase64(${JSON.stringify(filename)}, ${JSON.stringify(sourceBase64)})`
