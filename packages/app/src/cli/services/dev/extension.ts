@@ -1,7 +1,7 @@
 import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
-import {AppEvent, AppEventWatcher} from './app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -127,8 +127,25 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const eventHandler = async ({extensionEvents}: AppEvent) => {
     for (const event of extensionEvents) {
       const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
-      // eslint-disable-next-line no-await-in-loop
-      await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+
+      switch (event.type) {
+        case EventType.Created:
+          payloadStoreOptions.extensions.push(event.extension)
+          // eslint-disable-next-line no-await-in-loop
+          await payloadStore.addExtension(event.extension, bundlePath)
+          break
+        case EventType.Updated:
+          // eslint-disable-next-line no-await-in-loop
+          await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+          break
+        case EventType.Deleted:
+          payloadStoreOptions.extensions = payloadStoreOptions.extensions.filter(
+            (ext) => ext.devUUID !== event.extension.devUUID,
+          )
+          // eslint-disable-next-line no-await-in-loop
+          await payloadStore.deleteExtension(event.extension)
+          break
+      }
     }
   }
 
