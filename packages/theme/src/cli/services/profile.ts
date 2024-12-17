@@ -1,18 +1,17 @@
 import {openURL} from '@shopify/cli-kit/node/system'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
-import {joinPath, resolvePath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from 'fs/promises'
 import {tmpdir} from 'os'
-import {fileURLToPath} from 'url'
 
 export async function profile(password: string | undefined, storeDomain: string, urlPath: string, asJson: boolean) {
   // Fetch the profiling from the Store
   const url = new URL(`https://${storeDomain}/${urlPath}`)
-  url.searchParams.append('profile_liquid', '1')
   const storefrontToken = await ensureAuthenticatedStorefront([], password)
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${storefrontToken}`,
+      Accept: 'application/vnd.speedscope+json',
     },
   })
   const profileJson = await response.text()
@@ -27,11 +26,13 @@ export async function profile(password: string | undefined, storeDomain: string,
 
 async function openProfile(profileJson: string) {
   // Adapted from https://github.com/jlfwong/speedscope/blob/146477a8508a6d2da697cb0ea0a426ba81b3e8dc/bin/cli.js#L63
-  const __filename = fileURLToPath(import.meta.url)
-  const __dirname = dirname(__filename)
-  let urlToOpen = `file://${resolvePath(__dirname, '../../../node_modules/speedscope/dist/release/index.html')}`
+  let urlToOpen
+  if (import.meta.resolve) {
+    urlToOpen = await import.meta.resolve('speedscope/dist/release/index.html')
+  } else {
+    throw "Can't find Speedscope"
+  }
   const filename = 'liquid-profile'
-
   const sourceBase64 = Buffer.from(profileJson).toString('base64')
   const jsSource = `speedscope.loadFileFromBase64(${JSON.stringify(filename)}, ${JSON.stringify(sourceBase64)})`
 
