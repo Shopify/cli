@@ -29,6 +29,7 @@ export interface Schemas {
       env_plugin_installed_all?: Optional<string>
     }
     public: {
+      business_platform_id?: Optional<number>
       partner_id?: Optional<number>
       command: string
       project_type?: Optional<string>
