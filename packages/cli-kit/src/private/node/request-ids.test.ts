@@ -31,7 +31,7 @@ describe('RequestIDCollection', () => {
 
   test('limits collection to MAX_REQUEST_IDS', () => {
     // When
-    for (let i = 0; i < 120; i++) {
+   for (let i = 0; i < MAX_REQUEST_IDS + 20; i++) {
       requestIdsCollection.addRequestId(`request-${i}`)
     }
 
