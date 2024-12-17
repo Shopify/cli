@@ -5808,7 +5808,7 @@
   },
   {
     "name": "theme profile",
-    "description": "Profile the Shopify Liquid on a given page (URL).",
+    "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
     "overviewPreviewDescription": "Profile the Liquid rendering of a theme page.",
     "type": "command",
     "isVisualComponent": false,

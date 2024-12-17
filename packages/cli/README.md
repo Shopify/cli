@@ -2106,7 +2106,10 @@ FLAGS
 DESCRIPTION
   Profile the Liquid rendering of a theme page.
 
-  Profile the Shopify Liquid on a given page (URL).
+  Profile the Shopify Liquid on a given page.
+
+  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given
+  page.
 ```
 
 ## `shopify theme publish`

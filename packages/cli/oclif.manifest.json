@@ -5832,8 +5832,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Profile the Shopify Liquid on a given page (URL).",
-      "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page (URL).",
+      "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "flags": {
         "json": {
           "allowNo": false,
