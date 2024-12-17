@@ -1,7 +1,9 @@
+const MAX_REQUEST_IDS = 100
+
 /**
  * Manages collection of request IDs during command execution
  */
-export class RequestIDCollection {
+class RequestIDCollection {
   private static instance: RequestIDCollection
 
   static getInstance(): RequestIDCollection {
@@ -11,17 +13,14 @@ export class RequestIDCollection {
     return RequestIDCollection.instance
   }
 
-  // We only report the last 1000 request IDs.
-  private readonly maxRequestIds = 1000
   private requestIds: string[] = []
-
-  private constructor() {}
 
   /**
    * Add a request ID to the collection
+   * We only report the first MAX_REQUEST_IDS request IDs.
    */
   addRequestId(requestId: string | undefined | null) {
-    if (requestId) {
+    if (requestId && this.requestIds.length < MAX_REQUEST_IDS) {
       this.requestIds.push(requestId)
     }
   }
@@ -30,7 +29,7 @@ export class RequestIDCollection {
    * Get all collected request IDs as a comma-separated string
    */
   getRequestIds(): string[] {
-    return this.requestIds.slice(-this.maxRequestIds)
+    return this.requestIds
   }
 
   /**
