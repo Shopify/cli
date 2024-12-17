@@ -107,11 +107,9 @@ async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) 
   try {
     const requestId = response.headers.get('x-request-id')
     requestIdsCollection.addRequestId(requestId)
-    await addPublicMetadata(async () => {
-      return {
-        cmd_all_last_graphql_request_id: requestId ?? undefined,
-      }
-    })
+    await addPublicMetadata(() => ({
+      cmd_all_last_graphql_request_id: requestId ?? undefined,
+    }))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     // no problem if unable to get request ID.
