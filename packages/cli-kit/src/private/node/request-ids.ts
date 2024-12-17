@@ -1,4 +1,4 @@
-const MAX_REQUEST_IDS = 100
+export const MAX_REQUEST_IDS = 100
 
 /**
  * Manages collection of request IDs during command execution
