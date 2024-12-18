@@ -93,6 +93,7 @@ describe('generateSchemaService', () => {
             type: 'api_type',
             build: {
               command: 'echo "hello world"',
+              wasm_opt: true,
             },
             api_version: 'unstable',
             configuration_ui: true,
@@ -121,7 +122,6 @@ describe('generateSchemaService', () => {
           },
           app.configuration.client_id,
           orgId,
-          app.configuration.app_id,
         )
       })
     })
@@ -148,6 +148,7 @@ describe('generateSchemaService', () => {
             ],
             build: {
               command: 'echo "hello world"',
+              wasm_opt: true,
             },
             api_version: 'unstable',
             configuration_ui: true,
@@ -177,7 +178,6 @@ describe('generateSchemaService', () => {
           },
           app.configuration.client_id,
           orgId,
-          app.configuration.app_id,
         )
       })
     })

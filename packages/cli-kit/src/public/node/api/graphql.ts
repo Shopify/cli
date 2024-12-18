@@ -2,7 +2,14 @@ import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
-import {GraphQLClient, rawRequest, RequestDocument, resolveRequestDocument, Variables} from 'graphql-request'
+import {
+  GraphQLClient,
+  rawRequest,
+  RequestDocument,
+  resolveRequestDocument,
+  Variables,
+  ClientError,
+} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 // to replace TVariable type when there graphql query has no variables
@@ -62,9 +69,27 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   const clientOptions = {agent: await httpsAgent(), headers}
   const client = new GraphQLClient(url, clientOptions)
 
+  const performRequest = async () => {
+    let fullResponse: GraphQLResponse<TResult>
+    // there is a errorPolicy option which returns rather than throwing on errors, but we _do_ ultimately want to
+    // throw.
+    try {
+      fullResponse = await client.rawRequest<TResult>(queryAsString, variables)
+      await logLastRequestIdFromResponse(fullResponse)
+      return fullResponse
+    } catch (error) {
+      if (error instanceof ClientError) {
+        // error.response does have a headers property like a normal response, but it's not typed as such.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await logLastRequestIdFromResponse(error.response as any)
+      }
+      throw error
+    }
+  }
+
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     const response = await retryAwareRequest(
-      {request: () => client.rawRequest<TResult>(queryAsString, variables), url},
+      {request: performRequest, url},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
       unauthorizedHandler,
     )
@@ -73,20 +98,22 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       responseOptions.onResponse(response)
     }
 
-    try {
-      const requestId = response.headers.get('x-request-id')
-      await addPublicMetadata(async () => {
-        return {
-          cmd_all_last_graphql_request_id: requestId ?? undefined,
-        }
-      })
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch {
-      // no problem if unable to get request ID.
-    }
-
     return response.data
   })
+}
+
+async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) {
+  try {
+    const requestId = response.headers.get('x-request-id')
+    await addPublicMetadata(async () => {
+      return {
+        cmd_all_last_graphql_request_id: requestId ?? undefined,
+      }
+    })
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // no problem if unable to get request ID.
+  }
 }
 
 /**

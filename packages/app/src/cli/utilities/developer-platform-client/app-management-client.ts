@@ -21,6 +21,7 @@ import {
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -88,10 +89,10 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
-  ActiveAppRelease,
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
+import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
@@ -217,7 +218,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers(appIdentifiers: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
@@ -789,12 +790,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async targetSchemaDefinition(
     input: SchemaDefinitionByTargetQueryVariables,
-    _apiKey: string,
+    apiKey: string,
     organizationId: string,
-    appId?: string,
   ): Promise<string | null> {
     try {
-      const appIdNumber = String(numberFromGid(appId!))
+      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const appIdNumber = String(numberFromGid(app.id))
       const token = await this.token()
       const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
         organizationId,
@@ -815,12 +816,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async apiSchemaDefinition(
     input: SchemaDefinitionByApiTypeQueryVariables,
-    _apiKey: string,
+    apiKey: string,
     organizationId: string,
-    appId?: string,
   ): Promise<string | null> {
     try {
-      const appIdNumber = String(numberFromGid(appId!))
+      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const appIdNumber = String(numberFromGid(app.id))
       const token = await this.token()
       const result = await functionsRequestDoc<SchemaDefinitionByApiTypeQuery, SchemaDefinitionByApiTypeQueryVariables>(
         organizationId,
@@ -871,8 +872,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
-    return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
+  private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
+    return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
   }
 
   private async organizationBetaFlags(

@@ -13,7 +13,9 @@ import {
 import {
   OnlineStoreThemeFileBodyInputType,
   OnlineStoreThemeFilesUpsertFileInput,
+  MetafieldOwnerType,
 } from '../../../cli/api/graphql/admin/generated/types.js'
+import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -286,6 +288,23 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
   }
 
   return true
+}
+
+export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
+  const {metafieldDefinitions} = await adminRequestDoc(MetafieldDefinitionsByOwnerType, session, {
+    ownerType: type,
+  })
+
+  return metafieldDefinitions.nodes.map((definition) => ({
+    key: definition.key,
+    namespace: definition.namespace,
+    name: definition.name,
+    description: definition.description,
+    type: {
+      name: definition.type.name,
+      category: definition.type.category,
+    },
+  }))
 }
 
 async function request<T>(

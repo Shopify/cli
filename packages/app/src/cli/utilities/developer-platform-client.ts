@@ -3,6 +3,7 @@ import {AppManagementClient} from './developer-platform-client/app-management-cl
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -213,7 +214,7 @@ export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (app: MinimalAppIdentifiers) => Promise<OrganizationApp | undefined>
+  appFromIdentifiers: (app: AppApiKeyAndOrgId) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
@@ -252,13 +253,11 @@ export interface DeveloperPlatformClient {
     input: SchemaDefinitionByTargetQueryVariables,
     apiKey: string,
     organizationId: string,
-    appId?: string,
   ) => Promise<string | null>
   apiSchemaDefinition: (
     input: SchemaDefinitionByApiTypeQueryVariables,
     apiKey: string,
     organizationId: string,
-    appId?: string,
   ) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string

@@ -1,3 +1,5 @@
+import {hyphenate} from '@shopify/cli-kit/common/string'
+
 export const contextToTarget = (context: string) => {
   const splitContext = context.split('#')
   if (splitContext.length !== 2 || splitContext.some((part) => part === '' || part === undefined)) {
@@ -34,6 +36,6 @@ const typeToSubDomain = (type: string) => {
     case 'variants':
       return 'product-variant'
     default:
-      return type.toLocaleLowerCase().replace(new RegExp(`(s)$`), '')
+      return hyphenate(type.toLocaleLowerCase().replace(new RegExp(`(s)$`), ''))
   }
 }

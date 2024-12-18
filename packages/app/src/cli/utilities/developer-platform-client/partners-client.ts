@@ -15,6 +15,7 @@ import {
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -263,7 +264,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
     const variables: FindAppQueryVariables = {apiKey}
     const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
     const app = res.app
@@ -509,7 +510,6 @@ export class PartnersClient implements DeveloperPlatformClient {
     input: SchemaDefinitionByTargetQueryVariables,
     apiKey: string,
     _organizationId: string,
-    _appId?: string,
   ): Promise<string | null> {
     // Ensures compatibility with existing partners requests
     // Can remove once migrated to AMF

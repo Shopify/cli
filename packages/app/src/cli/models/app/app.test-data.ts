@@ -17,6 +17,7 @@ import {
   MinimalAppIdentifiers,
   OrganizationApp,
   MinimalOrganizationApp,
+  AppApiKeyAndOrgId,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -502,6 +503,7 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     build: {
       command: 'echo "hello world"',
       watch: ['src/**/*.rs'],
+      wasm_opt: true,
     },
     api_version: '2022-07',
     configuration_ui: true,
@@ -1318,7 +1320,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromId: (_app: MinimalAppIdentifiers) => Promise.resolve(testOrganizationApp()),
+    appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
