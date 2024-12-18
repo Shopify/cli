@@ -20,7 +20,7 @@ import {
 import {
   fetchOrCreateOrganizationApp,
   logMetadataForLoadedContext,
-  appFromId,
+  appFromIdentifiers,
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
 import {
@@ -52,6 +52,7 @@ export interface LinkOptions {
   configName?: string
   baseConfigName?: string
   developerPlatformClient?: DeveloperPlatformClient
+  isNewApp?: boolean
 }
 
 interface LinkOutput {
@@ -134,7 +135,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromId({
+    const remoteApp = await appFromIdentifiers({
       apiKey: options.apiKey,
       id: options.appId,
       developerPlatformClient,
@@ -280,7 +281,7 @@ async function loadLocalAppOptions(
         appDirectory: app.directory,
         packageManager: app.packageManager,
       }
-    } else if (app.configuration.client_id === remoteAppApiKey) {
+    } else if (app.configuration.client_id === remoteAppApiKey || options.isNewApp) {
       return {
         state: 'reusable-current-app',
         configFormat: 'current',
@@ -386,7 +387,6 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
         ...(localAppOptions.existingConfig ?? {}),
       },
       {
-        app_id: remoteApp.id,
         client_id: remoteApp.apiKey,
         path: configFilePath,
         ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),

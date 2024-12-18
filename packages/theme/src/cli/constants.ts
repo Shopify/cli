@@ -32,3 +32,5 @@ export const DEFAULT_IGNORE_PATTERNS = [
   '**/node_modules/',
   '.prettierrc.json',
 ]
+
+export const MAX_GRAPHQL_THEME_FILES = 50

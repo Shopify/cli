@@ -1,13 +1,15 @@
 /* eslint-disable tsdoc/syntax */
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
-import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
+import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {createTheme, fetchChecksums, publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
@@ -19,14 +21,8 @@ import {
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-
-export interface ThemeSelectionOptions {
-  live?: boolean
-  development?: boolean
-  unpublished?: boolean
-  theme?: string
-  'allow-live'?: boolean
-}
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {Severity} from '@shopify/theme-check-node'
 
 interface PushOptions {
   path: string
@@ -59,9 +55,6 @@ export interface PushFlags {
 
   /** Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com). */
   store?: string
-
-  /** The environment to apply to the current command. */
-  environment?: string
 
   /** Theme ID or name of the remote theme. */
   theme?: string
@@ -101,6 +94,9 @@ export interface PushFlags {
 
   /** Increase the verbosity of the output. */
   verbose?: boolean
+
+  /** Require theme check to pass without errors before pushing. Warnings are allowed. */
+  strict?: boolean
 }
 
 /**
@@ -109,14 +105,32 @@ export interface PushFlags {
  * @param flags - The flags for the push operation.
  */
 export async function push(flags: PushFlags): Promise<void> {
+  if (flags.strict) {
+    const outputType = flags.json ? 'json' : 'text'
+    const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
+
+    if (offenses.length > 0) {
+      const errorOffenses = offenses.filter((offense) => offense.severity === Severity.ERROR)
+      if (errorOffenses.length > 0) {
+        throw new AbortError('Theme check failed. Please fix the errors before pushing.')
+      }
+    }
+  }
+
   const {path} = flags
+
+  configureCLIEnvironment({
+    verbose: flags.verbose,
+    noColor: flags.noColor,
+  })
+
   const force = flags.force ?? false
 
   const store = ensureThemeStore({store: flags.store})
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
   const workingDirectory = path ? resolvePath(path) : cwd()
-  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await currentDirectoryConfirmed(force))) {
+  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
     return
   }
 
@@ -127,12 +141,12 @@ export async function push(flags: PushFlags): Promise<void> {
 
   await executePush(selectedTheme, adminSession, {
     path: workingDirectory,
-    nodelete: flags.nodelete || false,
-    publish: flags.publish || false,
-    json: flags.json || false,
+    nodelete: flags.nodelete ?? false,
+    publish: flags.publish ?? false,
+    json: flags.json ?? false,
     force,
-    ignore: flags.ignore || [],
-    only: flags.only || [],
+    ignore: flags.ignore ?? [],
+    only: flags.only ?? [],
   })
 }
 
@@ -158,7 +172,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   await renderThemeSyncProgress()
 
   if (options.publish) {
-    await publishTheme(theme.id, session)
+    await themePublish(theme.id, session)
   }
 
   await handlePushOutput(uploadResults, theme, session, options)
@@ -224,7 +238,7 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
   }
 
   if (hasErrors) {
-    const message = `The theme ${themeComponent(theme).join(' ')} was pushed with errors`
+    const message = `The theme '${theme.name}' was pushed with errors`
     output.theme.warning = message
   }
   outputInfo(JSON.stringify(output))
@@ -284,17 +298,14 @@ function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
   }
 }
 
-export async function createOrSelectTheme(
-  adminSession: AdminSession,
-  flags: ThemeSelectionOptions,
-): Promise<Theme | undefined> {
+export async function createOrSelectTheme(adminSession: AdminSession, flags: PushFlags): Promise<Theme | undefined> {
   const {live, development, unpublished, theme} = flags
 
   if (development) {
     const themeManager = new DevelopmentThemeManager(adminSession)
     return themeManager.findOrCreate()
   } else if (unpublished) {
-    const themeName = theme || (await promptThemeName('Name of the new theme'))
+    const themeName = theme ?? (await promptThemeName('Name of the new theme'))
     return createTheme(
       {
         name: themeName,
@@ -312,7 +323,7 @@ export async function createOrSelectTheme(
       },
     })
 
-    if (await confirmPushToTheme(selectedTheme.role as Role, flags['allow-live'], adminSession.storeFqdn)) {
+    if (await confirmPushToTheme(selectedTheme.role as Role, flags.allowLive, adminSession.storeFqdn)) {
       return selectedTheme
     }
   }

@@ -3,6 +3,7 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {resolvePath, relativizePath} from '@shopify/cli-kit/node/path'
+import {parseJSON} from '@shopify/theme-check-node'
 
 const themeFilesPattern = [
   'assets/**',
@@ -42,14 +43,27 @@ async function getThemePackageName(inputDirectory: string) {
     throw new AbortError('Provide a config/settings_schema.json to package your theme.')
   }
 
-  const parsedSettings = JSON.parse(await readFile(settingsPath))
-  const themeInfo = parsedSettings.find((setting: {name: string}) => setting.name === 'theme_info')
+  const themeInfo = await getThemeInfo(settingsPath)
 
   if (themeInfo === undefined || themeInfo.theme_name === undefined) {
-    throw new AbortError('Provide a theme_info.theme_name configuration in config/settings_schema.json')
+    throw new AbortError('Provide a theme_info.theme_name configuration in config/settings_schema.json.')
   }
 
   const themeNameVersion = [themeInfo.theme_name, themeInfo.theme_version].filter(Boolean).join('-')
 
   return `${themeNameVersion}.zip`
+}
+
+async function getThemeInfo(settingsPath: string) {
+  const parsedSettings = parseJSON(await readFile(settingsPath), null)
+
+  if (!parsedSettings) {
+    throw new AbortError(
+      `The file config/settings_schema.json contains an error. Please check if the file is valid JSON and includes the theme_info.theme_name configuration.`,
+    )
+  }
+
+  return parsedSettings.find((setting: {name: string}) => {
+    return setting.name === 'theme_info'
+  })
 }

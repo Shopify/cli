@@ -44,6 +44,8 @@ export const validateFieldShape = (
     return baseFieldSchema
       .extend({
         required: zod.boolean().optional(),
+        marketingActivityCreateUrl: zod.string().optional(),
+        marketingActivityDeleteUrl: zod.string().optional(),
       })
       .parse(configField)
   }

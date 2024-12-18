@@ -1,0 +1,7 @@
+query SchemaDefinitionByApiType($type: String!, $version: String!) {
+  api(type: $type) {
+    schema(version: $version) {
+      definition
+    }
+  }
+}

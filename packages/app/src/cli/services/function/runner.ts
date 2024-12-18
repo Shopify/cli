@@ -1,4 +1,4 @@
-import {functionRunnerBinary, installBinary} from './binaries.js'
+import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -19,7 +19,7 @@ interface FunctionRunnerOptions {
 
 export async function runFunction(options: FunctionRunnerOptions) {
   const functionRunner = functionRunnerBinary()
-  await installBinary(functionRunner)
+  await downloadBinary(functionRunner)
 
   const args: string[] = []
   if (options.inputPath) {

@@ -11,7 +11,14 @@ import {
   getAppVersionedSchema,
 } from './app.js'
 import {ExtensionTemplate} from './template.js'
-import {Organization, OrganizationStore, MinimalAppIdentifiers, OrganizationApp} from '../organization.js'
+import {
+  Organization,
+  OrganizationStore,
+  MinimalAppIdentifiers,
+  OrganizationApp,
+  MinimalOrganizationApp,
+  AppApiKeyAndOrgId,
+} from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -21,8 +28,9 @@ import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
-  ActiveAppVersion,
+  AppVersion,
   AppVersionIdentifiers,
+  AppVersionWithContext,
   AssetUrlSchema,
   CreateAppOptions,
   DeveloperPlatformClient,
@@ -41,7 +49,6 @@ import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../service
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppVersionByTagSchema, AppVersionByTagVariables} from '../../api/graphql/app_version_by_tag.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
   MigrateFlowExtensionSchema,
@@ -49,8 +56,6 @@ import {
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
-import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -63,6 +68,8 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -109,7 +116,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
   })
@@ -213,7 +219,32 @@ export async function testUIExtension(
         sources: [],
       },
     },
-    targeting: [{target: 'target1'}, {target: 'target2'}],
+    extension_points: [
+      {
+        target: 'target1',
+        module: 'module1',
+        build_manifest: {
+          assets: {
+            main: {
+              module: 'module1',
+              filepath: uiExtension?.handle ? `/${uiExtension.handle}.js` : '/test-ui-extension.js',
+            },
+          },
+        },
+      },
+      {
+        target: 'target2',
+        module: 'module2',
+        build_manifest: {
+          assets: {
+            main: {
+              module: 'module2',
+              filepath: uiExtension?.handle ? `/${uiExtension.handle}.js` : '/test-ui-extension.js',
+            },
+          },
+        },
+      },
+    ],
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
@@ -255,7 +286,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
-export async function testAppConfigExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppConfigExtensions(emptyConfig = false, directory?: string): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -270,14 +301,17 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification,
   })
 
   return extension
 }
 
-export async function testAppAccessConfigExtension(emptyConfig = false): Promise<ExtensionInstance> {
+export async function testAppAccessConfigExtension(
+  emptyConfig = false,
+  directory?: string,
+): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
     : ({
@@ -296,7 +330,7 @@ export async function testAppAccessConfigExtension(emptyConfig = false): Promise
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: 'shopify.app.toml',
-    directory: './',
+    directory: directory ?? './',
     specification: appAccessSpec,
   })
 
@@ -467,6 +501,8 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     type: 'product_discounts',
     build: {
       command: 'echo "hello world"',
+      watch: ['src/**/*.rs'],
+      wasm_opt: true,
     },
     api_version: '2022-07',
     configuration_ui: true,
@@ -859,6 +895,50 @@ const testRemoteSpecifications: RemoteSpecification[] = [
       registrationLimit: 1,
     },
   },
+  {
+    name: 'Remote Extension Without Schema and Without local spec',
+    externalName: 'Extension Test 1',
+    identifier: 'remote_only_extension_without_schema',
+    externalIdentifier: 'remote_only_extension_without_schema_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, without localization',
+    externalName: 'Extension Test 2',
+    identifier: 'remote_only_extension_schema',
+    externalIdentifier: 'remote_only_extension_schema_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, with localization',
+    externalName: 'Extension Test 3',
+    identifier: 'remote_only_extension_schema_with_localization',
+    externalIdentifier: 'remote_only_extension_schema_with_localization_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
+    },
+  },
 ]
 
 const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
@@ -1069,21 +1149,17 @@ const emptyAppVersions = {
   },
 }
 
-const emptyActiveAppVersion: ActiveAppVersion = {
+const emptyActiveAppVersion: AppVersion = {
   appModuleVersions: [],
 }
 
-const appVersionByTagResponse: AppVersionByTagSchema = {
-  app: {
-    appVersion: {
-      id: 1,
-      uuid: 'uuid',
-      versionTag: 'version-tag',
-      location: 'location',
-      message: 'MESSAGE',
-      appModuleVersions: [],
-    },
-  },
+const appVersionByTagResponse: AppVersionWithContext = {
+  id: 1,
+  uuid: 'uuid',
+  versionTag: 'version-tag',
+  location: 'location',
+  message: 'MESSAGE',
+  appModuleVersions: [],
 }
 
 const appVersionsDiffResponse: AppVersionsDiffSchema = {
@@ -1216,7 +1292,6 @@ const currentAccountInfoResponse: CurrentAccountInfoSchema = {
   currentAccountInfo: {
     __typename: 'UserAccount',
     email: 'user@example.com',
-    orgName: 'org1',
   },
 }
 
@@ -1244,7 +1319,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromId: (_app: MinimalAppIdentifiers) => Promise.resolve(testOrganizationApp()),
+    appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
@@ -1259,7 +1334,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
-    appVersionByTag: (_input: AppVersionByTagVariables) => Promise.resolve(appVersionByTagResponse),
+    appVersionByTag: (_app: MinimalOrganizationApp, _tag: string) => Promise.resolve(appVersionByTagResponse),
     appVersionsDiff: (_input: AppVersionsDiffVariables) => Promise.resolve(appVersionsDiffResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
@@ -1278,8 +1353,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
-    targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
-    apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables & {apiKey?: string}, _orgId: string) =>
+      Promise.resolve('schema'),
+    apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string}, _orgId: string) =>
+      Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
@@ -1288,6 +1365,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     devSessionUpdate: (_input: DevSessionOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
+    getCreateDevStoreLink: (_input: string) =>
+      Promise.resolve(`Looks like you don't have a dev store in the Partners org you selected. Keep going — create a dev store through the
+      Developer Dashboard: https://partners.shopify.com/organizations/1234/stores/new`),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub

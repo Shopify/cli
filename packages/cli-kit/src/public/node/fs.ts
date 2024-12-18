@@ -43,6 +43,7 @@ import {
   chmod as fsChmod,
   access as fsAccess,
   rename as fsRename,
+  unlink as fsUnlink,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
@@ -89,7 +90,7 @@ export type ReadOptions =
   | undefined
   | {flag?: string | undefined}
   | {
-      encoding: BufferEncoding | string
+      encoding: string
       flag?: string | undefined
     }
 export async function readFile(path: string, options?: ReadOptions): Promise<string>
@@ -215,7 +216,7 @@ export async function writeFile(
  * @param data - Content to be written.
  */
 export function writeFileSync(path: string, data: string): void {
-  outputDebug(outputContent`File-writing some content to file at ${outputToken.path(path)}...`)
+  outputDebug(outputContent`Sync-writing some content to file at ${outputToken.path(path)}...`)
   fsWriteFileSync(path, data)
 }
 
@@ -329,12 +330,22 @@ export function fileSizeSync(path: string): number {
 }
 
 /**
+ * Synchronously unlink a file at the given path.
+ *
+ * @param path - Path to the file.
+ */
+export function unlinkFileSync(path: string): void {
+  fsUnlinkSync(path)
+}
+
+/**
  * Unlink a file at the given path.
+ *
  * @param path - Path to the file.
  * @returns A promise that resolves when the file is unlinked.
  */
-export function unlinkFileSync(path: string): void {
-  return fsUnlinkSync(path)
+export function unlinkFile(path: string): Promise<void> {
+  return fsUnlink(path)
 }
 
 /**

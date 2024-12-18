@@ -1,27 +1,31 @@
 import {buildTomlObject as buildPaymentsTomlObject} from '../../services/payments/extension-to-toml.js'
 import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extension-to-toml.js'
+import {buildTomlObject as buildAdminLinkTomlObject} from '../../services/admin-link/extension-to-toml.js'
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
+import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../../services/subscription_link/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
-import {loadApp} from '../../models/app/loader.js'
-import {AppInterface} from '../../models/app/app.js'
 import {importExtensions} from '../../services/import-extensions.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 interface MigrationChoice {
   label: string
   value: string
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
+  buildTomlObject: (
+    ext: ExtensionRegistration,
+    allExtensions: ExtensionRegistration[],
+    appConfiguration: CurrentAppConfiguration,
+  ) => string
 }
 
-const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
+const getMigrationChoices = (): MigrationChoice[] => [
   {
     label: 'Payments Extensions',
     value: 'payments',
@@ -38,19 +42,27 @@ const getMigrationChoices = (isShopifolk: boolean): MigrationChoice[] => [
   {
     label: 'Flow Extensions',
     value: 'flow',
-    extensionTypes: ['flow_action_definition', 'flow_trigger_definition'],
+    extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'flow_trigger_discovery_webhook'],
     buildTomlObject: buildFlowTomlObject,
   },
-  ...(isShopifolk
-    ? [
-        {
-          label: 'Marketing Activity Extensions',
-          value: 'marketing activity',
-          extensionTypes: ['marketing_activity_extension'],
-          buildTomlObject: buildMarketingActivityTomlObject,
-        },
-      ]
-    : []),
+  {
+    label: 'Marketing Activity Extensions',
+    value: 'marketing activity',
+    extensionTypes: ['marketing_activity_extension'],
+    buildTomlObject: buildMarketingActivityTomlObject,
+  },
+  {
+    label: 'Subscription Link Extensions',
+    value: 'subscription link',
+    extensionTypes: ['subscription_link'],
+    buildTomlObject: buildSubscriptionLinkTomlObject,
+  },
+  {
+    label: 'Admin Link extensions',
+    value: 'link extension',
+    extensionTypes: ['app_link', 'bulk_action'],
+    buildTomlObject: buildAdminLinkTomlObject,
+  },
 ]
 
 export default class ImportExtensions extends AppCommand {
@@ -69,14 +81,14 @@ export default class ImportExtensions extends AppCommand {
 
   async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(ImportExtensions)
-    const specifications = await loadLocalExtensionsSpecifications()
-    const app: AppInterface = await loadApp({
-      specifications,
+    const appContext = await linkedAppContext({
       directory: flags.path,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    const isShopifolk = await isShopify()
-    const migrationChoices = getMigrationChoices(isShopifolk)
+
+    const migrationChoices = getMigrationChoices()
     const choices = migrationChoices.map((choice) => {
       return {label: choice.label, value: choice.value}
     })
@@ -84,15 +96,15 @@ export default class ImportExtensions extends AppCommand {
     const migrationChoice = migrationChoices.find((choice) => choice.value === promptAnswer)
     if (migrationChoice === undefined) {
       renderFatalError(new AbortError('Invalid migration choice'))
-      return {app}
+      process.exit(1)
     }
+
     await importExtensions({
-      app,
-      apiKey: flags['client-id'],
+      ...appContext,
       extensionTypes: migrationChoice.extensionTypes,
       buildTomlObject: migrationChoice.buildTomlObject,
     })
 
-    return {app}
+    return {app: appContext.app}
   }
 }

@@ -10,8 +10,6 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 // so for now, we manually add comments
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
   outputDebug(`Writing app configuration to ${configuration.path}`)
-  const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
-  const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
   // we need to condense the compliance and non-compliance webhooks again
   // so compliance topics and topics with the same uri are under
@@ -21,46 +19,27 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
   const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as {
     [key: string]: string | boolean | object
   }
-  const fileSplit = encodeToml(sorted as JsonMapType).split(/(\r\n|\r|\n)/)
 
-  fileSplit.unshift('\n')
-  fileSplit.unshift(initialComment)
+  const encodedString = encodeToml(sorted as JsonMapType)
 
-  fileSplit.forEach((line, index) => {
-    if (line === '[access_scopes]') {
-      fileSplit.splice(index + 1, 0, scopesComment)
-    }
-  })
-
-  const file = fileSplit.join('')
+  const file = addDefaultCommentsToToml(encodedString)
 
   writeFileSync(configuration.path, file)
 }
 
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
-  // Remove app_id if organization_id is not present.
-  // This will become unnecessary when we remove app_id from App Management apps.
-  let configCopy = config
-  if (typeof config === 'object' && config !== null && config !== undefined) {
-    if ('app_id' in config && !('organization_id' in config)) {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const {app_id, ...rest} = config
-      configCopy = rest
-    }
-  }
-
   if (schema === null || schema === undefined) return null
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
-    return rewriteConfiguration(schema.unwrap(), configCopy)
+    return rewriteConfiguration(schema.unwrap(), config)
   if (schema instanceof zod.ZodArray) {
-    return (configCopy as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
+    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
   }
   if (schema instanceof zod.ZodEffects) {
-    return rewriteConfiguration(schema._def.schema, configCopy)
+    return rewriteConfiguration(schema._def.schema, config)
   }
   if (schema instanceof zod.ZodObject) {
     const entries = Object.entries(schema.shape)
-    const confObj = configCopy as {[key: string]: unknown}
+    const confObj = config as {[key: string]: unknown}
     let result: {[key: string]: unknown} = {}
     entries.forEach(([key, subSchema]) => {
       if (confObj !== undefined && confObj[key] !== undefined) {
@@ -87,6 +66,23 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
     return result
   }
   return config
+}
+
+export function addDefaultCommentsToToml(fileString: string) {
+  const appTomlInitialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
+  const appTomlScopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
+
+  const fileSplit = fileString.split(/(\r\n|\r|\n)/)
+  fileSplit.unshift('\n')
+  fileSplit.unshift(appTomlInitialComment)
+
+  fileSplit.forEach((line, index) => {
+    if (line === '[access_scopes]') {
+      fileSplit.splice(index + 1, 0, appTomlScopesComment)
+    }
+  })
+
+  return fileSplit.join('')
 }
 
 /**

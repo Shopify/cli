@@ -2,6 +2,7 @@ query AppVersionById($versionId: ID!) {
   version(id: $versionId) {
     id
     metadata {
+      message
       versionTag
     }
     appModules {

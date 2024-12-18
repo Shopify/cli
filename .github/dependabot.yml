@@ -2,7 +2,9 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     versioning-strategy: increase
-    directory: "/"
+    directories:
+      - "/"
+      - "packages/*"
     schedule:
       interval: "weekly"
     labels:
@@ -16,6 +18,7 @@ updates:
         update-types: ["version-update:semver-major"]
     groups:
       minor_versions:
+        dependency-type: "production"
         update-types:
           - 'minor'
           - 'patch'
@@ -30,6 +33,11 @@ updates:
           - "react"
           - "@babel/*"
           - "javy-cli"
+      development_dependencies:
+        dependency-type: "development"
+        update-types:
+          - 'minor'
+          - 'patch'
       oclif:
         patterns:
           - "oclif"
@@ -38,21 +46,3 @@ updates:
         patterns:
           - "nx"
           - "@nx/*"
-  - package-ecosystem: "bundler"
-    versioning-strategy: increase
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-    open-pull-requests-limit: 100
-    pull-request-branch-name:
-      separator: "-"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      minor_versions:
-        update-types:
-          - 'minor'
-          - 'patch'

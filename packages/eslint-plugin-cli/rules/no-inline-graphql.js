@@ -131,7 +131,7 @@ const knownFailures = {
     '0261459f988f5ba947ba52dc90dd049032196595cad5be8b7042ad1d0a22277c',
   'packages/app/src/cli/api/graphql/create_app.ts': '13fdc528f39a5e6d589c7834e03f916528f00b431e69b8148c6237229be1dc2c',
   'packages/app/src/cli/api/graphql/current_account_info.ts':
-    '2de25fd9e0363380ad42fd6ed2ec75f1817a47d342fbf77f5d447cff6f8a990a',
+    'e25977539cec28a33c0c32c75973ac5a78e3b4b5e504aa3d14d01291c5b42c14',
   'packages/app/src/cli/api/graphql/development_preview.ts':
     'db9e18b48c6cb6c76f8d03be74b902f8711c08d1512e26ed6e5884cafee62bfe',
   'packages/app/src/cli/api/graphql/extension_create.ts':
@@ -143,7 +143,7 @@ const knownFailures = {
   'packages/app/src/cli/api/graphql/extension_migrate_to_ui_extension.ts':
     'dd3fb42d0b9327de627bd02295de9e08087266885777602a34b44bdc460c0285',
   'packages/app/src/cli/api/graphql/extension_specifications.ts':
-    '9078c6fe4e0f48eea7d69e4253f1377fae58cc1ede4bd4f95b615d6b8b415b81',
+    'a514090fe981495a67123ccc7fcb74169d97f5b33551f9b8ebbbe6476bb66faa',
   'packages/app/src/cli/api/graphql/find_app.ts': '699def43534d0fdb4988b91e74a890778026960fd31662fecd86384ecfc05370',
   'packages/app/src/cli/api/graphql/find_app_preview_mode.ts':
     '8311925b338d4aba1957974bb815cfa8c5d8272226f68b8e74a69d91acc9c8cb',
@@ -152,10 +152,10 @@ const knownFailures = {
     '867f01113c20386d6a438dd56a6d241199e407eab928ab1ad9a7f233cd35c1be',
   'packages/app/src/cli/api/graphql/find_store_by_domain.ts':
     '0824f5baaab1ad419a7fa1d64824e306bd369430da47c7457ed72e74a1e94a9a',
-  'packages/app/src/cli/api/graphql/functions/api_schema_definition.ts':
-    '9ebbab831a66a2e49a8c2dac3185bb58c4688655040c6d14a9b2fb41a004bca8',
+    'packages/app/src/cli/api/graphql/functions/api_schema_definition.ts':
+    'e71100cf61919831681da1be8f12cd9067c4e3f2faf04c1b88b764fd8a275b82',
   'packages/app/src/cli/api/graphql/functions/target_schema_definition.ts':
-    '0469c1fe724568f031a52c5bda54d56d8c3b23d7e8a54a86a684f72028d71b46',
+    'd338c5d187ca8a1e1e68892987d780e540426faeba89df2dd9d8c96e193f5c13',
   'packages/app/src/cli/api/graphql/generate_signed_upload_url.ts':
     '848e40bf6b44331de0fe1dc1b0753593c1d47f9705ebe988a1b8ad5638d267ef',
   'packages/app/src/cli/api/graphql/get_variant_id.ts':

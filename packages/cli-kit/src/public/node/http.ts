@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-base-to-string */
 import {dirname} from './path.js'
 import {createFileWriteStream, fileExistsSync, mkdirSync, unlinkFileSync} from './fs.js'
 import {runWithTimer} from './metadata.js'
@@ -58,7 +59,7 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Promis
 
   outputDebug(outputContent`Sending ${options.method ?? 'GET'} request to URL ${sanitizedUrl}
 With request headers:
-${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
+${sanitizedHeadersOutput((options.headers ?? {}) as {[header: string]: string})}
 `)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     return simpleRequestWithDebugLog({

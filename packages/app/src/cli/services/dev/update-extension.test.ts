@@ -13,7 +13,7 @@ import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
@@ -51,8 +51,9 @@ describe('updateExtensionDraft()', () => {
         directory: tmpDir,
       })
 
-      await mkdir(joinPath(tmpDir, 'dist'))
-      await writeFile(mockExtension.outputPath, 'test content')
+      await mkdir(joinPath(tmpDir, 'mock-handle', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -62,6 +63,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -93,6 +95,7 @@ describe('updateExtensionDraft()', () => {
       stdout,
       stderr,
       appConfiguration: placeholderAppConfiguration,
+      bundlePath: 'dir',
     })
 
     expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -136,6 +139,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -173,6 +177,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -201,7 +206,9 @@ describe('updateExtensionDraft()', () => {
       const content = 'test content'
       const base64Content = Buffer.from(content).toString('base64')
       await mkdir(joinPath(mockExtension.directory, 'dist'))
-      await writeFile(joinPath(mockExtension.directory, 'dist', filepath), content)
+      const outputPath = mockExtension.outputPath
+      await mkdir(dirname(outputPath))
+      await writeFile(outputPath, content)
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -211,6 +218,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
@@ -253,8 +261,9 @@ describe('updateExtensionDraft()', () => {
         type: 'web_pixel_extension',
       })
 
-      await mkdir(joinPath(tmpDir, 'dist'))
-      await writeFile(mockExtension.outputPath, 'test content')
+      await mkdir(joinPath(tmpDir, mockExtension.handle, 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -264,6 +273,7 @@ describe('updateExtensionDraft()', () => {
         stdout,
         stderr,
         appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')

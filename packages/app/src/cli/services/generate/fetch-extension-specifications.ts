@@ -1,11 +1,16 @@
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
-import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
+import {
+  createContractBasedModuleSpecification,
+  ExtensionSpecification,
+  RemoteAwareExtensionSpecification,
+} from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -56,20 +61,26 @@ async function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
 ): Promise<RemoteAwareExtensionSpecification[]> {
-  const updated = local.map(async (spec) => {
-    const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) {
-      const merged = {...spec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
-        FlattenedRemoteSpecification
-
-      const parseConfigurationObject = await unifiedConfigurationParserFactory(merged)
-
-      return {
-        ...merged,
-        parseConfigurationObject,
-      }
+  // Iterate over the remote specs and merge them with the local ones
+  // If the local spec is missing, and the remote one has a validation schema, create a new local spec using contracts
+  const updated = remote.map(async (remoteSpec) => {
+    let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
+    if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
+      const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
+      const hasLocalization = normalisedSchema.properties?.localization !== undefined
+      localSpec = createContractBasedModuleSpecification(remoteSpec.identifier, hasLocalization ? ['localization'] : [])
     }
-    return undefined
+    if (!localSpec) return undefined
+
+    const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
+      FlattenedRemoteSpecification
+
+    const parseConfigurationObject = await unifiedConfigurationParserFactory(merged)
+
+    return {
+      ...merged,
+      parseConfigurationObject,
+    }
   })
 
   const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(await Promise.all(updated))

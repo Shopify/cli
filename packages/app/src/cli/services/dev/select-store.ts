@@ -10,19 +10,10 @@ import {
 } from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
-import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-
-const CreateStoreLink = async (orgId: string) => {
-  const url = `https://${await partnersFqdn()}/${orgId}/stores/new?store_type=dev_store`
-  return (
-    `Looks like you don't have a dev store in the Partners org you selected. ` +
-    `Keep going — create a dev store on Shopify Partners:\n${url}\n`
-  )
-}
+import {outputSuccess} from '@shopify/cli-kit/node/output'
 
 /**
  * Select store from list or
@@ -44,7 +35,9 @@ export async function selectStore(
   // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
   let store = await selectStorePrompt(stores, showDomainOnPrompt)
   if (!store) {
-    outputInfo(`\n${await CreateStoreLink(org.id)}`)
+    renderInfo({
+      body: await developerPlatformClient.getCreateDevStoreLink(org.id),
+    })
     await sleep(5)
 
     const reload = await reloadStoreListPrompt(org)

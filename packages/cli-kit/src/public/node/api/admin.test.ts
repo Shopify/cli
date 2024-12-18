@@ -56,8 +56,37 @@ describe('admin-graphql-api', () => {
     expect(graphqlRequest).toHaveBeenLastCalledWith({
       query: 'query',
       api: 'Admin',
-      url: 'https://store/admin/api/2022-01/graphql.json',
+      url: 'https://store.myshopify.com/admin/api/2022-01/graphql.json',
+      addedHeaders: {},
       token,
+      variables: {variables: 'variables'},
+    })
+  })
+
+  test('request is called with correct parameters when it is a theme access session', async () => {
+    // Given
+    const themeAccessToken = 'shptka_token'
+    const themeAccessSession = {
+      ...Session,
+      token: themeAccessToken,
+    }
+
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+    vi.mocked(graphqlRequestDoc).mockResolvedValue(mockedResult)
+
+    // When
+    await admin.adminRequest('query', themeAccessSession, {variables: 'variables'})
+
+    // Then
+    expect(graphqlRequest).toHaveBeenLastCalledWith({
+      query: 'query',
+      api: 'Admin',
+      addedHeaders: {
+        'X-Shopify-Access-Token': 'shptka_token',
+        'X-Shopify-Shop': 'store',
+      },
+      url: `https://${defaultThemeKitAccessDomain}/cli/admin/api/2022-01/graphql.json`,
+      token: themeAccessToken,
       variables: {variables: 'variables'},
     })
   })

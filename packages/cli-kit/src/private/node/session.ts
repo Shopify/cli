@@ -16,7 +16,7 @@ import {RequestClientError} from './api/headers.js'
 import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
+import {firstPartyDev, isAppManagementEnabled, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -26,14 +26,13 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isSpin} from '@shopify/cli-kit/node/context/spin'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 /**
  * A scope supported by the Shopify Admin API.
  */
-type AdminAPIScope = 'graphql' | 'themes' | 'collaborator' | string
+export type AdminAPIScope = 'graphql' | 'themes' | 'collaborator'
 
 /**
  * It represents the options to authenticate against the Shopify Admin API.
@@ -49,7 +48,7 @@ interface AdminAPIOAuthOptions {
 /**
  * A scope supported by the Partners API.
  */
-type PartnersAPIScope = 'cli' | string
+export type PartnersAPIScope = 'cli'
 interface PartnersAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: PartnersAPIScope[]
@@ -58,7 +57,7 @@ interface PartnersAPIOAuthOptions {
 /**
  * A scope supported by the Developer Platform API.
  */
-type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage' | string
+export type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage'
 interface AppManagementAPIOauthOptions {
   /** List of scopes to request permissions for. */
   scopes: AppManagementAPIScope[]
@@ -67,13 +66,13 @@ interface AppManagementAPIOauthOptions {
 /**
  * A scope supported by the Storefront Renderer API.
  */
-type StorefrontRendererScope = 'devtools' | string
+export type StorefrontRendererScope = 'devtools'
 interface StorefrontRendererAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: StorefrontRendererScope[]
 }
 
-type BusinessPlatformScope = 'destinations' | string
+export type BusinessPlatformScope = 'destinations'
 interface BusinessPlatformAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: BusinessPlatformScope[]
@@ -193,6 +192,7 @@ export async function ensureAuthenticated(
   }
 
   const currentSession = (await secureStore.fetch()) || {}
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 
@@ -309,7 +309,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
  * @param partnersToken - Partners token.
  */
 async function ensureUserHasPartnerAccount(partnersToken: string, userId: string | undefined) {
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) return
+  if (isAppManagementEnabled()) return
 
   outputDebug(outputContent`Verifying that the user has a Partner organization`)
   if (!(await hasPartnerAccount(partnersToken, userId))) {

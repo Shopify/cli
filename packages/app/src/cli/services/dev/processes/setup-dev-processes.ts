@@ -1,9 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
-import {
-  PreviewThemeAppExtensionsProcess as PreviewThemeAppExtensionsNextProcess,
-  setupPreviewThemeAppExtensionsProcess as setupPreviewThemeAppExtensionsProcessNext,
-} from './theme-app-extension-next.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
@@ -11,8 +7,9 @@ import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
+import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
 import {environmentVariableNames} from '../../../constants.js'
-import {AppInterface, WebType, getAppScopes} from '../../../models/app/app.js'
+import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -20,6 +17,8 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {reloadApp} from '../../../models/app/loader.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
@@ -31,7 +30,6 @@ interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: st
 type DevProcessDefinition =
   | SendWebhookProcess
   | PreviewThemeAppExtensionsProcess
-  | PreviewThemeAppExtensionsNextProcess
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
@@ -39,6 +37,7 @@ type DevProcessDefinition =
   | GraphiQLServerProcess
   | DevSessionProcess
   | AppLogsSubscribeProcess
+  | AppWatcherProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -51,11 +50,9 @@ interface DevNetworkOptions {
 }
 
 export interface DevConfig {
-  localApp: AppInterface
+  localApp: AppLinkedInterface
   remoteAppUpdated: boolean
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {
-    apiSecret?: string | undefined
-  }
+  remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
@@ -83,21 +80,25 @@ export async function setupDevProcesses({
   graphiqlUrl: string | undefined
 }> {
   const apiKey = remoteApp.apiKey
-  const apiSecret = (remoteApp.apiSecret as string) ?? ''
+  const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
   const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
   const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
+  // At this point, the toml file has changed, we need to reload the app before actually starting dev
+  const reloadedApp = await reloadApp(localApp)
+  const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
+
   const processes = [
     ...(await setupWebProcesses({
-      webs: localApp.webs,
+      webs: reloadedApp.webs,
       proxyUrl: network.proxyUrl,
       frontendPort: network.frontendPort,
       backendPort: network.backendPort,
       apiKey,
       apiSecret,
-      scopes: getAppScopes(localApp.configuration),
+      scopes: getAppScopes(reloadedApp.configuration),
     })),
     shouldRenderGraphiQL
       ? await setupGraphiQLServerProcess({
@@ -111,58 +112,51 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
-      allExtensions: localApp.allExtensions,
+      allExtensions: reloadedApp.allExtensions,
       storeFqdn,
       storeId,
       apiKey,
       subscriptionProductUrl: commandOptions.subscriptionProductUrl,
       checkoutCartUrl: commandOptions.checkoutCartUrl,
       proxyUrl: network.proxyUrl,
-      appName: localApp.name,
-      appDotEnvFile: localApp.dotenv,
+      appName: reloadedApp.name,
+      appDotEnvFile: reloadedApp.dotenv,
       grantedScopes: remoteApp.grantedScopes,
       appId: remoteApp.id,
-      appDirectory: localApp.directory,
+      appDirectory: reloadedApp.directory,
+      appWatcher,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
-          app: localApp,
+          app: reloadedApp,
           apiKey,
           developerPlatformClient,
           url: network.proxyUrl,
           appId: remoteApp.id,
           organizationId: remoteApp.organizationId,
           storeFqdn,
+          appWatcher,
         })
       : await setupDraftableExtensionsProcess({
-          localApp,
+          localApp: reloadedApp,
           remoteApp,
           apiKey,
           developerPlatformClient,
           proxyUrl: network.proxyUrl,
+          appWatcher,
         }),
-    commandOptions.devPreview
-      ? await setupPreviewThemeAppExtensionsProcessNext({
-          remoteApp,
-          localApp,
-          storeFqdn,
-          developerPlatformClient,
-          theme: commandOptions.theme,
-          themeExtensionPort: commandOptions.themeExtensionPort,
-        })
-      : await setupPreviewThemeAppExtensionsProcess({
-          allExtensions: localApp.allExtensions,
-          storeFqdn,
-          apiKey,
-          developerPlatformClient,
-          theme: commandOptions.theme,
-          themeExtensionPort: commandOptions.themeExtensionPort,
-          notify: commandOptions.notify,
-        }),
+    await setupPreviewThemeAppExtensionsProcess({
+      remoteApp,
+      localApp: reloadedApp,
+      storeFqdn,
+      theme: commandOptions.theme,
+      themeExtensionPort: commandOptions.themeExtensionPort,
+    }),
     setupSendUninstallWebhookProcess({
-      webs: localApp.webs,
+      webs: reloadedApp.webs,
       backendPort: network.backendPort,
       frontendPort: network.frontendPort,
+      organizationId: remoteApp.organizationId,
       developerPlatformClient,
       storeFqdn,
       apiSecret,
@@ -178,6 +172,9 @@ export async function setupDevProcesses({
           storeName: storeFqdn,
         })
       : undefined,
+    await setupAppWatcherProcess({
+      appWatcher,
+    }),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it

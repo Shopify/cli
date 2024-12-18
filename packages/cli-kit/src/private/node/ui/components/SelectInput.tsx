@@ -45,7 +45,14 @@ function highlightedLabel(label: string, term: string | undefined) {
     return label
   }
 
-  const regex = new RegExp(term, 'i')
+  let regex
+  try {
+    regex = new RegExp(term, 'i')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    // term is user provided and could be an invalid regex at that moment (e.g. ending in '\')
+    return label
+  }
   return label.replace(regex, (match) => {
     return chalk.bold(match)
   })
@@ -226,7 +233,7 @@ function SelectInputInner<T>(
       }
 
       // check that no special modifier (shift, control, etc.) is being pressed
-      if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
+      if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => !value)) {
         handleShortcuts(input)
       } else {
         handleArrows(key)

@@ -1,4 +1,5 @@
 import {allDefaultScopes, apiScopes} from './scopes.js'
+import {environmentVariables} from '../constants.js'
 import {describe, expect, test} from 'vitest'
 
 describe('allDefaultScopes', () => {
@@ -25,7 +26,7 @@ describe('allDefaultScopes', () => {
 
   test('includes App Management and Store Management when the required env var is defined', async () => {
     // Given
-    const envVars = {USE_APP_MANAGEMENT_API: 'true'}
+    const envVars = {[environmentVariables.useAppManagement]: 'true'}
 
     // When
     const got = allDefaultScopes([], envVars)

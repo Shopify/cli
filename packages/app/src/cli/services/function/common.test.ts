@@ -118,7 +118,7 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValue(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient)
+    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient, '123')
 
     // Then
     expect(result).toBe(expectedPath)
@@ -133,7 +133,7 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValueOnce(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient)
+    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient, '123')
 
     // Then
     expect(result).toBe(expectedPath)

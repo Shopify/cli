@@ -77,10 +77,11 @@ export function reduceWebhooks(
   subscriptions: WebhookSubscription[],
   property?: keyof Pick<WebhookSubscription, 'topics' | 'compliance_topics'>,
 ) {
-  return subscriptions.reduce((accumulator, subscription) => {
+  return subscriptions.reduce<WebhookSubscription[]>((accumulator, subscription) => {
     const existingSubscription = findSubscription(accumulator, subscription)
     if (existingSubscription) {
       if (property && subscription?.[property]?.length) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         existingSubscription[property]?.push(...subscription[property]!)
       } else {
         if (subscription.topics) {
@@ -96,5 +97,5 @@ export function reduceWebhooks(
       accumulator.push(subscription)
     }
     return accumulator
-  }, [] as WebhookSubscription[])
+  }, [])
 }

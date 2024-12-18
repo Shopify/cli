@@ -107,9 +107,9 @@ const UNKNOWN_TEXT = outputContent`${outputToken.italic('unknown')}`.value
 const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
 
 class AppInfo {
-  private app: AppLinkedInterface
-  private remoteApp: OrganizationApp
-  private options: InfoOptions
+  private readonly app: AppLinkedInterface
+  private readonly remoteApp: OrganizationApp
+  private readonly options: InfoOptions
 
   constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, options: InfoOptions) {
     this.app = app
@@ -129,7 +129,6 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-
     const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,
       'dev',
@@ -182,7 +181,7 @@ class AppInfo {
         if (relevantExtensions[0]) {
           body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
-            body += `${outputFormatter(extension)}`
+            body += outputFormatter(extension)
           })
         }
       })
@@ -194,7 +193,7 @@ class AppInfo {
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
       supportedExtensions.forEach((extension) => {
-        body += `${this.invalidExtensionSubSection(extension)}`
+        body += this.invalidExtensionSubSection(extension)
       })
     }
     return [title, body]
@@ -202,7 +201,7 @@ class AppInfo {
 
   webComponentsSection(): string {
     const errors: OutputMessage[] = []
-    const subtitle = [outputContent`${outputToken.subheading('web')}`.value]
+    const subtitle = outputContent`${outputToken.subheading('web')}`.value
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
@@ -223,7 +222,7 @@ class AppInfo {
         if (error) errors.push(error)
       }
     })
-    let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
+    let errorContent = `\n${errors.map((error) => this.formattedError(error)).join('\n')}`
     if (errorContent.trim() === '') errorContent = ''
 
     return `${subtitle}\n${linesToColumns([toplevel, ...sublevels])}${errorContent}`
@@ -269,6 +268,6 @@ class AppInfo {
       ['Shell', process.env.SHELL || 'unknown'],
       ['Node version', process.version],
     ]
-    return [title, `${linesToColumns(lines)}`]
+    return [title, linesToColumns(lines)]
   }
 }

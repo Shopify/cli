@@ -7,15 +7,11 @@ import {
   partitionThemeFiles,
   readThemeFile,
 } from './theme-fs.js'
-import {
-  getPatternsFromShopifyIgnore,
-  applyIgnoreFilters,
-  raiseWarningForNonExplicitGlobPatterns,
-} from './asset-ignore.js'
+import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
-import {deleteThemeAsset, fetchThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import EventEmitter from 'events'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -279,7 +275,6 @@ describe('theme-fs', () => {
       const themeFileSystem = mountThemeFileSystem(root, options)
       await themeFileSystem.ready()
 
-      expect(raiseWarningForNonExplicitGlobPatterns).toHaveBeenCalledOnce()
       expect(getPatternsFromShopifyIgnore).toHaveBeenCalledWith(root)
       expect(themeFileSystem.applyIgnoreFilters(files)).toEqual([{key: 'assets/file.json'}])
       expect(applyIgnoreFilters).toHaveBeenCalledWith(files, {
@@ -298,6 +293,7 @@ describe('theme-fs', () => {
 
       // When
       const content = await readThemeFile(root, key)
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       const contentJson = JSON.parse(content?.toString() || '')
 
       // Then
@@ -402,10 +398,19 @@ describe('theme-fs', () => {
         {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
         {key: 'templates/404.context.uk.json', checksum: '11'},
+        {key: 'blocks/block.liquid', checksum: '12'},
       ]
       // When
-      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
-        partitionThemeFiles(files)
+      const {
+        sectionLiquidFiles,
+        otherLiquidFiles,
+        templateJsonFiles,
+        otherJsonFiles,
+        configFiles,
+        staticAssetFiles,
+        contextualizedJsonFiles,
+        blockLiquidFiles,
+      } = partitionThemeFiles(files)
 
       // Then
       expect(sectionLiquidFiles).toEqual([{key: 'sections/announcement-bar.liquid', checksum: '10'}])
@@ -425,6 +430,8 @@ describe('theme-fs', () => {
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
       ])
+      expect(contextualizedJsonFiles).toEqual([{key: 'templates/404.context.uk.json', checksum: '11'}])
+      expect(blockLiquidFiles).toEqual([{key: 'blocks/block.liquid', checksum: '12'}])
     })
 
     test('should handle empty file array', () => {
@@ -503,13 +510,16 @@ describe('theme-fs', () => {
 
     test('deletes file from remote theme', async () => {
       // Given
-      vi.mocked(fetchThemeAsset).mockResolvedValue({
-        key: 'assets/base.css',
-        checksum: '1',
-        value: 'content',
-        attachment: '',
-        stats: {size: 100, mtime: 100},
-      })
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          key: 'assets/base.css',
+          checksum: '1',
+          value: 'content',
+          attachment: '',
+          stats: {size: 100, mtime: 100},
+        },
+      ])
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -533,14 +543,51 @@ describe('theme-fs', () => {
       expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
     })
 
+    test('does not delete file from remote when options.noDelete is true', async () => {
+      // Given
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          key: 'assets/base.css',
+          checksum: '1',
+          value: 'content',
+          attachment: '',
+          stats: {size: 100, mtime: 100},
+        },
+      ])
+      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root, {noDelete: true})
+      await themeFileSystem.ready()
+
+      const deleteOperationPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Explicitly emit the 'unlink' event
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/assets/base.css`)
+
+      await deleteOperationPromise
+
+      // Then
+      expect(deleteThemeAsset).not.toHaveBeenCalled()
+    })
+
     test('renders a warning to debug if the file deletion fails', async () => {
       // Given
-      vi.mocked(fetchThemeAsset).mockResolvedValue({
-        key: 'assets/base.css',
-        value: 'file content',
-        checksum: '1',
-        stats: {size: 100, mtime: 100},
-      })
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          key: 'assets/base.css',
+          value: 'file content',
+          checksum: '1',
+          stats: {size: 100, mtime: 100},
+        },
+      ])
       vi.mocked(deleteThemeAsset).mockResolvedValue(false)
 
       // When

@@ -1,5 +1,6 @@
+import {uniqBy} from '@shopify/cli-kit/common/array'
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
@@ -13,12 +14,26 @@ export function applyIgnoreFilters<T extends {key: string}>(
   const ignoreOptions = options.ignore ?? []
   const onlyOptions = options.only ?? []
 
-  raiseWarningForNonExplicitGlobPatterns([...shopifyIgnore, ...ignoreOptions, ...onlyOptions])
+  const [normalShopifyPatterns = [], negatedShopifyPatterns = []] = filterRegexValues(shopifyIgnore)
+  const [normalIgnorePatterns = [], negatedIgnorePatterns = []] = filterRegexValues(ignoreOptions)
+  const [normalOnlyPatterns = [], negatedOnlyPatterns = []] = filterRegexValues(onlyOptions)
 
-  return files
-    .filter(filterBy(shopifyIgnore, '.shopifyignore'))
-    .filter(filterBy(ignoreOptions, '--ignore'))
-    .filter(filterBy(onlyOptions, '--only', true))
+  let filteredFiles = files.filter(filterBy(normalShopifyPatterns, '.shopifyignore'))
+  filteredFiles = filteredFiles.filter(filterBy(normalIgnorePatterns, '--ignore'))
+  filteredFiles = filteredFiles.filter(filterBy(normalOnlyPatterns, '--only', true))
+
+  if (negatedShopifyPatterns.length > 0) {
+    filteredFiles = filteredFiles.concat(files.filter(filterBy(negatedShopifyPatterns, '.shopifyignore', true)))
+  }
+  if (negatedIgnorePatterns.length > 0) {
+    filteredFiles = filteredFiles.concat(files.filter(filterBy(negatedIgnorePatterns, '--ignore', true)))
+  }
+  if (negatedOnlyPatterns.length > 0) {
+    filteredFiles = filteredFiles.filter(filterBy(negatedOnlyPatterns, '--only'))
+  }
+
+  const uniqueFiles = uniqBy(filteredFiles, (file) => file.key)
+  return uniqueFiles
 }
 
 function filterBy(patterns: string[], type: string, invertMatch = false) {
@@ -53,6 +68,15 @@ export async function getPatternsFromShopifyIgnore(root: string) {
     .filter((line) => line && !line.startsWith('#'))
 }
 
+function filterRegexValues(regexList: string[]) {
+  const negatedPatterns = regexList
+    .filter((regexList) => regexList.startsWith('!'))
+    .map((regexList) => regexList.slice(1))
+  const normalPatterns = regexList.filter((regexList) => !regexList.startsWith('!'))
+
+  return [normalPatterns, negatedPatterns]
+}
+
 function matchGlob(key: string, pattern: string) {
   const matchOpts = {
     matchBase: true,
@@ -71,20 +95,6 @@ function matchGlob(key: string, pattern: string) {
   }
 
   return false
-}
-
-export function raiseWarningForNonExplicitGlobPatterns(patterns: string[]) {
-  const allPatterns = new Set(patterns)
-  allPatterns.forEach((pattern) => {
-    if (shouldReplaceGlobPattern(pattern)) {
-      outputWarn(
-        `Warning: The pattern '${pattern}' does not include subdirectories. To maintain backwards compatibility, we have modified your pattern to ${pattern.replace(
-          templatesRegex,
-          'templates/**/*$1',
-        )} to explicitly include subdirectories.`,
-      )
-    }
-  })
 }
 
 function shouldReplaceGlobPattern(pattern: string): boolean {

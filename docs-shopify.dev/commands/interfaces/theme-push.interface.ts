@@ -25,7 +25,7 @@ export interface themepush {
   '-x, --ignore <value>'?: string
 
   /**
-   * Output JSON instead of a UI.
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
   '-j, --json'?: ''
@@ -43,7 +43,7 @@ export interface themepush {
   '--no-color'?: ''
 
   /**
-   * Runs the push command without deleting local files.
+   * Prevent deleting remote files that don't exist locally.
    * @environment SHOPIFY_FLAG_NODELETE
    */
   '-n, --nodelete'?: ''
@@ -77,6 +77,12 @@ export interface themepush {
    * @environment SHOPIFY_FLAG_STORE
    */
   '-s, --store <value>'?: string
+
+  /**
+   * Require theme check to pass without errors before pushing. Warnings are allowed.
+   * @environment SHOPIFY_FLAG_STRICT_PUSH
+   */
+  '--strict'?: ''
 
   /**
    * Theme ID or name of the remote theme.

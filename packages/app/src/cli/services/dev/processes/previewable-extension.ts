@@ -2,6 +2,7 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {devUIExtensions} from '../extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
+import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -22,6 +23,7 @@ interface PreviewableExtensionOptions {
   appId?: string
   grantedScopes: string[]
   previewableExtensions: ExtensionInstance[]
+  appWatcher: AppEventWatcher
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -44,6 +46,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     grantedScopes,
     previewableExtensions,
     appDirectory,
+    appWatcher,
   },
 ) => {
   await devUIExtensions({
@@ -64,6 +67,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     checkoutCartUrl: cartUrl,
     subscriptionProductUrl,
     manifestVersion: MANIFEST_VERSION,
+    appWatcher,
   })
 }
 

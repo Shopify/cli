@@ -138,7 +138,7 @@ describe('getDeepInstallNPMTasks', () => {
       await getDeepInstallNPMTasks({...defaultArgs, packageManager: 'yarn', from: tmpDir})
 
       expect(installNodeModules).toHaveBeenCalledWith({
-        directory: `${normalizePath(tmpDir)}`,
+        directory: normalizePath(tmpDir),
         packageManager: 'yarn',
         args: expectedArgs,
       })

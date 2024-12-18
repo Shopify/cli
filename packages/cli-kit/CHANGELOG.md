@@ -1,5 +1,52 @@
 # @shopify/cli-kit
 
+## 3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- 94a7d4ce4f: Fix bug preventing empty theme files from uploading
+
+## 3.71.4
+
+### Patch Changes
+
+- 94953a671e: Fix bug preventing empty theme files from uploading
+
+## 3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- a395820e7b: Fix dev for Ruby apps by avoiding the command safety check to raise an error when not found
+
+## 3.71.1
+
+## 3.71.0
+
+### Patch Changes
+
+- 5fd19d2920: Improve display of links for terminals that don't support hyperlinks
+- 5531731c11: Skip notifications when using --json, -j or SHOPIFY_FLAG_JSON
+
+## 3.70.0
+
+### Minor Changes
+
+- 33477dd9d7: Notification system
+
+### Patch Changes
+
+- 03b39a67b3: Show a warning when there are multiple CLI installations
+
+## 3.69.0
+
+### Minor Changes
+
+- 283aa815c: Remove support for access_code based Shopify authentication within the CLI
+
 ## 3.68.0
 
 ### Patch Changes

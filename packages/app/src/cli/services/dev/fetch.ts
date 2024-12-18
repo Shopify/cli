@@ -86,7 +86,12 @@ export async function fetchOrganizations(): Promise<Organization[]> {
     // We don't want to run this in parallel because there could be port conflicts
     // eslint-disable-next-line no-await-in-loop
     const clientOrganizations = await client.organizations()
-    organizations.push(...clientOrganizations)
+    clientOrganizations.forEach((newOrg) => {
+      // Add organizations that are not already in the list
+      if (!organizations.some((org) => org.businessName === newOrg.businessName)) {
+        organizations.push(newOrg)
+      }
+    })
   }
 
   if (organizations.length === 0) {
@@ -143,4 +148,25 @@ export async function fetchStoreByDomain(
   const store = org.stores.nodes[0]
 
   return {organization: parsedOrg, store}
+}
+
+/**
+ * Returns the store based on given domain.
+ * Throws error if a store with that domain doesn't exist in the organization.
+ *
+ * @param org - Organization
+ * @param storeFqdn - store domain fqdn
+ * @param developerPlatformClient - The client to access the platform API
+ */
+export async function fetchStore(
+  org: Organization,
+  storeFqdn: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<OrganizationStore> {
+  const result: FindStoreByDomainSchema = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
+  const store = result.organizations.nodes[0]?.stores.nodes[0]
+
+  if (!store) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
+
+  return store
 }

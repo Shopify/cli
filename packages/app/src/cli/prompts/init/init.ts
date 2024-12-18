@@ -53,10 +53,6 @@ export const templates = {
     url: 'https://github.com/Shopify/shopify-app-template-node',
     visible: false,
   } as Template,
-  php: {
-    url: 'https://github.com/Shopify/shopify-app-template-php',
-    visible: false,
-  } as Template,
   ruby: {
     url: 'https://github.com/Shopify/shopify-app-template-ruby',
     visible: false,
@@ -119,7 +115,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   if (branch) {
-    selectedUrl += `#${branch}`
+    selectedUrl = `${selectedUrl}#${branch}`
   }
 
   answers.template = selectedUrl || answers.template || defaults.template

@@ -16,6 +16,7 @@ export function set<TObject, TValue>(obj: TObject, pathFn: (o: TObject) => TValu
 
   const newObj: TObject = {...obj}
   let current: any = newObj
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const lastKey = path.pop()!
 
   for (const key of path) {

@@ -1,6 +1,7 @@
 import {spinFqdn} from './spin.js'
 import {AbortError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
+import {DevServer, DevServerCore} from '../vendor/dev_server/DevServer.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new AbortError(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",
@@ -25,7 +26,7 @@ export async function partnersFqdn(): Promise<string> {
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
     case 'local':
-      return 'partners.myshopify.io'
+      return new DevServer('partners').host()
     case 'spin':
       return `partners.${await spinFqdn()}`
     default:
@@ -43,7 +44,7 @@ export async function appManagementFqdn(): Promise<string> {
   const productionFqdn = 'app.shopify.com'
   switch (environment) {
     case 'local':
-      return 'app.shopify.myshopify.io'
+      return new DevServerCore().host('app')
     case 'spin':
       return `app.shopify.${await spinFqdn()}`
     default:
@@ -61,7 +62,7 @@ export async function developerDashboardFqdn(): Promise<string> {
   const productionFqdn = 'dev.shopify.com'
   switch (environment) {
     case 'local':
-      return 'dev.shopify.myshopify.io'
+      return new DevServerCore().host('dev')
     case 'spin':
       return `dev.shopify.${await spinFqdn()}`
     default:
@@ -79,7 +80,7 @@ export async function businessPlatformFqdn(): Promise<string> {
   const productionFqdn = 'destinations.shopifysvc.com'
   switch (environment) {
     case 'local':
-      return 'business-platform.myshopify.io'
+      return new DevServer('business-platform').host()
     case 'spin':
       return `business-platform.${await spinFqdn()}`
     default:
@@ -97,7 +98,7 @@ export async function identityFqdn(): Promise<string> {
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
-      return 'identity.myshopify.io'
+      return new DevServer('identity').host()
     case 'spin':
       return `identity.${await spinFqdn()}`
     default:
@@ -118,7 +119,7 @@ export async function normalizeStoreFqdn(store: string): Promise<string> {
   const addDomain = async (storeFqdn: string) => {
     switch (serviceEnvironment()) {
       case 'local':
-        return `${storeFqdn}.myshopify.io`
+        return new DevServerCore().host(storeFqdn)
       case 'spin':
         return `${storeFqdn}.shopify.${await spinFqdn()}`
       default:
@@ -126,6 +127,9 @@ export async function normalizeStoreFqdn(store: string): Promise<string> {
     }
   }
   const containDomain = (storeFqdn: string) =>
-    storeFqdn.includes('.myshopify.com') || storeFqdn.includes('spin.dev') || storeFqdn.includes('shopify.io')
+    storeFqdn.includes('.myshopify.com') ||
+    storeFqdn.includes('spin.dev') ||
+    storeFqdn.includes('shopify.io') ||
+    storeFqdn.includes('.shop.dev')
   return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }

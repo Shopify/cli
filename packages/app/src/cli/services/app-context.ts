@@ -1,4 +1,4 @@
-import {appFromId} from './context.js'
+import {appFromIdentifiers} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
@@ -11,7 +11,7 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
-interface LoadedAppContextOutput {
+export interface LoadedAppContextOutput {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
@@ -74,8 +74,7 @@ export async function linkedAppContext({
   if (!remoteApp) {
     const apiKey = configState.basicConfiguration.client_id
     const organizationId = configState.basicConfiguration.organization_id
-    const id = configState.basicConfiguration.app_id
-    remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId, id})
+    remoteApp = await appFromIdentifiers({apiKey, developerPlatformClient, organizationId})
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -98,14 +97,15 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  await logMetadata(remoteApp)
+  await logMetadata(remoteApp, forceRelink)
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
-async function logMetadata(app: {organizationId: string; apiKey: string}) {
+async function logMetadata(app: {organizationId: string; apiKey: string}, resetUsed: boolean) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(app.organizationId),
     api_key: app.apiKey,
+    cmd_app_reset_used: resetUsed,
   }))
 }

@@ -246,6 +246,7 @@ async function uiExtensionInit({
 
         if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
         }
       },

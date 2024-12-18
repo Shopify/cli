@@ -12,32 +12,50 @@ const schemas = [
     repo: 'partners',
     pathToFile: 'db/graphql/cli_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'business-platform',
     pathToFile: 'db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'business-platform',
     pathToFile: 'db/graphql/organizations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
-    pathToFile: 'db/graphql/app_dev_schema_unstable_public.graphql',
+    pathToFile: 'areas/core/shopify/db/graphql/app_dev_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
-    pathToFile: 'db/graphql/app_management_schema_unstable_public.graphql',
+    pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
-    pathToFile: 'db/graphql/admin_schema_unstable_public.graphql',
+    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
     localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
-  }
+    branch: 'app-migration',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
+    branch: 'dd',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
+    branch: 'dd',
+  },
 ]
 
 function runCommand(command, args) {
@@ -79,12 +97,14 @@ function extractPassword(output) {
 async function fetchFileForSchema(schema, octokit) {
   try {
     // Fetch the file content from the repository
+    const branch = schema.branch ?? BRANCH
+    console.log(`\nFetching ${OWNER}/${schema.repo}#${branch}: ${schema.pathToFile} ...`)
     const {data} = await octokit.repos.getContent({
       mediaType: { format: "raw" },
       owner: OWNER,
       repo: schema.repo,
       path: schema.pathToFile,
-      ref: BRANCH,
+      ref: branch,
     })
 
     const content = Buffer.from(data).toString('utf-8')
@@ -118,7 +138,7 @@ async function getGithubPasswordFromDev() {
   }
 }
 
-async function fetchFiles() {
+async function withOctokit(func) {
   let password = undefined
   let tokenFromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
   if (!tokenFromEnv) {
@@ -130,10 +150,15 @@ async function fetchFiles() {
   const octokit = new Octokit({
     auth: authToken,
   })
+  return func(octokit)
+}
 
+async function fetchFiles() {
   let allSuccess = true
   for (const schema of schemas) {
-    allSuccess = await fetchFileForSchema(schema, octokit) && allSuccess
+    allSuccess = allSuccess && await withOctokit(async (octokit) => {
+      return fetchFileForSchema(schema, octokit)
+    })
   }
 
   if (!allSuccess) {
@@ -146,7 +171,19 @@ async function fetchFilesFromSpin() {
   for (const schema of schemas) {
     const remotePath = `~/src/github.com/Shopify/${schema.repo}/${schema.pathToFile}`
     const localPath = schema.localPath
-    await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+    try {
+      await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+    } catch(e) {
+      if (e.message.match(/scp.*No such file or directory/)) {
+        // Assume we need to just fetch the file from GitHub
+        console.log(`Cannot find file for ${schema.repo} in Spin, fetching from GitHub instead...`)
+        await withOctokit(async (octokit) => {
+          await fetchFileForSchema(schema, octokit)
+        })
+      } else {
+        throw e
+      }
+    }
   }
 }
 

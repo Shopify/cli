@@ -42,7 +42,6 @@ export async function release(options: ReleaseOptions) {
     remoteApp,
     versionAppModules: versionDetails.appModuleVersions.map((appModuleVersion) => ({
       ...appModuleVersion,
-      ...(appModuleVersion.config ? {config: JSON.parse(appModuleVersion.config)} : {}),
     })),
     release: true,
   })

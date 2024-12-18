@@ -18,6 +18,7 @@ export function fakeThemeFileSystem(
       files.set(asset.key, asset)
     },
     read: async (fileKey: string) => {
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       return files.get(fileKey)?.value || files.get(fileKey)?.attachment
     },
     addEventListener: () => {},

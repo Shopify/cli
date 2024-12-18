@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-invalid-void-type */
 /* eslint-disable @shopify/strict-component-boundaries */
 import {FlattenedLocalization, Localization} from './i18n'
 import './ExtensionServerClient/types'
@@ -93,6 +94,7 @@ export interface ExtensionPoint {
   localization?: FlattenedLocalization | Localization | null
   name: string
   description?: string
+  assets?: {[name: string]: Asset}
 }
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null

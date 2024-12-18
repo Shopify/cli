@@ -69,7 +69,7 @@ async function deployConfirmationPrompt({
   if (extensionsInfoTable) {
     infoTable.push(
       isDangerous
-        ? {...extensionsInfoTable, helperText: 'Removing extensions can permanentely delete app user data'}
+        ? {...extensionsInfoTable, helperText: 'Removing extensions can permanently delete app user data'}
         : extensionsInfoTable,
     )
   } else {

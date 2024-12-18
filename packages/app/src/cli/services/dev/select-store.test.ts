@@ -161,6 +161,7 @@ describe('selectStore', async () => {
 
     // Then
     await expect(got).rejects.toThrow()
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
     expect(developerPlatformClient.devStoresForOrg).toHaveBeenCalledTimes(10)
   })
 })

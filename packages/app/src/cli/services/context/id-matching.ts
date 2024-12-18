@@ -22,7 +22,9 @@ interface MatchResult {
  * Filter function to match a local and a remote source by type and handle
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.handle)
+  return (
+    remote.type.toLowerCase() === local.graphQLType.toLowerCase() && slugify(remote.title) === slugify(local.handle)
+  )
 }
 
 /**
@@ -52,7 +54,7 @@ function matchByNameAndType(
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid
   })
 
-  const pendingLocal = local.filter((elem) => !matched[elem.localIdentifier])
+  const pendingLocal = local.filter((elem) => matched[elem.localIdentifier] === undefined)
   const pendingRemote = remote.filter((registration) => !Object.values(matched).includes(registration.uuid))
 
   // Now we try to find a match between a local source and remote one if they have
@@ -67,7 +69,7 @@ function matchByNameAndType(
 /**
  * Automatically match local and remote sources if they have the same UID
  */
-function matchByUID(
+function matchByUUID(
   local: LocalSource[],
   remote: RemoteSource[],
 ): {
@@ -76,16 +78,20 @@ function matchByUID(
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
-  const matched: IdentifiersExtensions = {}
+  const notMigratedExtensions = local.filter((localSource) => localSource.uid === 'pending-migration')
+  // Generate a new UUID in the extension TOML
+
+  const {matched, toCreate, toConfirm, toManualMatch} = matchByNameAndType(notMigratedExtensions, remote)
 
   local.forEach((localSource) => {
-    const possibleMatch = remote.find((remoteSource) => remoteSource.uid === localSource.uid)
-    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uid!
+    const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
   })
 
-  const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
+  toCreate.concat(local.filter((elem) => !matched[elem.localIdentifier]))
 
-  return {matched, toCreate, toConfirm: [], toManualMatch: {local: [], remote: []}}
+  return {matched, toCreate, toConfirm, toManualMatch}
 }
 
 function migrateLegacyFunctions(
@@ -121,6 +127,7 @@ function migrateLegacyFunctions(
 
       const remoteId = pendingMigrations[localId]
       if (remoteId) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete pendingMigrations[functionExtension.localIdentifier]
         migrated[functionExtension.localIdentifier] = remoteId
       }
@@ -205,15 +212,14 @@ export async function automaticMatchmaking(
   identifiers: IdentifiersExtensions,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<MatchResult> {
-  const useUidMatching = developerPlatformClient.supportsAtomicDeployments
+  const useUuidMatching = developerPlatformClient.supportsAtomicDeployments
   const ids = getExtensionIds(localSources, identifiers)
   const localIds = Object.values(ids)
 
   const existsRemotely = (local: LocalSource) =>
     remoteSources.some((remote) => {
       if (remote.type !== developerPlatformClient.toExtensionGraphQLType(local.graphQLType)) return false
-      const remoteIdField = useUidMatching ? 'uid' : 'uuid'
-      return ids[local.localIdentifier] === remote[remoteIdField]
+      return ids[local.localIdentifier] === remote.uuid
     })
 
   const {migrated: migratedFunctions, pending: pendingAfterMigratingFunctions} = migrateLegacyFunctions(
@@ -223,8 +229,8 @@ export async function automaticMatchmaking(
   )
   const {local, remote} = pendingAfterMigratingFunctions
 
-  const {matched, toCreate, toConfirm, toManualMatch} = useUidMatching
-    ? matchByUID(local, remote)
+  const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
+    ? matchByUUID(local, remote)
     : matchByNameAndType(local, remote)
 
   return {

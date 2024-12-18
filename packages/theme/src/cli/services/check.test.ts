@@ -10,7 +10,14 @@ import {
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {Severity, SourceCodeType, loadConfig, type Offense, type Theme} from '@shopify/theme-check-node'
+import {
+  Severity,
+  SourceCodeType,
+  loadConfig,
+  path as pathUtils,
+  type Offense,
+  type Theme,
+} from '@shopify/theme-check-node'
 import {Mock, MockInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
@@ -52,7 +59,7 @@ describe('formatOffenses', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.ERROR,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -80,7 +87,7 @@ describe('formatOffenses', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.ERROR,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -89,7 +96,7 @@ describe('formatOffenses', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.WARNING,
         start: {index: 0, line: 2, character: 0},
         end: {index: 10, line: 2, character: 10},
@@ -115,12 +122,14 @@ describe('formatOffenses', () => {
 
 describe('sortOffenses', () => {
   test('should sort offenses by file path', () => {
+    const uri1 = pathUtils.normalize('file:///path/to/file1')
+    const uri2 = pathUtils.normalize('file:///path/to/file2')
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file2',
+        uri: uri2,
         severity: Severity.ERROR,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -129,7 +138,7 @@ describe('sortOffenses', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file1',
+        uri: uri1,
         severity: Severity.WARNING,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -139,18 +148,19 @@ describe('sortOffenses', () => {
     const result = sortOffenses(offenses)
 
     expect(result).toEqual({
-      '/path/to/file1': [offenses[1]],
-      '/path/to/file2': [offenses[0]],
+      [pathUtils.fsPath(uri1)]: [offenses[1]],
+      [pathUtils.fsPath(uri2)]: [offenses[0]],
     })
   })
 
   test('should sort offenses by severity within each file', () => {
+    const uri = pathUtils.normalize('file:///path/to/file')
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri,
         severity: Severity.WARNING,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -159,7 +169,7 @@ describe('sortOffenses', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri,
         severity: Severity.ERROR,
         start: {index: 0, line: 2, character: 0},
         end: {index: 10, line: 2, character: 10},
@@ -169,7 +179,7 @@ describe('sortOffenses', () => {
     const result = sortOffenses(offenses)
 
     expect(result).toEqual({
-      '/path/to/file': [offenses[1], offenses[0]],
+      [pathUtils.fsPath(uri)]: [offenses[1], offenses[0]],
     })
   })
 })
@@ -190,7 +200,7 @@ describe('formatSummary', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.ERROR,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -199,7 +209,7 @@ describe('formatSummary', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.WARNING,
         start: {index: 0, line: 2, character: 0},
         end: {index: 10, line: 2, character: 10},
@@ -235,7 +245,7 @@ describe('renderOffensesText', () => {
           type: SourceCodeType.LiquidHtml,
           check: 'LiquidHTMLSyntaxError',
           message: 'Attempting to close HtmlElement',
-          absolutePath: '/path/to/file',
+          uri: 'file:///path/to/file',
           severity: Severity.ERROR,
           start: {index: 0, line: 1, character: 0},
           end: {index: 10, line: 1, character: 10},
@@ -258,7 +268,7 @@ describe('formatOffensesJson', () => {
           type: SourceCodeType.LiquidHtml,
           check: 'LiquidHTMLSyntaxError',
           message: 'Attempting to close HtmlElement',
-          absolutePath: '/path/to/file',
+          uri: 'file:///path/to/file',
           severity: Severity.ERROR,
           start: {index: 0, line: 1, character: 0},
           end: {index: 10, line: 1, character: 10},
@@ -267,7 +277,7 @@ describe('formatOffensesJson', () => {
           type: SourceCodeType.LiquidHtml,
           check: 'LiquidHTMLSyntaxError',
           message: 'Attempting to close HtmlElement',
-          absolutePath: '/path/to/file',
+          uri: 'file:///path/to/file',
           severity: Severity.WARNING,
           start: {index: 0, line: 2, character: 0},
           end: {index: 10, line: 2, character: 10},
@@ -333,7 +343,7 @@ describe('handleExit', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.ERROR,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -349,7 +359,7 @@ describe('handleExit', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.ERROR,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},
@@ -365,7 +375,7 @@ describe('handleExit', () => {
         type: SourceCodeType.LiquidHtml,
         check: 'LiquidHTMLSyntaxError',
         message: 'Attempting to close HtmlElement',
-        absolutePath: '/path/to/file',
+        uri: 'file:///path/to/file',
         severity: Severity.INFO,
         start: {index: 0, line: 1, character: 0},
         end: {index: 10, line: 1, character: 10},

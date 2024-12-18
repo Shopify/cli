@@ -4,14 +4,12 @@ import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {Flag} from '../../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
 
 const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
   forward: transformToPrivacyComplianceWebhooksModule,
-  reverse: (content: object, options?: {flags?: Flag[]}) =>
-    transformFromPrivacyComplianceWebhooksModule(content, options),
+  reverse: (content: object) => transformFromPrivacyComplianceWebhooksModule(content),
 }
 
 export const PrivacyComplianceWebhooksSpecIdentifier = 'privacy_compliance_webhooks'
@@ -50,39 +48,24 @@ function transformToPrivacyComplianceWebhooksModule(content: object, appConfigur
   }
 }
 
-function transformFromPrivacyComplianceWebhooksModule(content: object, options?: {flags?: Flag[]}) {
+function transformFromPrivacyComplianceWebhooksModule(content: object) {
   const customersRedactUrl = getPathValue(content, 'customers_redact_url') as string
   const customersDataRequestUrl = getPathValue(content, 'customers_data_request_url') as string
   const shopRedactUrl = getPathValue(content, 'shop_redact_url') as string
 
-  if (options?.flags?.includes(Flag.DeclarativeWebhooks)) {
-    const webhooks: WebhookSubscription[] = []
-    if (customersDataRequestUrl) {
-      webhooks.push({compliance_topics: [ComplianceTopic.CustomersDataRequest], uri: customersDataRequestUrl})
-    }
-    if (customersRedactUrl) {
-      webhooks.push({compliance_topics: [ComplianceTopic.CustomersRedact], uri: customersRedactUrl})
-    }
-    if (shopRedactUrl) {
-      webhooks.push({compliance_topics: [ComplianceTopic.ShopRedact], uri: shopRedactUrl})
-    }
-
-    if (webhooks.length === 0) return {}
-    return {webhooks: {subscriptions: mergeAllWebhooks(webhooks), privacy_compliance: undefined}}
+  const webhooks: WebhookSubscription[] = []
+  if (customersDataRequestUrl) {
+    webhooks.push({compliance_topics: [ComplianceTopic.CustomersDataRequest], uri: customersDataRequestUrl})
+  }
+  if (customersRedactUrl) {
+    webhooks.push({compliance_topics: [ComplianceTopic.CustomersRedact], uri: customersRedactUrl})
+  }
+  if (shopRedactUrl) {
+    webhooks.push({compliance_topics: [ComplianceTopic.ShopRedact], uri: shopRedactUrl})
   }
 
-  if (customersRedactUrl || customersDataRequestUrl || shopRedactUrl) {
-    return {
-      webhooks: {
-        privacy_compliance: {
-          ...(customersRedactUrl ? {customer_deletion_url: customersRedactUrl} : {}),
-          ...(customersDataRequestUrl ? {customer_data_request_url: customersDataRequestUrl} : {}),
-          ...(shopRedactUrl ? {shop_deletion_url: shopRedactUrl} : {}),
-        },
-      },
-    }
-  }
-  return {}
+  if (webhooks.length === 0) return {}
+  return {webhooks: {subscriptions: mergeAllWebhooks(webhooks), privacy_compliance: undefined}}
 }
 
 function getComplianceUri(webhooks: WebhooksConfig, complianceTopic: string): string | undefined {

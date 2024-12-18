@@ -296,6 +296,24 @@ describe('ensureInsideGitDirectory()', () => {
     // Then
     await expect(git.ensureInsideGitDirectory()).resolves.toBeUndefined()
   })
+})
+
+describe('insideGitDirectory()', () => {
+  test('returns true if inside a git directory', async () => {
+    // Given
+    mockedCheckIsRepo.mockResolvedValue(true)
+
+    // Then
+    await expect(git.insideGitDirectory()).resolves.toBe(true)
+  })
+
+  test('returns false if not inside a git directory', async () => {
+    // Given
+    mockedCheckIsRepo.mockResolvedValue(false)
+
+    // Then
+    await expect(git.insideGitDirectory()).resolves.toBe(false)
+  })
 
   test('passes the directory option to simple git', async () => {
     // Given
@@ -303,7 +321,7 @@ describe('ensureInsideGitDirectory()', () => {
     mockedCheckIsRepo.mockResolvedValue(true)
 
     // When
-    await git.ensureInsideGitDirectory(directory)
+    await git.insideGitDirectory(directory)
 
     // Then
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})

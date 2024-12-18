@@ -7,8 +7,10 @@ const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
 const arnRegex =
   /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/
 
-export const removeTrailingSlash = (arg: unknown) =>
-  typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
+export function removeTrailingSlash(arg: string): string
+export function removeTrailingSlash(arg: unknown): unknown {
+  return typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
+}
 
 export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 'Value must be string'}).refine(
   (uri) => {

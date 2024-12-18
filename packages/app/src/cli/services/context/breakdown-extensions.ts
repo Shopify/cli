@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
@@ -10,7 +11,7 @@ import {
   fetchAppRemoteConfiguration,
   remoteAppConfigurationExtensionContent,
 } from '../app/select-app.js'
-import {ActiveAppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   RemoteExtensionRegistrations,
@@ -61,6 +62,13 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   let remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations(options)
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
+
+  if (extensionsToConfirm.didMigrateDashboardExtensions) {
+    // If we migrated dashboard extensions, we need to refetch the active app version
+    const newActiveAppVersion = await options.developerPlatformClient.activeAppVersion(options.remoteApp)
+    // eslint-disable-next-line require-atomic-updates
+    options.activeAppVersion = newActiveAppVersion
+  }
 
   if (extensionsToConfirm.dashboardOnlyExtensions.length > 0) {
     remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations({...options, activeAppVersion: undefined})
@@ -128,7 +136,7 @@ export async function configExtensionsIdentifiersBreakdown({
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
-  activeAppVersion?: ActiveAppVersion
+  activeAppVersion?: AppVersion
 }) {
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
@@ -162,7 +170,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   remoteApp: MinimalOrganizationApp,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
-  activeAppVersion?: ActiveAppVersion,
+  activeAppVersion?: AppVersion,
 ) {
   const remoteConfig: Partial<AppConfigurationUsedByCli> =
     (await fetchAppRemoteConfiguration(
@@ -329,7 +337,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   specs: ExtensionSpecification[],
-  activeAppVersion?: ActiveAppVersion,
+  activeAppVersion?: AppVersion,
 ): Promise<ExtensionIdentifiersBreakdown | undefined> {
   const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
@@ -351,7 +359,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
 }
 
 function loadExtensionsIdentifiersBreakdown(
-  activeAppVersion: ActiveAppVersion,
+  activeAppVersion: AppVersion,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
@@ -384,7 +392,7 @@ function loadExtensionsIdentifiersBreakdown(
   }
 }
 
-function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: ActiveAppVersion) {
+function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[], activeAppVersion: AppVersion) {
   const currentVersions =
     activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification!.options.managementExperience === 'dashboard',

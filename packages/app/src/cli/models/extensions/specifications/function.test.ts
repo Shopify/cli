@@ -20,6 +20,7 @@ describe('functionConfiguration', () => {
     build: {
       command: 'make build',
       path: 'dist/index.wasm',
+      wasm_opt: true,
     },
     ui: {
       paths: {

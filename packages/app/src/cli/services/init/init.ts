@@ -3,6 +3,9 @@ import cleanup from './template/cleanup.js'
 import link from '../app/config/link.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {loadConfigForAppCreation} from '../../models/app/loader.js'
+import {SelectAppOrNewAppNameResult} from '../../commands/app/init.js'
+import {linkedAppContext} from '../app-context.js'
 import {
   findUpAndReadPackageJson,
   lockfiles,
@@ -34,7 +37,7 @@ import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 interface InitOptions {
   name: string
-  app: OrganizationApp
+  selectedAppOrNameResult: SelectAppOrNewAppNameResult
   directory: string
   template: string
   packageManager: PackageManager
@@ -75,7 +78,7 @@ async function init(options: InitOptions) {
     const repoUrl = githubRepo.branch ? `${githubRepo.baseURL}#${githubRepo.branch}` : githubRepo.baseURL
 
     await mkdir(templateDownloadDir)
-    const tasks: Task<unknown>[] = [
+    const tasks: Task[] = [
       {
         title: `Downloading template from ${repoUrl}`,
         task: async () => {
@@ -177,7 +180,7 @@ async function init(options: InitOptions) {
       {
         title: 'Cleaning up',
         task: async () => {
-          await cleanup(templateScaffoldDir)
+          await cleanup(templateScaffoldDir, packageManager)
         },
       },
       {
@@ -193,18 +196,36 @@ async function init(options: InitOptions) {
     await moveFile(templateScaffoldDir, outputDirectory)
   })
 
-  // Link the new project to the selected App
+  let app: OrganizationApp
+  if (options.selectedAppOrNameResult.result === 'new') {
+    const creationOptions = await loadConfigForAppCreation(outputDirectory, options.name)
+    const org = options.selectedAppOrNameResult.org
+    app = await options.developerPlatformClient.createApp(org, options.name, creationOptions)
+  } else {
+    app = options.selectedAppOrNameResult.app
+  }
+
+  // Link the new project to the selected/created App
   await link(
     {
       directory: outputDirectory,
-      apiKey: options.app.apiKey,
-      appId: options.app.id,
-      organizationId: options.app.organizationId,
+      apiKey: app.apiKey,
+      appId: app.id,
+      organizationId: app.organizationId,
       configName: 'shopify.app.toml',
       developerPlatformClient: options.developerPlatformClient,
+      isNewApp: true,
     },
     false,
   )
+
+  const appContextResult = await linkedAppContext({
+    directory: outputDirectory,
+    clientId: undefined,
+    forceRelink: false,
+    userProvidedConfigName: undefined,
+    unsafeReportMode: false,
+  })
 
   renderSuccess({
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
@@ -217,12 +238,12 @@ async function init(options: InitOptions) {
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
       [
         'For an overview of commands, run',
-        {command: `${formatPackageManagerCommand(packageManager, 'shopify app', '--help')}`},
+        {command: formatPackageManagerCommand(packageManager, 'shopify app', '--help')},
       ],
     ],
   })
 
-  return {outputDirectory}
+  return {app: appContextResult.app}
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {

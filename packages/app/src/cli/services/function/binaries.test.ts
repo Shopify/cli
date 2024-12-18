@@ -1,10 +1,11 @@
-import {javyBinary, functionRunnerBinary, installBinary} from './binaries.js'
+import {javyBinary, functionRunnerBinary, downloadBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
 import {gzipSync} from 'zlib'
 
 const javy = javyBinary()
+const javyPlugin = javyPluginBinary()
 const functionRunner = functionRunnerBinary()
 
 vi.mock('@shopify/cli-kit/node/http', async () => {
@@ -117,18 +118,50 @@ describe('javy', () => {
     })
   })
 
-  test('installs Javy', async () => {
+  test('downloads Javy', async () => {
     // Given
     await removeFile(javy.path)
     await expect(fileExists(javy.path)).resolves.toBeFalsy()
     vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy binary')))
 
     // When
-    await installBinary(javy)
+    await downloadBinary(javy)
 
     // Then
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(javy.path)).resolves.toBeTruthy()
+  })
+})
+
+describe('javy-plugin', () => {
+  test('properties are set correctly', () => {
+    expect(javyPlugin.name).toBe('shopify_functions_javy_v1')
+    expect(javyPlugin.version).match(/^v\d+$/)
+    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v1.wasm$/)
+  })
+
+  test('downloadUrl returns the correct URL', () => {
+    // When
+    const url = javyPlugin.downloadUrl('', '')
+
+    // Then
+    expect(url).toMatch(
+      /^https:\/\/cdn\.shopify\.com\/shopifycloud\/shopify-functions-javy-plugin\/shopify_functions_javy_v\d+\.wasm$/,
+    )
+  })
+
+  test('downloads javy-plugin', async () => {
+    // Given
+    await removeFile(javyPlugin.path)
+    await expect(fileExists(javyPlugin.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy-plugin binary')))
+
+    // When
+    await downloadBinary(javyPlugin)
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(javyPlugin.path)).resolves.toBeTruthy()
   })
 })
 
@@ -234,17 +267,49 @@ describe('functionRunner', () => {
     })
   })
 
-  test('installs function-runner', async () => {
+  test('downloads function-runner', async () => {
     // Given
     await removeFile(functionRunner.path)
     await expect(fileExists(functionRunner.path)).resolves.toBeFalsy()
     vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('function-runner binary')))
 
     // When
-    await installBinary(functionRunner)
+    await downloadBinary(functionRunner)
 
     // Then
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(functionRunner.path)).resolves.toBeTruthy()
+  })
+})
+
+describe('wasm-opt', () => {
+  const wasmOpt = wasmOptBinary()
+
+  test('properties are set correctly', () => {
+    expect(wasmOpt.name).toBe('wasm-opt.cjs')
+    expect(wasmOpt.version).match(/\d.\d.\d$/)
+    expect(wasmOpt.path).toMatch(/(\/|\\)wasm-opt.cjs$/)
+  })
+
+  test('downloadUrl returns the correct URL', () => {
+    // When
+    const url = wasmOpt.downloadUrl('', '')
+
+    // Then
+    expect(url).toMatch(/https:\/\/cdn.jsdelivr.net\/npm\/binaryen@\d{3}\.\d\.\d\/bin\/wasm-opt/)
+  })
+
+  test('downloads wasm-opt', async () => {
+    // Given
+    await removeFile(wasmOpt.path)
+    await expect(fileExists(wasmOpt.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response('wasm-opt'))
+
+    // When
+    await downloadBinary(wasmOpt)
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(wasmOpt.path)).resolves.toBeTruthy()
   })
 })

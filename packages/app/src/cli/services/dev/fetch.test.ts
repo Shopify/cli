@@ -1,4 +1,4 @@
-import {fetchOrganizations, fetchStoreByDomain, NoOrgError} from './fetch.js'
+import {fetchOrganizations, fetchStore, fetchStoreByDomain, NoOrgError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
@@ -12,6 +12,7 @@ import {AppManagementClient} from '../../utilities/developer-platform-client/app
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const ORG1: Organization = {
   id: '1',
@@ -23,6 +24,17 @@ const ORG2: Organization = {
   businessName: 'org2',
   source: OrganizationSource.Partners,
 }
+const MIGRATED_ORG1: Organization = {
+  id: '1',
+  businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
+}
+const ORG3: Organization = {
+  id: '3',
+  businessName: 'org3',
+  source: OrganizationSource.BusinessPlatform,
+}
+
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -53,34 +65,14 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners without USE_APP_MANAGEMENT_API', async () => {
+  test('returns fetched organizations from Partners when App Management is disabled', async () => {
     // Given
+
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG1]),
+      organizations: () => Promise.resolve([ORG1, ORG2]),
     }) as PartnersClient
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG2]),
-    }) as AppManagementClient
-    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
-
-    // When
-    const got = await fetchOrganizations()
-
-    // Then
-    expect(got).toEqual([ORG1])
-    expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(appManagementClient.organizations).not.toHaveBeenCalled()
-  })
-
-  test('returns fetched organizations from Partners and App Management with USE_APP_MANAGEMENT_API', async () => {
-    // Given
-    vi.stubEnv('USE_APP_MANAGEMENT_API', '1')
-    const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG1]),
-    }) as PartnersClient
-    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG2]),
+      organizations: () => Promise.resolve([MIGRATED_ORG1, ORG3]),
     }) as AppManagementClient
     vi.mocked(PartnersClient).mockReturnValue(partnersClient)
     vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
@@ -90,6 +82,27 @@ describe('fetchOrganizations', async () => {
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
+    expect(partnersClient.organizations).toHaveBeenCalled()
+    expect(appManagementClient.organizations).not.toHaveBeenCalled()
+  })
+
+  test('returns unique organizations from App Management and Partners with USE_APP_MANAGEMENT_API', async () => {
+    // Given
+    vi.stubEnv('USE_APP_MANAGEMENT_API', '1')
+    const partnersClient: PartnersClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG1, ORG2]),
+    }) as PartnersClient
+    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([MIGRATED_ORG1, ORG3]),
+    }) as AppManagementClient
+    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
+    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
+
+    // When
+    const got = await fetchOrganizations()
+
+    // Then
+    expect(got).toEqual([MIGRATED_ORG1, ORG3, ORG2])
     expect(partnersClient.organizations).toHaveBeenCalled()
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })
@@ -123,6 +136,35 @@ describe('fetchStoreByDomain', async () => {
     // Then
     expect(got).toEqual({organization: ORG1, store: STORE1})
     expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
+  })
+})
+
+describe('fetchStore', () => {
+  test('returns fetched store', async () => {
+    // Given
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
+    })
+
+    // When
+    const got = await fetchStore(ORG1, 'domain1', developerPlatformClient)
+
+    // Then
+    expect(got).toEqual(STORE1)
+    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
+  })
+
+  test('throws error if store not found', async () => {
+    // Given
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
+    })
+
+    // When
+    const got = fetchStore(ORG1, 'domain1', developerPlatformClient)
+
+    // Then
+    await expect(got).rejects.toThrow(new AbortError(`Could not find Store for domain domain1 in Organization org1.`))
   })
 })
 

@@ -6,9 +6,6 @@ up:
       pnpm: 8.15.7
       package_manager: pnpm@8.15.7
       packages: []
-  - ruby
-  - bundler:
-      gemfile: packages/cli-kit/assets/cli-ruby/Gemfile
   - packages:
     - jq
   - custom:

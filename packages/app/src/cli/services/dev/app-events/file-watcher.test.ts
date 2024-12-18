@@ -1,18 +1,23 @@
-import {OutputContextOptions, WatcherEvent, startFileWatcher} from './file-watcher.js'
+import {FileWatcher, OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {
-  testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
+  testAppLinked,
+  testFunctionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
+const functionExtension = await testFunctionExtension({dir: '/extensions/my-function'})
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
 
@@ -27,7 +32,7 @@ interface TestCaseSingleEvent {
   name: string
   fileSystemEvent: string
   path: string
-  expectedEvent: WatcherEvent
+  expectedEvent?: WatcherEvent
 }
 
 /**
@@ -124,6 +129,12 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       startTime: expect.any(Array),
     },
   },
+  {
+    name: 'change in function extension is ignored if not in watch list',
+    fileSystemEvent: 'change',
+    path: '/extensions/my-function/src/cargo.lock',
+    expectedEvent: undefined,
+  },
 ]
 
 const multiEventTestCases: TestCaseMultiEvent[] = [
@@ -164,8 +175,8 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
 ]
 
 const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-const defaultApp = testApp({
-  allExtensions: [extension1, extension1B, extension2, posExtension, appAccessExtension],
+const defaultApp = testAppLinked({
+  allExtensions: [extension1, extension1B, extension2, posExtension, appAccessExtension, functionExtension],
   directory: '/',
   configuration: {scopes: '', extension_directories: ['/extensions'], path: '/shopify.app.toml'},
 })
@@ -173,21 +184,47 @@ const defaultApp = testApp({
 describe('file-watcher events', () => {
   test('The file watcher is started with the correct paths and options', async () => {
     // Given
-    const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
-      return {
-        on: (_: string, listener: any) => listener('change', '/shopify.app.toml'),
-        close: () => Promise.resolve(),
-      } as any
-    })
+    await inTemporaryDirectory(async (dir) => {
+      const ext1 = await testUIExtension({type: 'ui_extension', directory: joinPath(dir, '/extensions/ext1')})
+      const ext2 = await testUIExtension({type: 'ui_extension', directory: joinPath(dir, '/extensions/ext2')})
+      const posExtension = await testAppConfigExtensions(false, dir)
+      const app = testAppLinked({
+        allExtensions: [ext1, ext2, posExtension],
+        directory: dir,
+        configuration: {path: joinPath(dir, '/shopify.app.toml'), scopes: ''},
+      })
 
-    // When
-    await startFileWatcher(defaultApp, outputOptions, vi.fn())
+      // Add a custom gitignore file to the extension
+      await mkdir(joinPath(dir, '/extensions/ext1'))
+      await writeFile(joinPath(dir, '/extensions/ext1/.gitignore'), '#comment\na_folder\na_file.txt\n**/nested/**')
 
-    // Then
-    expect(watchSpy).toHaveBeenCalledWith(['/shopify.app.toml', '/extensions'], {
-      ignored: ['**/node_modules/**', '**/.git/**', '**/*.test.*', '**/dist/**', '**/*.swp'],
-      ignoreInitial: true,
-      persistent: true,
+      const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
+        return {
+          on: (_: string, listener: any) => listener('change', '/shopify.app.toml'),
+          close: () => Promise.resolve(),
+        } as any
+      })
+
+      // When
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      fileWatcher.onChange(vi.fn())
+
+      await fileWatcher.start()
+
+      // Then
+      expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
+        ignored: [
+          '**/node_modules/**',
+          '**/.git/**',
+          '**/*.test.*',
+          '**/dist/**',
+          '**/*.swp',
+          '**/generated/**',
+          '**/.gitignore',
+        ],
+        ignoreInitial: true,
+        persistent: true,
+      })
     })
   })
 
@@ -204,18 +241,26 @@ describe('file-watcher events', () => {
 
       // When
       const onChange = vi.fn()
-      await startFileWatcher(defaultApp, outputOptions, onChange)
+      const fileWatcher = new FileWatcher(defaultApp, outputOptions)
+      fileWatcher.onChange(onChange)
+
+      await fileWatcher.start()
 
       // Then
       await flushPromises()
 
       // use waitFor to so that we can test the debouncers and timeouts
-      await vi.waitFor(
-        () => {
-          expect(onChange).toHaveBeenCalledWith(expectedEvent)
-        },
-        {timeout: 1000, interval: 100},
-      )
+      if (expectedEvent) {
+        await vi.waitFor(
+          () => {
+            expect(onChange).toHaveBeenCalledWith([expectedEvent])
+          },
+          {timeout: 2000, interval: 100},
+        )
+      } else {
+        await sleep(0.01)
+        expect(onChange).not.toHaveBeenCalled()
+      }
     },
   )
 
@@ -232,7 +277,10 @@ describe('file-watcher events', () => {
 
       // When
       const onChange = vi.fn()
-      await startFileWatcher(defaultApp, outputOptions, onChange)
+      const fileWatcher = new FileWatcher(defaultApp, outputOptions)
+      fileWatcher.onChange(onChange)
+
+      await fileWatcher.start()
 
       // Then
       await flushPromises()
@@ -241,7 +289,7 @@ describe('file-watcher events', () => {
       await vi.waitFor(
         () => {
           expect(onChange).toHaveBeenCalledOnce()
-          expect(onChange).toHaveBeenCalledWith(expectedEvent)
+          expect(onChange).toHaveBeenCalledWith([expectedEvent])
         },
         {timeout: 1000, interval: 100},
       )

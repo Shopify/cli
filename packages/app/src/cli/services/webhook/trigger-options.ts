@@ -7,17 +7,15 @@ import {
   parseTopicFlag,
   validateAddressMethod,
 } from './trigger-flags.js'
+import {WebhookTriggerInput} from './trigger.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
-import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {renderCurrentlyUsedConfigInfo} from '../context.js'
 import {basename} from '@shopify/cli-kit/node/path'
 
 interface AppCredentials {
   clientSecret: string
   apiKey?: string
-  developerPlatformClient?: DeveloperPlatformClient
 }
 
 /**
@@ -34,28 +32,25 @@ interface AppCredentials {
  * @returns a pair with client-secret, api-key (possibly empty)
  */
 export async function collectCredentials(
-  clientId: string | undefined,
-  secret: string | undefined,
-  app: AppInterface,
+  input: Pick<WebhookTriggerInput, 'clientSecret' | 'clientId' | 'remoteApp' | 'app'>,
   deliveryMethod: string,
 ): Promise<AppCredentials> {
+  const {clientSecret: secret, clientId, remoteApp, app} = input
   if (secret && (clientId || deliveryMethod !== DELIVERY_METHOD.EVENTBRIDGE)) {
     const credentials: AppCredentials = {clientSecret: secret, apiKey: clientId}
     return credentials
   }
 
-  const orgApp = await fetchAppFromConfigOrSelect(app)
-  if (isCurrentAppSchema(app.configuration)) {
-    renderCurrentlyUsedConfigInfo({
-      appName: orgApp.title,
-      configFile: basename(app.configuration.path),
-    })
-  }
-  const clientSecret = orgApp.apiSecretKeys.find((elm) => elm.secret)!.secret
+  renderCurrentlyUsedConfigInfo({
+    appName: remoteApp.title,
+    configFile: basename(app.configuration.path),
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const clientSecret = remoteApp.apiSecretKeys.find((elm) => elm.secret)!.secret
   return {
     clientSecret,
-    apiKey: orgApp.apiKey,
-    developerPlatformClient: orgApp.developerPlatformClient,
+    apiKey: remoteApp.apiKey,
   }
 }
 
@@ -64,13 +59,15 @@ export async function collectCredentials(
  *
  * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID or undefined api-version
+ * @param organizationId - Organization ID required by the API to verify permissions
  * @returns api-version
  */
 export async function collectApiVersion(
   developerPlatformClient: DeveloperPlatformClient,
   apiVersion: string | undefined,
+  organizationId: string,
 ): Promise<string> {
-  const apiVersions = await requestApiVersions(developerPlatformClient)
+  const apiVersions = await requestApiVersions(developerPlatformClient, organizationId)
   if (apiVersion) return parseApiVersionFlag(apiVersion, apiVersions)
   return apiVersionPrompt(apiVersions)
 }
@@ -81,18 +78,19 @@ export async function collectApiVersion(
  * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - VALID api-version
  * @param topic - topic or undefined
+ * @param organizationId - Organization ID required by the API to verify permissions
  * @returns topic
  */
 export async function collectTopic(
   developerPlatformClient: DeveloperPlatformClient,
   apiVersion: string,
   topic: string | undefined,
+  organizationId: string,
 ): Promise<string> {
+  const topics = await requestTopics(developerPlatformClient, apiVersion, organizationId)
   if (topic) {
-    return parseTopicFlag(topic, apiVersion, await requestTopics(developerPlatformClient, apiVersion))
+    return parseTopicFlag(topic, apiVersion, topics)
   }
-
-  const topics = await requestTopics(developerPlatformClient, apiVersion)
   return topicPrompt(topics)
 }
 

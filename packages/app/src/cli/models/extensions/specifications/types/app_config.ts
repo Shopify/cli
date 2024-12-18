@@ -13,6 +13,7 @@ import {WebhooksConfig} from './app_config_webhook.js'
 export interface AppConfigurationUsedByCli {
   name: string
   application_url: string
+  embedded: boolean
   app_proxy?: {
     url: string
     prefix: string

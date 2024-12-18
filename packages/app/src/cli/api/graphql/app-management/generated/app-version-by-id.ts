@@ -11,9 +11,10 @@ export type AppVersionByIdQueryVariables = Types.Exact<{
 export type AppVersionByIdQuery = {
   version: {
     id: string
-    metadata: {versionTag?: string | null}
+    metadata: {message?: string | null; versionTag?: string | null}
     appModules: {
       uuid: string
+      userIdentifier: string
       handle: string
       config: JsonMapType
       specification: {identifier: string; externalIdentifier: string; name: string}
@@ -58,6 +59,7 @@ export const AppVersionById = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'message'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
@@ -89,6 +91,7 @@ export const AppVersionById = {
         kind: 'SelectionSet',
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
           {

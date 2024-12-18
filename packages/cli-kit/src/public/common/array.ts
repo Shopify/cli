@@ -9,6 +9,7 @@ import type {List, ValueIteratee} from 'lodash'
  * @returns A random element from the array.
  */
 export function takeRandomFromArray<T>(array: T[]): T {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return array[Math.floor(Math.random() * array.length)]!
 }
 

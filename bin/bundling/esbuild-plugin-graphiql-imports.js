@@ -10,7 +10,7 @@ const GraphiQLImportsPlugin = {
       return {
         contents: contents
           .replace('@shopify/app/assets/graphiql/favicon.ico', './assets/graphiql/favicon.ico')
-          .replace('@shopify/cli-kit/assets/style.css', './assets/style.css'),
+          .replace('@shopify/app/assets/graphiql/style.css', './assets/graphiql/style.css'),
       }
     })
   },

@@ -40,6 +40,7 @@ type VerboseResponse<T> = {
   | {status: 'client-error'; clientError: ClientError}
   | {status: 'unknown-error'; error: unknown}
   | {status: 'can-retry'; clientError: ClientError; delayMs: number | undefined}
+  | {status: 'unauthorized'; clientError: ClientError; delayMs: number | undefined}
 )
 
 async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
@@ -63,14 +64,14 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
     duration = Math.round(t1 - t0)
 
     if (err instanceof ClientError) {
-      if (err.response?.headers) {
-        for (const [key, value] of err.response?.headers as Iterable<[string, string]>) {
+      if (err.response.headers) {
+        for (const [key, value] of err.response.headers as Iterable<[string, string]>) {
           if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
         }
       }
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
-      if (err.response.errors?.some((error) => error.extensions?.code === '429') || err.response.status === 429) {
+      if (errorsIncludeStatus429(err)) {
         let delayMs: number | undefined
 
         try {
@@ -87,6 +88,16 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
           sanitizedUrl,
           requestId: responseHeaders['x-request-id'],
           delayMs,
+        }
+      } else if (err.response.status === 401) {
+        return {
+          status: 'unauthorized',
+          clientError: err,
+          duration,
+          sanitizedHeaders,
+          sanitizedUrl,
+          requestId: responseHeaders['x-request-id'],
+          delayMs: 500,
         }
       }
 
@@ -120,9 +131,22 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   }
 }
 
+function errorsIncludeStatus429(error: ClientError): boolean {
+  if (error.response.status === 429) {
+    return true
+  }
+
+  // GraphQL returns a 401 with a string error message when auth fails
+  // Therefore error.response.errors can be a string or GraphQLError[]
+  if (typeof error.response.errors === 'string') {
+    return false
+  }
+  return error.response.errors?.some((error) => error.extensions?.code === '429') ?? false
+}
+
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
   const result = await makeVerboseRequest({request, url})
 
@@ -156,12 +180,20 @@ ${result.sanitizedHeaders}
         throw result.clientError
       }
     }
+    case 'unauthorized': {
+      if (errorHandler) {
+        throw errorHandler(result.clientError, result.requestId)
+      } else {
+        throw result.clientError
+      }
+    }
   }
 }
 
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
-  errorHandler?: (error: unknown, requestId: string | undefined) => Error | unknown,
+  errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
+  unauthorizedHandler?: () => Promise<void>,
   retryOptions: {
     limitRetriesTo?: number
     defaultDelayMs?: number
@@ -198,6 +230,13 @@ ${result.sanitizedHeaders}
       } else {
         throw result.error
       }
+    } else if (result.status === 'unauthorized') {
+      if (unauthorizedHandler) {
+        // eslint-disable-next-line no-await-in-loop
+        await unauthorizedHandler()
+      } else {
+        throw result.clientError
+      }
     }
 
     if (limitRetriesTo <= retriesUsed) {
@@ -215,10 +254,10 @@ ${result.sanitizedHeaders}
     outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${retryDelayMs} ms`)
 
     // eslint-disable-next-line no-await-in-loop
-    result = await new Promise<VerboseResponse<T>>((resolve) =>
+    result = await new Promise<VerboseResponse<T>>((resolve) => {
       retryOptions.scheduleDelay(() => {
         resolve(makeVerboseRequest({request, url}))
-      }, retryDelayMs),
-    )
+      }, retryDelayMs)
+    })
   }
 }

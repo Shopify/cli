@@ -12,6 +12,10 @@ interface LinkProps {
 
 function link(label: string | undefined, url: string, linksContext: LinksContextValue | null) {
   if (!supportsHyperlinks.stdout) {
+    if (url === (label ?? url)) {
+      return url
+    }
+
     if (linksContext === null) {
       return label ? `${label} ${chalk.dim(`( ${url} )`)}` : url
     }

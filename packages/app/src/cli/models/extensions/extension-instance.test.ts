@@ -18,7 +18,7 @@ import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
-import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
@@ -32,7 +32,9 @@ function functionConfiguration(): FunctionConfigType {
     api_version: '2023-07',
     configuration_ui: true,
     metafields: [],
-    build: {},
+    build: {
+      wasm_opt: true,
+    },
   }
 }
 
@@ -41,6 +43,7 @@ describe('watchPaths', async () => {
     const config = functionConfiguration()
     config.build = {
       watch: 'src/single-path.foo',
+      wasm_opt: true,
     }
     const extensionInstance = await testFunctionExtension({
       config,
@@ -54,7 +57,9 @@ describe('watchPaths', async () => {
 
   test('returns default paths for javascript', async () => {
     const config = functionConfiguration()
-    config.build = {}
+    config.build = {
+      wasm_opt: true,
+    }
     const extensionInstance = await testFunctionExtension({
       config,
       entryPath: 'src/index.js',
@@ -86,6 +91,7 @@ describe('watchPaths', async () => {
     const config = functionConfiguration()
     config.build = {
       watch: ['src/**/*.rs', 'src/**/*.foo'],
+      wasm_opt: true,
     }
     const extensionInstance = await testFunctionExtension({
       config,
@@ -103,7 +109,9 @@ describe('watchPaths', async () => {
 
   test('returns null if not javascript and not configured', async () => {
     const config = functionConfiguration()
-    config.build = {}
+    config.build = {
+      wasm_opt: true,
+    }
     const extensionInstance = await testFunctionExtension({
       config,
     })
@@ -111,6 +119,95 @@ describe('watchPaths', async () => {
     const got = extensionInstance.watchBuildPaths
 
     expect(got).toBeNull()
+  })
+})
+
+describe('keepBuiltSourcemapsLocally', async () => {
+  test('moves the appropriate source map files to the expected directory for sourcemap generating extensions', async () => {
+    await inTemporaryDirectory(async (bundleDirectory: string) => {
+      await inTemporaryDirectory(async (outputPath: string) => {
+        const extensionInstance = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'scriptToMove',
+          directory: outputPath,
+        })
+        const someDirPath = joinPath(bundleDirectory, 'some_dir')
+        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+
+        await mkdir(someDirPath)
+        await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
+        await writeFile(joinPath(someDirPath, 'scriptToMove.js.map'), 'abc map')
+
+        await mkdir(otherDirPath)
+        await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
+        await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
+
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'some_dir')
+
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(true)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js.map'))).toBe(false)
+      })
+    })
+  })
+
+  test('does not move files if no handle matching sourcemap files found within the given path', async () => {
+    await inTemporaryDirectory(async (bundleDirectory: string) => {
+      await inTemporaryDirectory(async (outputPath: string) => {
+        const extensionInstance = await testUIExtension({
+          type: 'ui_extension',
+          handle: 'scriptToMove',
+          directory: outputPath,
+        })
+        const someDirPath = joinPath(bundleDirectory, 'some_dir')
+        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+
+        await mkdir(someDirPath)
+        await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
+        await writeFile(joinPath(someDirPath, 'scriptToMove.js.map'), 'abc map')
+
+        await mkdir(otherDirPath)
+        await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
+        await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
+
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'other_dir')
+
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js.map'))).toBe(false)
+      })
+    })
+  })
+
+  test('does nothing for non-sourcemap generating extensions', async () => {
+    await inTemporaryDirectory(async (bundleDirectory: string) => {
+      await inTemporaryDirectory(async (outputPath: string) => {
+        const extensionInstance = await testUIExtension({
+          type: 'web_pixel_extension',
+          handle: 'scriptToMove',
+          directory: outputPath,
+        })
+        const someDirPath = joinPath(bundleDirectory, 'some_dir')
+        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+
+        await mkdir(someDirPath)
+        await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
+        await writeFile(joinPath(someDirPath, 'scriptToMove.js.map'), 'abc map')
+
+        await mkdir(otherDirPath)
+        await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
+        await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
+
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'some_dir')
+
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js.map'))).toBe(false)
+      })
+    })
   })
 })
 

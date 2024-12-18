@@ -29,7 +29,7 @@ import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
-vi.mock('../../version.js')
+vi.mock('./version.js')
 vi.mock('./system.js')
 vi.mock('latest-version')
 vi.mock('./is-global')

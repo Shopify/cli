@@ -4,6 +4,7 @@ import {
   isDevelopment,
   isShopify,
   isUnitTest,
+  isAppManagementEnabled,
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
@@ -96,6 +97,30 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
+  })
+})
+
+describe('isAppManagementEnabled', () => {
+  test('returns true when USE_APP_MANAGEMENT_API is truthy', () => {
+    // Given
+    const env = {USE_APP_MANAGEMENT_API: '1'}
+
+    // When
+    const got = isAppManagementEnabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when USE_APP_MANAGEMENT_API is falsy', () => {
+    // Given
+    const env = {USE_APP_MANAGEMENT_API: '0'}
+
+    // When
+    const got = isAppManagementEnabled(env)
+
+    // Then
+    expect(got).toBe(false)
   })
 })
 
@@ -259,6 +284,23 @@ describe('ciPlatform', () => {
         runNumber: '789',
         url: 'https://github.com/user/repo/actions/runs/456',
       },
+    })
+  })
+
+  test('should return correct data for Azure CI environment', () => {
+    // Given
+    const azureEnv = {
+      TF_BUILD: 'true',
+    }
+
+    // When
+    const result = ciPlatform(azureEnv)
+
+    // Then
+    expect(result).toEqual({
+      isCI: true,
+      name: 'azure',
+      metadata: {},
     })
   })
 })

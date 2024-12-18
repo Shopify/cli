@@ -50,7 +50,7 @@ describe('loadLocalesConfig', () => {
 
       await mkdir(localesPath)
       await writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
-      const bigArray = new Array(5000).fill('a')
+      const bigArray = new Array(6000).fill('a')
       await writeFile(es, JSON.stringify(bigArray))
 
       // When
@@ -101,7 +101,7 @@ describe('loadLocalesConfig', () => {
       const es = joinPath(localesPath, 'es.json')
 
       await mkdir(localesPath)
-      const bigArray = JSON.stringify(new Array(3000).fill('a'))
+      const bigArray = JSON.stringify(new Array(4000).fill('a'))
 
       await writeFile(en, JSON.stringify(bigArray))
       await writeFile(es, JSON.stringify(bigArray))

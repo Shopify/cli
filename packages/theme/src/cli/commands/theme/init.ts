@@ -10,7 +10,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 export default class Init extends ThemeCommand {
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
 
-  static usage = 'theme:init [name]'
+  static usage = 'theme init [name]'
 
   static descriptionWithMarkdown = `Clones a Git repository to your local machine to use as the starting point for building a theme.
 

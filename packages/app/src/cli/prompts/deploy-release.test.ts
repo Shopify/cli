@@ -178,7 +178,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             },
             {
               header: 'Extensions:',
-              helperText: 'Removing extensions can permanentely delete app user data',
+              helperText: 'Removing extensions can permanently delete app user data',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
                 {
@@ -331,7 +331,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             },
             {
               header: 'Extensions:',
-              helperText: 'Removing extensions can permanentely delete app user data',
+              helperText: 'Removing extensions can permanently delete app user data',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
                 'to update extension',

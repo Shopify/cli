@@ -26,7 +26,7 @@ After installing Ubuntu 22 then run:
 
 - `sudo apt-get update && sudo apt-get -y upgrade`
 - `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
-- `sudo apt-get install -y git nodejs ruby-dev && sudo gem install bundler`
+- `sudo apt-get install -y git nodejs`
 - `curl -fsSL https://get.pnpm.io/install.sh | sh -`
 
 You can clone the CLI repository:
@@ -53,7 +53,6 @@ After you've installed Windows, you need to install the following software:
 
 - [Git](https://git-scm.com/download/win)
 - [Node](https://nodejs.org/en/download/) (remember to also install chocolatey)
-- [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.x is recommended)
 - [PNPM](https://pnpm.io/installation)
   - You will need to enable [long paths](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell) support on windows:
   - Search for Terminal, then right click and "Run as administrator". Then run:

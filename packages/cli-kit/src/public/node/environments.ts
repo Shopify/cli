@@ -22,7 +22,7 @@ export async function loadEnvironment(
   fileName: string,
   options?: LoadEnvironmentOptions,
 ): Promise<JsonMap | undefined> {
-  const basePath = options?.from && options?.from !== '.' ? options.from : cwd()
+  const basePath = options?.from && options.from !== '.' ? options.from : cwd()
   const filePath = await findPathUp(fileName, {
     cwd: basePath,
     type: 'file',

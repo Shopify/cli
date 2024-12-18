@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable tsdoc/syntax */
-import {AbortError, AbortSilentError, FatalError as Fatal, FatalErrorType} from './error.js'
+import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
 import {
   collectLog,
   consoleError,
@@ -39,7 +40,6 @@ import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
-import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
@@ -247,11 +247,6 @@ interface RenderFatalErrorOptions {
  */
 // eslint-disable-next-line max-params
 export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalErrorOptions = {}) {
-  recordUIEvent({
-    type: 'fatalError',
-    properties: {...error, errorType: error.type === FatalErrorType.Bug ? 'bug' : 'abort'},
-  })
-
   return renderOnce(<FatalError error={error} />, {logLevel: 'error', logger: consoleError, renderOptions})
 }
 
@@ -298,29 +293,21 @@ export async function renderSelectPrompt<T>(
 ): Promise<T> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
-  if (!isConfirmationPrompt) {
-    recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
-  }
-
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let selectedValue: T
-    try {
-      await render(
-        <SelectPrompt
-          {...props}
-          onSubmit={(value: T) => {
-            selectedValue = value
-          }}
-        />,
-        {
-          ...renderOptions,
-          exitOnCtrlC: false,
-        },
-      )
-      return selectedValue!
-    } finally {
-      resetRecordedSleep()
-    }
+    await render(
+      <SelectPrompt
+        {...props}
+        onSubmit={(value: T) => {
+          selectedValue = value
+        }}
+      />,
+      {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      },
+    )
+    return selectedValue!
   })
 }
 
@@ -361,9 +348,6 @@ export async function renderConfirmationPrompt({
   abortSignal,
   infoMessage,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
-  // eslint-disable-next-line prefer-rest-params
-  recordUIEvent({type: 'confirmationPrompt', properties: arguments[0]})
-
   const choices = [
     {
       label: confirmationMessage,
@@ -439,17 +423,12 @@ export async function renderAutocompletePrompt<T>(
 ): Promise<T> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
-  // eslint-disable-next-line prefer-rest-params
-  recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
-
   const newProps = {
     search(term: string) {
       const lowerTerm = term.toLowerCase()
       return Promise.resolve({
         data: props.choices.filter((item) => {
-          return (
-            item.label.toLowerCase().includes(lowerTerm) || (item.group && item.group.toLowerCase().includes(lowerTerm))
-          )
+          return item.label.toLowerCase().includes(lowerTerm) || item.group?.toLowerCase().includes(lowerTerm)
         }),
       })
     },
@@ -458,23 +437,19 @@ export async function renderAutocompletePrompt<T>(
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let selectedValue: T
-    try {
-      await render(
-        <AutocompletePrompt
-          {...newProps}
-          onSubmit={(value: T) => {
-            selectedValue = value
-          }}
-        />,
-        {
-          ...renderOptions,
-          exitOnCtrlC: false,
-        },
-      )
-      return selectedValue!
-    } finally {
-      resetRecordedSleep()
-    }
+    await render(
+      <AutocompletePrompt
+        {...newProps}
+        onSubmit={(value: T) => {
+          selectedValue = value
+        }}
+      />,
+      {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      },
+    )
+    return selectedValue!
   })
 }
 
@@ -492,9 +467,6 @@ interface RenderTableOptions<T extends ScalarDict> extends TableProps<T> {
  * 3   John Smith  jon@smith.com
  */
 export function renderTable<T extends ScalarDict>({renderOptions, ...props}: RenderTableOptions<T>) {
-  // eslint-disable-next-line prefer-rest-params
-  recordUIEvent({type: 'table', properties: arguments[0]})
-
   return renderOnce(<Table {...props} />, {renderOptions})
 }
 
@@ -510,24 +482,13 @@ interface RenderTasksOptions {
  */
 // eslint-disable-next-line max-params
 export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
-  recordUIEvent({
-    type: 'taskbar',
-    properties: {
-      // Rather than timing exactly, pretend each step takes 2 seconds. This
-      // should be easy to tweak manually.
-      steps: tasks.map((task) => {
-        return {title: task.title, duration: 2}
-      }),
-    },
-  })
-
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
     render(<Tasks tasks={tasks} onComplete={resolve} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
-      .then(() => resetRecordedSleep())
+      .then(() => {})
       .catch(reject)
   })
 }
@@ -551,28 +512,21 @@ export async function renderTextPrompt(
 ): Promise<string> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
-  // eslint-disable-next-line prefer-rest-params
-  recordUIEvent({type: 'textPrompt', properties: arguments[0]})
-
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let enteredText = ''
-    try {
-      await render(
-        <TextPrompt
-          {...props}
-          onSubmit={(value: string) => {
-            enteredText = value
-          }}
-        />,
-        {
-          ...renderOptions,
-          exitOnCtrlC: false,
-        },
-      )
-      return enteredText
-    } finally {
-      resetRecordedSleep()
-    }
+    await render(
+      <TextPrompt
+        {...props}
+        onSubmit={(value: string) => {
+          enteredText = value
+        }}
+      />,
+      {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      },
+    )
+    return enteredText
   })
 }
 
@@ -610,28 +564,21 @@ export async function renderDangerousConfirmationPrompt(
 ): Promise<boolean> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
-  // eslint-disable-next-line prefer-rest-params
-  recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
-
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let confirmed: boolean
-    try {
-      await render(
-        <DangerousConfirmationPrompt
-          {...props}
-          onSubmit={(value: boolean) => {
-            confirmed = value
-          }}
-        />,
-        {
-          ...renderOptions,
-          exitOnCtrlC: false,
-        },
-      )
-      return confirmed!
-    } finally {
-      resetRecordedSleep()
-    }
+    await render(
+      <DangerousConfirmationPrompt
+        {...props}
+        onSubmit={(value: boolean) => {
+          confirmed = value
+        }}
+      />,
+      {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      },
+    )
+    return confirmed!
   })
 }
 

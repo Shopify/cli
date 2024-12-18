@@ -22,7 +22,7 @@ export function Dialog({labelledBy, children, onClose, setClosing, width, ...css
   const containerNode = useRef<HTMLDivElement>(null)
 
   const ensureFocusInsideModal = useCallback(() => {
-    // eslint-disable-next-line @babel/no-unused-expressions
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     containerNode.current &&
       !containerNode.current.contains(document.activeElement) &&
       focusFirstFocusableNode(containerNode.current)

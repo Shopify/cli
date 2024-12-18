@@ -1,6 +1,6 @@
 import {versionDiffByVersion} from './version-diff.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {AppVersionByTagSchema} from '../../api/graphql/app_version_by_tag.js'
+import {AppVersionWithContext} from '../../utilities/developer-platform-client.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {describe, expect, test} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -34,17 +34,13 @@ describe('versionDiffByVersion', () => {
 
   test('returns versionDiff and versionDetails when the version is found', async () => {
     // Given
-    const versionDetails: AppVersionByTagSchema = {
-      app: {
-        appVersion: {
-          id: 1,
-          uuid: 'uuid',
-          versionTag: 'versionTag',
-          location: 'location',
-          message: 'message',
-          appModuleVersions: [],
-        },
-      },
+    const versionDetails: AppVersionWithContext = {
+      id: 1,
+      uuid: 'uuid',
+      versionTag: 'versionTag',
+      location: 'location',
+      message: 'message',
+      appModuleVersions: [],
     }
     const versionsDiff: AppVersionsDiffSchema = {
       app: {
@@ -101,6 +97,6 @@ describe('versionDiffByVersion', () => {
     const result = await versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)
 
     // Then
-    expect(result).toEqual({versionsDiff: versionsDiff.app.versionsDiff, versionDetails: versionDetails.app.appVersion})
+    expect(result).toEqual({versionsDiff: versionsDiff.app.versionsDiff, versionDetails})
   })
 })

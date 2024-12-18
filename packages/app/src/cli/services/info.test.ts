@@ -1,7 +1,6 @@
 import {InfoOptions, info} from './info.js'
-import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
-import {MinimalAppIdentifiers, OrganizationApp} from '../models/organization.js'
+import {AppApiKeyAndOrgId, OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
@@ -19,7 +18,6 @@ import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
-vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('../utilities/developer-platform-client.js')
@@ -36,7 +34,7 @@ const ORG1 = {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp> {
+    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp> {
       switch (apiKey) {
         case '123':
           return APP1
@@ -115,7 +113,6 @@ describe('info', () => {
       const app = mockApp({directory: tmp})
 
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
       const result = await info(app, remoteApp, {...infoOptions(), webEnv: true})
@@ -136,7 +133,6 @@ describe('info', () => {
       // Given
       const app = mockApp({directory: tmp})
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
       const result = await info(app, remoteApp, {...infoOptions(), format: 'json', webEnv: true})
@@ -185,7 +181,6 @@ describe('info', () => {
         },
       })
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
       const result = await info(app, remoteApp, infoOptions())
@@ -224,7 +219,6 @@ describe('info', () => {
         },
       })
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
       const result = await info(app, remoteApp, infoOptions())
@@ -256,7 +250,6 @@ describe('info', () => {
         },
       })
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
       const result = await info(app, remoteApp, {format: 'json', webEnv: false, developerPlatformClient})

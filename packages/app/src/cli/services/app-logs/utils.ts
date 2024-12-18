@@ -5,7 +5,6 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
   ErrorResponse,
-  AppLogPayload,
   AppLogData,
 } from './types.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -33,6 +32,11 @@ export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cac
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)
+
+  const parsedIqvValue =
+    parsedPayload.input_query_variables_metafield_value &&
+    parseJson(parsedPayload.input_query_variables_metafield_value)
+
   return new FunctionRunLog({
     export: parsedPayload.export,
     input: parsedPayload.input,
@@ -44,6 +48,9 @@ export function parseFunctionRunPayload(payload: string): FunctionRunLog {
     fuelConsumed: parsedPayload.fuel_consumed,
     errorMessage: parsedPayload.error_message,
     errorType: parsedPayload.error_type,
+    inputQueryVariablesMetafieldValue: parsedIqvValue,
+    inputQueryVariablesMetafieldNamespace: parsedPayload.input_query_variables_metafield_namespace,
+    inputQueryVariablesMetafieldKey: parsedPayload.input_query_variables_metafield_key,
   })
 }
 
@@ -175,24 +182,27 @@ export const toFormattedAppLogJson = ({
   prettyPrint = true,
 }: {
   appLog: AppLogData
-  appLogPayload: AppLogPayload | unknown
+  appLogPayload: unknown
   prettyPrint: boolean
   storeName: string
 }): string => {
   const {cursor: _, ...appLogWithoutCursor} = appLog
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const toSaveData: any = camelcaseKeys(
-    {
-      ...appLogWithoutCursor,
-      payload: appLogPayload,
-      localTime: formatLocalDate(appLog.log_timestamp),
-      storeName,
-    },
-    {deep: true},
-  )
+  const toSaveData: any = camelcaseKeys({
+    ...appLogWithoutCursor,
+    payload: appLogPayload,
+    localTime: formatLocalDate(appLog.log_timestamp),
+    storeName,
+  })
 
   if (appLogPayload instanceof FunctionRunLog) {
     toSaveData.payload.logs = appLogPayload.logs.split('\n').filter(Boolean)
+
+    if (toSaveData.payload.inputQueryVariablesMetafieldValue) {
+      toSaveData.payload.inputQueryVariablesMetafieldValue = parseJson(
+        toSaveData.payload.inputQueryVariablesMetafieldValue,
+      )
+    }
   }
 
   if (prettyPrint) {
@@ -203,8 +213,8 @@ export const toFormattedAppLogJson = ({
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const parseAppLogPayload = (payload: string, logType: string): AppLogPayload | any => {
-  const parsedPayload = camelcaseKeys(JSON.parse(payload), {deep: true})
+export const parseAppLogPayload = (payload: string, logType: string): any => {
+  const parsedPayload = camelcaseKeys(JSON.parse(payload))
 
   if (logType === LOG_TYPE_FUNCTION_RUN) {
     return new FunctionRunLog(parsedPayload)
@@ -233,7 +243,7 @@ export const subscribeToAppLogs = async (
     outputWarn('App log streaming is not available in this session.')
     throw new AbortError(errorOutput)
   } else {
-    outputDebug(`Subscribed to App Events for shop ID(s) ${variables.shopIds}`)
+    outputDebug(`Subscribed to App Events for shop ID(s) ${variables.shopIds.join(', ')}`)
     outputDebug(`Success: ${success}\n`)
   }
   return jwtToken
@@ -250,6 +260,15 @@ export function prettyPrintJsonIfPossible(json: unknown) {
       return json
     }
   } catch (error) {
-    throw new Error(`Error parsing JSON: ${error}`)
+    throw new Error(`Error parsing JSON: ${error as string}`)
+  }
+}
+
+const parseJson = (json: string): object | string => {
+  try {
+    return JSON.parse(json)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return json
   }
 }

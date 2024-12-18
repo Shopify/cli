@@ -1,4 +1,4 @@
-import {AbortError, BugError, handler, cleanSingleStackTracePath} from './error.js'
+import {AbortError, BugError, handler, cleanSingleStackTracePath, shouldReportErrorAsUnexpected} from './error.js'
 import {renderFatalError} from './ui.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -51,5 +51,23 @@ describe('stack file path helpers', () => {
     ['windows no file', 'D:\\something\\there.js'],
   ])('%s', (_, path) => {
     expect(cleanSingleStackTracePath(path)).toEqual('/something/there.js')
+  })
+})
+
+describe('shouldReportErrorAsUnexpected helper', () => {
+  test('returns true for normal errors', () => {
+    expect(shouldReportErrorAsUnexpected(new Error('test'))).toBe(true)
+  })
+
+  test('returns false for AbortError', () => {
+    expect(shouldReportErrorAsUnexpected(new AbortError('test'))).toBe(false)
+  })
+
+  test('returns true for BugError', () => {
+    expect(shouldReportErrorAsUnexpected(new BugError('test'))).toBe(true)
+  })
+
+  test('returns false for errors that imply environment issues', () => {
+    expect(shouldReportErrorAsUnexpected(new Error('EPERM: operation not permitted, scandir'))).toBe(false)
   })
 })

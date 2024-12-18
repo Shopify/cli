@@ -5,7 +5,7 @@ import * as output from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
   const mockOptions = {} as unknown as ExtensionDevOptions
@@ -142,7 +142,7 @@ describe('when there are locale files', () => {
   })
   test('outputs message when there are no JSON errors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      vi.spyOn(output, 'outputInfo')
+      vi.spyOn(output, 'outputDebug')
 
       await mkdir(joinPath(tmpDir, 'locales'))
       await writeFile(joinPath(tmpDir, 'locales', 'en.json'), '{"greeting": "Hi!"}')
@@ -150,8 +150,8 @@ describe('when there are locale files', () => {
 
       await testGetLocalization(tmpDir)
 
-      expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('mock-name'), undefined)
-      expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining(tmpDir), undefined)
+      expect(outputDebug).toHaveBeenLastCalledWith(expect.stringContaining('mock-name'), undefined)
+      expect(outputDebug).toHaveBeenLastCalledWith(expect.stringContaining(tmpDir), undefined)
     })
   })
 

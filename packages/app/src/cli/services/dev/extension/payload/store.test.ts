@@ -27,7 +27,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
     } as unknown as ExtensionsPayloadStoreOptions
 
     // When
-    const rawPayload = await getExtensionsPayloadStoreRawPayload(options)
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
 
     // Then
     expect(rawPayload).toMatchObject({
@@ -252,10 +252,10 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, {hidden: true})
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path', {hidden: true})
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
         ...mockOptions,
         currentDevelopmentPayload: {hidden: true},
       })
@@ -279,10 +279,10 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
         ...mockOptions,
         currentDevelopmentPayload: {
           status: 'success',
@@ -310,10 +310,10 @@ describe('ExtensionsPayloadStore()', () => {
       const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
 
       // Then
-      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, {
+      expect(payload.getUIExtensionPayload).toHaveBeenCalledWith(updatedExtension, 'mock-bundle-path', {
         ...mockOptions,
         currentDevelopmentPayload: {
           status: 'success',
@@ -338,7 +338,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
 
       // Then
       expect(onUpdateSpy).toHaveBeenCalledWith(['123'])
@@ -358,7 +358,7 @@ describe('ExtensionsPayloadStore()', () => {
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
 
       // When
-      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
+      await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
 
       // Then
       expect(initialRawPayload).toStrictEqual(extensionsPayloadStore.getRawPayload())

@@ -281,9 +281,6 @@ program
     }
 
     if (extensions.has("theme")) {
-      // set Ruby version inside app or CLI2 will complain
-      fs.writeFileSync(path.join(appPath, ".ruby-version"), "3.2.1");
-
       log("Generating Theme App extension...");
       await generateExtension([
         "--template=theme_app_extension",

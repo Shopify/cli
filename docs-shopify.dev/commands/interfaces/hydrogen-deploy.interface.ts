@@ -85,7 +85,7 @@ export interface hydrogendeploy {
   '--path <value>'?: string
 
   /**
-   * Deploys to the Preview environment. Overrides --env-branch and Git metadata.
+   * Deploys to the Preview environment.
    *
    */
   '--preview'?: ''

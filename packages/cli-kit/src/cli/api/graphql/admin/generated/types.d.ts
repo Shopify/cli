@@ -119,3 +119,140 @@ export type Scalars = {
    */
   UtcOffset: {input: any; output: any}
 }
+
+/** Possible types of a metafield's owner resource. */
+export type MetafieldOwnerType =
+  /** The Api Permission metafield owner type. */
+  | 'API_PERMISSION'
+  /** The Article metafield owner type. */
+  | 'ARTICLE'
+  /** The Blog metafield owner type. */
+  | 'BLOG'
+  /** The Brand metafield owner type. */
+  | 'BRAND'
+  /** The Cart Transform metafield owner type. */
+  | 'CARTTRANSFORM'
+  /** The Collection metafield owner type. */
+  | 'COLLECTION'
+  /** The Company metafield owner type. */
+  | 'COMPANY'
+  /** The Company Location metafield owner type. */
+  | 'COMPANY_LOCATION'
+  /** The Customer metafield owner type. */
+  | 'CUSTOMER'
+  /** The Delivery Customization metafield owner type. */
+  | 'DELIVERY_CUSTOMIZATION'
+  /** The Delivery Method metafield owner type. */
+  | 'DELIVERY_METHOD'
+  /** The Delivery Option Generator metafield owner type. */
+  | 'DELIVERY_OPTION_GENERATOR'
+  /** The Discount metafield owner type. */
+  | 'DISCOUNT'
+  /** The draft order metafield owner type. */
+  | 'DRAFTORDER'
+  /** The Fulfillment Constraint Rule metafield owner type. */
+  | 'FULFILLMENT_CONSTRAINT_RULE'
+  /** The Gate Configuration metafield owner type. */
+  | 'GATE_CONFIGURATION'
+  /** The GiftCardTransaction metafield owner type. */
+  | 'GIFT_CARD_TRANSACTION'
+  /** The Location metafield owner type. */
+  | 'LOCATION'
+  /** The Market metafield owner type. */
+  | 'MARKET'
+  /** The Media Image metafield owner type. */
+  | 'MEDIA_IMAGE'
+  /** The Order metafield owner type. */
+  | 'ORDER'
+  /** The Order Routing Location Rule metafield owner type. */
+  | 'ORDER_ROUTING_LOCATION_RULE'
+  /** The Page metafield owner type. */
+  | 'PAGE'
+  /** The Payment Customization metafield owner type. */
+  | 'PAYMENT_CUSTOMIZATION'
+  /** The Product metafield owner type. */
+  | 'PRODUCT'
+  /** The Product Variant metafield owner type. */
+  | 'PRODUCTVARIANT'
+  /** The Selling Plan metafield owner type. */
+  | 'SELLING_PLAN'
+  /** The Shop metafield owner type. */
+  | 'SHOP'
+  /** The Validation metafield owner type. */
+  | 'VALIDATION'
+
+/** The input fields for the theme file body. */
+export type OnlineStoreThemeFileBodyInput = {
+  /** The input type of the theme file body. */
+  type: OnlineStoreThemeFileBodyInputType
+  /** The body of the theme file. */
+  value: Scalars['String']['input']
+}
+
+/** The input type for a theme file body. */
+export type OnlineStoreThemeFileBodyInputType =
+  /** The base64 encoded body of a theme file. */
+  | 'BASE64'
+  /** The text body of the theme file. */
+  | 'TEXT'
+  /** The url of the body of a theme file. */
+  | 'URL'
+
+/** Type of a theme file operation result. */
+export type OnlineStoreThemeFileResultType =
+  /** Operation was malformed or invalid. */
+  | 'BAD_REQUEST'
+  /** Operation faced a conflict with the current state of the file. */
+  | 'CONFLICT'
+  /** Operation encountered an error. */
+  | 'ERROR'
+  /** Operation file could not be found. */
+  | 'NOT_FOUND'
+  /** Operation was successful. */
+  | 'SUCCESS'
+  /** Operation timed out. */
+  | 'TIMEOUT'
+  /** Operation could not be processed due to issues with input data. */
+  | 'UNPROCESSABLE_ENTITY'
+
+/** The input fields for the file to create or update. */
+export type OnlineStoreThemeFilesUpsertFileInput = {
+  /** The body of the theme file. */
+  body: OnlineStoreThemeFileBodyInput
+  /** The filename of the theme file. */
+  filename: Scalars['String']['input']
+}
+
+/** The input fields for Theme attributes to update. */
+export type OnlineStoreThemeInput = {
+  /** The new name of the theme. */
+  name?: InputMaybe<Scalars['String']['input']>
+}
+
+/** The role of the theme. */
+export type ThemeRole =
+  /**
+   * The theme is archived if a merchant changes their plan and exceeds the maximum
+   * number of themes allowed. Archived themes can be downloaded by merchant, but
+   * can not be customized or published until the plan is upgraded.
+   */
+  | 'ARCHIVED'
+  /**
+   * The theme is installed as a trial from the Shopify Theme Store. It can be
+   * customized using the theme editor, but access to the code editor and the
+   * ability to publish the theme are restricted until it is purchased.
+   */
+  | 'DEMO'
+  /** The theme is automatically created by the CLI for previewing purposes when in a development session. */
+  | 'DEVELOPMENT'
+  /**
+   * The theme is locked if it is identified as unlicensed. Customization and
+   * publishing are restricted until the merchant resolves the licensing issue.
+   */
+  | 'LOCKED'
+  /** TThe currently published theme. There can only be one main theme at any time. */
+  | 'MAIN'
+  /** The currently published theme that is only accessible to a mobile client. */
+  | 'MOBILE'
+  /** The theme is currently not published. It can be transitioned to the main role if it is published by the merchant. */
+  | 'UNPUBLISHED'

@@ -69,6 +69,37 @@ describe('Link', async () => {
     expect(lastFrame()).toMatchInlineSnapshot(`"${asLink('https://example.com')}"`)
   })
 
+  test("it renders the link as plain text when the terminal doesn't support hyperlinks and the link URL is the same as the label", async () => {
+    // Given
+    supportHyperLinks(false)
+
+    const link = {
+      url: 'https://example.com',
+      label: 'https://example.com',
+    }
+
+    // When
+    const {lastFrame} = render(<Link {...link} />)
+
+    // Then
+    expect(lastFrame()).toMatchInlineSnapshot('"https://example.com"')
+  })
+
+  test("it renders the link as plain text when the terminal doesn't support hyperlinks and no label is passed", async () => {
+    // Given
+    supportHyperLinks(false)
+
+    const link = {
+      url: 'https://example.com',
+    }
+
+    // When
+    const {lastFrame} = render(<Link {...link} />)
+
+    // Then
+    expect(lastFrame()).toMatchInlineSnapshot('"https://example.com"')
+  })
+
   function supportHyperLinks(isSupported: boolean) {
     vi.mocked(supportsHyperlinks).stdout = isSupported
   }

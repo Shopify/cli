@@ -50,6 +50,7 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
     const fileKey = relativePath(root, filePath)
 
     const contentPromise = read(fileKey).then(() => {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const file = files.get(fileKey)!
 
       unsyncedFileKeys.add(file.key)

@@ -6,7 +6,7 @@ import {fileExists, inTemporaryDirectory, readFile, writeFile} from '@shopify/cl
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('updateAppIdentifiers', () => {
-  test('persists the ids that are not env variables when deploying', async () => {
+  test('persists the ids that are not env variables when deploying, creating a new file', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()
@@ -37,9 +37,11 @@ describe('updateAppIdentifiers', () => {
     })
   })
 
-  test('persists the ids in the config-specific env file when deploying', async () => {
+  test('persists the ids in the config-specific env file when deploying, updating the existing file', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
+      const dotEnvFilePath = joinPath(tmpDir, '.env.staging')
+      await writeFile(dotEnvFilePath, '#comment\nEXISTING_VAR=value\nSHOPIFY_MY_EXTENSION_ID=OLDID\n#anothercomment')
       const uiExtension = await testUIExtension()
       const app = testAppWithConfig({
         app: {
@@ -65,7 +67,12 @@ describe('updateAppIdentifiers', () => {
       })
 
       // Then
-      const dotEnvFile = await readAndParseDotEnv(joinPath(tmpDir, '.env.staging'))
+      const dotEnvFileContent = await readFile(dotEnvFilePath)
+      const dotEnvFile = await readAndParseDotEnv(dotEnvFilePath)
+      expect(dotEnvFileContent).toEqual(
+        '#comment\nEXISTING_VAR=value\nSHOPIFY_MY_EXTENSION_ID=BAR\n#anothercomment\nSHOPIFY_API_KEY=FOO',
+      )
+      expect(dotEnvFile.variables.EXISTING_VAR).toEqual('value')
       expect(dotEnvFile.variables.SHOPIFY_API_KEY).toEqual('FOO')
       expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
       expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toEqual('FOO')

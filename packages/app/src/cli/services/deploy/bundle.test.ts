@@ -8,7 +8,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 describe('bundleAndBuildExtensions', () => {
   let app: AppInterface
 
-  test('generates a manifest.json when USE_APP_MANAGEMENT_API is enabled', async () => {
+  test('generates a manifest.json when App Management is enabled', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'writeFileSync').mockResolvedValue(undefined)
@@ -40,7 +40,7 @@ describe('bundleAndBuildExtensions', () => {
             type: 'web_pixel_extension_external',
             handle: 'test-ui-extension',
             uid: 'test-ui-extension-uid',
-            assets: 'test-ui-extension-uid',
+            assets: 'test-ui-extension',
             target: '',
             config: {},
           },
@@ -48,7 +48,7 @@ describe('bundleAndBuildExtensions', () => {
             type: 'theme_external',
             handle: 'theme-extension-name',
             uid: themeExtension.uid,
-            assets: themeExtension.uid,
+            assets: 'theme-extension-name',
             target: '',
             config: {
               theme_extension: {
@@ -73,7 +73,7 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('does not generate the manifest.json when USE_APP_MANAGEMENT_API is disabled', async () => {
+  test('does not generate the manifest.json when App Management is disabled', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'writeFileSync').mockResolvedValue(undefined)

@@ -10,7 +10,7 @@ import {Command} from '@oclif/core'
 export const postrun = (Command: Command.Class): void => {
   const nextDeprecationDate = getNextDeprecationDate()
   if (nextDeprecationDate) {
-    const forThemes = Command?.id?.includes('theme')
+    const forThemes = Command.id.includes('theme')
     renderUpgradeWarning(nextDeprecationDate, forThemes)
   }
 }

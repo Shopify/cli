@@ -36,6 +36,12 @@ export interface DevServerSession extends AdminSession {
    *                         rendering.
    */
   sessionCookies: {[key: string]: string}
+
+  /**
+   * Refreshes the current session, ensuring any tokens and session cookies
+   * are up-to-date.
+   */
+  refresh?: () => Promise<void>
 }
 
 /**

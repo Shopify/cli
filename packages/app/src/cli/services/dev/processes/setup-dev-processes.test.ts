@@ -5,8 +5,9 @@ import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
-import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {pushUpdatesForDevSession} from './dev-session.js'
+import {runThemeAppExtensionsServer} from './theme-app-extension.js'
+import {launchAppWatcher} from './app-watcher-process.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -18,19 +19,29 @@ import {
   testUIExtension,
   testFunctionExtension,
   testWebhookExtensions,
+  testOrganizationApp,
+  testAppLinked,
+  testOrganization,
+  testOrganizationStore,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {AppEventWatcher} from '../app-events/app-event-watcher.js'
+import * as loader from '../../../models/app/loader.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isStorefrontPasswordProtected} from '@shopify/theme'
+import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
+vi.mock('@shopify/theme')
+vi.mock('@shopify/cli-kit/node/themes/api')
 
 beforeEach(() => {
   // mocked for draft extensions
@@ -48,7 +59,24 @@ beforeEach(() => {
   })
   vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
   vi.mocked(getEnvironmentVariables).mockReturnValue({})
+  vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
+  vi.mocked(fetchTheme).mockResolvedValue({
+    id: 1,
+    name: 'Theme',
+    createdAtRuntime: false,
+    role: 'theme',
+    processing: false,
+  })
 })
+
+const appContextResult = {
+  app: testAppLinked(),
+  remoteApp: testOrganizationApp(),
+  developerPlatformClient: testDeveloperPlatformClient(),
+  organization: testOrganization(),
+  store: testOrganizationStore({}),
+  specifications: [],
+}
 
 describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
@@ -58,11 +86,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -100,10 +128,11 @@ describe('setup-dev-processes', () => {
         allExtensions: [previewable, draftable, theme],
       },
     })
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -199,16 +228,19 @@ describe('setup-dev-processes', () => {
       prefix: 'theme-extensions',
       function: runThemeAppExtensionsServer,
       options: {
+        theme: {
+          id: 1,
+          name: 'Theme',
+          createdAtRuntime: false,
+          role: 'theme',
+          processing: false,
+        },
         adminSession: {
           storeFqdn: 'store.myshopify.io',
           token: 'admin-token',
         },
-        themeExtensionServerArgs:
-          './my-extension --api-key api-key --extension-id extension-id --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
-            ' ',
-          ),
-        storefrontToken: 'storefront-token',
-        developerPlatformClient,
+        themeExtensionDirectory: './my-extension',
+        themeExtensionPort: 9293,
       },
     })
     expect(res.processes[5]).toMatchObject({
@@ -224,12 +256,21 @@ describe('setup-dev-processes', () => {
       },
     })
 
+    expect(res.processes[6]).toMatchObject({
+      type: 'app-watcher',
+      prefix: 'dev-session',
+      function: launchAppWatcher,
+      options: {
+        appWatcher: expect.any(AppEventWatcher),
+      },
+    })
+
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
     const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
-    expect(res.processes[6]).toMatchObject({
+    expect(res.processes[7]).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
       function: startProxyServer,
@@ -252,8 +293,8 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -270,10 +311,11 @@ describe('setup-dev-processes', () => {
       },
     }
     const localApp = testAppWithConfig()
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -297,7 +339,7 @@ describe('setup-dev-processes', () => {
 
     expect(res.processes[2]).toMatchObject({
       type: 'dev-session',
-      prefix: 'extensions',
+      prefix: 'dev-session',
       function: pushUpdatesForDevSession,
       options: {
         app: localApp,
@@ -320,11 +362,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -363,10 +405,11 @@ describe('setup-dev-processes', () => {
         allExtensions: [previewable, draftable, theme, functionExtension],
       },
     })
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -414,11 +457,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -458,9 +501,11 @@ describe('setup-dev-processes', () => {
       },
     })
 
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',
@@ -496,11 +541,11 @@ describe('setup-dev-processes', () => {
     const remoteAppUpdated = true
     const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
       directory: '',
-      reset: false,
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
@@ -550,10 +595,11 @@ describe('setup-dev-processes', () => {
         ],
       },
     })
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
-      apiSecret: 'api-secret',
+      apiSecretKeys: [{secret: 'api-secret'}],
       id: '1234',
       title: 'App',
       organizationId: '5678',

@@ -71,6 +71,8 @@ export type AppSourceInput = {
 
 /** Possible error codes that can be returned by AppManagement. */
 export type Code =
+  /** Access denied. */
+  | 'ACCESS_DENIED'
   /** An event error. */
   | 'EVENT'
   /** An internal error. */

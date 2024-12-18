@@ -59,6 +59,7 @@ export async function setupWebProcesses({
       hmrServerPort && web.configuration.roles.includes(WebType.Frontend)
         ? {
             port: hmrServerPort,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             httpPaths: web.configuration.hmr_server!.http_paths,
           }
         : undefined
@@ -183,7 +184,7 @@ async function runCommands({
   for (const command of commands) {
     const [cmd, ...args] = command.split(' ')
     if (cmd?.length === 0) continue
-    // eslint-disable-next-line no-await-in-loop
+    // eslint-disable-next-line no-await-in-loop, @typescript-eslint/no-non-null-assertion
     await exec(cmd!, args, {
       cwd: directory,
       stdout: showOutput ? stdout : undefined,

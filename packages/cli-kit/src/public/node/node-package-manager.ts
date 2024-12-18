@@ -29,6 +29,13 @@ export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
 export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile]
+export const lockfilesByManager: {[key in PackageManager]: Lockfile | undefined} = {
+  yarn: yarnLockfile,
+  npm: npmLockfile,
+  pnpm: pnpmLockfile,
+  bun: bunLockfile,
+  unknown: undefined,
+}
 export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb'
 
 /**
@@ -288,7 +295,7 @@ export async function checkForNewVersion(
  */
 export function checkForCachedNewVersion(dependency: string, currentVersion: string): string | undefined {
   const cacheKey: PackageVersionKey = `npm-package-${dependency}`
-  const lastVersion = cacheRetrieve(cacheKey)
+  const lastVersion = cacheRetrieve(cacheKey)?.value
 
   if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
     return lastVersion

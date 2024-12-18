@@ -72,5 +72,25 @@ describe('fetchExtensionSpecifications', () => {
         }),
       ]),
     )
+
+    expect(got).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          identifier: 'remote_only_extension_schema',
+        }),
+        expect.objectContaining({
+          identifier: 'remote_only_extension_schema_with_localization',
+        }),
+        expect.not.objectContaining({
+          identifier: 'remote_only_extension_without_schema',
+        }),
+      ]),
+    )
+
+    const withoutLocalization = got.find((spec) => spec.identifier === 'remote_only_extension_schema')
+    const withLocalization = got.find((spec) => spec.identifier === 'remote_only_extension_schema_with_localization')
+
+    expect(withoutLocalization?.appModuleFeatures()).toEqual([])
+    expect(withLocalization?.appModuleFeatures()).toEqual(['localization'])
   })
 })

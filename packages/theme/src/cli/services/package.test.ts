@@ -150,6 +150,28 @@ describe('packageTheme', () => {
       expect(renderSuccess).not.toBeCalled()
     })
   })
+
+  test('abort when the config/settings_schema.json file is broken', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const inputDirectory = joinPath(tmpDir, 'theme')
+      await mkdir(inputDirectory)
+      const themeRelativePaths = ['config/settings_schema.json']
+      await createFiles(themeRelativePaths, inputDirectory)
+      await createSettingsSchema('[{"name":', inputDirectory)
+
+      await expect(async () => {
+        // When
+        await packageTheme(inputDirectory)
+
+        // Then
+      }).rejects.toThrowError(
+        /The file config\/settings_schema.json contains an error. Please check if the file is valid JSON and includes the theme_info.theme_name configuration./,
+      )
+
+      expect(renderSuccess).not.toBeCalled()
+    })
+  })
 })
 
 async function createFiles(structure: string[], directory: string) {

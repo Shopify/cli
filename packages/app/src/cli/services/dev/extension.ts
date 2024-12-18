@@ -1,7 +1,7 @@
 import {setupWebsocketConnection} from './extension/websocket.js'
-import {setupBundlerAndFileWatcher} from './extension/bundler.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
+import {AppEvent, AppEventWatcher} from './app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -101,6 +101,11 @@ export interface ExtensionDevOptions {
    * This is exposed in the JSON payload for clients connecting to the Dev Server
    */
   manifestVersion: string
+
+  /**
+   * The app watcher that emits events when the app is updated
+   */
+  appWatcher: AppEventWatcher
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
@@ -108,7 +113,8 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
     ...options,
     websocketURL: getWebSocketUrl(options.url),
   }
-  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions)
+  const bundlePath = options.appWatcher.buildOutputPath
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions, bundlePath)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
   outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
@@ -117,11 +123,19 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
-  const fileWatcher = await setupBundlerAndFileWatcher({devOptions: options, payloadStore})
+
+  const eventHandler = async ({extensionEvents}: AppEvent) => {
+    for (const event of extensionEvents) {
+      const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
+      // eslint-disable-next-line no-await-in-loop
+      await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+    }
+  }
+
+  options.appWatcher.onEvent(eventHandler).onStart(eventHandler)
 
   options.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
-    fileWatcher.close()
     websocketConnection.close()
     httpServer.close()
   })

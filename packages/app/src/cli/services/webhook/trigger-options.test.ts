@@ -1,9 +1,9 @@
 import {collectAddressAndMethod, collectApiVersion, collectCredentials, collectTopic} from './trigger-options.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
+import {WebhookTriggerInput} from './trigger.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
-import {testApp, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {fetchAppFromConfigOrSelect} from '../app/fetch-app-from-config-or-select.js'
+import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, afterEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -11,14 +11,14 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 vi.mock('../../prompts/webhook/trigger.js')
 vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
-vi.mock('../app/fetch-app-from-config-or-select.js')
 
 const DELIVERY_METHOD = 'http'
 const SECRET = 'A_SECRET'
 const API_KEY = 'AN_API_KEY'
-const APP = testApp()
+const APP = testAppLinked()
 const ORGANIZATION_APP = testOrganizationApp()
 const developerPlatformClient = testDeveloperPlatformClient()
+const organizationId = ORGANIZATION_APP.organizationId
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -31,7 +31,7 @@ describe('collectApiVersion', () => {
     vi.mocked(apiVersionPrompt)
 
     // When
-    const version = await collectApiVersion(developerPlatformClient, '2023-01')
+    const version = await collectApiVersion(developerPlatformClient, '2023-01', organizationId)
 
     // Then
     expect(version).toEqual('2023-01')
@@ -44,7 +44,7 @@ describe('collectApiVersion', () => {
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
     // When
-    const version = await collectApiVersion(developerPlatformClient, undefined)
+    const version = await collectApiVersion(developerPlatformClient, undefined, organizationId)
 
     // Then
     expect(version).toEqual('2023-01')
@@ -60,7 +60,12 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const method = await collectTopic(developerPlatformClient, '2023-01', 'shop/redact')
+    const method = await collectTopic(
+      developerPlatformClient,
+      '2023-01',
+      'shop/redact',
+      ORGANIZATION_APP.organizationId,
+    )
 
     // Then
     expect(method).toEqual('shop/redact')
@@ -73,7 +78,9 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When then
-    await expect(collectTopic(developerPlatformClient, '2023-01', 'unknown/topic')).rejects.toThrow(AbortError)
+    await expect(collectTopic(developerPlatformClient, '2023-01', 'unknown/topic', organizationId)).rejects.toThrow(
+      AbortError,
+    )
     expect(topicPrompt).toHaveBeenCalledTimes(0)
   })
 
@@ -83,7 +90,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const topic = await collectTopic(developerPlatformClient, 'unstable', undefined)
+    const topic = await collectTopic(developerPlatformClient, 'unstable', undefined, organizationId)
 
     // Then
     expect(topic).toEqual('orders/create')
@@ -149,39 +156,41 @@ describe('collectAddressAndMethod', () => {
 })
 
 describe('collectCredentials', () => {
+  const input: Pick<WebhookTriggerInput, 'clientSecret' | 'clientId' | 'remoteApp' | 'app'> = {
+    clientSecret: SECRET,
+    clientId: API_KEY,
+    remoteApp: ORGANIZATION_APP,
+    app: APP,
+  }
   test('uses the value set as flag', async () => {
     // Given / When
-    const credentials = await collectCredentials(API_KEY, SECRET, APP, DELIVERY_METHOD)
+    const credentials = await collectCredentials(input, DELIVERY_METHOD)
 
     // Then
     expect(credentials).toEqual({apiKey: API_KEY, clientSecret: SECRET})
-    expect(fetchAppFromConfigOrSelect).toHaveBeenCalledTimes(0)
   })
 
   test('retrieves the secret from config or remotely when the flag is missing', async () => {
     // Given
-    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORGANIZATION_APP)
+    const inputWithoutSecret = {...input, clientSecret: undefined}
 
     // When
-    const credentials = await collectCredentials(API_KEY, undefined, APP, DELIVERY_METHOD)
+    const credentials = await collectCredentials(inputWithoutSecret, DELIVERY_METHOD)
 
     // Then
     expect(credentials).toEqual({
       apiKey: ORGANIZATION_APP.apiKey,
       clientSecret: ORGANIZATION_APP.apiSecretKeys[0]!.secret,
-      developerPlatformClient: undefined,
     })
-    expect(fetchAppFromConfigOrSelect).toHaveBeenCalledOnce()
   })
 
   test('shows the current config when found', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORGANIZATION_APP)
-    const app = testApp({}, 'current')
+    const app = testAppLinked()
 
     // When
-    await collectCredentials(API_KEY, undefined, app, DELIVERY_METHOD)
+    await collectCredentials({app, remoteApp: ORGANIZATION_APP}, DELIVERY_METHOD)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`

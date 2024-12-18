@@ -16,11 +16,16 @@ export const CurrentAccountInfoQuery = gql`
     }
   }
 `
-interface AccountInfoSchema {
-  __typename: string
-  email?: string
-  orgName?: string
-}
+
+type AccountInfoSchema =
+  | {
+      __typename: 'UserAccount'
+      email: string
+    }
+  | {
+      __typename: 'ServiceAccount'
+      orgName: string
+    }
 
 export interface CurrentAccountInfoSchema {
   currentAccountInfo: AccountInfoSchema
@@ -40,12 +45,12 @@ function mapAccountInfo(accountInfo: AccountInfoSchema): AccountInfo {
   if (accountInfo.__typename === 'UserAccount') {
     return {
       type: 'UserAccount',
-      email: accountInfo.email!,
+      email: accountInfo.email,
     }
   } else if (accountInfo.__typename === 'ServiceAccount') {
     return {
       type: 'ServiceAccount',
-      orgName: accountInfo.orgName!,
+      orgName: accountInfo.orgName,
     }
   } else {
     return {type: 'UnknownAccount'}

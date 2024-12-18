@@ -1,4 +1,4 @@
-import {getFlowExtensionsToMigrate, migrateFlowExtensions} from './migrate-flow-extension.js'
+import {migrateFlowExtensions} from './migrate-flow-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
@@ -22,94 +22,6 @@ function getRemoteExtension(attributes: Partial<RemoteSource> = {}) {
     ...attributes,
   } as unknown as RemoteSource
 }
-
-describe('getExtensionsToMigrate()', () => {
-  const defaultIds = {
-    'my-action': '1234',
-    'my-trigger': '5678',
-  }
-
-  test('matching my remote title and localIdentifier', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action', localIdentifier: 'my-action'})
-    const localExtensionB = getLocalExtension({type: 'flow_trigger', localIdentifier: 'my-trigger'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition', title: 'my-action', uuid: 'yy'})
-    const remoteExtensionB = getRemoteExtension({type: 'flow_trigger_definition', title: 'my-trigger', uuid: 'xx'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate(
-      [localExtension, localExtensionB],
-      [remoteExtension, remoteExtensionB],
-      defaultIds,
-    )
-
-    // Then
-    expect(toMigrate).toStrictEqual([
-      {local: localExtension, remote: remoteExtension},
-      {local: localExtensionB, remote: remoteExtensionB},
-    ])
-  })
-
-  test('matching my local and remote IDs', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action', localIdentifier: 'my-action'})
-    const localExtensionB = getLocalExtension({type: 'flow_trigger', localIdentifier: 'my-trigger'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition', title: 'remote', uuid: '1234'})
-    const remoteExtensionB = getRemoteExtension({type: 'flow_trigger_definition', title: 'remote', uuid: '5678'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate(
-      [localExtension, localExtensionB],
-      [remoteExtension, remoteExtensionB],
-      defaultIds,
-    )
-
-    // Then
-    expect(toMigrate).toStrictEqual([
-      {local: localExtension, remote: remoteExtension},
-      {local: localExtensionB, remote: remoteExtensionB},
-    ])
-  })
-
-  test('does not return extensions where local.type is not flow_action or flow_trigger', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
-    const remoteExtension = getRemoteExtension({type: 'flow_action_definition'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-
-  test('does not return extensions where remote.type is not flow_action_definition', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action'})
-    const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'})
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-
-  test('if neither title/name or ids match, does not return any extensions', () => {
-    // Given
-    const localExtension = getLocalExtension({type: 'flow_action'})
-    const remoteExtension = getRemoteExtension({
-      type: 'flow_action_definition',
-      uuid: '5678',
-    })
-
-    // When
-    const toMigrate = getFlowExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
-
-    // Then
-    expect(toMigrate).toStrictEqual([])
-  })
-})
 
 describe('migrateExtensions()', () => {
   test('performs a graphQL mutation for each extension', async () => {

@@ -21,8 +21,8 @@ export default class DemoWatcher extends AppCommand {
 
     const {app} = await linkedAppContext({
       directory: flags.path,
-      clientId: undefined,
-      forceRelink: false,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
@@ -43,9 +43,6 @@ export default class DemoWatcher extends AppCommand {
             break
           case EventType.Updated:
             outputInfo(`  🔄 Updated: ${colors.yellow(event.extension.handle)}`)
-            break
-          case EventType.UpdatedSourceFile:
-            outputInfo(`  🔄 Updated: ${colors.yellow(event.extension.handle)} (🏗️ needs rebuild)`)
             break
         }
       })

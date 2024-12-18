@@ -29,6 +29,7 @@ import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+vi.mock('../../models/app/validation/multi-cli-warning.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
   return {
@@ -154,13 +155,16 @@ describe('initialize a extension', async () => {
   )
 
   test.each(
-    allUITemplates.reduce((accumulator, specification) => {
-      accumulator.push({extensionTemplate: specification, flavor: 'vanilla-js'})
-      accumulator.push({extensionTemplate: specification, flavor: 'react'})
-      accumulator.push({extensionTemplate: specification, flavor: 'typescript'})
+    allUITemplates.reduce<{extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue}[]>(
+      (accumulator, specification) => {
+        accumulator.push({extensionTemplate: specification, flavor: 'vanilla-js'})
+        accumulator.push({extensionTemplate: specification, flavor: 'react'})
+        accumulator.push({extensionTemplate: specification, flavor: 'typescript'})
 
-      return accumulator
-    }, [] as {extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue}[]),
+        return accumulator
+      },
+      [],
+    ),
   )(
     `doesn't add deps for $specification.identifier extension when flavor is $flavor`,
 
@@ -182,14 +186,16 @@ describe('initialize a extension', async () => {
     },
   )
 
-  const allUITemplatesWithAllFlavors = allUITemplates.reduce((accumulator, specification) => {
+  const allUITemplatesWithAllFlavors = allUITemplates.reduce<
+    {extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue; ext: FileExtension}[]
+  >((accumulator, specification) => {
     accumulator.push({extensionTemplate: specification, flavor: 'vanilla-js', ext: 'js'})
     accumulator.push({extensionTemplate: specification, flavor: 'react', ext: 'jsx'})
     accumulator.push({extensionTemplate: specification, flavor: 'typescript', ext: 'ts'})
     accumulator.push({extensionTemplate: specification, flavor: 'typescript-react', ext: 'tsx'})
 
     return accumulator
-  }, [] as {extensionTemplate: ExtensionTemplate; flavor: ExtensionFlavorValue; ext: FileExtension}[])
+  }, [])
 
   test.each(allUITemplatesWithAllFlavors)(
     'creates $specification.identifier for $flavor with .$ext files',

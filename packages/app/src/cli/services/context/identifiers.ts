@@ -4,8 +4,9 @@ import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
-import {ActiveAppVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export type PartnersAppForIdentifierMatching = MinimalOrganizationApp
 
@@ -19,12 +20,11 @@ export interface EnsureDeploymentIdsPresenceOptions {
   release: boolean
   remoteApp: PartnersAppForIdentifierMatching
   includeDraftExtensions?: boolean
-  activeAppVersion?: ActiveAppVersion
+  activeAppVersion?: AppVersion
 }
 
 export interface RemoteSource {
   uuid: string
-  uid?: string
   type: string
   id: string
   title: string
@@ -70,6 +70,16 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     remoteExtensionsRegistrations.configurationRegistrations,
     extensionsToConfirm,
   )
+
+  // Update the matched local extensions with the remote UIDs
+  Object.keys(extensionsToConfirm.validMatches).forEach((handle) => {
+    const extension = options.app.allExtensions.find((ext) => ext.handle === handle)
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    const uid = extensionsToConfirm.validMatches[handle] || randomUUID()
+    if (!extension || !uid) return
+    extension.uid = uid
+    extension.configuration.uid = uid
+  })
 
   return {
     app: options.appId,

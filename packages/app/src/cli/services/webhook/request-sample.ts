@@ -25,6 +25,7 @@ export interface UserErrors {
   fields: string[]
 }
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const sendSampleWebhookMutation = `
   mutation samplePayload($topic: String!, $api_version: String!, $address: String!, $delivery_method: String!, $shared_secret: String!, $api_key: String) {
     sendSampleWebhook(input: {topic: $topic, apiVersion: $api_version, address: $address, deliveryMethod: $delivery_method, sharedSecret: $shared_secret, apiKey: $api_key}) {
@@ -53,14 +54,17 @@ export const sendSampleWebhookMutation = `
  *  - address - A destination for the webhook notification
  *  - shared_secret - A secret to generate the HMAC header apps can use to validate the origin
  *  - api_key - Client Api Key required to validate Event-Bridge addresses (optional)
+ * @param organizationId - Organization ID required by the API to verify permissions
  * @returns Empty if a remote delivery was requested, payload data if a local delivery was requested
  */
 export async function getWebhookSample(
   developerPlatformClient: DeveloperPlatformClient,
   variables: SendSampleWebhookVariables,
+  organizationId: string,
 ): Promise<SampleWebhook> {
   const {sendSampleWebhook: result}: SendSampleWebhookSchema = await developerPlatformClient.sendSampleWebhook(
     variables,
+    organizationId,
   )
 
   return result

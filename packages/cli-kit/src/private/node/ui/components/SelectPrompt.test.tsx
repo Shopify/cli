@@ -8,7 +8,6 @@ import React from 'react'
 import {useStdout} from 'ink'
 
 vi.mock('ink', async () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const original: any = await vi.importActual('ink')
   return {
     ...original,
@@ -25,7 +24,6 @@ beforeEach(() => {
     stdout: new Stdout({
       columns: 80,
       rows: 80,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any,
     write: () => {},
   })
@@ -206,7 +204,6 @@ describe('SelectPrompt', async () => {
   test("it doesn't submit if there are no choices", async () => {
     const onEnter = vi.fn()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: any[] = []
 
     const renderInstance = render(
@@ -332,7 +329,6 @@ describe('SelectPrompt', async () => {
 
   test('adapts to the height of the container', async () => {
     vi.mocked(useStdout).mockReturnValue({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       stdout: new Stdout({rows: 10}) as any,
       write: () => {},
     })

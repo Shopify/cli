@@ -1,4 +1,3 @@
-import {version as rubyVersion} from './ruby.js'
 import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from './context/local.js'
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
@@ -146,7 +145,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       total_time: wallClockElapsed,
       success: exitMode === 'ok' && errorMessage === undefined,
       cli_version: CLI_KIT_VERSION,
-      ruby_version: (await rubyVersion()) || '',
+      ruby_version: '',
       node_version: process.version.replace('v', ''),
       is_employee: await isShopify(),
       ...environmentData,

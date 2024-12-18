@@ -75,7 +75,11 @@ export async function staticService() {
         title: 'Custom section',
         body: {
           list: {
-            items: [{link: {label: 'Item 1', url: 'https://shopify.com'}}, 'Item 2'],
+            items: [
+              {link: {label: 'Item 1', url: 'https://shopify.com'}},
+              'Item 2',
+              {link: {url: 'https://community.shopify.com/'}},
+            ],
           },
         },
       },

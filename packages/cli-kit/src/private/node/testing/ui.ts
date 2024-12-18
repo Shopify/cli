@@ -67,11 +67,10 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
   const stdin = new Stdin()
 
   const instance = inkRender(tree, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     stdout: options.stdout ?? (stdout as any),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     stderr: options.stderr ?? (stderr as any),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     stdin: options.stdin ?? (stdin as any),
     debug: true,
     exitOnCtrlC: false,
@@ -139,6 +138,7 @@ export function waitForContent(
 ) {
   return waitFor(
     () => func(),
+
     () => renderInstance.lastFrame()!.includes(content),
   )
 }

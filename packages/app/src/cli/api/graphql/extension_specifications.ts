@@ -47,7 +47,7 @@ export interface RemoteSpecification {
   }
   validationSchema?: {
     jsonSchema: string
-  }
+  } | null
 }
 
 export interface FlattenedRemoteSpecification extends RemoteSpecification {

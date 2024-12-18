@@ -19,14 +19,16 @@ export const getTopicsQuery = `
  *
  * @param developerPlatformClient - The client to access the platform API
  * @param apiVersion - ApiVersion of the topics
+ * @param organizationId - Organization ID required by the API to verify permissions
  * @returns - Available webhook topics for the api-version
  */
 export async function requestTopics(
   developerPlatformClient: DeveloperPlatformClient,
   apiVersion: string,
+  organizationId: string,
 ): Promise<string[]> {
   const variables: WebhookTopicsVariables = {api_version: apiVersion}
-  const {webhookTopics: result}: WebhookTopicsSchema = await developerPlatformClient.topics(variables)
+  const {webhookTopics: result}: WebhookTopicsSchema = await developerPlatformClient.topics(variables, organizationId)
 
   return result
 }

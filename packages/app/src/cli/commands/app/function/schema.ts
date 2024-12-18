@@ -26,12 +26,6 @@ export default class FetchSchema extends AppCommand {
       env: 'SHOPIFY_FLAG_APP_API_KEY',
       exclusive: ['config'],
     }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID to fetch the schema with.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
     stdout: Flags.boolean({
       description: 'Output the schema to stdout instead of writing to a file.',
       required: false,
@@ -45,19 +39,21 @@ export default class FetchSchema extends AppCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] || flags['api-key']
+    const apiKey = flags['client-id'] ?? flags['api-key']
 
     const app = await inFunctionContext({
       path: flags.path,
       apiKey,
+      reset: flags.reset,
       userProvidedConfigName: flags.config,
-      callback: async (app, developerPlatformClient, ourFunction) => {
+      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
         await generateSchemaService({
           app,
           extension: ourFunction,
           developerPlatformClient,
           stdout: flags.stdout,
           path: flags.path,
+          orgId,
         })
         return app
       },

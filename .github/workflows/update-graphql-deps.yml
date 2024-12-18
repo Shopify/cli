@@ -1,0 +1,56 @@
+name: Update GraphQL Dependencies
+
+on:
+  schedule:
+    - cron: '13 0,6,12,18 * * *' # Runs at 00:13, 06:13, 12:13, and 18:13 UTC
+  workflow_dispatch:  # Allows manual triggering from the GitHub UI
+
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '8.15.7'
+  SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
+  SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+
+jobs:
+  update-graphql-deps:
+    name: Update GraphQL Dependencies
+    runs-on: macos-latest # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Checkout a new branch
+        run: git checkout -b auto-update-graphql-deps
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: '22.11.0'
+      - name: Get schemas for codegen
+        env:
+          GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+        run: pnpm graphql-codegen:get-graphql-schemas
+      - name: Run graphql-codegen
+        run: pnpm graphql-codegen
+      - name: PR if there are changes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          if test -z "$(git status --porcelain)"; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add .
+          git commit -m "update generated graphql files"
+          git push --set-upstream origin auto-update-graphql-deps --force
+
+          if ! gh pr view auto-update-graphql-deps &>/dev/null; then
+            gh pr create --title "Update generated GraphQL files" \
+              --body "This auto-generated PR updates the generated graphql files" \
+              --head auto-update-graphql-deps
+          fi
