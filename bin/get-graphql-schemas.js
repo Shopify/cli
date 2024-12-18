@@ -12,32 +12,37 @@ const schemas = [
     repo: 'partners',
     pathToFile: 'db/graphql/cli_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'business-platform',
     pathToFile: 'db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'business-platform',
     pathToFile: 'db/graphql/organizations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/app_dev_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
-    branch: 'dd',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
     localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
+    branch: 'app-migration',
   },
   {
     repo: 'shopify',
