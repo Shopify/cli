@@ -2,6 +2,7 @@ import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
+import {requestIdsCollection} from '../../../private/node/request-ids.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -105,11 +106,10 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
 async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) {
   try {
     const requestId = response.headers.get('x-request-id')
-    await addPublicMetadata(async () => {
-      return {
-        cmd_all_last_graphql_request_id: requestId ?? undefined,
-      }
-    })
+    requestIdsCollection.addRequestId(requestId)
+    await addPublicMetadata(() => ({
+      cmd_all_last_graphql_request_id: requestId ?? undefined,
+    }))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     // no problem if unable to get request ID.
