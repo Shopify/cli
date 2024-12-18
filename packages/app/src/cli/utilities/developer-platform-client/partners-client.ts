@@ -544,6 +544,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   async createTunnel(organizationId: string): Promise<TunnelCreateMutation> {
     const query = TunnelCreate
     const result = await appManagementRequestDoc(organizationId, query, await this.token())
+
     return result
   }
 
