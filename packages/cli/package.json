@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "3.70.0",
+  "version": "3.72.0",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -102,18 +102,18 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.11.0",
-    "esbuild": "0.19.8"
+    "esbuild": "0.24.0"
   },
   "devDependencies": {
     "@oclif/core": "3.26.5",
     "@oclif/plugin-commands": "3.3.2",
     "@oclif/plugin-plugins": "5.1.2",
-    "@shopify/app": "3.70.0",
-    "@shopify/cli-kit": "3.70.0",
-    "@shopify/plugin-cloudflare": "3.70.0",
-    "@shopify/plugin-did-you-mean": "3.70.0",
-    "@shopify/theme": "3.70.0",
-    "@shopify/cli-hydrogen": "9.0.2",
+    "@shopify/app": "3.72.0",
+    "@shopify/cli-kit": "3.72.0",
+    "@shopify/plugin-cloudflare": "3.72.0",
+    "@shopify/plugin-did-you-mean": "3.72.0",
+    "@shopify/theme": "3.72.0",
+    "@shopify/cli-hydrogen": "9.0.3",
     "@types/node": "18.19.3",
     "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^1.6.0",

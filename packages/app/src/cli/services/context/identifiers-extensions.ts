@@ -124,6 +124,7 @@ export async function ensureExtensionsIds(
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+    didMigrateDashboardExtensions = true
   }
 
   if (adminLinkExtensionsToMigrate.length > 0) {
@@ -137,6 +138,7 @@ export async function ensureExtensionsIds(
       options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
+    didMigrateDashboardExtensions = true
   }
 
   const matchExtensions = await automaticMatchmaking(

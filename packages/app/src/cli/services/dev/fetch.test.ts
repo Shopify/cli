@@ -65,7 +65,7 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners without USE_APP_MANAGEMENT_API', async () => {
+  test('returns fetched organizations from Partners when App Management is disabled', async () => {
     // Given
 
     const partnersClient: PartnersClient = testDeveloperPlatformClient({

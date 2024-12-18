@@ -5,8 +5,8 @@ import {zip} from '@shopify/cli-kit/node/archiver'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdirSync, touchFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {isAppManagementEnabled} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -21,7 +21,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions, systemEnv
     mkdirSync(bundleDirectory)
     await touchFile(joinPath(bundleDirectory, '.shopify'))
 
-    if (isTruthy(systemEnvironment.USE_APP_MANAGEMENT_API)) {
+    if (isAppManagementEnabled(systemEnvironment)) {
       // Include manifest in bundle
       const appManifest = await options.app.manifest(options.identifiers)
       const manifestPath = joinPath(bundleDirectory, 'manifest.json')

@@ -4,6 +4,7 @@ import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../model
 import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationFileName} from '../../models/app/loader.js'
+import {BugError} from '@shopify/cli-kit/node/error'
 
 /**
  * Select an app from env, list or create a new one:
@@ -44,8 +45,15 @@ export async function selectOrCreateApp(
 
     if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
-    const fullSelectedApp = await developerPlatformClient.appFromId(app)
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return fullSelectedApp!
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
+
+    if (!fullSelectedApp) {
+      // This is unlikely, and a bug. But we still want a nice user facing message plus appropriate context logged.
+      throw new BugError(
+        `Unable to fetch app ${app.apiKey} from Shopify`,
+        'Try running `shopify app config link` to connect to an app you have access to.',
+      )
+    }
+    return fullSelectedApp
   }
 }

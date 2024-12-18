@@ -38,8 +38,8 @@ export async function updateExtensionDraft({
   bundlePath,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
+  const outputPath = extension.getOutputPathForDirectory(bundlePath)
   if (extension.features.includes('esbuild')) {
-    const outputPath = extension.getOutputPathForDirectory(bundlePath)
     const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
@@ -50,7 +50,7 @@ export async function updateExtensionDraft({
     // When updating just the theme extension draft, upload the files as part of the config.
     config = await themeExtensionConfig(extension)
   } else {
-    config = (await extension.deployConfig({apiKey, appConfiguration})) || {}
+    config = (await extension.deployConfig({apiKey, appConfiguration})) ?? {}
   }
 
   const draftableConfig: {[key: string]: unknown} = {
@@ -58,6 +58,8 @@ export async function updateExtensionDraft({
     serialized_script: encodedFile,
   }
   if (extension.isFunctionExtension) {
+    // For function drafts we need to use the `extension.outputPath` instead of `bundlePath`
+    // The wasm in the bundle path is encoded in base64.
     const compiledFiles = await readFile(extension.outputPath, {encoding: 'base64'})
     draftableConfig.uploaded_files = {'dist/index.wasm': compiledFiles}
   }

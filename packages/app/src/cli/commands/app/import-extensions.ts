@@ -8,6 +8,7 @@ import {appFlags} from '../../flags.js'
 import {importExtensions} from '../../services/import-extensions.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
+import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -17,7 +18,11 @@ interface MigrationChoice {
   label: string
   value: string
   extensionTypes: string[]
-  buildTomlObject: (ext: ExtensionRegistration, allExtensions: ExtensionRegistration[]) => string
+  buildTomlObject: (
+    ext: ExtensionRegistration,
+    allExtensions: ExtensionRegistration[],
+    appConfiguration: CurrentAppConfiguration,
+  ) => string
 }
 
 const getMigrationChoices = (): MigrationChoice[] => [
@@ -79,7 +84,7 @@ export default class ImportExtensions extends AppCommand {
     const appContext = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
-      forceRelink: false,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

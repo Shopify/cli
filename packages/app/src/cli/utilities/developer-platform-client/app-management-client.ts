@@ -21,6 +21,7 @@ import {
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -46,7 +47,11 @@ import {
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
-import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {
+  SampleWebhook,
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {
@@ -56,8 +61,6 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
-import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
 import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
@@ -86,10 +89,10 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
-  ActiveAppRelease,
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
+import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
@@ -100,6 +103,19 @@ import {FetchSpecifications} from '../../api/graphql/app-management/generated/sp
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
 import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
+import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
+import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
+import {
+  SchemaDefinitionByTarget,
+  SchemaDefinitionByTargetQuery,
+  SchemaDefinitionByTargetQueryVariables,
+} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {
+  SchemaDefinitionByApiType,
+  SchemaDefinitionByApiTypeQuery,
+  SchemaDefinitionByApiTypeQueryVariables,
+} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -115,6 +131,8 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
+import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -200,7 +218,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers(appIdentifiers: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
@@ -475,7 +493,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       uuid: versionInfo.id,
       versionTag: versionInfo.metadata.versionTag,
       location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
-      message: '',
+      message: versionInfo.metadata.message ?? '',
       appModuleVersions: versionInfo.appModules.map(appModuleVersion),
     }
   }
@@ -560,6 +578,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     appModules,
     organizationId,
     versionTag,
+    message,
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
@@ -572,6 +591,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
+
     const variables = {
       appId,
       name: updatedName,
@@ -587,7 +607,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      metadata: versionTag ? {versionTag} : {},
+      metadata: {versionTag, message},
     }
 
     const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
@@ -726,25 +746,46 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appPreviewMode')
   }
 
-  async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    outputDebug('⚠️ sendSampleWebhook is not implemented')
-    return {
-      sendSampleWebhook: {
-        samplePayload: '',
-        headers: '{}',
-        success: true,
-        userErrors: [],
-      },
+  async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
+    const query = CliTesting
+    const variables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
     }
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+    let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
+    const cliTesting = result.cliTesting
+    if (cliTesting) {
+      sendSampleWebhook = {
+        samplePayload: cliTesting.samplePayload ?? '{}',
+        headers: cliTesting.headers ?? '{}',
+        success: cliTesting.success,
+        userErrors: cliTesting.errors.map((error) => ({message: error, fields: []})),
+      }
+    }
+    return {sendSampleWebhook}
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
-    outputDebug('⚠️ apiVersions is not implemented')
-    return {publicApiVersions: ['unstable']}
+  async apiVersions(organizationId: string): Promise<PublicApiVersionsSchema> {
+    const result = await webhooksRequest(organizationId, PublicApiVersions, await this.token(), {})
+    return {publicApiVersions: result.publicApiVersions.map((version) => version.handle)}
   }
 
-  async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
-    throw new BugError('Not implemented: topics')
+  async topics(
+    {api_version: apiVersion}: WebhookTopicsVariables,
+    organizationId: string,
+  ): Promise<WebhookTopicsSchema> {
+    const query = AvailableTopics
+    const variables = {apiVersion}
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+
+    return {
+      webhookTopics: result.availableTopics ?? [],
+    }
   }
 
   async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
@@ -764,12 +805,53 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: currentAccountInfo')
   }
 
-  async targetSchemaDefinition(_input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
-    throw new BugError('Not implemented: targetSchemaDefinition')
+  async targetSchemaDefinition(
+    input: SchemaDefinitionByTargetQueryVariables,
+    apiKey: string,
+    organizationId: string,
+  ): Promise<string | null> {
+    try {
+      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const appIdNumber = String(numberFromGid(app.id))
+      const token = await this.token()
+      const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
+        organizationId,
+        SchemaDefinitionByTarget,
+        token,
+        appIdNumber,
+        {
+          handle: input.handle,
+          version: input.version,
+        },
+      )
+
+      return result?.target?.api?.schema?.definition ?? null
+    } catch (error) {
+      throw new AbortError(`Failed to fetch schema definition: ${error}`)
+    }
   }
 
-  async apiSchemaDefinition(_input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
-    throw new BugError('Not implemented: apiSchemaDefinition')
+  async apiSchemaDefinition(
+    input: SchemaDefinitionByApiTypeQueryVariables,
+    apiKey: string,
+    organizationId: string,
+  ): Promise<string | null> {
+    try {
+      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const appIdNumber = String(numberFromGid(app.id))
+      const token = await this.token()
+      const result = await functionsRequestDoc<SchemaDefinitionByApiTypeQuery, SchemaDefinitionByApiTypeQueryVariables>(
+        organizationId,
+        SchemaDefinitionByApiType,
+        token,
+        appIdNumber,
+        input,
+      )
+
+      return result?.api?.schema?.definition ?? null
+    } catch (error) {
+      throw new AbortError(`Failed to fetch schema definition: ${error}`)
+    }
   }
 
   async migrateToUiExtension(_input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
@@ -807,8 +889,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
-    return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
+  private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
+    return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
   }
 
   private async organizationBetaFlags(

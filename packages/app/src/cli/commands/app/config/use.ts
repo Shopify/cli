@@ -3,7 +3,7 @@ import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import use from '../../../services/app/config/use.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
-import {Args, Flags} from '@oclif/core'
+import {Args} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 // This is one of the few commands where we don't need a
@@ -20,12 +20,6 @@ export default class ConfigUse extends AppCommand {
   static flags = {
     ...globalFlags,
     ...appFlagsWithoutConfig,
-    reset: Flags.boolean({
-      hidden: false,
-      description: 'Reset current configuration.',
-      env: 'SHOPIFY_FLAG_RESET',
-      default: false,
-    }),
   }
 
   static args = {

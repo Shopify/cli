@@ -12,10 +12,13 @@ export interface Organization {
   source?: OrganizationSource
 }
 
-export interface MinimalAppIdentifiers {
-  id: string
+export interface AppApiKeyAndOrgId {
   apiKey: string
   organizationId: string
+}
+
+export type MinimalAppIdentifiers = AppApiKeyAndOrgId & {
+  id: string
 }
 
 export type MinimalOrganizationApp = MinimalAppIdentifiers & {

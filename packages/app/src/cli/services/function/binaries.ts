@@ -4,16 +4,19 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {PipelineSource} from 'stream'
+import {pipeline} from 'stream/promises'
 import stream from 'node:stream/promises'
 import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const FUNCTION_RUNNER_VERSION = 'v6.3.0'
+const FUNCTION_RUNNER_VERSION = 'v6.5.0'
 const JAVY_VERSION = 'v4.0.0'
-// The Javy plugin version does not need to match the Javy version. It should
-// match the plugin version used in the function-runner version specified above.
-const JAVY_PLUGIN_VERSION = 'v3.2.0'
+// The Javy plugin version should match the plugin version used in the
+// function-runner version specified above.
+const JAVY_PLUGIN_VERSION = 'v1'
+
+const BINARYEN_VERSION = '120.0.0'
 
 interface DownloadableBinary {
   path: string
@@ -93,23 +96,49 @@ class JavyPlugin implements DownloadableBinary {
   readonly path: string
 
   constructor() {
-    this.name = 'javy_quickjs_provider_v3'
+    this.name = `shopify_functions_javy_${JAVY_PLUGIN_VERSION}`
     this.version = JAVY_PLUGIN_VERSION
-    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'javy_quickjs_provider_v3.wasm')
+    this.path = joinPath(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      'bin',
+      `shopify_functions_javy_${JAVY_PLUGIN_VERSION}.wasm`,
+    )
   }
 
   downloadUrl(_processPlatform: string, _processArch: string) {
-    return `https://github.com/bytecodealliance/javy/releases/download/${this.version}/plugin.wasm.gz`
+    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${JAVY_PLUGIN_VERSION}.wasm`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
-    return gunzipResponse(responseStream, outputStream)
+    return pipeline(responseStream, outputStream)
+  }
+}
+
+class WasmOptExecutable implements DownloadableBinary {
+  readonly name: string
+  readonly version: string
+  readonly path: string
+
+  constructor(name: string, version: string) {
+    this.name = name
+    this.version = version
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', name)
+  }
+
+  downloadUrl(_processPlatform: string, _processArch: string) {
+    return `https://cdn.jsdelivr.net/npm/binaryen@${this.version}/bin/wasm-opt`
+  }
+
+  async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
+    await stream.pipeline(responseStream, outputStream)
   }
 }
 
 let _javy: DownloadableBinary
 let _javyPlugin: DownloadableBinary
 let _functionRunner: DownloadableBinary
+let _wasmOpt: DownloadableBinary
 
 export function javyBinary() {
   if (!_javy) {
@@ -130,6 +159,14 @@ export function functionRunnerBinary() {
     _functionRunner = new Executable('function-runner', FUNCTION_RUNNER_VERSION, 'Shopify/function-runner')
   }
   return _functionRunner
+}
+
+export function wasmOptBinary() {
+  if (!_wasmOpt) {
+    _wasmOpt = new WasmOptExecutable('wasm-opt.cjs', BINARYEN_VERSION)
+  }
+
+  return _wasmOpt
 }
 
 export async function downloadBinary(bin: DownloadableBinary) {
@@ -164,7 +201,7 @@ export async function downloadBinary(bin: DownloadableBinary) {
         const outputStream = createFileWriteStream(tmpFile)
         await bin.processResponse(responseStream, outputStream)
         await chmod(tmpFile, 0o775)
-        await moveFile(tmpFile, bin.path)
+        await moveFile(tmpFile, bin.path, {overwrite: true})
       })
     },
     async () => {},

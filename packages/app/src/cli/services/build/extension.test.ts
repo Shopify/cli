@@ -1,16 +1,18 @@
 import {buildFunctionExtension} from './extension.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
-import {buildJSFunction} from '../function/build.js'
+import {buildJSFunction, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
 vi.mock('proper-lockfile')
+vi.mock('@shopify/cli-kit/node/fs')
 
 describe('buildFunctionExtension', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -26,6 +28,7 @@ describe('buildFunctionExtension', () => {
     build: {
       command: 'make build',
       path: 'dist/index.wasm',
+      wasm_opt: true,
     },
     configuration_ui: true,
     api_version: '2022-07',
@@ -136,6 +139,45 @@ describe('buildFunctionExtension', () => {
       signal,
     })
     expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('performs wasm-opt execution by default', async () => {
+    // Given
+    vi.mocked(fileExistsSync).mockResolvedValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  test('skips wasm-opt execution when the disable-wasm-opt is true', async () => {
+    // Given
+    vi.mocked(fileExistsSync).mockResolvedValue(true)
+    extension.configuration.build.wasm_opt = false
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(runWasmOpt).not.toHaveBeenCalled()
   })
 
   test('fails when build lock cannot be acquired', async () => {

@@ -8,12 +8,12 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromId} from '../../context.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromIdentifiers} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
+import {MinimalAppIdentifiers, AppApiKeyAndOrgId, OrganizationApp} from '../../../models/organization.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -49,7 +49,7 @@ const DEFAULT_REMOTE_CONFIGURATION = {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
@@ -85,7 +85,6 @@ describe('link', () => {
       expect(fileExistsSync(joinPath(tmp, 'shopify.app.default-value.toml'))).toBeTruthy()
       expect(configuration).toEqual({
         client_id: '12345',
-        app_id: '1',
         name: 'app1',
         extension_directories: [],
         application_url: 'https://example.com',
@@ -165,7 +164,6 @@ embedded = false
 `
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       extension_directories: [],
       application_url: 'https://example.com',
@@ -274,7 +272,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -407,7 +404,6 @@ url = "https://api-client-config.com/preferences"
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'new-title',
       application_url: 'https://api-client-config.com',
       embedded: false,
@@ -539,7 +535,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'my app',
       application_url: 'https://myapp.com',
       embedded: true,
@@ -582,11 +577,12 @@ test('the local configuration is discarded if the client_id is different from th
         scopes: 'write_products',
         webhooks: {api_version: '2023-04'},
         application_url: 'https://myapp.com',
+        embedded: false,
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
         },
-      } as CurrentAppConfiguration,
+      },
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
@@ -631,7 +627,6 @@ embedded = false
 `
     expect(configuration).toEqual({
       client_id: 'different-api-key',
-      app_id: '1',
       name: 'my app',
       application_url: 'https://myapp.com',
       embedded: true,
@@ -712,7 +707,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       extension_directories: [],
       name: 'app1',
       application_url: 'https://example.com',
@@ -779,7 +773,6 @@ embedded = false
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -813,8 +806,8 @@ test('fetches the remote app when an api key is provided', async () => {
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
     vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
-    vi.mocked(appFromId).mockImplementation(async ({apiKey}: {apiKey: string}) => {
-      return (await developerPlatformClient.appFromId({id: apiKey, apiKey, organizationId: '1'}))!
+    vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
+      return (await developerPlatformClient.appFromIdentifiers({apiKey, organizationId: '1'}))!
     })
 
     // When
@@ -825,7 +818,6 @@ test('fetches the remote app when an api key is provided', async () => {
     expect(content).toContain('name = "app1"')
     expect(configuration).toEqual({
       client_id: 'api-key',
-      app_id: '1',
       extension_directories: [],
       name: 'app1',
       application_url: 'https://example.com',
@@ -933,7 +925,6 @@ embedded = false
 `
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -995,7 +986,6 @@ embedded = false
 
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -1062,7 +1052,6 @@ embedded = false
 
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       extension_directories: [],
       name: 'app1',
       application_url: 'https://example.com',
@@ -1185,7 +1174,6 @@ embedded = false
     })
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://example.com',
       embedded: true,
@@ -1310,7 +1298,6 @@ embedded = false
 
     expect(configuration).toEqual({
       client_id: '12345',
-      app_id: '1',
       name: 'app1',
       application_url: 'https://my-app-url.com',
       embedded: true,
@@ -1358,7 +1345,8 @@ test('the api client configuration is deep merged with the remote app_config ext
           api_version: '2023-04',
         },
         application_url: 'https://myapp.com',
-      } as CurrentAppConfiguration,
+        embedded: true,
+      },
     }
     vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
     vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(

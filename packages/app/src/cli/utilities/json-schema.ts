@@ -19,6 +19,7 @@ export async function unifiedConfigurationParserFactory(
     return merged.parseConfigurationObject
   }
   const contract = await normaliseJsonSchema(contractJsonSchema)
+  const extensionIdentifier = merged.identifier
 
   const parseConfigurationObject = (config: object): ParseConfigurationResult<BaseConfigType> => {
     // First we parse with zod. This may also change the format of the data.
@@ -29,7 +30,7 @@ export async function unifiedConfigurationParserFactory(
     const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
 
     const subjectForAjvWithoutFirstClassFields = configWithoutFirstClassFields(subjectForAjv)
-    const jsonSchemaParse = jsonSchemaValidate(subjectForAjvWithoutFirstClassFields, contract)
+    const jsonSchemaParse = jsonSchemaValidate(subjectForAjvWithoutFirstClassFields, contract, extensionIdentifier)
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
     let errors = zodParse.errors || []

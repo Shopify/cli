@@ -5,7 +5,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {formatSection, outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Info extends ThemeCommand {
@@ -14,6 +14,7 @@ export default class Info extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     store: themeFlags.store,
     password: themeFlags.password,
     environment: themeFlags.environment,
@@ -26,11 +27,6 @@ export default class Info extends ThemeCommand {
       char: 't',
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
-    }),
-    json: Flags.boolean({
-      description: 'Output the theme info as JSON.',
-      default: false,
-      env: 'SHOPIFY_FLAG_JSON',
     }),
   }
 

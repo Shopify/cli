@@ -29,6 +29,7 @@ import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+vi.mock('../../models/app/validation/multi-cli-warning.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
   return {

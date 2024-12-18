@@ -22,6 +22,8 @@ export default class FunctionTypegen extends AppCommand {
     const {flags} = await this.parse(FunctionTypegen)
     const app = await inFunctionContext({
       path: flags.path,
+      apiKey: flags['client-id'],
+      reset: flags.reset,
       userProvidedConfigName: flags.config,
       callback: async (app, _, ourFunction) => {
         await buildGraphqlTypes(ourFunction, {stdout: process.stdout, stderr: process.stderr, app})

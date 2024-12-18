@@ -9,12 +9,10 @@ export class ShopifyEssentialError extends Error {}
 export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
   const response = await fetch(prependHttps(storeURL), {
     method: 'GET',
-    redirect: 'manual',
   })
 
-  if (response.status !== 302) return false
-
-  return response.headers.get('location')?.endsWith('/password') ?? false
+  const redirectLocation = new URL(response.url)
+  return redirectLocation.pathname.endsWith('/password')
 }
 
 /**
@@ -45,9 +43,21 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
     )
   }
 
-  const isValidRedirect = new RegExp(`^${storeUrl}/?$`, 'i')
+  const locationHeader = response.headers.get('location') ?? ''
+  let redirectUrl: URL
 
-  return response.status === 302 && isValidRedirect.test(response.headers.get('location') ?? '')
+  try {
+    redirectUrl = new URL(locationHeader, storeUrl)
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
+  }
+
+  const storeOrigin = new URL(storeUrl).origin
+
+  return response.status === 302 && redirectUrl.origin === storeOrigin
 }
 
 export async function getStorefrontSessionCookies(

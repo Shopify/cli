@@ -35,7 +35,7 @@ describe('Check', () => {
         context: 'theme',
         settings: {},
         checks: [],
-        root: '',
+        rootUri: '',
       }
       const mockOffenses: Offense[] = []
 
@@ -53,7 +53,7 @@ describe('Check', () => {
         context: 'app',
         settings: {},
         checks: [],
-        root: '',
+        rootUri: '',
       }
       const mockOffenses: Offense[] = []
 
@@ -72,7 +72,7 @@ describe('Check', () => {
         context: 'theme',
         settings: {},
         checks: [],
-        root: '',
+        rootUri: '',
       }
       const mockOffenses: Offense[] = []
 

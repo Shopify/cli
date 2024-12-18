@@ -38,7 +38,19 @@ const schemas = [
     repo: 'shopify',
     pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
     localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
-  }
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
+    branch: 'dd',
+  },
+  {
+    repo: 'shopify',
+    pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
+    branch: 'dd',
+  },
 ]
 
 function runCommand(command, args) {
@@ -121,7 +133,7 @@ async function getGithubPasswordFromDev() {
   }
 }
 
-async function fetchFiles() {
+async function withOctokit(func) {
   let password = undefined
   let tokenFromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
   if (!tokenFromEnv) {
@@ -133,10 +145,15 @@ async function fetchFiles() {
   const octokit = new Octokit({
     auth: authToken,
   })
+  return func(octokit)
+}
 
+async function fetchFiles() {
   let allSuccess = true
   for (const schema of schemas) {
-    allSuccess = await fetchFileForSchema(schema, octokit) && allSuccess
+    allSuccess = allSuccess && await withOctokit(async (octokit) => {
+      return fetchFileForSchema(schema, octokit)
+    })
   }
 
   if (!allSuccess) {
@@ -149,7 +166,19 @@ async function fetchFilesFromSpin() {
   for (const schema of schemas) {
     const remotePath = `~/src/github.com/Shopify/${schema.repo}/${schema.pathToFile}`
     const localPath = schema.localPath
-    await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+    try {
+      await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
+    } catch(e) {
+      if (e.message.match(/scp.*No such file or directory/)) {
+        // Assume we need to just fetch the file from GitHub
+        console.log(`Cannot find file for ${schema.repo} in Spin, fetching from GitHub instead...`)
+        await withOctokit(async (octokit) => {
+          await fetchFileForSchema(schema, octokit)
+        })
+      } else {
+        throw e
+      }
+    }
   }
 }
 

@@ -23,6 +23,7 @@ const aPort = '1234'
 const aUrlPath = '/a/url/path'
 const anAddress = 'https://example.org'
 const anEventBridgeAddress = 'arn:aws:events:us-east-3::event-source/aws.partner/shopify.com/12/source'
+const anOrganizationId = 'anOrganizationId'
 
 vi.mock('@shopify/cli-kit')
 vi.mock('@shopify/cli-kit/node/output')
@@ -81,7 +82,7 @@ describe('webhookTriggerService', () => {
     await webhookTriggerService(sampleFlags())
 
     // Then
-    expectCalls(aVersion)
+    expectCalls(aVersion, anOrganizationId)
     expect(consoleError).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
@@ -104,7 +105,7 @@ describe('webhookTriggerService', () => {
     await webhookTriggerService(sampleFlags())
 
     // Then
-    expectCalls(aVersion)
+    expectCalls(aVersion, anOrganizationId)
     expect(consoleError).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
@@ -125,8 +126,12 @@ describe('webhookTriggerService', () => {
     await webhookTriggerService(sampleFlags())
 
     // Then
-    expectCalls(aVersion)
-    expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
+    expectCalls(aVersion, anOrganizationId)
+    expect(getWebhookSample).toHaveBeenCalledWith(
+      developerPlatformClient,
+      expectedSampleWebhookVariables,
+      anOrganizationId,
+    )
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
@@ -174,8 +179,12 @@ describe('webhookTriggerService', () => {
     await webhookTriggerService(flags)
 
     // Then
-    expectCalls(aVersion)
-    expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
+    expectCalls(aVersion, anOrganizationId)
+    expect(getWebhookSample).toHaveBeenCalledWith(
+      developerPlatformClient,
+      expectedSampleWebhookVariables,
+      anOrganizationId,
+    )
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
@@ -197,8 +206,12 @@ describe('webhookTriggerService', () => {
       await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
-      expectCalls(aVersion)
-      expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
+      expectCalls(aVersion, anOrganizationId)
+      expect(getWebhookSample).toHaveBeenCalledWith(
+        developerPlatformClient,
+        expectedSampleWebhookVariables,
+        anOrganizationId,
+      )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
@@ -220,8 +233,12 @@ describe('webhookTriggerService', () => {
       await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
-      expectCalls(aVersion)
-      expect(getWebhookSample).toHaveBeenCalledWith(developerPlatformClient, expectedSampleWebhookVariables)
+      expectCalls(aVersion, anOrganizationId)
+      expect(getWebhookSample).toHaveBeenCalledWith(
+        developerPlatformClient,
+        expectedSampleWebhookVariables,
+        anOrganizationId,
+      )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(consoleError).toHaveBeenCalledWith('Localhost delivery failed')
     })
@@ -232,9 +249,9 @@ describe('webhookTriggerService', () => {
     vi.mocked(requestTopics).mockResolvedValue([topic])
   }
 
-  function expectCalls(version: string) {
-    expect(requestApiVersions).toHaveBeenCalledWith(developerPlatformClient)
-    expect(requestTopics).toHaveBeenCalledWith(developerPlatformClient, version)
+  function expectCalls(version: string, organizationId: string) {
+    expect(requestApiVersions).toHaveBeenCalledWith(developerPlatformClient, organizationId)
+    expect(requestTopics).toHaveBeenCalledWith(developerPlatformClient, version, organizationId)
   }
 
   function sampleFlags(): WebhookTriggerInput {
@@ -247,6 +264,7 @@ describe('webhookTriggerService', () => {
       address: anAddress,
       developerPlatformClient,
       path: '.',
+      organizationId: anOrganizationId,
     }
 
     return flags
@@ -262,6 +280,7 @@ describe('webhookTriggerService', () => {
       address: anEventBridgeAddress,
       developerPlatformClient,
       path: '.',
+      organizationId: anOrganizationId,
     }
 
     return flags
@@ -277,6 +296,7 @@ describe('webhookTriggerService', () => {
       address: aFullLocalAddress,
       developerPlatformClient,
       path: '.',
+      organizationId: anOrganizationId,
     }
 
     return flags

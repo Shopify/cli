@@ -11,8 +11,8 @@ import {
   testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
 import {formData} from '@shopify/cli-kit/node/http'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
+import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
@@ -66,6 +66,7 @@ describe('pushUpdatesForDevSession', () => {
   let developerPlatformClient: any
   let appWatcher: AppEventWatcher
   let app: AppLinkedInterface
+  let abortController: AbortController
 
   beforeEach(() => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
@@ -75,7 +76,7 @@ describe('pushUpdatesForDevSession', () => {
     developerPlatformClient = testDeveloperPlatformClient()
     app = testAppLinked()
     appWatcher = new AppEventWatcher(app)
-
+    abortController = new AbortController()
     options = {
       developerPlatformClient,
       appWatcher,
@@ -85,10 +86,14 @@ describe('pushUpdatesForDevSession', () => {
     }
   })
 
+  afterEach(() => {
+    abortController.abort()
+  })
+
   test('creates a new dev session successfully when receiving the app watcher start event', async () => {
     // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
-    await appWatcher.start()
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
 
     // Then
@@ -100,8 +105,8 @@ describe('pushUpdatesForDevSession', () => {
     // When
 
     const spyContext = vi.spyOn(outputContext, 'useConcurrentOutputContext')
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
-    await appWatcher.start()
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
 
     const extension = await testUIExtension()
@@ -123,7 +128,7 @@ describe('pushUpdatesForDevSession', () => {
     developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({devSessionCreate: {userErrors}})
 
     // When
-    await appWatcher.start()
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
     await flushPromises()
 
@@ -134,7 +139,7 @@ describe('pushUpdatesForDevSession', () => {
 
   test('handles receiving an event before session is ready', async () => {
     // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
     await flushPromises()
 
@@ -152,8 +157,8 @@ describe('pushUpdatesForDevSession', () => {
     developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({devSessionUpdate: {userErrors}})
 
     // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
-    await appWatcher.start()
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
     await flushPromises()
@@ -171,8 +176,8 @@ describe('pushUpdatesForDevSession', () => {
     const contextSpy = vi.spyOn(outputContext, 'useConcurrentOutputContext')
 
     // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortSignal()}, options)
-    await appWatcher.start()
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
     appWatcher.emit('all', event)
     await flushPromises()

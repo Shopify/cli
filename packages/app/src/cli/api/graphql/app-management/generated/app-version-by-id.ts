@@ -11,7 +11,7 @@ export type AppVersionByIdQueryVariables = Types.Exact<{
 export type AppVersionByIdQuery = {
   version: {
     id: string
-    metadata: {versionTag?: string | null}
+    metadata: {message?: string | null; versionTag?: string | null}
     appModules: {
       uuid: string
       userIdentifier: string
@@ -59,6 +59,7 @@ export const AppVersionById = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'message'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],

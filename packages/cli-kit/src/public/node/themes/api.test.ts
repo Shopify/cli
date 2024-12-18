@@ -10,11 +10,13 @@ import {
   AssetParams,
   deleteThemeAsset,
 } from './api.js'
-import {RemoteBulkUploadResponse} from './factories.js'
+import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
+import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
+import {OnlineStoreThemeFileBodyInputType} from '../../../cli/api/graphql/admin/generated/types.js'
 import {test, vi, expect, describe} from 'vitest'
 import {adminRequestDoc, restRequest, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -112,19 +114,18 @@ describe('createTheme', () => {
 
   test('creates a theme', async () => {
     // Given
-    vi.mocked(restRequest)
-      .mockResolvedValueOnce({
-        json: {theme: {id, name, role, processing}},
-        status: 200,
-        headers: {},
-      })
-      .mockResolvedValueOnce({
-        json: {
-          results: [],
-        },
-        status: 207,
-        headers: {},
-      })
+    vi.mocked(restRequest).mockResolvedValueOnce({
+      json: {theme: {id, name, role, processing}},
+      status: 200,
+      headers: {},
+    })
+
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesUpsert: {
+        upsertedThemeFiles: [],
+        userErrors: [],
+      },
+    })
 
     // When
     const theme = await createTheme(params, session)
@@ -355,7 +356,6 @@ describe('themeDelete', () => {
 describe('request errors', () => {
   test(`returns AbortError when graphql returns user error`, async () => {
     // Given
-
     vi.mocked(adminRequestDoc).mockResolvedValue({
       themeDelete: {
         deletedThemeId: null,
@@ -370,147 +370,132 @@ describe('request errors', () => {
       // Then
     }).rejects.toThrowError(AbortError)
   })
-
-  test(`refresh the session when 401 errors happen`, async () => {
-    // Given
-    const id = 123
-    const assets: AssetParams[] = []
-
-    vi.spyOn(session, 'refresh').mockImplementation(vi.fn())
-    vi.mocked(restRequest)
-      .mockResolvedValueOnce({
-        json: {},
-        status: 401,
-        headers: {},
-      })
-      .mockResolvedValueOnce({
-        json: {},
-        status: 207,
-        headers: {},
-      })
-
-    // When
-    await bulkUploadThemeAssets(id, assets, session)
-
-    // Then
-    expect(session.refresh).toHaveBeenCalledOnce()
-  })
 })
 
 describe('bulkUploadThemeAssets', async () => {
-  test('uploads multiple assets', async () => {
+  test('uploads multiple TEXT and BASE64 assets', async () => {
     const id = 123
     const assets: AssetParams[] = [
       {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-      {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
-    ]
-
-    const mockResults: RemoteBulkUploadResponse[] = [
       {
-        code: 200,
-        body: {
-          asset: {
-            key: 'assets/test.liquid',
-            checksum: '3f26c8569292ce6f1cc991c5fa7d3fcb',
-            attachment: '',
-            value: '',
-          },
-        },
-      },
-      {
-        code: 400,
-        body: {
-          errors: {asset: ['expected Hash to be a String']},
-        },
+        key: 'templates/404.json',
+        value: 'to_be_replaced_with_hash',
       },
     ]
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {results: mockResults},
-      status: 207,
-      headers: {},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesUpsert: {
+        upsertedThemeFiles: [{filename: 'snippets/product-variant-picker.liquid'}, {filename: 'templates/404.json'}],
+        userErrors: [],
+      },
     })
 
     // When
     const bulkUploadresults = await bulkUploadThemeAssets(id, assets, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'PUT',
-      `/themes/${id}/assets/bulk`,
-      session,
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeFilesUpsert, session, {
+      themeId: `gid://shopify/OnlineStoreTheme/${id}`,
+      files: [
+        {
+          filename: 'snippets/product-variant-picker.liquid',
+          body: {value: 'content', type: 'TEXT' as OnlineStoreThemeFileBodyInputType},
+        },
+        {
+          filename: 'templates/404.json',
+          body: {value: 'to_be_replaced_with_hash', type: 'TEXT' as OnlineStoreThemeFileBodyInputType},
+        },
+      ],
+    })
+
+    expect(bulkUploadresults).toEqual([
       {
-        assets: [
-          {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-          {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
+        key: 'snippets/product-variant-picker.liquid',
+        success: true,
+        operation: Operation.Upload,
+      },
+      {
+        key: 'templates/404.json',
+        success: true,
+        operation: Operation.Upload,
+      },
+    ])
+  })
+
+  test('throws an error when returns userErrors with filenames', async () => {
+    const id = 123
+    const assets: AssetParams[] = [
+      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
+      {
+        key: 'templates/404.json',
+        value: 'to_be_replaced_with_hash',
+      },
+    ]
+
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesUpsert: {
+        upsertedThemeFiles: [],
+        userErrors: [
+          {filename: 'snippets/product-variant-picker.liquid', message: 'Something went wrong'},
+          {filename: 'templates/404.json', message: 'Something went wrong'},
         ],
       },
-      {},
+    })
+
+    // When
+    const bulkUploadresults = await bulkUploadThemeAssets(id, assets, session)
+
+    // Then
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeFilesUpsert, session, {
+      themeId: `gid://shopify/OnlineStoreTheme/${id}`,
+      files: [
+        {
+          filename: 'snippets/product-variant-picker.liquid',
+          body: {value: 'content', type: 'TEXT' as OnlineStoreThemeFileBodyInputType},
+        },
+        {
+          filename: 'templates/404.json',
+          body: {value: 'to_be_replaced_with_hash', type: 'TEXT' as OnlineStoreThemeFileBodyInputType},
+        },
+      ],
+    })
+
+    expect(bulkUploadresults).toEqual([
+      {
+        key: 'snippets/product-variant-picker.liquid',
+        success: false,
+        operation: Operation.Upload,
+        errors: {asset: ['Something went wrong']},
+      },
+      {
+        key: 'templates/404.json',
+        success: false,
+        operation: Operation.Upload,
+        errors: {asset: ['Something went wrong']},
+      },
+    ])
+  })
+
+  test('throws an error when returns userErrors with no filename', async () => {
+    const id = 123
+    const assets: AssetParams[] = [
+      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
+      {
+        key: 'templates/404.json',
+        value: 'to_be_replaced_with_hash',
+      },
+    ]
+
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesUpsert: {
+        upsertedThemeFiles: [],
+        userErrors: [{message: 'Something went wrong'}],
+      },
+    })
+
+    await expect(bulkUploadThemeAssets(id, assets, session)).rejects.toThrow(AbortError)
+    await expect(bulkUploadThemeAssets(id, assets, session)).rejects.toThrow(
+      'Error uploading theme files: Something went wrong',
     )
-    expect(bulkUploadresults).toHaveLength(2)
-    expect(bulkUploadresults[0]).toEqual({
-      key: 'snippets/product-variant-picker.liquid',
-      success: true,
-      errors: {},
-      operation: 'UPLOAD',
-      asset: {
-        attachment: '',
-        key: 'assets/test.liquid',
-        checksum: '3f26c8569292ce6f1cc991c5fa7d3fcb',
-        value: '',
-      },
-    })
-    expect(bulkUploadresults[1]).toEqual({
-      key: 'templates/404.json',
-      operation: 'UPLOAD',
-      success: false,
-      errors: {asset: ['expected Hash to be a String']},
-      asset: undefined,
-    })
-  })
-
-  test('throws an error when the server responds with a 404', async () => {
-    const id = 123
-    const assets: AssetParams[] = [
-      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-      {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
-    ]
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {},
-      status: 404,
-      headers: {},
-    })
-
-    // When
-    await expect(async () => {
-      return bulkUploadThemeAssets(id, assets, session)
-      // Then
-    }).rejects.toThrowError(AbortError)
-  })
-
-  test('throws an error when the server responds with a 403', async () => {
-    // Given
-    const id = 123
-    const assets: AssetParams[] = [
-      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-      {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
-    ]
-    const message = `Cannot delete generated asset 'assets/bla.css'. Delete 'assets/bla.css.liquid' instead.`
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {
-        message,
-      },
-      status: 403,
-      headers: {},
-    })
-
-    // When
-    await expect(async () => {
-      return bulkUploadThemeAssets(id, assets, session)
-
-      // Then
-    }).rejects.toThrowError(new AbortError(message))
   })
 })

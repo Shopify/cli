@@ -27,20 +27,23 @@ export async function inFunctionContext({
   userProvidedConfigName,
   apiKey,
   callback,
+  reset,
 }: {
   path: string
   userProvidedConfigName?: string
   apiKey?: string
+  reset?: boolean
   callback: (
     app: AppLinkedInterface,
     developerPlatformClient: DeveloperPlatformClient,
     ourFunction: ExtensionInstance<FunctionConfigType>,
+    orgId: string,
   ) => Promise<AppLinkedInterface>
 }) {
-  const {app, developerPlatformClient} = await linkedAppContext({
+  const {app, developerPlatformClient, organization} = await linkedAppContext({
     directory: path,
     clientId: apiKey,
-    forceRelink: false,
+    forceRelink: reset ?? false,
     userProvidedConfigName,
   })
 
@@ -50,14 +53,14 @@ export async function inFunctionContext({
   const ourFunction = allFunctions.find((fun) => fun.directory === path)
 
   if (ourFunction) {
-    return callback(app, developerPlatformClient, ourFunction)
+    return callback(app, developerPlatformClient, ourFunction, organization.id)
   } else if (isTerminalInteractive()) {
     const selectedFunction = await renderAutocompletePrompt({
       message: 'Which function?',
       choices: allFunctions.map((shopifyFunction) => ({label: shopifyFunction.handle, value: shopifyFunction})),
     })
 
-    return callback(app, developerPlatformClient, selectedFunction)
+    return callback(app, developerPlatformClient, selectedFunction, organization.id)
   } else {
     throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
   }
@@ -67,6 +70,7 @@ export async function getOrGenerateSchemaPath(
   extension: ExtensionInstance<FunctionConfigType>,
   app: AppLinkedInterface,
   developerPlatformClient: DeveloperPlatformClient,
+  orgId: string,
 ): Promise<string | undefined> {
   const path = joinPath(extension.directory, 'schema.graphql')
   if (await fileExists(path)) {
@@ -79,6 +83,7 @@ export async function getOrGenerateSchemaPath(
     extension,
     stdout: false,
     path: extension.directory,
+    orgId,
   })
 
   return (await fileExists(path)) ? path : undefined

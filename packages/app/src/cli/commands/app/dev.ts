@@ -49,25 +49,12 @@ If you're using the Ruby app template, then you need to complete the following s
       env: 'SHOPIFY_FLAG_APP_API_KEY',
       exclusive: ['config'],
     }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
     store: Flags.string({
       hidden: false,
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => normalizeStoreFqdn(input),
-    }),
-    reset: Flags.boolean({
-      hidden: false,
-      description: 'Reset all your settings.',
-      env: 'SHOPIFY_FLAG_RESET',
-      default: false,
-      exclusive: ['config'],
     }),
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,

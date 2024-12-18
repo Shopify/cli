@@ -8,7 +8,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 describe('bundleAndBuildExtensions', () => {
   let app: AppInterface
 
-  test('generates a manifest.json when USE_APP_MANAGEMENT_API is enabled', async () => {
+  test('generates a manifest.json when App Management is enabled', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'writeFileSync').mockResolvedValue(undefined)
@@ -73,7 +73,7 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('does not generate the manifest.json when USE_APP_MANAGEMENT_API is disabled', async () => {
+  test('does not generate the manifest.json when App Management is disabled', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       vi.spyOn(file, 'writeFileSync').mockResolvedValue(undefined)

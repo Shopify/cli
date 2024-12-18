@@ -44,6 +44,8 @@ export const environmentVariables = {
   refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
   otelURL: 'SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT',
   themeKitAccessDomain: 'SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN',
+  json: 'SHOPIFY_FLAG_JSON',
+  useAppManagement: 'USE_APP_MANAGEMENT_API',
 }
 
 export const defaultThemeKitAccessDomain = 'theme-kit-access.shopifyapps.com'

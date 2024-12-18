@@ -1,13 +1,12 @@
 import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {appFromId, selectOrg} from '../../services/context.js'
+import {appFromIdentifiers, selectOrg} from '../../services/context.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
-import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -88,7 +87,7 @@ export default class Init extends AppCommand {
     let appName: string
     if (flags['client-id']) {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
-      const selectedApp = await appFromId({apiKey: flags['client-id'], developerPlatformClient})
+      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id'], developerPlatformClient})
       appName = selectedApp.title
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
@@ -109,7 +108,7 @@ export default class Init extends AppCommand {
       cmd_create_app_template_url: promptAnswers.template,
     }))
 
-    const result = await initService({
+    const {app} = await initService({
       name: appName,
       selectedAppOrNameResult: selectAppResult,
       packageManager: inferredPackageManager,
@@ -121,14 +120,6 @@ export default class Init extends AppCommand {
       postCloneActions: {
         removeLockfilesFromGitignore: promptAnswers.templateType !== 'custom',
       },
-    })
-
-    const {app} = await linkedAppContext({
-      directory: result.outputDirectory,
-      clientId: undefined,
-      forceRelink: false,
-      userProvidedConfigName: undefined,
-      unsafeReportMode: false,
     })
 
     return {app}
@@ -167,7 +158,7 @@ async function selectAppOrNewAppName(
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)
 
-    const fullSelectedApp = await developerPlatformClient.appFromId(app)
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
     if (!fullSelectedApp) throw new AbortError(`App with id ${app.id} not found`)
     return {result: 'existing', app: fullSelectedApp}
   }

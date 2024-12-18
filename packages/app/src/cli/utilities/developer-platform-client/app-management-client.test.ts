@@ -10,6 +10,10 @@ import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/
 import {testUIExtension, testRemoteExtensionTemplates, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
+import {PublicApiVersionsQuery} from '../../api/graphql/webhooks/generated/public-api-versions.js'
+import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/available-topics.js'
+import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -17,10 +21,12 @@ import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/bu
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/cli-kit/node/api/webhooks')
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -286,5 +292,179 @@ describe('searching for apps', () => {
 
     // Then
     await expect(client.appsForOrg(orgId)).rejects.toThrow(BugError)
+  })
+})
+
+describe('apiVersions', () => {
+  test('fetches available public API versions', async () => {
+    // Given
+    const orgId = '1'
+    const mockedResponse: PublicApiVersionsQuery = {
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    }
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const apiVersions = await client.apiVersions(orgId)
+
+    // Then
+    expect(apiVersions.publicApiVersions.length).toEqual(mockedResponse.publicApiVersions.length)
+    expect(apiVersions.publicApiVersions).toEqual(mockedResponse.publicApiVersions.map((version) => version.handle))
+  })
+})
+
+describe('topics', () => {
+  test('fetches available topics for a valid API version', async () => {
+    // Given
+    const orgId = '1'
+    const mockedResponse: AvailableTopicsQuery = {availableTopics: ['app/uninstalled', 'products/created']}
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const topics = await client.topics({api_version: '2024-07'}, orgId)
+
+    // Then
+    expect(topics.webhookTopics.length).toEqual(mockedResponse.availableTopics?.length)
+    expect(topics.webhookTopics).toEqual(mockedResponse.availableTopics)
+  })
+
+  test('returns an empty list when failing', async () => {
+    // Given
+    const orgId = '1'
+    const mockedResponse: AvailableTopicsQuery = {availableTopics: null}
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const topics = await client.topics({api_version: 'invalid'}, orgId)
+
+    // Then
+    expect(topics.webhookTopics.length).toEqual(0)
+  })
+})
+
+describe('sendSampleWebhook', () => {
+  test('succeeds for local delivery', async () => {
+    // Given
+    const orgId = '1'
+    const input: SendSampleWebhookVariables = {
+      address: 'http://localhost:3000/webhooks',
+      api_key: 'abc123',
+      api_version: '2025-01',
+      delivery_method: 'localhost',
+      shared_secret: 'secret',
+      topic: 'app/uninstalled',
+    }
+    const mockedResponse: CliTestingMutation = {
+      cliTesting: {
+        headers: `{"Content-Type":"application/json"}`,
+        samplePayload: `{"id": 42,"name":"test"}`,
+        success: true,
+        errors: [],
+      },
+    }
+    const expectedVariables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
+    }
+    const token = 'token'
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve(token)
+    const result = await client.sendSampleWebhook(input, orgId)
+
+    // Then
+    expect(webhooksRequest).toHaveBeenCalledWith(orgId, CliTesting, token, expectedVariables)
+    expect(result.sendSampleWebhook.samplePayload).toEqual(mockedResponse.cliTesting?.samplePayload)
+    expect(result.sendSampleWebhook.headers).toEqual(mockedResponse.cliTesting?.headers)
+    expect(result.sendSampleWebhook.success).toEqual(true)
+    expect(result.sendSampleWebhook.userErrors).toEqual([])
+  })
+
+  test('succeeds for remote delivery', async () => {
+    // Given
+    const orgId = '1'
+    const input: SendSampleWebhookVariables = {
+      address: 'https://webhooks.test',
+      api_key: 'abc123',
+      api_version: '2025-01',
+      delivery_method: 'http',
+      shared_secret: 'secret',
+      topic: 'app/uninstalled',
+    }
+    const mockedResponse: CliTestingMutation = {
+      cliTesting: {
+        headers: '{}',
+        samplePayload: '{}',
+        success: true,
+        errors: [],
+      },
+    }
+    const expectedVariables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
+    }
+    const token = 'token'
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve(token)
+    const result = await client.sendSampleWebhook(input, orgId)
+
+    // Then
+    expect(webhooksRequest).toHaveBeenCalledWith(orgId, CliTesting, token, expectedVariables)
+    expect(result.sendSampleWebhook.samplePayload).toEqual('{}')
+    expect(result.sendSampleWebhook.headers).toEqual('{}')
+    expect(result.sendSampleWebhook.success).toEqual(true)
+    expect(result.sendSampleWebhook.userErrors).toEqual([])
+  })
+
+  test('handles API failures', async () => {
+    // Given
+    const orgId = '1'
+    const input: SendSampleWebhookVariables = {
+      address: 'https://webhooks.test',
+      api_key: 'abc123',
+      api_version: 'invalid',
+      delivery_method: 'http',
+      shared_secret: 'secret',
+      topic: 'app/uninstalled',
+    }
+    const mockedResponse: CliTestingMutation = {
+      cliTesting: {
+        headers: '{}',
+        samplePayload: '{}',
+        success: false,
+        errors: ['Invalid api_version'],
+      },
+    }
+    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const result = await client.sendSampleWebhook(input, orgId)
+
+    // Then
+    expect(result.sendSampleWebhook.samplePayload).toEqual('{}')
+    expect(result.sendSampleWebhook.headers).toEqual('{}')
+    expect(result.sendSampleWebhook.success).toEqual(false)
+    expect(result.sendSampleWebhook.userErrors).toEqual([{message: 'Invalid api_version', fields: []}])
   })
 })

@@ -13,10 +13,10 @@ export interface themelist {
   '--id <value>'?: string
 
   /**
-   * Output the theme list as JSON.
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
-  '--json'?: ''
+  '-j, --json'?: ''
 
   /**
    * Only list themes that contain the given name.

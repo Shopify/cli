@@ -54,6 +54,7 @@
           "build:types",
           "graphql-codegen:generate:business-platform",
           "graphql-codegen:generate:partners",
+          "graphql-codegen:generate:webhooks",
           "graphql-codegen:postfix",
           "graphql-codegen:formatting"
         ],

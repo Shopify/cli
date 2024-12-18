@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {downloadBinary, javyBinary, javyPluginBinary} from './binaries.js'
+import {downloadBinary, javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
 import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 interface JSFunctionBuildOptions {
@@ -104,23 +105,46 @@ export async function buildGraphqlTypes(
   })
 }
 
+async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<FunctionConfigType>) {
+  const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
+    type: 'file',
+    cwd: fun.directory,
+  })
+
+  const runModule = await findPathUp('node_modules/@shopify/shopify_function/run.ts', {
+    type: 'file',
+    cwd: fun.directory,
+  })
+
+  if (!entryPoint || !runModule) {
+    throw new AbortError(
+      'Could not find the Shopify Functions JavaScript library.',
+      outputContent`Make sure you have the latest ${outputToken.yellow(
+        '@shopify/shopify_function',
+      )} library installed.`,
+      [
+        outputContent`Add ${outputToken.green(
+          '"@shopify/shopify_function": "1.0.0"',
+        )} to the dependencies section of the package.json file in your function's directory, if not already present.`
+          .value,
+        `Run your package manager's install command to update dependencies.`,
+      ],
+    )
+  }
+
+  if (!fun.entrySourceFilePath) {
+    throw new AbortError('Could not find your function entry point. It must be in src/index.js or src/index.ts')
+  }
+
+  return entryPoint
+}
+
 export async function bundleExtension(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
   processEnv = process.env,
 ) {
-  const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
-    type: 'file',
-    cwd: fun.directory,
-  })
-  if (!entryPoint) {
-    throw new Error(
-      "Could not find the Shopify Function runtime. Make sure you have '@shopify/shopify_function' installed",
-    )
-  }
-  if (!fun.entrySourceFilePath) {
-    throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
-  }
+  const entryPoint = await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
   const esbuildOptions = {
     ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}, processEnv),
@@ -162,6 +186,31 @@ function getESBuildOptions(
   return esbuildOptions
 }
 
+export async function runWasmOpt(modulePath: string) {
+  const wasmOpt = wasmOptBinary()
+  await downloadBinary(wasmOpt)
+
+  const wasmOptDir = dirname(wasmOptBinary().path)
+
+  const command = `node`
+  const args = [
+    // invoke the js-wrapped wasm-opt binary
+    wasmOptBinary().name,
+    modulePath,
+    // pass these options to wasm-opt
+    '-Oz',
+    '--enable-bulk-memory',
+    '--strip-debug',
+    // overwrite our existing module with the optimized version
+    '-o',
+    modulePath,
+  ]
+
+  outputDebug(`Wasm binary: ${wasmOptBinary().name}`)
+  outputDebug('Optimizing this wasm binary using wasm-opt.')
+  await exec(command, args, {cwd: wasmOptDir})
+}
+
 export async function runJavy(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
@@ -198,7 +247,8 @@ export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
     const javy = javyBinary()
-    await downloadBinary(javy)
+    const plugin = javyPluginBinary()
+    await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
   }
 }
 
@@ -226,9 +276,7 @@ export class ExportJavyBuilder implements JavyBuilder {
   }
 
   async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions, processEnv = process.env) {
-    if (!fun.entrySourceFilePath) {
-      throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
-    }
+    await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
     const contents = this.entrypointContents
     outputDebug('Generating dist/function.js using generated module:')

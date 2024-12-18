@@ -1,5 +1,7 @@
 import {isTruthy} from './context/utilities.js'
+import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
 import {cacheClear} from '../../private/node/conf-store.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {Flags} from '@oclif/core'
 
 /**
@@ -73,7 +75,7 @@ function forceNoColor(argv: string[] = process.argv, env: NodeJS.ProcessEnv = pr
  */
 export async function runCLI(
   options: RunCLIOptions & {runInCreateMode?: boolean},
-  launchCLI: (options: {moduleURL: string}) => Promise<void>,
+  launchCLI: (options: {moduleURL: string}) => Promise<void> = defaultLaunchCli,
   argv: string[] = process.argv,
   env: NodeJS.ProcessEnv = process.env,
   versions: NodeJS.ProcessVersions = process.versions,
@@ -110,7 +112,7 @@ async function addInitToArgvWhenRunningCreateCLI(
  */
 export async function runCreateCLI(
   options: RunCLIOptions,
-  launchCLI: (options: {moduleURL: string}) => Promise<void>,
+  launchCLI: (options: {moduleURL: string}) => Promise<void> = defaultLaunchCli,
   argv: string[] = process.argv,
   env: NodeJS.ProcessEnv = process.env,
   versions: NodeJS.ProcessVersions = process.versions,
@@ -132,6 +134,16 @@ export const globalFlags = {
     hidden: false,
     description: 'Increase the verbosity of the output.',
     env: 'SHOPIFY_FLAG_VERBOSE',
+  }),
+}
+
+export const jsonFlag = {
+  json: Flags.boolean({
+    char: 'j',
+    description: 'Output the result as JSON.',
+    hidden: false,
+    default: false,
+    env: environmentVariables.json,
   }),
 }
 

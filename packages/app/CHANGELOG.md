@@ -1,5 +1,86 @@
 # @shopify/app
 
+## 3.72.0
+
+### Minor Changes
+
+- 178c17e820: Bump minor version
+
+### Patch Changes
+
+- @shopify/cli-kit@3.72.0
+- @shopify/theme@3.72.0
+- @shopify/plugin-cloudflare@3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- 44844a7752: Update function-runner to v6.4.0
+- 78cbc67c26: Download Javy plugin ahead of time with Javy CLI
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+  - @shopify/plugin-cloudflare@3.71.5
+  - @shopify/theme@3.71.5
+
+## 3.71.4
+
+### Patch Changes
+
+- Updated dependencies [94953a671e]
+  - @shopify/cli-kit@3.71.4
+  - @shopify/plugin-cloudflare@3.71.4
+  - @shopify/theme@3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- d5b0856f78: Increase extension localization file size limit
+- 73eb727757: Fix function drafts not working during dev
+  - @shopify/cli-kit@3.71.3
+  - @shopify/theme@3.71.3
+  - @shopify/plugin-cloudflare@3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- Updated dependencies [a395820e7b]
+  - @shopify/cli-kit@3.71.2
+  - @shopify/plugin-cloudflare@3.71.2
+  - @shopify/theme@3.71.2
+
+## 3.71.1
+
+### Patch Changes
+
+- 4b93d76290: Fix error when downloading Javy plugin in parallel
+  - @shopify/cli-kit@3.71.1
+  - @shopify/theme@3.71.1
+  - @shopify/plugin-cloudflare@3.71.1
+
+## 3.71.0
+
+### Patch Changes
+
+- 1c9d74988e: Update Javy invocation to use Javy plugin
+- 08f3ddba1f: Update Javy to 3.2.0 and function-runner to 6.3.0
+- 93d65a6c38: Remove PHP template from app creation options
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5107f4e805]
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [ff994c34d3]
+- Updated dependencies [1e267a2e04]
+- Updated dependencies [7017b9e31c]
+- Updated dependencies [5531731c11]
+- Updated dependencies [057e2c6189]
+- Updated dependencies [9548a34471]
+- Updated dependencies [33f713e06e]
+  - @shopify/theme@3.71.0
+  - @shopify/cli-kit@3.71.0
+  - @shopify/plugin-cloudflare@3.71.0
+
 ## 3.70.0
 
 ### Minor Changes

@@ -94,7 +94,7 @@ export interface ExtensionPoint {
   localization?: FlattenedLocalization | Localization | null
   name: string
   description?: string
-  shouldRender?: {scriptUrl?: string}
+  assets?: {[name: string]: Asset}
 }
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null

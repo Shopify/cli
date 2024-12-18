@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.70.0",
+  "version": "3.72.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -82,7 +82,6 @@
                 "./context/local.js",
                 "./custom-oclif-loader.js",
                 "@oclif/core",
-                "../../private/node/constants.js",
                 "./path.js",
                 "./system.js",
                 "./ui.js"
@@ -91,7 +90,9 @@
                 "@oclif/core",
                 "./context/utilities.js",
                 "../../private/node/conf-store.js",
-                "url"
+                "../../private/node/constants.js",
+                "url",
+                "./cli-launcher.js"
               ]
             }
           ]
