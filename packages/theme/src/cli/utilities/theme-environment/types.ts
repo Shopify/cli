@@ -117,6 +117,11 @@ export interface DevServerContext {
      * Automatically open the theme preview in the default browser.
      */
     open: boolean
+
+    /**
+     * Disable request logs.
+     */
+    silence: boolean
   }
 }
 
