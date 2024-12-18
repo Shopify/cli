@@ -1,5 +1,15 @@
 # @shopify/theme
 
+## 3.73.0
+
+### Minor Changes
+
+- 1f0508f1a7: [Bug Fix] Reduce theme upload batch size to prevent timeout
+
+### Patch Changes
+
+- @shopify/cli-kit@3.73.0
+
 ## 3.72.1
 
 ### Patch Changes
