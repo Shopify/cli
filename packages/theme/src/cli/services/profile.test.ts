@@ -14,19 +14,22 @@ describe('profile', () => {
   }
   const mockToken = 'mock-token'
   const storeDomain = 'test-store.myshopify.com'
-  const urlPath = 'admin/themes/123/profiler'
+  const urlPath = '/admin/themes/123/profiler'
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue(mockToken)
 
-    // Mock fetch globally
+    // Mock fetch globally with status 200 and JSON content-type by default
     global.fetch = vi.fn().mockResolvedValue({
+      status: 200,
+      headers: {
+        get: (name: string) => (name === 'content-type' ? 'application/json' : null),
+      },
       text: () => Promise.resolve(JSON.stringify(mockProfileData)),
     })
   })
 
   test('outputs JSON to stdout when asJson is true', async () => {
-    // Mock stdout.write
     const stdoutWrite = vi.spyOn(process.stdout, 'write')
 
     await profile(undefined, storeDomain, urlPath, true)
@@ -41,6 +44,14 @@ describe('profile', () => {
   })
 
   test('opens profile in browser when asJson is false', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      status: 200,
+      headers: {
+        get: (name: string) => (name === 'content-type' ? 'application/json' : null),
+      },
+      text: () => Promise.resolve(JSON.stringify(mockProfileData)),
+    })
+
     await profile(undefined, storeDomain, urlPath, false)
 
     // Verify fetch was called correctly
@@ -72,5 +83,36 @@ describe('profile', () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
 
     await expect(profile(undefined, storeDomain, urlPath, true)).rejects.toThrow('Network error')
+  })
+
+  test('throws error when response status is not 200 and content-type is not application/json', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      status: 404,
+      headers: {
+        get: (name: string) => (name === 'content-type' ? 'text/html' : null),
+      },
+    })
+
+    await expect(profile(undefined, storeDomain, urlPath, true)).rejects.toThrow(
+      'Bad response: 404, content-type: text/html',
+    )
+  })
+
+  test('succeeds when status is not 200 but content-type is application/json', async () => {
+    const jsonResponse = {error: 'Some error message'}
+    global.fetch = vi.fn().mockResolvedValue({
+      status: 404,
+      headers: {
+        get: (name: string) => (name === 'content-type' ? 'application/json' : null),
+      },
+      text: () => Promise.resolve(JSON.stringify(jsonResponse)),
+    })
+
+    // Mock stdout.write
+    const stdoutWrite = vi.spyOn(process.stdout, 'write')
+
+    await profile(undefined, storeDomain, urlPath, true)
+
+    expect(stdoutWrite).toHaveBeenCalledWith(JSON.stringify(jsonResponse))
   })
 })
