@@ -232,7 +232,7 @@ describe('linkedAppContext', () => {
       const meta = metadata.getAllPublicMetadata()
       expect(meta).toEqual(
         expect.objectContaining({
-          partner_id: tryParseInt(mockRemoteApp.organizationId),
+          business_platform_id: tryParseInt(mockOrganization.id),
           api_key: mockRemoteApp.apiKey,
           cmd_app_reset_used: false,
         }),
