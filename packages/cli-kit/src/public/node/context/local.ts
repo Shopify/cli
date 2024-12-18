@@ -47,16 +47,6 @@ export function isVerbose(env = process.env): boolean {
 }
 
 /**
- * It returns true if the App Management API is available.
- *
- * @param env - The environment variables from the environment of the current process.
- * @returns True if the App Management API is available.
- */
-export function isAppManagementEnabled(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.useAppManagement])
-}
-
-/**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present) or a cloud environment (spin).
  *
