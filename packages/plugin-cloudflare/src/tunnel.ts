@@ -1,5 +1,4 @@
 import {TUNNEL_PROVIDER} from './provider.js'
-import install from './install-cloudflared.js'
 import {
   startTunnel,
   TunnelError,
@@ -8,23 +7,22 @@ import {
   TunnelClient,
 } from '@shopify/cli-kit/node/plugins/tunnel'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {exec, sleep} from '@shopify/cli-kit/node/system'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {BugError} from '@shopify/cli-kit/node/error'
+import WebSocket from 'ws'
+import {fetch, FetchError} from '@shopify/cli-kit/node/http'
+import {sleep} from '@shopify/cli-kit/node/system'
+import crypto from 'crypto'
+
+import {stdout} from 'node:process'
 import {Writable} from 'stream'
-import {fileURLToPath} from 'url'
+
+const ARGUS_URL = process.env.WS_GRAPHQL_ENDPOINT ?? 'ws://localhost:48935/graphql'
+
+// TODO: should be provided by the App toml (application_url)
+const APPLICATION_URL = 'https://webhooks-websocket-demo.test'
+const APP_ID = 905743398573
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
-
-// How much time to wait for a tunnel to be established. in seconds.
-const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
-
-// if the tunnel process crashes, we'll retry this many times before giving up
-// If we retry too many times, we might get rate limited by cloudflare
-const MAX_RETRIES = 5
 
 export async function hookStart(port: number): Promise<TunnelStartReturn> {
   try {
@@ -44,14 +42,15 @@ class TunnelClientInstance implements TunnelClient {
 
   private currentStatus: TunnelStatusType = {status: 'not-started'}
   private abortController: AbortController | undefined = undefined
+  private readonly ws: WebSocket
 
   constructor(port: number) {
     this.port = port
+    this.ws = new WebSocket(ARGUS_URL)
   }
 
   async startTunnel() {
     try {
-      await install()
       this.tunnel()
       // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -67,89 +66,104 @@ class TunnelClientInstance implements TunnelClient {
     this.abortController?.abort()
   }
 
-  tunnel(retries = 0) {
+  tunnel() {
     this.abortController = new AbortController()
-    let resolved = false
-
-    if (retries >= MAX_RETRIES) {
-      resolved = true
-      this.currentStatus = {
-        status: 'error',
-        message: 'Could not start Cloudflare tunnel: max retries reached.',
-        tryMessage: whatToTry(),
-      }
-      return
-    }
-
-    const args: string[] = ['tunnel', '--url', `http://localhost:${this.port}`, '--no-autoupdate']
-    const errors: string[] = []
-
-    let connected = false
-    let url: string | undefined
     this.currentStatus = {status: 'starting'}
 
-    setTimeout(() => {
-      if (!resolved) {
-        resolved = true
-        const lastErrors = [...new Set(errors)].slice(-5).join('\n')
-        if (lastErrors === '') {
-          this.currentStatus = {
-            status: 'error',
-            message: 'Could not start Cloudflare tunnel: unknown error.',
-            tryMessage: whatToTry(),
-          }
-        } else {
-          this.currentStatus = {status: 'error', message: lastErrors, tryMessage: whatToTry()}
-        }
-        this.abortController?.abort()
-      }
-    }, TUNNEL_TIMEOUT * 1000)
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
 
-    const customStdout = new Writable({
-      write(chunk, _, callback) {
-        outputDebug(chunk.toString())
-        if (resolved) return
-        if (!url) url = findUrl(chunk)
-        if (findConnection(chunk)) connected = true
-        if (connected) {
-          if (url) {
-            resolved = true
-            self.currentStatus = {status: 'connected', url}
-          } else {
-            self.currentStatus = {status: 'error', message: 'Could not start Cloudflare tunnel: URL not found.'}
+    // TODO: Keep the connection alive
+    // TODO: Refresh the token if it expires afer 60 minutes
+    this.ws.on('error', function (err) {
+      console.error(err)
+      self.currentStatus = {status: 'error', message: 'Could not start Cloudflare tunnel: URL not found.'}
+    })
+
+    this.ws.on('open', function open() {
+      // console.log('connected')
+      self.authenticate()
+    })
+
+    this.ws.on('message', function message(data) {
+      // console.log('received: %s', data)
+      const event = JSON.parse(data.toString())
+
+      switch (event.type) {
+        case 'connection_ack':
+          self.subscribe('webhook')
+          self.currentStatus = {status: 'connected', url: APPLICATION_URL}
+          break
+        case 'data':
+          self.processWebhookEvent(event)
+          break
+      }
+    })
+  }
+
+  private authenticate() {
+    const token = getToken(
+      {
+        exp: 2524626000,
+        bucket_id: `gid://shopify/App/${APP_ID}`,
+        staff_id: 123,
+        permissions: ['full'],
+      },
+      // TODO: API call to partners/Core API to get a valid token
+      // Core would decide which bucket ID to use for Argus
+      'so_secret',
+    )
+    return this.ws.send(
+      JSON.stringify({
+        type: 'connection_init',
+        payload: {Authorization: token},
+      }),
+    )
+  }
+
+  private subscribe(eventName: string) {
+    const msg = JSON.stringify({
+      id: '1',
+      type: 'start',
+      payload: {
+        query: `
+          subscription {
+            eventReceived(eventName: "${eventName}") {
+              payload
+              eventName
+              eventScope
+              eventSerialId
+              eventSerialGroup
+              eventSourceApp
+              eventSourceHost
+              eventTimestamp
+              eventUuid
+              internalSessionId
+              remoteIp
+              schemaVersion
+              bucketId
+              userId
+            }
           }
-        }
-        const errorMessage = findError(chunk)
-        if (errorMessage) errors.push(errorMessage)
-        callback()
+        `,
       },
     })
+    // console.log('sending', msg)
+    return this.ws.send(msg)
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    exec(getBinPathTarget(), args, {
-      stdout: customStdout,
-      stderr: customStdout,
-      signal: this.abortController.signal,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      externalErrorHandler: async (error: any) => {
-        // If already resolved, means that the CLI already received the tunnel URL.
-        // Can't retry because the CLI is running with an invalid URL
-        if (resolved) {
-          throw new BugError(
-            `Could not start Cloudflare tunnel: process crashed after stablishing a connection: ${error.message}`,
-            whatToTry(),
-          )
-        }
-
-        outputDebug(`Cloudflare tunnel crashed: ${error.message}, restarting...`)
-
-        // wait 1 second before restarting the tunnel, to avoid rate limiting
-        if (!isUnitTest()) await sleep(1)
-        this.tunnel(retries + 1)
-      },
-    })
+  private processWebhookEvent(event: WebhookEvent) {
+    const webhook = JSON.parse(event.payload.data.eventReceived.payload)
+    // console.log(webhook)
+    // TODO: Switch on different types of events (e.g: flow, app proxy, payment apps etc)
+    const payload: SampleWebhook = {
+      headers: webhook.headers,
+      samplePayload: webhook.payload,
+      success: true,
+      userErrors: [],
+    }
+    const address = webhook.uri.replace(APPLICATION_URL, `http://localhost:${this.port}`)
+    // console.log(payload, address)
+    triggerWebhook({address, stdout}, payload).catch(console.error)
   }
 }
 
@@ -167,55 +181,84 @@ function whatToTry() {
   ]
 }
 
-function findUrl(data: Buffer): string | undefined {
-  const regex = new RegExp(`(https:\\/\\/[^\\s]+\\.${getTunnelDomain()})`)
-  const match = data.toString().match(regex) ?? undefined
-  return match && match[1]
+function getToken(
+  tokenPayload: {exp: number; bucket_id: string; staff_id: number; permissions: string[]},
+  secret: string,
+) {
+  const encodedPayload = Buffer.from(JSON.stringify(tokenPayload)).toString('base64')
+  const signature = crypto.createHmac('sha256', secret).update(encodedPayload).digest('hex')
+  return `${encodedPayload}--${signature}`
 }
 
-function findError(data: Buffer): string | undefined {
-  const knownErrors = [
-    /failed to request quick Tunnel/,
-    /failed to unmarshal quick Tunnel/,
-    /failed to parse quick Tunnel ID/,
-    /failed to provision routing/,
-    /ERR Couldn't start tunnel/,
-    /ERR Failed to serve quic connection/,
-    /ERR Failed to create new quic connection error/,
-  ]
-  const match = knownErrors.some((error) => error.test(data.toString()))
-  if (!match) return undefined
-
-  return `Could not start Cloudflare tunnel: ${cleanCloudflareLog(data.toString())}`
+interface WebhookEvent {
+  payload: {
+    data: {
+      eventReceived: {
+        payload: string
+      }
+    }
+  }
 }
 
-function cleanCloudflareLog(input: string): string {
-  const prefixRegex = /^[0-9TZ:-]+ (ERR )?/g
-  const suffixRegex = /connIndex.*/g
-  return input.replace(prefixRegex, '').replace(suffixRegex, '')
-}
+// // TODO: refactor below this line
 
-function findConnection(data: Buffer): string | undefined {
-  const match = data.toString().match(/(INF Registered tunnel connection|INF Connection)/) ?? undefined
-  return match && match[0]
+export interface SampleWebhook {
+  samplePayload: string
+  headers: string
+  success: boolean
+  userErrors: UserErrors[]
+}
+export interface UserErrors {
+  message: string
+  fields: string[]
 }
 
 /**
- * Get the path where the binary was installed.
- * If the environment variable SHOPIFY_CLI_CLOUDFLARED_PATH is set, use that.
+ * Sends a POST request to a local endpoint with a webhook payload
+ *
+ * @param address - local address where to send the POST message to
+ * @param body - Webhook payload
+ * @param headers - Webhook headers
+ * @returns true if the message was delivered
  */
-function getBinPathTarget() {
-  if (process.env.SHOPIFY_CLI_CLOUDFLARED_PATH) {
-    return process.env.SHOPIFY_CLI_CLOUDFLARED_PATH
+export async function triggerLocalWebhook(address: string, body: string, headers: string) {
+  const options = {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+      ...JSON.parse(headers),
+    },
   }
-  return joinPath(
-    dirname(fileURLToPath(import.meta.url)),
-    '..',
-    'bin',
-    process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared',
-  )
+  const response = await fetch(address, options)
+  return response.status >= 200 && response.status < 300
 }
 
-function getTunnelDomain() {
-  return process.env.SHOPIFY_CLI_CLOUDFLARED_DOMAIN ?? 'trycloudflare.com'
+async function triggerWebhook(options: {address: string; stdout: Writable}, sample: SampleWebhook): Promise<boolean> {
+  let tries = 0
+
+  /* eslint-disable no-await-in-loop */
+  while (tries < 3) {
+    try {
+      const result = await triggerLocalWebhook(options.address, sample.samplePayload, sample.headers)
+
+      return result
+    } catch (error) {
+      if (error instanceof FetchError && error.code === 'ECONNREFUSED') {
+        if (tries < 3) {
+          options.stdout.write("App isn't responding yet, retrying in 5 seconds")
+          await sleep(5)
+        }
+      } else {
+        throw error
+      }
+    }
+
+    tries++
+  }
+  /* eslint-enable no-await-in-loop */
+
+  options.stdout.write("App hasn't started in time, giving up")
+
+  return false
 }

@@ -670,6 +670,12 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.70.0
         version: link:../cli-kit
+      '@types/ws':
+        specifier: ^8.5.5
+        version: 8.5.10
+      ws:
+        specifier: 8.13.0
+        version: 8.13.0
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
@@ -7159,7 +7165,6 @@ packages:
     resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
     dependencies:
       '@types/node': 18.19.3
-    dev: true
 
   /@types/yargs-parser@21.0.3:
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
