@@ -83,12 +83,19 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const tunnelPort = await getAvailableTCPPort()
   let tunnelClient: TunnelClient | undefined
   if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
-    const tunnel = await developerPlatformClient.createTunnel(remoteApp.organizationId)
-    console.log({tunnel})
+    const result = await developerPlatformClient.createTunnel(remoteApp.organizationId)
+    const tunnelUrl = result.tunnelCreate.tunnelUrl
 
-    process.exit(0)
+    if (!tunnelUrl) {
+      throw new AbortError('Failed to create tunnel', 'Please try again.')
+    }
 
-    tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
+    tunnelClient = await startTunnelPlugin({
+      config: commandOptions.commandConfig,
+      port: tunnelPort,
+      provider: 'cloudflare',
+      tunnelUrl,
+    })
   }
 
   const remoteConfiguration = await fetchAppRemoteConfiguration(

@@ -26,9 +26,9 @@ const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 // If we retry too many times, we might get rate limited by cloudflare
 const MAX_RETRIES = 5
 
-export async function hookStart(port: number): Promise<TunnelStartReturn> {
+export async function hookStart(port: number, tunnelUrl?: string): Promise<TunnelStartReturn> {
   try {
-    const client = new TunnelClientInstance(port)
+    const client = new TunnelClientInstance(port, tunnelUrl)
     await client.startTunnel()
     return ok(client)
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
@@ -41,12 +41,13 @@ export async function hookStart(port: number): Promise<TunnelStartReturn> {
 class TunnelClientInstance implements TunnelClient {
   port: number
   provider = TUNNEL_PROVIDER
-
+  tunnelUrl?: string
   private currentStatus: TunnelStatusType = {status: 'not-started'}
   private abortController: AbortController | undefined = undefined
 
-  constructor(port: number) {
+  constructor(port: number, tunnelUrl?: string) {
     this.port = port
+    this.tunnelUrl = tunnelUrl
   }
 
   async startTunnel() {
@@ -81,7 +82,12 @@ class TunnelClientInstance implements TunnelClient {
       return
     }
 
-    const args: string[] = ['tunnel', '--url', `http://localhost:${this.port}`, '--no-autoupdate']
+    const args = this.tunnelUrl ? ['--quick-service', this.tunnelUrl] : ['tunnel']
+
+    args.push('--url')
+    args.push(`http://localhost:${this.port}`)
+    args.push('--no-autoupdate')
+
     const errors: string[] = []
 
     let connected = false

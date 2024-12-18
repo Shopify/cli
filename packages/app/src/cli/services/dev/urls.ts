@@ -291,8 +291,18 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
   }
 }
 
-export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelClient> {
-  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider})
+export async function startTunnelPlugin({
+  config,
+  port,
+  provider,
+  tunnelUrl,
+}: {
+  config: Config
+  port: number
+  provider: string
+  tunnelUrl?: string
+}): Promise<TunnelClient> {
+  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider, tunnelUrl})
   const results = Object.values(hooks).filter(
     (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
   )
