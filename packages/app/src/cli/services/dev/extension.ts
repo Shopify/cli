@@ -2,6 +2,7 @@ import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
+import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -109,20 +110,24 @@ export interface ExtensionDevOptions {
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
-  const payloadStoreOptions = {
+  const payloadOptions = {
     ...options,
     websocketURL: getWebSocketUrl(options.url),
   }
-  const bundlePath = options.appWatcher.buildOutputPath
-  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions, bundlePath)
-  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
-  outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
-  const httpServer = setupHTTPServer({devOptions: options, payloadStore})
+  // NOTE: Always use `payloadOptions`, never `options` directly. This way we can mutate `payloadOptions` without
+  // affecting the original `options` object and we only need to care about `payloadOptions` in this function.
 
-  outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
-  const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
-  outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
+  const bundlePath = payloadOptions.appWatcher.buildOutputPath
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
+  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
+
+  outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
+  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore})
+
+  outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
+  const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
+  outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
   const eventHandler = async ({extensionEvents}: AppEvent) => {
     for (const event of extensionEvents) {
@@ -130,18 +135,29 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
       switch (event.type) {
         case EventType.Created:
-          payloadStoreOptions.extensions.push(event.extension)
+          payloadOptions.extensions.push(event.extension)
+          // const cartUrl = await buildCartURLIfNeeded([evnet.extension], storeFqdn, checkoutCartUrl)
+          if (!payloadOptions.checkoutCartUrl) {
+            // eslint-disable-next-line no-await-in-loop
+            const cartUrl = await buildCartURLIfNeeded(
+              payloadOptions.extensions,
+              payloadOptions.storeFqdn,
+              payloadOptions.checkoutCartUrl,
+            )
+            // eslint-disable-next-line require-atomic-updates
+            payloadOptions.checkoutCartUrl = cartUrl
+          }
+
           // eslint-disable-next-line no-await-in-loop
           await payloadStore.addExtension(event.extension, bundlePath)
           break
         case EventType.Updated:
           // eslint-disable-next-line no-await-in-loop
-          await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+          await payloadStore.updateExtension(event.extension, payloadOptions, bundlePath, {status})
           break
         case EventType.Deleted:
-          payloadStoreOptions.extensions = payloadStoreOptions.extensions.filter(
-            (ext) => ext.devUUID !== event.extension.devUUID,
-          )
+          payloadOptions.extensions = payloadOptions.extensions.filter((ext) => ext.devUUID !== event.extension.devUUID)
+
           // eslint-disable-next-line no-await-in-loop
           await payloadStore.deleteExtension(event.extension)
           break
@@ -149,9 +165,9 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
     }
   }
 
-  options.appWatcher.onEvent(eventHandler).onStart(eventHandler)
+  payloadOptions.appWatcher.onEvent(eventHandler).onStart(eventHandler)
 
-  options.signal.addEventListener('abort', () => {
+  payloadOptions.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
     websocketConnection.close()
     httpServer.close()

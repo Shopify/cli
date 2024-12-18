@@ -25,7 +25,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
-import {hashString, randomUUID} from '@shopify/cli-kit/node/crypto'
+import {hashString, nonRandomUUID, randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
@@ -149,8 +149,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
-    this.devUUID = `dev-${randomUUID()}`
     this.handle = this.buildHandle()
+    this.devUUID = `dev-${nonRandomUUID(this.handle)}`
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
