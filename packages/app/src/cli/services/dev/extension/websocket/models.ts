@@ -1,5 +1,4 @@
-import {ExtensionsPayloadStore} from '../payload/store.js'
-import {ExtensionDevOptions} from '../../extension.js'
+import {ExtensionsPayloadStore, ExtensionsPayloadStoreOptions} from '../payload/store.js'
 import {Server} from 'http'
 
 export enum EventType {
@@ -11,7 +10,7 @@ type DataType = 'focus' | 'unfocus'
 
 type DataPayload = {uuid: string}[]
 
-export type SetupWebSocketConnectionOptions = ExtensionDevOptions & {
+export type SetupWebSocketConnectionOptions = ExtensionsPayloadStoreOptions & {
   httpServer: Server
   payloadStore: ExtensionsPayloadStore
 }

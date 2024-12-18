@@ -1,7 +1,11 @@
 /* eslint-disable no-await-in-loop */
 import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupHTTPServer} from './extension/server.js'
-import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
+import {
+  ExtensionsPayloadStore,
+  ExtensionsPayloadStoreOptions,
+  getExtensionsPayloadStoreRawPayload,
+} from './extension/payload/store.js'
 import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -111,7 +115,7 @@ export interface ExtensionDevOptions {
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
-  const payloadOptions = {
+  const payloadOptions: ExtensionsPayloadStoreOptions = {
     ...options,
     websocketURL: getWebSocketUrl(options.url),
   }
