@@ -25,7 +25,7 @@ export default class Profile extends ThemeCommand {
       description: 'URL to the theme page to profile.',
       env: 'SHOPIFY_FLAG_URL',
       required: true,
-      parse: async url => url.startsWith('/') ? url : `/${url}`,
+      parse: async (url) => (url.startsWith('/') ? url : `/${url}`),
     }),
     json: Flags.boolean({
       char: 'j',
