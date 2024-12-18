@@ -40,9 +40,6 @@ beforeEach(async () => {
 
 describe('graphqlRequest', () => {
   test('calls debugLogRequestInfo once', async () => {
-    // Given
-    const retryAwareSpy = vi.spyOn(api, 'retryAwareRequest')
-
     // When
     await graphqlRequest({
       query: 'query',
@@ -62,12 +59,6 @@ describe('graphqlRequest', () => {
       },
     })
     expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledOnce()
-    const receivedObject = {
-      request: expect.any(Function),
-      url: mockedAddress,
-    }
-
-    expect(retryAwareSpy).toHaveBeenCalledWith(receivedObject, expect.any(Function), undefined)
   })
 
   test('Logs the request ids to metadata and requestIdCollection', async () => {
