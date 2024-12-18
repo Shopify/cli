@@ -1,6 +1,6 @@
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
-import {TargetSchemaDefinitionQueryVariables} from '../api/graphql/functions/target_schema_definition.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {AppLinkedInterface} from '../models/app/app.js'
@@ -15,12 +15,12 @@ interface GenerateSchemaOptions {
   stdout: boolean
   path: string
   developerPlatformClient: DeveloperPlatformClient
+  orgId: string
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, stdout, developerPlatformClient, app} = options
+  const {extension, stdout, developerPlatformClient, app, orgId} = options
   const apiKey = app.configuration.client_id
-
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
   const definition = await (usingTargets
@@ -31,19 +31,21 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         target: targeting![0]!.target,
         version,
+        orgId,
       })
-    : generateSchemaFromType({
+    : generateSchemaFromApiType({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
         apiKey,
         type,
         version,
+        orgId,
       }))
 
   if (stdout) {
     outputInfo(definition)
   } else {
-    const outputPath = joinPath(options.path, 'schema.graphql')
+    const outputPath = joinPath(extension.directory, 'schema.graphql')
     await writeFile(outputPath, definition)
     outputInfo(`GraphQL Schema for ${extension.localIdentifier} written to ${outputPath}`)
   }
@@ -54,6 +56,7 @@ interface BaseGenerateSchemaOptions {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
   version: string
+  orgId: string
 }
 
 interface GenerateSchemaFromTargetOptions extends BaseGenerateSchemaOptions {
@@ -66,13 +69,14 @@ async function generateSchemaFromTarget({
   apiKey,
   target,
   version,
+  orgId,
 }: GenerateSchemaFromTargetOptions): Promise<string> {
-  const variables: TargetSchemaDefinitionQueryVariables = {
-    apiKey,
-    target,
+  const variables: SchemaDefinitionByTargetQueryVariables = {
+    handle: target,
     version,
   }
-  const definition = await developerPlatformClient.targetSchemaDefinition(variables)
+  // Api key required for partners reqs, can be removed once fully migrated to AMF
+  const definition = await developerPlatformClient.targetSchemaDefinition(variables, apiKey, orgId)
 
   if (!definition) {
     throw new AbortError(
@@ -88,19 +92,20 @@ interface GenerateSchemaFromType extends BaseGenerateSchemaOptions {
   type: string
 }
 
-async function generateSchemaFromType({
+async function generateSchemaFromApiType({
   localIdentifier,
   developerPlatformClient,
   apiKey,
   version,
   type,
+  orgId,
 }: GenerateSchemaFromType): Promise<string> {
-  const variables: ApiSchemaDefinitionQueryVariables = {
-    apiKey,
+  const variables: SchemaDefinitionByApiTypeQueryVariables = {
     version,
     type,
   }
-  const definition = await developerPlatformClient.apiSchemaDefinition(variables)
+
+  const definition = await developerPlatformClient.apiSchemaDefinition(variables, apiKey, orgId)
 
   if (!definition) {
     throw new AbortError(

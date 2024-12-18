@@ -2,7 +2,7 @@ import {functionFlags, inFunctionContext, getOrGenerateSchemaPath} from '../../.
 import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -20,6 +20,7 @@ export default class FunctionRun extends AppCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    ...jsonFlag,
     input: Flags.string({
       char: 'i',
       description: 'The input JSON to pass to the function. If omitted, standard input is used.',
@@ -31,12 +32,6 @@ export default class FunctionRun extends AppCommand {
       description: 'Name of the WebAssembly export to invoke.',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
-    json: Flags.boolean({
-      char: 'j',
-      hidden: false,
-      description: 'Log the run result as a JSON object.',
-      env: 'SHOPIFY_FLAG_JSON',
-    }),
   }
 
   public async run(): Promise<AppCommandOutput> {
@@ -44,7 +39,9 @@ export default class FunctionRun extends AppCommand {
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      callback: async (app, developerPlatformClient, ourFunction) => {
+      apiKey: flags['client-id'],
+      reset: flags.reset,
+      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
         if (flags.export !== undefined) {
@@ -80,7 +77,7 @@ export default class FunctionRun extends AppCommand {
 
         const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
         const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
-        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, developerPlatformClient)
+        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, developerPlatformClient, orgId)
 
         await runFunction({
           functionExtension: ourFunction,

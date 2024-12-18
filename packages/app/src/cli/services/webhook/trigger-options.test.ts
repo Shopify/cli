@@ -18,6 +18,7 @@ const API_KEY = 'AN_API_KEY'
 const APP = testAppLinked()
 const ORGANIZATION_APP = testOrganizationApp()
 const developerPlatformClient = testDeveloperPlatformClient()
+const organizationId = ORGANIZATION_APP.organizationId
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -30,7 +31,7 @@ describe('collectApiVersion', () => {
     vi.mocked(apiVersionPrompt)
 
     // When
-    const version = await collectApiVersion(developerPlatformClient, '2023-01')
+    const version = await collectApiVersion(developerPlatformClient, '2023-01', organizationId)
 
     // Then
     expect(version).toEqual('2023-01')
@@ -43,7 +44,7 @@ describe('collectApiVersion', () => {
     vi.mocked(requestApiVersions).mockResolvedValue(['2023-01', 'unstable'])
 
     // When
-    const version = await collectApiVersion(developerPlatformClient, undefined)
+    const version = await collectApiVersion(developerPlatformClient, undefined, organizationId)
 
     // Then
     expect(version).toEqual('2023-01')
@@ -59,7 +60,12 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const method = await collectTopic(developerPlatformClient, '2023-01', 'shop/redact')
+    const method = await collectTopic(
+      developerPlatformClient,
+      '2023-01',
+      'shop/redact',
+      ORGANIZATION_APP.organizationId,
+    )
 
     // Then
     expect(method).toEqual('shop/redact')
@@ -72,7 +78,9 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When then
-    await expect(collectTopic(developerPlatformClient, '2023-01', 'unknown/topic')).rejects.toThrow(AbortError)
+    await expect(collectTopic(developerPlatformClient, '2023-01', 'unknown/topic', organizationId)).rejects.toThrow(
+      AbortError,
+    )
     expect(topicPrompt).toHaveBeenCalledTimes(0)
   })
 
@@ -82,7 +90,7 @@ describe('collectTopic', () => {
     vi.mocked(requestTopics).mockResolvedValue(['shop/redact', 'orders/create'])
 
     // When
-    const topic = await collectTopic(developerPlatformClient, 'unstable', undefined)
+    const topic = await collectTopic(developerPlatformClient, 'unstable', undefined, organizationId)
 
     // Then
     expect(topic).toEqual('orders/create')

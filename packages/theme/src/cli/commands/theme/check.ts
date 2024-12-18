@@ -111,7 +111,7 @@ export default class Check extends ThemeCommand {
 
       let version = 'unknown'
       if (pkgJsonPath) {
-        version = (await getPackageVersion(pkgJsonPath)) || 'unknown'
+        version = (await getPackageVersion(pkgJsonPath)) ?? 'unknown'
       }
 
       outputInfo(version)
@@ -134,47 +134,7 @@ export default class Check extends ThemeCommand {
       return
     }
 
-    const {offenses, theme} = await themeCheckRun(path, config, (message) => {
-      // We should replace this with outputDebug when it logs to STDERR by default.
-      // We need this right now because the --verbose flags pollutes STDOUT
-      // when used with --output=json with the current outputDebug defaults.
-      if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
-        consoleError(message)
-      }
-    })
-
-    const offensesByFile = sortOffenses(offenses)
-
-    if (flags.output === 'text') {
-      renderOffensesText(offensesByFile, path)
-
-      // Use renderSuccess when theres no offenses
-      const render = offenses.length ? renderInfo : renderSuccess
-
-      render({
-        headline: 'Theme Check Summary.',
-        body: formatSummary(offenses, offensesByFile, theme),
-      })
-    }
-
-    if (flags.output === 'json') {
-      /**
-       * Workaround:
-       * Force stdout to be blocking so that the JSON output is not broken when piped to another process.
-       * ie: ` | jq .`
-       * It turns out that console.log is technically asynchronous, and when we call process.exit(),
-       * node doesn't wait on all the output being sent to stdout and instead closes the process immediately
-       *
-       * https://github.com/pnp/cli-microsoft365/issues/1266#issuecomment-727254264
-       *
-       */
-      const stdout = process.stdout
-      if (isExtendedWriteStream(stdout)) {
-        stdout._handle.setBlocking(true)
-      }
-
-      outputInfo(JSON.stringify(formatOffensesJson(offensesByFile)))
-    }
+    const {offenses, theme} = await runThemeCheck(path, flags.output, config)
 
     if (flags['auto-correct']) {
       await performAutoFixes(theme, offenses)
@@ -182,4 +142,50 @@ export default class Check extends ThemeCommand {
 
     return handleExit(offenses, flags['fail-level'] as FailLevel)
   }
+}
+
+export async function runThemeCheck(path: string, outputFormat: string, config?: string) {
+  const {offenses, theme} = await themeCheckRun(path, config, (message) => {
+    // We should replace this with outputDebug when it logs to STDERR by default.
+    // We need this right now because the --verbose flags pollutes STDOUT
+    // when used with --output=json with the current outputDebug defaults.
+    if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
+      consoleError(message)
+    }
+  })
+
+  const offensesByFile = sortOffenses(offenses)
+
+  if (outputFormat === 'text') {
+    renderOffensesText(offensesByFile, path)
+
+    // Use renderSuccess when theres no offenses
+    const render = offenses.length ? renderInfo : renderSuccess
+
+    render({
+      headline: 'Theme Check Summary.',
+      body: formatSummary(offenses, offensesByFile, theme),
+    })
+  }
+
+  if (outputFormat === 'json') {
+    /**
+     * Workaround:
+     * Force stdout to be blocking so that the JSON output is not broken when piped to another process.
+     * ie: ` | jq .`
+     * It turns out that console.log is technically asynchronous, and when we call process.exit(),
+     * node doesn't wait on all the output being sent to stdout and instead closes the process immediately
+     *
+     * https://github.com/pnp/cli-microsoft365/issues/1266#issuecomment-727254264
+     *
+     */
+    const stdout = process.stdout
+    if (isExtendedWriteStream(stdout)) {
+      stdout._handle.setBlocking(true)
+    }
+
+    outputInfo(JSON.stringify(formatOffensesJson(offensesByFile)))
+  }
+
+  return {offenses, theme}
 }

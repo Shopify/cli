@@ -25,6 +25,12 @@ export interface appconfiglink {
   '--path <value>'?: string
 
   /**
+   * Reset all your settings.
+   * @environment SHOPIFY_FLAG_RESET
+   */
+  '--reset'?: ''
+
+  /**
    * Increase the verbosity of the output.
    * @environment SHOPIFY_FLAG_VERBOSE
    */

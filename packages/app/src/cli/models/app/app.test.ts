@@ -39,6 +39,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     },
   },
   application_url: 'http://example.com',
+  embedded: false,
   auth: {
     redirect_urls: ['https://google.com'],
   },
@@ -204,6 +205,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
     description: 'description',
     build: {
       command: 'echo "hello world"',
+      wasm_opt: true,
     },
     api_version: '2022-07',
     configuration_ui: true,

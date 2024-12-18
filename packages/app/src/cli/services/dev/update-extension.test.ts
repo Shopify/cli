@@ -13,7 +13,7 @@ import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
@@ -206,7 +206,9 @@ describe('updateExtensionDraft()', () => {
       const content = 'test content'
       const base64Content = Buffer.from(content).toString('base64')
       await mkdir(joinPath(mockExtension.directory, 'dist'))
-      await writeFile(joinPath(mockExtension.directory, 'dist', filepath), content)
+      const outputPath = mockExtension.outputPath
+      await mkdir(dirname(outputPath))
+      await writeFile(outputPath, content)
 
       await updateExtensionDraft({
         extension: mockExtension,

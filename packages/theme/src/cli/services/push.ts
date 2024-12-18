@@ -1,12 +1,13 @@
 /* eslint-disable tsdoc/syntax */
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
-import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -20,6 +21,8 @@ import {
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {Severity} from '@shopify/theme-check-node'
 
 interface PushOptions {
   path: string
@@ -52,9 +55,6 @@ export interface PushFlags {
 
   /** Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com). */
   store?: string
-
-  /** The environment to apply to the current command. */
-  environment?: string
 
   /** Theme ID or name of the remote theme. */
   theme?: string
@@ -94,6 +94,9 @@ export interface PushFlags {
 
   /** Increase the verbosity of the output. */
   verbose?: boolean
+
+  /** Require theme check to pass without errors before pushing. Warnings are allowed. */
+  strict?: boolean
 }
 
 /**
@@ -102,6 +105,18 @@ export interface PushFlags {
  * @param flags - The flags for the push operation.
  */
 export async function push(flags: PushFlags): Promise<void> {
+  if (flags.strict) {
+    const outputType = flags.json ? 'json' : 'text'
+    const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
+
+    if (offenses.length > 0) {
+      const errorOffenses = offenses.filter((offense) => offense.severity === Severity.ERROR)
+      if (errorOffenses.length > 0) {
+        throw new AbortError('Theme check failed. Please fix the errors before pushing.')
+      }
+    }
+  }
+
   const {path} = flags
 
   configureCLIEnvironment({
@@ -115,7 +130,7 @@ export async function push(flags: PushFlags): Promise<void> {
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
   const workingDirectory = path ? resolvePath(path) : cwd()
-  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await currentDirectoryConfirmed(force))) {
+  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
     return
   }
 

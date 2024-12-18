@@ -13,10 +13,10 @@ export interface themeinfo {
   '-e, --environment <value>'?: string
 
   /**
-   * Output the theme info as JSON.
+   * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */
-  '--json'?: ''
+  '-j, --json'?: ''
 
   /**
    * Disable color output.

@@ -2,7 +2,7 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -43,6 +43,7 @@ export default class Push extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...themeFlags,
+    ...jsonFlag,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -80,11 +81,6 @@ export default class Push extends ThemeCommand {
       multiple: true,
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Output JSON instead of a UI.',
-      env: 'SHOPIFY_FLAG_JSON',
-    }),
     'allow-live': Flags.boolean({
       char: 'a',
       description: 'Allow push to a live theme.',
@@ -101,6 +97,10 @@ export default class Push extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    strict: Flags.boolean({
+      description: 'Require theme check to pass without errors before pushing. Warnings are allowed.',
+      env: 'SHOPIFY_FLAG_STRICT_PUSH',
+    }),
   }
 
   async run(): Promise<void> {
@@ -110,7 +110,6 @@ export default class Push extends ThemeCommand {
       path: flags.path,
       password: flags.password,
       store: flags.store,
-      environment: flags.environment,
       theme: flags.theme,
       development: flags.development,
       live: flags.live,
@@ -124,6 +123,7 @@ export default class Push extends ThemeCommand {
       force: flags.force,
       noColor: flags['no-color'],
       verbose: flags.verbose,
+      strict: flags.strict,
     }
 
     await push(pushFlags)

@@ -40,6 +40,7 @@ type VerboseResponse<T> = {
   | {status: 'client-error'; clientError: ClientError}
   | {status: 'unknown-error'; error: unknown}
   | {status: 'can-retry'; clientError: ClientError; delayMs: number | undefined}
+  | {status: 'unauthorized'; clientError: ClientError; delayMs: number | undefined}
 )
 
 async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
@@ -88,6 +89,16 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
           requestId: responseHeaders['x-request-id'],
           delayMs,
         }
+      } else if (err.response.status === 401) {
+        return {
+          status: 'unauthorized',
+          clientError: err,
+          duration,
+          sanitizedHeaders,
+          sanitizedUrl,
+          requestId: responseHeaders['x-request-id'],
+          delayMs: 500,
+        }
       }
 
       return {
@@ -126,7 +137,7 @@ function errorsIncludeStatus429(error: ClientError): boolean {
   }
 
   // GraphQL returns a 401 with a string error message when auth fails
-  // Therefore error.response.errros can be a string or GraphQLError[]
+  // Therefore error.response.errors can be a string or GraphQLError[]
   if (typeof error.response.errors === 'string') {
     return false
   }
@@ -169,12 +180,20 @@ ${result.sanitizedHeaders}
         throw result.clientError
       }
     }
+    case 'unauthorized': {
+      if (errorHandler) {
+        throw errorHandler(result.clientError, result.requestId)
+      } else {
+        throw result.clientError
+      }
+    }
   }
 }
 
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
+  unauthorizedHandler?: () => Promise<void>,
   retryOptions: {
     limitRetriesTo?: number
     defaultDelayMs?: number
@@ -210,6 +229,13 @@ ${result.sanitizedHeaders}
         throw errorHandler(result.error, result.requestId)
       } else {
         throw result.error
+      }
+    } else if (result.status === 'unauthorized') {
+      if (unauthorizedHandler) {
+        // eslint-disable-next-line no-await-in-loop
+        await unauthorizedHandler()
+      } else {
+        throw result.clientError
       }
     }
 

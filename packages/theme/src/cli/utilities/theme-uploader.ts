@@ -18,9 +18,9 @@ type ChecksumWithSize = Checksum & {size: number}
 type FileBatch = ChecksumWithSize[]
 
 // Limits for Bulk Requests
-export const MAX_BATCH_FILE_COUNT = 10
-// 100KB
-export const MAX_BATCH_BYTESIZE = 102400
+export const MAX_BATCH_FILE_COUNT = 50
+// 10MB
+export const MAX_BATCH_BYTESIZE = 1024 * 1024 * 10
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
 export function uploadTheme(
@@ -168,6 +168,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.sectionJsonFiles,
     ...fileSets.otherJsonFiles,
     ...fileSets.sectionLiquidFiles,
+    ...fileSets.blockLiquidFiles,
     ...fileSets.otherLiquidFiles,
     ...fileSets.configFiles,
     ...fileSets.staticAssetFiles,
@@ -176,8 +177,14 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
 
 export const MINIMUM_THEME_ASSETS = [
   {key: 'config/settings_schema.json', value: '[]'},
-  {key: 'layout/password.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
-  {key: 'layout/theme.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+  {
+    key: 'layout/password.liquid',
+    value: '{{ content_for_header }}{{ content_for_layout }}',
+  },
+  {
+    key: 'layout/theme.liquid',
+    value: '{{ content_for_header }}{{ content_for_layout }}',
+  },
 ] as const
 /**
  * If there's no theme in the remote, we need to create it first so that
@@ -231,11 +238,12 @@ function buildUploadJob(
     (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
     Promise.resolve(),
   )
-  // Wait for dependent files upload to be started before starting this one:
+
+  // Dependant and independant files are uploaded concurrently
   const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
   const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
-    progress.current += progress.total
+    progress.current = progress.total
   })
 
   return {progress, promise}
@@ -283,6 +291,7 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
     independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
     // Follow order of dependencies:
     dependentFiles: [
+      fileSets.blockLiquidFiles,
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,
       fileSets.templateJsonFiles,

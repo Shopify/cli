@@ -1,5 +1,5 @@
 /* eslint-disable tsdoc/syntax */
-import {OutputContextOptions, startFileWatcher} from './file-watcher.js'
+import {FileWatcher, OutputContextOptions} from './file-watcher.js'
 import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
@@ -80,6 +80,7 @@ export interface AppEvent {
   extensionEvents: ExtensionEvent[]
   path: string
   startTime: [number, number]
+  appWasReloaded?: boolean
 }
 
 type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
@@ -96,12 +97,14 @@ export class AppEventWatcher extends EventEmitter {
   private started = false
   private ready = false
   private initialEvents: ExtensionEvent[] = []
+  private fileWatcher?: FileWatcher
 
   constructor(
     app: AppLinkedInterface,
     appURL?: string,
     buildOutputPath?: string,
     esbuildManager?: ESBuildContextManager,
+    fileWatcher?: FileWatcher,
   ) {
     super()
     this.app = app
@@ -117,6 +120,7 @@ export class AppEventWatcher extends EventEmitter {
         url: this.appURL ?? '',
         ...this.options,
       })
+    this.fileWatcher = fileWatcher
   }
 
   async start(options?: OutputContextOptions, buildExtensionsFirst = true) {
@@ -139,14 +143,15 @@ export class AppEventWatcher extends EventEmitter {
       await this.buildExtensions(this.initialEvents)
     }
 
-    // Start the file system watcher
-    await startFileWatcher(this.app, this.options, (events) => {
+    this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
+    this.fileWatcher.onChange((events) => {
       handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
           if (!appEvent || appEvent.extensionEvents.length === 0) return
 
           this.app = appEvent.app
+          if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
@@ -163,6 +168,7 @@ export class AppEventWatcher extends EventEmitter {
           this.options.stderr.write(`Error handling event: ${error.message}`)
         })
     })
+    await this.fileWatcher.start()
 
     this.ready = true
     this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})
@@ -224,7 +230,7 @@ export class AppEventWatcher extends EventEmitter {
       const ext = extEvent.extension
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
-          if (this.esbuildManager.contexts[ext.handle]) {
+          if (this.esbuildManager.contexts?.[ext.handle]?.length) {
             await this.esbuildManager.rebuildContext(ext)
           } else {
             await this.buildExtension(ext)

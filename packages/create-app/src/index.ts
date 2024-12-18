@@ -1,15 +1,11 @@
 import {commands} from '@shopify/app'
 import {runCreateCLI} from '@shopify/cli-kit/node/cli'
-import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 
 async function runCreateAppCLI(development: boolean) {
-  await runCreateCLI(
-    {
-      moduleURL: import.meta.url,
-      development,
-    },
-    launchCLI,
-  )
+  await runCreateCLI({
+    moduleURL: import.meta.url,
+    development,
+  })
 }
 
 export const COMMANDS: unknown = {
