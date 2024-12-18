@@ -6,7 +6,7 @@ import {tmpdir} from 'os'
 
 export async function profile(password: string | undefined, storeDomain: string, urlPath: string, asJson: boolean) {
   // Fetch the profiling from the Store
-  const url = new URL(`https://${storeDomain}/${urlPath}`)
+  const url = new URL(`https://${storeDomain}${urlPath}`)
   const storefrontToken = await ensureAuthenticatedStorefront([], password)
   const response = await fetch(url, {
     headers: {
@@ -14,6 +14,11 @@ export async function profile(password: string | undefined, storeDomain: string,
       Accept: 'application/vnd.speedscope+json',
     },
   })
+  const contentType = response.headers.get('content-type')
+  if (response.status !== 200 && contentType !== 'application/json') {
+    throw new Error(`Bad response: ${response.status}, content-type: ${contentType}`)
+  }
+
   const profileJson = await response.text()
 
   if (asJson) {
