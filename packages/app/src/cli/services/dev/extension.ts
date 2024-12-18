@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
@@ -136,29 +137,29 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       switch (event.type) {
         case EventType.Created:
           payloadOptions.extensions.push(event.extension)
-          // const cartUrl = await buildCartURLIfNeeded([evnet.extension], storeFqdn, checkoutCartUrl)
+
           if (!payloadOptions.checkoutCartUrl) {
-            // eslint-disable-next-line no-await-in-loop
-            const cartUrl = await buildCartURLIfNeeded(
-              payloadOptions.extensions,
-              payloadOptions.storeFqdn,
-              payloadOptions.checkoutCartUrl,
-            )
-            // eslint-disable-next-line require-atomic-updates
-            payloadOptions.checkoutCartUrl = cartUrl
+            // If the checkoutCartUrl is not set, check again and build the URL in case the new extension is a checkout extension.
+            try {
+              const cartUrl = await buildCartURLIfNeeded(payloadOptions.extensions, payloadOptions.storeFqdn)
+              // eslint-disable-next-line require-atomic-updates
+              payloadOptions.checkoutCartUrl = cartUrl
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch (error) {
+              outputDebug(
+                `Failed to build a cart URL for your checkout extension. Use the --checkout-cart-url flag to set a fixed URL.`,
+                payloadOptions.stdout,
+              )
+            }
           }
 
-          // eslint-disable-next-line no-await-in-loop
           await payloadStore.addExtension(event.extension, bundlePath)
           break
         case EventType.Updated:
-          // eslint-disable-next-line no-await-in-loop
           await payloadStore.updateExtension(event.extension, payloadOptions, bundlePath, {status})
           break
         case EventType.Deleted:
           payloadOptions.extensions = payloadOptions.extensions.filter((ext) => ext.devUUID !== event.extension.devUUID)
-
-          // eslint-disable-next-line no-await-in-loop
           await payloadStore.deleteExtension(event.extension)
           break
       }
