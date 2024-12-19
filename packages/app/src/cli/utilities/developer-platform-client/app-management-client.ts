@@ -330,28 +330,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
     let templates: GatedExtensionTemplate[]
     if (process.env[TEMPLATE_PATH_ENV_VARIABLE]) {
       if (!(await fileExists(process.env[TEMPLATE_PATH_ENV_VARIABLE]))) {
-        throw new AbortError("There is no file at the path specified for template specifications")
-      } else {
-        const templatesJson = await readFile(process.env[TEMPLATE_PATH_ENV_VARIABLE])
-        templates = JSON.parse(templatesJson)
+        throw new AbortError('There is no file at the path specified for template specifications')
       }
+      const templatesJson = await readFile(process.env[TEMPLATE_PATH_ENV_VARIABLE])
+      templates = JSON.parse(templatesJson)
     } else {
       try {
         const response = await fetch(TEMPLATE_JSON_URL)
         templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
       } catch (_e) {
-        throw new AbortError(
-          [
-            'Failed to fetch extension templates from',
-            {link: {url: TEMPLATE_JSON_URL}},
-            {char: '.'},
-            'This likely means a problem with your internet connection.',
-          ],
-          [
-            {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
-            'or try again later.',
-          ],
-        )
+        throw new AbortError([
+          'Failed to fetch extension templates from',
+          {link: {url: TEMPLATE_JSON_URL}},
+          {char: '.'},
+          'This likely means a problem with your internet connection.',
+        ])
       }
     }
     // Fake the sortPriority as ascending, since the templates are already sorted
