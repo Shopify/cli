@@ -6,6 +6,7 @@ import {
   Notification,
   stringifyFilters,
   getNotifications,
+  fetchNotifications,
 } from '@shopify/cli-kit/node/notifications-system'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderSelectPrompt, renderTextPrompt, renderSuccess, renderTable, TableColumn} from '@shopify/cli-kit/node/ui'
@@ -95,7 +96,7 @@ export async function generate() {
 }
 
 export async function list() {
-  const notifications: Notifications = await getNotifications()
+  const notifications = await fetchNotifications()
 
   const columns: TableColumn<{type: string; title: string; message: string; filters: string}> = {
     type: {header: 'Type', color: 'dim'},
@@ -107,7 +108,7 @@ export async function list() {
   const rows = notifications.notifications.map((notification: Notification) => {
     return {
       type: notification.type,
-      title: notification.title || '',
+      title: notification.title ?? '',
       message: notification.message,
       filters: stringifyFilters(notification),
     }

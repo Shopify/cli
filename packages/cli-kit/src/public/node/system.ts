@@ -21,6 +21,7 @@ export interface ExecOptions {
   signal?: AbortSignal
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
+  background?: boolean
 }
 
 /**
@@ -55,6 +56,11 @@ export async function captureOutput(command: string, args: string[], options?: E
  */
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
   const commandProcess = buildExec(command, args, options)
+
+  if (options?.background) {
+    commandProcess.unref()
+  }
+
   if (options?.stderr && options.stderr !== 'inherit') {
     commandProcess.stderr?.pipe(options.stderr, {end: false})
   }
@@ -106,16 +112,18 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     env,
     cwd: executionCwd,
     input: options?.input,
-    stdio: options?.stdio,
+    stdio: options?.background ? 'ignore' : options?.stdio,
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
     // Setting this to false makes it possible to kill the main process
     // and all its sub-processes with Ctrl+C on Windows
     windowsHide: false,
+    detached: options?.background,
+    cleanup: !options?.background,
   })
   outputDebug(`
-Running system process:
+Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
   · Working directory: ${executionCwd}
 `)
