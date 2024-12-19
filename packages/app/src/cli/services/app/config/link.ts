@@ -137,7 +137,6 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     // Remote API Key provided by the caller, so use that app specifically
     const remoteApp = await appFromIdentifiers({
       apiKey: options.apiKey,
-      id: options.appId,
       developerPlatformClient,
       organizationId: options.organizationId,
     })
