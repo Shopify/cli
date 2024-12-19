@@ -133,8 +133,10 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
+const TEMPLATE_PATH_ENV_VARIABLE = 'SHOPIFY_APP_TEMPLATES_JSON_PATH'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
@@ -325,24 +327,32 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    let response
     let templates: GatedExtensionTemplate[]
-    try {
-      response = await fetch(TEMPLATE_JSON_URL)
-      templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
-    } catch (_e) {
-      throw new AbortError(
-        [
-          'Failed to fetch extension templates from',
-          {link: {url: TEMPLATE_JSON_URL}},
-          {char: '.'},
-          'This likely means a problem with your internet connection.',
-        ],
-        [
-          {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
-          'or try again later.',
-        ],
-      )
+    if (process.env[TEMPLATE_PATH_ENV_VARIABLE]) {
+      if (!(await fileExists(process.env[TEMPLATE_PATH_ENV_VARIABLE]))) {
+        throw new AbortError("There is no file at the path specified for template specifications")
+      } else {
+        const templatesJson = await readFile(process.env[TEMPLATE_PATH_ENV_VARIABLE])
+        templates = JSON.parse(templatesJson)
+      }
+    } else {
+      try {
+        const response = await fetch(TEMPLATE_JSON_URL)
+        templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+      } catch (_e) {
+        throw new AbortError(
+          [
+            'Failed to fetch extension templates from',
+            {link: {url: TEMPLATE_JSON_URL}},
+            {char: '.'},
+            'This likely means a problem with your internet connection.',
+          ],
+          [
+            {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
+            'or try again later.',
+          ],
+        )
+      }
     }
     // Fake the sortPriority as ascending, since the templates are already sorted
     // in the static JSON file. This can be removed once PartnersClient, which
