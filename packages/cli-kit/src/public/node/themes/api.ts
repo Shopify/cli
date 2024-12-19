@@ -16,6 +16,8 @@ import {
   MetafieldOwnerType,
 } from '../../../cli/api/graphql/admin/generated/types.js'
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
+import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
+import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -28,15 +30,48 @@ export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | '
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,name,role,processing'})
-  return buildTheme(response.json.theme)
+  const response = await adminRequestDoc(GetTheme, session, {id: composeThemeGid(id)})
+
+  const {theme} = response
+  if (!theme) {
+    return undefined
+  }
+  return buildTheme({
+    id: parseGid(theme.id),
+    processing: theme.processing,
+    role: theme.role.toLowerCase(),
+    name: theme.name,
+  })
 }
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
-  const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
-  const themes = response.json?.themes
-  if (themes?.length > 0) return themes.map(buildTheme)
-  return []
+  const themes: Theme[] = []
+  let after: string | null = null
+
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const response = await adminRequestDoc(GetThemes, session, {after})
+    if (!response.themes) {
+      unexpectedGraphQLError('Failed to fetch themes')
+    }
+    const {nodes, pageInfo} = response.themes
+    nodes.forEach((theme) => {
+      const t = buildTheme({
+        id: parseGid(theme.id),
+        processing: theme.processing,
+        role: theme.role.toLowerCase(),
+        name: theme.name,
+      })
+      if (t) {
+        themes.push(t)
+      }
+    })
+    if (!pageInfo.hasNextPage) {
+      return themes
+    }
+
+    after = pageInfo.endCursor as string
+  }
 }
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
