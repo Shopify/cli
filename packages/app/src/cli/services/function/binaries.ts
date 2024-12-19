@@ -10,7 +10,7 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const FUNCTION_RUNNER_VERSION = 'v6.5.0'
+const FUNCTION_RUNNER_VERSION = 'v7.0.0'
 const JAVY_VERSION = 'v4.0.0'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
