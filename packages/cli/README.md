@@ -66,6 +66,9 @@
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
+* [`shopify theme generate block`](#shopify-theme-generate-block)
+* [`shopify theme generate section`](#shopify-theme-generate-section)
+* [`shopify theme generate template`](#shopify-theme-generate-template)
 * [`shopify theme info`](#shopify-theme-info)
 * [`shopify theme init [name]`](#shopify-theme-init-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
@@ -1894,6 +1897,82 @@ DESCRIPTION
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
+```
+
+## `shopify theme generate block`
+
+Creates and adds a new block file to your local theme directory
+
+```
+USAGE
+  $ shopify theme generate block [-n <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -n, --name=<value>  Name of the block
+      --no-color      Disable color output.
+      --path=<value>  The path to your theme directory.
+      --verbose       Increase the verbosity of the output.
+
+DESCRIPTION
+  Creates and adds a new block file to your local theme directory
+
+  Creates a new "theme block" (https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.
+
+  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.
+```
+
+## `shopify theme generate section`
+
+Creates and adds a new section file to your local theme directory
+
+```
+USAGE
+  $ shopify theme generate section [-x liquid|json] [-n <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -n, --name=<value>        Name of the section
+  -x, --extension=<option>  File extension (liquid or json)
+                            <options: liquid|json>
+      --no-color            Disable color output.
+      --path=<value>        The path to your theme directory.
+      --verbose             Increase the verbosity of the output.
+
+DESCRIPTION
+  Creates and adds a new section file to your local theme directory
+
+  Creates a new "theme section" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.
+
+  The section is created in the `sections` directory with the basic structure needed, including schema and settings.
+```
+
+## `shopify theme generate template`
+
+Creates and adds a new template file to your local theme directory
+
+```
+USAGE
+  $ shopify theme generate template [-x liquid|json] [-f] [-n <value>] [--no-color] [--path <value>] [-r
+    404|article|blog|cart|collection|customers|gift_card|list-collections|page|password|product|robots|search]
+    [--verbose]
+
+FLAGS
+  -f, --force               Proceed without confirmation, if current directory does not seem to be theme directory.
+  -n, --name=<value>        Name of the template
+  -r, --resource=<option>   Resource type for the template
+                            <options: 404|article|blog|cart|collection|customers|gift_card|list-collections|page|passwor
+                            d|product|robots|search>
+  -x, --extension=<option>  File extension (liquid or json)
+                            <options: liquid|json>
+      --no-color            Disable color output.
+      --path=<value>        The path to your theme directory.
+      --verbose             Increase the verbosity of the output.
+
+DESCRIPTION
+  Creates and adds a new template file to your local theme directory
+
+  Creates a new "theme template" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.
+
+  The template is created in the `templates` directory with the basic structure needed, including schema and settings.
 ```
 
 ## `shopify theme info`
