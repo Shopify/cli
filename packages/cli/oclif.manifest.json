@@ -5317,6 +5317,244 @@
       "strict": true,
       "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time."
     },
+    "theme:generate:block": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Creates a new \"theme block\" (https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.",
+      "descriptionWithMarkdown": "Creates a new [theme block](https://shopify.dev/docs/themes/architecture/blocks) in your local theme directory.\n\n  The block is created in the `blocks` directory with the basic structure needed, including schema and settings.",
+      "flags": {
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "type": "boolean"
+        },
+        "name": {
+          "char": "n",
+          "description": "Name of the block",
+          "env": "SHOPIFY_FLAG_BLOCK_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:generate:block",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Creates and adds a new block file to your local theme directory"
+    },
+    "theme:generate:section": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Creates a new \"theme section\" (https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema and settings.",
+      "descriptionWithMarkdown": "Creates a new [theme section](https://shopify.dev/docs/themes/architecture/sections) in your local theme directory.\n\n  The section is created in the `sections` directory with the basic structure needed, including schema and settings.",
+      "flags": {
+        "extension": {
+          "char": "x",
+          "description": "File extension (liquid or json)",
+          "env": "SHOPIFY_FLAG_SECTION_FILE_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "extension",
+          "options": [
+            "liquid",
+            "json"
+          ],
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "type": "boolean"
+        },
+        "name": {
+          "char": "n",
+          "description": "Name of the section",
+          "env": "SHOPIFY_FLAG_SECTION_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:generate:section",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Creates and adds a new section file to your local theme directory"
+    },
+    "theme:generate:template": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Creates a new \"theme template\" (https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.",
+      "descriptionWithMarkdown": "Creates a new [theme template](https://shopify.dev/docs/themes/architecture/templates) in your local theme directory.\n\n  The template is created in the `templates` directory with the basic structure needed, including schema and settings.",
+      "flags": {
+        "extension": {
+          "char": "x",
+          "description": "File extension (liquid or json)",
+          "env": "SHOPIFY_FLAG_TEMPLATE_FILE_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "extension",
+          "options": [
+            "liquid",
+            "json"
+          ],
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "name": {
+          "char": "n",
+          "description": "Name of the template",
+          "env": "SHOPIFY_FLAG_TEMPLATE_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "resource": {
+          "char": "r",
+          "description": "Resource type for the template",
+          "env": "SHOPIFY_FLAG_TEMPLATE_RESOURCE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "resource",
+          "options": [
+            "404",
+            "article",
+            "blog",
+            "cart",
+            "collection",
+            "customers",
+            "gift_card",
+            "list-collections",
+            "page",
+            "password",
+            "product",
+            "robots",
+            "search"
+          ],
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:generate:template",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Creates and adds a new template file to your local theme directory"
+    },
     "theme:info": {
       "aliases": [
       ],
