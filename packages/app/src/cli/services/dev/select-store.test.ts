@@ -1,5 +1,5 @@
 import {selectStore} from './select-store.js'
-import {Organization, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
   reloadStoreListPrompt,
   selectStorePrompt,
@@ -20,6 +20,7 @@ vi.mock('@shopify/cli-kit/node/context/spin')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
 }
 const STORE1: OrganizationStore = {
   shopId: '1',
