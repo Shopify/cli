@@ -4,6 +4,7 @@ import {selectConfigFile} from '../../../prompts/config.js'
 import {AppConfiguration, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -102,8 +103,11 @@ async function getConfigFileName(directory: string, configName?: string): Promis
 }
 
 async function logMetadata(configuration: CurrentAppConfiguration) {
-  await logMetadataForLoadedContext({
-    organizationId: configuration.organization_id || '0',
-    apiKey: configuration.client_id,
-  })
+  await logMetadataForLoadedContext(
+    {
+      apiKey: configuration.client_id,
+      organizationId: configuration.organization_id || '0',
+    },
+    configuration.organization_id ? OrganizationSource.BusinessPlatform : OrganizationSource.Partners,
+  )
 }

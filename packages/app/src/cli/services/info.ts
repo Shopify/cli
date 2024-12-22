@@ -4,7 +4,7 @@ import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -27,10 +27,11 @@ interface Configurable {
 export async function info(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  organization: Organization,
   options: InfoOptions,
 ): Promise<OutputMessage> {
   if (options.webEnv) {
-    return infoWeb(app, remoteApp, options)
+    return infoWeb(app, remoteApp, organization, options)
   } else {
     return infoApp(app, remoteApp, options)
   }
@@ -39,9 +40,10 @@ export async function info(
 async function infoWeb(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  organization: Organization,
   {format}: InfoOptions,
 ): Promise<OutputMessage> {
-  return outputEnv(app, remoteApp, format)
+  return outputEnv(app, remoteApp, organization, format)
 }
 
 async function infoApp(
