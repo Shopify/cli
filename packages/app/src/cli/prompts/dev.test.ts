@@ -7,7 +7,7 @@ import {
   selectStorePrompt,
   updateURLsPrompt,
 } from './dev.js'
-import {Organization, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
@@ -21,10 +21,12 @@ vi.mock('../utilities/app/config/getTomls')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
+  source: OrganizationSource.BusinessPlatform,
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({

@@ -1,6 +1,6 @@
 import {InfoOptions, info} from './info.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
-import {AppApiKeyAndOrgId, OrganizationApp} from '../models/organization.js'
+import {AppApiKeyAndOrgId, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
@@ -30,6 +30,7 @@ const ORG1 = {
   flags: {},
   businessName: 'test',
   apps: {nodes: []},
+  source: OrganizationSource.BusinessPlatform,
 }
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
