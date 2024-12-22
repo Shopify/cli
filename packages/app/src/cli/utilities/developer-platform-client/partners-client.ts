@@ -213,6 +213,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsAtomicDeployments = false
   public readonly requiresOrganization = false
   public readonly supportsDevSessions = false
+  public readonly organizationSource = OrganizationSource.Partners
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -284,7 +285,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       return result.organizations.nodes!.map((org) => ({
         id: org!.id,
         businessName: org!.businessName,
-        source: OrganizationSource.Partners,
+        source: this.organizationSource,
       }))
     } catch (error: unknown) {
       if ((error as {statusCode?: number}).statusCode === 404) {
@@ -299,7 +300,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     const variables: FindOrganizationBasicVariables = {id: orgId}
     const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
     const org: Omit<Organization, 'source'> | undefined = result.organizations.nodes[0]
-    return org ? {...org, source: OrganizationSource.Partners} : undefined
+    return org ? {...org, source: this.organizationSource} : undefined
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
@@ -590,7 +591,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const partnersSession = await this.session()
       throw new NoOrgError(partnersSession.accountInfo, orgId)
     }
-    const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
+    const parsedOrg = {id: org.id, businessName: org.businessName, source: this.organizationSource}
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
   }

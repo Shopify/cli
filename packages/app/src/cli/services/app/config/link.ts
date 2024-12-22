@@ -87,7 +87,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     format: localAppOptions.configFormat,
   })
 
-  await logMetadataForLoadedContext(remoteApp)
+  await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
 
   // Finally, merge the remote app's configuration with the local app's configuration, and write it to the filesystem
   const mergedAppConfiguration = await overwriteLocalConfigFileWithRemoteAppConfiguration({
