@@ -298,9 +298,8 @@ export class PartnersClient implements DeveloperPlatformClient {
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const variables: FindOrganizationBasicVariables = {id: orgId}
     const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
-    const org: Organization | undefined = result.organizations.nodes[0]
-    if (org) org.source = OrganizationSource.Partners
-    return org
+    const org: Omit<Organization, 'source'> | undefined = result.organizations.nodes[0]
+    return org ? {...org, source: OrganizationSource.Partners} : undefined
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
