@@ -2,7 +2,12 @@ import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderSelectPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -26,6 +31,11 @@ export interface GenerateExtensionPromptOutput {
 export interface GenerateExtensionContentOutput {
   name: string
   flavor?: ExtensionFlavorValue
+  relatedExtensions?: {
+    type: string
+    name: string
+    directory: string
+  }[]
 }
 
 export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
@@ -63,13 +73,12 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailabl
   return templateSpecChoices.sort(compareChoices)
 }
 
-const generateExtensionPrompts = async (
+export const generateExtensionPrompts = async (
   options: GenerateExtensionPromptOptions,
 ): Promise<GenerateExtensionPromptOutput> => {
   let extensionTemplates = options.extensionTemplates
   let templateType = options.templateType
   const extensionFlavor = options.extensionFlavor
-
   if (!templateType) {
     if (extensionFlavor) {
       extensionTemplates = extensionTemplates.filter((template) =>
@@ -81,11 +90,15 @@ const generateExtensionPrompts = async (
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
-    // eslint-disable-next-line require-atomic-updates
-    templateType = await renderAutocompletePrompt({
-      message: 'Type of extension?',
-      choices: buildChoices(extensionTemplates, options.unavailableExtensions),
-    })
+    if (extensionTemplates.length === 1) {
+      templateType = extensionTemplates[0]?.identifier
+    } else {
+      // eslint-disable-next-line require-atomic-updates
+      templateType = await renderAutocompletePrompt({
+        message: 'Type of extension?',
+        choices: buildChoices(extensionTemplates, options.unavailableExtensions),
+      })
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -93,9 +106,19 @@ const generateExtensionPrompts = async (
 
   const name = options.name || (await promptName(options.directory, extensionTemplate.defaultName))
   const flavor = options.extensionFlavor ?? (await promptFlavor(extensionTemplate))
-  const extensionContent = {name, flavor}
+  const extensionContent = {
+    name,
+    flavor,
+  }
 
   return {extensionTemplate, extensionContent}
+}
+
+const promptAddExtensionConfirmation = (): Promise<boolean> => {
+  return renderConfirmationPrompt({
+    message: 'Would you like to create the function extension?',
+    defaultValue: true,
+  })
 }
 
 async function promptName(directory: string, defaultName: string, number = 1): Promise<string> {
@@ -134,3 +157,4 @@ async function promptFlavor(extensionTemplate: ExtensionTemplate): Promise<Exten
 }
 
 export default generateExtensionPrompts
+export {promptAddExtensionConfirmation}
