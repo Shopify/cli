@@ -151,6 +151,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
+  public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -243,7 +244,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: org.name,
-      source: OrganizationSource.BusinessPlatform,
+      source: this.organizationSource,
     }))
   }
 
@@ -262,7 +263,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       id: orgId,
       businessName: org.name,
-      source: OrganizationSource.BusinessPlatform,
+      source: this.organizationSource,
     }
   }
 

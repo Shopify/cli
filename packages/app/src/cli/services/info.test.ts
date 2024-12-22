@@ -88,7 +88,7 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
 
       // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, ORG1, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
     })
@@ -101,7 +101,7 @@ describe('info', () => {
       vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
 
       // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
+      const result = stringifyMessage(await info(app, remoteApp, ORG1, infoOptions()))
       // Then
       expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
       expect(unstyled(result)).not.toMatch('CLI reminder')
@@ -116,7 +116,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, {...infoOptions(), webEnv: true})
+      const result = await info(app, remoteApp, ORG1, {...infoOptions(), webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -136,7 +136,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, {...infoOptions(), format: 'json', webEnv: true})
+      const result = await info(app, remoteApp, ORG1, {...infoOptions(), format: 'json', webEnv: true})
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -184,7 +184,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, infoOptions())
+      const result = await info(app, remoteApp, ORG1, infoOptions())
 
       // Then
       expect(result).toContain('Extensions with errors')
@@ -222,7 +222,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, infoOptions())
+      const result = await info(app, remoteApp, ORG1, infoOptions())
 
       // Then
       expect(result).toContain('📂 handle-for-extension-1')
@@ -253,7 +253,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, {format: 'json', webEnv: false, developerPlatformClient})
+      const result = await info(app, remoteApp, ORG1, {format: 'json', webEnv: false, developerPlatformClient})
 
       // Then
       expect(result).toBeInstanceOf(TokenizedString)

@@ -10,6 +10,7 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {appFromIdentifiers, logMetadataForLoadedContext} from '../../context.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -311,7 +312,11 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, {apiKey: REMOTE_APP.apiKey, organizationId: '0'})
+      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(
+        1,
+        {apiKey: REMOTE_APP.apiKey, organizationId: '0'},
+        OrganizationSource.Partners,
+      )
     })
   })
 })

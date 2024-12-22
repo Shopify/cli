@@ -211,6 +211,7 @@ export interface DeveloperPlatformClient {
   readonly supportsAtomicDeployments: boolean
   readonly requiresOrganization: boolean
   readonly supportsDevSessions: boolean
+  readonly organizationSource: OrganizationSource
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
