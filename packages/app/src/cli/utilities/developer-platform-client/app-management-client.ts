@@ -4,6 +4,7 @@ import {
   OrganizationBetaFlagsQueryVariables,
   organizationBetaFlagsQuery,
 } from './app-management-client/graphql/organization_beta_flags.js'
+import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -133,6 +134,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -325,24 +327,27 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    let response
     let templates: GatedExtensionTemplate[]
-    try {
-      response = await fetch(TEMPLATE_JSON_URL)
-      templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
-    } catch (_e) {
-      throw new AbortError(
-        [
+    const {templatesJsonPath} = environmentVariableNames
+    const overrideFile = process.env[templatesJsonPath]
+    if (overrideFile) {
+      if (!(await fileExists(overrideFile))) {
+        throw new AbortError('There is no file at the path specified for template specifications')
+      }
+      const templatesJson = await readFile(overrideFile)
+      templates = JSON.parse(templatesJson)
+    } else {
+      try {
+        const response = await fetch(TEMPLATE_JSON_URL)
+        templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+      } catch (_e) {
+        throw new AbortError([
           'Failed to fetch extension templates from',
           {link: {url: TEMPLATE_JSON_URL}},
           {char: '.'},
           'This likely means a problem with your internet connection.',
-        ],
-        [
-          {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
-          'or try again later.',
-        ],
-      )
+        ])
+      }
     }
     // Fake the sortPriority as ascending, since the templates are already sorted
     // in the static JSON file. This can be removed once PartnersClient, which
