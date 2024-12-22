@@ -4,6 +4,7 @@ import {
   OrganizationBetaFlagsQueryVariables,
   organizationBetaFlagsQuery,
 } from './app-management-client/graphql/organization_beta_flags.js'
+import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -136,7 +137,6 @@ import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
-const TEMPLATE_PATH_ENV_VARIABLE = 'SHOPIFY_APP_TEMPLATES_JSON_PATH'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
@@ -328,11 +328,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
     let templates: GatedExtensionTemplate[]
-    if (process.env[TEMPLATE_PATH_ENV_VARIABLE]) {
-      if (!(await fileExists(process.env[TEMPLATE_PATH_ENV_VARIABLE]))) {
+    const {templatesJsonPath} = environmentVariableNames
+    const overrideFile = process.env[templatesJsonPath]
+    if (overrideFile) {
+      if (!(await fileExists(overrideFile))) {
         throw new AbortError('There is no file at the path specified for template specifications')
       }
-      const templatesJson = await readFile(process.env[TEMPLATE_PATH_ENV_VARIABLE])
+      const templatesJson = await readFile(overrideFile)
       templates = JSON.parse(templatesJson)
     } else {
       try {
