@@ -141,7 +141,7 @@ describe('selectStore', () => {
     const stores: OrganizationStore[] = []
 
     // When
-    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt})
 
     // Then
     expect(got).toEqual(undefined)
@@ -154,7 +154,7 @@ describe('selectStore', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt})
 
     // Then
     expect(got).toEqual(STORE1)
@@ -168,7 +168,7 @@ describe('selectStore', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt})
 
     // Then
     expect(got).toEqual(STORE2)
@@ -178,6 +178,8 @@ describe('selectStore', () => {
         {label: 'store1', value: '1'},
         {label: 'store2', value: '2'},
       ],
+      hasMorePages: false,
+      search: expect.any(Function),
     })
   })
 
@@ -187,7 +189,7 @@ describe('selectStore', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores, true)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: true})
 
     // Then
     expect(got).toEqual(STORE2)
@@ -197,6 +199,8 @@ describe('selectStore', () => {
         {label: 'store1 (domain1)', value: '1'},
         {label: 'store2 (domain2)', value: '2'},
       ],
+      hasMorePages: false,
+      search: expect.any(Function),
     })
   })
 })
