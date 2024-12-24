@@ -76,7 +76,7 @@ describe('storeContext', () => {
     const appWithoutCachedStore = testAppLinked()
     const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
 
-    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue(allStores)
+    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
     vi.mocked(selectStore).mockResolvedValue(mockStore)
 
     const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
@@ -86,14 +86,18 @@ describe('storeContext', () => {
     })
 
     expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
-    expect(selectStore).toHaveBeenCalledWith(allStores, mockOrganization, mockDeveloperPlatformClient)
+    expect(selectStore).toHaveBeenCalledWith(
+      {stores: allStores, hasMorePages: false},
+      mockOrganization,
+      mockDeveloperPlatformClient,
+    )
     expect(result).toEqual(mockStore)
   })
 
   test('fetches and selects store when forceReselectStore is true', async () => {
     const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
 
-    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue(allStores)
+    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
     vi.mocked(selectStore).mockResolvedValue(mockStore)
 
     const result = await storeContext({
@@ -102,7 +106,11 @@ describe('storeContext', () => {
     })
 
     expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
-    expect(selectStore).toHaveBeenCalledWith(allStores, mockOrganization, mockDeveloperPlatformClient)
+    expect(selectStore).toHaveBeenCalledWith(
+      {stores: allStores, hasMorePages: false},
+      mockOrganization,
+      mockDeveloperPlatformClient,
+    )
     expect(result).toEqual(mockStore)
   })
 
@@ -115,7 +123,7 @@ describe('storeContext', () => {
   test('throws an error when selectStore fails', async () => {
     const appWithoutCachedStore = testAppLinked()
 
-    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue([])
+    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: [], hasMorePages: false})
     vi.mocked(selectStore).mockRejectedValue(new Error('No stores available'))
     const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
 

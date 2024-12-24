@@ -3,7 +3,9 @@ import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
-export type ListAppDevStoresQueryVariables = Types.Exact<{[key: string]: never}>
+export type ListAppDevStoresQueryVariables = Types.Exact<{
+  searchTerm?: Types.InputMaybe<Types.Scalars['String']['input']>
+}>
 
 export type ListAppDevStoresQuery = {
   organization?: {
@@ -20,6 +22,7 @@ export type ListAppDevStoresQuery = {
           shortName?: string | null
         }
       }[]
+      pageInfo: {hasNextPage: boolean}
     } | null
   } | null
 }
@@ -31,6 +34,13 @@ export const ListAppDevStores = {
       kind: 'OperationDefinition',
       operation: 'query',
       name: {kind: 'Name', value: 'ListAppDevStores'},
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'searchTerm'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
+        },
+      ],
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -70,6 +80,11 @@ export const ListAppDevStores = {
                         ],
                       },
                     },
+                    {
+                      kind: 'Argument',
+                      name: {kind: 'Name', value: 'search'},
+                      value: {kind: 'Variable', name: {kind: 'Name', value: 'searchTerm'}},
+                    },
                   ],
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -96,6 +111,17 @@ export const ListAppDevStores = {
                                 ],
                               },
                             },
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'pageInfo'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'hasNextPage'}},
                             {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                           ],
                         },

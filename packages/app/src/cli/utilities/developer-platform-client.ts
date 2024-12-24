@@ -222,7 +222,7 @@ export interface DeveloperPlatformClient {
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
-  devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
+  devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,

@@ -1,18 +1,21 @@
-  query ListAppDevStores {
-    organization {
-      id
-      name
-      accessibleShops(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}) {
-        edges {
-          node {
-            id
-            externalId
-            name
-            storeType
-            primaryDomain
-            shortName
-          }
+query ListAppDevStores($searchTerm: String) {
+  organization {
+    id
+    name
+    accessibleShops(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, search: $searchTerm) {
+      edges {
+        node {
+          id
+          externalId
+          name
+          storeType
+          primaryDomain
+          shortName
         }
+      }
+      pageInfo {
+        hasNextPage
       }
     }
   }
+}
