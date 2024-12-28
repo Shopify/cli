@@ -8,8 +8,7 @@ export async function fetchExtensionTemplates(
   availableSpecifications: string[],
 ): Promise<ExtensionTemplate[]> {
   const remoteTemplates: ExtensionTemplate[] = await developerPlatformClient.templateSpecifications(app)
-  return remoteTemplates.filter(
-    (template) =>
-      availableSpecifications.includes(template.identifier) || availableSpecifications.includes(template.type),
-  )
+  return remoteTemplates.filter((template) => {
+    return availableSpecifications.includes(template.identifier) || availableSpecifications.includes(template.type)
+  })
 }

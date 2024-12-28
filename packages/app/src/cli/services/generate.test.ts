@@ -81,7 +81,7 @@ describe('generate', () => {
       │    • To preview this extension along with the rest of the project, run       │
       │      \`yarn shopify app dev\`                                                  │
       │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
+      ╰─────────────────────────────────────���────────────────────────────────────────╯
       "
     `)
   })
@@ -206,6 +206,71 @@ describe('generate', () => {
 
     // Then
     await expect(got).rejects.toThrow(/Invalid template for extension type/)
+  })
+
+  test.only('creates related extensions in a shared directory with common configuration', async () => {
+    const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
+
+    const productDiscountsTemplate = testRemoteExtensionTemplates.find(
+      (spec) => spec.identifier === 'product_discounts',
+    )
+    if (!productDiscountsTemplate) throw new Error('Product discounts template not found')
+
+    vi.mocked(generateExtensionPrompts).mockResolvedValue({
+      extensionTemplate: productDiscountsTemplate,
+      extensionContent: {
+        name: 'product_discounts',
+        flavor: 'vanilla-js',
+        relatedExtensions: [
+          {
+            type: 'function',
+            name: 'product_discounts',
+            directory: 'product_discounts_function/product_discounts_function',
+          },
+          {
+            type: 'ui_extension',
+            name: 'discount_function_settings',
+            directory: 'discount_ui/discount_ui',
+          },
+        ],
+      },
+    })
+
+    // When
+    await generate({
+      directory: '/',
+      reset: false,
+      app,
+      remoteApp,
+      specifications,
+      developerPlatformClient,
+    })
+
+    // Then
+    expect(generateExtensionTemplate).toHaveBeenCalledTimes(2)
+
+    // Verify first extension (UI)
+    expect(generateExtensionTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extensionContent: expect.objectContaining({
+          name: 'discount_function_settings',
+          type: 'ui_extension',
+        }),
+      }),
+    )
+
+    // Verify second extension (function)
+    expect(generateExtensionTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extensionContent: expect.objectContaining({
+          name: 'product_discounts',
+          type: 'function',
+        }),
+      }),
+    )
+
+    // Verify shared configuration file was created
+    expect(outputInfo.info()).toContain('extensions/google-maps-validation')
   })
 })
 

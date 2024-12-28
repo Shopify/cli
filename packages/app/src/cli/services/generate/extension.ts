@@ -60,6 +60,7 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): Template
 export interface GeneratedExtension {
   directory: string
   extensionTemplate: ExtensionTemplate
+  handle: string
 }
 
 interface ExtensionInitOptions {
@@ -72,7 +73,7 @@ interface ExtensionInitOptions {
   uid: string | undefined
   onGetTemplateRepository: (url: string, destination: string) => Promise<void>
 }
-
+// This might become plural?
 export async function generateExtensionTemplate(
   options: GenerateExtensionTemplateOptions,
 ): Promise<GeneratedExtension> {
@@ -99,7 +100,11 @@ export async function generateExtensionTemplate(
       }),
   }
   await extensionInit(initOptions)
-  return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
+  return {
+    directory: relativizePath(directory),
+    extensionTemplate: options.extensionTemplate,
+    handle: slugify(extensionName),
+  }
 }
 
 async function extensionInit(options: ExtensionInitOptions) {
@@ -152,6 +157,7 @@ async function functionExtensionInit({
   uid,
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
+  // Here we'd want to write the ui extension handle in the function toml
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
   const taskList = []
 
@@ -168,6 +174,8 @@ async function functionExtensionInit({
         await recursiveLiquidTemplateCopy(templateDirectory, directory, {
           name,
           handle: slugify(name),
+          // TODO: This is where we'd want to write the ui extension handle in the function toml
+          uiExtensionHandle: slugify(name),
           flavor: extensionFlavor?.value,
           uid,
         })
@@ -221,7 +229,6 @@ async function uiExtensionInit({
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
-
   const tasks = [
     {
       title: `Generating extension`,

@@ -17,4 +17,9 @@ export interface ExtensionTemplate {
   extensionPoints: string[]
   supportedFlavors: ExtensionFlavor[]
   url: string
+  relatedExtensions?: {
+    type: string
+    name: string
+    directory: string
+  }[]
 }

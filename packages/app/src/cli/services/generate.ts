@@ -1,4 +1,5 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
+import {workflowRegistry, WorkflowResult} from './generate/workflows/registry.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
@@ -23,7 +24,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
-interface GenerateOptions {
+export interface GenerateOptions {
   app: AppLinkedInterface
   specifications: RemoteAwareExtensionSpecification[]
   remoteApp: OrganizationApp
@@ -50,10 +51,27 @@ async function generate(options: GenerateOptions) {
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  renderSuccessMessage(generatedExtension, app.packageManager)
+  const workflow = workflowRegistry[generatedExtension.extensionTemplate.identifier]
+  if (!workflow) {
+    renderSuccessMessage(generatedExtension, app.packageManager)
+    return
+  }
+
+  const workflowResult = await workflow?.afterGenerate({
+    generateOptions: options,
+    generatedExtension,
+    extensionTemplateOptions: generateExtensionOptions,
+    extensionTemplates,
+  })
+
+  if (!workflowResult?.success) {
+    // TODO: Cleanup extension?
+  }
+
+  renderSuccessMessage(generatedExtension, app.packageManager, workflowResult)
 }
 
-async function buildPromptOptions(
+export async function buildPromptOptions(
   extensionTemplates: ExtensionTemplate[],
   specifications: ExtensionSpecification[],
   app: AppInterface,
@@ -85,6 +103,7 @@ function checkLimits(
     const allValid = !limitReached(app, specifications, template)
     return allValid ? 'validTemplates' : 'templatesOverlimit'
   }
+
   return groupBy(extensionTemplates, iterateeFunction)
 }
 
@@ -104,7 +123,7 @@ async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutpu
   }))
 }
 
-function buildGenerateOptions(
+export function buildGenerateOptions(
   promptAnswers: GenerateExtensionPromptOutput,
   app: AppInterface,
   options: GenerateOptions,
@@ -119,11 +138,16 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager']) {
+function renderSuccessMessage(
+  extension: GeneratedExtension,
+  packageManager: AppInterface['packageManager'],
+  workflowResult?: WorkflowResult,
+) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,
     packageManager,
+    workflowResult,
   )
   renderSuccess(formattedSuccessfulMessage)
 }
@@ -145,11 +169,17 @@ function formatSuccessfulRunMessage(
   extensionTemplate: ExtensionTemplate,
   extensionDirectory: string,
   depndencyManager: PackageManager,
+  workflowResult?: WorkflowResult,
 ): RenderAlertOptions {
+  const workflowMessage = workflowResult?.message
   const options: RenderAlertOptions = {
-    headline: ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
-    nextSteps: [],
-    reference: [],
+    headline: workflowMessage?.headline || [
+      'Your extension was created in',
+      {filePath: extensionDirectory},
+      {char: '.'},
+    ],
+    nextSteps: workflowMessage?.nextSteps || [],
+    reference: workflowMessage?.reference || [],
   }
 
   if (extensionTemplate.type !== 'function') {

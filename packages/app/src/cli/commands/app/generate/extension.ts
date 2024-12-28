@@ -8,6 +8,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
+import { workflowFlags} from '../../../services/generate/workflows/registry.js'
 
 export default class AppGenerateExtension extends AppCommand {
   static summary = 'Generate a new app Extension.'
@@ -23,6 +24,7 @@ export default class AppGenerateExtension extends AppCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...workflowFlags(),
     type: Flags.string({
       char: 't',
       hidden: false,
