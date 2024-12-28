@@ -12,9 +12,10 @@ interface Options {
   name?: string
   id?: number
   json: boolean
+  ignoreDevelopmentThemes?: boolean
 }
 
-export async function list(adminSession: AdminSession, options: Options) {
+export async function list(adminSession: AdminSession, options: Options): Promise<string> {
   const store = adminSession.storeFqdn
   const filter = new Filter({
     ...ALLOWED_ROLES.reduce((roles: FilterProps, role) => {
@@ -25,14 +26,16 @@ export async function list(adminSession: AdminSession, options: Options) {
   })
 
   let storeThemes = await fetchStoreThemes(adminSession)
-  const developmentTheme = getDevelopmentTheme()
+  const developmentTheme = options.ignoreDevelopmentThemes ? undefined : getDevelopmentTheme()
   const hostTheme = getHostTheme(store)
   if (filter.any()) {
     storeThemes = filterThemes(store, storeThemes, filter)
   }
 
+  const themesJson = JSON.stringify(storeThemes, null, 2)
   if (options.json) {
-    return outputInfo(JSON.stringify(storeThemes, null, 2))
+    outputInfo(themesJson)
+    return themesJson
   }
 
   const themes = storeThemes.map(({id, name, role}) => {
@@ -51,4 +54,5 @@ export async function list(adminSession: AdminSession, options: Options) {
   })
 
   renderTable({rows: themes, columns})
+  return themesJson
 }

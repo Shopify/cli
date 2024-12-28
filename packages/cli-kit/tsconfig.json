@@ -3,6 +3,7 @@
   "include": ["./src/**/*.ts", "decs.d.ts", "./src/**/*.tsx"],
   "exclude": ["./dist"],
   "compilerOptions": {
+    "lib": ["ES2020", "DOM"],
     "outDir": "dist",
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
