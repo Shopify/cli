@@ -3,6 +3,7 @@ import {buildTomlObject as buildFlowTomlObject} from '../../services/flow/extens
 import {buildTomlObject as buildAdminLinkTomlObject} from '../../services/admin-link/extension-to-toml.js'
 import {buildTomlObject as buildMarketingActivityTomlObject} from '../../services/marketing_activity/extension-to-toml.js'
 import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../../services/subscription_link/extension-to-toml.js'
+import {buildTomlObject as buildProductConfigurationLinkTomlObject} from '../../services/product_configuration_link/extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
 import {importExtensions} from '../../services/import-extensions.js'
@@ -62,6 +63,12 @@ const getMigrationChoices = (): MigrationChoice[] => [
     value: 'link extension',
     extensionTypes: ['app_link', 'bulk_action'],
     buildTomlObject: buildAdminLinkTomlObject,
+  },
+  {
+    label: 'Product Configuration Link Extensions',
+    value: 'product configuration link',
+    extensionTypes: ['product_configuration_link'],
+    buildTomlObject: buildProductConfigurationLinkTomlObject,
   },
 ]
 
