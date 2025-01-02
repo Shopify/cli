@@ -46,7 +46,6 @@ export const resetHelpMessage: Token[] = [
 
 interface AppFromIdOptions {
   apiKey: string
-  id?: string
   organizationId?: string
   developerPlatformClient: DeveloperPlatformClient
 }
