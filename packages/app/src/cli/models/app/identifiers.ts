@@ -48,17 +48,9 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command, developerPlatformClient}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
-  if (developerPlatformClient.supportsAtomicDeployments) {
-    // We can't update the TOML files in parallel because some extensions might share the same file
-    for (const extension of app.allExtensions) {
-      // eslint-disable-next-line no-await-in-loop
-      await addUidToToml(extension)
-    }
-  }
-
   let dotenvFile = app.dotenv
 
   if (!dotenvFile) {
@@ -95,8 +87,21 @@ export async function updateAppIdentifiers(
   return app
 }
 
+export async function addUidToTomlsIfNecessary(
+  extensions: ExtensionInstance[],
+  developerPlatformClient: DeveloperPlatformClient,
+) {
+  if (!developerPlatformClient.supportsAtomicDeployments) return
+
+  // We can't update the TOML files in parallel because some extensions might share the same file
+  for (const extension of extensions) {
+    // eslint-disable-next-line no-await-in-loop
+    await addUidToToml(extension)
+  }
+}
+
 async function addUidToToml(extension: ExtensionInstance) {
-  if (!extension.isUUIDStrategyExtension) return
+  if (!extension.isUUIDStrategyExtension || extension.configuration.uid) return
 
   const tomlContents = await readFile(extension.configurationPath)
   const extensionConfig = decodeToml(tomlContents)

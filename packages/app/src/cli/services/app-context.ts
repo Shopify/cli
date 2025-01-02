@@ -9,6 +9,7 @@ import {getAppConfigurationState, loadAppUsingConfigurationState} from '../model
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
+import {addUidToTomlsIfNecessary} from '../models/app/identifiers.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
 export interface LoadedAppContextOutput {
@@ -98,6 +99,9 @@ export async function linkedAppContext({
   }
 
   await logMetadata(remoteApp, forceRelink)
+
+  // Add UIDs to extension TOML files if using app-management.
+  await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
