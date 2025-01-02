@@ -12,20 +12,14 @@ import {
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
-import {RequestClientError} from './api/headers.js'
-import {getCachedPartnerAccountStatus, setCachedPartnerAccountStatus} from './conf-store.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, isAppManagementEnabled, themeToken} from '../../public/node/context/local.js'
+import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
-import {partnersRequest} from '../../public/node/api/partners.js'
-import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
-import {openURL} from '../../public/node/system.js'
-import {keypress} from '../../public/node/ui.js'
+import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
-import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {isSpin} from '@shopify/cli-kit/node/context/spin'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
@@ -247,9 +241,6 @@ The CLI is currently unable to prompt for reauthentication.`,
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }
-  if (!envToken && tokens.partners) {
-    await ensureUserHasPartnerAccount(tokens.partners, tokens.userId)
-  }
 
   setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
@@ -299,74 +290,6 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   outputCompleted('Logged in.')
 
   return session
-}
-
-/**
- * If the user creates an account from the Identity website, the created
- * account won't get a Partner organization created. We need to detect that
- * and take the user to create a partner organization.
- *
- * @param partnersToken - Partners token.
- */
-async function ensureUserHasPartnerAccount(partnersToken: string, userId: string | undefined) {
-  if (isAppManagementEnabled()) return
-
-  outputDebug(outputContent`Verifying that the user has a Partner organization`)
-  if (!(await hasPartnerAccount(partnersToken, userId))) {
-    outputInfo(`\nA Shopify Partners organization is needed to proceed.`)
-    outputInfo(`👉 Press any key to create one`)
-    await keypress()
-    await openURL(`https://${await partnersFqdn()}/signup`)
-    outputInfo(outputContent`👉 Press any key when you have ${outputToken.cyan('created the organization')}`)
-    outputWarn(outputContent`Make sure you've confirmed your Shopify and the Partner organization from the email`)
-    await keypress()
-    if (!(await hasPartnerAccount(partnersToken, userId))) {
-      throw new AbortError(
-        `Couldn't find your Shopify Partners organization`,
-        `Have you confirmed your accounts from the emails you received?`,
-      )
-    }
-  }
-}
-
-// eslint-disable-next-line @shopify/cli/no-inline-graphql
-const getFirstOrganization = gql`
-  {
-    organizations(first: 1) {
-      nodes {
-        id
-      }
-    }
-  }
-`
-
-/**
- * Validate if the current token is valid for partners API.
- *
- * @param partnersToken - Partners token.
- * @returns A promise that resolves to true if the token is valid for partners API.
- */
-async function hasPartnerAccount(partnersToken: string, userId?: string): Promise<boolean> {
-  const cacheKey = userId ?? partnersToken
-  const cachedStatus = getCachedPartnerAccountStatus(cacheKey)
-
-  if (cachedStatus) {
-    outputDebug(`Confirmed partner account exists from cache`)
-    return true
-  }
-
-  try {
-    await partnersRequest(getFirstOrganization, partnersToken)
-    setCachedPartnerAccountStatus(cacheKey)
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    if (error instanceof RequestClientError && error.statusCode === 404) {
-      return false
-    } else {
-      return true
-    }
-  }
 }
 
 /**
