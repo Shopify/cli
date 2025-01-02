@@ -116,7 +116,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
+    configSchema: (app.configSchema ?? AppConfigurationSchema) as unknown,
     remoteFlags: app.remoteFlags ?? [],
   })
 
@@ -214,9 +214,6 @@ export async function testUIExtension(
       collect_buyer_consent: {
         sms_marketing: false,
         customer_privacy: false,
-      },
-      iframe: {
-        sources: [],
       },
     },
     extension_points: [

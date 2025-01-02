@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-invalid-void-type */
 /* eslint-disable @shopify/strict-component-boundaries */
 import {FlattenedLocalization, Localization} from './i18n'
 import './ExtensionServerClient/types'
@@ -104,16 +103,11 @@ interface CollectBuyerConsentCapabilities {
   customerPrivacy: boolean
 }
 
-interface IframeCapabilities {
-  sources: string[]
-}
-
 interface Capabilities {
   apiAccess: boolean
   blockProgress: boolean
   networkAccess: boolean
   collectBuyerConsent: CollectBuyerConsentCapabilities
-  iframe: IframeCapabilities
 }
 
 export interface ExtensionPayload {
