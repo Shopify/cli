@@ -18,6 +18,7 @@ vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
 vi.mock('./dev/fetch.js')
+vi.mock('./app/add-uid-to-extension-toml.js')
 
 async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
