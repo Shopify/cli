@@ -5340,6 +5340,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "-p, --dev-preview",
+                "value": "\"\"",
+                "description": "Uses the new framework theme as the default clone-url",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_CLONE_URL"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "-u, --clone-url <value>",
                 "value": "string",
                 "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
@@ -5347,7 +5356,7 @@
                 "environmentValue": "SHOPIFY_FLAG_CLONE_URL"
               }
             ],
-            "value": "export interface themeinit {\n  /**\n   * The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeinit {\n  /**\n   * The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Uses the new framework theme as the default clone-url\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-p, --dev-preview'?: ''\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
