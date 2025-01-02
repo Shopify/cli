@@ -7,6 +7,7 @@ import {parseJSON} from '@shopify/theme-check-node'
 
 const themeFilesPattern = [
   'assets/**',
+  'blocks/**',
   'config/**',
   'layout/**',
   'locales/**',
