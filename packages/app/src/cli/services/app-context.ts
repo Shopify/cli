@@ -3,6 +3,7 @@ import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
 import {fetchOrgFromId} from './dev/fetch.js'
+import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
@@ -98,6 +99,9 @@ export async function linkedAppContext({
   }
 
   await logMetadata(remoteApp, forceRelink)
+
+  // Add UIDs to extension TOML files if using app-management.
+  await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
