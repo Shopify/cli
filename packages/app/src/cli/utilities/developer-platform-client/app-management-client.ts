@@ -397,11 +397,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // we are returning OrganizationStore type here because we want to keep types consistent btwn
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
-  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+  async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
     const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
+      {searchTerm},
     )
     const organization = storesResult.organization
 
@@ -410,7 +411,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    return mapBusinessPlatformStoresToOrganizationStores(shopArray)
+    return {
+      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray),
+      hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
+    }
   }
 
   async appExtensionRegistrations(
