@@ -2,8 +2,13 @@ import {appDiff} from './app-diffing.js'
 import {testApp, testAppConfigExtensions, testUIExtension} from '../../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
-const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
-const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
+const extension1 = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h1',
+  directory: '/extensions/ui_extension_1',
+  uid: 'uid1',
+})
+const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2', uid: 'uid2'})
 const posExtension = await testAppConfigExtensions()
 const posExtensionWithDifferentConfig = await testAppConfigExtensions(true)
 
