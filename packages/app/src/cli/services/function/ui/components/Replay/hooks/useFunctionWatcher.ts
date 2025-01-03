@@ -61,8 +61,8 @@ export function useFunctionWatcher({
       setRecentFunctionRuns((recentFunctionRuns) => {
         return [functionRun, recentFunctionRuns[0]]
       })
-      setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
       setLogs((logs) => [...logs, functionRun])
+      setStatusMessage(`Watching for changes to ${selectedRun.source}...`)
     }
 
     const initialReplay = async () => {
