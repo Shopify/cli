@@ -15,7 +15,7 @@ const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
 const EXTENSION_CREATION_TIMEOUT_IN_MS = 60000
 const EXTENSION_CREATION_CHECK_INTERVAL_IN_MS = 200
 const FILE_DELETE_TIMEOUT_IN_MS = 500
-
+const EXTENSION_MOVE_CHECK_INTERVAL_IN_MS = 100
 /**
  * Event emitted by the file watcher
  *
@@ -221,8 +221,11 @@ export class FileWatcher {
           this.pushEvent({type: 'app_config_deleted', path, extensionPath, startTime})
         } else if (isExtensionToml) {
           // When a toml is deleted, we can consider every extension in that folder was deleted.
-          this.extensionPaths = this.extensionPaths.filter((extPath) => extPath !== extensionPath)
-          this.pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
+          // We need to wait in case this is actually just moving folders around, not deleting them.
+          setTimeout(() => {
+            this.extensionPaths = this.extensionPaths.filter((extPath) => extPath !== extensionPath)
+            this.pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
+          }, EXTENSION_MOVE_CHECK_INTERVAL_IN_MS)
         } else {
           setTimeout(() => {
             // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.

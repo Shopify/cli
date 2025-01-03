@@ -172,6 +172,7 @@ async function handleDevSessionResult(
 async function printActionRequiredMessages(processOptions: DevSessionProcessOptions, event?: AppEvent) {
   if (!event) return
   const extensionEvents = event.extensionEvents ?? []
+
   const warningMessages = getArrayRejectingUndefined(
     await Promise.all(
       extensionEvents.map((eve) =>

@@ -20,20 +20,21 @@ interface AppExtensionsDiff {
  */
 export function appDiff(app: AppInterface, newApp: AppInterface, includeUpdated = true): AppExtensionsDiff {
   const oldExtensions = app.realExtensions
-  const oldExtensionsHandles = oldExtensions.map((ext) => ext.handle)
+  const oldExtensionsUids = oldExtensions.map((ext) => ext.uid)
   const newExtensions = newApp.realExtensions
-  const newExtensionsHandles = newExtensions.map((ext) => ext.handle)
+  const newExtensionsUids = newExtensions.map((ext) => ext.uid)
 
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsHandles.includes(ext.handle))
-  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsHandles.includes(ext.handle))
+  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsUids.includes(ext.uid))
+  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsUids.includes(ext.uid))
 
   let updatedExtensions
   if (includeUpdated) {
     updatedExtensions = newExtensions.filter((ext) => {
-      const oldConfig = oldExtensions.find((oldExt) => oldExt.handle === ext.handle)?.configuration
-      const newConfig = ext.configuration
-      if (oldConfig === undefined) return false
-      return JSON.stringify(oldConfig) !== JSON.stringify(newConfig)
+      const oldExtension = oldExtensions.find((oldExt) => oldExt.uid === ext.uid)
+      if (!oldExtension) return false
+      const configChanged = JSON.stringify(oldExtension.configuration) !== JSON.stringify(ext.configuration)
+      const extensionPathChanged = oldExtension.configurationPath !== ext.configurationPath
+      return configChanged || extensionPathChanged
     })
   }
 
