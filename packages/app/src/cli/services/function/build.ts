@@ -9,13 +9,15 @@ import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/out
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
-import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {findPathUp, inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
+
+const SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '1'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
@@ -105,6 +107,18 @@ export async function buildGraphqlTypes(
   })
 }
 
+const MissingShopifyFunctionPackageError = new AbortError(
+  'Could not find the Shopify Functions JavaScript library.',
+  outputContent`Make sure you have the ${outputToken.yellow('@shopify/shopify_function')} library installed.`,
+  [
+    outputContent`Add ${outputToken.green(
+      `"@shopify/shopify_function": "~${SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0"`,
+    )} to the dependencies section of the package.json file in your function's directory, if not already present.`
+      .value,
+    `Run your package manager's install command to update dependencies.`,
+  ],
+)
+
 async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<FunctionConfigType>) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
@@ -117,19 +131,7 @@ async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<F
   })
 
   if (!entryPoint || !runModule) {
-    throw new AbortError(
-      'Could not find the Shopify Functions JavaScript library.',
-      outputContent`Make sure you have the latest ${outputToken.yellow(
-        '@shopify/shopify_function',
-      )} library installed.`,
-      [
-        outputContent`Add ${outputToken.green(
-          '"@shopify/shopify_function": "1.0.0"',
-        )} to the dependencies section of the package.json file in your function's directory, if not already present.`
-          .value,
-        `Run your package manager's install command to update dependencies.`,
-      ],
-    )
+    throw MissingShopifyFunctionPackageError
   }
 
   if (!fun.entrySourceFilePath) {
@@ -139,11 +141,42 @@ async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<F
   return entryPoint
 }
 
+async function validateShopifyFunctionPackageVersion(fun: ExtensionInstance<FunctionConfigType>) {
+  const packageJsonPath = await findPathUp('node_modules/@shopify/shopify_function/package.json', {
+    type: 'file',
+    cwd: fun.directory,
+  })
+
+  if (!packageJsonPath) {
+    throw MissingShopifyFunctionPackageError
+  }
+
+  const packageJson = JSON.parse(await readFile(packageJsonPath))
+  const majorVersion = packageJson.version.split('.')[0]
+
+  if (majorVersion !== SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION) {
+    throw new AbortError(
+      'The installed version of the Shopify Functions JavaScript library is not compatible with this version of Shopify CLI.',
+      outputContent`Make sure you have a compatible version of the ${outputToken.yellow(
+        '@shopify/shopify_function',
+      )} library installed.`,
+      [
+        outputContent`Add ${outputToken.green(
+          `"@shopify/shopify_function": "~${SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0"`,
+        )} to the dependencies section of the package.json file in your function's directory, if not already present.`
+          .value,
+        `Run your package manager's install command to update dependencies.`,
+      ],
+    )
+  }
+}
+
 export async function bundleExtension(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
   processEnv = process.env,
 ) {
+  await validateShopifyFunctionPackageVersion(fun)
   const entryPoint = await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
   const esbuildOptions = {
@@ -276,6 +309,7 @@ export class ExportJavyBuilder implements JavyBuilder {
   }
 
   async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions, processEnv = process.env) {
+    await validateShopifyFunctionPackageVersion(fun)
     await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
     const contents = this.entrypointContents

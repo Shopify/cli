@@ -67,6 +67,9 @@ async function installShopifyLibrary(tmpDir: string) {
   const runModule = joinPath(shopifyFunctionDir, 'run.ts')
   await writeFile(runModule, '')
 
+  const packageJson = joinPath(shopifyFunctionDir, 'package.json')
+  await writeFile(packageJson, JSON.stringify({version: '1.0.0'}))
+
   return shopifyFunction
 }
 
@@ -133,6 +136,28 @@ describe('bundleExtension', () => {
 
       // Then
       await expect(got).rejects.toThrow(/Could not find the Shopify Functions JavaScript library/)
+    })
+  })
+
+  test('errors if shopify library is not on a compatible version', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const incompatibleVersion = '0.0.1'
+      const ourFunction = await testFunctionExtension({dir: tmpDir})
+      ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
+      await installShopifyLibrary(tmpDir)
+      await writeFile(
+        joinPath(tmpDir, 'node_modules/@shopify/shopify_function/package.json'),
+        JSON.stringify({version: incompatibleVersion}),
+      )
+
+      // When
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
+
+      // Then
+      await expect(got).rejects.toThrow(
+        /The installed version of the Shopify Functions JavaScript library is not compatible with this version of Shopify CLI./,
+      )
     })
   })
 
