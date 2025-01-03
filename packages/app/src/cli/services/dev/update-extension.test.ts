@@ -49,9 +49,10 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         configuration,
         directory: tmpDir,
+        uid: 'uid1',
       })
 
-      await mkdir(joinPath(tmpDir, 'mock-handle', 'dist'))
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
       const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
       await writeFile(outputPath, 'test content')
 
@@ -259,9 +260,10 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         directory: tmpDir,
         type: 'web_pixel_extension',
+        uid: 'uid1',
       })
 
-      await mkdir(joinPath(tmpDir, mockExtension.handle, 'dist'))
+      await mkdir(joinPath(tmpDir, mockExtension.uid, 'dist'))
       const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
       await writeFile(outputPath, 'test content')
 
