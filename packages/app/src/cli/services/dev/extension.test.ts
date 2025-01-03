@@ -65,7 +65,7 @@ describe('devUIExtensions()', () => {
 
     // THEN
     expect(server.setupHTTPServer).toHaveBeenCalledWith({
-      devOptions: options,
+      devOptions: {...options, websocketURL: 'wss://mock.url/extensions'},
       payloadStore: {mock: 'payload-store'},
     })
   })
@@ -82,6 +82,7 @@ describe('devUIExtensions()', () => {
       ...options,
       httpServer: expect.objectContaining({mock: 'http-server'}),
       payloadStore: {mock: 'payload-store'},
+      websocketURL: 'wss://mock.url/extensions',
     })
   })
 
