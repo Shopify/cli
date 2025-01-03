@@ -30,6 +30,7 @@ vi.mock('../../models/app/loader.js', async () => {
 
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
+const handle = 'mock-handle'
 const stdout = {write: vi.fn()} as any
 const stderr = {write: vi.fn()} as any
 
@@ -41,7 +42,7 @@ describe('updateExtensionDraft()', () => {
         runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
-        handle: 'mock-handle',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
@@ -69,7 +70,7 @@ describe('updateExtensionDraft()', () => {
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
         apiKey,
         context: '',
-        handle: 'mock-handle',
+        handle,
         registrationId,
         config:
           '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object"},"serialized_script":"dGVzdCBjb250ZW50"}',
