@@ -3,7 +3,7 @@ import {batchedRequests} from '../batching.js'
 import {MAX_GRAPHQL_THEME_FILES} from '../../constants.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -179,9 +179,13 @@ async function performFileReconciliation(
     )
   })
 
-  const deleteRemoteFiles = remoteFilesToDelete.map((file) => deleteThemeAsset(targetTheme.id, file.key, session))
+  const deleteRemoteFiles = deleteThemeAssets(
+    targetTheme.id,
+    remoteFilesToDelete.map((file) => file.key),
+    session,
+  )
 
-  await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, ...deleteRemoteFiles])
+  await Promise.all([...deleteLocalFiles, ...downloadRemoteFiles, deleteRemoteFiles])
 }
 
 async function partitionFilesByReconciliationStrategy(
