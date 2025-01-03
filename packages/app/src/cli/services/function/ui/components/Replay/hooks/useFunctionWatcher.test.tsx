@@ -4,8 +4,8 @@ import {testAppLinked, testFunctionExtension} from '../../../../../../models/app
 import {runFunction} from '../../../../runner.js'
 import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {render} from '@shopify/cli-kit/node/testing/ui'
-import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
+import {render, waitFor} from '@shopify/cli-kit/node/testing/ui'
+import {test, describe, vi, expect} from 'vitest'
 import React from 'react'
 import {Writable} from 'stream'
 
@@ -47,8 +47,8 @@ const EXEC_RESPONSE = {
   output: SELECTED_RUN.payload.output,
   logs: SELECTED_RUN.payload.logs,
   name: SELECTED_RUN.source,
-  size: 0,
-  memory_usage: 0,
+  size: 1,
+  memory_usage: 1,
   instructions: SELECTED_RUN.payload.fuelConsumed,
 }
 
@@ -57,20 +57,12 @@ const SECOND_EXEC_RESPONSE = {
   output: SELECTED_RUN.payload.output,
   logs: SELECTED_RUN.payload.logs,
   name: SELECTED_RUN.source,
-  size: 1,
-  memory_usage: 1,
+  size: 2,
+  memory_usage: 2,
   instructions: SELECTED_RUN.payload.fuelConsumed,
 }
 
 describe('useFunctionWatcher', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.clearAllTimers()
-  })
-
   test('runs function once in watch mode without changes', async () => {
     // Given
     vi.mocked(runFunction).mockImplementation(runFunctionMockImplementation(EXEC_RESPONSE))
@@ -85,12 +77,21 @@ describe('useFunctionWatcher', () => {
         appWatcher: new AppEventWatcher(APP),
       }),
     )
-    // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
+
+    await waitFor(
+      () => {},
+      () => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size,
+    )
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
+    expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({
+      ...EXEC_RESPONSE,
+      type: 'functionRun',
+      size: 0,
+      memory_usage: 0,
+    })
   })
 
   test('file watcher onChange re-runs function', async () => {
@@ -113,13 +114,24 @@ describe('useFunctionWatcher', () => {
     )
 
     // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
+    await waitFor(
+      () => {},
+      () => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size,
+    )
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
-    expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
+    expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({
+      ...EXEC_RESPONSE,
+      type: 'functionRun',
+      size: 0,
+      memory_usage: 0,
+    })
 
     appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(0)
+    await waitFor(
+      () => {},
+      () => hook.lastResult?.recentFunctionRuns[0].size === SECOND_EXEC_RESPONSE.size,
+    )
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
@@ -151,10 +163,16 @@ describe('useFunctionWatcher', () => {
     )
 
     // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
+    await waitFor(
+      () => {},
+      () => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size,
+    )
 
     appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(0)
+    await waitFor(
+      () => {},
+      () => hook.lastResult?.error !== undefined,
+    )
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
