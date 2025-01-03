@@ -24,23 +24,9 @@ vi.mock('../../../models/app/loader.js')
 vi.mock('./app-watcher-esbuild.js')
 
 // Extensions 1 and 1B simulate extensions defined in the same directory (same toml)
-const extension1 = await testUIExtension({
-  type: 'ui_extension',
-  handle: 'h1',
-  directory: '/extensions/ui_extension_1',
-  uid: 'uid1',
-})
-const extension1B = await testUIExtension({
-  type: 'ui_extension',
-  handle: 'h2',
-  directory: '/extensions/ui_extension_1',
-  uid: 'uid1B',
-})
-const extension2 = await testUIExtension({
-  type: 'ui_extension',
-  directory: '/extensions/ui_extension_2',
-  uid: 'uid2',
-})
+const extension1 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1'})
+const extension1B = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1B'})
+const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2', uid: 'uid2'})
 const flowExtension = await testFlowActionExtension('/extensions/flow_action')
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
@@ -50,14 +36,12 @@ const webhookExtension = await testSingleWebhookSubscriptionExtension()
 const extension1Updated = await testUIExtension({
   type: 'ui_extension',
   name: 'updated_name1',
-  handle: 'h1',
   directory: '/extensions/ui_extension_1',
   uid: 'uid1',
 })
 const extension1BUpdated = await testUIExtension({
   type: 'ui_extension',
   name: 'updated_name1B',
-  handle: 'h2',
   directory: '/extensions/ui_extension_1',
   uid: 'uid1B',
 })

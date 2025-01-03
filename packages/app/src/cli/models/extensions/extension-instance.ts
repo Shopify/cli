@@ -370,7 +370,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   getOutputFolderId(extensionId?: string) {
-    return extensionId ?? this.configuration.uid ?? this.handle
+    return extensionId ?? this.uid ?? this.handle
   }
 
   getOutputPathForDirectory(directory: string, extensionId?: string) {

@@ -12,17 +12,8 @@ vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
   },
 }))
 
-const extension1 = await testUIExtension({
-  type: 'ui_extension',
-  handle: 'h1',
-  directory: '/extensions/ui_extension_1',
-  uid: 'uid1',
-})
-const extension2 = await testUIExtension({
-  type: 'ui_extension',
-  directory: '/extensions/ui_extension_2',
-  uid: 'uid2',
-})
+const extension1 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1'})
+const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2', uid: 'uid2'})
 
 describe('app-watcher-esbuild', () => {
   const options: DevAppWatcherOptions = {
@@ -138,6 +129,6 @@ describe('app-watcher-esbuild', () => {
 
     // Then
     expect(spyContext).toHaveBeenCalled()
-    expect(spyCopy).toHaveBeenCalledWith('/path/to/output/h1/dist', '/extensions/ui_extension_1/dist')
+    expect(spyCopy).toHaveBeenCalledWith('/path/to/output/uid1/dist', '/extensions/ui_extension_1/dist')
   })
 })
