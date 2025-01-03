@@ -30,7 +30,6 @@ vi.mock('../../models/app/loader.js', async () => {
 
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
-const handle = 'mock-handle'
 const stdout = {write: vi.fn()} as any
 const stderr = {write: vi.fn()} as any
 
@@ -42,16 +41,17 @@ describe('updateExtensionDraft()', () => {
         runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
-        handle,
+        handle: 'mock-handle',
       } as any
 
       const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,
+        uid: 'uid1',
       })
 
-      await mkdir(joinPath(tmpDir, 'mock-handle', 'dist'))
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
       const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
       await writeFile(outputPath, 'test content')
 
@@ -69,7 +69,7 @@ describe('updateExtensionDraft()', () => {
       expect(developerPlatformClient.updateExtension).toHaveBeenCalledWith({
         apiKey,
         context: '',
-        handle,
+        handle: 'mock-handle',
         registrationId,
         config:
           '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object"},"serialized_script":"dGVzdCBjb250ZW50"}',
@@ -259,9 +259,10 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         directory: tmpDir,
         type: 'web_pixel_extension',
+        uid: 'uid1',
       })
 
-      await mkdir(joinPath(tmpDir, mockExtension.handle, 'dist'))
+      await mkdir(joinPath(tmpDir, mockExtension.uid, 'dist'))
       const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
       await writeFile(outputPath, 'test content')
 
