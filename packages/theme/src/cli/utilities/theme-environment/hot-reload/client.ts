@@ -1,38 +1,29 @@
 // eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
 /// <reference lib="dom" />
 
+export interface HotReloadEventPayload {
+  isAppExtension?: boolean
+  sectionNames?: string[]
+  replaceTemplates?: {[key: string]: string}
+}
+
 export type HotReloadEvent =
   | {
       type: 'open'
       pid: string
     }
   | {
-      type: 'section'
-      key: string
-      names: string[]
-      sectionNames: string[]
-      replaceTemplates: {[key: string]: string}
-    }
-  | {
-      type: 'css'
-      key: string
-    }
-  | {
       type: 'full'
       key: string
     }
   | {
-      type: 'extCss'
+      type: 'update' | 'delete'
       key: string
-    }
-  | {
-      type: 'extAppBlock'
-      key: string
+      sync: 'local' | 'remote'
+      payload?: HotReloadEventPayload
     }
 
-type HotReloadActionMap = {
-  [T in HotReloadEvent['type']]: (data: HotReloadEvent & {type: T}) => Promise<void>
-}
+type UpdateEvent = HotReloadEvent & {type: 'update' | 'delete'}
 
 export function getClientScripts() {
   return injectFunction(hotReloadScript)
@@ -53,8 +44,9 @@ function hotReloadScript() {
   const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
 
   // eslint-disable-next-line no-console
+  const logDebug = console.debug.bind(console, prefix)
+  // eslint-disable-next-line no-console
   const logInfo = console.info.bind(console, prefix)
-
   // eslint-disable-next-line no-console
   const logError = console.error.bind(console, prefix)
 
@@ -76,12 +68,12 @@ function hotReloadScript() {
     }
   }
 
-  const refreshSections = async (data: HotReloadEvent & {type: 'section' | 'extAppBlock'}, elements: Element[]) => {
+  const refreshSections = async (data: UpdateEvent, elements: Element[]) => {
     const controller = new AbortController()
 
     await Promise.all(
       elements.map(async (element) => {
-        const prefix = data.type === 'section' ? 'section' : 'app'
+        const prefix = data.payload?.isAppExtension ? 'app' : 'section'
         const sectionId = element.id.replace(/^shopify-section-/, '')
         const params = [
           `section-id=${encodeURIComponent(sectionId)}`,
@@ -107,7 +99,7 @@ function hotReloadScript() {
     })
   }
 
-  const refreshAppEmbedBlock = async (data: HotReloadEvent & {type: 'extAppBlock'}, block: Element) => {
+  const refreshAppEmbedBlock = async (data: UpdateEvent, block: Element) => {
     const controller = new AbortController()
 
     const appEmbedBlockId = block.id.replace(/^shopify-block-/, '')
@@ -128,7 +120,7 @@ function hotReloadScript() {
     block.outerHTML = await response.text()
   }
 
-  const refreshAppBlock = async (data: HotReloadEvent & {type: 'extAppBlock'}, block: Element) => {
+  const refreshAppBlock = async (data: UpdateEvent, block: Element) => {
     const blockSection = block.closest(`[id^=shopify-section-]`)
     const isAppEmbed = blockSection === null
 
@@ -141,24 +133,15 @@ function hotReloadScript() {
     }
   }
 
-  const action: HotReloadActionMap = {
-    open: async (data) => {
-      serverPid ??= data.pid
-
-      // If the server PID is different it means that the process has been restarted.
-      // Trigger a full-refresh to get all the latest changes.
-      if (serverPid !== data.pid) {
-        fullPageReload('Reconnected to new server')
-      }
-    },
-    section: async (data) => {
-      const elements = data.names.flatMap((name) =>
+  const actions = {
+    updateSections: async (data: UpdateEvent) => {
+      const elements = data.payload?.sectionNames?.flatMap((name) =>
         Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
       )
 
-      if (elements.length > 0) {
+      if (elements?.length) {
         await refreshSections(data, elements)
-        logInfo(`Updated sections for "${data.key}":`, data.names)
+        logInfo(`Updated sections for "${data.key}":`, data.payload?.sectionNames)
       } else {
         // No sections found. Possible scenarios:
         // - The section has been removed.
@@ -167,26 +150,25 @@ function hotReloadScript() {
         fullPageReload(data.key)
       }
     },
-    css: async (data) => {
+    updateCss: async (data: UpdateEvent) => {
+      const normalizedKey = data.key.replace(/.liquid$/, '')
       const elements: HTMLLinkElement[] = Array.from(
-        document.querySelectorAll(`link[rel="stylesheet"][href^="/cdn/"][href*="${data.key}?"]`),
+        document.querySelectorAll(`link[rel="stylesheet"][href^="/cdn/"][href*="${normalizedKey}?"]`),
       )
 
       refreshHTMLLinkElements(elements)
       logInfo(`Updated theme CSS: ${data.key}`)
     },
-    full: async (data) => {
-      fullPageReload(data.key)
-    },
-    extCss: async (data) => {
+    updateExtCss: async (data: UpdateEvent) => {
+      const normalizedKey = data.key.replace(/.liquid$/, '')
       const elements: HTMLLinkElement[] = Array.from(
-        document.querySelectorAll(`link[rel="stylesheet"][href^="/ext/cdn/"][href*="${data.key}?"]`),
+        document.querySelectorAll(`link[rel="stylesheet"][href^="/ext/cdn/"][href*="${normalizedKey}?"]`),
       )
 
       refreshHTMLLinkElements(elements)
       logInfo(`Updated extension CSS: ${data.key}`)
     },
-    extAppBlock: async (data) => {
+    updateExtAppBlock: async (data: UpdateEvent) => {
       const blockHandle = data.key.match(/\/(\w+)\.liquid$/)?.[1]
       const blockElements = Array.from(document.querySelectorAll(`[data-block-handle$='${blockHandle}']`))
 
@@ -212,11 +194,66 @@ function hotReloadScript() {
   evtSource.onmessage = async (event) => {
     if (!event.data || typeof event.data !== 'string') return
 
-    const data = JSON.parse(event.data)
+    const data: HotReloadEvent = JSON.parse(event.data)
 
-    logInfo('Event data:', data)
+    logDebug('Event data:', data)
 
-    const actionFn = action[data.type as HotReloadEvent['type']]
-    await actionFn(data)
+    if (data.type === 'open') {
+      serverPid ??= data.pid
+
+      // If the server PID is different it means that the process has been restarted.
+      // Trigger a full-refresh to get all the latest changes.
+      if (serverPid !== data.pid) {
+        fullPageReload('Reconnected to new server')
+      }
+
+      return
+    }
+
+    if (data.type === 'full') {
+      return fullPageReload(data.key)
+    }
+
+    if (data.type !== 'update' && data.type !== 'delete') {
+      return logDebug(`Unknown event "${data.type}"`)
+    }
+
+    const isRemoteSync = data.sync === 'remote'
+    const [fileType] = data.key.split('/')
+
+    // -- App extensions
+    if (data.payload?.isAppExtension) {
+      // App embed blocks come from local server. Skip remote sync:
+      if (isRemoteSync) return
+
+      if (fileType === 'blocks') return actions.updateExtAppBlock(data)
+      if (fileType === 'assets' && data.key.endsWith('.css')) return actions.updateExtCss(data)
+
+      return fullPageReload(data.key)
+    }
+
+    // -- Theme files
+    if (fileType === 'sections') {
+      // Sections come from local server. Skip remote sync:
+      if (isRemoteSync) return
+
+      return actions.updateSections(data)
+    }
+
+    if (fileType === 'assets') {
+      const isLiquidAsset = data.key.endsWith('.liquid')
+      const isCssAsset = data.key.endsWith('.css') || data.key.endsWith('.css.liquid')
+
+      // Skip local sync events for Liquid assets, since we need to wait for remote sync:
+      if (isLiquidAsset ? !isRemoteSync : isRemoteSync) return
+
+      return isCssAsset ? actions.updateCss(data) : fullPageReload(data.key)
+    }
+
+    // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
+    const hasReplaceTemplates = Object.keys(data.payload?.replaceTemplates ?? {}).length > 0
+    if (hasReplaceTemplates ? !isRemoteSync : isRemoteSync) {
+      return fullPageReload(data.key)
+    }
   }
 }
