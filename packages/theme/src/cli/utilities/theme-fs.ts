@@ -157,10 +157,11 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
           })
           .catch(() => {})
       },
-      onSync: (fn) => {
+      onSync: (onSuccess, onError) => {
         syncPromise
           .then((didSync) => {
-            if (didSync) fn()
+            if (didSync) onSuccess()
+            else onError?.()
           })
           .catch(() => {})
       },
