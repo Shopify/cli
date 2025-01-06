@@ -254,6 +254,9 @@ export function graphiqlTemplate({
             {% if query %}
             query: '{{query}}',
             {% endif %}
+            {% if variables %}
+            variables: '{{variables}}',
+            {% endif %}
             defaultTabs: [
               {query: "${graphiqlIntroMessage
                 .replace(/"/g, '\\"')
