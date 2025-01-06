@@ -3,7 +3,12 @@ import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdent
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {Paginateable} from '../utilities/developer-platform-client.js'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  RenderAutocompleteOptions,
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -78,7 +83,7 @@ export async function selectStorePrompt({
     return stores[0]
   }
 
-  const toAnswer = (store: OrganizationStore) => {
+  const storeToChoice = (store: OrganizationStore): RenderAutocompleteOptions<string>['choices'][number] => {
     let label = store.shopName
     if (showDomainOnPrompt && store.shopDomain) {
       label = `${store.shopName} (${store.shopDomain})`
@@ -86,25 +91,25 @@ export async function selectStorePrompt({
     return {label, value: store.shopId}
   }
 
-  let currentStoreChoices = stores
+  let currentStores = stores
 
   const id = await renderAutocompletePrompt({
     message: 'Which store would you like to use to view your project?',
-    choices: currentStoreChoices.map(toAnswer),
+    choices: currentStores.map(storeToChoice),
     hasMorePages,
     search: async (term) => {
       const result = await onSearchForStoresByName(term)
-      currentStoreChoices = result.stores
+      currentStores = result.stores
 
       return {
-        data: currentStoreChoices.map(toAnswer),
+        data: currentStores.map(storeToChoice),
         meta: {
           hasNextPage: result.hasMorePages,
         },
       }
     },
   })
-  return stores.find((store) => store.shopId === id)
+  return currentStores.find((store) => store.shopId === id)
 }
 
 export async function confirmConversionToTransferDisabledStorePrompt(): Promise<boolean> {
