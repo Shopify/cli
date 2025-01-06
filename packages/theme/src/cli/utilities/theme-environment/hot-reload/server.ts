@@ -1,4 +1,4 @@
-import {getClientScripts, type HotReloadEvent} from './client.js'
+import {getClientScripts, type HotReloadEventPayload, type HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {patchRenderingResponse} from '../proxy.js'
@@ -87,58 +87,22 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
 
-    if (isAsset(fileKey)) {
-      if (extension === '.liquid') {
-        // If the asset is a .css.liquid or similar, we wait until it's been synced:
-        onSync(() => {
-          triggerHotReload(fileKey.replace(extension, ''), ctx)
-        })
-      } else {
-        // Otherwise, just full refresh directly:
-        triggerHotReload(fileKey, ctx, {timing: false})
-
-        onSync(() => {
-          // Note: onSync is only required for OSE.
-          // CLI serves assets from local disk so it doesn't need cloud syncing.
-          // However, OSE currently gets assets from SFR, so it needs to wait
-          // until the asset is synced to the cloud before triggering a hot reload.
-          // Once OSE can intercept asset requests via Service Worker, it will
-          // start serving assets from local disk and won't need to wait for syncs.
-          triggerHotReload(fileKey, ctx, {timing: 'sync'})
-        })
+    onContent((content) => {
+      if (!isAsset(fileKey) && needsTemplateUpdate(fileKey) && extension === '.json') {
+        saveSectionsFromJson(fileKey, content)
       }
-    } else if (needsTemplateUpdate(fileKey)) {
-      // Update in-memory templates for hot reloading:
-      onContent((content) => {
-        if (extension === '.json') saveSectionsFromJson(fileKey, content)
-        triggerHotReload(fileKey, ctx, {timing: false})
-      })
 
-      onSync(() => {
-        // Note: onSync is only required for OSE.
-        // Once we get replace_templates working with the SFR API for OSE,
-        // we can remove the onSync callback and just trigger a hot reload here.
-        triggerHotReload(fileKey, ctx, {timing: 'sync'})
+      triggerHotReload(ctx, onSync, {
+        type: 'update',
+        key: fileKey,
+        payload: collectReloadInfoForFile(fileKey, ctx),
       })
-    } else {
-      // Unknown files outside of assets. Wait for sync and reload:
-      onSync(() => {
-        triggerHotReload(fileKey, ctx)
-      })
-    }
+    })
   }
 
   const handleFileDelete = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
-    // Liquid assets are proxied, so we need to wait until the file has been deleted on the server before reloading
-    const isLiquidAsset = isAsset(fileKey) && extname(fileKey) === '.liquid'
-    if (isLiquidAsset) {
-      onSync?.(() => {
-        triggerHotReload(fileKey.replace('.liquid', ''), ctx)
-      })
-    } else {
-      sectionNamesByFile.delete(fileKey)
-      triggerHotReload(fileKey, ctx)
-    }
+    sectionNamesByFile.delete(fileKey)
+    triggerHotReload(ctx, onSync, {type: 'delete', key: fileKey})
   }
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
@@ -163,30 +127,9 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 }
 
 // --- SSE Hot Reload ---
-
-interface EventFilter {
-  timing?: 'sync' | false
-}
-
 const eventEmitter = new EventEmitter()
-export function emitHotReloadEvent(event: HotReloadEvent, filter?: EventFilter) {
-  eventEmitter.emit('hot-reload', event, filter)
-}
-
-/**
- * The client can pass a filter in the query params to prevent getting certain events.
- * This is useful to run different behavior for Online Store Editor, where events
- * need to be triggered after syncing, vs pure CLI where we want to trigger them asap.
- */
-function shouldIgnoreEvent(queryParam: EventFilter, filter?: EventFilter) {
-  if (queryParam.timing) {
-    // OSE will subscribe to `?timing=sync` to only get events after syncing:
-    // Only ignore events if the filter doesn't match or if it's specifically disabled.
-    if (filter?.timing === false || filter?.timing !== queryParam.timing) return true
-  } else if (filter?.timing) {
-    // CLI will subscribe without a filter param, so we ignore every event that has a filter set.
-    return true
-  }
+function emitHotReloadEvent(event: HotReloadEvent) {
+  eventEmitter.emit('hot-reload', event)
 }
 
 /**
@@ -198,12 +141,9 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
     if (endpoint === '/__hot-reload/subscribe') {
       const eventStream = createEventStream(event)
-      const queryParams: EventFilter = getQuery(event)
 
-      eventEmitter.on('hot-reload', (event: HotReloadEvent, filter?: EventFilter) => {
-        if (shouldIgnoreEvent(queryParams, filter)) return
-
-        eventStream.push(JSON.stringify({...event, debug: {timing: filter?.timing}})).catch((error: Error) => {
+      eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
+        eventStream.push(JSON.stringify(event)).catch((error: Error) => {
           renderWarning({headline: 'Failed to send HotReload event.', body: error.stack})
         })
       })
@@ -293,25 +233,24 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
-function triggerHotReload(key: string, ctx: DevServerContext, filter?: EventFilter) {
+export function triggerHotReload(
+  ctx: DevServerContext,
+  onSync: ThemeFSEventPayload['onSync'],
+  event: {type: 'update' | 'delete'; key: string; payload?: HotReloadEventPayload},
+) {
+  const fullReload = () => emitHotReloadEvent({type: 'full', key: event.key})
+
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
-    emitHotReloadEvent({type: 'full', key}, filter)
+    onSync(fullReload)
     return
   }
 
-  const [type] = key.split('/')
-
-  if (type === 'sections') {
-    hotReloadSections(key, ctx, filter)
-  } else if (type === 'assets' && key.endsWith('.css')) {
-    emitHotReloadEvent({type: 'css', key}, filter)
-  } else {
-    emitHotReloadEvent({type: 'full', key}, filter)
-  }
+  emitHotReloadEvent({sync: 'local', ...event})
+  onSync(() => emitHotReloadEvent({sync: 'remote', ...event}), fullReload)
 }
 
-function hotReloadSections(key: string, ctx: DevServerContext, filter?: EventFilter) {
+function findSectionNamesToReload(key: string, ctx: DevServerContext) {
   const sectionsToUpdate = new Set<string>()
 
   if (key.endsWith('.json')) {
@@ -337,26 +276,15 @@ function hotReloadSections(key: string, ctx: DevServerContext, filter?: EventFil
     }
   }
 
-  if (sectionsToUpdate.size > 0) {
-    // emitHotReloadEvent({type: 'section', key, names: [...sectionsToUpdate]})
-    const sectionNames = [...sectionsToUpdate]
-    emitHotReloadEvent(
-      {
-        type: 'section',
-        key,
-        sectionNames,
-        names: sectionNames,
-        replaceTemplates: Object.fromEntries(
-          sectionNames.map((name) => {
-            const sectionKey = `sections/${name}.liquid`
-            return [sectionKey, ctx.localThemeFileSystem.files.get(sectionKey)?.value ?? '']
-          }),
-        ),
-      },
-      filter,
-    )
-  } else {
-    emitHotReloadEvent({type: 'full', key}, filter)
+  return [...sectionsToUpdate]
+}
+
+function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
+  const [type] = key.split('/')
+
+  return {
+    sectionNames: type === 'sections' ? findSectionNamesToReload(key, ctx) : [],
+    replaceTemplates: needsTemplateUpdate(key) ? getInMemoryTemplates(ctx) : {},
   }
 }
 
