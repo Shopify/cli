@@ -38,17 +38,36 @@ function injectFunction(fn: () => void) {
  * Therefore, do not use any imports or references to external variables here.
  */
 function hotReloadScript() {
-  let serverPid: string | undefined
-
   const prefix = '[HotReload]'
-  const evtSource = new EventSource('/__hot-reload/subscribe', {withCredentials: true})
-
   // eslint-disable-next-line no-console
   const logDebug = console.debug.bind(console, prefix)
   // eslint-disable-next-line no-console
   const logInfo = console.info.bind(console, prefix)
   // eslint-disable-next-line no-console
   const logError = console.error.bind(console, prefix)
+
+  const searchParams = new URLSearchParams(window.location.search)
+  const hotReloadParam = searchParams.get('hr')
+  const isOSE = searchParams.has('oseid')
+
+  if (isOSE && searchParams.get('source') === 'visualPreviewInitialLoad') {
+    // OSE adds this extra iframe to the page and we don't need to hot reload it.
+    return
+  }
+
+  let serverPid: string | undefined
+  let hotReloadOrigin = window.location.origin
+
+  if (isOSE) {
+    if (!hotReloadParam) {
+      logInfo('Disabled - No hot reload origin specified.')
+      return
+    }
+
+    hotReloadOrigin = /^\d{4}$/.test(hotReloadParam) ? `http://localhost:${hotReloadParam}` : hotReloadParam
+  }
+
+  const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
 
   const fullPageReload = (key: string, error?: Error) => {
     if (error) logError(error)
@@ -68,21 +87,51 @@ function hotReloadScript() {
     }
   }
 
+  const buildSectionHotReloadUrl = (sectionId: string, data: UpdateEvent) => {
+    if (!isOSE) {
+      // Note: Change this to mimic SFR API in CLI
+      const prefix = data.payload?.isAppExtension ? 'app' : 'section'
+      const params = [
+        `section-id=${encodeURIComponent(sectionId)}`,
+        `${prefix}-template-name=${encodeURIComponent(data.key)}`,
+        `pathname=${encodeURIComponent(window.location.pathname)}`,
+        `search=${encodeURIComponent(window.location.search)}`,
+      ].join('&')
+
+      return `${hotReloadOrigin}/__hot-reload/render?${params}`
+    }
+
+    const url = window.location.pathname
+    const params = new URLSearchParams({
+      _fd: '0',
+      pb: '0',
+    })
+
+    for (const [key, value] of new URLSearchParams(window.location.search)) {
+      params.append(key, value)
+    }
+
+    // The Section Rendering API takes precendence over the Block Rendering API.
+    if (sectionId) {
+      params.append('section_id', sectionId)
+    }
+
+    return `${url}?${params}`
+  }
+
   const refreshSections = async (data: UpdateEvent, elements: Element[]) => {
     const controller = new AbortController()
 
     await Promise.all(
       elements.map(async (element) => {
-        const prefix = data.payload?.isAppExtension ? 'app' : 'section'
         const sectionId = element.id.replace(/^shopify-section-/, '')
-        const params = [
-          `section-id=${encodeURIComponent(sectionId)}`,
-          `${prefix}-template-name=${encodeURIComponent(data.key)}`,
-          `pathname=${encodeURIComponent(window.location.pathname)}`,
-          `search=${encodeURIComponent(window.location.search)}`,
-        ].join('&')
 
-        const response = await fetch(`/__hot-reload/render?${params}`, {signal: controller.signal})
+        // Note: sometimes SFR uses the old asset, even if this runs on sync:remote.
+        // Perhaps SFR is still compiling the section and the new asset is not ready yet.
+        // This workaround is a temporary fix until we can send replace_templates params.
+        // if (isOSE) await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const response = await fetch(buildSectionHotReloadUrl(sectionId, data), {signal: controller.signal})
 
         if (!response.ok) {
           throw new Error(`Hot reload request failed: ${response.statusText}`)
@@ -90,8 +139,9 @@ function hotReloadScript() {
 
         const updatedSection = await response.text()
 
-        // eslint-disable-next-line require-atomic-updates
-        element.outerHTML = updatedSection
+        if (element.parentNode) {
+          element.outerHTML = updatedSection
+        }
       }),
     ).catch((error: Error) => {
       controller.abort('Request error')
@@ -153,7 +203,7 @@ function hotReloadScript() {
     updateCss: async (data: UpdateEvent) => {
       const normalizedKey = data.key.replace(/.liquid$/, '')
       const elements: HTMLLinkElement[] = Array.from(
-        document.querySelectorAll(`link[rel="stylesheet"][href^="/cdn/"][href*="${normalizedKey}?"]`),
+        document.querySelectorAll(`link[rel="stylesheet"][href*="${normalizedKey}?"]`),
       )
 
       refreshHTMLLinkElements(elements)
@@ -162,6 +212,7 @@ function hotReloadScript() {
     updateExtCss: async (data: UpdateEvent) => {
       const normalizedKey = data.key.replace(/.liquid$/, '')
       const elements: HTMLLinkElement[] = Array.from(
+        // Note: Remove /ext/cdn/ ?
         document.querySelectorAll(`link[rel="stylesheet"][href^="/ext/cdn/"][href*="${normalizedKey}?"]`),
       )
 
@@ -234,8 +285,8 @@ function hotReloadScript() {
 
     // -- Theme files
     if (fileType === 'sections') {
-      // Sections come from local server. Skip remote sync:
-      if (isRemoteSync) return
+      // Sections come from local server unless in OSE:
+      if (isOSE ? !isRemoteSync : isRemoteSync) return
 
       return actions.updateSections(data)
     }
@@ -244,15 +295,15 @@ function hotReloadScript() {
       const isLiquidAsset = data.key.endsWith('.liquid')
       const isCssAsset = data.key.endsWith('.css') || data.key.endsWith('.css.liquid')
 
-      // Skip local sync events for Liquid assets, since we need to wait for remote sync:
-      if (isLiquidAsset ? !isRemoteSync : isRemoteSync) return
+      // Skip local sync events for Liquid assets and OSE, since we need to wait for remote sync:
+      if (isLiquidAsset || isOSE ? !isRemoteSync : isRemoteSync) return
 
       return isCssAsset ? actions.updateCss(data) : fullPageReload(data.key)
     }
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
     const hasReplaceTemplates = Object.keys(data.payload?.replaceTemplates ?? {}).length > 0
-    if (hasReplaceTemplates ? !isRemoteSync : isRemoteSync) {
+    if (hasReplaceTemplates && !isOSE ? !isRemoteSync : isRemoteSync) {
       return fullPageReload(data.key)
     }
   }
