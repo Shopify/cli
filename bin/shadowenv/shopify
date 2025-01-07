@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+printf "\033[0;32myou are running global \033[1;32mshopify\033[0;32m rather than your locally checked out branch.\033[0;32m\n"
+printf "use \033[1;32mp shopify\033[0;32m if you are testing local cli changes.\n\n\033[0m"
+
+
+"$( which -a shopify | head -2 | tail -1)" "$@"
+
