@@ -1,5 +1,27 @@
 # @shopify/app
 
+## 3.73.0
+
+### Minor Changes
+
+- d5b69b8c24: Bump function-runner version to v7.0.0
+- adcce6d664: Use Shopify Functions Javy plugin instead of default Javy plugin for building JS Shopify Functions
+
+### Patch Changes
+
+- a92307dce8: Bump Shopify/theme-tools packages
+- 03fb93e3c9: Remove all template lockfiles, except the one used to install dependencies
+- Updated dependencies [9d47c0f5f2]
+- Updated dependencies [a92307dce8]
+- Updated dependencies [df9d347d73]
+- Updated dependencies [beab713acd]
+- Updated dependencies [beab713acd]
+- Updated dependencies [4d722c64fc]
+- Updated dependencies [03fb93e3c9]
+  - @shopify/theme@3.73.0
+  - @shopify/cli-kit@3.73.0
+  - @shopify/plugin-cloudflare@3.73.0
+
 ## 3.72.0
 
 ### Minor Changes
