@@ -94,7 +94,7 @@ describe('profile', () => {
     })
 
     await expect(profile(undefined, storeDomain, urlPath, true)).rejects.toThrow(
-      'Bad response: 404, content-type: text/html',
+      'Bad response: 404 (content-type: application/json): {"error":"Some error message"}',
     )
   })
 
