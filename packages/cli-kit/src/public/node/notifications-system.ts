@@ -131,9 +131,10 @@ export async function fetchNotifications(): Promise<Notifications> {
   const response = await fetch(url(), {signal: AbortSignal.timeout(3 * 1000)})
   if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
   const rawNotifications = await response.text()
-  await cacheNotifications(rawNotifications)
   const notifications: object = JSON.parse(rawNotifications)
-  return NotificationsSchema.parse(notifications)
+  const result = NotificationsSchema.parse(notifications)
+  await cacheNotifications(rawNotifications)
+  return result
 }
 
 /**
