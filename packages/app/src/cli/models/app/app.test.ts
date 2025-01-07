@@ -30,6 +30,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   path: '',
   name: 'app 1',
   client_id: '12345',
+  extension_directories: ['extensions/*'],
   webhooks: {
     api_version: '2023-04',
     privacy_compliance: {
