@@ -47,7 +47,12 @@ function hotReloadScript() {
   const logError = console.error.bind(console, prefix)
 
   const searchParams = new URLSearchParams(window.location.search)
-  const hotReloadParam = searchParams.get('hr')
+
+  // Situations where this script can run:
+  // - Local preview in the CLI: the URL is like localhost:<port>
+  // - OSE visual preview: the URL is a myshopify.com domain
+  // - Theme Preview: the URL is a myshopify.com domain
+  const isLocalPreview = Boolean(window.location.port)
   const isOSE = searchParams.has('oseid')
 
   if (isOSE && searchParams.get('source') === 'visualPreviewInitialLoad') {
@@ -55,16 +60,31 @@ function hotReloadScript() {
     return
   }
 
-  let serverPid: string | undefined
+  const hrParam = 'hr'
+  const hrKey = `__${hrParam}`
+
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const hotReloadParam = searchParams.get(hrParam) || window.location.port || localStorage.getItem(hrKey)
+
+  if (hotReloadParam) {
+    // Store the hot reload port in localStorage to keep it after a page reload,
+    // but remove it from the URL to avoid confusing the user in Theme Preview.
+    localStorage.setItem(hrKey, hotReloadParam)
+    if (!isLocalPreview && !isOSE && searchParams.has(hrParam)) {
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete(hrParam)
+      window.history.replaceState({}, '', newUrl)
+    }
+  } else {
+    // Note: this should fallback to window messages eventually for the Service Worker.
+    logInfo('Disabled - No hot reload port specified.')
+    return
+  }
+
   let hotReloadOrigin = window.location.origin
 
-  if (isOSE) {
-    if (!hotReloadParam) {
-      logInfo('Disabled - No hot reload origin specified.')
-      return
-    }
-
-    hotReloadOrigin = /^\d{4}$/.test(hotReloadParam) ? `http://localhost:${hotReloadParam}` : hotReloadParam
+  if (!isLocalPreview) {
+    hotReloadOrigin = /^\d+$/.test(hotReloadParam) ? `http://localhost:${hotReloadParam}` : hotReloadParam
   }
 
   const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
@@ -88,7 +108,7 @@ function hotReloadScript() {
   }
 
   const buildSectionHotReloadUrl = (sectionId: string, data: UpdateEvent) => {
-    if (!isOSE) {
+    if (isLocalPreview) {
       // Note: Change this to mimic SFR API in CLI
       const prefix = data.payload?.isAppExtension ? 'app' : 'section'
       const params = [
@@ -242,6 +262,8 @@ function hotReloadScript() {
     }
   }
 
+  let serverPid: string | undefined
+
   evtSource.onmessage = async (event) => {
     if (!event.data || typeof event.data !== 'string') return
 
@@ -285,8 +307,8 @@ function hotReloadScript() {
 
     // -- Theme files
     if (fileType === 'sections') {
-      // Sections come from local server unless in OSE:
-      if (isOSE ? !isRemoteSync : isRemoteSync) return
+      // Sections come from local server only in local preview:
+      if (isLocalPreview ? isRemoteSync : !isRemoteSync) return
 
       return actions.updateSections(data)
     }
@@ -295,15 +317,16 @@ function hotReloadScript() {
       const isLiquidAsset = data.key.endsWith('.liquid')
       const isCssAsset = data.key.endsWith('.css') || data.key.endsWith('.css.liquid')
 
-      // Skip local sync events for Liquid assets and OSE, since we need to wait for remote sync:
-      if (isLiquidAsset || isOSE ? !isRemoteSync : isRemoteSync) return
+      // Skip remote sync events for local preview unless it's a Liquid asset.
+      // Skip local sync events for prod previews.
+      if (isLocalPreview && !isLiquidAsset ? isRemoteSync : !isRemoteSync) return
 
       return isCssAsset ? actions.updateCss(data) : fullPageReload(data.key)
     }
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
     const hasReplaceTemplates = Object.keys(data.payload?.replaceTemplates ?? {}).length > 0
-    if (hasReplaceTemplates && !isOSE ? !isRemoteSync : isRemoteSync) {
+    if (isLocalPreview && hasReplaceTemplates ? !isRemoteSync : isRemoteSync) {
       return fullPageReload(data.key)
     }
   }
