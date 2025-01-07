@@ -2,7 +2,13 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {Paginateable} from '../utilities/developer-platform-client.js'
+import {
+  RenderAutocompleteOptions,
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -58,29 +64,52 @@ export async function selectAppPrompt(
   return currentAppChoices.find((app) => app.apiKey === apiKey)!
 }
 
-export async function selectStorePrompt(
-  stores: OrganizationStore[],
-  showDomainOnPrompt: boolean,
-): Promise<OrganizationStore | undefined> {
+interface SelectStorePromptOptions {
+  onSearchForStoresByName?: (term: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
+  stores: OrganizationStore[]
+  hasMorePages?: boolean
+  showDomainOnPrompt: boolean
+}
+
+export async function selectStorePrompt({
+  stores,
+  hasMorePages = false,
+  onSearchForStoresByName = (_term: string) => Promise.resolve({stores, hasMorePages}),
+  showDomainOnPrompt = true,
+}: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
     outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
 
-  const storeList = stores.map((store) => {
+  const storeToChoice = (store: OrganizationStore): RenderAutocompleteOptions<string>['choices'][number] => {
     let label = store.shopName
     if (showDomainOnPrompt && store.shopDomain) {
       label = `${store.shopName} (${store.shopDomain})`
     }
     return {label, value: store.shopId}
-  })
+  }
+
+  let currentStores = stores
 
   const id = await renderAutocompletePrompt({
     message: 'Which store would you like to use to view your project?',
-    choices: storeList,
+    choices: currentStores.map(storeToChoice),
+    hasMorePages,
+    search: async (term) => {
+      const result = await onSearchForStoresByName(term)
+      currentStores = result.stores
+
+      return {
+        data: currentStores.map(storeToChoice),
+        meta: {
+          hasNextPage: result.hasMorePages,
+        },
+      }
+    },
   })
-  return stores.find((store) => store.shopId === id)
+  return currentStores.find((store) => store.shopId === id)
 }
 
 export async function confirmConversionToTransferDisabledStorePrompt(): Promise<boolean> {

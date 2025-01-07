@@ -358,10 +358,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return {...result.appCreate.app, organizationId: org.id, newApp: true, flags, developerPlatformClient: this}
   }
 
-  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+  async devStoresForOrg(orgId: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
     const variables: DevStoresByOrgQueryVariables = {id: orgId}
     const result: DevStoresByOrgQuery = await this.requestDoc(DevStoresByOrg, variables)
-    return result.organizations.nodes![0]!.stores.nodes as OrganizationStore[]
+    return {
+      stores: result.organizations.nodes![0]!.stores.nodes as OrganizationStore[],
+      hasMorePages: false,
+    }
   }
 
   async appExtensionRegistrations(
