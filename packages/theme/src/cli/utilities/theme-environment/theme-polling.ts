@@ -8,8 +8,22 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-const POLLING_INTERVAL = 3000
+const BASE_POLLING_INTERVAL = 3000
+// Maximum backoff of 60 seconds
+const MAX_POLLING_INTERVAL = 60000
+// Add up to 30% random jitter
+const JITTER_FACTOR = 0.3
 class PollingError extends Error {}
+
+function calculateBackoffTime(attemptNumber: number): number {
+  // Calculate exponential backoff: BASE * 2^attempt
+  const exponentialDelay = BASE_POLLING_INTERVAL * 2 ** attemptNumber
+  // Cap it at the maximum interval
+  const cappedDelay = Math.min(exponentialDelay, MAX_POLLING_INTERVAL)
+  // Add random jitter
+  const jitter = cappedDelay * JITTER_FACTOR * Math.random()
+  return cappedDelay + jitter
+}
 
 export interface PollingOptions {
   noDelete: boolean
@@ -32,17 +46,21 @@ export function pollThemeEditorChanges(
   const poll = async () => {
     // Asynchronously wait for the polling interval, similar to a setInterval
     // but ensure the polling work is done before starting the next interval.
-    await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
+    const backoffTime = calculateBackoffTime(failedPollingAttempts)
+    await new Promise((resolve) => setTimeout(resolve, backoffTime))
 
+    outputDebug('Fetching remote checksums')
     // eslint-disable-next-line require-atomic-updates
     latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
       .then((checksums) => {
+        outputDebug('Succesfully fetched checksums')
         failedPollingAttempts = 0
         lastError = ''
 
         return checksums
       })
       .catch((error: Error) => {
+        outputDebug(`Error fetching checksums: ${error}`)
         failedPollingAttempts++
 
         if (error.message !== lastError) {
