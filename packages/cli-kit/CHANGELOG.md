@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.73.0
+
+### Patch Changes
+
+- beab713acd: Introduce method to fetch metafield definitions by ownerType from Admin API
+- 4d722c64fc: Ensure git directory is clean when running `theme pull`
+- 03fb93e3c9: Remove all template lockfiles, except the one used to install dependencies
+
 ## 3.72.0
 
 ## 3.71.5

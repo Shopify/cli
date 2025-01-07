@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.73.0
+
+### Minor Changes
+
+- beab713acd: Developers can now use the `shopify theme metafields pull` command to download metafields, which can then be used for more refined code completion.
+
+### Patch Changes
+
+- 9d47c0f5f2: Support theme blocks in the `theme package` command
+- a92307dce8: Bump Shopify/theme-tools packages
+- df9d347d73: [Bug Fix] Reduce theme upload batch size to prevent timeout
+- 4d722c64fc: Ensure git directory is clean when running `theme pull`
+- Updated dependencies [beab713acd]
+- Updated dependencies [4d722c64fc]
+- Updated dependencies [03fb93e3c9]
+  - @shopify/cli-kit@3.73.0
+
 ## 3.72.0
 
 ### Patch Changes
