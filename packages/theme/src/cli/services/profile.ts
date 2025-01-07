@@ -15,8 +15,9 @@ export async function profile(password: string | undefined, storeDomain: string,
     },
   })
   const contentType = response.headers.get('content-type')
-  if (response.status !== 200 && contentType !== 'application/json') {
-    throw new Error(`Bad response: ${response.status}, content-type: ${contentType}`)
+  if (response.status !== 200 || contentType !== 'application/json') {
+    const body = await response.text()
+    throw new Error(`Bad response: ${response.status} (content-type: ${contentType}): ${body}`)
   }
 
   const profileJson = await response.text()
