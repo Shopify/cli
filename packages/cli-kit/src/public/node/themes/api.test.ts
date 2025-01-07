@@ -1,6 +1,7 @@
 import {
   createTheme,
   themeDelete,
+  fetchTheme,
   fetchThemes,
   ThemeParams,
   themeUpdate,
@@ -18,9 +19,11 @@ import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/ge
 import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
 import {OnlineStoreThemeFileBodyInputType} from '../../../cli/api/graphql/admin/generated/types.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
+import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {test, vi, expect, describe} from 'vitest'
 import {adminRequestDoc, restRequest, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ClientError} from 'graphql-request'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/system')
@@ -28,6 +31,52 @@ vi.mock('@shopify/cli-kit/node/system')
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com', refresh: async () => {}}
 const themeAccessSession = {...session, token: 'shptka_token'}
 const sessions = {CLI: session, 'Theme Access': themeAccessSession}
+
+describe('fetchTheme', () => {
+  test('returns a store theme', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      theme: {id: 'gid://shopify/OnlineStoreTheme/123', name: 'store theme 1', role: 'MAIN', processing: false},
+    })
+
+    // When
+    const theme = await fetchTheme(123, session)
+
+    // Then
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      GetTheme,
+      session,
+      {id: 'gid://shopify/OnlineStoreTheme/123'},
+      undefined,
+      {handleErrors: false},
+    )
+
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(123)
+    expect(theme!.name).toEqual('store theme 1')
+    expect(theme!.processing).toBeFalsy()
+  })
+
+  test('returns undefined when a theme is not found', async () => {
+    const errorResponse = {
+      status: 200,
+      errors: [{message: 'Theme does not exist'} as any],
+    }
+    vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError(errorResponse, {query: ''}))
+
+    // When
+    const theme = await fetchTheme(123, session)
+
+    // Then
+    expect(theme).toBeUndefined()
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      GetTheme,
+      session,
+      {id: 'gid://shopify/OnlineStoreTheme/123'},
+      undefined,
+      {handleErrors: false},
+    )
+  })
+})
 
 describe('fetchThemes', () => {
   test('returns store themes', async () => {

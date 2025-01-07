@@ -25,23 +25,34 @@ import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {ClientError} from 'graphql-request'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const response = await adminRequestDoc(GetTheme, session, {id: composeThemeGid(id)})
-
-  const {theme} = response
-  if (!theme) {
-    return undefined
+  try {
+    const response = await adminRequestDoc(GetTheme, session, {id: composeThemeGid(id)}, undefined, {
+      handleErrors: false,
+    })
+    const {theme} = response
+    if (!theme) {
+      return undefined
+    }
+    return buildTheme({
+      id: parseGid(theme.id),
+      processing: theme.processing,
+      role: theme.role.toLowerCase(),
+      name: theme.name,
+    })
+  } catch (error) {
+    if (error instanceof ClientError) {
+      if (error.response?.errors?.[0]?.message === 'Theme does not exist') {
+        return undefined
+      }
+    }
+    throw new AbortError(`Failed to fetch theme: ${id}`)
   }
-  return buildTheme({
-    id: parseGid(theme.id),
-    processing: theme.processing,
-    role: theme.role.toLowerCase(),
-    name: theme.name,
-  })
 }
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
