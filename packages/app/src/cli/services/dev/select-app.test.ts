@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {AppApiKeyAndOrgId, Organization} from '../../models/organization.js'
+import {AppApiKeyAndOrgId, Organization, OrganizationSource} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
@@ -25,6 +25,7 @@ const LOCAL_APP: AppInterface = testApp({
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({
