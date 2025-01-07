@@ -15,7 +15,7 @@ describe('setupWebsocketConnection', () => {
   const payloadStore: ExtensionsPayloadStore = {on: vi.fn()} as any
   const httpServer: Server = {on: vi.fn()} as any
   const devOptions = {} as unknown as ExtensionDevOptions
-  const options = {...devOptions, httpServer, payloadStore}
+  const options = {...devOptions, httpServer, payloadStore, websocketURL: 'wss://mock.url/extensions'}
 
   beforeEach(() => {
     vi.useFakeTimers()
