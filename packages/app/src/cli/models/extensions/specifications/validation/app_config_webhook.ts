@@ -13,7 +13,18 @@ export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
 }
 
 function validateSubscriptions(webhookConfig: WebhooksConfig) {
-  const {subscriptions = []} = webhookConfig
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const {subscriptions = [], api_version} = webhookConfig
+
+  const hasMetafields = subscriptions.some((sub) => sub.metafields && sub.metafields.length > 0)
+  if (hasMetafields && !isVersionGreaterOrEqual(api_version, '2025-04')) {
+    return {
+      code: zod.ZodIssueCode.custom,
+      message: 'Webhook metafields are only supported in API version 2025-04 or later, or with version "unstable"',
+      path: ['api_version'],
+    }
+  }
+
   const uniqueSubscriptionSet = new Set()
   const duplicatedSubscriptionsFields: string[] = []
 
@@ -75,4 +86,11 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
       path: ['subscriptions'],
     }
   }
+}
+
+function isVersionGreaterOrEqual(version: string, minVersion: string): boolean {
+  if (version === 'unstable') return true
+  const [versionYear = 0, versionMonth = 0] = version.split('-').map(Number)
+  const [minYear = 0, minMonth = 0] = minVersion.split('-').map(Number)
+  return versionYear > minYear || (versionYear === minYear && versionMonth >= minMonth)
 }

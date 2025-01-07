@@ -428,6 +428,7 @@ export async function testSingleWebhookSubscriptionExtension({
     topic,
     api_version: '2024-01',
     uri: 'https://my-app.com/webhooks',
+    metafields: [{namespace: 'custom', key: 'test'}],
   },
 }: {
   emptyConfig?: boolean
