@@ -1,23 +1,39 @@
+import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
+import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
+import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile} from 'fs/promises'
 import {tmpdir} from 'os'
 
-export async function profile(password: string | undefined, storeDomain: string, urlPath: string, asJson: boolean) {
-  // Fetch the profiling from the Store
-  const url = new URL(`https://${storeDomain}${urlPath}`)
-  const storefrontToken = await ensureAuthenticatedStorefront([], password)
-  const response = await fetch(url, {
+export async function profile(
+  adminSession: AdminSession,
+  themeId: string,
+  url: string,
+  asJson: boolean,
+  themeAccessPassword?: string,
+  storefrontPassword?: string,
+) {
+  const storePassword = (await isStorefrontPasswordProtected(adminSession.storeFqdn))
+    ? await ensureValidPassword(storefrontPassword, adminSession.storeFqdn)
+    : undefined
+
+  const session = await fetchDevServerSession(themeId, adminSession, themeAccessPassword, storePassword)
+  const response = await render(session, {
+    method: 'GET',
+    path: url,
+    query: [],
+    themeId,
     headers: {
-      Authorization: `Bearer ${storefrontToken}`,
       Accept: 'application/vnd.speedscope+json',
     },
   })
-  const contentType = response.headers.get('content-type')
-  if (response.status !== 200 || contentType !== 'application/json') {
+
+  if (response.status !== 200) {
     const body = await response.text()
-    throw new Error(`Bad response: ${response.status} (content-type: ${contentType}): ${body}`)
+    throw new Error(`Bad response: ${response.status}: ${body}`)
   }
 
   const profileJson = await response.text()

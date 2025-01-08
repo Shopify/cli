@@ -165,7 +165,7 @@ export interface DevServerRenderContext {
   /**
    * Custom content to be replaced in the theme during rendering.
    */
-  replaceTemplates: {[key: string]: string}
+  replaceTemplates?: {[key: string]: string}
 
   /**
    * Custom content to be replaced during rendering.

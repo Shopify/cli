@@ -2,6 +2,8 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -20,12 +22,19 @@ export default class Profile extends ThemeCommand {
     ...globalFlags,
     store: themeFlags.store,
     password: themeFlags.password,
+    theme: Flags.string({
+      char: 't',
+      description: 'Theme ID or name of the remote theme.',
+      env: 'SHOPIFY_FLAG_THEME_ID',
+    }),
     url: Flags.string({
-      char: 'u',
-      description: 'URL to the theme page to profile.',
+      description: 'The url to be used as context',
       env: 'SHOPIFY_FLAG_URL',
-      required: true,
-      parse: async (url) => (url.startsWith('/') ? url : `/${url}`),
+      default: '/',
+    }),
+    'store-password': Flags.string({
+      description: 'The password for storefronts with password protection.',
+      env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
     json: Flags.boolean({
       char: 'j',
@@ -37,7 +46,24 @@ export default class Profile extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Profile)
     const store = ensureThemeStore(flags)
+    const {password: themeAccessPassword} = flags
 
-    await profile(flags.password, store, flags.url, flags.json)
+    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
+    let filter
+    if (flags.theme) {
+      filter = {filter: {theme: flags.theme}}
+    } else {
+      filter = {filter: {live: true}}
+    }
+    const theme = await findOrSelectTheme(adminSession, filter)
+
+    await profile(
+      adminSession,
+      theme.id.toString(),
+      flags.url,
+      flags.json,
+      themeAccessPassword,
+      flags['store-password'],
+    )
   }
 }
