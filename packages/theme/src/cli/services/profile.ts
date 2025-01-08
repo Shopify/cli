@@ -47,6 +47,7 @@ export async function profile(
 }
 
 async function resolveSpeedscope() {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   if (import.meta.resolve) {
     return import.meta.resolve('speedscope/dist/release/index.html')
