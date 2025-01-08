@@ -182,6 +182,10 @@ function hotReloadScript() {
   }
 
   const refreshSections = async (data: UpdateEvent, elements: Element[]) => {
+    // The current section hot reload logic creates small issues in OSE state.
+    // For now, we reload the full page to workaround this problem finding a better solution:
+    if (isOSE) fullPageReload(data.key)
+
     const controller = new AbortController()
     const oseDataPromise = isOSE ? oseActions.startDataReload(controller.signal) : null
 
