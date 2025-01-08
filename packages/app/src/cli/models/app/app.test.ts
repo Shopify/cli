@@ -1,4 +1,5 @@
 import {
+  AppSchema,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
   getAppScopes,
@@ -91,6 +92,33 @@ describe('app schema validation', () => {
       delete config.client_id
 
       expect(isCurrentAppSchema(config)).toBe(false)
+    })
+
+    test('extension_directories should be transformed to double asterisks', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        extension_directories: ['extensions/*'],
+      }
+      const parsed = AppSchema.parse(config)
+      expect(parsed.extension_directories).toEqual(['extensions/**'])
+    })
+
+    test('extension_directories is not transformed if it ends with double asterisks', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        extension_directories: ['extensions/**'],
+      }
+      const parsed = AppSchema.parse(config)
+      expect(parsed.extension_directories).toEqual(['extensions/**'])
+    })
+
+    test('extension_directories is not transformed if it doesnt end with a wildcard', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        extension_directories: ['extensions'],
+      }
+      const parsed = AppSchema.parse(config)
+      expect(parsed.extension_directories).toEqual(['extensions'])
     })
   })
 })

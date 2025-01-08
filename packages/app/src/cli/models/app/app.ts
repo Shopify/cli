@@ -59,7 +59,8 @@ function removeTrailingPathSeparator(value: string[] | undefined) {
 // If a path ends with a single asterisk, modify it to end with a double asterisk.
 // This is to support the glob pattern used by chokidar and watch for changes in subfolders.
 function fixSingleWildcards(value: string[] | undefined) {
-  return value?.map((dir) => dir.replace(/\*$/, '**'))
+  // eslint-disable-next-line no-useless-escape
+  return value?.map((dir) => dir.replace(/([^\*])\*$/, '$1**'))
 }
 
 /**
