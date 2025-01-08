@@ -1,5 +1,6 @@
 import {linkedAppContext} from './app-context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import link from './app/config/link.js'
 import {appFromIdentifiers} from './context.js'
 
@@ -259,6 +260,7 @@ describe('linkedAppContext', () => {
       })
 
       // Then
+      expect(vi.mocked(addUidToTomlsIfNecessary)).not.toHaveBeenCalled()
       expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'report'}))
       loadSpy.mockRestore()
     })
@@ -280,6 +282,7 @@ describe('linkedAppContext', () => {
       })
 
       // Then
+      expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
       expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'strict'}))
       loadSpy.mockRestore()
     })

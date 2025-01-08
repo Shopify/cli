@@ -101,7 +101,12 @@ export async function linkedAppContext({
   await logMetadata(remoteApp, organization, forceRelink)
 
   // Add UIDs to extension TOML files if using app-management.
-  await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
+  // If in unsafe report mode, it is possible the UIDs are not loaded in memory
+  // even if they are present in the file, so we can't be sure whether or not
+  // it's necessary.
+  if (!unsafeReportMode) {
+    await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
+  }
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
