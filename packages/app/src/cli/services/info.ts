@@ -11,7 +11,7 @@ import {
   OutputMessage,
   formatPackageManagerCommand,
   outputContent,
-  outputToken,
+  shouldDisplayColors,
   stringifyMessage,
 } from '@shopify/cli-kit/node/output'
 import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -109,8 +109,9 @@ function withPurgedSchemas(extensions: object[]): object[] {
   })
 }
 
-const UNKNOWN_TEXT = outputContent`${outputToken.italic('unknown')}`.value
-const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
+const UNKNOWN_TEXT = 'unknown'
+const NOT_CONFIGURED_TOKEN: InlineToken = {subdued: 'Not yet configured'}
+const NOT_LOADED_TEXT = 'NOT LOADED'
 
 class AppInfo {
   private readonly app: AppLinkedInterface
@@ -133,7 +134,7 @@ class AppInfo {
   }
 
   async devConfigsSection(): Promise<CustomSection[]> {
-    let updateUrls = NOT_CONFIGURED_TEXT
+    let updateUrls = NOT_CONFIGURED_TOKEN
     if (this.app.configuration.build?.automatically_update_urls_on_dev !== undefined) {
       updateUrls = this.app.configuration.build.automatically_update_urls_on_dev ? 'Yes' : 'No'
     }
@@ -151,10 +152,10 @@ class AppInfo {
         'Current app configuration',
         [
           ['Configuration file', {filePath: basename(this.app.configuration.path) || configurationFileNames.app}],
-          ['App name', this.remoteApp.title || NOT_CONFIGURED_TEXT],
-          ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TEXT],
+          ['App name', this.remoteApp.title || NOT_CONFIGURED_TOKEN],
+          ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TOKEN],
           ['Access scopes', getAppScopes(this.app.configuration)],
-          ['Dev store', this.app.configuration.build?.dev_store_url || NOT_CONFIGURED_TEXT],
+          ['Dev store', this.app.configuration.build?.dev_store_url ?? NOT_CONFIGURED_TOKEN],
           ['Update URLs', updateUrls],
           partnersAccountInfo,
         ],
@@ -175,36 +176,19 @@ class AppInfo {
 
   async appComponentsSection(): Promise<CustomSection[]> {
     const webComponentsSection = this.webComponentsSection()
-
-    const supportedExtensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
-    const extensionsSections = this.extensionsSections(supportedExtensions)
-
-    let errorsSection: CustomSection | undefined
-    if (this.app.errors?.isEmpty() === false) {
-      errorsSection = this.tableSection(
-        'Extensions with errors',
-        (
-          supportedExtensions
-            .map((extension) => this.invalidExtensionSubSection(extension))
-            .filter((data) => typeof data !== 'undefined') as [string, InlineToken][][]
-        ).flat(),
-      )
-    }
-
     return [
       {
         title: '\nDirectory components'.toUpperCase(),
         body: '',
       },
       ...(webComponentsSection ? [webComponentsSection] : []),
-      ...extensionsSections,
-      ...(errorsSection ? [errorsSection] : []),
+      ...this.extensionsSections(),
     ]
   }
 
   webComponentsSection(): CustomSection | undefined {
     const errors: OutputMessage[] = []
-    const sublevels: [string, InlineToken][] = []
+    const sublevels: InlineToken[][] = []
     if (!this.app.webs[0]) return
     this.app.webs.forEach((web) => {
       if (web.configuration) {
@@ -220,7 +204,7 @@ class AppInfo {
           })
         }
       } else {
-        sublevels.push([`  📂 ${UNKNOWN_TEXT}`, {filePath: relativePath(this.app.directory, web.directory)}])
+        sublevels.push([{subdued: `  📂 ${UNKNOWN_TEXT}`}, {filePath: relativePath(this.app.directory, web.directory)}])
       }
       if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
@@ -231,11 +215,12 @@ class AppInfo {
     return this.subtableSection('web', [
       ['📂 web', ''],
       ...sublevels,
-      ...errors.map((error): [string, InlineToken] => ['', {error: this.formattedError(error)}]),
+      ...errors.map((error): InlineToken[] => [{error: 'error'}, {error: this.formattedError(error)}]),
     ])
   }
 
-  extensionsSections(extensions: ExtensionInstance[]): CustomSection[] {
+  extensionsSections(): CustomSection[] {
+    const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
     const types = Array.from(new Set(extensions.map((ext) => ext.type)))
     return types
       .map((extensionType: string): CustomSection | undefined => {
@@ -250,33 +235,29 @@ class AppInfo {
       .filter((section: CustomSection | undefined) => section !== undefined) as CustomSection[]
   }
 
-  extensionSubSection(extension: ExtensionInstance): [string, InlineToken][] {
+  extensionSubSection(extension: ExtensionInstance): InlineToken[][] {
     const config = extension.configuration
-    const details: [string, InlineToken][] = [
-      [`📂 ${extension.handle}`, {filePath: relativePath(this.app.directory, extension.directory)}],
+    const details: InlineToken[][] = [
+      [`📂 ${extension.handle || NOT_LOADED_TEXT}`, {filePath: relativePath(this.app.directory, extension.directory)}],
       ['     config file', {filePath: relativePath(extension.directory, extension.configurationPath)}],
     ]
     if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
+    const error = this.app.errors?.getError(extension.configurationPath)
+    if (error) {
+      details.push([{error: '     error'}, {error: this.formattedError(error)}])
+    }
 
     return details
   }
 
-  invalidExtensionSubSection(extension: ExtensionInstance): [string, InlineToken][] | undefined {
-    const error = this.app.errors?.getError(extension.configurationPath)
-    if (!error) return
-    return [
-      [`📂 ${extension.handle}`, {filePath: relativePath(this.app.directory, extension.directory)}],
-      ['     config file', {filePath: relativePath(extension.directory, extension.configurationPath)}],
-      ['     message', {error: this.formattedError(error)}],
-    ]
-  }
-
   formattedError(str: OutputMessage): string {
-    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).split('\n')
-    const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
-    return outputContent`${outputToken.errorText(errorLines.join('\n'))}`.value
+    // Some errors have newlines at the beginning for no apparent reason
+    const rawErrorMessage = stringifyMessage(str).trim()
+    if (shouldDisplayColors()) return rawErrorMessage
+    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).trim().split('\n')
+    return [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)].join('\n')
   }
 
   async systemInfoSection(): Promise<CustomSection> {
@@ -285,19 +266,19 @@ class AppInfo {
       ['Shopify CLI', CLI_KIT_VERSION],
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
-      ['Shell', process.env.SHELL || 'unknown'],
+      ['Shell', process.env.SHELL ?? 'unknown'],
       ['Node version', process.version],
     ])
   }
 
-  tableSection(title: string, rows: [string, InlineToken][], {isFirstItem = false} = {}): CustomSection {
+  tableSection(title: string, rows: InlineToken[][], {isFirstItem = false} = {}): CustomSection {
     return {
       title: `${isFirstItem ? '' : '\n'}${title.toUpperCase()}\n`,
       body: {tabularData: rows, firstColumnSubdued: true},
     }
   }
 
-  subtableSection(title: string, rows: [string, InlineToken][]): CustomSection {
+  subtableSection(title: string, rows: InlineToken[][]): CustomSection {
     return {
       title,
       body: {tabularData: rows, firstColumnSubdued: true},

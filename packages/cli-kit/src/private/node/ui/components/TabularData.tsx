@@ -21,7 +21,7 @@ const TabularData: FunctionComponent<TabularDataProps> = ({tabularData: data, fi
       {data.map((row, index) => (
         <Box key={index} flexDirection="row" gap={2}>
           {row.map((cell, index) => (
-            <Box key={index} width={columnWidths[index] ?? 0}>
+            <Box key={index} width={columnWidths[index] ?? 0} flexShrink={index === 0 ? 0 : 1}>
               <TokenizedText
                 item={index === 0 && firstColumnSubdued && typeof cell === 'string' ? {subdued: cell} : cell}
               />
