@@ -1,11 +1,16 @@
 import {profile} from './profile.js'
+import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
+import {Headers, Response} from 'node-fetch'
 import {readFile} from 'fs/promises'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
+vi.mock('../utilities/theme-environment/storefront-session.js')
+vi.mock('../utilities/theme-environment/storefront-renderer.js')
 
 describe('profile', () => {
   const mockProfileData = {
@@ -13,49 +18,50 @@ describe('profile', () => {
     data: 'sample-data',
   }
   const mockToken = 'mock-token'
-  const storeDomain = 'test-store.myshopify.com'
-  const urlPath = '/admin/themes/123/profiler'
+  const mockAdminSession = {token: mockToken, storeFqdn: 'test-store.myshopify.com'}
+  const themeId = '123'
+  const urlPath = '/products/test'
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue(mockToken)
-
-    // Mock fetch globally with status 200 and JSON content-type by default
-    global.fetch = vi.fn().mockResolvedValue({
-      status: 200,
-      headers: {
-        get: (name: string) => (name === 'content-type' ? 'application/json' : null),
-      },
-      text: () => Promise.resolve(JSON.stringify(mockProfileData)),
-    })
+    vi.mocked(render).mockResolvedValue(
+      new Response(JSON.stringify(mockProfileData), {
+        status: 200,
+        headers: new Headers({
+          'content-type': 'application/json',
+        }),
+      }),
+    )
   })
 
   test('outputs JSON to stdout when asJson is true', async () => {
     const stdoutWrite = vi.spyOn(process.stdout, 'write')
 
-    await profile(undefined, storeDomain, urlPath, true)
+    await profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
 
-    expect(fetch).toHaveBeenCalledWith(new URL('https://test-store.myshopify.com/admin/themes/123/profiler'), {
-      headers: {
-        Authorization: `Bearer ${mockToken}`,
-        Accept: 'application/vnd.speedscope+json',
+    expect(render).toHaveBeenCalledWith(
+      {
+        sessionCookies: undefined,
+        storefrontToken: mockToken,
       },
-    })
+      {
+        method: 'GET',
+        path: urlPath,
+        query: [],
+        themeId,
+        headers: {
+          Accept: 'application/vnd.speedscope+json',
+        },
+      },
+    )
     expect(stdoutWrite).toHaveBeenCalledWith(JSON.stringify(mockProfileData))
   })
 
   test('opens profile in browser when asJson is false', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      status: 200,
-      headers: {
-        get: (name: string) => (name === 'content-type' ? 'application/json' : null),
-      },
-      text: () => Promise.resolve(JSON.stringify(mockProfileData)),
-    })
-
-    await profile(undefined, storeDomain, urlPath, false)
+    await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
 
     // Verify fetch was called correctly
-    expect(fetch).toHaveBeenCalled()
+    expect(render).toHaveBeenCalled()
 
     // Verify openURL was called with a file:// URL
     expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^file:\/\/.*\.html$/))
@@ -72,47 +78,30 @@ describe('profile', () => {
     expect(htmlContent).toContain('speedscope')
   })
 
-  test('uses provided password for authentication', async () => {
-    const password = 'test-password'
-    await profile(password, storeDomain, urlPath, true)
+  test('uses provided passwords for authentication', async () => {
+    await profile(mockAdminSession, themeId, urlPath, true, 'themeAccessPassword', 'storePassword')
 
-    expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], password)
+    expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], 'themeAccessPassword')
   })
 
   test('throws error when fetch fails', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+    vi.mocked(render).mockRejectedValue(new Error('Network error'))
 
-    await expect(profile(undefined, storeDomain, urlPath, true)).rejects.toThrow('Network error')
-  })
-
-  test('throws error when response status is not 200 and content-type is not application/json', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      status: 404,
-      headers: {
-        get: (name: string) => (name === 'content-type' ? 'text/html' : null),
-      },
-    })
-
-    await expect(profile(undefined, storeDomain, urlPath, true)).rejects.toThrow(
-      'Bad response: 404 (content-type: application/json): {"error":"Some error message"}',
+    await expect(profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)).rejects.toThrow(
+      'Network error',
     )
   })
 
-  test('succeeds when status is not 200 but content-type is application/json', async () => {
-    const jsonResponse = {error: 'Some error message'}
-    global.fetch = vi.fn().mockResolvedValue({
-      status: 404,
-      headers: {
-        get: (name: string) => (name === 'content-type' ? 'application/json' : null),
-      },
-      text: () => Promise.resolve(JSON.stringify(jsonResponse)),
-    })
+  test('throws error when response status is not 200', async () => {
+    vi.mocked(render).mockResolvedValue(
+      new Response(JSON.stringify({error: 'Some error message'}), {
+        status: 404,
+        headers: new Headers({'content-type': 'application/json'}),
+      }),
+    )
 
-    // Mock stdout.write
-    const stdoutWrite = vi.spyOn(process.stdout, 'write')
-
-    await profile(undefined, storeDomain, urlPath, true)
-
-    expect(stdoutWrite).toHaveBeenCalledWith(JSON.stringify(jsonResponse))
+    await expect(profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)).rejects.toThrow(
+      'Bad response: 404: {"error":"Some error message"}',
+    )
   })
 })
