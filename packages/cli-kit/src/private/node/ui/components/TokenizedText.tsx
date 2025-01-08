@@ -34,30 +34,30 @@ export interface BoldToken {
 export type Token =
   | string
   | {
-    command: string
-  }
+      command: string
+    }
   | LinkToken
   | {
-    char: string
-  }
+      char: string
+    }
   | UserInputToken
   | {
-    subdued: string
-  }
+      subdued: string
+    }
   | {
-    filePath: string
-  }
+      filePath: string
+    }
   | ListToken
   | BoldToken
   | {
-    info: string
-  }
+      info: string
+    }
   | {
-    warn: string
-  }
+      warn: string
+    }
   | {
-    error: string
-  }
+      error: string
+    }
 
 export type InlineToken = Exclude<Token, ListToken>
 export type TokenItem<T extends Token = Token> = T | T[]
