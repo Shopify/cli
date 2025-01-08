@@ -3,6 +3,7 @@ import {Dev, DevProps} from './ui/components/Dev.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import React from 'react'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -17,9 +18,11 @@ export async function outputUpdateURLsResult(
   urls: PartnersURLs,
   remoteApp: OrganizationApp,
   localApp: AppInterface,
+  developerPlatformClient?: DeveloperPlatformClient,
 ) {
+  const usingAppManagementClient = developerPlatformClient?.clientName === ClientName.AppManagement
   const dashboardURL = await partnersURL(remoteApp.organizationId, remoteApp.id)
-  if (remoteApp.newApp) {
+  if (remoteApp.newApp && !usingAppManagementClient) {
     renderInfo({
       headline: `For your convenience, we've given your app a default URL: ${urls.applicationUrl}.`,
       body: [
