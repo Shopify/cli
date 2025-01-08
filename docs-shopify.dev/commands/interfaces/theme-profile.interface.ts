@@ -25,10 +25,22 @@ export interface themeprofile {
   '-s, --store <value>'?: string
 
   /**
-   * URL to the theme page to profile.
+   * The password for storefronts with password protection.
+   * @environment SHOPIFY_FLAG_STORE_PASSWORD
+   */
+  '--store-password <value>'?: string
+
+  /**
+   * Theme ID or name of the remote theme.
+   * @environment SHOPIFY_FLAG_THEME_ID
+   */
+  '-t, --theme <value>'?: string
+
+  /**
+   * The url to be used as context
    * @environment SHOPIFY_FLAG_URL
    */
-  '-u, --url <value>': string
+  '--url <value>'?: string
 
   /**
    * Increase the verbosity of the output.
