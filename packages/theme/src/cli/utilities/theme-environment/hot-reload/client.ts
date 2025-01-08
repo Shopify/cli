@@ -179,6 +179,10 @@ function hotReloadScript() {
       // OSE reads the new data after the page is loaded
       window.dispatchEvent(new Event('load'))
     },
+    sendEvent: (payload: Pick<UpdateEvent, 'key'>) => {
+      if (!isOSE) return
+      window.parent.postMessage({type: 'StorefrontEvent::HotReload', payload}, `https://${window.Shopify.editorDomain}`)
+    },
   }
 
   const refreshSections = async (data: UpdateEvent, elements: Element[]) => {
@@ -343,7 +347,7 @@ function hotReloadScript() {
     }
 
     const isRemoteSync = data.sync === 'remote'
-    const [fileType] = data.key.split('/')
+    const [fileType, fileName] = data.key.split('/')
 
     // -- App extensions
     if (data.payload?.isAppExtension) {
@@ -373,6 +377,13 @@ function hotReloadScript() {
       if (isLocalPreview && !isLiquidAsset ? isRemoteSync : !isRemoteSync) return
 
       return isCssAsset ? domActions.updateCss(data) : fullPageReload(data.key)
+    }
+
+    if (fileType === 'config') {
+      if (isOSE) oseActions.sendEvent({key: data.key})
+
+      // No need to refresh previews for this file.
+      if (fileName === 'settings_schema.json') return
     }
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
