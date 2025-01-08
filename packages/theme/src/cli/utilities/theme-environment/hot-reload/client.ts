@@ -139,8 +139,51 @@ function hotReloadScript() {
     return `${url}?${params}`
   }
 
+  const oseActions = {
+    startDataReload: async (signal: AbortSignal) => {
+      if (!isOSE) return null
+
+      // Force OSE to show the loading state
+      window.dispatchEvent(new Event('pagehide'))
+
+      return fetch(window.location.href, {
+        // Note: enable these properties when we have access to replace_templates
+        // method: 'POST',
+        // body: storefrontReplaceTemplatesParams(data.replaceTemplates),
+        // This is required to get the OnlineStoreEditorData script:
+        headers: {Accept: 'text/html'},
+        signal,
+      })
+        .then((response) => response.text())
+        .catch((error) => {
+          logError('Error fetching full page reload for section settings', error)
+          return null
+        })
+    },
+    finishDataReload: async (oseDataPromise: Promise<string | null>) => {
+      if (!isOSE) return null
+
+      const refreshedHtml = await oseDataPromise
+      const newOSEData = new DOMParser()
+        .parseFromString(refreshedHtml ?? '', 'text/html')
+        .querySelector('#OnlineStoreEditorData')?.textContent
+
+      if (newOSEData) {
+        const oseDataElement = document.querySelector('#OnlineStoreEditorData')
+        if (oseDataElement && newOSEData !== oseDataElement.textContent) {
+          oseDataElement.textContent = newOSEData
+          logInfo('OSE data updated')
+        }
+      }
+
+      // OSE reads the new data after the page is loaded
+      window.dispatchEvent(new Event('load'))
+    },
+  }
+
   const refreshSections = async (data: UpdateEvent, elements: Element[]) => {
     const controller = new AbortController()
+    const oseDataPromise = isOSE ? oseActions.startDataReload(controller.signal) : null
 
     await Promise.all(
       elements.map(async (element) => {
@@ -167,6 +210,10 @@ function hotReloadScript() {
       controller.abort('Request error')
       fullPageReload(data.key, error)
     })
+
+    if (oseDataPromise) {
+      await oseActions.finishDataReload(oseDataPromise)
+    }
   }
 
   const refreshAppEmbedBlock = async (data: UpdateEvent, block: Element) => {
@@ -203,7 +250,7 @@ function hotReloadScript() {
     }
   }
 
-  const actions = {
+  const domActions = {
     updateSections: async (data: UpdateEvent) => {
       const elements = data.payload?.sectionNames?.flatMap((name) =>
         Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
@@ -299,8 +346,8 @@ function hotReloadScript() {
       // App embed blocks come from local server. Skip remote sync:
       if (isRemoteSync) return
 
-      if (fileType === 'blocks') return actions.updateExtAppBlock(data)
-      if (fileType === 'assets' && data.key.endsWith('.css')) return actions.updateExtCss(data)
+      if (fileType === 'blocks') return domActions.updateExtAppBlock(data)
+      if (fileType === 'assets' && data.key.endsWith('.css')) return domActions.updateExtCss(data)
 
       return fullPageReload(data.key)
     }
@@ -310,7 +357,7 @@ function hotReloadScript() {
       // Sections come from local server only in local preview:
       if (isLocalPreview ? isRemoteSync : !isRemoteSync) return
 
-      return actions.updateSections(data)
+      return domActions.updateSections(data)
     }
 
     if (fileType === 'assets') {
@@ -321,7 +368,7 @@ function hotReloadScript() {
       // Skip local sync events for prod previews.
       if (isLocalPreview && !isLiquidAsset ? isRemoteSync : !isRemoteSync) return
 
-      return isCssAsset ? actions.updateCss(data) : fullPageReload(data.key)
+      return isCssAsset ? domActions.updateCss(data) : fullPageReload(data.key)
     }
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
