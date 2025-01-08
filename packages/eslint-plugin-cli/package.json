@@ -34,7 +34,6 @@
     "debug": "4.4.0"
   },
   "devDependencies": {
-    "typescript": "5.2.2",
     "prettier": "2.8.8"
   },
   "peerDependencies": {
