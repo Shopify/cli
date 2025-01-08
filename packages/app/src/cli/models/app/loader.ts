@@ -1035,7 +1035,7 @@ async function getAllLinkedConfigClientIds(
 ): Promise<{[key: string]: string}> {
   const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
 
-  const entries = (
+  const entries: [string, string][] = (
     await Promise.all(
       candidates.map(async (candidateFile) => {
         const configName = basename(candidateFile)
@@ -1059,7 +1059,7 @@ async function getAllLinkedConfigClientIds(
         }
       }),
     )
-  ).filter((entry) => entry !== undefined) as [string, string][]
+  ).filter((entry) => entry !== undefined)
   return Object.fromEntries(entries)
 }
 
@@ -1155,7 +1155,8 @@ async function logMetadataForLoadedAppUsingRawValues(
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {
-        extensionsBreakdownMapping[extension.type]++
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        extensionsBreakdownMapping[extension.type]!++
       }
     }
 

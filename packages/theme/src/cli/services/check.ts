@@ -142,6 +142,7 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
       acc[filePath] = []
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     acc[filePath]!.push(offense)
     return acc
   }, {})
