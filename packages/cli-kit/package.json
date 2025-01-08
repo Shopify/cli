@@ -168,15 +168,13 @@
     "@types/fs-extra": "9.0.13",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.17.14",
-    "@types/node": "18.19.70",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",
     "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
-    "typedoc": "^0.27.6",
-    "typescript": "5.7.2"
+    "typedoc": "^0.27.6"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"
