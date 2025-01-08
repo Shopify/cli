@@ -2095,13 +2095,15 @@ USAGE
   $ shopify theme profile --url /products/classic-leather-jacket
 
 FLAGS
-  -j, --json              Return profiling data as JSON.
-  -s, --store=<value>     Store URL. It can be the store prefix (example) or the full myshopify.com URL
-                          (example.myshopify.com, https://example.myshopify.com).
-  -u, --url=<value>       (required) URL to the theme page to profile.
-      --no-color          Disable color output.
-      --password=<value>  Password generated from the Theme Access app.
-      --verbose           Increase the verbosity of the output.
+  -j, --json                    Return profiling data as JSON.
+  -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                                (example.myshopify.com, https://example.myshopify.com).
+  -t, --theme=<value>           Theme ID or name of the remote theme.
+      --no-color                Disable color output.
+      --password=<value>        Password generated from the Theme Access app.
+      --store-password=<value>  The password for storefronts with password protection.
+      --url=<value>             [default: /] The url to be used as context
+      --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
   Profile the Liquid rendering of a theme page.
