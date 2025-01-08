@@ -22,7 +22,7 @@ function relativeScore(commandBigrams: string[], userCommandBigrams: string[]): 
   for (const key of userCommandBigrams) {
     if (key in map && map[key]! > 0) {
       result.push(key)
-      map[key]--
+      map[key] = map[key]! - 1
     }
   }
   return result.length

@@ -148,7 +148,7 @@ export function createRuntimeMetadataContainer<
 
           // If this is the topmost timer, the stack will be empty.
           if (durationStack.length > 0) {
-            durationStack[durationStack.length - 1] += wallClockDuration
+            durationStack[durationStack.length - 1] = (durationStack[durationStack.length - 1] ?? 0) + wallClockDuration
           }
 
           // Log it -- we include it in the metadata, but also log via the standard performance API. The TS types for this library are not quite right, so we have to cast to `any` here.
