@@ -228,7 +228,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   const commandData = {} as {[key: string]: unknown}
   const environmentData = {} as {[key: string]: unknown}
   const miscData = {} as {[key: string]: unknown}
-  const appKeys = ['api_key', 'partner_id', 'project_type']
+  const appKeys = ['api_key', 'business_platform_id', 'partner_id', 'project_type']
   const commandKeys = ['command']
   const environmentKeys = ['cli_version', 'node_version', 'uname']
 

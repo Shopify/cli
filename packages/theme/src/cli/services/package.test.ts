@@ -90,6 +90,7 @@ describe('packageTheme', () => {
       await mkdir(inputDirectory)
       const themeRelativePaths = [
         'assets/base.css',
+        'blocks/product-grid.liquid',
         'layout/theme.liquid',
         'config/settings_schema.json',
         'release-notes.md',

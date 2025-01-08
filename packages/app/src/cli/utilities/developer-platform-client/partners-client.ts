@@ -298,9 +298,8 @@ export class PartnersClient implements DeveloperPlatformClient {
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const variables: FindOrganizationBasicVariables = {id: orgId}
     const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
-    const org: Organization | undefined = result.organizations.nodes[0]
-    if (org) org.source = OrganizationSource.Partners
-    return org
+    const org: Omit<Organization, 'source'> | undefined = result.organizations.nodes[0]
+    return org ? {...org, source: OrganizationSource.Partners} : undefined
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
@@ -358,10 +357,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return {...result.appCreate.app, organizationId: org.id, newApp: true, flags, developerPlatformClient: this}
   }
 
-  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+  async devStoresForOrg(orgId: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
     const variables: DevStoresByOrgQueryVariables = {id: orgId}
     const result: DevStoresByOrgQuery = await this.requestDoc(DevStoresByOrg, variables)
-    return result.organizations.nodes![0]!.stores.nodes as OrganizationStore[]
+    return {
+      stores: result.organizations.nodes![0]!.stores.nodes as OrganizationStore[],
+      hasMorePages: false,
+    }
   }
 
   async appExtensionRegistrations(

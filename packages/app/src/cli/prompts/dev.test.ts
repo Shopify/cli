@@ -7,7 +7,7 @@ import {
   selectStorePrompt,
   updateURLsPrompt,
 } from './dev.js'
-import {Organization, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
@@ -21,10 +21,12 @@ vi.mock('../utilities/app/config/getTomls')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
+  source: OrganizationSource.BusinessPlatform,
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({
@@ -46,6 +48,14 @@ const STORE2: OrganizationStore = {
   link: 'link2',
   shopDomain: 'domain2',
   shopName: 'store2',
+  transferDisabled: false,
+  convertableToPartnerTest: false,
+}
+const STORE3: OrganizationStore = {
+  shopId: '3',
+  link: 'link3',
+  shopDomain: 'domain3',
+  shopName: 'store3',
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
@@ -141,7 +151,7 @@ describe('selectStore', () => {
     const stores: OrganizationStore[] = []
 
     // When
-    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt})
 
     // Then
     expect(got).toEqual(undefined)
@@ -154,7 +164,7 @@ describe('selectStore', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt})
 
     // Then
     expect(got).toEqual(STORE1)
@@ -168,7 +178,7 @@ describe('selectStore', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores, defaultShowDomainOnPrompt)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: defaultShowDomainOnPrompt})
 
     // Then
     expect(got).toEqual(STORE2)
@@ -178,6 +188,8 @@ describe('selectStore', () => {
         {label: 'store1', value: '1'},
         {label: 'store2', value: '2'},
       ],
+      hasMorePages: false,
+      search: expect.any(Function),
     })
   })
 
@@ -187,7 +199,7 @@ describe('selectStore', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('2')
 
     // When
-    const got = await selectStorePrompt(stores, true)
+    const got = await selectStorePrompt({stores, showDomainOnPrompt: true})
 
     // Then
     expect(got).toEqual(STORE2)
@@ -197,6 +209,36 @@ describe('selectStore', () => {
         {label: 'store1 (domain1)', value: '1'},
         {label: 'store2 (domain2)', value: '2'},
       ],
+      hasMorePages: false,
+      search: expect.any(Function),
+    })
+  })
+
+  test('returns correct store if user selects one after searching', async () => {
+    // Given
+    const stores: OrganizationStore[] = [STORE1, STORE2]
+    vi.mocked(renderAutocompletePrompt).mockImplementation(async ({search}) => {
+      const searchResults = await search!('')
+      return searchResults.data[0]!.value
+    })
+
+    // When
+    const got = await selectStorePrompt({
+      stores,
+      showDomainOnPrompt: defaultShowDomainOnPrompt,
+      onSearchForStoresByName: (_term: string) => Promise.resolve({stores: [STORE3], hasMorePages: false}),
+    })
+
+    // Then
+    expect(got).toEqual(STORE3)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which store would you like to use to view your project?',
+      choices: [
+        {label: 'store1', value: '1'},
+        {label: 'store2', value: '2'},
+      ],
+      hasMorePages: false,
+      search: expect.any(Function),
     })
   })
 })

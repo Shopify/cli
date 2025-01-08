@@ -10,13 +10,12 @@ import {
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
 } from './server/middlewares.js'
-import {ExtensionsPayloadStore} from './payload/store.js'
-import {ExtensionDevOptions} from '../extension.js'
+import {ExtensionsPayloadStore, ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {createApp, createRouter} from 'h3'
 import {createServer} from 'http'
 
 interface SetupHTTPServerOptions {
-  devOptions: ExtensionDevOptions
+  devOptions: ExtensionsPayloadStoreOptions
   payloadStore: ExtensionsPayloadStore
 }
 

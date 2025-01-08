@@ -157,6 +157,19 @@ export class ExtensionsPayloadStore extends EventEmitter {
     this.emitUpdate([extension.devUUID])
   }
 
+  deleteExtension(extension: ExtensionInstance) {
+    const index = this.rawPayload.extensions.findIndex((ext) => ext.uuid === extension.devUUID)
+    if (index !== -1) {
+      this.rawPayload.extensions.splice(index, 1)
+      this.emitUpdate([extension.devUUID])
+    }
+  }
+
+  async addExtension(extension: ExtensionInstance, bundlePath: string) {
+    this.rawPayload.extensions.push(await getUIExtensionPayload(extension, bundlePath, this.options))
+    this.emitUpdate([extension.devUUID])
+  }
+
   private emitUpdate(extensionIds: string[]) {
     this.emit(ExtensionsPayloadStoreEvent.Update, extensionIds)
   }
