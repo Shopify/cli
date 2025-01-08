@@ -8,10 +8,6 @@ import {Subdued} from './Subdued.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 
-export interface CommandToken {
-  command: string
-}
-
 export interface LinkToken {
   link: {
     label?: string
@@ -19,20 +15,8 @@ export interface LinkToken {
   }
 }
 
-export interface CharToken {
-  char: string
-}
-
 export interface UserInputToken {
   userInput: string
-}
-
-export interface SubduedToken {
-  subdued: string
-}
-
-export interface FilePathToken {
-  filePath: string
 }
 
 export interface ListToken {
@@ -47,31 +31,33 @@ export interface BoldToken {
   bold: string
 }
 
-export interface InfoToken {
-  info: string
-}
-
-export interface WarnToken {
-  warn: string
-}
-
-export interface ErrorToken {
-  error: string
-}
-
 export type Token =
   | string
-  | CommandToken
+  | {
+    command: string
+  }
   | LinkToken
-  | CharToken
+  | {
+    char: string
+  }
   | UserInputToken
-  | SubduedToken
-  | FilePathToken
+  | {
+    subdued: string
+  }
+  | {
+    filePath: string
+  }
   | ListToken
   | BoldToken
-  | InfoToken
-  | WarnToken
-  | ErrorToken
+  | {
+    info: string
+  }
+  | {
+    warn: string
+  }
+  | {
+    error: string
+  }
 
 export type InlineToken = Exclude<Token, ListToken>
 export type TokenItem<T extends Token = Token> = T | T[]

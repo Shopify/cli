@@ -20,7 +20,7 @@ export interface Task<TContext = unknown> {
   skip?: (ctx: TContext) => boolean
 }
 
-export interface TasksProps<TContext> {
+interface TasksProps<TContext> {
   tasks: Task<TContext>[]
   silent?: boolean
   onComplete?: (ctx: TContext) => void
