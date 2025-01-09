@@ -246,9 +246,6 @@
           "**/{commands,hooks}/**/*.ts!",
           "**/index.ts!"
         ],
-        "ignoreDependencies": [
-          "speedscope"
-        ],
         "vite": {
           "config": [
             "vite.config.ts"
