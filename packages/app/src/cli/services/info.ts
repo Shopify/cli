@@ -152,7 +152,7 @@ class AppInfo {
         'Current app configuration',
         [
           ['Configuration file', {filePath: basename(this.app.configuration.path) || configurationFileNames.app}],
-          ['App name', this.remoteApp.title || NOT_CONFIGURED_TOKEN],
+          ['App name', this.remoteApp.title ? {userInput: this.remoteApp.title} : NOT_CONFIGURED_TOKEN],
           ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TOKEN],
           ['Access scopes', getAppScopes(this.app.configuration)],
           ['Dev store', this.app.configuration.build?.dev_store_url ?? NOT_CONFIGURED_TOKEN],
