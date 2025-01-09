@@ -11,7 +11,7 @@ export interface TabularDataProps {
 const TabularData: FunctionComponent<TabularDataProps> = ({tabularData: data, firstColumnSubdued}) => {
   const columnWidths: number[] = data.reduce<number[]>((acc, row) => {
     row.forEach((cell, index) => {
-      acc[index] = Math.max(acc[index] ?? 0, unstyled((tokenItemToString(cell))).length)
+      acc[index] = Math.max(acc[index] ?? 0, unstyled(tokenItemToString(cell)).length)
     })
     return acc
   }, [])

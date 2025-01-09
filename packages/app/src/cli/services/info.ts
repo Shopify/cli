@@ -233,7 +233,7 @@ class AppInfo {
           )
         }
       })
-      .filter((section: CustomSection | undefined) => section !== undefined) as CustomSection[]
+      .filter((section: CustomSection | undefined) => section !== undefined)
   }
 
   extensionSubSection(extension: ExtensionInstance): InlineToken[][] {
