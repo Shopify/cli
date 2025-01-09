@@ -194,10 +194,11 @@ class AppInfo {
       if (web.configuration) {
         if (web.configuration.name) {
           const {name, roles} = web.configuration
-          sublevels.push([
-            `    📂 ${name} (${roles.join(',')})`,
-            {filePath: relativePath(this.app.directory, web.directory)},
-          ])
+          const pathToWeb = relativePath(this.app.directory, web.directory)
+          sublevels.push([`    📂 ${name}`, {filePath: pathToWeb || '/'}])
+          if (roles.length > 0) {
+            sublevels.push(['         roles', roles.join(', ')])
+          }
         } else {
           web.configuration.roles.forEach((role) => {
             sublevels.push([`    📂 ${role}`, {filePath: relativePath(this.app.directory, web.directory)}])
