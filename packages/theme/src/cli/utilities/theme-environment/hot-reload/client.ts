@@ -347,7 +347,7 @@ function hotReloadScript() {
     }
 
     const isRemoteSync = data.sync === 'remote'
-    const [fileType, fileName] = data.key.split('/')
+    const [fileType] = data.key.split('/')
 
     // -- App extensions
     if (data.payload?.isAppExtension) {
@@ -379,12 +379,14 @@ function hotReloadScript() {
       return isCssAsset ? domActions.updateCss(data) : fullPageReload(data.key)
     }
 
-    if (fileType === 'config') {
-      if (isOSE) oseActions.sendEvent({key: data.key})
+    const isSchemaLanguageFile = fileType === 'locales' && data.key.endsWith('.schema.json')
 
-      // No need to refresh previews for this file.
-      if (fileName === 'settings_schema.json') return
+    if (isOSE && isRemoteSync && (isSchemaLanguageFile || fileType === 'config')) {
+      oseActions.sendEvent({key: data.key})
     }
+
+    // No need to refresh previews for this file.
+    if (isSchemaLanguageFile || data.key === 'config/settings_schema.json') return
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
     const hasReplaceTemplates = Object.keys(data.payload?.replaceTemplates ?? {}).length > 0
