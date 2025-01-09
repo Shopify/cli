@@ -3,9 +3,11 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {Task} from '@shopify/cli-kit/node/ui'
 
 export default class Profile extends ThemeCommand {
   static summary = 'Profile the Liquid rendering of a theme page.'
