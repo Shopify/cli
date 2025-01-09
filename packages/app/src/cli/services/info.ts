@@ -139,12 +139,12 @@ class AppInfo {
       updateUrls = this.app.configuration.build.automatically_update_urls_on_dev ? 'Yes' : 'No'
     }
 
-    let partnersAccountInfo: [string, string] = ['Partners account', 'unknown']
+    let userAccountInfo: [string, string] = ['User', 'unknown']
     const retrievedAccountInfo = await this.options.developerPlatformClient.accountInfo()
     if (isServiceAccount(retrievedAccountInfo)) {
-      partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
+      userAccountInfo = ['Service account', retrievedAccountInfo.orgName]
     } else if (isUserAccount(retrievedAccountInfo)) {
-      partnersAccountInfo = ['Partners account', retrievedAccountInfo.email]
+      userAccountInfo[1] = retrievedAccountInfo.email
     }
 
     return [
@@ -157,7 +157,7 @@ class AppInfo {
           ['Access scopes', getAppScopes(this.app.configuration)],
           ['Dev store', this.app.configuration.build?.dev_store_url ?? NOT_CONFIGURED_TOKEN],
           ['Update URLs', updateUrls],
-          partnersAccountInfo,
+          userAccountInfo,
         ],
         {isFirstItem: true},
       ),
