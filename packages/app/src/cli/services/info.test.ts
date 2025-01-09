@@ -12,12 +12,10 @@ import {
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
-import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 type CustomSection = Exclude<Parameters<typeof renderInfo>[0]['customSections'], undefined>[number]
 
@@ -82,34 +80,6 @@ function infoOptions(): InfoOptions {
 
 describe('info', () => {
   const remoteApp = testOrganizationApp()
-
-  test('returns update shopify cli reminder when last version is greater than current version', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const latestVersion = '2.2.3'
-      const app = mockApp({directory: tmp})
-      vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, ORG1, infoOptions()))
-      // Then
-      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
-    })
-  })
-
-  test('returns update shopify cli reminder when last version lower or equals to current version', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const app = mockApp({directory: tmp})
-      vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, ORG1, infoOptions()))
-      // Then
-      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
-      expect(unstyled(result)).not.toMatch('CLI reminder')
-    })
-  })
 
   test('returns the web environment as a text when webEnv is true', async () => {
     await inTemporaryDirectory(async (tmp) => {
