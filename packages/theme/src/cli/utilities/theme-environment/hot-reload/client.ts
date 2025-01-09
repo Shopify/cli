@@ -63,10 +63,14 @@ function hotReloadScript() {
   const hrParam = 'hr'
   const hrKey = `__${hrParam}`
 
+  let hotReloadOrigin = window.location.origin
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   const hotReloadParam = searchParams.get(hrParam) || window.location.port || localStorage.getItem(hrKey)
-
   if (hotReloadParam) {
+    if (!isLocalPreview) {
+      hotReloadOrigin = /^\d+$/.test(hotReloadParam) ? `http://localhost:${hotReloadParam}` : hotReloadParam
+    }
+
     // Store the hot reload port in localStorage to keep it after a page reload,
     // but remove it from the URL to avoid confusing the user in Theme Preview.
     localStorage.setItem(hrKey, hotReloadParam)
@@ -75,15 +79,6 @@ function hotReloadScript() {
       newUrl.searchParams.delete(hrParam)
       window.history.replaceState({}, '', newUrl)
     }
-  } else {
-    // Note: this should fallback to window messages eventually for the Service Worker.
-    logInfo('Disabled - No hot reload port specified.')
-    return
-  }
-
-  let hotReloadOrigin = window.location.origin
-  if (!isLocalPreview) {
-    hotReloadOrigin = /^\d+$/.test(hotReloadParam) ? `http://localhost:${hotReloadParam}` : hotReloadParam
   }
 
   const fullPageReload = (key: string, error?: Error) => {
@@ -379,22 +374,34 @@ function hotReloadScript() {
     }
   }
 
-  let hasEventSourceConnectedOnce = false
-  const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
-  evtSource.onmessage = (event) => onHotReloadEvent(JSON.parse(event.data))
-  evtSource.onopen = () => {
-    hasEventSourceConnectedOnce = true
-    logInfo('Connected')
-  }
-  evtSource.onerror = (event) => {
-    if (hasEventSourceConnectedOnce) {
-      if (event.eventPhase === EventSource.CLOSED) {
-        logError('Connection closed by the server, attempting to reconnect...')
-      } else {
-        logError('Error occurred, attempting to reconnect...')
-      }
-    } else {
-      evtSource.close()
+  if (hotReloadParam) {
+    let hasEventSourceConnectedOnce = false
+    const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
+    evtSource.onmessage = (event) => onHotReloadEvent(JSON.parse(event.data))
+    evtSource.onopen = () => {
+      hasEventSourceConnectedOnce = true
+      logInfo('Connected')
     }
+    evtSource.onerror = (event) => {
+      if (hasEventSourceConnectedOnce) {
+        if (event.eventPhase === EventSource.CLOSED) {
+          logError('Connection closed by the server, attempting to reconnect...')
+        } else {
+          logError('Error occurred, attempting to reconnect...')
+        }
+      } else {
+        evtSource.close()
+      }
+    }
+  } else {
+    logInfo('CLI hot reload disabled - No hot reload port specified.')
+  }
+
+  if (!isLocalPreview) {
+    window.addEventListener('message', (event: MessageEvent<{type: string; payload: HotReloadEvent}>) => {
+      if (event.data?.type === 'StorefrontMessage::HotReload') {
+        onHotReloadEvent(event.data.payload).catch((error) => logError('Error handling OSE hot reload event', error))
+      }
+    })
   }
 }
