@@ -5,8 +5,8 @@ import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {writeFile} from 'fs/promises'
-import {tmpdir} from 'os'
+import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export async function profile(
   adminSession: AdminSession,
@@ -40,7 +40,7 @@ export async function profile(
 
   if (asJson) {
     // Print the JSON
-    process.stdout.write(profileJson)
+    outputInfo(profileJson)
   } else {
     await openProfile(profileJson)
   }
@@ -71,14 +71,14 @@ async function openProfile(profileJson: string) {
   const jsSource = `speedscope.loadFileFromBase64(${JSON.stringify(filename)}, ${JSON.stringify(sourceBase64)})`
 
   const filePrefix = `speedscope-${Number(new Date())}-${process.pid}`
-  const jsPath = joinPath(tmpdir(), `${filePrefix}.js`)
+  const jsPath = joinPath(tempDirectory(), `${filePrefix}.js`)
   await writeFile(jsPath, jsSource)
   urlToOpen += `#localProfilePath=${jsPath}`
 
   // For some silly reason, the OS X open command ignores any query parameters or hash parameters
   // passed as part of the URL. To get around this weird issue, we'll create a local HTML file
   // that just redirects.
-  const htmlPath = joinPath(tmpdir(), `${filePrefix}.html`)
+  const htmlPath = joinPath(tempDirectory(), `${filePrefix}.html`)
   await writeFile(htmlPath, `<script>window.location=${JSON.stringify(urlToOpen)}</script>`)
 
   urlToOpen = `file://${htmlPath}`
