@@ -5,9 +5,11 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
 import {Headers, Response} from 'node-fetch'
 import {readFile} from 'fs/promises'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/storefront-renderer.js')
@@ -35,10 +37,10 @@ describe('profile', () => {
   })
 
   test('outputs JSON to stdout when asJson is true', async () => {
-    const stdoutWrite = vi.spyOn(process.stdout, 'write')
-
+    // When
     await profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
 
+    // Then
     expect(render).toHaveBeenCalledWith(
       {
         sessionCookies: undefined,
@@ -54,12 +56,14 @@ describe('profile', () => {
         },
       },
     )
-    expect(stdoutWrite).toHaveBeenCalledWith(JSON.stringify(mockProfileData))
+    expect(outputInfo).toHaveBeenCalledWith(JSON.stringify(mockProfileData))
   })
 
   test('opens profile in browser when asJson is false', async () => {
+    // When
     await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
 
+    // Then
     // Verify fetch was called correctly
     expect(render).toHaveBeenCalled()
 
@@ -79,20 +83,26 @@ describe('profile', () => {
   })
 
   test('uses provided passwords for authentication', async () => {
+    // When
     await profile(mockAdminSession, themeId, urlPath, true, 'themeAccessPassword', 'storePassword')
 
+    // Then
     expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], 'themeAccessPassword')
   })
 
   test('throws error when fetch fails', async () => {
+    // Given
     vi.mocked(render).mockRejectedValue(new Error('Network error'))
 
-    await expect(profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)).rejects.toThrow(
-      'Network error',
-    )
+    // When
+    const result = profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
+
+    // Then
+    await expect(result).rejects.toThrow('Network error')
   })
 
   test('throws error when response status is not 200', async () => {
+    // Given
     vi.mocked(render).mockResolvedValue(
       new Response(JSON.stringify({error: 'Some error message'}), {
         status: 404,
@@ -100,8 +110,10 @@ describe('profile', () => {
       }),
     )
 
-    await expect(profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)).rejects.toThrow(
-      'Bad response: 404: {"error":"Some error message"}',
-    )
+    // When
+    const result = profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
+
+    // Then
+    await expect(result).rejects.toThrow('Bad response: 404: {"error":"Some error message"}')
   })
 })
