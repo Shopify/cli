@@ -82,12 +82,9 @@ function hotReloadScript() {
   }
 
   let hotReloadOrigin = window.location.origin
-
   if (!isLocalPreview) {
     hotReloadOrigin = /^\d+$/.test(hotReloadParam) ? `http://localhost:${hotReloadParam}` : hotReloadParam
   }
-
-  const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
 
   const fullPageReload = (key: string, error?: Error) => {
     if (error) logError(error)
@@ -308,56 +305,43 @@ function hotReloadScript() {
     },
   }
 
-  evtSource.onopen = () => logInfo('Connected')
-  evtSource.onerror = (event) => {
-    if (event.eventPhase === EventSource.CLOSED) {
-      logError('Connection closed by the server, attempting to reconnect...')
-    } else {
-      logError('Error occurred, attempting to reconnect...')
-    }
-  }
-
   let serverPid: string | undefined
 
-  evtSource.onmessage = async (event) => {
-    if (!event.data || typeof event.data !== 'string') return
+  const onHotReloadEvent = async (event: HotReloadEvent) => {
+    logDebug('Event:', event)
 
-    const data: HotReloadEvent = JSON.parse(event.data)
-
-    logDebug('Event data:', data)
-
-    if (data.type === 'open') {
-      serverPid ??= data.pid
+    if (event.type === 'open') {
+      serverPid ??= event.pid
 
       // If the server PID is different it means that the process has been restarted.
       // Trigger a full-refresh to get all the latest changes.
-      if (serverPid !== data.pid) {
+      if (serverPid !== event.pid) {
         fullPageReload('Reconnected to new server')
       }
 
       return
     }
 
-    if (data.type === 'full') {
-      return fullPageReload(data.key)
+    if (event.type === 'full') {
+      return fullPageReload(event.key)
     }
 
-    if (data.type !== 'update' && data.type !== 'delete') {
-      return logDebug(`Unknown event "${data.type}"`)
+    if (event.type !== 'update' && event.type !== 'delete') {
+      return logDebug(`Unknown event "${event.type}"`)
     }
 
-    const isRemoteSync = data.sync === 'remote'
-    const [fileType] = data.key.split('/')
+    const isRemoteSync = event.sync === 'remote'
+    const [fileType] = event.key.split('/')
 
     // -- App extensions
-    if (data.payload?.isAppExtension) {
+    if (event.payload?.isAppExtension) {
       // App embed blocks come from local server. Skip remote sync:
       if (isRemoteSync) return
 
-      if (fileType === 'blocks') return domActions.updateExtAppBlock(data)
-      if (fileType === 'assets' && data.key.endsWith('.css')) return domActions.updateExtCss(data)
+      if (fileType === 'blocks') return domActions.updateExtAppBlock(event)
+      if (fileType === 'assets' && event.key.endsWith('.css')) return domActions.updateExtCss(event)
 
-      return fullPageReload(data.key)
+      return fullPageReload(event.key)
     }
 
     // -- Theme files
@@ -365,33 +349,52 @@ function hotReloadScript() {
       // Sections come from local server only in local preview:
       if (isLocalPreview ? isRemoteSync : !isRemoteSync) return
 
-      return domActions.updateSections(data)
+      return domActions.updateSections(event)
     }
 
     if (fileType === 'assets') {
-      const isLiquidAsset = data.key.endsWith('.liquid')
-      const isCssAsset = data.key.endsWith('.css') || data.key.endsWith('.css.liquid')
+      const isLiquidAsset = event.key.endsWith('.liquid')
+      const isCssAsset = event.key.endsWith('.css') || event.key.endsWith('.css.liquid')
 
       // Skip remote sync events for local preview unless it's a Liquid asset.
       // Skip local sync events for prod previews.
       if (isLocalPreview && !isLiquidAsset ? isRemoteSync : !isRemoteSync) return
 
-      return isCssAsset ? domActions.updateCss(data) : fullPageReload(data.key)
+      return isCssAsset ? domActions.updateCss(event) : fullPageReload(event.key)
     }
 
-    const isSchemaLanguageFile = fileType === 'locales' && data.key.endsWith('.schema.json')
+    const isSchemaLanguageFile = fileType === 'locales' && event.key.endsWith('.schema.json')
 
     if (isOSE && isRemoteSync && (isSchemaLanguageFile || fileType === 'config')) {
-      oseActions.sendEvent({key: data.key})
+      oseActions.sendEvent({key: event.key})
     }
 
     // No need to refresh previews for this file.
-    if (isSchemaLanguageFile || data.key === 'config/settings_schema.json') return
+    if (isSchemaLanguageFile || event.key === 'config/settings_schema.json') return
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
-    const hasReplaceTemplates = Object.keys(data.payload?.replaceTemplates ?? {}).length > 0
+    const hasReplaceTemplates = Object.keys(event.payload?.replaceTemplates ?? {}).length > 0
     if (isLocalPreview && hasReplaceTemplates ? !isRemoteSync : isRemoteSync) {
-      return fullPageReload(data.key)
+      return fullPageReload(event.key)
+    }
+  }
+
+  let hasEventSourceConnectedOnce = false
+  const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
+  evtSource.onmessage = (event) => onHotReloadEvent(JSON.parse(event.data))
+  evtSource.onopen = () => {
+    hasEventSourceConnectedOnce = true
+    logInfo('Connected')
+  }
+  evtSource.onerror = (event) => {
+    if (hasEventSourceConnectedOnce) {
+      if (event.eventPhase === EventSource.CLOSED) {
+        logError('Connection closed by the server, attempting to reconnect...')
+      } else {
+        logError('Error occurred, attempting to reconnect...')
+      }
+    } else {
+      evtSource.close()
     }
   }
 }
