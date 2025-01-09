@@ -29,7 +29,10 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
     targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
     verification_session_url: zod.string().url().optional(),
     ui_extension_handle: zod.string().optional(),
-    supports_moto: zod.boolean(),
+    supports_moto: zod.boolean({
+      required_error: 'supports_moto is required',
+      invalid_type_error: 'Value must be Boolean',
+    }),
     encryption_certificate_fingerprint: zod
       .string()
       .min(1, {message: "Encryption certificate fingerprint can't be blank"}),

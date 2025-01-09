@@ -173,6 +173,46 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
       ]),
     )
   })
+
+  test('returns an error if supports_moto is not a boolean', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        supports_moto: 'true',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'boolean',
+          received: 'string',
+          path: ['supports_moto'],
+          message: 'Value must be Boolean',
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if supports_moto is not present', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        supports_moto: undefined,
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'boolean',
+          received: 'undefined',
+          path: ['supports_moto'],
+          message: 'supports_moto is required',
+        },
+      ]),
+    )
+  })
 })
 
 describe('creditCardPaymentsAppExtensionDeployConfig', () => {
