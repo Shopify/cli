@@ -57,13 +57,21 @@ export default class Profile extends ThemeCommand {
     }
     const theme = await findOrSelectTheme(adminSession, filter)
 
-    await profile(
-      adminSession,
-      theme.id.toString(),
-      flags.url,
-      flags.json,
-      themeAccessPassword,
-      flags['store-password'],
-    )
+    const tasks: Task[] = [
+      {
+        title: `Generating Liquid profile for ${store + flags.url}`,
+        task: async () => {
+          await profile(
+            adminSession,
+            theme.id.toString(),
+            flags.url,
+            flags.json,
+            themeAccessPassword,
+            flags['store-password'],
+          )
+        },
+      },
+    ]
+    await renderTasksToStdErr(tasks)
   }
 }
