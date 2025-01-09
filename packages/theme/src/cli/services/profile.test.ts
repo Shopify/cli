@@ -4,8 +4,8 @@ import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
 import {Headers, Response} from 'node-fetch'
-import {readFile} from 'fs/promises'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {readFile} from 'fs/promises'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system')
