@@ -1,10 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {
-  AppConfigurationInterface,
-  AppInterface,
-  CurrentAppConfiguration,
-  isCurrentAppSchema,
-} from '../../models/app/app.js'
+import {AppConfigurationInterface, AppLinkedInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
@@ -202,7 +197,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
+  if (localApp && localApp.configuration.client_id === apiKey) {
     const patch = {
       application_url: urls.applicationUrl,
       auth: {
@@ -243,7 +238,7 @@ interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
-  localApp?: AppInterface
+  localApp?: AppLinkedInterface
   apiKey: string
 }
 
@@ -258,7 +253,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.redirectUrlWhitelist,
     )
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
+    if (options.localApp) {
       const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
