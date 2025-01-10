@@ -7,6 +7,13 @@ export interface HotReloadEventPayload {
   replaceTemplates?: {[key: string]: string}
 }
 
+interface HotReloadFileEvent {
+  type: 'create' | 'update' | 'delete'
+  key: string
+  sync: 'local' | 'remote'
+  payload?: HotReloadEventPayload
+}
+
 export type HotReloadEvent =
   | {
       type: 'open'
@@ -16,14 +23,7 @@ export type HotReloadEvent =
       type: 'full'
       key: string
     }
-  | {
-      type: 'update' | 'delete'
-      key: string
-      sync: 'local' | 'remote'
-      payload?: HotReloadEventPayload
-    }
-
-type UpdateEvent = HotReloadEvent & {type: 'update' | 'delete'}
+  | HotReloadFileEvent
 
 export function getClientScripts() {
   return injectFunction(hotReloadScript)
@@ -99,7 +99,7 @@ function hotReloadScript() {
     }
   }
 
-  const buildSectionHotReloadUrl = (sectionId: string, data: UpdateEvent) => {
+  const buildSectionHotReloadUrl = (sectionId: string, data: HotReloadFileEvent) => {
     if (isLocalPreview) {
       // Note: Change this to mimic SFR API in CLI
       const prefix = data.payload?.isAppExtension ? 'app' : 'section'
@@ -171,13 +171,13 @@ function hotReloadScript() {
       // OSE reads the new data after the page is loaded
       window.dispatchEvent(new Event('load'))
     },
-    sendEvent: (payload: Pick<UpdateEvent, 'key'>) => {
+    sendEvent: (payload: Pick<HotReloadFileEvent, 'key'>) => {
       if (!isOSE) return
       window.parent.postMessage({type: 'StorefrontEvent::HotReload', payload}, `https://${window.Shopify.editorDomain}`)
     },
   }
 
-  const refreshSections = async (data: UpdateEvent, elements: Element[]) => {
+  const refreshSections = async (data: HotReloadFileEvent, elements: Element[]) => {
     // The current section hot reload logic creates small issues in OSE state.
     // For now, we reload the full page to workaround this problem finding a better solution:
     if (isOSE) fullPageReload(data.key)
@@ -216,7 +216,7 @@ function hotReloadScript() {
     }
   }
 
-  const refreshAppEmbedBlock = async (data: UpdateEvent, block: Element) => {
+  const refreshAppEmbedBlock = async (data: HotReloadFileEvent, block: Element) => {
     const controller = new AbortController()
 
     const appEmbedBlockId = block.id.replace(/^shopify-block-/, '')
@@ -237,7 +237,7 @@ function hotReloadScript() {
     block.outerHTML = await response.text()
   }
 
-  const refreshAppBlock = async (data: UpdateEvent, block: Element) => {
+  const refreshAppBlock = async (data: HotReloadFileEvent, block: Element) => {
     const blockSection = block.closest(`[id^=shopify-section-]`)
     const isAppEmbed = blockSection === null
 
@@ -251,7 +251,7 @@ function hotReloadScript() {
   }
 
   const domActions = {
-    updateSections: async (data: UpdateEvent) => {
+    updateSections: async (data: HotReloadFileEvent) => {
       const elements = data.payload?.sectionNames?.flatMap((name) =>
         Array.from(document.querySelectorAll(`[id^='shopify-section'][id$='${name}']`)),
       )
@@ -267,7 +267,7 @@ function hotReloadScript() {
         fullPageReload(data.key)
       }
     },
-    updateCss: async (data: UpdateEvent) => {
+    updateCss: async (data: HotReloadFileEvent) => {
       const normalizedKey = data.key.replace(/.liquid$/, '')
       const elements: HTMLLinkElement[] = Array.from(
         document.querySelectorAll(`link[rel="stylesheet"][href*="${normalizedKey}?"]`),
@@ -276,7 +276,7 @@ function hotReloadScript() {
       refreshHTMLLinkElements(elements)
       logInfo(`Updated theme CSS: ${data.key}`)
     },
-    updateExtCss: async (data: UpdateEvent) => {
+    updateExtCss: async (data: HotReloadFileEvent) => {
       const normalizedKey = data.key.replace(/.liquid$/, '')
       const elements: HTMLLinkElement[] = Array.from(
         // Note: Remove /ext/cdn/ ?
@@ -286,7 +286,7 @@ function hotReloadScript() {
       refreshHTMLLinkElements(elements)
       logInfo(`Updated extension CSS: ${data.key}`)
     },
-    updateExtAppBlock: async (data: UpdateEvent) => {
+    updateExtAppBlock: async (data: HotReloadFileEvent) => {
       const blockHandle = data.key.match(/\/(\w+)\.liquid$/)?.[1]
       const blockElements = Array.from(document.querySelectorAll(`[data-block-handle$='${blockHandle}']`))
 
@@ -321,7 +321,7 @@ function hotReloadScript() {
       return fullPageReload(event.key)
     }
 
-    if (event.type !== 'update' && event.type !== 'delete') {
+    if (event.type !== 'update' && event.type !== 'delete' && event.type !== 'create') {
       return logDebug(`Unknown event "${event.type}"`)
     }
 
