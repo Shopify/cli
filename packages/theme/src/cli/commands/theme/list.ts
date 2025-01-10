@@ -6,7 +6,7 @@ import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {loadEnvironment} from '@shopify/cli-kit/node/environments'
+import {loadEnvironment, validateEnvironmentConfig} from '@shopify/cli-kit/node/environments'
 
 export default class List extends ThemeCommand {
   static description = 'Lists the themes in your store, along with their IDs and statuses.'
@@ -43,6 +43,13 @@ export default class List extends ThemeCommand {
             ...flags,
             ...envConfig,
             environment: env,
+          }
+          const valid = validateEnvironmentConfig(envConfig, {
+            // This is not actually required but used for testing
+            additionalRequiredFlags: ['path'],
+          })
+          if (!valid) {
+            return
           }
           const store = ensureThemeStore(envFlags)
           const adminSession = await ensureAuthenticatedThemes(store, envFlags.password)
