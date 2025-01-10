@@ -201,12 +201,6 @@ function hotReloadScript() {
     await Promise.all(
       elements.map(async (element) => {
         const sectionId = element.id.replace(/^shopify-section-/, '')
-
-        // Note: sometimes SFR uses the old asset, even if this runs on sync:remote.
-        // Perhaps SFR is still compiling the section and the new asset is not ready yet.
-        // This workaround is a temporary fix until we can send replace_templates params.
-        // if (isOSE) await new Promise((resolve) => setTimeout(resolve, 1000));
-
         const response = await fetch(buildSectionHotReloadUrl(sectionId, data), {signal: controller.signal})
 
         if (!response.ok) {
