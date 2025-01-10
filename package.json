@@ -193,7 +193,8 @@
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
-          "@ast-grep/napi"
+          "@ast-grep/napi",
+          "speedscope"
         ],
         "vite": {
           "config": [
