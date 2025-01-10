@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.73.1
+
+### Patch Changes
+
+- f3d5f7d678: Credit card payment extensions must include a `supports_moto` property
+  - @shopify/cli-kit@3.73.1
+  - @shopify/theme@3.73.1
+  - @shopify/plugin-cloudflare@3.73.1
+
 ## 3.73.0
 
 ### Minor Changes

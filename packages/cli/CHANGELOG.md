@@ -1,5 +1,7 @@
 # @shopify/cli
 
+## 3.73.1
+
 ## 3.73.0
 
 ### Minor Changes
