@@ -1,6 +1,14 @@
 // eslint-disable-next-line spaced-comment, @typescript-eslint/triple-slash-reference
 /// <reference lib="dom" />
 
+declare global {
+  interface Window {
+    Shopify: {
+      editorDomain: string
+    }
+  }
+}
+
 export interface HotReloadEventPayload {
   isAppExtension?: boolean
   sectionNames?: string[]
@@ -84,6 +92,11 @@ function hotReloadScript() {
   const fullPageReload = (key: string, error?: Error) => {
     if (error) logError(error)
     logInfo('Full reload:', key)
+
+    if (isOSE) {
+      oseActions.sendEvent({type: 'before-reload', key})
+    }
+
     window.location.reload()
   }
 
@@ -171,7 +184,7 @@ function hotReloadScript() {
       // OSE reads the new data after the page is loaded
       window.dispatchEvent(new Event('load'))
     },
-    sendEvent: (payload: Pick<HotReloadFileEvent, 'key'>) => {
+    sendEvent: (payload: Pick<HotReloadFileEvent, 'key'> & {type: HotReloadFileEvent['type'] | 'before-reload'}) => {
       if (!isOSE) return
       window.parent.postMessage({type: 'StorefrontEvent::HotReload', payload}, `https://${window.Shopify.editorDomain}`)
     },
@@ -180,7 +193,7 @@ function hotReloadScript() {
   const refreshSections = async (data: HotReloadFileEvent, elements: Element[]) => {
     // The current section hot reload logic creates small issues in OSE state.
     // For now, we reload the full page to workaround this problem finding a better solution:
-    if (isOSE) fullPageReload(data.key)
+    if (isOSE) return fullPageReload(data.key)
 
     const controller = new AbortController()
     const oseDataPromise = isOSE ? oseActions.startDataReload(controller.signal) : null
@@ -329,7 +342,7 @@ function hotReloadScript() {
     const [fileType] = event.key.split('/')
 
     if (isOSE && isRemoteSync) {
-      oseActions.sendEvent({key: event.key})
+      oseActions.sendEvent({type: event.type, key: event.key})
     }
 
     // -- App extensions
