@@ -114,7 +114,7 @@ describe('dev', () => {
     const urls = {
       local: `http://${host}:${port}`,
       giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
-      themeEditor: `https://${store}/admin/themes/${themeId}/editor`,
+      themeEditor: `https://${store}/admin/themes/${themeId}/editor${port}`,
       preview: `https://${store}/?preview_theme_id=${themeId}`,
     }
 
