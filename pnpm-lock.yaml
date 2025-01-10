@@ -252,6 +252,9 @@ importers:
       esbuild:
         specifier: 0.24.0
         version: 0.24.0
+      speedscope:
+        specifier: 1.21.0
+        version: 1.21.0
     devDependencies:
       '@oclif/core':
         specifier: 3.26.5
