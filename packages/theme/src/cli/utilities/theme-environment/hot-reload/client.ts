@@ -328,6 +328,10 @@ function hotReloadScript() {
     const isRemoteSync = event.sync === 'remote'
     const [fileType] = event.key.split('/')
 
+    if (isOSE && isRemoteSync) {
+      oseActions.sendEvent({key: event.key})
+    }
+
     // -- App extensions
     if (event.payload?.isAppExtension) {
       // App embed blocks come from local server. Skip remote sync:
@@ -358,14 +362,10 @@ function hotReloadScript() {
       return isCssAsset ? domActions.updateCss(event) : fullPageReload(event.key)
     }
 
-    const isSchemaLanguageFile = fileType === 'locales' && event.key.endsWith('.schema.json')
-
-    if (isOSE && isRemoteSync && (isSchemaLanguageFile || fileType === 'config')) {
-      oseActions.sendEvent({key: event.key})
-    }
-
     // No need to refresh previews for this file.
-    if (isSchemaLanguageFile || event.key === 'config/settings_schema.json') return
+    if (event.key === 'config/settings_schema.json' || (fileType === 'locales' && event.key.endsWith('.schema.json'))) {
+      return
+    }
 
     // For other files, if there are replace templates, use local sync. Otherwise, wait for remote sync:
     const hasReplaceTemplates = Object.keys(event.payload?.replaceTemplates ?? {}).length > 0
