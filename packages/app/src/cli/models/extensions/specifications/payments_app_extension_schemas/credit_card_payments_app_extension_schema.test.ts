@@ -21,6 +21,7 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   supported_countries: ['CA'],
   supported_payment_methods: ['PAYMENT_METHOD'],
   supported_buyer_contexts: [{currency: 'USD'}, {currency: 'CAD'}],
+  supports_moto: true,
   supports_3ds: false,
   test_mode_available: true,
   supports_deferred_payments: false,
@@ -172,6 +173,46 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
       ]),
     )
   })
+
+  test('returns an error if supports_moto is not a boolean', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        supports_moto: 'true',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'boolean',
+          received: 'string',
+          path: ['supports_moto'],
+          message: 'Value must be Boolean',
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if supports_moto is not present', async () => {
+    // When/Then
+    expect(() =>
+      CreditCardPaymentsAppExtensionSchema.parse({
+        ...config,
+        supports_moto: undefined,
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'boolean',
+          received: 'undefined',
+          path: ['supports_moto'],
+          message: 'supports_moto is required',
+        },
+      ]),
+    )
+  })
 })
 
 describe('creditCardPaymentsAppExtensionDeployConfig', () => {
@@ -194,6 +235,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       supported_payment_methods: config.supported_payment_methods,
       supported_buyer_contexts: config.supported_buyer_contexts,
       test_mode_available: config.test_mode_available,
+      supports_moto: config.supports_moto,
       supports_3ds: config.supports_3ds,
       supports_deferred_payments: config.supports_deferred_payments,
       supports_installments: config.supports_installments,
