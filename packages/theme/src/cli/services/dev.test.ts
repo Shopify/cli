@@ -128,7 +128,7 @@ describe('dev', () => {
             {
               link: {
                 label: 'Customize your theme at the theme editor',
-                url: 'https://my-store.myshopify.com/admin/themes/123/editor',
+                url: 'https://my-store.myshopify.com/admin/themes/123/editor?hr=9292',
               },
             },
           ],
