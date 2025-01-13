@@ -514,6 +514,17 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
 export function pathToFileURL(path: string): URL {
   return pathToFile(path)
 }
+
+/**
+ * Returns the operating system's end-of-line marker.
+ * On POSIX systems this is `\n`, on Windows this is `\r\n`.
+ *
+ * @returns The platform-specific EOL string.
+ */
+export function eol(): string {
+  return os.EOL
+}
+
 /**
  * Find a file by walking parent directories.
  *
