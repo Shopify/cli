@@ -97,6 +97,7 @@ FLAGS
       --path=<value>                    The path to your app directory.
       --reset                           Reset all your settings.
       --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
+      --sourcemaps                      Generates UI extension sourcemaps, you can find them in the `/dist/` directory.
       --verbose                         Increase the verbosity of the output.
 
 DESCRIPTION
@@ -182,6 +183,8 @@ FLAGS
       --path=<value>                The path to your app directory.
       --reset                       Reset all your settings.
       --source-control-url=<value>  URL associated with the new app version.
+      --sourcemaps                  Generates UI extension sourcemaps, you can find them in the
+                                    `/dist/` directory.
       --verbose                     Increase the verbosity of the output.
       --version=<value>             Optional version tag that will be associated with this app version. If not provided,
                                     an auto-generated identifier will be generated for this app version.
