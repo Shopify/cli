@@ -6,7 +6,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {describe, test, vi, beforeEach, expect, afterEach} from 'vitest'
-import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-ui.js')
@@ -77,6 +77,30 @@ describe('metafields-pull', () => {
           2,
         ),
       )
+    })
+
+    expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')
+    expect(capturedOutput.error()).toBeFalsy()
+  })
+
+  test('should add metafields to .gitignore', async () => {
+    // Given
+    vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation((type: any, _session: AdminSession) => {
+      if (type !== 'PRODUCT') return Promise.resolve([])
+      return Promise.resolve([fakeMetafieldDefinition])
+    })
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+      writeFileSync(gitIgnorePath, '.DS_Store')
+
+      // When
+      await metafieldsPull({path: tmpDir})
+
+      // Then
+      await expect(fileExists(gitIgnorePath)).resolves.toBe(true)
+      await expect(readFile(gitIgnorePath)).resolves.toBe('.DS_Store\n.shopify/metafields.json')
     })
 
     expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')
