@@ -15,9 +15,7 @@ import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
-
-type CustomSection = Exclude<Parameters<typeof renderInfo>[0]['customSections'], undefined>[number]
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -157,7 +155,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, ORG1, infoOptions()) as CustomSection[]
+      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
       const uiData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const checkoutData = tabularDataSectionFromInfo(result, 'checkout_ui_extension_external')
 
@@ -205,7 +203,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as CustomSection[]
+      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
       const uiExtensionsData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const relevantExtension = extensionTitleRow(uiExtensionsData, 'handle-for-extension-1')
       const irrelevantExtension = extensionTitleRow(uiExtensionsData, 'point_of_sale')
@@ -280,7 +278,7 @@ function mockApp({
   })
 }
 
-function tabularDataSectionFromInfo(info: CustomSection[], title: string): InlineToken[][] {
+function tabularDataSectionFromInfo(info: AlertCustomSection[], title: string): InlineToken[][] {
   const section = info.find((section) => section.title === title)
   if (!section) throw new Error(`Section ${title} not found`)
   if (!(typeof section.body === 'object' && 'tabularData' in section.body)) {

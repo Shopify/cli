@@ -14,10 +14,8 @@ import {
   shouldDisplayColors,
   stringifyMessage,
 } from '@shopify/cli-kit/node/output'
-import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-
-type CustomSection = Exclude<Parameters<typeof renderInfo>[0]['customSections'], undefined>[number]
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -33,7 +31,7 @@ export async function info(
   remoteApp: OrganizationApp,
   organization: Organization,
   options: InfoOptions,
-): Promise<OutputMessage | CustomSection[]> {
+): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.webEnv) {
     return infoWeb(app, remoteApp, organization, options)
   } else {
@@ -54,7 +52,7 @@ async function infoApp(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
   options: InfoOptions,
-): Promise<OutputMessage | CustomSection[]> {
+): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -124,7 +122,7 @@ class AppInfo {
     this.options = options
   }
 
-  async output(): Promise<CustomSection[]> {
+  async output(): Promise<AlertCustomSection[]> {
     return [
       ...(await this.devConfigsSection()),
       this.projectSettingsSection(),
@@ -133,7 +131,7 @@ class AppInfo {
     ]
   }
 
-  async devConfigsSection(): Promise<CustomSection[]> {
+  async devConfigsSection(): Promise<AlertCustomSection[]> {
     let updateUrls = NOT_CONFIGURED_TOKEN
     if (this.app.configuration.build?.automatically_update_urls_on_dev !== undefined) {
       updateUrls = this.app.configuration.build.automatically_update_urls_on_dev ? 'Yes' : 'No'
@@ -170,11 +168,11 @@ class AppInfo {
     ]
   }
 
-  projectSettingsSection(): CustomSection {
+  projectSettingsSection(): AlertCustomSection {
     return this.tableSection('Your Project', [['Root location', {filePath: this.app.directory}]])
   }
 
-  async appComponentsSection(): Promise<CustomSection[]> {
+  async appComponentsSection(): Promise<AlertCustomSection[]> {
     const webComponentsSection = this.webComponentsSection()
     return [
       {
@@ -186,7 +184,7 @@ class AppInfo {
     ]
   }
 
-  webComponentsSection(): CustomSection | undefined {
+  webComponentsSection(): AlertCustomSection | undefined {
     const errors: OutputMessage[] = []
     const sublevels: InlineToken[][] = []
     if (!this.app.webs[0]) return
@@ -220,11 +218,11 @@ class AppInfo {
     ])
   }
 
-  extensionsSections(): CustomSection[] {
+  extensionsSections(): AlertCustomSection[] {
     const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
     const types = Array.from(new Set(extensions.map((ext) => ext.type)))
     return types
-      .map((extensionType: string): CustomSection | undefined => {
+      .map((extensionType: string): AlertCustomSection | undefined => {
         const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
         if (relevantExtensions[0]) {
           return this.subtableSection(
@@ -233,7 +231,7 @@ class AppInfo {
           )
         }
       })
-      .filter((section: CustomSection | undefined) => section !== undefined)
+      .filter((section: AlertCustomSection | undefined) => section !== undefined)
   }
 
   extensionSubSection(extension: ExtensionInstance): InlineToken[][] {
@@ -261,7 +259,7 @@ class AppInfo {
     return [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)].join('\n')
   }
 
-  async systemInfoSection(): Promise<CustomSection> {
+  async systemInfoSection(): Promise<AlertCustomSection> {
     const {platform, arch} = platformAndArch()
     return this.tableSection('Tooling and System', [
       ['Shopify CLI', CLI_KIT_VERSION],
@@ -272,14 +270,14 @@ class AppInfo {
     ])
   }
 
-  tableSection(title: string, rows: InlineToken[][], {isFirstItem = false} = {}): CustomSection {
+  tableSection(title: string, rows: InlineToken[][], {isFirstItem = false} = {}): AlertCustomSection {
     return {
       title: `${isFirstItem ? '' : '\n'}${title.toUpperCase()}\n`,
       body: {tabularData: rows, firstColumnSubdued: true},
     }
   }
 
-  subtableSection(title: string, rows: InlineToken[][]): CustomSection {
+  subtableSection(title: string, rows: InlineToken[][]): AlertCustomSection {
     return {
       title,
       body: {tabularData: rows, firstColumnSubdued: true},
