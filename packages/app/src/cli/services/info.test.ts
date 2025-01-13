@@ -107,7 +107,11 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {...infoOptions(), format: 'json', webEnv: true})) as OutputMessage
+      const result = (await info(app, remoteApp, ORG1, {
+        ...infoOptions(),
+        format: 'json',
+        webEnv: true,
+      })) as OutputMessage
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
