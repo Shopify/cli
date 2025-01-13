@@ -14,7 +14,7 @@ import {
   AppLinkedInterface,
 } from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -246,7 +246,7 @@ export async function fetchOrCreateOrganizationApp(
   })
   remoteApp.developerPlatformClient = developerPlatformClient
 
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
+  await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
 
   return remoteApp
 }
@@ -345,9 +345,15 @@ export function renderCurrentlyUsedConfigInfo({
   })
 }
 
-export async function logMetadataForLoadedContext(app: {organizationId: string; apiKey: string}) {
+export async function logMetadataForLoadedContext(
+  app: {apiKey: string; organizationId: string},
+  organizationSource: OrganizationSource,
+) {
+  const orgIdKey = organizationSource === OrganizationSource.BusinessPlatform ? 'business_platform_id' : 'partner_id'
+  const organizationInfo = {[orgIdKey]: tryParseInt(app.organizationId)}
+
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(app.organizationId),
+    ...organizationInfo,
     api_key: app.apiKey,
   }))
 }

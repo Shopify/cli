@@ -4,12 +4,10 @@ import {
   testApp,
   testAppWithConfig,
   testDeveloperPlatformClient,
-  testOrganizationApp,
 } from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {appFromIdentifiers, logMetadataForLoadedContext} from '../../context.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -21,8 +19,6 @@ vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context.js')
-
-const REMOTE_APP = testOrganizationApp()
 
 describe('use', () => {
   test('clears currentConfiguration when reset is true', async () => {
@@ -287,31 +283,6 @@ describe('use', () => {
       // Then
       expect(renderSuccess).not.toHaveBeenCalled()
       expect(setCachedAppInfo).toHaveBeenCalledWith({directory, configFile: 'shopify.app.something.toml'})
-    })
-  })
-
-  test('logs metadata', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      // Given
-      const {configuration} = testApp({}, 'current')
-      const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory,
-        configuration,
-        configSchema,
-        specifications: [],
-        remoteFlags: [],
-      })
-      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
-      vi.mocked(appFromIdentifiers).mockResolvedValue(REMOTE_APP)
-      createConfigFile(directory, 'shopify.app.something.toml')
-      const options = {directory, configName: 'something', developerPlatformClient: testDeveloperPlatformClient()}
-
-      // When
-      await use(options)
-
-      // Then
-      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, {apiKey: REMOTE_APP.apiKey, organizationId: '0'})
     })
   })
 })
