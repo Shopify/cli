@@ -162,7 +162,7 @@ class AppInfo {
       {
         body: [
           '💡 To change these, run',
-          {command: formatPackageManagerCommand(this.app.packageManager, 'dev', '--reset')},
+          {command: formatPackageManagerCommand(this.app.packageManager, 'shopify app config link')},
         ],
       },
     ]
