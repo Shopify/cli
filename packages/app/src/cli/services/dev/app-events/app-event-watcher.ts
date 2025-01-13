@@ -83,7 +83,7 @@ export interface AppEvent {
   appWasReloaded?: boolean
 }
 
-type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
+type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; uid: string}
 
 /**
  * App event watcher will emit events when changes are detected in the file system.
@@ -230,12 +230,12 @@ export class AppEventWatcher extends EventEmitter {
       const ext = extEvent.extension
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
-          if (this.esbuildManager.contexts?.[ext.handle]?.length) {
+          if (this.esbuildManager.contexts?.[ext.uid]?.length) {
             await this.esbuildManager.rebuildContext(ext)
           } else {
             await this.buildExtension(ext)
           }
-          extEvent.buildResult = {status: 'ok', handle: ext.handle}
+          extEvent.buildResult = {status: 'ok', uid: ext.uid}
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
           // If there is an `errors` array, it's an esbuild error, format it and log it
@@ -249,7 +249,7 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             this.options.stderr.write(error.message)
           }
-          extEvent.buildResult = {status: 'error', error: error.message, handle: ext.handle}
+          extEvent.buildResult = {status: 'error', error: error.message, uid: ext.uid}
         }
       })
     })

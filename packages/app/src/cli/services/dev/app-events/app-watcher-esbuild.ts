@@ -66,14 +66,14 @@ export class ESBuildContextManager {
         return esContext(esbuildOptions)
       })
 
-      this.contexts[extension.handle] = await Promise.all(assetContextPromises.concat(mainContextPromise))
+      this.contexts[extension.uid] = await Promise.all(assetContextPromises.concat(mainContextPromise))
     })
 
     await Promise.all(promises)
   }
 
   async rebuildContext(extension: ExtensionInstance) {
-    const context = this.contexts[extension.handle]
+    const context = this.contexts[extension.uid]
     if (!context) return
     await Promise.all(context.map((ctxt) => ctxt.rebuild()))
 
@@ -102,10 +102,10 @@ export class ESBuildContextManager {
   }
 
   async deleteContexts(extensions: ExtensionInstance[]) {
-    const promises = extensions.map((ext) => this.contexts[ext.handle]?.map((context) => context.dispose())).flat()
+    const promises = extensions.map((ext) => this.contexts[ext.uid]?.map((context) => context.dispose())).flat()
     await Promise.all(promises)
     extensions.forEach((ext) => {
-      const {[ext.handle]: _, ...rest} = this.contexts
+      const {[ext.uid]: _, ...rest} = this.contexts
       this.contexts = rest
     })
   }
