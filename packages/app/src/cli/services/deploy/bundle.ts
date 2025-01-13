@@ -13,6 +13,7 @@ interface BundleOptions {
   app: AppInterface
   bundlePath?: string
   identifiers?: Identifiers
+  sourcemaps?: boolean
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions, systemEnvironment = process.env) {
@@ -38,7 +39,14 @@ export async function bundleAndBuildExtensions(options: BundleOptions, systemEnv
           prefix: extension.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await extension.buildForBundle(
-              {stderr, stdout, signal, app: options.app, environment: 'production'},
+              {
+                stderr,
+                stdout,
+                signal,
+                app: options.app,
+                environment: 'production',
+                sourcemaps: options.sourcemaps,
+              },
               bundleDirectory,
               options.identifiers,
             )

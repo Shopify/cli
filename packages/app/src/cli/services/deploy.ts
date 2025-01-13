@@ -44,6 +44,9 @@ export interface DeployOptions {
 
   /** The git reference url of the app version */
   commitReference?: string
+
+  /** If true, generates sourcemaps for UI extensions during the app build */
+  sourcemaps?: boolean
 }
 
 interface TasksContext {
@@ -78,7 +81,7 @@ export async function deploy(options: DeployOptions) {
         bundlePath = joinPath(tmpDir, `bundle.zip`)
         await mkdir(dirname(bundlePath))
       }
-      await bundleAndBuildExtensions({app, bundlePath, identifiers})
+      await bundleAndBuildExtensions({app, bundlePath, identifiers, sourcemaps: options.sourcemaps})
 
       let uploadTaskTitle
 

@@ -61,6 +61,13 @@ export default class Deploy extends AppCommand {
       description: 'URL associated with the new app version.',
       env: 'SHOPIFY_FLAG_SOURCE_CONTROL_URL',
     }),
+    sourcemaps: Flags.boolean({
+      hidden: false,
+      description:
+        'Generates sourcemaps for UI extensions during the app build, you can find them in the `/dist` directory.',
+      env: 'SHOPIFY_FLAG_SOURCEMAPS',
+      default: false,
+    }),
   }
 
   async run(): Promise<AppCommandOutput> {
@@ -111,6 +118,7 @@ export default class Deploy extends AppCommand {
       message: flags.message,
       version: flags.version,
       commitReference: flags['source-control-url'],
+      sourcemaps: flags.sourcemaps,
     })
 
     return {app: result.app}

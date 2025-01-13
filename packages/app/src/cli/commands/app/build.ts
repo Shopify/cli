@@ -31,6 +31,13 @@ export default class Build extends AppCommand {
       env: 'SHOPIFY_FLAG_API_KEY',
       exclusive: ['config'],
     }),
+    sourcemaps: Flags.boolean({
+      hidden: false,
+      description:
+        'Generates UI extension sourcemaps for the production build, you can find them in the `/dist` directory.',
+      env: 'SHOPIFY_FLAG_SOURCEMAPS',
+      default: false,
+    }),
   }
 
   async run(): Promise<AppCommandOutput> {

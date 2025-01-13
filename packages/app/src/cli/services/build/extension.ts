@@ -53,6 +53,11 @@ export interface ExtensionBuildOptions {
    * The URL where the app is running.
    */
   appURL?: string
+
+  /**
+   * If true, generates sourcemaps for the extension build.
+   */
+  sourcemaps?: boolean
 }
 
 /**
@@ -106,7 +111,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       env,
       stderr: options.stderr,
       stdout: options.stdout,
-      sourceMaps: extension.isSourceMapGeneratingExtension,
+      sourceMaps: extension.isSourceMapGeneratingExtension(options),
     })
     if (assets) {
       await Promise.all(

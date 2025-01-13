@@ -113,10 +113,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
-  get isSourceMapGeneratingExtension() {
-    return this.features.includes('generates_source_maps')
-  }
-
   get isAppConfigExtension() {
     return ['single', 'dynamic'].includes(this.specification.uidStrategy)
   }
@@ -225,8 +221,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.buildValidation(this)
   }
 
-  async keepBuiltSourcemapsLocally(bundleDirectory: string, extensionId: string): Promise<void> {
-    if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
+  isSourceMapGeneratingExtension(options: ExtensionBuildOptions) {
+    return this.features.includes('generates_source_maps') && options.sourcemaps
+  }
+
+  async keepBuiltSourcemapsLocally(
+    bundleDirectory: string,
+    extensionId: string,
+    options: ExtensionBuildOptions,
+  ): Promise<void> {
+    if (!this.isSourceMapGeneratingExtension(options)) return Promise.resolve()
 
     const inputPath = joinPath(bundleDirectory, extensionId)
 
@@ -366,7 +370,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       await bundleThemeExtension(this, options)
     }
 
-    await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId)
+    await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId, options)
   }
 
   getOutputFolderId(extensionId?: string) {
