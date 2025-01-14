@@ -1035,6 +1035,7 @@ async function getAllLinkedConfigClientIds(
 ): Promise<{[key: string]: string}> {
   const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
 
+  // @ts-expect-error - not sure, on main
   const entries: [string, string][] = (
     await Promise.all(
       candidates.map(async (candidateFile) => {
@@ -1155,8 +1156,7 @@ async function logMetadataForLoadedAppUsingRawValues(
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        extensionsBreakdownMapping[extension.type]!++
+        extensionsBreakdownMapping[extension.type]++
       }
     }
 
