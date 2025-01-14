@@ -2095,7 +2095,7 @@ USAGE
   $ shopify theme profile --url /products/classic-leather-jacket
 
 FLAGS
-  -j, --json                    Return profiling data as JSON.
+  -j, --json                    Output the result as JSON.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.

@@ -5838,8 +5838,9 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Return profiling data as JSON.",
+          "description": "Output the result as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },

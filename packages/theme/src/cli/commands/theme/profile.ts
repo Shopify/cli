@@ -6,7 +6,7 @@ import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Task} from '@shopify/cli-kit/node/ui'
 
 export default class Profile extends ThemeCommand {
@@ -38,11 +38,7 @@ export default class Profile extends ThemeCommand {
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
-    json: Flags.boolean({
-      char: 'j',
-      description: 'Return profiling data as JSON.',
-      env: 'SHOPIFY_FLAG_JSON',
-    }),
+    ...jsonFlag,
   }
 
   async run(): Promise<void> {
