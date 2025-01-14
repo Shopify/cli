@@ -19,6 +19,8 @@ describe('allDefaultScopes', () => {
       'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
       'https://api.shopify.com/auth/partners.app.cli.access',
       'https://api.shopify.com/auth/destinations.readonly',
+      'https://api.shopify.com/auth/organization.store-management',
+      'https://api.shopify.com/auth/organization.apps.manage',
       ...customScopes,
     ])
   })
