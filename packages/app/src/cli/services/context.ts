@@ -5,6 +5,7 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
+import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppInterface,
@@ -38,10 +39,30 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   }
 }
 
-export const resetHelpMessage: Token[] = [
-  'You can pass ',
+export const resetHelpMessage = [
+  'You can pass',
   {command: '--reset'},
-  ' to your command to reset your app configuration.',
+  'to your command to reset your app configuration.',
+]
+
+const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
+  {
+    list: {
+      title: 'Next steps:',
+      items: [
+        'Check that your account has permission to develop apps for this organization or contact the owner of the organization to grant you permission',
+        [
+          'Run',
+          {command: 'shopify auth logout'},
+          'to log into a different',
+          isOrg ? 'organization' : 'account',
+          'than',
+          {bold: accountIdentifier},
+        ],
+        ['Pass', {command: '--reset'}, 'to your command to create a new app'],
+      ],
+    },
+  },
 ]
 
 interface AppFromIdOptions {
@@ -65,7 +86,23 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
     apiKey: options.apiKey,
     organizationId,
   })
-  if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: options.apiKey}], resetHelpMessage)
+  if (!app) {
+    const accountInfo = await developerPlatformClient.accountInfo()
+    let identifier = 'Unknown account'
+    let isOrg = false
+
+    if (isServiceAccount(accountInfo)) {
+      identifier = accountInfo.orgName
+      isOrg = true
+    } else if (isUserAccount(accountInfo)) {
+      identifier = accountInfo.email
+    }
+
+    throw new AbortError(
+      [`No app with client ID`, {command: options.apiKey}, 'found'],
+      appNotFoundHelpMessage(identifier, isOrg),
+    )
+  }
   return app
 }
 
