@@ -4,6 +4,7 @@ import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/util
 import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
+import {getPartnersToken} from '../environment.js'
 import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
 import {homedir} from 'os'
@@ -44,6 +45,16 @@ export function isDevelopment(env = process.env): boolean {
  */
 export function isVerbose(env = process.env): boolean {
   return isTruthy(env[environmentVariables.verbose]) || process.argv.includes('--verbose')
+}
+
+/**
+ * It returns true if the App Management API is disabled.
+ * This should only be relevant when using a Partners token.
+ *
+ * @returns True if the App Management API is disabled.
+ */
+export function isAppManagementDisabled(): boolean {
+  return Boolean(getPartnersToken())
 }
 
 /**

@@ -7,13 +7,16 @@ import {
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
+  isAppManagementDisabled,
 } from './local.js'
+import {getPartnersToken} from '../environment.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 import {expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
+vi.mock('../environment.js')
 
 describe('isUnitTest', () => {
   test('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
@@ -96,6 +99,30 @@ describe('hasGit', () => {
 
     // Then
     expect(got).toBeTruthy()
+  })
+})
+
+describe('isAppManagementDisabled', () => {
+  test('returns true when a Partners token is present', () => {
+    // Given
+    vi.mocked(getPartnersToken).mockReturnValue('token')
+
+    // When
+    const got = isAppManagementDisabled()
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when a Partners token is not present', () => {
+    // Given
+    vi.mocked(getPartnersToken).mockReturnValue(undefined)
+
+    // When
+    const got = isAppManagementDisabled()
+
+    // Then
+    expect(got).toBe(false)
   })
 })
 

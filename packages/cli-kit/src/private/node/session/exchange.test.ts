@@ -63,12 +63,9 @@ describe('exchange identity token for application tokens', () => {
     // Then
     const expected = {
       'app-management': {
-        accessToken: "access_token",
+        accessToken: 'access_token',
         expiresAt: expiredDate,
-        scopes: [
-          "scope",
-          "scope2",
-        ],
+        scopes: ['scope', 'scope2'],
       },
       partners: {
         accessToken: 'access_token',
@@ -111,12 +108,9 @@ describe('exchange identity token for application tokens', () => {
     // Then
     const expected = {
       'app-management': {
-        accessToken: "access_token",
+        accessToken: 'access_token',
         expiresAt: expiredDate,
-        scopes: [
-          "scope",
-          "scope2",
-        ],
+        scopes: ['scope', 'scope2'],
       },
       partners: {
         accessToken: 'access_token',
