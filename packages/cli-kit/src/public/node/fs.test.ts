@@ -22,9 +22,11 @@ import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
+import * as os from 'os'
 
 vi.mock('../common/array.js')
 vi.mock('fast-glob')
+vi.mock('os')
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -311,6 +313,7 @@ describe('detectEOL', () => {
   test('returns the default EOL if no EOL is found', async () => {
     // Given
     const fileContent = 'testcontent'
+    vi.mocked(os).EOL = '\n'
 
     // When
     const eol = detectEOL(fileContent)

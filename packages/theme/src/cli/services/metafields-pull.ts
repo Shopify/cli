@@ -164,7 +164,7 @@ function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
   const fileContent = JSON.stringify(content, null, 2)
 
   if (!fileExistsSync(filePath)) {
-    addToGitIgnore(path, '.shopify/metafields.json')
+    addToGitIgnore(path, '.shopify')
   }
 
   writeFileSync(filePath, fileContent)
@@ -178,14 +178,13 @@ function addToGitIgnore(root: string, entry: string) {
     return
   }
 
-  const gitIgnoreContent = readFileSync(gitIgnorePath)
+  const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+  const eol = detectEOL(gitIgnoreContent)
 
-  if (gitIgnoreContent.includes(entry)) {
+  if (gitIgnoreContent.split(eol).includes(entry)) {
     // The file already existing in the .gitignore
     return
   }
-
-  const eol = detectEOL(gitIgnoreContent.toString())
 
   writeFileSync(gitIgnorePath, `${gitIgnoreContent}${eol}${entry}`)
 }

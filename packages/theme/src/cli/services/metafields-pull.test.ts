@@ -92,14 +92,14 @@ describe('metafields-pull', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const gitIgnorePath = `${tmpDir}/.gitignore`
-      writeFileSync(gitIgnorePath, '.DS_Store')
+      writeFileSync(gitIgnorePath, '.DS_Store\n.shopify/secrets.json')
 
       // When
       await metafieldsPull({path: tmpDir})
 
       // Then
       await expect(fileExists(gitIgnorePath)).resolves.toBe(true)
-      await expect(readFile(gitIgnorePath)).resolves.toBe(`.DS_Store\n.shopify/metafields.json`)
+      await expect(readFile(gitIgnorePath)).resolves.toBe(`.DS_Store\n.shopify/secrets.json\n.shopify`)
     })
 
     expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')
