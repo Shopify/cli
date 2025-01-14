@@ -516,13 +516,39 @@ export function pathToFileURL(path: string): URL {
 }
 
 /**
- * Returns the operating system's end-of-line marker.
- * On POSIX systems this is `\n`, on Windows this is `\r\n`.
- *
- * @returns The platform-specific EOL string.
+ * The operating system-specific end-of-line marker:
+ * - `\n` on POSIX
+ * - `\r\n` on Windows
  */
-export function eol(): string {
-  return os.EOL
+export type EOL = '\r\n' | '\n'
+
+/**
+ * Detects the end-of-line marker used in a string.
+ *
+ * @param content - file contents to analyze
+ *
+ * @returns The detected end-of-line marker
+ */
+export function detectEOL(content: string): EOL {
+  const match = content.match(/\r\n|\n/g)
+
+  if (!match) {
+    return defaultEOL()
+  }
+
+  const crlf = match.filter((eol) => eol === '\r\n').length
+  const lf = match.filter((eol) => eol === '\n').length
+
+  return crlf > lf ? '\r\n' : '\n'
+}
+
+/**
+ * Returns the operating system's end-of-line marker.
+ *
+ * @returns The OS-specific end-of-line marker
+ */
+export function defaultEOL(): EOL {
+  return os.EOL as EOL
 }
 
 /**

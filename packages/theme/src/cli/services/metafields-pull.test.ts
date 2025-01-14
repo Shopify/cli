@@ -6,7 +6,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {describe, test, vi, beforeEach, expect, afterEach} from 'vitest'
-import {eol, fileExists, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-ui.js')
@@ -99,7 +99,7 @@ describe('metafields-pull', () => {
 
       // Then
       await expect(fileExists(gitIgnorePath)).resolves.toBe(true)
-      await expect(readFile(gitIgnorePath)).resolves.toBe(`.DS_Store${eol()}.shopify/metafields.json`)
+      await expect(readFile(gitIgnorePath)).resolves.toBe(`.DS_Store\n.shopify/metafields.json`)
     })
 
     expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')

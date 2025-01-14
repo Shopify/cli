@@ -16,6 +16,7 @@ import {
   generateRandomNameForSubdirectory,
   readFileSync,
   glob,
+  detectEOL,
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
@@ -281,5 +282,40 @@ describe('glob', () => {
 
     // Then
     expect(FastGlob).toBeCalledWith('pattern', {dot: false})
+  })
+})
+
+describe('detectEOL', () => {
+  test('detects the EOL of a file', async () => {
+    // Given
+    const fileContent = 'test\ncontent'
+
+    // When
+    const eol = detectEOL(fileContent)
+
+    // Then
+    expect(eol).toEqual('\n')
+  })
+
+  test('detects the EOL of a file with CRLF', async () => {
+    // Given
+    const fileContent = 'test\r\ncontent'
+
+    // When
+    const eol = detectEOL(fileContent)
+
+    // Then
+    expect(eol).toEqual('\r\n')
+  })
+
+  test('returns the default EOL if no EOL is found', async () => {
+    // Given
+    const fileContent = 'testcontent'
+
+    // When
+    const eol = detectEOL(fileContent)
+
+    // Then
+    expect(eol).toEqual('\n')
   })
 })

@@ -6,7 +6,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {eol, fileExistsSync, mkdirSync, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {detectEOL, fileExistsSync, mkdirSync, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface MetafieldsPullOptions {
@@ -185,5 +185,7 @@ function addToGitIgnore(root: string, entry: string) {
     return
   }
 
-  writeFileSync(gitIgnorePath, `${gitIgnoreContent}${eol()}${entry}`)
+  const eol = detectEOL(gitIgnoreContent.toString())
+
+  writeFileSync(gitIgnorePath, `${gitIgnoreContent}${eol}${entry}`)
 }
