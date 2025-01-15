@@ -82,7 +82,7 @@ export async function loadConfigurationFileContent(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     // TOML errors have line, pos and col properties
-    if (err.line && err.pos && err.col) {
+    if (err.line !== undefined && err.pos !== undefined && err.col !== undefined) {
       return abortOrReport(
         outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
         {},
