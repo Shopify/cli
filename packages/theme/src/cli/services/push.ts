@@ -71,7 +71,7 @@ export interface PushFlags {
   /** Runs the push command without deleting local files. */
   nodelete?: boolean
 
-  /** Download only the specified files (Multiple flags allowed). */
+  /** Push only the specified files (Multiple flags allowed). */
   only?: string[]
 
   /** Skip downloading the specified files (Multiple flags allowed). */

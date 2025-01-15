@@ -71,7 +71,7 @@ export default class Push extends ThemeCommand {
     }),
     only: Flags.string({
       char: 'o',
-      description: 'Download only the specified files (Multiple flags allowed).',
+      description: 'Push only the specified files (Multiple flags allowed).',
       multiple: true,
       env: 'SHOPIFY_FLAG_ONLY',
     }),
