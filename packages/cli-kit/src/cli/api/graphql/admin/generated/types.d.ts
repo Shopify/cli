@@ -250,7 +250,7 @@ export type ThemeRole =
    * publishing are restricted until the merchant resolves the licensing issue.
    */
   | 'LOCKED'
-  /** TThe currently published theme. There can only be one main theme at any time. */
+  /** The currently published theme. There can only be one main theme at any time. */
   | 'MAIN'
   /** The currently published theme that is only accessible to a mobile client. */
   | 'MOBILE'
