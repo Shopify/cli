@@ -42,9 +42,8 @@ export async function dev(options: DevOptions) {
     return
   }
 
-  const storefrontPasswordPromise = isStorefrontPasswordProtected(options.adminSession.storeFqdn).then(
-    (needsPassword) =>
-      needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
+  const storefrontPasswordPromise = await isStorefrontPasswordProtected(options.adminSession).then((needsPassword) =>
+    needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
   )
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()

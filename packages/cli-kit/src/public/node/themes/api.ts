@@ -18,6 +18,7 @@ import {
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -354,6 +355,17 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
       category: definition.type.category,
     },
   }))
+}
+
+export async function passwordProtected(session: AdminSession): Promise<boolean> {
+  const {onlineStore} = await adminRequestDoc(OnlineStorePasswordProtection, session)
+  if (!onlineStore) {
+    unexpectedGraphQLError("Unable to get details about the storefront's password protection")
+  }
+
+  const {passwordProtection} = onlineStore
+
+  return passwordProtection.enabled
 }
 
 async function request<T>(
