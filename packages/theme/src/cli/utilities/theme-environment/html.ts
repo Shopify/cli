@@ -1,6 +1,7 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
+import {injectErrorIntoHtml} from './hot-reload/error-overlay.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
 import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
@@ -33,6 +34,10 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)
+        }
+
+        if (ctx.localThemeFileSystem.uploadErrors.size > 0) {
+          html = injectErrorIntoHtml(html, ctx.localThemeFileSystem.uploadErrors)
         }
 
         return html
