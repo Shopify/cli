@@ -99,12 +99,12 @@ export interface ThemeFileSystem extends VirtualFileSystem {
   /**
    * Applies filters to ignore files from .shopifyignore file, --ignore and --only flags.
    */
-  applyIgnoreFilters: <T extends {key: string}>(files: T[]) => T[]
+  applyIgnoreFilters: <T extends {key: Key}>(files: T[]) => T[]
 
   /**
-   * Map of file keys to errors.
+   * Stores upload errors returned when uploading files via the Asset API
    */
-  uploadErrors: Map<string, string[]>
+  uploadErrors: Map<Key, string[]>
 
   /**
    * Emits an event to the event emitter.
