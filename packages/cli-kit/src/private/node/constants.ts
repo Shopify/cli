@@ -21,6 +21,7 @@ export const environmentVariables = {
   firstPartyDev: 'SHOPIFY_CLI_1P_DEV',
   noAnalytics: 'SHOPIFY_CLI_NO_ANALYTICS',
   partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
+  appManagementApiToken: 'SHOPIFY_AM_API_TOKEN',
   runAsUser: 'SHOPIFY_RUN_AS_USER',
   serviceEnv: 'SHOPIFY_SERVICE_ENV',
   skipCliRedirect: 'SHOPIFY_CLI_SKIP_CLI_REDIRECT',

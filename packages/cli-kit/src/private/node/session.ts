@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
+  exchangeAppManagementApiToken,
 } from './session/exchange.js'
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
@@ -22,7 +23,7 @@ import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {keypress} from '../../public/node/ui.js'
-import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
+import {getAppManagementToken, getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
@@ -100,7 +101,13 @@ export interface OAuthSession {
   userId: string
 }
 
-type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'custom_app_token' | 'none'
+type AuthMethod =
+  | 'partners_token'
+  | 'device_auth'
+  | 'theme_access_token'
+  | 'custom_app_token'
+  | 'app_management_token'
+  | 'none'
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'

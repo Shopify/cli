@@ -1,9 +1,9 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
-import {getPartnersToken} from './environment.js'
+import {getPartnersToken, getAppManagementToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
-import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
+import {exchangeCustomPartnerToken, exchangeAppManagementApiToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {
   AdminAPIScope,
@@ -75,6 +75,13 @@ export async function ensureAuthenticatedAppManagement(
   outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
 ${outputToken.json(scopes)}
 `)
+  const envToken = getAppManagementToken()
+  outputDebug(`HELLO HERE IS THE ENV TOKEN ${envToken}`)
+  if (envToken) {
+    const result = await exchangeAppManagementApiToken(envToken)
+    outputDebug(`HERE IS THE ACCESS TOKEN ${result.accessToken}`)
+    return {token: result.accessToken, userId: result.userId}
+  }
   const tokens = await ensureAuthenticated({appManagementApi: {scopes}}, env, options)
   if (!tokens) {
     throw new BugError('No App Management token found after ensuring authenticated')

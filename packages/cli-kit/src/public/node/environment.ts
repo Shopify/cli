@@ -26,6 +26,10 @@ export function getPartnersToken(): string | undefined {
   return getEnvironmentVariables()[environmentVariables.partnersToken]
 }
 
+export function getAppManagementToken(): string | undefined {
+  return getEnvironmentVariables()[environmentVariables.appManagementApiToken]
+}
+
 /**
  * Check if the current proccess is running using the partners token.
  *
