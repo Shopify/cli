@@ -29,6 +29,13 @@ export const ListOrganizations = {
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'organizations'},
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: {kind: 'Name', value: 'hasAccessToDestination'},
+                      value: {kind: 'EnumValue', value: 'DEVELOPER_DASHBOARD'},
+                    },
+                  ],
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
