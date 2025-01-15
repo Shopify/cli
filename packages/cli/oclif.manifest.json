@@ -4948,6 +4948,7 @@
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
+        "vibe:check"
       ],
       "id": "theme:check",
       "pluginAlias": "@shopify/cli",
