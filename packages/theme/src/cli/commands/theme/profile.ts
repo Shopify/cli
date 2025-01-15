@@ -12,7 +12,7 @@ import {Task} from '@shopify/cli-kit/node/ui'
 export default class Profile extends ThemeCommand {
   static summary = 'Profile the Liquid rendering of a theme page.'
 
-  static usage = ['theme profile --url /products/classic-leather-jacket']
+  static usage = ['theme profile', 'theme profile --url /products/classic-leather-jacket']
 
   static descriptionWithMarkdown = `Profile the Shopify Liquid on a given page.
 
