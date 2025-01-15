@@ -6,9 +6,8 @@ import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {linesToColumns} from '@shopify/cli-kit/common/string'
-import {OutputMessage, formatSection} from '@shopify/cli-kit/node/output'
 import {getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/upgrade'
+import {AlertCustomSection} from '@shopify/cli-kit/node/ui'
 
 interface ThemeInfo {
   theme: {
@@ -58,34 +57,39 @@ export async function fetchThemeInfo(
   return theme ? themeInfoJSON(theme, adminSession) : undefined
 }
 
-export async function fetchDevInfo(config: {cliVersion: string}): Promise<OutputMessage> {
-  const sections: [string, string][] = [devConfigSection(), await systemInfoSection(config)]
-  const message = sections.map((sectionContents) => formatSection(...sectionContents)).join('\n\n')
-  return message
+export async function fetchDevInfo(config: {cliVersion: string}): Promise<AlertCustomSection[]> {
+  return [devConfigSection(), await systemInfoSection(config)]
 }
 
-function devConfigSection(): [string, string] {
-  const title = 'Theme Configuration'
+function devConfigSection(): AlertCustomSection {
   const store = getThemeStore() || 'Not configured'
-  let developmentTheme = getDevelopmentTheme()
-  developmentTheme = developmentTheme ? `#${developmentTheme}` : 'Not set'
-  const lines: string[][] = [
-    ['Store', store],
-    ['Development Theme ID', developmentTheme],
-  ]
-  return [title, linesToColumns(lines)]
+  const developmentTheme = getDevelopmentTheme()
+  return {
+    title: 'Theme Configuration',
+    body: {
+      tabularData: [
+        ['Store', store],
+        ['Development Theme ID', developmentTheme ? `#${developmentTheme}` : {subdued: 'Not set'}],
+      ],
+      firstColumnSubdued: true,
+    },
+  }
 }
 
-async function systemInfoSection(config: {cliVersion: string}): Promise<[string, string]> {
-  const title = 'Tooling and System'
+async function systemInfoSection(config: {cliVersion: string}): Promise<AlertCustomSection> {
   const {platform, arch} = platformAndArch()
-  const lines: string[][] = [
-    ['Shopify CLI', await cliVersionInfo(config)],
-    ['OS', `${platform}-${arch}`],
-    ['Shell', process.env.SHELL || 'unknown'],
-    ['Node version', process.version],
-  ]
-  return [title, linesToColumns(lines)]
+  return {
+    title: 'Tooling and System',
+    body: {
+      tabularData: [
+        ['Shopify CLI', await cliVersionInfo(config)],
+        ['OS', `${platform}-${arch}`],
+        ['Shell', process.env.SHELL || 'unknown'],
+        ['Node version', process.version],
+      ],
+      firstColumnSubdued: true,
+    },
+  }
 }
 
 async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {
