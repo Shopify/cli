@@ -38,6 +38,7 @@ export default class Profile extends ThemeCommand {
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
+    environment: themeFlags.environment,
     ...jsonFlag,
   }
 

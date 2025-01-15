@@ -73,7 +73,7 @@
 * [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
-* [`shopify theme profile --url /products/classic-leather-jacket`](#shopify-theme-profile---url-productsclassic-leather-jacket)
+* [`shopify theme profile`](#shopify-theme-profile)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
@@ -2086,15 +2086,17 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
 
-## `shopify theme profile --url /products/classic-leather-jacket`
+## `shopify theme profile`
 
 Profile the Liquid rendering of a theme page.
 
 ```
 USAGE
+  $ shopify theme profile
   $ shopify theme profile --url /products/classic-leather-jacket
 
 FLAGS
+  -e, --environment=<value>     The environment to apply to the current command.
   -j, --json                    Output the result as JSON.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).

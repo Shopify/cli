@@ -5835,6 +5835,15 @@
       "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "flags": {
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "environment",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -5914,6 +5923,7 @@
       "strict": true,
       "summary": "Profile the Liquid rendering of a theme page.",
       "usage": [
+        "theme profile",
         "theme profile --url /products/classic-leather-jacket"
       ]
     },
