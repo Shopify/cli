@@ -1,3 +1,5 @@
+/* eslint-disable no-catch-all/no-catch-all */
+/* eslint-disable no-console */
 import {storeAdminUrl} from './urls.js'
 import {composeThemeGid, parseGid} from './utils.js'
 import * as throttler from '../api/rest-api-throttler.js'
@@ -46,12 +48,20 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       name: theme.name,
     })
   } catch (error) {
+    console.log('[debug] error: ', error)
+
     if (error instanceof ClientError) {
+      console.log('[debug] reponse: ', error?.response)
+      console.log('[debug] message:', error.response?.errors?.[0]?.message)
+
       if (error.response?.errors?.[0]?.message === 'Theme does not exist') {
         return undefined
       }
     }
-    throw new AbortError(`Failed to fetch theme: ${id}`)
+
+    return undefined
+    // This error should not be raised, otherwise expired development themes will never be created.
+    // throw new AbortError(`Failed to fetch theme: ${id}`)
   }
 }
 
