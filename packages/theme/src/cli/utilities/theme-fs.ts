@@ -45,6 +45,7 @@ const THEME_PARTITION_REGEX = {
 
 export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
+  const uploadErrors = new Map<string, string[]>()
   const unsyncedFileKeys = new Set<string>()
   const filterPatterns = {
     ignoreFromFile: [] as string[],
@@ -223,6 +224,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     root,
     files,
     unsyncedFileKeys,
+    uploadErrors,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
       files.delete(fileKey)

@@ -10,6 +10,7 @@ export function fakeThemeFileSystem(
     root,
     files,
     unsyncedFileKeys: new Set(),
+    uploadErrors: new Map(),
     ready: () => Promise.resolve(),
     delete: async (fileKey: string) => {
       files.delete(fileKey)
