@@ -1,6 +1,7 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
+import {getErrorOverlay} from './error-overlay.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
 import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
@@ -72,74 +73,11 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 function injectErrorIntoHtml(html: string, errors: Map<string, string[]>): string {
   const bodyIndex = html.indexOf('<body>')
   if (bodyIndex === -1) {
-    return html + getErrorSection(errors)
+    return html + getErrorOverlay(errors)
   } else {
     const insertIndex = bodyIndex + '<body>'.length
-    return html.slice(0, insertIndex) + getErrorSection(errors) + html.slice(insertIndex)
+    return html.slice(0, insertIndex) + getErrorOverlay(errors) + html.slice(insertIndex)
   }
-}
-
-function getErrorSection(errors: Map<string, string[]>) {
-  const errorContent = Array.from(errors.entries())
-    .map(
-      ([fileKey, messages]) => `
-        <div style="margin-bottom: 16px; text-align: left;">
-          <strong>${fileKey}</strong>
-          ${messages
-            .map((msg) => `<pre style="margin: 8px 0; white-space: normal; word-wrap: break-word;">- ${msg}</pre>`)
-            .join('')}
-        </div>
-      `,
-    )
-    .join('')
-
-  return `
-    <div
-      id="section-error-overlay"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      "
-    >
-      <div
-        style="
-          background: rgba(200, 200, 200, 0.9);
-          backdrop-filter: blur(10px);
-          border-radius: 10px;
-          padding: 20px;
-          font-family: system-ui, -apple-system, sans-serif;
-          max-width: 80%;
-          max-height: 80%;
-          box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
-          position: relative;
-          overflow-y: auto;
-        "
-      >
-        ${errorContent}
-        <button
-          style="
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: transparent;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-          "
-          onclick="document.getElementById('section-error-overlay').style.display='none';"
-        >
-          &times;
-        </button>
-      </div>
-    </div>
-  `
 }
 
 function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
