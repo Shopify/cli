@@ -107,7 +107,7 @@ export interface ThemeFileSystem extends VirtualFileSystem {
   uploadErrors: Map<Key, string[]>
 
   /**
-   * Emits an event to the event emitter.
+   * Provides an interface for triggering events in the hot reload server
    */
   emitEvent: <T extends ThemeFSEventName>(eventName: T, payload: ThemeFSEventPayload<T>) => void
 }
