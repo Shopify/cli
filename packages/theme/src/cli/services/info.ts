@@ -5,7 +5,7 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AlertCustomSection} from '@shopify/cli-kit/node/ui'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 
 interface ThemeInfo {
   theme: {
@@ -62,30 +62,25 @@ export async function fetchDevInfo(config: {cliVersion: string}): Promise<AlertC
 function devConfigSection(): AlertCustomSection {
   const store = getThemeStore() || 'Not configured'
   const developmentTheme = getDevelopmentTheme()
-  return {
-    title: 'Theme Configuration',
-    body: {
-      tabularData: [
-        ['Store', store],
-        ['Development Theme ID', developmentTheme ? `#${developmentTheme}` : {subdued: 'Not set'}],
-      ],
-      firstColumnSubdued: true,
-    },
-  }
+  return tabularSection('Theme Configuration', [
+    ['Store', store],
+    ['Development Theme ID', developmentTheme ? `#${developmentTheme}` : {subdued: 'Not set'}],
+  ])
 }
 
 async function systemInfoSection(config: {cliVersion: string}): Promise<AlertCustomSection> {
   const {platform, arch} = platformAndArch()
+  return tabularSection('Tooling and System', [
+    ['Shopify CLI', config.cliVersion],
+    ['OS', `${platform}-${arch}`],
+    ['Shell', process.env.SHELL || 'unknown'],
+    ['Node version', process.version],
+  ])
+}
+
+function tabularSection(title: string, data: InlineToken[][]): AlertCustomSection {
   return {
-    title: 'Tooling and System',
-    body: {
-      tabularData: [
-        ['Shopify CLI', config.cliVersion],
-        ['OS', `${platform}-${arch}`],
-        ['Shell', process.env.SHELL || 'unknown'],
-        ['Node version', process.version],
-      ],
-      firstColumnSubdued: true,
-    },
+    title,
+    body: {tabularData: data, firstColumnSubdued: true},
   }
 }
