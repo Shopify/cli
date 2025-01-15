@@ -8,7 +8,6 @@ import {
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
-  exchangeAppManagementApiToken,
 } from './session/exchange.js'
 import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
@@ -23,7 +22,7 @@ import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {openURL} from '../../public/node/system.js'
 import {keypress} from '../../public/node/ui.js'
-import {getAppManagementToken, getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
+import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
 import {gql} from 'graphql-request'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputCompleted, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'

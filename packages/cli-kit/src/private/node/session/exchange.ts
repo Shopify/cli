@@ -90,6 +90,23 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
   }
 }
 
+export async function exchangeAppManagementApiToken(token: string): Promise<{accessToken: string; userId: string}> {
+  const appId = applicationId('app-management')
+  try {
+    const newToken = await requestAppToken('app-management', token, [
+      'https://api.shopify.com/auth/organization.apps.manage',
+    ])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const accessToken = newToken[appId]!.accessToken
+    const userId = nonRandomUUID(token)
+    setLastSeenUserIdAfterAuth(userId)
+    setLastSeenAuthMethod('app_management_token')
+    return {accessToken, userId}
+  } catch (error) {
+    throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
+  }
+}
+
 type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
 
 /**
