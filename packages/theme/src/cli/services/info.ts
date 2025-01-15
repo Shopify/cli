@@ -2,11 +2,9 @@ import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {getOutputUpdateCLIReminder} from '@shopify/cli-kit/node/upgrade'
 import {AlertCustomSection} from '@shopify/cli-kit/node/ui'
 
 interface ThemeInfo {
@@ -82,7 +80,7 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<AlertCus
     title: 'Tooling and System',
     body: {
       tabularData: [
-        ['Shopify CLI', await cliVersionInfo(config)],
+        ['Shopify CLI', config.cliVersion],
         ['OS', `${platform}-${arch}`],
         ['Shell', process.env.SHELL || 'unknown'],
         ['Node version', process.version],
@@ -90,12 +88,4 @@ async function systemInfoSection(config: {cliVersion: string}): Promise<AlertCus
       firstColumnSubdued: true,
     },
   }
-}
-
-async function cliVersionInfo(config: {cliVersion: string}): Promise<string> {
-  const dependency = '@shopify/cli'
-  const newestVersion = await checkForNewVersion(dependency, config.cliVersion)
-  if (!newestVersion) return config.cliVersion
-  const upgradeMessage = getOutputUpdateCLIReminder(newestVersion)
-  return [config.cliVersion, upgradeMessage].join(' ').trim()
 }
