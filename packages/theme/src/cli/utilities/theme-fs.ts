@@ -152,6 +152,11 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
           uploadErrors.delete(fileKey)
         } else {
           uploadErrors.set(fileKey, result?.errors?.asset ?? ['Response was not successful.'])
+          throw new Error(
+            result?.errors?.asset
+              ? `\n\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
+              : 'Response was not successful.',
+          )
         }
 
         unsyncedFileKeys.delete(fileKey)
