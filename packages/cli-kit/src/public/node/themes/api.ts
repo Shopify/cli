@@ -56,6 +56,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
      * Error handlers should not inspect GraphQL error messages directly, as
      * they are internationalized.
      */
+    outputDebug(`Error fetching theme with ID: ${id}`)
   }
 }
 
