@@ -1,7 +1,8 @@
 import {spinFqdn} from './spin.js'
-import {AbortError} from '../error.js'
+import {AbortError, BugError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import {DevServer, DevServerCore} from '../vendor/dev_server/DevServer.js'
+import {blockPartnersAccess} from '../environment.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new AbortError(
   "Couldn't obtain the Spin FQDN for Partners when the CLI is not running from a Spin environment.",
@@ -22,6 +23,9 @@ export const NotProvidedStoreFQDNError = new AbortError(
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function partnersFqdn(): Promise<string> {
+  if (blockPartnersAccess()) {
+    throw new BugError('Partners API is blocked by the SHOPIFY_CLI_NEVER_USE_PARTNERS_API environment variable.')
+  }
   const environment = serviceEnvironment()
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
