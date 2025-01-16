@@ -6123,7 +6123,7 @@
         },
         "only": {
           "char": "o",
-          "description": "Download only the specified files (Multiple flags allowed).",
+          "description": "Push only the specified files (Multiple flags allowed).",
           "env": "SHOPIFY_FLAG_ONLY",
           "hasDynamicHelp": false,
           "multiple": true,
