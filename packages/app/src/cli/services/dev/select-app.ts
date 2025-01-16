@@ -16,24 +16,22 @@ import {BugError} from '@shopify/cli-kit/node/error'
  * @returns The selected (or created) app
  */
 export async function selectOrCreateApp(
-  localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
   options: CreateAppOptions,
-  directory?: string,
 ): Promise<OrganizationApp> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(localAppName)
+    const name = await appNamePrompt(options.name)
     return developerPlatformClient.createApp(org, {...options, name})
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages, {
-      directory,
+      directory: options.directory,
     })
 
     const data = getCachedCommandInfo()

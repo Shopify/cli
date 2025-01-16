@@ -266,22 +266,11 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   })
 }
 
-export async function fetchOrCreateOrganizationApp(
-  options: CreateAppOptions,
-  directory?: string,
-): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): Promise<OrganizationApp> {
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-  const remoteApp = await selectOrCreateApp(
-    options.name,
-    apps,
-    hasMorePages,
-    organization,
-    developerPlatformClient,
-    options,
-    directory,
-  )
+  const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)
   remoteApp.developerPlatformClient = developerPlatformClient
 
   await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
