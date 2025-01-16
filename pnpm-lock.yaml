@@ -252,9 +252,6 @@ importers:
       esbuild:
         specifier: 0.24.0
         version: 0.24.0
-      speedscope:
-        specifier: 1.21.0
-        version: 1.21.0
     devDependencies:
       '@oclif/core':
         specifier: 3.26.5
@@ -669,9 +666,6 @@ importers:
       h3:
         specifier: 1.13.0
         version: 1.13.0
-      speedscope:
-        specifier: 1.21.0
-        version: 1.21.0
       yaml:
         specifier: 2.7.0
         version: 2.7.0
@@ -13865,14 +13859,6 @@ packages:
     dependencies:
       mimic-fn: 4.0.0
 
-  /open@7.2.0:
-    resolution: {integrity: sha512-4HeyhxCvBTI5uBePsAdi55C5fmqnWZ2e2MlmvWi5KW5tdH5rxoiv/aMtbeVxKZc3eWkT1GymMnLG8XC4Rq4TDQ==}
-    engines: {node: '>=8'}
-    dependencies:
-      is-docker: 2.2.1
-      is-wsl: 2.2.0
-    dev: false
-
   /open@8.4.2:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
@@ -15545,13 +15531,6 @@ packages:
 
   /spdx-license-ids@3.0.17:
     resolution: {integrity: sha512-sh8PWc/ftMqAAdFiBu6Fy6JUOYjqDJBJvIhpfDMyHrr0Rbp5liZqd4TjtQ/RgfLjKFZb+LMx5hpml5qOWy0qvg==}
-
-  /speedscope@1.21.0:
-    resolution: {integrity: sha512-gH5n8APHxG2AOltpBx66SQwe1eMpxmV3MsfEdE1gJ+UXE6H+SlIbA7TM6jHunAcHVHNiUw8EYSMFnaoNQyfRhQ==}
-    hasBin: true
-    dependencies:
-      open: 7.2.0
-    dev: false
 
   /split-on-first@1.1.0:
     resolution: {integrity: sha512-43ZssAJaMusuKWL8sKUBQXHWOpq8d6CfN/u1p4gUzfJkM05C8rxTmYrkIPTXapZpORA6LkkzcUulJ8FqA7Uudw==}

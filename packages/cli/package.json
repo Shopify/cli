@@ -24,7 +24,8 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "main": "src/index.js",
   "module": "src/index.js",
@@ -102,7 +103,6 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
-    "speedscope": "1.21.0",
     "esbuild": "0.24.0"
   },
   "devDependencies": {
