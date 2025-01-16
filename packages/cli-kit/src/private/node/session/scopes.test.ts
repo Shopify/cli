@@ -1,5 +1,4 @@
 import {allDefaultScopes, apiScopes} from './scopes.js'
-import {environmentVariables} from '../constants.js'
 import {describe, expect, test} from 'vitest'
 
 describe('allDefaultScopes', () => {
@@ -20,16 +19,15 @@ describe('allDefaultScopes', () => {
       'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
       'https://api.shopify.com/auth/partners.app.cli.access',
       'https://api.shopify.com/auth/destinations.readonly',
+      'https://api.shopify.com/auth/organization.store-management',
+      'https://api.shopify.com/auth/organization.apps.manage',
       ...customScopes,
     ])
   })
 
-  test('includes App Management and Store Management when the required env var is defined', async () => {
-    // Given
-    const envVars = {[environmentVariables.useAppManagement]: 'true'}
-
+  test('includes App Management and Store Management', async () => {
     // When
-    const got = allDefaultScopes([], envVars)
+    const got = allDefaultScopes([])
 
     // Then
     expect(got).toEqual([

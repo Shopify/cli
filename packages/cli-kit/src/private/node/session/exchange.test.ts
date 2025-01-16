@@ -55,20 +55,18 @@ describe('exchange identity token for application tokens', () => {
 
   test('returns tokens for all APIs if a store is passed', async () => {
     // Given
-    const response = new Response(JSON.stringify(data))
-
-    // Need to do it 3 times because a Response can only be used once
-    vi.mocked(shopifyFetch)
-      .mockResolvedValue(response)
-      .mockResolvedValueOnce(response.clone())
-      .mockResolvedValueOnce(response.clone())
-      .mockResolvedValueOnce(response.clone())
+    vi.mocked(shopifyFetch).mockImplementation(async () => Promise.resolve(new Response(JSON.stringify(data))))
 
     // When
     const got = await exchangeAccessForApplicationTokens(identityToken, scopes, 'storeFQDN')
 
     // Then
     const expected = {
+      'app-management': {
+        accessToken: 'access_token',
+        expiresAt: expiredDate,
+        scopes: ['scope', 'scope2'],
+      },
       partners: {
         accessToken: 'access_token',
         expiresAt: expiredDate,
@@ -109,6 +107,11 @@ describe('exchange identity token for application tokens', () => {
 
     // Then
     const expected = {
+      'app-management': {
+        accessToken: 'access_token',
+        expiresAt: expiredDate,
+        scopes: ['scope', 'scope2'],
+      },
       partners: {
         accessToken: 'access_token',
         expiresAt: expiredDate,

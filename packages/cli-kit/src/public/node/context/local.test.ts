@@ -4,17 +4,19 @@ import {
   isDevelopment,
   isShopify,
   isUnitTest,
-  isAppManagementEnabled,
   analyticsDisabled,
   cloudEnvironment,
   macAddress,
+  isAppManagementDisabled,
 } from './local.js'
+import {getPartnersToken} from '../environment.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 import {expect, describe, vi, test} from 'vitest'
 
 vi.mock('../fs.js')
 vi.mock('../system.js')
+vi.mock('../environment.js')
 
 describe('isUnitTest', () => {
   test('returns true when SHOPIFY_UNIT_TEST is truthy', () => {
@@ -100,24 +102,24 @@ describe('hasGit', () => {
   })
 })
 
-describe('isAppManagementEnabled', () => {
-  test('returns true when USE_APP_MANAGEMENT_API is truthy', () => {
+describe('isAppManagementDisabled', () => {
+  test('returns true when a Partners token is present', () => {
     // Given
-    const env = {USE_APP_MANAGEMENT_API: '1'}
+    vi.mocked(getPartnersToken).mockReturnValue('token')
 
     // When
-    const got = isAppManagementEnabled(env)
+    const got = isAppManagementDisabled()
 
     // Then
     expect(got).toBe(true)
   })
 
-  test('returns false when USE_APP_MANAGEMENT_API is falsy', () => {
+  test('returns false when a Partners token is not present', () => {
     // Given
-    const env = {USE_APP_MANAGEMENT_API: '0'}
+    vi.mocked(getPartnersToken).mockReturnValue(undefined)
 
     // When
-    const got = isAppManagementEnabled(env)
+    const got = isAppManagementDisabled()
 
     // Then
     expect(got).toBe(false)
