@@ -124,6 +124,7 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
+      "@shopify/cli",
       "@shopify/cli-hydrogen",
       "@shopify/theme-check-node",
       "@shopify/theme-check-docs-updater"
