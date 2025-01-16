@@ -432,7 +432,7 @@ async function handleFailedUploads(
 function reportFailedUploads(uploadResults: Map<string, Result>) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
-      const errorMessage = result.errors?.asset?.map((err) => err).join('\n') ?? 'File upload failed'
+      const errorMessage = result.errors?.asset?.join('\n') ?? 'File upload failed'
       renderThrownError(key, new Error(errorMessage))
     }
   }
