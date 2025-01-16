@@ -82,11 +82,11 @@ class TunnelClientInstance implements TunnelClient {
       return
     }
 
-    const args = this.tunnelUrl ? ['--quick-service', this.tunnelUrl] : ['tunnel']
+    const args = ['tunnel', 'run', 'isaac-tunnel']
 
-    args.push('--url')
-    args.push(`http://localhost:${this.port}`)
-    args.push('--no-autoupdate')
+    // args.push('--url')
+    // args.push(`http://localhost:${this.port}`)
+    // args.push('--no-autoupdate')
 
     const errors: string[] = []
 

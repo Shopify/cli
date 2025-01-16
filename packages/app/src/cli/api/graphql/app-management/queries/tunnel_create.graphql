@@ -1,6 +1,7 @@
 mutation tunnelCreate {
   tunnelCreate {
     tunnelUrl
+    tunnelSecret
     userErrors {
       field
       message

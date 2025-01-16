@@ -9,6 +9,7 @@ export type TunnelCreateMutationVariables = Types.Exact<{[key: string]: never}>
 export type TunnelCreateMutation = {
   tunnelCreate: {
     tunnelUrl?: string | null
+    tunnelSecret?: string | null
     userErrors: {
       field?: string[] | null
       message: string
@@ -36,6 +37,7 @@ export const TunnelCreate = {
               kind: 'SelectionSet',
               selections: [
                 {kind: 'Field', name: {kind: 'Name', value: 'tunnelUrl'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'tunnelSecret'}},
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'userErrors'},
