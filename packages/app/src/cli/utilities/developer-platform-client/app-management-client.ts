@@ -913,7 +913,7 @@ const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
-  const {isLaunchable, scopesArray, name} = options
+  const {isLaunchable, scopesArray, name, isEmbedded} = options
   return {
     appSource: {
       appModules: [
@@ -923,7 +923,7 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
           specificationIdentifier: AppHomeSpecIdentifier,
           config: {
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-            embedded: isLaunchable,
+            embedded: isEmbedded,
           },
         },
         {

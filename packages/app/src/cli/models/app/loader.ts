@@ -220,11 +220,15 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const loader = new AppLoader({loadedConfiguration})
   const webs = await loader.loadWebs(directory)
 
+  const isLaunchable = webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
+
   return {
-    isLaunchable: webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend)),
+    isLaunchable,
     scopesArray: getAppScopesArray(config),
     name,
     directory,
+    // By default, and ONLY for `app init`, we consider the app as embedded if it is launchable.
+    isEmbedded: isLaunchable,
   }
 }
 

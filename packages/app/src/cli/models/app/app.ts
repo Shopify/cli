@@ -433,11 +433,17 @@ export class App<
     return Boolean(frontendConfig ?? backendConfig)
   }
 
+  get appIsEmbedded() {
+    if (isCurrentAppSchema(this.configuration)) return this.configuration.embedded
+    return this.appIsLaunchable()
+  }
+
   creationDefaultOptions(): CreateAppOptions {
     return {
       isLaunchable: this.appIsLaunchable(),
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
+      isEmbedded: this.appIsEmbedded,
       directory: this.directory,
     }
   }

@@ -141,6 +141,7 @@ export interface CreateAppOptions {
   isLaunchable?: boolean
   scopesArray?: string[]
   directory?: string
+  isEmbedded?: boolean
 }
 
 interface AppModuleVersionSpecification {
