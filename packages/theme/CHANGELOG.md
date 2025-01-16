@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.73.2
+
+### Patch Changes
+
+- 23bbb16ba1: Fix `shopify theme dev` to no longer fail when development themes expire in internationalized stores
+- Updated dependencies [23bbb16ba1]
+  - @shopify/cli-kit@3.73.2
+
 ## 3.73.1
 
 ### Patch Changes
