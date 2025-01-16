@@ -15,7 +15,6 @@ import {
   LegacyAppConfiguration,
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
-  AppCreationDefaultOptions,
   AppLinkedInterface,
 } from './app.js'
 import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
@@ -26,7 +25,7 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -213,7 +212,7 @@ export async function checkFolderIsValidApp(directory: string) {
   )
 }
 
-export async function loadConfigForAppCreation(directory: string, name: string): Promise<AppCreationDefaultOptions> {
+export async function loadConfigForAppCreation(directory: string, name: string): Promise<CreateAppOptions> {
   const state = await getAppConfigurationState(directory)
   const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
   const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
@@ -225,6 +224,7 @@ export async function loadConfigForAppCreation(directory: string, name: string):
     isLaunchable: webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend)),
     scopesArray: getAppScopesArray(config),
     name,
+    directory,
   }
 }
 

@@ -59,7 +59,9 @@ describe('selectOrCreateApp', () => {
 
     // When
     const {developerPlatformClient} = mockDeveloperPlatformClient()
-    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
+    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {
+      name: 'app-name',
+    })
 
     // Then
     expect(got).toEqual(APP1)
@@ -75,7 +77,7 @@ describe('selectOrCreateApp', () => {
 
     // When
     const {developerPlatformClient} = mockDeveloperPlatformClient()
-    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
+    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {name: 'app-name'})
 
     // Then
     expect(got).toEqual({...APP1, newApp: true})

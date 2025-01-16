@@ -319,7 +319,7 @@ describe('createApp', () => {
 
     // When
     client.token = () => Promise.resolve('token')
-    await client.createApp(org, 'app-name')
+    await client.createApp(org, {name: 'app-name'})
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
@@ -381,7 +381,7 @@ describe('createApp', () => {
 
     // When
     client.token = () => Promise.resolve('token')
-    const result = await client.createApp(org, appName)
+    const result = await client.createApp(org, {name: 'app-name'})
 
     // Then
     expect(result).toMatchObject(expectedApp)

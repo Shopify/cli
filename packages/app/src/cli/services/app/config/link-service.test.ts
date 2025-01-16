@@ -33,7 +33,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
         hasMorePages: false,
       }
     },
-    async createApp(org, name, options) {
+    async createApp(org, options) {
       return testOrganizationApp({
         requestedAccessScopes: options?.scopesArray,
         developerPlatformClient: this as DeveloperPlatformClient,

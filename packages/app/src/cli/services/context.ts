@@ -7,13 +7,7 @@ import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {
-  AppInterface,
-  isCurrentAppSchema,
-  CurrentAppConfiguration,
-  AppCreationDefaultOptions,
-  AppLinkedInterface,
-} from '../models/app/app.js'
+import {AppInterface, isCurrentAppSchema, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -25,7 +19,11 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {
+  CreateAppOptions,
+  DeveloperPlatformClient,
+  selectDeveloperPlatformClient,
+} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, TokenItem, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -269,18 +267,21 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
 }
 
 export async function fetchOrCreateOrganizationApp(
-  options: AppCreationDefaultOptions,
+  options: CreateAppOptions,
   directory?: string,
 ): Promise<OrganizationApp> {
-  const {isLaunchable, scopesArray, name} = options
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-  const remoteApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient, {
-    isLaunchable,
-    scopesArray,
+  const remoteApp = await selectOrCreateApp(
+    options.name,
+    apps,
+    hasMorePages,
+    organization,
+    developerPlatformClient,
+    options,
     directory,
-  })
+  )
   remoteApp.developerPlatformClient = developerPlatformClient
 
   await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)

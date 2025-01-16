@@ -7,7 +7,6 @@ import {
   CliBuildPreferences,
   getAppScopes,
   LegacyAppConfiguration,
-  AppCreationDefaultOptions,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -27,6 +26,7 @@ import {
   Flag,
   DeveloperPlatformClient,
   sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+  CreateAppOptions,
 } from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -173,13 +173,14 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
  * @returns Default options for creating a new app; the app's actual directory if loaded.
  */
 async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise<{
-  creationOptions: AppCreationDefaultOptions
+  creationOptions: CreateAppOptions
   appDirectory?: string
 }> {
   const appCreationDefaults = {
     isLaunchable: false,
     scopesArray: [] as string[],
     name: '',
+    directory: options.directory,
   }
   try {
     const app = await loadApp({
