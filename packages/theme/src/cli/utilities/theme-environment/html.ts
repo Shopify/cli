@@ -1,7 +1,7 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
-import {injectErrorIntoHtml} from './hot-reload/error-overlay.js'
+import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
 import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
@@ -32,12 +32,19 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         assertThemeId(response, html, String(theme.id))
 
-        if (ctx.options.liveReload !== 'off') {
-          html = injectHotReloadScript(html)
+        if (ctx.localThemeFileSystem.uploadErrors.size > 0) {
+          html = getErrorPage({
+            title: 'Failed to Upload Theme Files',
+            header: 'Upload Errors',
+            errors: Array.from(ctx.localThemeFileSystem.uploadErrors.entries()).map(([file, errors]) => ({
+              message: file,
+              code: errors.join('\n'),
+            })),
+          })
         }
 
-        if (ctx.localThemeFileSystem.uploadErrors.size > 0) {
-          html = injectErrorIntoHtml(html, ctx.localThemeFileSystem.uploadErrors)
+        if (ctx.options.liveReload !== 'off') {
+          html = injectHotReloadScript(html)
         }
 
         return html
@@ -57,8 +64,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         let errorPageHtml = getErrorPage({
           title,
           header: title,
-          message: [...rest, cause?.message ?? error.message].join('<br>'),
-          code: error.stack?.replace(`${error.message}\n`, '') ?? '',
+          errors: [
+            {
+              message: [...rest, cause?.message ?? error.message].join('<br>'),
+              code: error.stack?.replace(`${error.message}\n`, '') ?? '',
+            },
+          ],
         })
 
         if (ctx.options.liveReload !== 'off') {
@@ -68,24 +79,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return errorPageHtml
       })
   })
-}
-
-function getErrorPage(options: {title: string; header: string; message: string; code: string}) {
-  const html = String.raw
-
-  return html`<html>
-    <head>
-      <title>${options.title ?? 'Unknown error'}</title>
-    </head>
-    <body
-      id="full-error-page"
-      style="display: flex; flex-direction: column; align-items: center; padding-top: 20px; font-family: Arial"
-    >
-      <h2>${options.header}</h2>
-      <p>${options.message}</p>
-      <pre>${options.code}</pre>
-    </body>
-  </html>`
 }
 
 function assertThemeId(response: Response, html: string, expectedThemeId: string) {
