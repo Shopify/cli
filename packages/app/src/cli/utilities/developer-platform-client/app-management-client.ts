@@ -171,26 +171,27 @@ export class AppManagementClient implements DeveloperPlatformClient {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
       // Figure out ordering of the BP request and the service token exchange
-      const userInfoResult = await businessPlatformRequestDoc(UserInfo, await this.businessPlatformToken())
+      // const userInfoResult = await businessPlatformRequestDoc(UserInfo, await this.businessPlatformToken())
       const {token, userId} = await ensureAuthenticatedAppManagement()
-      if (userInfoResult.currentUserAccount) {
-        this._session = {
-          token,
-          accountInfo: {
-            type: 'UserAccount',
-            email: userInfoResult.currentUserAccount.email,
-          },
-          userId,
-        }
-      } else {
-        this._session = {
-          token,
-          accountInfo: {
-            type: 'UnknownAccount',
-          },
-          userId,
-        }
+      // if (userInfoResult.currentUserAccount) {
+      //   this._session = {
+      //     token,
+      //     accountInfo: {
+      //       type: 'UserAccount',
+      //       email: userInfoResult.currentUserAccount.email,
+      //     },
+      //     userId,
+      //   }
+      // } else {
+      this._session = {
+        token,
+        accountInfo: {
+          type: 'ServiceAccount',
+          orgName: 'Random',
+        },
+        userId,
       }
+      // }
     }
     return this._session
   }
