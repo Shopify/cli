@@ -2,6 +2,7 @@ import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
+import {emitHotReloadEvent} from './theme-environment/hot-reload/server.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -149,10 +150,14 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
         if (result?.success) {
-          uploadErrors.delete(fileKey)
+          if (uploadErrors.has(fileKey)) {
+            uploadErrors.delete(fileKey)
+            emitHotReloadEvent({type: 'full', key: fileKey})
+          }
         } else {
           const errors = result?.errors?.asset ?? ['Response was not successful.']
           uploadErrors.set(fileKey, errors)
+          emitHotReloadEvent({type: 'full', key: fileKey})
           throw new Error(errors.length === 1 ? errors[0] : errors.join('\n'))
         }
 
