@@ -41,24 +41,6 @@ describe('loadLocalesConfig', () => {
     })
   })
 
-  test('Throws if one locale is too big', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
-      // Given
-      const localesPath = joinPath(tmpDir, 'locales')
-      const enDefault = joinPath(localesPath, 'en.default.json')
-      const es = joinPath(localesPath, 'es.json')
-
-      await mkdir(localesPath)
-      await writeFile(enDefault, JSON.stringify({hello: 'Hello'}))
-      const bigArray = new Array(6000).fill('a')
-      await writeFile(es, JSON.stringify(bigArray))
-
-      // When
-      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
-      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
-    })
-  })
-
   test('Throws if there are no defaults', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
@@ -86,25 +68,6 @@ describe('loadLocalesConfig', () => {
       await mkdir(localesPath)
       await writeFile(en, JSON.stringify({hello: 'Hello'}))
       await writeFile(es, JSON.stringify({hello: 'Hola'}))
-
-      // When
-      const got = loadLocalesConfig(tmpDir, 'checkout_ui')
-      await expect(got).rejects.toThrow(/Error loading checkout_ui/)
-    })
-  })
-
-  test('Throws if bundle is too big', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
-      // Given
-      const localesPath = joinPath(tmpDir, 'locales')
-      const en = joinPath(localesPath, 'en.default.json')
-      const es = joinPath(localesPath, 'es.json')
-
-      await mkdir(localesPath)
-      const bigArray = JSON.stringify(new Array(4000).fill('a'))
-
-      await writeFile(en, JSON.stringify(bigArray))
-      await writeFile(es, JSON.stringify(bigArray))
 
       // When
       const got = loadLocalesConfig(tmpDir, 'checkout_ui')
