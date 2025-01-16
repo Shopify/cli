@@ -17,7 +17,7 @@ export async function profile(
   themeAccessPassword?: string,
   storefrontPassword?: string,
 ) {
-  const storePassword = (await isStorefrontPasswordProtected(adminSession.storeFqdn))
+  const storePassword = (await isStorefrontPasswordProtected(adminSession))
     ? await ensureValidPassword(storefrontPassword, adminSession.storeFqdn)
     : undefined
 
