@@ -79,7 +79,7 @@ export async function linkedAppContext({
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
-  const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
+  // const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 
   // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
@@ -98,7 +98,7 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  await logMetadata(remoteApp, organization, forceRelink)
+  // await logMetadata(remoteApp, organization, forceRelink)
 
   // Add UIDs to extension TOML files if using app-management.
   // If in unsafe report mode, it is possible the UIDs are not loaded in memory
@@ -108,7 +108,13 @@ export async function linkedAppContext({
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+  return {
+    app: localApp,
+    remoteApp,
+    developerPlatformClient,
+    specifications,
+    organization: {id: '212', businessName: 'DWSD', source: OrganizationSource.Partners},
+  }
 }
 
 async function logMetadata(app: {apiKey: string}, organization: Organization, resetUsed: boolean) {
