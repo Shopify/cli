@@ -390,11 +390,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // Need to figure this out still
     const flags = filterDisabledFlags([])
     const createdApp = result.appCreate.app
+    const apiSecretKeys = createdApp.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       ...createdApp,
       title: name,
       apiKey: createdApp.key,
-      apiSecretKeys: [],
+      apiSecretKeys,
       grantedScopes: options?.scopesArray ?? [],
       organizationId: org.id,
       newApp: true,

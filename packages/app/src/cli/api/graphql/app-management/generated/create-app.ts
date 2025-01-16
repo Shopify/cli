@@ -11,7 +11,7 @@ export type CreateAppMutationVariables = Types.Exact<{
 
 export type CreateAppMutation = {
   appCreate: {
-    app?: {id: string; key: string} | null
+    app?: {id: string; key: string; activeRoot: {clientCredentials: {secrets: {key: string}[]}}} | null
     userErrors: {category: string; message: string; on: JsonMapType}[]
   }
 }
@@ -64,6 +64,37 @@ export const CreateApp = {
                     selections: [
                       {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'activeRoot'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: {kind: 'Name', value: 'clientCredentials'},
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: {kind: 'Name', value: 'secrets'},
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                      ],
+                                    },
+                                  },
+                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                ],
+                              },
+                            },
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
