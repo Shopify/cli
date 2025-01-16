@@ -12,11 +12,10 @@ import {
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
-import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -80,34 +79,6 @@ function infoOptions(): InfoOptions {
 describe('info', () => {
   const remoteApp = testOrganizationApp()
 
-  test('returns update shopify cli reminder when last version is greater than current version', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const latestVersion = '2.2.3'
-      const app = mockApp({directory: tmp})
-      vi.mocked(checkForNewVersion).mockResolvedValue(latestVersion)
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
-      // Then
-      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
-    })
-  })
-
-  test('returns update shopify cli reminder when last version lower or equals to current version', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const app = mockApp({directory: tmp})
-      vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
-
-      // When
-      const result = stringifyMessage(await info(app, remoteApp, infoOptions()))
-      // Then
-      expect(unstyled(result)).toMatch(`Shopify CLI       ${CLI_KIT_VERSION}`)
-      expect(unstyled(result)).not.toMatch('CLI reminder')
-    })
-  })
-
   test('returns the web environment as a text when webEnv is true', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -116,7 +87,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, {...infoOptions(), webEnv: true})
+      const result = (await info(app, remoteApp, ORG1, {...infoOptions(), webEnv: true})) as OutputMessage
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -136,7 +107,11 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, {...infoOptions(), format: 'json', webEnv: true})
+      const result = (await info(app, remoteApp, ORG1, {
+        ...infoOptions(),
+        format: 'json',
+        webEnv: true,
+      })) as OutputMessage
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -184,18 +159,28 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, infoOptions())
+      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const uiData = tabularDataSectionFromInfo(result, 'ui_extension_external')
+      const checkoutData = tabularDataSectionFromInfo(result, 'checkout_ui_extension_external')
 
       // Then
-      expect(result).toContain('Extensions with errors')
+
       // Doesn't use the type as part of the title
-      expect(result).not.toContain('📂 ui_extension')
-      // Shows handle in title
-      expect(result).toContain('📂 handle-for-extension-1')
+      expect(JSON.stringify(uiData)).not.toContain('📂 ui_extension')
+
+      // Shows handle as title
+      const uiExtensionTitle = uiData[0]![0]
+      expect(uiExtensionTitle).toBe('📂 handle-for-extension-1')
+      // Displays errors
+      const uiExtensionErrorsRow = errorRow(uiData)
+      expect(uiExtensionErrorsRow[1]).toStrictEqual({error: 'Mock error with ui_extension'})
+
       // Shows default handle derived from name when no handle is present
-      expect(result).toContain('📂 extension-2')
-      expect(result).toContain('! Mock error with ui_extension')
-      expect(result).toContain('! Mock error with checkout_ui_extension')
+      const checkoutExtensionTitle = checkoutData[0]![0]
+      expect(checkoutExtensionTitle).toBe('📂 extension-2')
+      // Displays errors
+      const checkoutExtensionErrorsRow = errorRow(checkoutData)
+      expect(checkoutExtensionErrorsRow[1]).toStrictEqual({error: 'Mock error with checkout_ui_extension'})
     })
   })
 
@@ -222,11 +207,14 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, infoOptions())
+      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const uiExtensionsData = tabularDataSectionFromInfo(result, 'ui_extension_external')
+      const relevantExtension = extensionTitleRow(uiExtensionsData, 'handle-for-extension-1')
+      const irrelevantExtension = extensionTitleRow(uiExtensionsData, 'point_of_sale')
 
       // Then
-      expect(result).toContain('📂 handle-for-extension-1')
-      expect(result).not.toContain('📂 point_of_sale')
+      expect(relevantExtension).toBeDefined()
+      expect(irrelevantExtension).not.toBeDefined()
     })
   })
 
@@ -253,7 +241,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, {format: 'json', webEnv: false, developerPlatformClient})
+      const result = await info(app, remoteApp, ORG1, {format: 'json', webEnv: false, developerPlatformClient})
 
       // Then
       expect(result).toBeInstanceOf(TokenizedString)
@@ -292,4 +280,23 @@ function mockApp({
     nodeDependencies,
     ...(app ? app : {}),
   })
+}
+
+function tabularDataSectionFromInfo(info: AlertCustomSection[], title: string): InlineToken[][] {
+  const section = info.find((section) => section.title === title)
+  if (!section) throw new Error(`Section ${title} not found`)
+  if (!(typeof section.body === 'object' && 'tabularData' in section.body)) {
+    throw new Error(`Expected to be a table: ${JSON.stringify(section.body)}`)
+  }
+  return section.body.tabularData
+}
+
+function errorRow(data: InlineToken[][]): InlineToken[] {
+  const row = data.find((row: InlineToken[]) => typeof row[0] === 'object' && 'error' in row[0])!
+  if (!row) throw new Error('Error row not found')
+  return row
+}
+
+function extensionTitleRow(data: InlineToken[][], title: string): InlineToken[] | undefined {
+  return data.find((row) => typeof row[0] === 'string' && row[0].match(new RegExp(title)))
 }

@@ -2197,7 +2197,7 @@ FLAGS
   -j, --json                 Output the result as JSON.
   -l, --live                 Push theme files from your remote live theme.
   -n, --nodelete             Prevent deleting remote files that don't exist locally.
-  -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
+  -o, --only=<value>...      Push only the specified files (Multiple flags allowed).
   -p, --publish              Publish as the live theme after uploading.
   -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
                              (example.myshopify.com, https://example.myshopify.com).

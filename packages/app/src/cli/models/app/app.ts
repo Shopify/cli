@@ -23,6 +23,12 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 // Schemas for loading app configuration
 
+const ExtensionDirectoriesSchema = zod
+  .array(zod.string())
+  .optional()
+  .transform(removeTrailingPathSeparator)
+  .transform(fixSingleWildcards)
+
 /**
  * Schema for a freshly minted app template.
  */
@@ -34,7 +40,7 @@ export const LegacyAppSchema = zod
       .string()
       .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
       .default(''),
-    extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
+    extension_directories: ExtensionDirectoriesSchema,
     web_directories: zod.array(zod.string()).optional(),
     webhooks: zod
       .object({
@@ -49,6 +55,14 @@ function removeTrailingPathSeparator(value: string[] | undefined) {
   // eslint-disable-next-line no-useless-escape
   return value?.map((dir) => dir.replace(/[\/\\]+$/, ''))
 }
+
+// If a path ends with a single asterisk, modify it to end with a double asterisk.
+// This is to support the glob pattern used by chokidar and watch for changes in subfolders.
+function fixSingleWildcards(value: string[] | undefined) {
+  // eslint-disable-next-line no-useless-escape
+  return value?.map((dir) => dir.replace(/([^\*])\*$/, '$1**'))
+}
+
 /**
  * Schema for a normal, linked app. Properties from modules are not validated.
  */
@@ -62,7 +76,7 @@ export const AppSchema = zod.object({
       include_config_on_deploy: zod.boolean().optional(),
     })
     .optional(),
-  extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
+  extension_directories: ExtensionDirectoriesSchema,
   web_directories: zod.array(zod.string()).optional(),
 })
 
@@ -259,7 +273,7 @@ export interface AppInterface<
    */
   creationDefaultOptions(): AppCreationDefaultOptions
   manifest: () => Promise<JsonMapType>
-  removeExtension: (extensionHandle: string) => void
+  removeExtension: (extensionUid: string) => void
 }
 
 type AppConstructor<
@@ -427,8 +441,8 @@ export class App<
     }
   }
 
-  removeExtension(extensionHandle: string) {
-    this.realExtensions = this.realExtensions.filter((ext) => ext.handle !== extensionHandle)
+  removeExtension(extensionUid: string) {
+    this.realExtensions = this.realExtensions.filter((ext) => ext.uid !== extensionUid)
   }
 
   get includeConfigOnDeploy() {

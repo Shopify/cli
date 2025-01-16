@@ -59,6 +59,12 @@ let bundleControllers: AbortController[] = []
 // Since the watcher can emit events before the dev session is ready, we need to keep track of the status
 let isDevSessionReady = false
 
+export function devSessionStatus() {
+  return {
+    isDevSessionReady,
+  }
+}
+
 export async function setupDevSessionProcess({
   app,
   apiKey,

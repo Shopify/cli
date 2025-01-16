@@ -75,7 +75,6 @@ import {
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
-import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
@@ -117,6 +116,7 @@ import {
   SchemaDefinitionByApiTypeQuery,
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -153,6 +153,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
+  public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -245,7 +246,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: org.name,
-      source: OrganizationSource.BusinessPlatform,
+      source: this.organizationSource,
     }))
   }
 
@@ -264,7 +265,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       id: orgId,
       businessName: org.name,
-      source: OrganizationSource.BusinessPlatform,
+      source: this.organizationSource,
     }
   }
 
@@ -369,7 +370,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
       directory?: string
     },
   ): Promise<OrganizationApp> {
-    const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray)
+    // Query for latest api version
+    const apiVersions = await this.apiVersions(org.id)
+    const apiVersion =
+      apiVersions.publicApiVersions
+        .filter((version) => version !== 'unstable')
+        .sort()
+        .at(-1) ?? 'unstable'
+
+    const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray, apiVersion)
 
     const mutation = CreateApp
     const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
@@ -909,7 +918,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
+function createAppVars(
+  name: string,
+  isLaunchable = true,
+  scopesArray?: string[],
+  apiVersion?: string,
+): CreateAppMutationVariables {
   return {
     appSource: {
       appModules: [
@@ -932,7 +946,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           // Change the uid to WebhooksSpecIdentifier
           uid: 'webhooks',
           specificationIdentifier: WebhooksSpecIdentifier,
-          config: {api_version: '2024-01'},
+          config: {api_version: apiVersion},
         },
         {
           // Change the uid to AppAccessSpecIdentifier

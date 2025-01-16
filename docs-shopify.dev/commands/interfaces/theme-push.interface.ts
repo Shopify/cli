@@ -49,7 +49,7 @@ export interface themepush {
   '-n, --nodelete'?: ''
 
   /**
-   * Download only the specified files (Multiple flags allowed).
+   * Push only the specified files (Multiple flags allowed).
    * @environment SHOPIFY_FLAG_ONLY
    */
   '-o, --only <value>'?: string

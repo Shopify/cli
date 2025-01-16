@@ -16,6 +16,7 @@ import {
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -314,7 +315,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
-      localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}, 'current'),
+      localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}, 'current') as AppLinkedInterface,
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -334,7 +335,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
-      localApp,
+      localApp: localApp as AppLinkedInterface,
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 

@@ -2,13 +2,14 @@ import {fetchOrganizations, fetchOrgFromId} from './dev/fetch.js'
 import {selectOrCreateApp} from './dev/select-app.js'
 import {selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {ensureDeployContext, ensureThemeExtensionDevContext} from './context.js'
+import {appFromIdentifiers, ensureDeployContext, ensureThemeExtensionDevContext} from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as patchAppConfigurationFile from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
+import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   AppApiKeyAndOrgId,
@@ -22,15 +23,13 @@ import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   DEFAULT_CONFIG,
   testDeveloperPlatformClient,
-  testApp,
   testAppWithConfig,
   testOrganizationApp,
   testThemeExtensions,
-  buildVersionedAppSchema,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {AppConfigurationStateLinked, getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
-import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
@@ -221,11 +220,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -270,11 +269,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -320,11 +319,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -370,11 +369,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -426,11 +425,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -470,11 +469,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -511,11 +510,11 @@ describe('ensureDeployContext', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
@@ -689,11 +688,72 @@ describe('ensureThemeExtensionDevContext', () => {
   })
 })
 
-async function mockApp(directory: string, app?: Partial<AppInterface>) {
-  const versionSchema = await buildVersionedAppSchema()
-  const localApp = testApp(app)
-  localApp.configSchema = versionSchema.schema
-  localApp.specifications = versionSchema.configSpecifications
-  localApp.directory = directory
-  return localApp
-}
+describe('appFromIdentifiers', () => {
+  test('renders the org name when an app cannot be found and the account is a service account ', async () => {
+    vi.mocked(isServiceAccount).mockReturnValue(true)
+
+    await expect(
+      appFromIdentifiers({
+        apiKey: 'apiKey-12345',
+        developerPlatformClient: testDeveloperPlatformClient({
+          appFromIdentifiers: () => Promise.resolve(undefined),
+          accountInfo: () =>
+            Promise.resolve({
+              type: 'ServiceAccount',
+              orgName: 'My Test Org',
+            }),
+        }),
+        organizationId: 'orgId',
+      }),
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        message: 'No app with client ID apiKey-12345 found',
+        tryMessage: renderTryMessage(true, 'My Test Org'),
+      }),
+    )
+  })
+
+  test('renders the user email when an app cannot be found and the account is a user account ', async () => {
+    vi.mocked(isUserAccount).mockReturnValue(true)
+
+    await expect(
+      appFromIdentifiers({
+        apiKey: 'apiKey-12345',
+        developerPlatformClient: testDeveloperPlatformClient({
+          appFromIdentifiers: () => Promise.resolve(undefined),
+          accountInfo: () =>
+            Promise.resolve({
+              type: 'UserAccount',
+              email: 'user@example.com',
+            }),
+        }),
+        organizationId: 'orgId',
+      }),
+    ).rejects.toThrowError(
+      expect.objectContaining({
+        message: 'No app with client ID apiKey-12345 found',
+        tryMessage: renderTryMessage(false, 'user@example.com'),
+      }),
+    )
+  })
+})
+
+const renderTryMessage = (isOrg: boolean, identifier: string) => [
+  {
+    list: {
+      title: 'Next steps:',
+      items: [
+        'Check that your account has permission to develop apps for this organization or contact the owner of the organization to grant you permission',
+        [
+          'Run',
+          {command: 'shopify auth logout'},
+          'to log into a different',
+          isOrg ? 'organization' : 'account',
+          'than',
+          {bold: identifier},
+        ],
+        ['Pass', {command: '--reset'}, 'to your command to create a new app'],
+      ],
+    },
+  },
+]

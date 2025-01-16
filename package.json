@@ -22,7 +22,7 @@
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
     "type-check:affected": "nx affected --target=type-check",
     "build": "nx run-many --target=build --all --skip-nx-cache",
-    "bundle": "nx run-many --target=bundle --all --skip-nx-cache",
+    "bundle-for-release": "nx run-many --target=bundle --all --skip-nx-cache",
     "build:affected": "nx affected --target=build",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",

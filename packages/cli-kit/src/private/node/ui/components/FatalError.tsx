@@ -2,6 +2,7 @@ import {Banner} from './Banner.js'
 import {TokenizedText} from './TokenizedText.js'
 import {Command} from './Command.js'
 import {List} from './List.js'
+import {TabularData} from './TabularData.js'
 import {BugError, cleanSingleStackTracePath, ExternalError, FatalError as Fatal} from '../../../../public/node/error.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
@@ -58,7 +59,11 @@ const FatalError: FunctionComponent<FatalErrorProps> = ({error}) => {
           {error.customSections.map((section, index) => (
             <Box key={index} flexDirection="column">
               {section.title ? <Text bold>{section.title}</Text> : null}
-              <TokenizedText item={section.body} />
+              {typeof section.body === 'object' && 'tabularData' in section.body ? (
+                <TabularData {...section.body} />
+              ) : (
+                <TokenizedText item={section.body} />
+              )}
             </Box>
           ))}
         </Box>

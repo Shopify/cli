@@ -55,7 +55,7 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {isAppManagementEnabled} from '@shopify/cli-kit/node/context/local'
+import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -77,9 +77,7 @@ export interface AppVersionIdentifiers {
 }
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
-  const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isAppManagementEnabled()) clients.push(new AppManagementClient())
-  return clients
+  return isAppManagementDisabled() ? [new PartnersClient()] : [new PartnersClient(), new AppManagementClient()]
 }
 
 /**
@@ -118,11 +116,9 @@ export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isAppManagementEnabled()) {
-    if (organization) return selectDeveloperPlatformClientByOrg(organization)
-    return selectDeveloperPlatformClientByConfig(configuration)
-  }
-  return new PartnersClient()
+  if (isAppManagementDisabled()) return new PartnersClient()
+  if (organization) return selectDeveloperPlatformClientByOrg(organization)
+  return selectDeveloperPlatformClientByConfig(configuration)
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
@@ -211,6 +207,7 @@ export interface DeveloperPlatformClient {
   readonly supportsAtomicDeployments: boolean
   readonly requiresOrganization: boolean
   readonly supportsDevSessions: boolean
+  readonly organizationSource: OrganizationSource
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>

@@ -7,6 +7,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {formatSection, outputInfo} from '@shopify/cli-kit/node/output'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class Info extends ThemeCommand {
   static description =
@@ -52,7 +53,7 @@ export default class Info extends ThemeCommand {
       outputInfo(infoMessage)
     } else {
       const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
-      outputInfo(infoMessage)
+      renderInfo({customSections: infoMessage})
     }
   }
 }

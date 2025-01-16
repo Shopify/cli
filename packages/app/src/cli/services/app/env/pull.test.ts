@@ -1,11 +1,17 @@
 import {pullEnv} from './pull.js'
 import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
-import {OrganizationApp} from '../../../models/organization.js'
+import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
+
+const ORG1: Organization = {
+  id: '1',
+  businessName: 'My Org',
+  source: OrganizationSource.BusinessPlatform,
+}
 
 describe('env pull', () => {
   let app: AppLinkedInterface
@@ -23,7 +29,7 @@ describe('env pull', () => {
 
       // When
       const filePath = resolvePath(tmpDir, '.env')
-      const result = await pullEnv({app, remoteApp, envFile: filePath})
+      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
 
       // Then
       expect(file.writeFile).toHaveBeenCalledWith(
@@ -49,7 +55,7 @@ describe('env pull', () => {
       vi.spyOn(file, 'writeFile')
 
       // When
-      const result = await pullEnv({app, remoteApp, envFile: filePath})
+      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
 
       // Then
       expect(file.writeFile).toHaveBeenCalledWith(
@@ -83,7 +89,7 @@ describe('env pull', () => {
       vi.spyOn(file, 'writeFile')
 
       // When
-      const result = await pullEnv({app, remoteApp, envFile: filePath})
+      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
 
       // Then
       expect(file.writeFile).not.toHaveBeenCalled()

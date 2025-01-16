@@ -237,11 +237,11 @@ describe('logs', () => {
           },
         },
         '\n',
-        'You can pass ',
+        'You can pass',
         {
           command: '--reset',
         },
-        ' to your command to reset your app configuration.',
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
