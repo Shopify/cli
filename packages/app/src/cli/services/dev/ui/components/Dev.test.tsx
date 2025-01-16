@@ -1,6 +1,7 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
+import {devSessionStatus} from '../../processes/dev-session.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -12,7 +13,7 @@ import {
 } from '@shopify/cli-kit/node/testing/ui'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import React from 'react'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
@@ -20,6 +21,7 @@ import {Writable} from 'stream'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../../context.js')
 vi.mock('../../fetch.js')
+vi.mock('../../processes/dev-session.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()
 
@@ -40,6 +42,10 @@ const developerPreview = {
 }
 
 describe('Dev', () => {
+  beforeEach(() => {
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true})
+  })
+
   test('renders a stream of concurrent outputs from sub-processes, shortcuts and a preview url', async () => {
     // Given
     let backendPromiseResolve: () => void
@@ -962,6 +968,66 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
       Failed to handle your input.
+      "
+    `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('updates UI when devSessionEnabled changes from false to true', async () => {
+    // Given
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: false})
+
+    const renderInstance = render(
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={{
+          ...testApp,
+          canEnablePreviewMode: false,
+          developerPlatformClient: {
+            ...testDeveloperPlatformClient(),
+            supportsDevSessions: true,
+          },
+        }}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    // Initial state - dev session not ready
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
+      "
+    `)
+
+    // When dev session becomes ready
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true})
+
+    // Wait for the polling interval to update the UI
+    await waitForContent(renderInstance, 'preview in your browser')
+
+    // Then - preview shortcut should be visible
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press g │ open GraphiQL (Admin API) in your browser
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 

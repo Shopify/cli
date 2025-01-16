@@ -1,6 +1,7 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {devSessionStatus} from '../../processes/dev-session.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -64,6 +65,7 @@ const Dev: FunctionComponent<DevProps> = ({
 
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
+  const devSessionPollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultStatusMessage = `Preview URL: ${previewUrl}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
@@ -83,11 +85,13 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
+    clearInterval(devSessionPollingInterval.current)
     await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     await developerPreview.disable()
   })
 
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
+  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatus().isDevSessionReady)
   const [error, setError] = useState<string | undefined>(undefined)
 
   const errorHandledProcesses = useMemo(() => {
@@ -105,6 +109,32 @@ const Dev: FunctionComponent<DevProps> = ({
       }
     })
   }, [processes, abortController])
+
+  /*
+   * Poll Dev Session status
+   *
+   * Polling mechanism to check if the dev session is ready.
+   * When the session is ready, the polling stops and the shortcuts are shown.
+   * Reason is that shortcuts won't work properly until the session is ready and the app is installed.
+   *
+   * This only applies for App Management dev-sessions.
+   */
+  useEffect(() => {
+    const pollDevSession = async () => {
+      const {isDevSessionReady} = devSessionStatus()
+      setDevSessionEnabled(isDevSessionReady)
+      if (isDevSessionReady) clearInterval(devSessionPollingInterval.current)
+    }
+
+    if (app.developerPlatformClient.supportsDevSessions) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      devSessionPollingInterval.current = setInterval(pollDevSession, 200)
+    } else {
+      setDevSessionEnabled(true)
+    }
+
+    return () => clearInterval(devSessionPollingInterval.current)
+  }, [devSessionStatus])
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
@@ -160,12 +190,12 @@ const Dev: FunctionComponent<DevProps> = ({
         try {
           setError('')
 
-          if (input === 'p' && previewUrl) {
+          if (input === 'p' && previewUrl && devSessionEnabled) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,
             }))
             await openURL(previewUrl)
-          } else if (input === 'g' && graphiqlUrl) {
+          } else if (input === 'g' && graphiqlUrl && devSessionEnabled) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
             }))
@@ -244,15 +274,17 @@ const Dev: FunctionComponent<DevProps> = ({
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}
-              {graphiqlUrl ? (
+              {graphiqlUrl && devSessionEnabled ? (
                 <Text>
                   {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
                   your browser
                 </Text>
               ) : null}
-              <Text>
-                {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-              </Text>
+              {devSessionEnabled ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                </Text>
+              ) : null}
               <Text>
                 {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
               </Text>
