@@ -2,6 +2,7 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
+import {resolveAssetPath} from '../utilities/asset-path.js'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -46,25 +47,9 @@ export async function profile(
   }
 }
 
-async function resolveSpeedscope() {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  if (import.meta.resolve) {
-    return import.meta.resolve('speedscope/dist/release/index.html')
-  } else {
-    try {
-      const speedscopePath = require.resolve('speedscope/package.json')
-      const speedscopeDir = speedscopePath.replace('/package.json', '')
-      return `file://${speedscopeDir}/dist/release/index.html`
-    } catch (error) {
-      throw new Error("Can't find Speedscope package")
-    }
-  }
-}
-
 async function openProfile(profileJson: string) {
   // Adapted from https://github.com/jlfwong/speedscope/blob/146477a8508a6d2da697cb0ea0a426ba81b3e8dc/bin/cli.js#L63
-  let urlToOpen = await resolveSpeedscope()
+  let urlToOpen = await resolveAssetPath('speedscope', 'index.html')
 
   const filename = 'liquid-profile'
   const sourceBase64 = Buffer.from(profileJson).toString('base64')
