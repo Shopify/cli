@@ -186,7 +186,12 @@ export async function buildFunctionExtension(
       await touchFile(bundlePath)
       await writeFile(bundlePath, base64Contents)
     }
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    const errors = error.errors ?? []
+    // If there is an `errors` array, it's an esbuild error, re-throw it directly.
+    if (errors.length) throw error
+
     const errorMessage = (error as Error).message ?? 'Unknown error occurred'
     throw new AbortError('Failed to build function.', errorMessage)
   } finally {
