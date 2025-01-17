@@ -147,6 +147,15 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       )
     })
     .onStart(async (event) => {
+      const buildErrors = event.extensionEvents.filter((eve) => eve.buildResult?.status === 'error')
+      if (buildErrors.length) {
+        const errors = buildErrors.map((error) => ({
+          error: 'Build error. Please review your code and try again.',
+          prefix: error.extension.handle,
+        }))
+        await printMultipleErrors(errors, processOptions.stdout)
+        throw new AbortError('Dev session aborted, build errors detected in extensions.')
+      }
       const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
       await handleDevSessionResult(result, {...processOptions, app: event.app})
     })
@@ -333,6 +342,16 @@ async function printError(message: string, stdout: Writable, prefix?: string) {
   const content = outputToken.errorText(`└  ${message}`)
   await printLogMessage(outputContent`${header}`.value, stdout, prefix)
   await printLogMessage(outputContent`${content}`.value, stdout, prefix)
+}
+
+async function printMultipleErrors(errors: {error: string; prefix: string}[], stdout: Writable) {
+  const header = outputToken.errorText(`❌ Error`)
+  await printLogMessage(outputContent`${header}`.value, stdout, 'dev-session')
+  const messages = errors.map((error) => {
+    const content = outputToken.errorText(`└  ${error.error}`)
+    return printLogMessage(outputContent`${content}`.value, stdout, error.prefix)
+  })
+  await Promise.all(messages)
 }
 
 async function printSuccess(message: string, stdout: Writable) {
