@@ -17,6 +17,7 @@ import {BugError} from '@shopify/cli-kit/node/error'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
+import {homedir} from 'os'
 
 export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
 
@@ -55,7 +56,7 @@ class TunnelClientInstance implements TunnelClient {
 
   constructor(port: number, tunnelUrl: string, tunnelSecret: string, tunnelId: string) {
     this.port = port
-    this.tunnelUrl = tunnelUrl
+    this.tunnelUrl = `https://${tunnelUrl}`
     this.tunnelSecret = tunnelSecret
     this.tunnelId = tunnelId
   }
@@ -79,14 +80,14 @@ class TunnelClientInstance implements TunnelClient {
     }
     const config = `
 tunnel: ${this.tunnelId}
-credentials-path: ~/.cloudflared/
+credentials-path: ${homedir()}/.cloudflared/${this.tunnelId}.json
 
 ingress:
   - service: http://localhost:${this.port}
 `
 
-    await writeFile('~/.cloudflared/config.yml', config)
-    await writeFile(`~/.cloudflared/${this.tunnelId}.json`, JSON.stringify(credentials))
+    await writeFile(`${homedir()}/.cloudflared/config.yml`, config)
+    await writeFile(`${homedir()}/.cloudflared/${this.tunnelId}.json`, JSON.stringify(credentials))
   }
 
   getTunnelStatus(): TunnelStatusType {
@@ -111,7 +112,7 @@ ingress:
       return
     }
 
-    const args = ['tunnel', 'run', 'isaac-tunnel']
+    const args = ['tunnel', 'run', this.tunnelId]
 
     // args.push('--url')
     // args.push(`http://localhost:${this.port}`)

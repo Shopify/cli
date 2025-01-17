@@ -222,7 +222,6 @@ class AppInfo {
     const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
     const types = Array.from(new Set(extensions.map((ext) => ext.type)))
 
-    // @ts-expect-error - not sure, on main
     return types
       .map((extensionType: string): AlertCustomSection | undefined => {
         const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
