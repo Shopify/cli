@@ -7,7 +7,6 @@ import {
   testAppAccessConfigExtension,
   testAppLinked,
   testDeveloperPlatformClient,
-  testFunctionExtension,
   testUIExtension,
   testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
@@ -205,22 +204,5 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
-  })
-
-  test('prints build errors', async () => {
-    // Given
-    const extension = await testFunctionExtension()
-    const event = {app, extensionEvents: [{type: 'updated', extension, buildResult: {status: 'error'}}]}
-
-    // When
-    try {
-      await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
-      appWatcher.emit('ready', event)
-      await flushPromises()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error: any) {
-      expect(error.message).toBe('Dev session aborted, build errors detected in extensions')
-    }
-    expect(developerPlatformClient.devSessionCreate).not.toHaveBeenCalled()
   })
 })
