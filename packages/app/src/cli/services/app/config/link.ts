@@ -131,7 +131,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
   let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
 
   const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
-  const appDirectory = possibleAppDirectory || options.directory
+  const appDirectory = possibleAppDirectory ?? options.directory
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
@@ -189,12 +189,9 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       userProvidedConfigName: options.baseConfigName,
       remoteFlags: undefined,
     })
-    const configuration = app.configuration
 
-    if (!isCurrentAppSchema(configuration)) {
-      return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
-    }
-    return {creationOptions: appCreationDefaults}
+    return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
+
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {creationOptions: appCreationDefaults}
