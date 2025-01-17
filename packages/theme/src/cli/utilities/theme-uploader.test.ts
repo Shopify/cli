@@ -4,6 +4,7 @@ import {
   MAX_UPLOAD_RETRY_COUNT,
   MINIMUM_THEME_ASSETS,
   uploadTheme,
+  updateUploadErrors,
 } from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
@@ -600,5 +601,85 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+  })
+})
+
+describe('updateUploadErrors', () => {
+  test('should clear error for successful upload', () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
+    const result: Result = {
+      key: 'file1.liquid',
+      success: true,
+      errors: {},
+      operation: Operation.Upload,
+      asset: {key: 'file1.liquid', checksum: 'abc'},
+    }
+
+    // Pre-existing error that should be cleared
+    themeFileSystem.uploadErrors.set('file1.liquid', ['Old error'])
+
+    // When
+    updateUploadErrors(result, themeFileSystem)
+
+    // Then
+    expect(themeFileSystem.uploadErrors.has('file1.liquid')).toBe(false)
+  })
+
+  test('should set error for failed upload', () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
+    const result: Result = {
+      key: 'file1.liquid',
+      success: false,
+      errors: {asset: ['Upload failed']},
+      operation: Operation.Upload,
+      asset: {key: 'file1.liquid', checksum: 'abc'},
+    }
+
+    // When
+    updateUploadErrors(result, themeFileSystem)
+
+    // Then
+    expect(themeFileSystem.uploadErrors.get('file1.liquid')).toEqual(['Upload failed'])
+  })
+
+  test('should set default error when no specific error provided', () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
+    const result: Result = {
+      key: 'file1.liquid',
+      success: false,
+      errors: {},
+      operation: Operation.Upload,
+      asset: {key: 'file1.liquid', checksum: 'abc'},
+    }
+
+    // When
+    updateUploadErrors(result, themeFileSystem)
+
+    // Then
+    expect(themeFileSystem.uploadErrors.get('file1.liquid')).toEqual(['Response was not successful.'])
+  })
+
+  test('should update existing error', () => {
+    // Given
+    const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
+    const result: Result = {
+      key: 'file1.liquid',
+      success: false,
+      errors: {asset: ['New error']},
+      operation: Operation.Upload,
+      asset: {key: 'file1.liquid', checksum: 'abc'},
+    }
+
+    // Pre-existing error that should be updated
+    themeFileSystem.uploadErrors.set('file1.liquid', ['Old error'])
+
+    // When
+    updateUploadErrors(result, themeFileSystem)
+
+    // Then
+    expect(themeFileSystem.uploadErrors.get('file1.liquid')).toEqual(['New error'])
   })
 })
