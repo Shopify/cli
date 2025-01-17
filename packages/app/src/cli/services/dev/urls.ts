@@ -296,13 +296,17 @@ export async function startTunnelPlugin({
   port,
   provider,
   tunnelUrl,
+  tunnelSecret,
+  tunnelId,
 }: {
   config: Config
   port: number
   provider: string
-  tunnelUrl?: string
+  tunnelUrl: string
+  tunnelSecret: string
+  tunnelId: string
 }): Promise<TunnelClient> {
-  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider, tunnelUrl})
+  const hooks = await fanoutHooks(config, 'tunnel_start', {port, provider, tunnelUrl, tunnelSecret, tunnelId})
   const results = Object.values(hooks).filter(
     (tunnelResponse) => !tunnelResponse?.isErr() || tunnelResponse.error.type !== 'invalid-provider',
   )

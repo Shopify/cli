@@ -85,8 +85,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
     const result = await developerPlatformClient.createTunnel(remoteApp.organizationId)
     const tunnelUrl = result.tunnelCreate.tunnelUrl
+    const tunnelSecret = result.tunnelCreate.tunnelSecret
+    const tunnelId = result.tunnelCreate.tunnelId
 
-    if (!tunnelUrl) {
+    if (!tunnelUrl || !tunnelSecret || !tunnelId) {
       throw new AbortError('Failed to create tunnel', 'Please try again.')
     }
 
@@ -95,6 +97,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       port: tunnelPort,
       provider: 'cloudflare',
       tunnelUrl,
+      tunnelSecret,
+      tunnelId,
     })
   }
 

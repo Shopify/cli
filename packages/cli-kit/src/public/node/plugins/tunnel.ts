@@ -32,7 +32,7 @@ export class TunnelError extends ExtendableError {
  */
 export interface HookReturnPerTunnelPlugin {
   tunnel_start: {
-    options: {port: number; provider: string; tunnelUrl?: string}
+    options: {port: number; provider: string; tunnelUrl: string; tunnelSecret: string; tunnelId: string}
     pluginReturns: {
       [key: string]: Result<TunnelClient, TunnelError>
     }
@@ -48,15 +48,26 @@ export interface HookReturnPerTunnelPlugin {
 export type TunnelProviderFunction = FanoutHookFunction<'tunnel_provider', ''>
 export type TunnelStartFunction = FanoutHookFunction<'tunnel_start', ''>
 export type TunnelStartReturn = PluginReturnsForHook<'tunnel_start', ''>
-export type TunnelStartAction = (port: number, tunnelUrl?: string) => Promise<TunnelStartReturn>
+export type TunnelStartAction = (
+  port: number,
+  tunnelUrl: string,
+  tunnelSecret: string,
+  tunnelId: string,
+) => Promise<TunnelStartReturn>
 
 export const defineProvider = (input: {name: string}): TunnelProviderFunction => {
   return async () => input
 }
 
 export const startTunnel = (options: {provider: string; action: TunnelStartAction}): TunnelStartFunction => {
-  return async (inputs: {provider: string; port: number; tunnelUrl?: string}): Promise<TunnelStartReturn> => {
+  return async (inputs: {
+    provider: string
+    port: number
+    tunnelUrl: string
+    tunnelSecret: string
+    tunnelId: string
+  }): Promise<TunnelStartReturn> => {
     if (inputs.provider !== options.provider) return err(new TunnelError('invalid-provider'))
-    return options.action(inputs.port, inputs.tunnelUrl)
+    return options.action(inputs.port, inputs.tunnelUrl, inputs.tunnelSecret, inputs.tunnelId)
   }
 }

@@ -14,6 +14,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {writeFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -26,9 +27,14 @@ const TUNNEL_TIMEOUT = isUnitTest() ? 0.2 : 40
 // If we retry too many times, we might get rate limited by cloudflare
 const MAX_RETRIES = 5
 
-export async function hookStart(port: number, tunnelUrl?: string): Promise<TunnelStartReturn> {
+export async function hookStart(
+  port: number,
+  tunnelUrl: string,
+  tunnelSecret: string,
+  tunnelId: string,
+): Promise<TunnelStartReturn> {
   try {
-    const client = new TunnelClientInstance(port, tunnelUrl)
+    const client = new TunnelClientInstance(port, tunnelUrl, tunnelSecret, tunnelId)
     await client.startTunnel()
     return ok(client)
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
@@ -41,23 +47,46 @@ export async function hookStart(port: number, tunnelUrl?: string): Promise<Tunne
 class TunnelClientInstance implements TunnelClient {
   port: number
   provider = TUNNEL_PROVIDER
-  tunnelUrl?: string
+  tunnelUrl: string
+  tunnelSecret: string
+  tunnelId: string
   private currentStatus: TunnelStatusType = {status: 'not-started'}
   private abortController: AbortController | undefined = undefined
 
-  constructor(port: number, tunnelUrl?: string) {
+  constructor(port: number, tunnelUrl: string, tunnelSecret: string, tunnelId: string) {
     this.port = port
     this.tunnelUrl = tunnelUrl
+    this.tunnelSecret = tunnelSecret
+    this.tunnelId = tunnelId
   }
 
   async startTunnel() {
     try {
       await install()
+      await this.writeFiles()
       this.tunnel()
       // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
     } catch (error: any) {
       this.currentStatus = {status: 'error', message: error.message, tryMessage: whatToTry()}
     }
+  }
+
+  async writeFiles() {
+    const credentials = {
+      TunnelID: this.tunnelId,
+      AccountTag: '8378b3b7c26e4b6205f5b0d0c8c4f063',
+      TunnelSecret: this.tunnelSecret,
+    }
+    const config = `
+tunnel: ${this.tunnelId}
+credentials-path: ~/.cloudflared/
+
+ingress:
+  - service: http://localhost:${this.port}
+`
+
+    await writeFile('~/.cloudflared/config.yml', config)
+    await writeFile(`~/.cloudflared/${this.tunnelId}.json`, JSON.stringify(credentials))
   }
 
   getTunnelStatus(): TunnelStatusType {
@@ -91,7 +120,7 @@ class TunnelClientInstance implements TunnelClient {
     const errors: string[] = []
 
     let connected = false
-    let url: string | undefined
+    const url: string | undefined = this.tunnelUrl
     this.currentStatus = {status: 'starting'}
 
     setTimeout(() => {
@@ -117,7 +146,7 @@ class TunnelClientInstance implements TunnelClient {
       write(chunk, _, callback) {
         outputDebug(chunk.toString())
         if (resolved) return
-        if (!url) url = findUrl(chunk)
+        // if (!url) url = findUrl(chunk)
         if (findConnection(chunk)) connected = true
         if (connected) {
           if (url) {
@@ -156,6 +185,9 @@ class TunnelClientInstance implements TunnelClient {
         this.tunnel(retries + 1)
       },
     })
+
+    resolved = true
+    self.currentStatus = {status: 'connected', url: this.tunnelUrl}
   }
 }
 
@@ -173,11 +205,11 @@ function whatToTry() {
   ]
 }
 
-function findUrl(data: Buffer): string | undefined {
-  const regex = new RegExp(`(https:\\/\\/[^\\s]+\\.${getTunnelDomain()})`)
-  const match = data.toString().match(regex) ?? undefined
-  return match && match[1]
-}
+// function findUrl(data: Buffer): string | undefined {
+//   const regex = new RegExp(`(https:\\/\\/[^\\s]+\\.${getTunnelDomain()})`)
+//   const match = data.toString().match(regex) ?? undefined
+//   return match && match[1]
+// }
 
 function findError(data: Buffer): string | undefined {
   const knownErrors = [
@@ -222,6 +254,6 @@ function getBinPathTarget() {
   )
 }
 
-function getTunnelDomain() {
-  return process.env.SHOPIFY_CLI_CLOUDFLARED_DOMAIN ?? 'trycloudflare.com'
-}
+// function getTunnelDomain() {
+//   return process.env.SHOPIFY_CLI_CLOUDFLARED_DOMAIN ?? 'trycloudflare.com'
+// }
