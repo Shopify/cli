@@ -73,6 +73,7 @@
 * [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
+* [`shopify theme profile`](#shopify-theme-profile)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
@@ -2083,6 +2084,36 @@ DESCRIPTION
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
+```
+
+## `shopify theme profile`
+
+Profile the Liquid rendering of a theme page.
+
+```
+USAGE
+  $ shopify theme profile
+  $ shopify theme profile --url /products/classic-leather-jacket
+
+FLAGS
+  -e, --environment=<value>     The environment to apply to the current command.
+  -j, --json                    Output the result as JSON.
+  -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                                (example.myshopify.com, https://example.myshopify.com).
+  -t, --theme=<value>           Theme ID or name of the remote theme.
+      --no-color                Disable color output.
+      --password=<value>        Password generated from the Theme Access app.
+      --store-password=<value>  The password for storefronts with password protection.
+      --url=<value>             [default: /] The url to be used as context
+      --verbose                 Increase the verbosity of the output.
+
+DESCRIPTION
+  Profile the Liquid rendering of a theme page.
+
+  Profile the Shopify Liquid on a given page.
+
+  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given
+  page.
 ```
 
 ## `shopify theme publish`

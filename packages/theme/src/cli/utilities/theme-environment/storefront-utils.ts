@@ -7,7 +7,7 @@ export function storefrontReplaceTemplatesParams(context: DevServerRenderContext
    */
   const params = new URLSearchParams()
 
-  for (const [path, content] of Object.entries(context.replaceTemplates)) {
+  for (const [path, content] of Object.entries(context.replaceTemplates ?? [])) {
     params.append(`replace_templates[${path}]`, content)
   }
 

@@ -5807,6 +5807,125 @@
     "related": []
   },
   {
+    "name": "theme profile",
+    "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+    "overviewPreviewDescription": "Profile the Liquid rendering of a theme page.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme profile",
+            "code": "theme profile\n\ntheme profile --url /products/classic-leather-jacket",
+            "language": "bash"
+          }
+        ],
+        "title": "theme profile"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme profile` command:",
+        "type": "themeprofile",
+        "typeDefinitions": {
+          "themeprofile": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+            "name": "themeprofile",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--store-password <value>",
+                "value": "string",
+                "description": "The password for storefronts with password protection.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_PASSWORD"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--url <value>",
+                "value": "string",
+                "description": "The url to be used as context",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_URL"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_ENVIRONMENT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Output the result as JSON.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_THEME_ID"
+              }
+            ],
+            "value": "export interface themeprofile {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
     "name": "theme publish",
     "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
     "overviewPreviewDescription": "Set a remote theme as the live theme.",

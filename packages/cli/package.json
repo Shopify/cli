@@ -24,7 +24,8 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "main": "src/index.js",
   "module": "src/index.js",
