@@ -6,7 +6,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {mkdirSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {detectEOL, fileExistsSync, mkdirSync, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface MetafieldsPullOptions {
@@ -161,5 +161,30 @@ function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
   mkdirSync(shopifyDirectory)
 
   const filePath = joinPath(shopifyDirectory, 'metafields.json')
-  writeFileSync(filePath, JSON.stringify(content, null, 2))
+  const fileContent = JSON.stringify(content, null, 2)
+
+  if (!fileExistsSync(filePath)) {
+    addToGitIgnore(path, '.shopify')
+  }
+
+  writeFileSync(filePath, fileContent)
+}
+
+function addToGitIgnore(root: string, entry: string) {
+  const gitIgnorePath = joinPath(root, '.gitignore')
+
+  if (!fileExistsSync(gitIgnorePath)) {
+    // When the .gitignore file does not exist, the CLI should not be opinionated about creating it
+    return
+  }
+
+  const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+  const eol = detectEOL(gitIgnoreContent)
+
+  if (gitIgnoreContent.split(eol).includes(entry)) {
+    // The file already existing in the .gitignore
+    return
+  }
+
+  writeFileSync(gitIgnorePath, `${gitIgnoreContent}${eol}${entry}`)
 }
