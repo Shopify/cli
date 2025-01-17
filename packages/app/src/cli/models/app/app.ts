@@ -8,7 +8,7 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../exte
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
@@ -271,7 +271,7 @@ export interface AppInterface<
   /**
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
-  creationDefaultOptions(): AppCreationDefaultOptions
+  creationDefaultOptions(): CreateAppOptions
   manifest: () => Promise<JsonMapType>
   removeExtension: (extensionUid: string) => void
 }
@@ -430,14 +430,15 @@ export class App<
     const frontendConfig = this.webs.find((web) => isWebType(web, WebType.Frontend))
     const backendConfig = this.webs.find((web) => isWebType(web, WebType.Backend))
 
-    return Boolean(frontendConfig || backendConfig)
+    return Boolean(frontendConfig ?? backendConfig)
   }
 
-  creationDefaultOptions(): AppCreationDefaultOptions {
+  creationDefaultOptions(): CreateAppOptions {
     return {
       isLaunchable: this.appIsLaunchable(),
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
+      directory: this.directory,
     }
   }
 
@@ -547,10 +548,4 @@ export async function getDependencyVersion(dependency: string, directory: string
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: dependency, version: packageContent.version}
-}
-
-export interface AppCreationDefaultOptions {
-  isLaunchable: boolean
-  scopesArray: string[]
-  name: string
 }

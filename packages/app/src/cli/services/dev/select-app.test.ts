@@ -59,7 +59,7 @@ describe('selectOrCreateApp', () => {
 
     // When
     const {developerPlatformClient} = mockDeveloperPlatformClient()
-    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
+    const got = await selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})
 
     // Then
     expect(got).toEqual(APP1)
@@ -75,11 +75,11 @@ describe('selectOrCreateApp', () => {
 
     // When
     const {developerPlatformClient} = mockDeveloperPlatformClient()
-    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
+    const got = await selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})
 
     // Then
     expect(got).toEqual({...APP1, newApp: true})
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
-    expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, 'app-name', {})
+    expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, {name: 'app-name'})
   })
 })

@@ -3204,6 +3204,7 @@ describe('loadConfigForAppCreation', () => {
         isLaunchable: false,
         scopesArray: ['read_orders', 'write_products'],
         name: 'my-app',
+        directory: tmpDir,
       })
     })
   })
@@ -3236,6 +3237,7 @@ dev = "echo 'Hello, world!'"
         isLaunchable: true,
         scopesArray: ['write_products'],
         name: 'my-app',
+        directory: tmpDir,
       })
     })
   })
@@ -3271,6 +3273,7 @@ dev = "echo 'Hello, world!'"
         isLaunchable: true,
         scopesArray: ['write_products'],
         name: 'my-app',
+        directory: tmpDir,
       })
     })
   })
@@ -3295,6 +3298,7 @@ dev = "echo 'Hello, world!'"
         isLaunchable: false,
         scopesArray: ['read_orders', 'write_products'],
         name: 'my-app',
+        directory: tmpDir,
       })
     })
   })
@@ -3317,6 +3321,7 @@ dev = "echo 'Hello, world!'"
         isLaunchable: false,
         scopesArray: [],
         name: 'my-app',
+        directory: tmpDir,
       })
     })
   })

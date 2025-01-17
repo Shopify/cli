@@ -18,6 +18,7 @@ import {
   filterDisabledFlags,
   ClientName,
   AppModuleVersion,
+  CreateAppOptions,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -361,15 +362,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     ).map((template) => ({...template, sortPriority: counter++}))
   }
 
-  async createApp(
-    org: Organization,
-    name: string,
-    options?: {
-      isLaunchable?: boolean
-      scopesArray?: string[]
-      directory?: string
-    },
-  ): Promise<OrganizationApp> {
+  async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
     // Query for latest api version
     const apiVersions = await this.apiVersions(org.id)
     const apiVersion =
@@ -378,7 +371,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .sort()
         .at(-1) ?? 'unstable'
 
-    const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray, apiVersion)
+    const variables = createAppVars(options, apiVersion)
 
     const mutation = CreateApp
     const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
@@ -393,7 +386,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const apiSecretKeys = createdApp.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       ...createdApp,
-      title: name,
+      title: options.name,
       apiKey: createdApp.key,
       apiSecretKeys,
       grantedScopes: options?.scopesArray ?? [],
@@ -919,12 +912,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function createAppVars(
-  name: string,
-  isLaunchable = true,
-  scopesArray?: string[],
-  apiVersion?: string,
-): CreateAppMutationVariables {
+function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
+  const {isLaunchable, scopesArray, name} = options
   return {
     appSource: {
       appModules: [

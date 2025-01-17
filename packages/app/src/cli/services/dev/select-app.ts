@@ -2,7 +2,7 @@ import {searchForAppsByNameFactory} from './prompt-helpers.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationFileName} from '../../models/app/loader.js'
 import {BugError} from '@shopify/cli-kit/node/error'
 
@@ -16,27 +16,22 @@ import {BugError} from '@shopify/cli-kit/node/error'
  * @returns The selected (or created) app
  */
 export async function selectOrCreateApp(
-  localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
-  options?: {
-    isLaunchable?: boolean
-    scopesArray?: string[]
-    directory?: string
-  },
+  options: CreateAppOptions,
 ): Promise<OrganizationApp> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(localAppName)
-    return developerPlatformClient.createApp(org, name, options)
+    const name = await appNamePrompt(options.name)
+    return developerPlatformClient.createApp(org, {...options, name})
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages, {
-      directory: options?.directory,
+      directory: options.directory,
     })
 
     const data = getCachedCommandInfo()

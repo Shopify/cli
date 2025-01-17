@@ -133,6 +133,7 @@ function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration |
 }
 
 export interface CreateAppOptions {
+  name: string
   isLaunchable?: boolean
   scopesArray?: string[]
   directory?: string
@@ -218,7 +219,7 @@ export interface DeveloperPlatformClient {
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
-  createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
+  createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (
