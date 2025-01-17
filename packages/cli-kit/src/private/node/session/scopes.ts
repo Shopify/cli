@@ -1,6 +1,5 @@
 import {allAPIs, API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
-import {isAppManagementEnabled} from '../../../public/node/context/local.js'
 
 /**
  * Generate a flat array with all the default scopes for all the APIs plus
@@ -8,8 +7,8 @@ import {isAppManagementEnabled} from '../../../public/node/context/local.js'
  * @param extraScopes - custom user-defined scopes
  * @returns Array of scopes
  */
-export function allDefaultScopes(extraScopes: string[] = [], systemEnvironment = process.env): string[] {
-  let scopes = allAPIs.map((api) => defaultApiScopes(api, systemEnvironment)).flat()
+export function allDefaultScopes(extraScopes: string[] = []): string[] {
+  let scopes = allAPIs.map((api) => defaultApiScopes(api)).flat()
   scopes = ['openid', ...scopes, ...extraScopes].map(scopeTransform)
   return Array.from(new Set(scopes))
 }
@@ -21,12 +20,12 @@ export function allDefaultScopes(extraScopes: string[] = [], systemEnvironment =
  * @param extraScopes - custom user-defined scopes
  * @returns Array of scopes
  */
-export function apiScopes(api: API, extraScopes: string[] = [], systemEnvironment = process.env): string[] {
-  const scopes = [...defaultApiScopes(api, systemEnvironment), ...extraScopes.map(scopeTransform)].map(scopeTransform)
+export function apiScopes(api: API, extraScopes: string[] = []): string[] {
+  const scopes = [...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
   return Array.from(new Set(scopes))
 }
 
-function defaultApiScopes(api: API, systemEnvironment = process.env): string[] {
+function defaultApiScopes(api: API): string[] {
   switch (api) {
     case 'admin':
       return ['graphql', 'themes', 'collaborator']
@@ -35,9 +34,9 @@ function defaultApiScopes(api: API, systemEnvironment = process.env): string[] {
     case 'partners':
       return ['cli']
     case 'business-platform':
-      return isAppManagementEnabled(systemEnvironment) ? ['destinations', 'store-management'] : ['destinations']
+      return ['destinations', 'store-management']
     case 'app-management':
-      return isAppManagementEnabled(systemEnvironment) ? ['app-management'] : []
+      return ['app-management']
     default:
       throw new BugError(`Unknown API: ${api}`)
   }

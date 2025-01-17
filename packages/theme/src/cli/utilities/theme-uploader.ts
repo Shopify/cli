@@ -1,12 +1,12 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
-import {createSyncingCatchError} from './errors.js'
+import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
 import {Task} from '@shopify/cli-kit/node/ui'
-import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
   nodelete?: boolean
@@ -370,7 +370,17 @@ async function uploadBatch(
   // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
     uploadResults.set(result.key, result)
+    updateUploadErrors(result, localThemeFileSystem)
   })
+}
+
+export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFileSystem) {
+  if (result.success) {
+    localThemeFileSystem.uploadErrors.delete(result.key)
+  } else {
+    const errors = result.errors?.asset ?? ['Response was not successful.']
+    localThemeFileSystem.uploadErrors.set(result.key, errors)
+  }
 }
 
 async function handleBulkUpload(
@@ -432,10 +442,8 @@ async function handleFailedUploads(
 function reportFailedUploads(uploadResults: Map<string, Result>) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
-      const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
-      outputWarn(`Failed to upload file ${key}:`)
-      outputInfo(`${errorMessage}`)
-      outputNewline()
+      const errorMessage = result.errors?.asset?.join('\n') ?? 'File upload failed'
+      renderThrownError(key, new Error(errorMessage))
     }
   }
 }

@@ -9,7 +9,7 @@ import {consoleLog} from '@shopify/cli-kit/node/output'
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
 
-  const storePassword = (await isStorefrontPasswordProtected(adminSession.storeFqdn))
+  const storePassword = (await isStorefrontPasswordProtected(adminSession))
     ? await ensureValidPassword(storePasswordFlag, adminSession.storeFqdn)
     : undefined
 

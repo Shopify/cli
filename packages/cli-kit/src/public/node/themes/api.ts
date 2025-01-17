@@ -18,6 +18,7 @@ import {
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {restRequest, RestResponse, adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -25,33 +26,37 @@ import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {ClientError} from 'graphql-request'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
+  const gid = composeThemeGid(id)
+
   try {
-    const response = await adminRequestDoc(GetTheme, session, {id: composeThemeGid(id)}, undefined, {
+    const {theme} = await adminRequestDoc(GetTheme, session, {id: gid}, undefined, {
       handleErrors: false,
     })
-    const {theme} = response
-    if (!theme) {
-      return undefined
+
+    if (theme) {
+      return buildTheme({
+        id: parseGid(theme.id),
+        processing: theme.processing,
+        role: theme.role.toLowerCase(),
+        name: theme.name,
+      })
     }
-    return buildTheme({
-      id: parseGid(theme.id),
-      processing: theme.processing,
-      role: theme.role.toLowerCase(),
-      name: theme.name,
-    })
-  } catch (error) {
-    if (error instanceof ClientError) {
-      if (error.response?.errors?.[0]?.message === 'Theme does not exist') {
-        return undefined
-      }
-    }
-    throw new AbortError(`Failed to fetch theme: ${id}`)
+
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (_error) {
+    /**
+     * Consumers of this and other theme APIs in this file expect either a theme
+     * or `undefined`.
+     *
+     * Error handlers should not inspect GraphQL error messages directly, as
+     * they are internationalized.
+     */
+    outputDebug(`Error fetching theme with ID: ${id}`)
   }
 }
 
@@ -351,6 +356,17 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
       category: definition.type.category,
     },
   }))
+}
+
+export async function passwordProtected(session: AdminSession): Promise<boolean> {
+  const {onlineStore} = await adminRequestDoc(OnlineStorePasswordProtection, session)
+  if (!onlineStore) {
+    unexpectedGraphQLError("Unable to get details about the storefront's password protection")
+  }
+
+  const {passwordProtection} = onlineStore
+
+  return passwordProtection.enabled
 }
 
 async function request<T>(

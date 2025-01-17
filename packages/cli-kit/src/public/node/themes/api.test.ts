@@ -59,7 +59,7 @@ describe('fetchTheme', () => {
   test('returns undefined when a theme is not found', async () => {
     const errorResponse = {
       status: 200,
-      errors: [{message: 'Theme does not exist'} as any],
+      errors: [{message: 'Tema não existe'} as any],
     }
     vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError(errorResponse, {query: ''}))
 

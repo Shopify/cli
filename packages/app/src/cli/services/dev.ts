@@ -18,7 +18,7 @@ import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
-import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
+import {renderDev} from './dev/ui.js'
 import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -280,7 +280,7 @@ async function handleUpdatingOfPartnerUrls(
       const newURLs = generatePartnersURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
+        localApp.configuration.app_proxy,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
@@ -293,7 +293,6 @@ async function handleUpdatingOfPartnerUrls(
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
       if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }
   return shouldUpdateURLs

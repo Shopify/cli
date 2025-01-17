@@ -54,29 +54,8 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners when App Management is disabled', async () => {
+  test('returns fetched organizations from Partners and App Management', async () => {
     // Given
-    const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG1]),
-    }) as PartnersClient
-    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG2]),
-    }) as AppManagementClient
-    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
-
-    // When
-    const got = await fetchOrganizations()
-
-    // Then
-    expect(got).toEqual([ORG1])
-    expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(appManagementClient.organizations).not.toHaveBeenCalled()
-  })
-
-  test('returns fetched organizations from Partners and App Management when App Management is enabled', async () => {
-    // Given
-    vi.stubEnv('USE_APP_MANAGEMENT_API', '1')
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),
     }) as PartnersClient
@@ -100,7 +79,11 @@ describe('fetchOrganizations', async () => {
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
     }) as PartnersClient
+    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([]),
+    }) as AppManagementClient
     vi.mocked(PartnersClient).mockReturnValue(partnersClient)
+    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
 
     // When
     const got = fetchOrganizations()
@@ -108,6 +91,7 @@ describe('fetchOrganizations', async () => {
     // Then
     await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
     expect(partnersClient.organizations).toHaveBeenCalled()
+    expect(appManagementClient.organizations).toHaveBeenCalled()
   })
 })
 

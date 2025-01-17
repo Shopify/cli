@@ -3,16 +3,13 @@ import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {type AdminSession} from '@shopify/cli-kit/node/session'
+import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 
 export class ShopifyEssentialError extends Error {}
 
-export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(prependHttps(storeURL), {
-    method: 'GET',
-  })
-
-  const redirectLocation = new URL(response.url)
-  return redirectLocation.pathname.endsWith('/password')
+export async function isStorefrontPasswordProtected(session: AdminSession): Promise<boolean> {
+  return passwordProtected(session)
 }
 
 /**

@@ -4,7 +4,7 @@ import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
 import https from 'https'
 
-export class RequestClientError extends ExtendableError {
+class RequestClientError extends ExtendableError {
   statusCode: number
   public constructor(message: string, statusCode: number) {
     super(message)

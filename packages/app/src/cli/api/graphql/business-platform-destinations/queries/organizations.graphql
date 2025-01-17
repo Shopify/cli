@@ -1,7 +1,7 @@
 query ListOrganizations {
   currentUserAccount {
     uuid
-    organizations {
+    organizations(hasAccessToDestination: DEVELOPER_DASHBOARD) {
       nodes {
         id
         name

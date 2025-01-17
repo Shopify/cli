@@ -13,6 +13,7 @@ function emptyFileSystem<T>(): T {
     root: '',
     files: new Map(),
     unsyncedFileKeys: new Set(),
+    uploadErrors: new Map(),
     ready: () => Promise.resolve(),
     delete: async (_: string) => {},
     read: async (_: string) => '',
