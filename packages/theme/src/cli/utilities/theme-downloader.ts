@@ -1,9 +1,9 @@
+/* eslint-disable no-console */
 import {batchedTasks, Task} from './batching.js'
 import {MAX_GRAPHQL_THEME_FILES} from '../constants.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 interface DownloadOptions {
   nodelete: boolean
@@ -22,8 +22,19 @@ export async function downloadTheme(
   const tasks = [...deleteTasks, ...downloadTasks]
 
   if (tasks.length > 0) {
-    await renderTasks(tasks)
+    try {
+      for (const task of tasks) {
+        console.log(`[${theme.id}] Executing task: ${task.title}`)
+        // eslint-disable-next-line no-await-in-loop
+        await task.task()
+        console.log(`[${theme.id}] Completed task: ${task.title}`)
+      }
+    } catch (error) {
+      console.error(`[${theme.id}] Failed to execute tasks:`, error)
+      throw error
+    }
   }
+  console.log(`[${theme.id}] Completed downloadTheme`)
 }
 
 function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem, options: DownloadOptions) {
@@ -54,21 +65,18 @@ function buildDownloadTasks(
   checksums = checksums.filter((checksum) => {
     const remoteChecksumValue = checksum.checksum
     const localAsset = themeFileSystem.files.get(checksum.key)
-
-    if (localAsset?.checksum === remoteChecksumValue) {
-      return false
-    } else {
-      return true
-    }
+    return localAsset?.checksum !== remoteChecksumValue
   })
 
   const filenames = checksums.map((checksum) => checksum.key)
 
   const batches = batchedTasks(filenames, MAX_GRAPHQL_THEME_FILES, (batchedFilenames, i) => {
-    const title = `Downloading files ${i}..${i + batchedFilenames.length} / ${filenames.length} files`
+    const title = `[${theme.id}] Downloading files ${i}..${i + batchedFilenames.length} / ${filenames.length} files`
     return {
       title,
-      task: async () => downloadFiles(theme, themeFileSystem, batchedFilenames, session),
+      task: async () => {
+        await downloadFiles(theme, themeFileSystem, batchedFilenames, session)
+      },
     }
   })
   return batches
@@ -76,10 +84,13 @@ function buildDownloadTasks(
 
 async function downloadFiles(theme: Theme, fileSystem: ThemeFileSystem, filenames: string[], session: AdminSession) {
   const assets = await fetchThemeAssets(theme.id, filenames, session)
-  if (!assets) return
+  if (!assets) {
+    return
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  assets.forEach(async (asset: ThemeAsset) => {
-    await fileSystem.write(asset)
-  })
+  await Promise.all(
+    assets.map(async (asset: ThemeAsset) => {
+      await fileSystem.write(asset)
+    }),
+  )
 }

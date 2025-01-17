@@ -40,14 +40,47 @@ export async function loadEnvironment(
     return undefined
   }
   const environment = environments[environmentName] as JsonMap
-  if (!environment)
-    renderWarning({
-      body: ['Environment', {command: environmentName}, 'not found.'],
-    })
+  // == Ignore when multiple environments are passed.
+  // if (!environment)
+  //   renderWarning({
+  //     body: ['Environment', {command: environmentName}, 'not found.'],
+  //   })
 
   await metadata.addSensitiveMetadata(() => ({
     environmentFlags: JSON.stringify(environment),
   }))
 
   return environment
+}
+
+interface ValidateEnvironmentOptions {
+  additionalRequiredFlags?: string[]
+}
+
+/**
+ * Validates that required flags are present in the environment configuration.
+ * @param environment - The environment configuration to validate.
+ * @param options - Options for validation, including any additional required flags.
+ * @returns True if valid, throws an error if invalid.
+ */
+export function validateEnvironmentConfig(
+  environment: JsonMap | undefined,
+  options?: ValidateEnvironmentOptions,
+): boolean {
+  if (!environment) {
+    renderWarning({body: 'Environment configuration is empty.'})
+    return false
+  }
+
+  const requiredFlags = ['store', 'password', ...(options?.additionalRequiredFlags ?? [])]
+  const missingFlags = requiredFlags.filter((flag) => !environment[flag])
+
+  if (missingFlags.length > 0) {
+    renderWarning({
+      body: ['Missing required flags in environment configuration:', {list: {items: missingFlags}}],
+    })
+    return false
+  }
+
+  return true
 }

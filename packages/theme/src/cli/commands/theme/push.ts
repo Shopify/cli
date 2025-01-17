@@ -1,6 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
+import {multiRun} from '../../utilities/multi-run.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
@@ -106,6 +107,14 @@ export default class Push extends ThemeCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
 
+    if (flags.environment && flags.environment.length > 1) {
+      await multiRun({
+        flags,
+        command: (flags, session) => push(flags, session),
+      })
+      return
+    }
+
     const pushFlags: PushFlags = {
       path: flags.path,
       password: flags.password,
@@ -123,7 +132,6 @@ export default class Push extends ThemeCommand {
       force: flags.force,
       noColor: flags['no-color'],
       verbose: flags.verbose,
-      strict: flags.strict,
     }
 
     await push(pushFlags)
