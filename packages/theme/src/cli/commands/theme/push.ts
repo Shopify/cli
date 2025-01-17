@@ -1,14 +1,9 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
+import {multiRun} from '../../utilities/multi-run.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -111,30 +106,13 @@ export default class Push extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Push)
+
     if (flags.environment && flags.environment.length > 1) {
-      console.log('Pushing to multiple environments')
-      const sessions: {[key: string]: AdminSession} = {}
-
-      // First authenticate all sessions
-      for (const env of flags.environment) {
-        const envConfig = await loadEnvironment(env, 'shopify.theme.toml')
-        const store = ensureThemeStore({store: envConfig?.store as any})
-        sessions[env] = await ensureAuthenticatedThemes(store, envConfig?.password as any)
-      }
-
-      // Then push to all environments concurrently
-      await Promise.all(
-        flags.environment.map(async (env) => {
-          console.log(`Pushing to environment ${env}`)
-          const envConfig = await loadEnvironment(env, 'shopify.theme.toml')
-          const pushFlags: PushFlags = {
-            ...flags,
-            ...envConfig,
-            environment: [env],
-          }
-          await push(pushFlags, sessions[env])
-        }),
-      )
+      await multiRun({
+        flags,
+        additionalRequiredFlags: ['path'],
+        command: 'push',
+      })
     } else {
       const pushFlags: PushFlags = {
         path: flags.path,

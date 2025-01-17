@@ -33,6 +33,7 @@ interface MultiRunOptions<T extends SupportedCommands> {
   command: T
 }
 
+// Command list for import
 async function runCommand<T extends SupportedCommands>(session: AdminSession, flags: CommandFlags[T], command: T) {
   switch (command) {
     case 'list':
