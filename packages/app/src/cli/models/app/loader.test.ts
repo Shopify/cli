@@ -3205,6 +3205,7 @@ describe('loadConfigForAppCreation', () => {
         scopesArray: ['read_orders', 'write_products'],
         name: 'my-app',
         directory: tmpDir,
+        isEmbedded: false,
       })
     })
   })
@@ -3238,6 +3239,7 @@ dev = "echo 'Hello, world!'"
         scopesArray: ['write_products'],
         name: 'my-app',
         directory: tmpDir,
+        isEmbedded: true,
       })
     })
   })
@@ -3274,6 +3276,7 @@ dev = "echo 'Hello, world!'"
         scopesArray: ['write_products'],
         name: 'my-app',
         directory: tmpDir,
+        isEmbedded: true,
       })
     })
   })
@@ -3299,6 +3302,7 @@ dev = "echo 'Hello, world!'"
         scopesArray: ['read_orders', 'write_products'],
         name: 'my-app',
         directory: tmpDir,
+        isEmbedded: false,
       })
     })
   })
@@ -3322,6 +3326,7 @@ dev = "echo 'Hello, world!'"
         scopesArray: [],
         name: 'my-app',
         directory: tmpDir,
+        isEmbedded: false,
       })
     })
   })

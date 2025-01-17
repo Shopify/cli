@@ -181,6 +181,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
     scopesArray: [] as string[],
     name: '',
     directory: options.directory,
+    isEmbedded: false,
   }
   try {
     const app = await loadApp({
