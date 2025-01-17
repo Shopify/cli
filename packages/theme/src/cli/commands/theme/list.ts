@@ -1,11 +1,12 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {list} from '../../services/list.js'
 import {ALLOWED_ROLES, Role} from '../../utilities/theme-selector/fetch.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {list} from '../../services/list.js'
+import {ensureThemeStore} from '../../utilities/theme-store.js'
+import {multiRun} from '../../utilities/multi-run.js'
 import {Flags} from '@oclif/core'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class List extends ThemeCommand {
   static description = 'Lists the themes in your store, along with their IDs and statuses.'
@@ -33,9 +34,17 @@ export default class List extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(List)
+
+    if (flags.environment) {
+      await multiRun({
+        flags,
+        command: (flags, session) => list(session, flags as {json: boolean}),
+      })
+      return
+    }
+
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-
     await list(adminSession, flags)
   }
 }
