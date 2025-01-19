@@ -371,7 +371,7 @@ export interface OutputProcess {
  * @param message - The message to print.
  */
 export function consoleLog(message: string): void {
-  console.log(withOrWithoutStyle(message))
+  process.stdout.write(`${withOrWithoutStyle(message)}\n`)
 }
 
 /**
@@ -380,7 +380,7 @@ export function consoleLog(message: string): void {
  * @param message - The message to print.
  */
 export function consoleError(message: string): void {
-  console.error(withOrWithoutStyle(message))
+  process.stderr.write(`${withOrWithoutStyle(message)}\n`)
 }
 
 /**
@@ -389,7 +389,7 @@ export function consoleError(message: string): void {
  * @param message - The message to print.
  */
 export function consoleWarn(message: string): void {
-  console.warn(withOrWithoutStyle(message))
+  process.stderr.write(`${withOrWithoutStyle(message)}\n`)
 }
 
 /**
