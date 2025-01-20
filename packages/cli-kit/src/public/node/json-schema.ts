@@ -39,7 +39,7 @@ export function jsonSchemaValidate(
   schema: SchemaObject,
   identifier: string,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
-  const ajv = new Ajv({allowUnionTypes: true})
+  const ajv = new Ajv({allowUnionTypes: true, removeAdditional: true})
 
   ajv.addKeyword('x-taplo')
 
