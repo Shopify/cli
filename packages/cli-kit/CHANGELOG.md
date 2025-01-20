@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.74.0
+
+### Minor Changes
+
+- bb3b100731: Add tabular data display component to UI kit
+
+### Patch Changes
+
+- 7e34195c30: Store theme asset upload errors encountered while running the theme dev command
+- 1a5aec270d: Fix `shopify theme dev` to no longer fail when development themes expire in internationalized stores
+- 369351435b: Ensure no-color mode is respected for warnings and errors
+- f004019bb9: Utilize Admin API to determine if a storefront is password protected
+
 ## 3.73.0
 
 ### Patch Changes
