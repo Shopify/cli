@@ -118,7 +118,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
     // Setting this to false makes it possible to kill the main process
     // and all its sub-processes with Ctrl+C on Windows
-    windowsHide: false,
+    windowsHide: options?.background,
     detached: options?.background,
     cleanup: !options?.background,
   })
