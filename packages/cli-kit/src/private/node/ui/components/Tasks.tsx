@@ -3,12 +3,22 @@ import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import {shouldDisplayColors} from '../../../../public/node/output.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import {handleCtrlC} from '../../ui.js'
 import {Box, Text, useStdin, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
+// Chars that can be arranged to form a colorless horizontal figure that displays progress as it moves.
+// The string is 15 chars long so it can always be displayed even within a box inside a 20-char-wide terminal.
+const hillString = '▁▂▃▄▅▆▇█▇▆▅▄▃▂▁'
+// Like the hill string, but forming a gentler slope for motion that is less jarring
+const gradualHillString = hillString
+  .split('')
+  .map((char) => char.repeat(2).split(''))
+  .flat()
+  .join('')
 
 export interface Task<TContext = unknown> {
   title: string
@@ -25,6 +35,7 @@ interface TasksProps<TContext> {
   silent?: boolean
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
+  noColor?: boolean
 }
 
 enum TasksState {
@@ -65,9 +76,20 @@ function Tasks<TContext>({
   silent = isUnitTest(),
   onComplete = noop,
   abortSignal,
+  noColor,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
-  const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
+  let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
+  if (noColor ?? !shouldDisplayColors()) {
+    // fill loading bar with the no color chars, repeating until the length is two thirds but only using a whole number repeat of the no color chars
+    const repeatCount = Math.floor(twoThirds / gradualHillString.length)
+    if (repeatCount === 0) {
+      const shortRepeatCount = Math.floor(twoThirds / hillString.length)
+      loadingBar = hillString.repeat(Math.max(1, shortRepeatCount))
+    } else {
+      loadingBar = gradualHillString.repeat(repeatCount)
+    }
+  }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)

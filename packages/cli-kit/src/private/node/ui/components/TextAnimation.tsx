@@ -14,6 +14,16 @@ function rainbow(text: string, frame: number) {
   return gradient(leftColor, rightColor)(text, {interpolation: 'hsv', hsvSpin: 'long'})
 }
 
+function rotated(text: string, steps: number) {
+  const textLength = text.length
+  return text
+    .split('')
+    .map((_, index) => {
+      return text[(index + steps) % textLength]
+    })
+    .join('')
+}
+
 /**
  * `TextAnimation` applies a rainbow animation to text.
  */
@@ -26,7 +36,7 @@ const TextAnimation = memo(({text}: TextAnimationProps): JSX.Element => {
     const newFrame = frame.current + 1
     frame.current = newFrame
 
-    setRenderedFrame(rainbow(text, frame.current))
+    setRenderedFrame(rainbow(rotated(text, frame.current), frame.current))
 
     timeout.current = setTimeout(() => {
       renderAnimation()
