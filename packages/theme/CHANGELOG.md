@@ -1,5 +1,27 @@
 # @shopify/theme
 
+## 3.74.0
+
+### Minor Changes
+
+- b7cda8c890: Add `theme profile` command which allows users to get a performance profile for Liquid rendering on a given page
+- 1b8ad07153: Give theme info a facelift using standard UI components
+- 6380277a7a: Unify how asset upload errors are reported in the `theme dev` command
+
+### Patch Changes
+
+- 7e34195c30: Store theme asset upload errors encountered while running the theme dev command
+- 1a5aec270d: Fix `shopify theme dev` to no longer fail when development themes expire in internationalized stores
+- 404fa77c90: When the `.shopify/metafields.json` file gets created, the CLI now proposes to add it to `.gitignore` by default
+- 5be14a5b08: Update documentation for `theme push --only`
+- f004019bb9: Utilize Admin API to determine if a storefront is password protected
+- Updated dependencies [7e34195c30]
+- Updated dependencies [1a5aec270d]
+- Updated dependencies [bb3b100731]
+- Updated dependencies [369351435b]
+- Updated dependencies [f004019bb9]
+  - @shopify/cli-kit@3.74.0
+
 ## 3.73.0
 
 ### Minor Changes

@@ -1,5 +1,32 @@
 # @shopify/app
 
+## 3.74.0
+
+### Minor Changes
+
+- bb3b100731: Give `app info` a facelift and correct a few display bugs
+
+### Patch Changes
+
+- 2d92db780b: Add support for "variables" query param in graphiql
+- 6df2563cb8: Remove localization file size validations from the CLI and move them into Shopify's backend.
+- 4969c1f0a8: Better error message for certain types of invalid app TOML files
+- f4c7577151: Validate the @shopify/shopify_function NPM package version is compatible with the Javy version
+- f004019bb9: Utilize Admin API to determine if a storefront is password protected
+- Updated dependencies [7e34195c30]
+- Updated dependencies [b7cda8c890]
+- Updated dependencies [1b8ad07153]
+- Updated dependencies [1a5aec270d]
+- Updated dependencies [404fa77c90]
+- Updated dependencies [bb3b100731]
+- Updated dependencies [5be14a5b08]
+- Updated dependencies [369351435b]
+- Updated dependencies [6380277a7a]
+- Updated dependencies [f004019bb9]
+  - @shopify/cli-kit@3.74.0
+  - @shopify/theme@3.74.0
+  - @shopify/plugin-cloudflare@3.74.0
+
 ## 3.73.0
 
 ### Minor Changes
