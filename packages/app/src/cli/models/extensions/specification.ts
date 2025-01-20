@@ -249,47 +249,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   })
 }
 
-/**
- * Create a zod object schema based on keys, but neutral as to content.
- *
- * Used for schemas that are supplemented by JSON schema contracts, but need to register top-level keys.
- */
-function neutralTopLevelSchema<TKey extends string>(...keys: TKey[]): zod.ZodObject<{[k in TKey]: zod.ZodAny}> {
-  return zod.object(
-    Object.fromEntries(
-      keys.map((key) => {
-        return [key, zod.any()]
-      }),
-    ),
-  ) as zod.ZodObject<{[k in TKey]: zod.ZodAny}>
-}
-
-/**
- * Create a new app config extension spec that uses contract-based validation.
- *
- * See {@link createConfigExtensionSpecification} for more about app config extensions.
- */
-export function createContractBasedConfigModuleSpecification<TKey extends string>(
-  identifier: string,
-  ...topLevelKeys: TKey[]
-): ExtensionSpecification {
-  const schema = neutralTopLevelSchema(...topLevelKeys)
-  return createConfigExtensionSpecification({
-    identifier,
-    schema,
-    transformConfig: {
-      // outgoing config is already scoped to this module and passed directly along
-      forward(obj) {
-        return obj
-      },
-      // incoming config from the platform is included in app config as-is
-      reverse(obj) {
-        return obj
-      },
-    },
-  })
-}
-
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   identifier: string,
   appModuleFeatures?: ExtensionFeature[],
