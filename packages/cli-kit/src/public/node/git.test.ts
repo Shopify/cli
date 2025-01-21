@@ -1,8 +1,9 @@
 import * as git from './git.js'
-import {appendFileSync} from './fs.js'
+import {appendFileSync, fileExistsSync, inTemporaryDirectory, writeFileSync} from './fs.js'
 import {hasGit} from './context/local.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import simpleGit from 'simple-git'
+import {readFileSync} from 'node:fs'
 
 const mockedClone = vi.fn(async () => ({current: 'Mocked'}))
 const mockedInit = vi.fn(async () => {})
@@ -373,5 +374,51 @@ describe('isGitClean()', () => {
 
     // Then
     expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
+  })
+})
+
+describe('addToGitIgnore()', () => {
+  test('does nothing when .gitignore does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+
+      // When
+      git.addToGitIgnore(tmpDir, '.shopify')
+
+      // Then
+      expect(fileExistsSync(gitIgnorePath)).toBe(false)
+    })
+  })
+
+  test('does nothing when pattern already exists in .gitignore', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+      writeFileSync(gitIgnorePath, '.shopify\nnode_modules')
+
+      // When
+      git.addToGitIgnore(tmpDir, '.shopify')
+
+      // Then
+      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+      expect(gitIgnoreContent).toBe('.shopify\nnode_modules')
+    })
+  })
+
+  test('appends pattern to .gitignore when file exists and pattern not present', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+
+      writeFileSync(gitIgnorePath, 'node_modules')
+
+      // When
+      git.addToGitIgnore(tmpDir, '.shopify')
+
+      // Then
+      const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+      expect(gitIgnoreContent).toBe('node_modules\n.shopify')
+    })
   })
 })
