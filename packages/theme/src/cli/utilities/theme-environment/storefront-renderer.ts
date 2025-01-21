@@ -8,28 +8,42 @@ import {createError} from 'h3'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
-  const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
-
-  outputDebug(`→ Rendering ${url} (with ${replaceTemplates})...`)
-
-  const bodyParams = storefrontReplaceTemplatesParams(context)
   const headers = await buildHeaders(session, context)
+  let response
 
-  const response = await fetch(url, {
-    method: 'POST',
-    body: bodyParams,
-    headers: {
-      ...headers,
-      ...defaultHeaders(),
-    },
-  }).catch((error: Error) => {
-    throw createError({
-      status: 502,
-      statusText: 'Bad Gateway',
-      data: {url},
-      cause: error,
+  if (context.replaceTemplates) {
+    const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
+
+    outputDebug(`→ Rendering ${url} (with ${replaceTemplates})...`)
+
+    const bodyParams = storefrontReplaceTemplatesParams(context)
+
+    response = await fetch(url, {
+      method: 'POST',
+      body: bodyParams,
+      headers: {
+        ...headers,
+        ...defaultHeaders(),
+      },
+    }).catch((error: Error) => {
+      throw createError({
+        status: 502,
+        statusText: 'Bad Gateway',
+        data: {url},
+        cause: error,
+      })
     })
-  })
+  } else {
+    outputDebug(`→ Rendering ${url}...`)
+
+    response = await fetch(url, {
+      method: context.method,
+      headers: {
+        ...headers,
+        ...defaultHeaders(),
+      },
+    })
+  }
 
   const requestId = response.headers.get('x-request-id')
   outputDebug(`← ${response.status} (request_id: ${requestId})`)

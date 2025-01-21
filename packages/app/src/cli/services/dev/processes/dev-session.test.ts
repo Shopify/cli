@@ -1,4 +1,4 @@
-import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session.js'
+import {setupDevSessionProcess, pushUpdatesForDevSession, resetDevSessionStatus} from './dev-session.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -77,6 +77,7 @@ describe('pushUpdatesForDevSession', () => {
     app = testAppLinked()
     appWatcher = new AppEventWatcher(app)
     abortController = new AbortController()
+    resetDevSessionStatus()
     options = {
       developerPlatformClient,
       appWatcher,
@@ -187,5 +188,21 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
     expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'dev-session', stripAnsi: false}, expect.anything())
+  })
+
+  test('update is retried if there is an error', async () => {
+    // Given
+    developerPlatformClient.devSessionUpdate = vi.fn().mockRejectedValue(new Error('Test error'))
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then
+    expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
   })
 })

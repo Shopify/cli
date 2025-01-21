@@ -7,7 +7,6 @@ import {
   CliBuildPreferences,
   getAppScopes,
   LegacyAppConfiguration,
-  AppCreationDefaultOptions,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -27,6 +26,7 @@ import {
   Flag,
   DeveloperPlatformClient,
   sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+  CreateAppOptions,
 } from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -131,7 +131,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
   let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
 
   const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
-  const appDirectory = possibleAppDirectory || options.directory
+  const appDirectory = possibleAppDirectory ?? options.directory
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
@@ -152,7 +152,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     }
   }
 
-  const remoteApp = await fetchOrCreateOrganizationApp(creationOptions, appDirectory)
+  const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -173,13 +173,15 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
  * @returns Default options for creating a new app; the app's actual directory if loaded.
  */
 async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise<{
-  creationOptions: AppCreationDefaultOptions
+  creationOptions: CreateAppOptions
   appDirectory?: string
 }> {
   const appCreationDefaults = {
     isLaunchable: false,
     scopesArray: [] as string[],
     name: '',
+    directory: options.directory,
+    isEmbedded: false,
   }
   try {
     const app = await loadApp({
@@ -189,12 +191,9 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       userProvidedConfigName: options.baseConfigName,
       remoteFlags: undefined,
     })
-    const configuration = app.configuration
 
-    if (!isCurrentAppSchema(configuration)) {
-      return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
-    }
-    return {creationOptions: appCreationDefaults}
+    return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
+
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {creationOptions: appCreationDefaults}

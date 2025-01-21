@@ -310,11 +310,16 @@ describe('createApp', () => {
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
     }
     vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedApiVersionResult)
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appCreate: {app: {id: '1', key: 'key'}, userErrors: []}})
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {
+        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        userErrors: [],
+      },
+    })
 
     // When
     client.token = () => Promise.resolve('token')
-    await client.createApp(org, 'app-name')
+    await client.createApp(org, {name: 'app-name'})
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
@@ -347,7 +352,7 @@ describe('createApp', () => {
       id: '1',
       key: 'api-key',
       apiKey: 'api-key',
-      apiSecretKeys: [],
+      apiSecretKeys: [{secret: 'secret'}],
       flags: [],
       grantedScopes: [],
       organizationId: '1',
@@ -364,6 +369,11 @@ describe('createApp', () => {
         app: {
           id: expectedApp.id,
           key: expectedApp.key,
+          activeRoot: {
+            clientCredentials: {
+              secrets: [{key: 'secret'}],
+            },
+          },
         },
         userErrors: [],
       },
@@ -371,7 +381,7 @@ describe('createApp', () => {
 
     // When
     client.token = () => Promise.resolve('token')
-    const result = await client.createApp(org, appName)
+    const result = await client.createApp(org, {name: 'app-name'})
 
     // Then
     expect(result).toMatchObject(expectedApp)

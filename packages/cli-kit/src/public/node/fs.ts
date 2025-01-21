@@ -514,6 +514,43 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
 export function pathToFileURL(path: string): URL {
   return pathToFile(path)
 }
+
+/**
+ * The operating system-specific end-of-line marker:
+ * - `\n` on POSIX
+ * - `\r\n` on Windows
+ */
+export type EOL = '\r\n' | '\n'
+
+/**
+ * Detects the end-of-line marker used in a string.
+ *
+ * @param content - file contents to analyze
+ *
+ * @returns The detected end-of-line marker
+ */
+export function detectEOL(content: string): EOL {
+  const match = content.match(/\r\n|\n/g)
+
+  if (!match) {
+    return defaultEOL()
+  }
+
+  const crlf = match.filter((eol) => eol === '\r\n').length
+  const lf = match.filter((eol) => eol === '\n').length
+
+  return crlf > lf ? '\r\n' : '\n'
+}
+
+/**
+ * Returns the operating system's end-of-line marker.
+ *
+ * @returns The OS-specific end-of-line marker
+ */
+export function defaultEOL(): EOL {
+  return os.EOL as EOL
+}
+
 /**
  * Find a file by walking parent directories.
  *

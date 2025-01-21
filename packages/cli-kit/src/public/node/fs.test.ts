@@ -16,14 +16,17 @@ import {
   generateRandomNameForSubdirectory,
   readFileSync,
   glob,
+  detectEOL,
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
 import {describe, expect, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
+import * as os from 'os'
 
 vi.mock('../common/array.js')
 vi.mock('fast-glob')
+vi.mock('os')
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {
@@ -281,5 +284,41 @@ describe('glob', () => {
 
     // Then
     expect(FastGlob).toBeCalledWith('pattern', {dot: false})
+  })
+})
+
+describe('detectEOL', () => {
+  test('detects the EOL of a file', async () => {
+    // Given
+    const fileContent = 'test\ncontent'
+
+    // When
+    const eol = detectEOL(fileContent)
+
+    // Then
+    expect(eol).toEqual('\n')
+  })
+
+  test('detects the EOL of a file with CRLF', async () => {
+    // Given
+    const fileContent = 'test\r\ncontent'
+
+    // When
+    const eol = detectEOL(fileContent)
+
+    // Then
+    expect(eol).toEqual('\r\n')
+  })
+
+  test('returns the default EOL if no EOL is found', async () => {
+    // Given
+    const fileContent = 'testcontent'
+    vi.mocked(os).EOL = '\n'
+
+    // When
+    const eol = detectEOL(fileContent)
+
+    // Then
+    expect(eol).toEqual('\n')
   })
 })

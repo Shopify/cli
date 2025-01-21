@@ -200,7 +200,7 @@ async function init(options: InitOptions) {
   if (options.selectedAppOrNameResult.result === 'new') {
     const creationOptions = await loadConfigForAppCreation(outputDirectory, options.name)
     const org = options.selectedAppOrNameResult.org
-    app = await options.developerPlatformClient.createApp(org, options.name, creationOptions)
+    app = await options.developerPlatformClient.createApp(org, creationOptions)
   } else {
     app = options.selectedAppOrNameResult.app
   }

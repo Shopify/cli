@@ -11,6 +11,7 @@ import {
   filterDisabledFlags,
   ClientName,
   AppVersionWithContext,
+  CreateAppOptions,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -340,16 +341,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     })
   }
 
-  async createApp(
-    org: Organization,
-    name: string,
-    options?: {
-      isLaunchable?: boolean
-      scopesArray?: string[]
-      directory?: string
-    },
-  ): Promise<OrganizationApp> {
-    const variables: CreateAppQueryVariables = getAppVars(org, name, options?.isLaunchable, options?.scopesArray)
+  async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
+    const variables: CreateAppQueryVariables = getAppVars(org, options.name, options.isLaunchable, options.scopesArray)
     const result: CreateAppQuerySchema = await this.request(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')

@@ -1,19 +1,12 @@
-import {
-  Notification,
-  fetchNotificationsInBackground,
-  filterNotifications,
-  showNotificationsIfNeeded,
-} from './notifications-system.js'
+import {Notification, filterNotifications, showNotificationsIfNeeded} from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {sniffForJson} from './path.js'
-import {exec} from './system.js'
-import {cacheRetrieve} from '../../private/node/conf-store.js'
+import {cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
 vi.mock('../../private/node/conf-store.js')
 vi.mock('./path.js')
-vi.mock('./system.js')
 
 const betweenVersins1and2: Notification = {
   id: 'betweenVersins1and2',
@@ -340,7 +333,7 @@ describe('showNotificationsIfNeeded', () => {
   test('an info notification triggers a renderInfo call', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
@@ -352,7 +345,7 @@ describe('showNotificationsIfNeeded', () => {
   test('a warning notification triggers a renderWarning call', async () => {
     // Given
     const notifications = [warningNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
@@ -364,7 +357,7 @@ describe('showNotificationsIfNeeded', () => {
   test('an error notification triggers a renderError call and throws an error', async () => {
     // Given
     const notifications = [errorNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
     await expect(showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})).rejects.toThrowError()
@@ -376,7 +369,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped on CI', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false', CI: 'true'})
@@ -388,7 +381,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped on tests', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'true'})
@@ -400,7 +393,7 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped when using --json flag', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
     vi.mocked(sniffForJson).mockReturnValue(true)
 
     // When
@@ -413,42 +406,12 @@ describe('showNotificationsIfNeeded', () => {
   test('notifications are skipped when using SHOPIFY_FLAG_JSON', async () => {
     // Given
     const notifications = [infoNotification]
-    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+    vi.mocked(cacheRetrieveOrRepopulate).mockResolvedValue(JSON.stringify({notifications}))
 
     // When
     await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false', SHOPIFY_FLAG_JSON: 'true'})
 
     // Then
     expect(renderInfo).not.toHaveBeenCalled()
-  })
-})
-
-describe('fetchNotificationsInBackground', () => {
-  test('calls the expected Shopify binary for global installation', async () => {
-    // Given / When
-    fetchNotificationsInBackground('theme:init', ['shopify', 'theme', 'init'], {SHOPIFY_UNIT_TEST: 'false'})
-
-    // Then
-    expect(exec).toHaveBeenCalledWith('shopify', ['notifications', 'list'], expect.anything())
-  })
-
-  test('calls the expected Shopify binary for local installation', async () => {
-    // Given / When
-    fetchNotificationsInBackground('theme:init', ['npm', 'run', 'shopify', 'theme', 'init'], {
-      SHOPIFY_UNIT_TEST: 'false',
-    })
-
-    // Then
-    expect(exec).toHaveBeenCalledWith('npm', ['run', 'shopify', 'notifications', 'list'], expect.anything())
-  })
-
-  test('calls the expected Shopify binary for dev environment', async () => {
-    // Given / When
-    fetchNotificationsInBackground('theme:init', ['node', 'packages/cli/bin/dev.js', 'theme', 'init'], {
-      SHOPIFY_UNIT_TEST: 'false',
-    })
-
-    // Then
-    expect(exec).toHaveBeenCalledWith('node', ['packages/cli/bin/dev.js', 'notifications', 'list'], expect.anything())
   })
 })

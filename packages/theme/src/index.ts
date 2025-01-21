@@ -8,6 +8,7 @@ import LanguageServer from './cli/commands/theme/language-server.js'
 import ListCommnd from './cli/commands/theme/list.js'
 import Open from './cli/commands/theme/open.js'
 import Package from './cli/commands/theme/package.js'
+import Profile from './cli/commands/theme/profile.js'
 import Publish from './cli/commands/theme/publish.js'
 import MetafieldsPull from './cli/commands/theme/metafields/pull.js'
 import Pull from './cli/commands/theme/pull.js'
@@ -28,6 +29,7 @@ const COMMANDS = {
   'theme:metafields:pull': MetafieldsPull,
   'theme:open': Open,
   'theme:package': Package,
+  'theme:profile': Profile,
   'theme:publish': Publish,
   'theme:pull': Pull,
   'theme:push': Push,

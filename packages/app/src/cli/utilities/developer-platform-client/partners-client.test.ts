@@ -90,10 +90,15 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await partnersClient.createApp({...ORG1, source: OrganizationSource.Partners}, localApp.name, {
-      scopesArray: ['write_products'],
-      isLaunchable: true,
-    })
+    const got = await partnersClient.createApp(
+      {...ORG1, source: OrganizationSource.Partners},
+      {
+        name: localApp.name,
+        scopesArray: ['write_products'],
+        isLaunchable: true,
+        directory: '',
+      },
+    )
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
@@ -115,10 +120,14 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await partnersClient.createApp({...ORG1, source: OrganizationSource.Partners}, LOCAL_APP.name, {
-      isLaunchable: false,
-      scopesArray: ['write_products'],
-    })
+    const got = await partnersClient.createApp(
+      {...ORG1, source: OrganizationSource.Partners},
+      {
+        name: LOCAL_APP.name,
+        isLaunchable: false,
+        scopesArray: ['write_products'],
+      },
+    )
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
@@ -134,7 +143,7 @@ describe('createApp', () => {
     })
 
     // When
-    const got = partnersClient.createApp({...ORG2, source: OrganizationSource.Partners}, LOCAL_APP.name)
+    const got = partnersClient.createApp({...ORG2, source: OrganizationSource.Partners}, {name: LOCAL_APP.name})
 
     // Then
     await expect(got).rejects.toThrow(`some-error`)
