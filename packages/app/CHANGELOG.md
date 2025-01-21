@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.74.1
+
+### Patch Changes
+
+- f16483e4e1: Bump `function-runner` version to v7.0.1
+  - @shopify/cli-kit@3.74.1
+  - @shopify/theme@3.74.1
+  - @shopify/plugin-cloudflare@3.74.1
+
 ## 3.74.0
 
 ### Minor Changes
