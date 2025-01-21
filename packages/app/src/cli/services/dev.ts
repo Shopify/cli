@@ -1,8 +1,8 @@
 import {
   FrontendURLOptions,
-  PartnersURLs,
+  ApplicationURLs,
   generateFrontendURL,
-  generatePartnersURLs,
+  generateApplicationURLs,
   getURLs,
   shouldOrPromptUpdateURLs,
   startTunnelPlugin,
@@ -249,7 +249,7 @@ async function handleUpdatingOfPartnerUrls(
   commandSpecifiedToUpdate: boolean,
   network: {
     proxyUrl: string
-    currentUrls: PartnersURLs
+    currentUrls: ApplicationURLs
   },
   localApp: AppLinkedInterface,
   cachedUpdateURLs: boolean | undefined,
@@ -261,7 +261,7 @@ async function handleUpdatingOfPartnerUrls(
   let shouldUpdateURLs = false
   if (frontendConfig ?? backendConfig) {
     if (commandSpecifiedToUpdate) {
-      const newURLs = generatePartnersURLs(
+      const newURLs = generateApplicationURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
         localApp.configuration.app_proxy,
