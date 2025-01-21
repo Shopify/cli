@@ -25,7 +25,7 @@ function saveSectionsFromJson(fileKey: string, content: string) {
 
   const sections: SectionGroup | undefined = maybeJson?.sections
 
-  if (sections) {
+  if (sections && !fileKey.startsWith('locales/')) {
     sectionNamesByFile.set(
       fileKey,
       Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
@@ -137,9 +137,10 @@ function emitHotReloadEvent(event: HotReloadEvent) {
  */
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
-    const endpoint = event.path.split('?')[0]
+    const isEventSourceConnection = event.headers.get('accept') === 'text/event-stream'
+    const query = new URLSearchParams(Object.entries(getQuery(event)))
 
-    if (endpoint === '/__hot-reload/subscribe') {
+    if (isEventSourceConnection) {
       const eventStream = createEventStream(event)
 
       eventEmitter.on('hot-reload', (event: HotReloadEvent) => {
@@ -153,51 +154,51 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         .catch(() => {})
 
       return eventStream.send().then(() => eventStream.flush())
-    } else if (endpoint === '/__hot-reload/render') {
-      const defaultQueryParams = {
-        'app-block-id': '',
-        'section-id': '',
-        'section-template-name': '',
-      }
-      const {
-        search: browserSearch,
-        pathname: browserPathname,
-        'app-block-id': appBlockId,
-        'section-id': sectionId,
-        'section-template-name': sectionKey,
-      }: {[key: string]: string} = {...defaultQueryParams, ...getQuery(event)}
+    } else if (query.has('section_id') || query.has('app_block_id')) {
+      const sectionId = query.get('section_id') ?? ''
+      const appBlockId = query.get('app_block_id') ?? ''
+      const browserPathname = event.path.split('?')[0] ?? ''
+      const browserSearch = new URLSearchParams(query)
+      browserSearch.delete('section_id')
+      browserSearch.delete('app_block_id')
+      browserSearch.delete('_fd')
+      browserSearch.delete('pb')
 
       if (sectionId === '' && appBlockId === '') {
         return
       }
 
       const replaceTemplates: {[key: string]: string} = {}
-      const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
 
-      if (inMemoryTemplateFiles.has(sectionKey)) {
-        const sectionTemplate = ctx.localThemeFileSystem.files.get(sectionKey)?.value
-        if (!sectionTemplate) {
-          // If the section template is not found, it means that the section has been removed.
-          // The remote version might not yet be synced so, instead of rendering it remotely,
-          // which should return an empty section, we directly return the same thing here.
-          return ''
+      if (sectionId) {
+        const sectionKey = `sections/${sectionId.replace(/^[^_]+__/, '')}.liquid`
+        const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
+
+        if (inMemoryTemplateFiles.has(sectionKey)) {
+          const sectionTemplate = ctx.localThemeFileSystem.files.get(sectionKey)?.value
+          if (!sectionTemplate) {
+            // If the section template is not found, it means that the section has been removed.
+            // The remote version might not yet be synced so, instead of rendering it remotely,
+            // which should return an empty section, we directly return the same thing here.
+            return ''
+          }
+
+          replaceTemplates[sectionKey] = sectionTemplate
         }
 
-        replaceTemplates[sectionKey] = sectionTemplate
-      }
-
-      // If a JSON file changed locally and updated the ID of a section,
-      // there's a chance the cloud won't know how to render a modified section ID.
-      // Therefore, we gather all the locally updated JSON files that reference
-      // the updated section ID and include them in replaceTemplates:
-      for (const fileKey of inMemoryTemplateFiles) {
-        if (fileKey.endsWith('.json')) {
-          for (const [_type, name] of sectionNamesByFile.get(fileKey) ?? []) {
-            // Section ID is something like `template_12345__<section-name>`:
-            if (sectionId.endsWith(`__${name}`)) {
-              const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
-              if (content) replaceTemplates[fileKey] = content
-              continue
+        // If a JSON file changed locally and updated the ID of a section,
+        // there's a chance the cloud won't know how to render a modified section ID.
+        // Therefore, we gather all the locally updated JSON files that reference
+        // the updated section ID and include them in replaceTemplates:
+        for (const fileKey of inMemoryTemplateFiles) {
+          if (fileKey.endsWith('.json')) {
+            for (const [_type, name] of sectionNamesByFile.get(fileKey) ?? []) {
+              // Section ID is something like `template_12345__<section-name>`:
+              if (sectionId.endsWith(`__${name}`)) {
+                const content = ctx.localThemeFileSystem.files.get(fileKey)?.value
+                if (content) replaceTemplates[fileKey] = content
+                continue
+              }
             }
           }
         }
