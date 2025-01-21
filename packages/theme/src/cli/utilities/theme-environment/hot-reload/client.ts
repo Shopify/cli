@@ -112,33 +112,16 @@ function hotReloadScript() {
     }
   }
 
-  const buildSectionHotReloadUrl = (sectionId: string, data: HotReloadFileEvent) => {
-    if (isLocalPreview) {
-      // Note: Change this to mimic SFR API in CLI
-      const prefix = data.payload?.isAppExtension ? 'app' : 'section'
-      const params = [
-        `section-id=${encodeURIComponent(sectionId)}`,
-        `${prefix}-template-name=${encodeURIComponent(data.key)}`,
-        `pathname=${encodeURIComponent(window.location.pathname)}`,
-        `search=${encodeURIComponent(window.location.search)}`,
-      ].join('&')
-
-      return `${hotReloadOrigin}/__hot-reload/render?${params}`
-    }
-
+  const buildSectionHotReloadUrl = (renderParams: {section_id: string} | {app_block_id: string}) => {
     const url = window.location.pathname
     const params = new URLSearchParams({
       _fd: '0',
       pb: '0',
+      ...renderParams,
     })
 
     for (const [key, value] of new URLSearchParams(window.location.search)) {
       params.append(key, value)
-    }
-
-    // The Section Rendering API takes precendence over the Block Rendering API.
-    if (sectionId) {
-      params.append('section_id', sectionId)
     }
 
     return `${url}?${params}`
@@ -200,8 +183,10 @@ function hotReloadScript() {
 
     await Promise.all(
       elements.map(async (element) => {
-        const sectionId = element.id.replace(/^shopify-section-/, '')
-        const response = await fetch(buildSectionHotReloadUrl(sectionId, data), {signal: controller.signal})
+        const response = await fetch(
+          buildSectionHotReloadUrl({section_id: encodeURIComponent(element.id.replace(/^shopify-section-/, ''))}),
+          {signal: controller.signal},
+        )
 
         if (!response.ok) {
           throw new Error(`Hot reload request failed: ${response.statusText}`)
@@ -227,13 +212,10 @@ function hotReloadScript() {
     const controller = new AbortController()
 
     const appEmbedBlockId = block.id.replace(/^shopify-block-/, '')
-    const params = [
-      `app-block-id=${encodeURIComponent(appEmbedBlockId)}`,
-      `pathname=${encodeURIComponent(window.location.pathname)}`,
-      `search=${encodeURIComponent(window.location.search)}`,
-    ].join('&')
 
-    const response = await fetch(`/__hot-reload/render?${params}`, {signal: controller.signal})
+    const response = await fetch(buildSectionHotReloadUrl({app_block_id: encodeURIComponent(appEmbedBlockId)}), {
+      signal: controller.signal,
+    })
 
     if (!response.ok) {
       controller.abort('Request error')
@@ -383,7 +365,7 @@ function hotReloadScript() {
 
   if (hotReloadParam) {
     let hasEventSourceConnectedOnce = false
-    const evtSource = new EventSource(new URL('/__hot-reload/subscribe', hotReloadOrigin))
+    const evtSource = new EventSource(hotReloadOrigin)
     evtSource.onmessage = (event) => onHotReloadEvent(JSON.parse(event.data))
     evtSource.onopen = () => {
       hasEventSourceConnectedOnce = true
