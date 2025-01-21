@@ -19,6 +19,9 @@ describe('ui_extension', async () => {
       should_render?: {
         module: string
       }
+      urls?: {
+        edit?: string
+      }
       build_manifest?: {
         assets: {
           main: {
@@ -58,6 +61,7 @@ describe('ui_extension', async () => {
         },
       },
       settings: {},
+      urls: {},
     }
 
     return new ExtensionInstance({
@@ -157,6 +161,7 @@ describe('ui_extension', async () => {
               },
             },
           },
+          urls: {},
         },
       ])
     })
@@ -209,6 +214,7 @@ describe('ui_extension', async () => {
           default_placement_reference: 'PLACEMENT_REFERENCE1',
           capabilities: undefined,
           preloads: {},
+          urls: {},
           build_manifest: {
             assets: {
               main: {
@@ -266,6 +272,7 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
           metafields: [],
+          urls: {},
           default_placement_reference: undefined,
           capabilities: {allow_direct_linking: true},
           preloads: {},
@@ -329,6 +336,73 @@ describe('ui_extension', async () => {
           default_placement_reference: undefined,
           capabilities: undefined,
           preloads: {chat: '/chat'},
+          urls: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
+        },
+      ])
+    })
+
+    test('targeting object accepts urls', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            preloads: {chat: '/chat', not_supported: '/hello'},
+            urls: {
+              edit: '/bundles/products/101',
+            },
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {chat: '/chat'},
+          urls: {
+            edit: '/bundles/products/101',
+          },
           build_manifest: {
             assets: {
               main: {
@@ -404,6 +478,7 @@ describe('ui_extension', async () => {
               },
             },
           },
+          urls: {},
         },
       ])
     })
