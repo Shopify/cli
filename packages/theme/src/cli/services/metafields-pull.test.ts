@@ -99,7 +99,7 @@ describe('metafields-pull', () => {
 
       // Then
       await expect(fileExists(gitIgnorePath)).resolves.toBe(true)
-      await expect(readFile(gitIgnorePath)).resolves.toBe(`.DS_Store\n.shopify/secrets.json\n.shopify`)
+      await expect(readFile(gitIgnorePath)).resolves.toBe(`.DS_Store\n.shopify/secrets.json\n.shopify\n`)
     })
 
     expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')

@@ -6,8 +6,9 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {detectEOL, fileExistsSync, mkdirSync, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, mkdirSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {addToGitIgnore} from '@shopify/cli-kit/node/git'
 
 interface MetafieldsPullOptions {
   path: string
@@ -168,23 +169,4 @@ function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
   }
 
   writeFileSync(filePath, fileContent)
-}
-
-function addToGitIgnore(root: string, entry: string) {
-  const gitIgnorePath = joinPath(root, '.gitignore')
-
-  if (!fileExistsSync(gitIgnorePath)) {
-    // When the .gitignore file does not exist, the CLI should not be opinionated about creating it
-    return
-  }
-
-  const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
-  const eol = detectEOL(gitIgnoreContent)
-
-  if (gitIgnoreContent.split(eol).includes(entry)) {
-    // The file already existing in the .gitignore
-    return
-  }
-
-  writeFileSync(gitIgnorePath, `${gitIgnoreContent}${eol}${entry}`)
 }
