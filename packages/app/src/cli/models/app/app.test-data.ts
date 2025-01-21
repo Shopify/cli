@@ -71,6 +71,8 @@ import {
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
+import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -120,6 +122,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
     hiddenConfig: app.hiddenConfig ?? {},
+    devApplicationURLs: app.devApplicationURLs,
   })
 
   if (app.updateDependencies) {
@@ -335,6 +338,55 @@ export async function testAppAccessConfigExtension(
     configurationPath: 'shopify.app.toml',
     directory: directory ?? './',
     specification: appAccessSpec,
+  })
+
+  return extension
+}
+
+export async function testAppHomeConfigExtension(): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'App Home',
+    type: 'app_home',
+    handle: 'app-home',
+    application_url: 'https://example.com',
+    embedded: true,
+    metafields: [],
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === AppHomeSpecIdentifier)!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification,
+  })
+
+  return extension
+}
+
+export async function testAppProxyConfigExtension(): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'App Proxy',
+    type: 'app_proxy',
+    handle: 'app-proxy',
+    metafields: [],
+    app_proxy: {
+      url: 'https://example.com',
+      subpath: 'apps',
+      prefix: 'apps',
+    },
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === AppProxySpecIdentifier)!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification,
   })
 
   return extension
