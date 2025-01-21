@@ -2,9 +2,9 @@ import {
   updateURLs,
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
-  generatePartnersURLs,
-  PartnersURLs,
-  validatePartnersURLs,
+  generateApplicationURLs,
+  ApplicationURLs,
+  validateApplicationURLs,
   FrontendURLOptions,
 } from './urls.js'
 import {
@@ -557,7 +557,7 @@ describe('generatePartnersURLs', () => {
   test('Returns the default values without an override', () => {
     const applicationUrl = 'http://my-base-url'
 
-    const got = generatePartnersURLs(applicationUrl)
+    const got = generateApplicationURLs(applicationUrl)
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -573,7 +573,7 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const overridePath = '/my/custom/path'
 
-    const got = generatePartnersURLs(applicationUrl, overridePath)
+    const got = generateApplicationURLs(applicationUrl, overridePath)
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -585,7 +585,7 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const overridePath = ['/my/custom/path1', '/my/custom/path2']
 
-    const got = generatePartnersURLs(applicationUrl, overridePath)
+    const got = generateApplicationURLs(applicationUrl, overridePath)
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -596,7 +596,7 @@ describe('generatePartnersURLs', () => {
   test('Returns app proxy section when receiving proxy fields', () => {
     const applicationUrl = 'http://my-base-url'
 
-    const got = generatePartnersURLs(applicationUrl, [], {
+    const got = generateApplicationURLs(applicationUrl, [], {
       url: applicationUrl,
       subpath: 'subpath',
       prefix: 'prefix',
@@ -621,7 +621,7 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const proxyUrl = 'http://old-base-url/subpath'
 
-    const got = generatePartnersURLs(applicationUrl, [], {
+    const got = generateApplicationURLs(applicationUrl, [], {
       url: proxyUrl,
       subpath: 'subpath',
       prefix: 'prefix',
@@ -648,47 +648,47 @@ describe('validatePartnersURLs', () => {
     // Given
     const applicationUrl = 'http://example.com'
     const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: PartnersURLs = {
+    const urls: ApplicationURLs = {
       applicationUrl,
       redirectUrlWhitelist,
       appProxy: {proxyUrl: applicationUrl, proxySubPath: '', proxySubPathPrefix: ''},
     }
 
     // When/Then
-    validatePartnersURLs(urls)
+    validateApplicationURLs(urls)
   })
 
   test('it raises an error when the application URL is not valid', () => {
     // Given
     const applicationUrl = 'wrong'
     const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+    const urls: ApplicationURLs = {applicationUrl, redirectUrlWhitelist}
 
     // When/Then
-    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid application URL/)
+    expect(() => validateApplicationURLs(urls)).toThrow(/Invalid application URL/)
   })
 
   test('it raises an error when the redirection URLs are not valid', () => {
     // Given
     const applicationUrl = 'http://example.com'
     const redirectUrlWhitelist = ['http://example.com/callback1', 'wrong']
-    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+    const urls: ApplicationURLs = {applicationUrl, redirectUrlWhitelist}
 
     // When/Then
-    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid redirection URLs/)
+    expect(() => validateApplicationURLs(urls)).toThrow(/Invalid redirection URLs/)
   })
 
   test('it raises an error when the app proxy URL is not valid', () => {
     // Given
     const applicationUrl = 'http://example.com'
     const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: PartnersURLs = {
+    const urls: ApplicationURLs = {
       applicationUrl,
       redirectUrlWhitelist,
       appProxy: {proxyUrl: 'wrong', proxySubPath: '', proxySubPathPrefix: ''},
     }
 
     // When/Then
-    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid app proxy URL/)
+    expect(() => validateApplicationURLs(urls)).toThrow(/Invalid app proxy URL/)
   })
 })
