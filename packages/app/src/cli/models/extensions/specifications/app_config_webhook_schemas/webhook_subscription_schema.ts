@@ -18,6 +18,15 @@ export const WebhookSubscriptionSchema = zod.object({
   }),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  metafields: zod
+    .array(
+      zod.object({
+        namespace: zod.string({invalid_type_error: 'Metafield namespace must be a string'}),
+        key: zod.string({invalid_type_error: 'Metafield key must be a string'}),
+      }),
+      {invalid_type_error: 'Metafields must be an array of objects with namespace and key'},
+    )
+    .optional(),
   compliance_topics: zod
     .array(
       zod.enum([ComplianceTopic.CustomersRedact, ComplianceTopic.CustomersDataRequest, ComplianceTopic.ShopRedact]),
