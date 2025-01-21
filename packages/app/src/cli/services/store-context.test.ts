@@ -10,8 +10,11 @@ import {
   testOrganizationStore,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
+import {appHiddenConfigPath, AppLinkedInterface} from '../models/app/app.js'
 import {vi, describe, test, expect} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')
@@ -38,80 +41,95 @@ describe('storeContext', () => {
   }
 
   test('uses explicitly provided storeFqdn', async () => {
-    vi.mocked(fetchStore).mockResolvedValue(mockStore)
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+      await prepareAppFolder(mockApp, dir)
 
-    const result = await storeContext({
-      appContextResult,
-      storeFqdn: 'explicit-store.myshopify.com',
-      forceReselectStore: false,
+      const result = await storeContext({
+        appContextResult,
+        storeFqdn: 'explicit-store.myshopify.com',
+        forceReselectStore: false,
+      })
+
+      expect(fetchStore).toHaveBeenCalledWith(
+        mockOrganization,
+        'explicit-store.myshopify.com',
+        mockDeveloperPlatformClient,
+      )
+      expect(convertToTransferDisabledStoreIfNeeded).toHaveBeenCalledWith(
+        mockStore,
+        mockOrganization.id,
+        mockDeveloperPlatformClient,
+        'never',
+      )
+      expect(result).toEqual(mockStore)
     })
-
-    expect(fetchStore).toHaveBeenCalledWith(
-      mockOrganization,
-      'explicit-store.myshopify.com',
-      mockDeveloperPlatformClient,
-    )
-    expect(convertToTransferDisabledStoreIfNeeded).toHaveBeenCalledWith(
-      mockStore,
-      mockOrganization.id,
-      mockDeveloperPlatformClient,
-      'never',
-    )
-    expect(result).toEqual(mockStore)
   })
 
   test('uses cached dev_store_url when no explicit storeFqdn is provided', async () => {
-    vi.mocked(fetchStore).mockResolvedValue(mockStore)
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+      await prepareAppFolder(mockApp, dir)
 
-    const result = await storeContext({
-      appContextResult,
-      forceReselectStore: false,
+      const result = await storeContext({
+        appContextResult,
+        forceReselectStore: false,
+      })
+
+      expect(fetchStore).toHaveBeenCalledWith(
+        mockOrganization,
+        'cached-store.myshopify.com',
+        mockDeveloperPlatformClient,
+      )
+      expect(result).toEqual(mockStore)
     })
-
-    expect(fetchStore).toHaveBeenCalledWith(mockOrganization, 'cached-store.myshopify.com', mockDeveloperPlatformClient)
-    expect(result).toEqual(mockStore)
   })
 
   test('fetches and selects store when no storeFqdn or cached value is available', async () => {
-    const appWithoutCachedStore = testAppLinked()
-    const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
+    await inTemporaryDirectory(async (dir) => {
+      const appWithoutCachedStore = testAppLinked()
+      await prepareAppFolder(appWithoutCachedStore, dir)
+      const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
 
-    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
-    vi.mocked(selectStore).mockResolvedValue(mockStore)
+      vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
+      vi.mocked(selectStore).mockResolvedValue(mockStore)
 
-    const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
-    const result = await storeContext({
-      appContextResult: updatedAppContextResult,
-      forceReselectStore: false,
+      const updatedAppContextResult = {...appContextResult, app: appWithoutCachedStore}
+      const result = await storeContext({
+        appContextResult: updatedAppContextResult,
+        forceReselectStore: false,
+      })
+
+      expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
+      expect(selectStore).toHaveBeenCalledWith(
+        {stores: allStores, hasMorePages: false},
+        mockOrganization,
+        mockDeveloperPlatformClient,
+      )
+      expect(result).toEqual(mockStore)
     })
-
-    expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
-    expect(selectStore).toHaveBeenCalledWith(
-      {stores: allStores, hasMorePages: false},
-      mockOrganization,
-      mockDeveloperPlatformClient,
-    )
-    expect(result).toEqual(mockStore)
   })
 
   test('fetches and selects store when forceReselectStore is true', async () => {
-    const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
+    await inTemporaryDirectory(async (dir) => {
+      const allStores = [mockStore, {...mockStore, shopId: 'store2', shopDomain: 'another-store.myshopify.com'}]
+      await prepareAppFolder(mockApp, dir)
+      vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
+      vi.mocked(selectStore).mockResolvedValue(mockStore)
 
-    vi.mocked(mockDeveloperPlatformClient.devStoresForOrg).mockResolvedValue({stores: allStores, hasMorePages: false})
-    vi.mocked(selectStore).mockResolvedValue(mockStore)
+      const result = await storeContext({
+        appContextResult,
+        forceReselectStore: true,
+      })
 
-    const result = await storeContext({
-      appContextResult,
-      forceReselectStore: true,
+      expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
+      expect(selectStore).toHaveBeenCalledWith(
+        {stores: allStores, hasMorePages: false},
+        mockOrganization,
+        mockDeveloperPlatformClient,
+      )
+      expect(result).toEqual(mockStore)
     })
-
-    expect(mockDeveloperPlatformClient.devStoresForOrg).toHaveBeenCalledWith(mockOrganization.id)
-    expect(selectStore).toHaveBeenCalledWith(
-      {stores: allStores, hasMorePages: false},
-      mockOrganization,
-      mockDeveloperPlatformClient,
-    )
-    expect(result).toEqual(mockStore)
   })
 
   test('throws an error when fetchStore fails', async () => {
@@ -133,25 +151,58 @@ describe('storeContext', () => {
   })
 
   test('calls logMetadata', async () => {
-    // Given
-    vi.mocked(fetchStore).mockResolvedValue(mockStore)
+    await inTemporaryDirectory(async (dir) => {
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+      await prepareAppFolder(mockApp, dir)
 
-    // When
-    await storeContext({appContextResult, forceReselectStore: false})
+      // When
+      await storeContext({appContextResult, forceReselectStore: false})
 
-    // Then
-    const meta = metadata.getAllPublicMetadata()
-    expect(meta).toEqual(
-      expect.objectContaining({
-        store_fqdn_hash: hashString(mockStore.shopDomain),
-      }),
-    )
+      // Then
+      const meta = metadata.getAllPublicMetadata()
+      expect(meta).toEqual(
+        expect.objectContaining({
+          store_fqdn_hash: hashString(mockStore.shopDomain),
+        }),
+      )
 
-    const sensitiveMeta = metadata.getAllSensitiveMetadata()
-    expect(sensitiveMeta).toEqual(
-      expect.objectContaining({
-        store_fqdn: mockStore.shopDomain,
-      }),
-    )
+      const sensitiveMeta = metadata.getAllSensitiveMetadata()
+      expect(sensitiveMeta).toEqual(
+        expect.objectContaining({
+          store_fqdn: mockStore.shopDomain,
+        }),
+      )
+    })
+  })
+
+  test('adds hidden config to gitignore if needed', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await prepareAppFolder(mockApp, dir)
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+
+      await storeContext({appContextResult, forceReselectStore: false})
+
+      const gitIgnoreContent = await readFile(joinPath(dir, '.gitignore'))
+      expect(gitIgnoreContent).toContain('.shopify')
+    })
+  })
+
+  test('updates hidden config', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await prepareAppFolder(mockApp, dir)
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+
+      await storeContext({appContextResult, forceReselectStore: false})
+
+      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
+      expect(hiddenConfig).toEqual('{\n  "dev_store_url": "test-store.myshopify.com"\n}')
+    })
   })
 })
+
+async function prepareAppFolder(app: AppLinkedInterface, directory: string) {
+  app.directory = directory
+  await mkdir(joinPath(directory, '.shopify'))
+  await writeFile(joinPath(directory, '.shopify', 'project.json'), '')
+  await writeFile(joinPath(directory, '.gitignore'), '')
+}

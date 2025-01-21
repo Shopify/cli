@@ -153,7 +153,10 @@ class AppInfo {
           ['App name', this.remoteApp.title ? {userInput: this.remoteApp.title} : NOT_CONFIGURED_TOKEN],
           ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TOKEN],
           ['Access scopes', getAppScopes(this.app.configuration)],
-          ['Dev store', this.app.configuration.build?.dev_store_url ?? NOT_CONFIGURED_TOKEN],
+          [
+            'Dev store',
+            this.app.configuration.build?.dev_store_url ?? this.app.hiddenConfig.dev_store_url ?? NOT_CONFIGURED_TOKEN,
+          ],
           ['Update URLs', updateUrls],
           userAccountInfo,
         ],
