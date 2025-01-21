@@ -495,7 +495,7 @@ export class App<
   /**
    * Patches the manifest with the development URLs.
    * @param modules - All App modules
-   * @returns All app moduels with patches applied.
+   * @returns All app modules with patches applied.
    */
   private patchManifestWithDevURLs(modules: {type: string; config: JsonMapType}[]) {
     if (!this.devApplicationURLs) return modules
