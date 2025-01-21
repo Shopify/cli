@@ -13,9 +13,10 @@ import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {ClientError} from 'graphql-request'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -48,6 +49,12 @@ interface UserError {
   category: string
 }
 
+interface DevSessionPayload {
+  shopFqdn: string
+  appId: string
+  assetsUrl: string
+}
+
 type DevSessionResult =
   | {status: 'updated' | 'created' | 'aborted'}
   | {status: 'remote-error'; error: UserError[]}
@@ -63,6 +70,10 @@ export function devSessionStatus() {
   return {
     isDevSessionReady,
   }
+}
+
+export function resetDevSessionStatus() {
+  isDevSessionReady = false
 }
 
 export async function setupDevSessionProcess({
@@ -88,12 +99,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {developerPlatformClient, appWatcher} = options
-
-  isDevSessionReady = false
-  const refreshToken = async () => {
-    return developerPlatformClient.refreshToken()
-  }
+  const {appWatcher} = options
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
@@ -106,7 +112,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         return
       }
 
-      // If there are any errors build errors, don't update the dev session
+      // If there are any build errors, don't update the dev session
       const anyError = event.extensionEvents.some((eve) => eve.buildResult?.status === 'error')
       if (anyError) return
 
@@ -133,19 +139,16 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       })
 
       const networkStartTime = startHRTime()
-      await performActionWithRetryAfterRecovery(async () => {
-        const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
-        await handleDevSessionResult(result, {...processOptions, app: event.app}, event)
-        const endTime = endHRTimeInMs(event.startTime)
-        const endNetworkTime = endHRTimeInMs(networkStartTime)
-        outputDebug(`✅ Event handled [Network: ${endNetworkTime}ms -- Total: ${endTime}ms]`, processOptions.stdout)
-      }, refreshToken)
+      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
+      await handleDevSessionResult(result, {...processOptions, app: event.app}, event)
+      outputDebug(
+        `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
+        processOptions.stdout,
+      )
     })
     .onStart(async (event) => {
-      await performActionWithRetryAfterRecovery(async () => {
-        const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
-        await handleDevSessionResult(result, {...processOptions, app: event.app})
-      }, refreshToken)
+      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
+      await handleDevSessionResult(result, {...processOptions, app: event.app})
     })
 }
 
@@ -168,7 +171,7 @@ async function handleDevSessionResult(
 
   // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
   // async nature of the process.
-  if (!isDevSessionReady && !isUnitTest()) throw new AbortError('Failed to create dev session')
+  if (!isDevSessionReady && !isUnitTest()) throw new AbortError('Failed to start dev session.')
 }
 
 /**
@@ -227,11 +230,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
 
   // Get a signed URL to upload the zip file
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
-  const signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
-    apiKey: options.appId,
-    organizationId: options.organizationId,
-    id: options.appId,
-  })
+  const signedURL = await getSignedURLWithRetry(options)
 
   // Upload the zip file
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
@@ -244,18 +243,18 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
     headers: form.getHeaders(),
   })
 
-  const payload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
+  const payload: DevSessionPayload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 
   // Create or update the dev session
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
     if (isDevSessionReady) {
-      const result = await options.developerPlatformClient.devSessionUpdate(payload)
+      const result = await devSessionUpdateWithRetry(payload, options.developerPlatformClient)
       const errors = result.devSessionUpdate?.userErrors ?? []
       if (errors.length) return {status: 'remote-error', error: errors}
       return {status: 'updated'}
     } else {
-      const result = await options.developerPlatformClient.devSessionCreate(payload)
+      const result = await devSessionCreateWithRetry(payload, options.developerPlatformClient)
       const errors = result.devSessionCreate?.userErrors ?? []
       if (errors.length) return {status: 'remote-error', error: errors}
       return {status: 'created'}
@@ -263,12 +262,46 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.statusCode === 401) {
-      // Re-throw the error so the recovery procedure can be executed
       throw new Error('Unauthorized')
+    } else if (error instanceof ClientError) {
+      if (error.response.status === 401 || error.response.status === 403) {
+        throw new AbortError('Auth session expired. Please run `shopify app dev` again.')
+      } else {
+        outputDebug(JSON.stringify(error.response, null, 2), options.stdout)
+        throw new AbortError('Unknown error')
+      }
     } else {
       return {status: 'unknown-error', error}
     }
   }
+}
+
+async function getSignedURLWithRetry(options: DevSessionProcessOptions) {
+  return performActionWithRetryAfterRecovery(
+    async () =>
+      getExtensionUploadURL(options.developerPlatformClient, {
+        apiKey: options.appId,
+        organizationId: options.organizationId,
+        id: options.appId,
+      }),
+    () => options.developerPlatformClient.refreshToken(),
+  )
+}
+
+async function devSessionUpdateWithRetry(payload: DevSessionPayload, developerPlatformClient: DeveloperPlatformClient) {
+  return performActionWithRetryAfterRecovery(
+    async () => developerPlatformClient.devSessionUpdate(payload),
+    () => developerPlatformClient.refreshToken(),
+  )
+}
+
+// If the Dev Session Create fails, we try to refresh the token and retry the operation
+// This only happens if an error is thrown. Won't be triggered if we receive an error inside the response.
+async function devSessionCreateWithRetry(payload: DevSessionPayload, developerPlatformClient: DeveloperPlatformClient) {
+  return performActionWithRetryAfterRecovery(
+    async () => developerPlatformClient.devSessionCreate(payload),
+    () => developerPlatformClient.refreshToken(),
+  )
 }
 
 async function processUserErrors(
