@@ -323,13 +323,12 @@ async function processUserErrors(
   } else if (errors instanceof Error) {
     await printError(errors.message, stdout)
   } else {
-    for (const error of errors) {
+    const mappedErrors = errors.map((error) => {
       const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
-      // If we have information about the extension that caused the error, use the handle as prefix in the output.
       const extension = options.app.allExtensions.find((ext) => ext.uid === on?.user_identifier)
-      // eslint-disable-next-line no-await-in-loop
-      await printError(error.message, stdout, extension?.handle ?? 'dev-session')
-    }
+      return {error: error.message, prefix: extension?.handle ?? 'dev-session'}
+    })
+    await printMultipleErrors(mappedErrors, stdout)
   }
 }
 
