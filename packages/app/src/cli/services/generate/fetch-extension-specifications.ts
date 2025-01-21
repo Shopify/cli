@@ -69,6 +69,11 @@ async function mergeLocalAndRemoteSpecs(
       const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
       const hasLocalization = normalisedSchema.properties?.localization !== undefined
       localSpec = createContractBasedModuleSpecification(remoteSpec.identifier, hasLocalization ? ['localization'] : [])
+
+      // HACK -- pull from API when ready.
+      if (localSpec.identifier === 'data') {
+        localSpec.uidStrategy = 'single'
+      }
     }
     if (!localSpec) return undefined
 
