@@ -18,11 +18,14 @@ import {
   testWebhookExtensions,
   testEditorExtensionCollection,
   testAppAccessConfigExtension,
+  testAppHomeConfigExtension,
+  testAppProxyConfigExtension,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
+import {ApplicationURLs} from '../../services/dev/urls.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -467,6 +470,150 @@ describe('allExtensions', () => {
     )
 
     expect(app.allExtensions).toContain(configExtension)
+  })
+})
+
+describe('manifest', () => {
+  test('generates a manifest with basic app information and modules', async () => {
+    // Given
+    const appAccessModule = await testAppAccessConfigExtension()
+
+    const app = await testApp({
+      name: 'my-app',
+      allExtensions: [appAccessModule],
+      configuration: {
+        ...DEFAULT_CONFIG,
+        client_id: 'test-client-id',
+      },
+    })
+
+    // When
+    const manifest = await app.manifest()
+
+    // Then
+    expect(manifest).toEqual({
+      name: 'my-app',
+      handle: '',
+      modules: [
+        {
+          type: 'app_access_external',
+          handle: 'app-access',
+          uid: appAccessModule.uid,
+          assets: appAccessModule.uid,
+          target: appAccessModule.contextValue,
+          config: expect.objectContaining({
+            redirect_url_allowlist: ['https://example.com/auth/callback'],
+          }),
+        },
+      ],
+    })
+  })
+
+  test('patches the manifest with development URLs when available', async () => {
+    // Given
+    const appHome = await testAppHomeConfigExtension()
+    const appAccess = await testAppAccessConfigExtension()
+    const appProxy = await testAppProxyConfigExtension()
+
+    const devApplicationURLs: ApplicationURLs = {
+      applicationUrl: 'https://new-url.io',
+      redirectUrlWhitelist: ['https://new-url.io/auth/callback'],
+      appProxy: {
+        proxyUrl: 'https://new-proxy-url.io',
+        proxySubPath: '/updated-path',
+        proxySubPathPrefix: 'updated-prefix',
+      },
+    }
+
+    const app = await testApp({
+      name: 'my-app',
+      allExtensions: [appHome, appProxy, appAccess],
+      configuration: {
+        ...DEFAULT_CONFIG,
+        client_id: 'test-client-id',
+      },
+      devApplicationURLs,
+    })
+
+    // When
+    const manifest = await app.manifest()
+
+    // Then
+    expect(manifest).toEqual({
+      name: 'my-app',
+      handle: '',
+      modules: [
+        {
+          type: 'app_home_external',
+          handle: 'app-home',
+          uid: appHome.uid,
+          assets: appHome.uid,
+          target: appHome.contextValue,
+          config: expect.objectContaining({
+            app_url: 'https://new-url.io',
+          }),
+        },
+        {
+          type: 'app_proxy_external',
+          handle: 'app-proxy',
+          uid: appProxy.uid,
+          assets: appProxy.uid,
+          target: appProxy.contextValue,
+          config: expect.objectContaining({
+            url: 'https://new-proxy-url.io',
+            subpath: '/updated-path',
+            prefix: 'updated-prefix',
+          }),
+        },
+        {
+          type: 'app_access_external',
+          handle: 'app-access',
+          uid: appAccess.uid,
+          assets: appAccess.uid,
+          target: appAccess.contextValue,
+          config: expect.objectContaining({
+            redirect_url_allowlist: ['https://new-url.io/auth/callback'],
+          }),
+        },
+      ],
+    })
+  })
+
+  test('does not patch URLs when devApplicationURLs is not available', async () => {
+    // Given
+    const appHome = await testAppHomeConfigExtension()
+
+    const app = await testApp({
+      name: 'my-app',
+      allExtensions: [appHome],
+      configuration: {
+        ...DEFAULT_CONFIG,
+        client_id: 'test-client-id',
+      },
+      devApplicationURLs: undefined,
+    })
+
+    // When
+    const manifest = await app.manifest()
+
+    // Then
+    expect(manifest).toEqual({
+      name: 'my-app',
+      handle: '',
+      modules: [
+        {
+          type: 'app_home_external',
+          handle: 'app-home',
+          uid: appHome.uid,
+          assets: appHome.uid,
+          target: appHome.contextValue,
+          config: {
+            app_url: 'https://example.com',
+            embedded: true,
+          },
+        },
+      ],
+    })
   })
 })
 
