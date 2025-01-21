@@ -9,12 +9,10 @@ import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
-import appAccessSpec, {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
+import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import appHomeSpec from '../extensions/specifications/app_config_app_home.js'
-import appProxySpec from '../extensions/specifications/app_config_app_proxy.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -275,7 +273,7 @@ export interface AppInterface<
   errors?: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
-  devApplicationURLs?: ApplicationURLs
+  readonly devApplicationURLs?: ApplicationURLs
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
@@ -294,6 +292,7 @@ export interface AppInterface<
   manifest: () => Promise<JsonMapType>
   removeExtension: (extensionUid: string) => void
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
+  setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
 }
 
 type AppConstructor<
@@ -367,7 +366,7 @@ export class App<
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
     this.hiddenConfig = hiddenConfig
-    this.devApplicationURLs = devApplicationURLs
+    if (devApplicationURLs) this.setDevApplicationURLs(devApplicationURLs)
   }
 
   get allExtensions() {
@@ -384,6 +383,11 @@ export class App<
   get appManagementApiEnabled() {
     if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.organization_id !== undefined
+  }
+
+  setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {
+    this.patchAppConfiguration(devApplicationURLs)
+    this.realExtensions.forEach((ext) => ext.patchWithAppDevURLs(devApplicationURLs))
   }
 
   async manifest(): Promise<JsonMapType> {
@@ -403,12 +407,11 @@ export class App<
         }
       }),
     )
-    const realModules = getArrayRejectingUndefined(modules)
-    const patchedModules = this.patchManifestWithDevURLs(realModules)
+
     return {
       name: this.name,
       handle: '',
-      modules: patchedModules,
+      modules: getArrayRejectingUndefined(modules),
     }
   }
 
@@ -492,35 +495,21 @@ export class App<
     return this.configuration.build?.include_config_on_deploy
   }
 
-  /**
-   * Patches the manifest with the development URLs.
-   * @param modules - All App modules
-   * @returns All app modules with patches applied.
-   */
-  private patchManifestWithDevURLs(modules: {type: string; config: JsonMapType}[]) {
-    if (!this.devApplicationURLs) return modules
+  private patchAppConfiguration(devApplicationURLs: ApplicationURLs) {
+    if (!isCurrentAppSchema(this.configuration)) return
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const appHome: any = modules.find((module) => module.type === appHomeSpec.externalIdentifier)
-    if (appHome) {
-      appHome.config.app_url = this.devApplicationURLs.applicationUrl
+    this.devApplicationURLs = devApplicationURLs
+    this.configuration.application_url = devApplicationURLs.applicationUrl
+    if (devApplicationURLs.appProxy) {
+      this.configuration.app_proxy = {
+        url: devApplicationURLs.appProxy.proxyUrl,
+        subpath: devApplicationURLs.appProxy.proxySubPath,
+        prefix: devApplicationURLs.appProxy.proxySubPathPrefix,
+      }
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const appProxy: any = modules.find((module) => module.type === appProxySpec.externalIdentifier)
-    if (appProxy && this.devApplicationURLs?.appProxy) {
-      appProxy.config.url = this.devApplicationURLs.appProxy.proxyUrl
-      appProxy.config.subpath = this.devApplicationURLs.appProxy.proxySubPath
-      appProxy.config.prefix = this.devApplicationURLs.appProxy.proxySubPathPrefix
+    if (this.configuration.auth?.redirect_urls) {
+      this.configuration.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const appAccess: any = modules.find((module) => module.type === appAccessSpec.externalIdentifier)
-    if (appAccess) {
-      appAccess.config.redirect_url_allowlist = this.devApplicationURLs.redirectUrlWhitelist
-    }
-
-    return modules
   }
 }
 
