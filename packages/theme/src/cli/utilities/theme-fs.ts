@@ -9,7 +9,7 @@ import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -192,9 +192,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     const syncPromise = options?.noDelete
       ? Promise.resolve()
-      : deleteThemeAsset(Number(themeId), fileKey, adminSession)
-          .then(async (success) => {
-            if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+      : deleteThemeAssets(Number(themeId), [fileKey], adminSession)
+          .then(async (results) => {
+            if (!results[0]?.success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
             unsyncedFileKeys.delete(fileKey)
             outputSyncResult('delete', fileKey)
             return true

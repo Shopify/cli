@@ -11,10 +11,10 @@ import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.j
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
-import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
+import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import EventEmitter from 'events'
-import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
@@ -521,7 +521,9 @@ describe('theme-fs', () => {
           stats: {size: 100, mtime: 100},
         },
       ])
-      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Delete},
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -542,7 +544,7 @@ describe('theme-fs', () => {
       await deleteOperationPromise
 
       // Then
-      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
     })
 
     test('does not delete file from remote when options.noDelete is true', async () => {
@@ -556,7 +558,9 @@ describe('theme-fs', () => {
           stats: {size: 100, mtime: 100},
         },
       ])
-      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Delete},
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root, {noDelete: true})
@@ -577,7 +581,7 @@ describe('theme-fs', () => {
       await deleteOperationPromise
 
       // Then
-      expect(deleteThemeAsset).not.toHaveBeenCalled()
+      expect(deleteThemeAssets).not.toHaveBeenCalled()
     })
 
     test('renders a warning to debug if the file deletion fails', async () => {
@@ -590,7 +594,9 @@ describe('theme-fs', () => {
           stats: {size: 100, mtime: 100},
         },
       ])
-      vi.mocked(deleteThemeAsset).mockResolvedValue(false)
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: false, operation: Operation.Delete},
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -611,7 +617,7 @@ describe('theme-fs', () => {
       await deleteOperationPromise
 
       // Then
-      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Failed to delete file "assets/base.css" from remote theme.',
         body: expect.any(String),

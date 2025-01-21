@@ -10,6 +10,7 @@ import {
   ThemeFilesUpsert,
   ThemeFilesUpsertMutation,
 } from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
+import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 import {
   OnlineStoreThemeFileBodyInputType,
   OnlineStoreThemeFilesUpsertFileInput,
@@ -147,11 +148,47 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
   }
 }
 
-export async function deleteThemeAsset(id: number, key: Key, session: AdminSession): Promise<boolean> {
-  const response = await request('DELETE', `/themes/${id}/assets`, session, undefined, {
-    'asset[key]': key,
-  })
-  return response.status === 200
+export async function deleteThemeAssets(id: number, filenames: Key[], session: AdminSession): Promise<Result[]> {
+  const batchSize = 50
+  const results: Result[] = []
+
+  for (let i = 0; i < filenames.length; i += batchSize) {
+    const batch = filenames.slice(i, i + batchSize)
+    // eslint-disable-next-line no-await-in-loop
+    const {themeFilesDelete} = await adminRequestDoc(ThemeFilesDelete, session, {
+      themeId: composeThemeGid(id),
+      files: batch,
+    })
+
+    if (!themeFilesDelete) {
+      unexpectedGraphQLError('Failed to delete theme assets')
+    }
+
+    const {deletedThemeFiles, userErrors} = themeFilesDelete
+
+    if (deletedThemeFiles) {
+      deletedThemeFiles.forEach((file) => {
+        results.push({key: file.filename, success: true, operation: Operation.Delete})
+      })
+    }
+
+    if (userErrors.length > 0) {
+      userErrors.forEach((error) => {
+        if (error.filename) {
+          results.push({
+            key: error.filename,
+            success: false,
+            operation: Operation.Delete,
+            errors: {asset: [error.message]},
+          })
+        } else {
+          unexpectedGraphQLError(`Failed to delete theme assets: ${error.message}`)
+        }
+      })
+    }
+  }
+
+  return results
 }
 
 export async function bulkUploadThemeAssets(

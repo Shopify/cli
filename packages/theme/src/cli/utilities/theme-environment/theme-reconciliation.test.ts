@@ -1,7 +1,7 @@
 import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
-import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
@@ -143,7 +143,7 @@ describe('reconcileJsonFiles', () => {
       )
 
       // Then
-      expect(deleteThemeAsset).toHaveBeenCalledWith(developmentTheme.id, assetToBeDeleted.key, adminSession)
+      expect(deleteThemeAssets).toHaveBeenCalledWith(developmentTheme.id, [assetToBeDeleted.key], adminSession)
       expect(defaultThemeFileSystem.files.get('templates/asset.json')).toBeUndefined()
     })
   })
