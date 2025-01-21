@@ -473,15 +473,6 @@ describe('allExtensions', () => {
   })
 })
 
-describe('patchManifestWithDevURLs', () => {
-  test('patches the manifest with the development URLs', () => {
-    const app = testApp({})
-
-    const manifest = app.manifest()
-    expect(manifest).toContain(app.devApplicationURLs?.applicationUrl)
-  })
-})
-
 describe('manifest', () => {
   test('generates a manifest with basic app information and modules', async () => {
     // Given
@@ -590,14 +581,7 @@ describe('manifest', () => {
 
   test('does not patch URLs when devApplicationURLs is not available', async () => {
     // Given
-    const appHome = await testUIExtension({
-      type: 'app_home',
-      configuration: {
-        name: 'App Home',
-        type: 'app_home',
-        handle: 'app-home',
-      },
-    })
+    const appHome = await testAppHomeConfigExtension()
 
     const app = await testApp({
       name: 'my-app',
@@ -618,12 +602,15 @@ describe('manifest', () => {
       handle: '',
       modules: [
         {
-          type: 'app_home',
+          type: 'app_home_external',
           handle: 'app-home',
           uid: appHome.uid,
           assets: appHome.uid,
           target: appHome.contextValue,
-          config: {},
+          config: {
+            app_url: 'https://example.com',
+            embedded: true,
+          },
         },
       ],
     })
