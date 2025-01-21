@@ -1,8 +1,8 @@
 import {
-  FrontendURLOptions,
   ApplicationURLs,
-  generateFrontendURL,
+  FrontendURLOptions,
   generateApplicationURLs,
+  generateFrontendURL,
   getURLs,
   shouldOrPromptUpdateURLs,
   startTunnelPlugin,
@@ -151,7 +151,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const previousAppId = getCachedAppInfo(commandOptions.directory)?.previousAppId
   const apiKey = remoteApp.apiKey
 
-  const {shouldUpdateURLs, newURLs} = await handleUpdatingOfPartnerUrls(
+  const partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
     webs,
     commandOptions.update,
     network,
@@ -162,12 +162,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     developerPlatformClient,
   )
 
-  // If the user chose to update the URLs automatically AND there are new URLs
-  // Store them in the app so that the manifest can be patched with them
-  if (shouldUpdateURLs && newURLs) {
-    app.devApplicationURLs = newURLs
-  }
-
   return {
     storeFqdn: store.shopDomain,
     storeId: store.shopId,
@@ -177,7 +171,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     developerPlatformClient,
     commandOptions,
     network,
-    partnerUrlsUpdated: shouldUpdateURLs,
+    partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
   }
@@ -266,10 +260,9 @@ async function handleUpdatingOfPartnerUrls(
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   let shouldUpdateURLs = false
-  let newURLs: ApplicationURLs | undefined
   if (frontendConfig ?? backendConfig) {
     if (commandSpecifiedToUpdate) {
-      newURLs = generateApplicationURLs(
+      const newURLs = generateApplicationURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
         localApp.configuration.app_proxy,
@@ -284,10 +277,14 @@ async function handleUpdatingOfPartnerUrls(
       })
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
+      if (shouldUpdateURLs) {
+        await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
+        // eslint-disable-next-line require-atomic-updates
+        localApp.devApplicationURLs = newURLs
+      }
     }
   }
-  return {shouldUpdateURLs, newURLs}
+  return shouldUpdateURLs
 }
 
 async function setupNetworkingOptions(
