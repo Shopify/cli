@@ -2366,7 +2366,7 @@ wrong = "property"
       redirectUrlWhitelist: ['http://custom.dev/auth'],
     }
     app.allExtensions[0]!.devUUID = customDevUUID
-    app.devApplicationURLs = customAppURLs
+    app.setDevApplicationURLs(customAppURLs)
 
     // When
     const reloadedApp = await reloadApp(app)

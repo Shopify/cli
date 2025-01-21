@@ -6,6 +6,7 @@ import {blocks} from '../../constants.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
+import {ApplicationURLs} from '../../services/dev/urls.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
@@ -77,6 +78,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     appConfig: CurrentAppConfiguration,
     storeFqdn: string,
   ) => Promise<string>
+  patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
    * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
@@ -233,6 +235,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     appConfig: CurrentAppConfiguration,
     storeFqdn: string,
   ) => Promise<string>
+  patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -246,6 +249,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
+    patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
 }
 
