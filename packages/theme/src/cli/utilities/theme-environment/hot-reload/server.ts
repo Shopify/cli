@@ -1,4 +1,3 @@
-import {getClientScripts, type HotReloadEventPayload, type HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {patchRenderingResponse} from '../proxy.js'
@@ -8,6 +7,7 @@ import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import EventEmitter from 'node:events'
+import type {HotReloadEventPayload, HotReloadEvent} from '@shopify/theme-hot-reload'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
 
@@ -311,12 +311,25 @@ function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
   }
 }
 
+export const hotReloadScriptId = 'hot-reload-client'
+export const hotReloadScriptUrl = 'https://unpkg.com/@shopify/theme-hot-reload'
+
 /**
  * Injects a `<script>` tag in the HTML Head containing
  * inlined code for HotReload.
  */
-export function injectHotReloadScript(html: string) {
-  return html.replace(/<\/head>/, `${getClientScripts()}</head>`)
+export function handleHotReloadScriptInjection(html: string, ctx: DevServerContext) {
+  const shouldEnableHotReload = ctx.options.liveReload !== 'off'
+  const alreadyIncludesHotReload = html.includes(`<script id="${hotReloadScriptId}"`)
+
+  if (alreadyIncludesHotReload) {
+    if (shouldEnableHotReload) return html
+    return html.replace(new RegExp(`<script id="${hotReloadScriptId}"[^>]*>[^<]*</script>`), '')
+  }
+
+  if (!shouldEnableHotReload) return html
+
+  return html.replace(/<\/head>/, `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head>`)
 }
 
 function isAsset(key: string) {

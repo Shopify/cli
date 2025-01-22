@@ -1,5 +1,5 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
-import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
+import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
@@ -68,7 +68,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return patchRenderingResponse(ctx, response, (body) => {
           assertThemeId(response, body, String(theme.id))
           themeIdMismatchRedirects = 0
-          return ctx.options.liveReload === 'off' ? body : injectHotReloadScript(body)
+          return handleHotReloadScriptInjection(body, ctx)
         })
       })
       .catch(async (error) => {
@@ -136,13 +136,9 @@ function createErrorPageResponse(
   responseInit: ResponseInit,
   options: Parameters<typeof getErrorPage>[0],
 ) {
-  let html = getErrorPage(options)
+  const errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx)
 
-  if (ctx.options.liveReload !== 'off') {
-    html = injectHotReloadScript(html)
-  }
-
-  return new Response(html, {
+  return new Response(errorPageHtml, {
     ...responseInit,
     headers: responseInit.headers ?? {'Content-Type': 'text/html; charset=utf-8'},
   })
