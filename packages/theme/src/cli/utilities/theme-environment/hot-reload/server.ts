@@ -11,7 +11,7 @@ import {
   sendError,
   type H3Error,
 } from 'h3'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import EventEmitter from 'node:events'
@@ -161,6 +161,28 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         .catch(() => {})
 
       return eventStream.send().then(() => eventStream.flush())
+    } else if (query.has('hmr-log')) {
+      const message = parseJSON(query.get('hmr-log') ?? '', null) as null | {
+        type: string
+        headline: string
+        body?: string
+      }
+
+      if (message) {
+        message.headline = `[HMR] ${message.headline}`
+
+        if (message.type === 'error') {
+          renderError(message)
+        } else if (message.type === 'warn') {
+          renderWarning(message)
+        } else if (message.type === 'info') {
+          renderInfo(message)
+        } else {
+          renderWarning({headline: `Unknown HMR log type: ${message.type}`})
+        }
+      }
+
+      return null
     } else if (query.has('section_id') || query.has('app_block_id')) {
       const sectionId = query.get('section_id') ?? ''
       const appBlockId = query.get('app_block_id') ?? ''
