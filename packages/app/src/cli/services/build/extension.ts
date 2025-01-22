@@ -188,8 +188,13 @@ export async function buildFunctionExtension(
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    // We capture and rethrow as AbortError to avoid random user-code errors being reported as CLI bugs.
-    // At the same time, we need to keep the ESBuild details for the logs. (the `errors` array)
+    // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.
+    // In this case, we need to keep the ESBuild details for the logs. (the `errors` array).
+    // If the error is already an AbortError, we can just rethrow it.
+    if (error instanceof AbortError) {
+      throw error
+    }
+
     const errorMessage = (error as Error).message ?? 'Unknown error occurred'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const newError: any = new AbortError('Failed to build function.', errorMessage)
