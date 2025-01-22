@@ -98,7 +98,7 @@ export async function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     onContent(() => {
-      triggerHotReload(ctx, onSync, {type: 'update', key: fileKey, payload: {isAppExtension: true}})
+      triggerHotReload(ctx, onSync, {type: 'update', key: fileKey, payload: {isThemeExtension: true}})
     })
   }
 
