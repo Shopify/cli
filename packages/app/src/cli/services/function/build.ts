@@ -17,7 +17,8 @@ import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
-export const SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '1'
+const ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS = ['0', '1']
+export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '1'
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
@@ -28,7 +29,7 @@ class InvalidShopifyFunctionPackageError extends AbortError {
       )} library installed.`,
       [
         outputContent`Add ${outputToken.green(
-          `"@shopify/shopify_function": "~${SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0"`,
+          `"@shopify/shopify_function": "~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0"`,
         )} to the dependencies section of the package.json file in your function's directory, if not already present.`
           .value,
         `Run your package manager's install command to update dependencies.`,
@@ -160,7 +161,7 @@ async function validateShopifyFunctionPackageVersion(fun: ExtensionInstance<Func
   const packageJson = JSON.parse(await readFile(packageJsonPath))
   const majorVersion = packageJson.version.split('.')[0]
 
-  if (majorVersion !== SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION) {
+  if (!ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS.includes(majorVersion)) {
     throw new InvalidShopifyFunctionPackageError(
       'The installed version of the Shopify Functions JavaScript library is not compatible with this version of Shopify CLI.',
     )
