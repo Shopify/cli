@@ -1,4 +1,11 @@
-import {getHotReloadHandler, getInMemoryTemplates, setupInMemoryTemplateWatcher} from './server.js'
+import {
+  getHotReloadHandler,
+  getInMemoryTemplates,
+  handleHotReloadScriptInjection,
+  hotReloadScriptId,
+  hotReloadScriptUrl,
+  setupInMemoryTemplateWatcher,
+} from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
@@ -19,6 +26,43 @@ describe('hot-reload server', () => {
     processing: false,
     role: 'main',
   }
+
+  describe('handleHotReloadScriptInjection', () => {
+    const htmlWithHrScript = `<html><head><script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head><body></body></html>`
+    const htmlWithoutHrScript = '<html><head></head><body></body></html>'
+
+    test('keeps the SFR injected script when hot reload is enabled', () => {
+      const ctx = {
+        options: {liveReload: 'hot-reload'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithHrScript, ctx)).toEqual(htmlWithHrScript)
+    })
+
+    test('removes the SFR injected script when hot reload is disabled', () => {
+      const ctx = {
+        options: {liveReload: 'off'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithHrScript, ctx)).toEqual(htmlWithoutHrScript)
+    })
+
+    test('injects the hot reload script if missing from SFR when hot reload is enabled', () => {
+      const ctx = {
+        options: {liveReload: 'hot-reload'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithoutHrScript, ctx)).toEqual(htmlWithHrScript)
+    })
+
+    test('does not inject the hot reload script if missing from SFR when hot reload is disabled', () => {
+      const ctx = {
+        options: {liveReload: 'off'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithoutHrScript, ctx)).toEqual(htmlWithoutHrScript)
+    })
+  })
 
   // eslint-disable-next-line vitest/no-disabled-tests
   test.skip('emits hot-reload events with proper data', async () => {
