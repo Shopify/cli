@@ -2,10 +2,12 @@ import {render} from '../storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
+import {inferLocalHotReloadScriptPath} from '../../theme-fs.js'
 import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
 import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
+import {readFile} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'node:events'
 import type {HotReloadEventPayload, HotReloadEvent} from '@shopify/theme-hot-reload'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
@@ -154,7 +156,9 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         .catch(() => {})
 
       return eventStream.send().then(() => eventStream.flush())
-    } else if (query.has('hmr-log')) {
+    }
+
+    if (query.has('hmr-log')) {
       const message = parseJSON(query.get('hmr-log') ?? '', null) as null | {
         type: string
         headline: string
@@ -176,7 +180,15 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       }
 
       return null
-    } else if (query.has('section_id') || query.has('app_block_id')) {
+    }
+
+    if (event.path === localHotReloadScriptEndpoint) {
+      return readFile(inferLocalHotReloadScriptPath())
+        .then((content) => new Response(content, {headers: {'Content-Type': 'application/javascript'}}))
+        .catch((error) => new Response(error.message, {status: 404}))
+    }
+
+    if (query.has('section_id') || query.has('app_block_id')) {
       const sectionId = query.get('section_id') ?? ''
       const appBlockId = query.get('app_block_id') ?? ''
       const browserPathname = event.path.split('?')[0] ?? ''
@@ -256,12 +268,14 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
   })
 }
 
+export const triggerBrowserFullReload = (key: string) => emitHotReloadEvent({type: 'full', key})
+
 export function triggerHotReload(
   ctx: DevServerContext,
   onSync: ThemeFSEventPayload['onSync'],
   event: {type: 'update' | 'delete'; key: string; payload?: HotReloadEventPayload},
 ) {
-  const fullReload = () => emitHotReloadEvent({type: 'full', key: event.key})
+  const fullReload = () => triggerBrowserFullReload(event.key)
 
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
@@ -313,22 +327,29 @@ function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
 
 export const hotReloadScriptId = 'hot-reload-client'
 export const hotReloadScriptUrl = 'https://unpkg.com/@shopify/theme-hot-reload'
+const hotReloadScriptRE = new RegExp(`<script id="${hotReloadScriptId}"[^>]*>[^<]*</script>`)
+const localHotReloadScriptEndpoint = '/@shopify/theme-hot-reload'
 
 /**
  * Injects a `<script>` tag in the HTML Head containing
  * inlined code for HotReload.
  */
 export function handleHotReloadScriptInjection(html: string, ctx: DevServerContext) {
-  const shouldEnableHotReload = ctx.options.liveReload !== 'off'
-  const alreadyIncludesHotReload = html.includes(`<script id="${hotReloadScriptId}"`)
+  if (ctx.options.liveReload === 'off') return html.replace(hotReloadScriptRE, '')
 
-  if (alreadyIncludesHotReload) {
-    if (shouldEnableHotReload) return html
-    return html.replace(new RegExp(`<script id="${hotReloadScriptId}"[^>]*>[^<]*</script>`), '')
+  if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD) {
+    // When running locally, use the local script for easy development.
+    return html
+      .replace(hotReloadScriptRE, '')
+      .replace(/<\/head>/, `<script id="${hotReloadScriptId}" src="${localHotReloadScriptEndpoint}"></script></head>`)
   }
 
-  if (!shouldEnableHotReload) return html
+  if (html.includes(`<script id="${hotReloadScriptId}"`)) {
+    // Already injected in SFR, do nothing
+    return html
+  }
 
+  // Inject the HotReload script in the HTML Head
   return html.replace(/<\/head>/, `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head>`)
 }
 
