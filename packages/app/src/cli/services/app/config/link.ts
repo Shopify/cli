@@ -144,6 +144,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
+    if (options.isNewApp) remoteApp.newApp = true
 
     return {
       remoteApp,
