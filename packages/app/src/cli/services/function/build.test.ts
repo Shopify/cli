@@ -142,7 +142,7 @@ describe('bundleExtension', () => {
   test('errors if shopify library is not on a compatible version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const incompatibleVersion = '0.0.1'
+      const incompatibleVersion = '999.0.0'
       const ourFunction = await testFunctionExtension({dir: tmpDir})
       ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
       await installShopifyLibrary(tmpDir)

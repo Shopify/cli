@@ -187,6 +187,13 @@ export async function buildFunctionExtension(
       await writeFile(bundlePath, base64Contents)
     }
   } catch (error) {
+    // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.
+    // In this case, we need to keep the ESBuild details for the logs. (the `errors` array).
+    // If the error is already an AbortError, we can just rethrow it.
+    if (error instanceof AbortError) {
+      throw error
+    }
+
     const errorMessage = (error as Error).message ?? 'Unknown error occurred'
     throw new AbortError('Failed to build function.', errorMessage)
   } finally {
