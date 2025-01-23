@@ -1,0 +1,17 @@
+name: Deprecate shopify-cli-extensions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Deprecate shopify-cli-extensions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deprecate
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+          npm deprecate @shopify/shopify-cli-extensions@"*" "$MESSAGE"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          MESSAGE: Please use @shopify/cli instead.
