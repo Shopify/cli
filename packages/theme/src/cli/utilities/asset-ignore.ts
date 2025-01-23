@@ -2,9 +2,11 @@ import {uniqBy} from '@shopify/cli-kit/common/array'
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
 const templatesRegex = /templates\/\*(\.(json|liquid))?$/
+const warnedPatterns = new Set<string>()
 
 export function applyIgnoreFilters<T extends {key: string}>(
   files: T[],
@@ -86,6 +88,15 @@ function matchGlob(key: string, pattern: string) {
   const result = originalMatchGlob(key, pattern, matchOpts)
 
   if (result) return true
+
+  if (!pattern.includes('*') && pattern.endsWith('/') && !warnedPatterns.has(pattern)) {
+    warnedPatterns.add(pattern)
+    renderWarning({
+      headline: 'Directory pattern not supported.',
+      body: `Try using ${pattern}* or ${pattern}*.filename instead.`,
+    })
+    return false
+  }
 
   // When the the standard match fails and the pattern includes '/*.', we
   // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
