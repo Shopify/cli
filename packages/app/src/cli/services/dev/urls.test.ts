@@ -217,6 +217,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       appDirectory: '/path',
       newApp: true,
       apiKey: 'api-key',
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
 
     // When
@@ -233,6 +238,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       appDirectory: '/path',
       cachedUpdateURLs: true,
       apiKey: 'api-key',
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
 
     // When
@@ -249,6 +259,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       appDirectory: '/path',
       cachedUpdateURLs: false,
       apiKey: 'api-key',
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
 
     // When
@@ -264,6 +279,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -280,6 +300,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
@@ -296,6 +321,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -316,6 +346,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       appDirectory: '/path',
       apiKey: 'api-key',
       localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}, 'current') as AppLinkedInterface,
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -336,6 +371,11 @@ describe('shouldOrPromptUpdateURLs', () => {
       appDirectory: '/path',
       apiKey: 'api-key',
       localApp: localApp as AppLinkedInterface,
+      developerPlatformClient: testDeveloperPlatformClient(),
+      newURLs: {
+        applicationUrl: 'https://example.com/home',
+        redirectUrlWhitelist: ['https://example.com/auth/callback'],
+      },
     }
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
