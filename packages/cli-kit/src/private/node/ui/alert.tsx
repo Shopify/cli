@@ -12,7 +12,7 @@ const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
 }
 
 const typeToLogger: {[key in AlertProps['type']]: Logger} = {
-  info: consoleLog,
+  info: consoleWarn,
   warning: consoleWarn,
   success: consoleLog,
   error: consoleError,

@@ -249,9 +249,23 @@ export const clearCollectedLogs = (): void => {
 }
 
 /**
- * Ouputs information to the user.
+ * Outputs command result information to the user.
+ * Result messages don't get additional formatting.
+ * Note: By default, result messages are logged at info level to stdout.
+ *
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
+ */
+export function outputResult(content: OutputMessage, logger: Logger = consoleLog): void {
+  const message = stringifyMessage(content)
+  if (isUnitTest()) collectLog('info', content)
+  outputWhereAppropriate('info', logger, message)
+}
+
+/**
+ * Logs information at the info level.
  * Info messages don't get additional formatting.
- * Note: Info messages are sent through the standard output.
+ * Note: By default, info messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
@@ -265,12 +279,12 @@ export function outputInfo(content: OutputMessage, logger: Logger = consoleWarn)
 /**
  * Outputs a success message to the user.
  * Success messages receive a special formatting to make them stand out in the console.
- * Note: Success messages are sent through the standard output.
+ * Note: Success messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputSuccess(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputSuccess(content: OutputMessage, logger: Logger = consoleWarn): void {
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', logger, message)
@@ -279,21 +293,21 @@ export function outputSuccess(content: OutputMessage, logger: Logger = consoleLo
 /**
  * Outputs a completed message to the user.
  * Completed message receive a special formatting to make them stand out in the console.
- * Note: Completed messages are sent through the standard output.
+ * Note: Completed messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputCompleted(content: OutputMessage, logger: Logger = consoleLog): void {
+export function outputCompleted(content: OutputMessage, logger: Logger = consoleWarn): void {
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
   outputWhereAppropriate('info', logger, message)
 }
 
 /**
- * Ouputs debug information to the user. By default these output is hidden unless the user calls the CLI with --verbose.
+ * Logs a message at the debug level. By default these output is hidden unless the user calls the CLI with --verbose.
  * Debug messages don't get additional formatting.
- * Note: Debug messages are sent through the standard output.
+ * Note: By default, debug messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
@@ -305,9 +319,9 @@ export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn
 }
 
 /**
- * Outputs a warning message to the user.
+ * Logs a message at the warning level.
  * Warning messages receive a special formatting to make them stand out in the console.
- * Note: Warning messages are sent through the standard output.
+ * Note: By default, warning messages are sent through the standard error.
  *
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
