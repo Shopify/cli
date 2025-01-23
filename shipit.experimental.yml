@@ -7,21 +7,9 @@ dependencies:
     # 404 issues like the one described in this comment:
     # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
     - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc .yarnrc
-    - curl -fsSL https://get.pnpm.io/install.sh | PNPM_VERSION=8.15.7 SHELL=`which bash` bash -
-    - bash -i -c "pnpm install"
 deploy:
   interval: 24h
   max_commits: null
   override:
-    - |-
-      bash -i -c 'echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-experimental-build.md'
-    - bash -i -c "npm_config_loglevel=verbose pnpm clean"
-    # Experimental snapshots can't be made from prerelease mode, so exit prerelease
-    # mode. But don't attempt to exit if we're in regular mode, when exiting
-    # will fail.
-    - bash -i -c "if [ -f '.changeset/pre.json' ]; then npm_config_loglevel=verbose pnpm changeset pre exit; fi"
-    - bash -i -c "npm_config_loglevel=verbose pnpm changeset version --snapshot experimental"
-    - bash -i -c "npm_config_loglevel=verbose pnpm changeset-build-no-docs"
-    - bash -i -c "npm_config_loglevel=verbose NODE_ENV=production pnpm bundle"
-    - bash -i -c "npm_config_loglevel=verbose node bin/create-cli-duplicate-package.js"
-    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
+    - npm deprecate @shopify/shopify-cli-extensions@"*" "Please use @shopify/cli instead"
+    - npm deprecate @shopify/ngrok@"*" "This package is deprecated"
