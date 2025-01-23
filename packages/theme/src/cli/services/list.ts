@@ -14,7 +14,7 @@ interface Options {
   json: boolean
 }
 
-export async function list(adminSession: AdminSession, options: Options) {
+export async function list(options: Options, adminSession: AdminSession) {
   const store = adminSession.storeFqdn
   const filter = new Filter({
     ...ALLOWED_ROLES.reduce((roles: FilterProps, role) => {

@@ -1,6 +1,6 @@
+/* eslint-disable no-console */
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
@@ -38,10 +38,9 @@ export function uploadTheme(
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions = {},
 ) {
+  console.log(`[${theme.id}] Starting uploadTheme`)
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults = new Map<string, Result>()
-  const getProgress = (params: {current: number; total: number}) =>
-    `[${Math.round((params.current / params.total) * 100)}%]`
 
   const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
 
@@ -59,7 +58,6 @@ export function uploadTheme(
     : deleteJobPromise.then((result) => result.promise)
 
   if (options?.backgroundWorkCatch) {
-    // Aggregate all backgorund work in a single promise and handle errors
     Promise.all([
       themeCreationPromise,
       uploadJobPromise.then((result) => result.promise),
@@ -74,22 +72,18 @@ export function uploadTheme(
       if (options?.deferPartialWork) return
 
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
-      await renderTasksToStdErr(
-        createIntervalTask({
-          promise: uploadPromise,
-          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
-          timeout: 1000,
-        }),
-      )
+      const uploadPercent =
+        uploadProgress.total > 0 ? Math.round((uploadProgress.current / uploadProgress.total) * 100) : 0
+      console.log(`[${theme.id}] [${uploadPercent}%] Uploading files to remote theme`)
+      await uploadPromise
+      console.log(`[${theme.id}] [100%] Completed uploading files`)
 
       const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
-      await renderTasksToStdErr(
-        createIntervalTask({
-          promise: deletePromise,
-          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-          timeout: 1000,
-        }),
-      )
+      const deletePercent =
+        deleteProgress.total > 0 ? Math.round((deleteProgress.current / deleteProgress.total) * 100) : 0
+      console.log(`[${theme.id}] [${deletePercent}%] Cleaning remote theme`)
+      await deletePromise
+      console.log(`[${theme.id}] [100%] Completed cleaning remote theme`)
     },
   }
 }

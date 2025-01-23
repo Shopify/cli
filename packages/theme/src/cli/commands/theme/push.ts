@@ -1,8 +1,12 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push, PushFlags} from '../../services/push.js'
+import {push} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+
+type PushFlags = OutputFlags<typeof Push.flags>
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -39,6 +43,8 @@ export default class Push extends ThemeCommand {
     `
 
   static description = this.descriptionWithoutMarkdown()
+
+  static multiEnvironmentsFlags = ['store', 'password', 'force']
 
   static flags = {
     ...globalFlags,
@@ -103,29 +109,27 @@ export default class Push extends ThemeCommand {
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Push)
-
-    const pushFlags: PushFlags = {
-      path: flags.path,
-      password: flags.password,
-      store: flags.store,
-      theme: flags.theme,
-      development: flags.development,
-      live: flags.live,
-      unpublished: flags.unpublished,
-      nodelete: flags.nodelete,
-      only: flags.only,
-      ignore: flags.ignore,
-      json: flags.json,
-      allowLive: flags['allow-live'],
-      publish: flags.publish,
-      force: flags.force,
-      noColor: flags['no-color'],
-      verbose: flags.verbose,
-      strict: flags.strict,
-    }
-
-    await push(pushFlags)
+  async command(flags: PushFlags, adminSession: AdminSession) {
+    await push(
+      {
+        path: flags.path,
+        password: flags.password,
+        store: flags.store,
+        theme: flags.theme,
+        development: flags.development,
+        live: flags.live,
+        unpublished: flags.unpublished,
+        nodelete: flags.nodelete,
+        only: flags.only,
+        ignore: flags.ignore,
+        json: flags.json,
+        allowLive: flags['allow-live'],
+        publish: flags.publish,
+        force: flags.force,
+        noColor: flags['no-color'],
+        verbose: flags.verbose,
+      },
+      adminSession,
+    )
   }
 }

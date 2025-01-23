@@ -29,7 +29,7 @@ export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
 const CART_PATTERN = /^\/cart\//
-const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?)?\/?$/
+const ACCOUNT_PATTERN = /^\/account(\/login\/(multipass|challenge)(\/[^/]+)?)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
 

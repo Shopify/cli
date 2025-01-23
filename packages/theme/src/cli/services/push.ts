@@ -104,7 +104,7 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags): Promise<void> {
+export async function push(flags: PushFlags, adminSession2?: AdminSession): Promise<void> {
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -118,7 +118,6 @@ export async function push(flags: PushFlags): Promise<void> {
   }
 
   const {path} = flags
-
   configureCLIEnvironment({
     verbose: flags.verbose,
     noColor: flags.noColor,
@@ -126,8 +125,14 @@ export async function push(flags: PushFlags): Promise<void> {
 
   const force = flags.force ?? false
 
-  const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  let adminSession: AdminSession
+
+  if (!adminSession2) {
+    const store = ensureThemeStore({store: flags.store})
+    adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  } else {
+    adminSession = adminSession2
+  }
 
   const workingDirectory = path ? resolvePath(path) : cwd()
   if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {

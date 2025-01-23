@@ -30,5 +30,6 @@ export const themeFlags = {
     char: 'e',
     description: 'The environment to apply to the current command.',
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
+    multiple: true,
   }),
 }

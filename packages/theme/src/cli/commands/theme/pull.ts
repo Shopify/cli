@@ -1,8 +1,12 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {pull, PullFlags} from '../../services/pull.js'
+import {pull} from '../../services/pull.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+
+type PullFlags = OutputFlags<typeof Pull.flags>
 
 export default class Pull extends ThemeCommand {
   static summary = 'Download your remote theme files locally.'
@@ -12,6 +16,8 @@ export default class Pull extends ThemeCommand {
 If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.`
 
   static description = this.descriptionWithoutMarkdown()
+
+  static multiEnvironmentsFlags = ['store', 'password', 'force']
 
   static flags = {
     ...globalFlags,
@@ -56,23 +62,23 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Pull)
-    const pullFlags: PullFlags = {
-      path: flags.path,
-      password: flags.password,
-      store: flags.store,
-      theme: flags.theme,
-      development: flags.development,
-      live: flags.live,
-      nodelete: flags.nodelete,
-      only: flags.only,
-      ignore: flags.ignore,
-      force: flags.force,
-      verbose: flags.verbose,
-      noColor: flags['no-color'],
-    }
-
-    await pull(pullFlags)
+  async command(flags: PullFlags, adminSession: AdminSession) {
+    await pull(
+      {
+        path: flags.path,
+        password: flags.password,
+        store: flags.store,
+        theme: flags.theme,
+        development: flags.development,
+        live: flags.live,
+        nodelete: flags.nodelete,
+        only: flags.only,
+        ignore: flags.ignore,
+        force: flags.force,
+        verbose: flags.verbose,
+        noColor: flags['no-color'],
+      },
+      adminSession,
+    )
   }
 }
