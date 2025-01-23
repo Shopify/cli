@@ -3,7 +3,7 @@ import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-e
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
 import {inferLocalHotReloadScriptPath} from '../../theme-fs.js'
-import {createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery} from 'h3'
+import {createError, createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, send, sendError} from 'h3'
 import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
@@ -184,8 +184,8 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
     if (event.path === localHotReloadScriptEndpoint) {
       return readFile(inferLocalHotReloadScriptPath())
-        .then((content) => new Response(content, {headers: {'Content-Type': 'application/javascript'}}))
-        .catch((error) => new Response(error.message, {status: 404}))
+        .then((content) => send(event, content, 'application/javascript'))
+        .catch((cause) => sendError(event, createError({cause})))
     }
 
     if (query.has('section_id') || query.has('app_block_id')) {
