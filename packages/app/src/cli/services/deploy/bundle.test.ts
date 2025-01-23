@@ -1,12 +1,17 @@
 import {bundleAndBuildExtensions} from './bundle.js'
-import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
-import {AppInterface} from '../../models/app/app.js'
+import {
+  testAppLinked,
+  testFunctionExtension,
+  testThemeExtensions,
+  testUIExtension,
+} from '../../models/app/app.test-data.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('bundleAndBuildExtensions', () => {
-  let app: AppInterface
+  let app: AppLinkedInterface
 
   test('generates a manifest.json', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
@@ -19,7 +24,7 @@ describe('bundleAndBuildExtensions', () => {
       uiExtension.buildForBundle = extensionBundleMock
       const themeExtension = await testThemeExtensions()
       themeExtension.buildForBundle = extensionBundleMock
-      app = testApp({allExtensions: [uiExtension, themeExtension]})
+      app = testAppLinked({allExtensions: [uiExtension, themeExtension]})
 
       const extensions: {[key: string]: string} = {}
       for (const extension of app.allExtensions) {
@@ -82,7 +87,7 @@ describe('bundleAndBuildExtensions', () => {
         file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
       })
       functionExtension.buildForBundle = extensionBundleMock
-      const app = testApp({allExtensions: [functionExtension]})
+      const app = testAppLinked({allExtensions: [functionExtension]})
 
       const extensions: {[key: string]: string} = {}
       for (const extension of app.allExtensions) {

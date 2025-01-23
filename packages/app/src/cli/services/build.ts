@@ -1,13 +1,13 @@
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {installJavy} from './function/build.js'
-import {AppInterface, Web} from '../models/app/app.js'
+import {AppLinkedInterface, Web} from '../models/app/app.js'
 import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 interface BuildOptions {
-  app: AppInterface
+  app: AppLinkedInterface
   skipDependenciesInstallation: boolean
   apiKey?: string
 }
@@ -40,7 +40,14 @@ async function build(options: BuildOptions) {
         return {
           prefix: ext.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            await ext.build({stdout, stderr, signal, app: options.app, environment: 'production'})
+            await ext.build({
+              stdout,
+              stderr,
+              signal,
+              app: options.app,
+              environment: 'production',
+              appURL: options.app.configuration.application_url,
+            })
           },
         }
       }),

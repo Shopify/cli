@@ -1,4 +1,4 @@
-import {AppInterface} from '../../models/app/app.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
@@ -9,7 +9,7 @@ import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
 interface BundleOptions {
-  app: AppInterface
+  app: AppLinkedInterface
   bundlePath?: string
   identifiers?: Identifiers
 }
@@ -35,7 +35,14 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
           prefix: extension.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await extension.buildForBundle(
-              {stderr, stdout, signal, app: options.app, environment: 'production'},
+              {
+                stderr,
+                stdout,
+                signal,
+                app: options.app,
+                environment: 'production',
+                appURL: options.app.configuration.application_url,
+              },
               bundleDirectory,
               options.identifiers,
             )
