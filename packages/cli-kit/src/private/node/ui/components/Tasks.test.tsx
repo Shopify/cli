@@ -65,7 +65,7 @@ describe('Tasks', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁
+      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁
       task 1 ..."
     `)
     expect(firstTaskFunction).toHaveBeenCalled()
@@ -95,7 +95,7 @@ describe('Tasks', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▂▃▄▅▆▇█▇▆▅▄▃▂▁▁
+      "▁▁▂▃▄▅▆▇█▇▆▅▄▃▂
       task 1 ..."
     `)
     expect(firstTaskFunction).toHaveBeenCalled()

@@ -15,13 +15,10 @@ function rainbow(text: string, frame: number) {
 }
 
 function rotated(text: string, steps: number) {
-  const textLength = text.length
-  return text
-    .split('')
-    .map((_, index) => {
-      return text[(index + steps) % textLength]
-    })
-    .join('')
+  const normalizedSteps = steps % text.length
+  const start = text.slice(-normalizedSteps)
+  const end = text.slice(0, -normalizedSteps)
+  return start + end
 }
 
 /**
