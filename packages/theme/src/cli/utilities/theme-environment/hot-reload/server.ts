@@ -8,6 +8,7 @@ import {
   defineEventHandler,
   getProxyRequestHeaders,
   getQuery,
+  send,
   sendError,
   type H3Error,
 } from 'h3'
@@ -191,8 +192,8 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
 
     if (event.path === localHotReloadScriptEndpoint) {
       return readFile(inferLocalHotReloadScriptPath())
-        .then((content) => new Response(content, {headers: {'Content-Type': 'application/javascript'}}))
-        .catch((error) => new Response(error.message, {status: 404}))
+        .then((content) => send(event, content, 'application/javascript'))
+        .catch((cause) => sendError(event, createError({cause})))
     }
 
     if (query.has('section_id') || query.has('app_block_id')) {
