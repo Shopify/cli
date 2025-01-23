@@ -192,8 +192,8 @@ export function renderLinks(urls: {local: string; giftCard: string; themeEditor:
       [
         {
           link: {
-            label: 'Customize your theme at the theme editor',
-            url: `${remoteUrl}/admin/themes/${themeId}/editor?hr=${port}`,
+            label: `Preview your gift cards ${chalk.cyan('(g)')}`,
+            url: urls.giftCard,
           },
         },
       ],
