@@ -1,7 +1,7 @@
 import {sourcesForApp} from './utils.js'
 import {sources} from './sources.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {outputInfo, formatSection} from '@shopify/cli-kit/node/output'
+import {outputResult, formatSection} from '@shopify/cli-kit/node/output'
 import {describe, test, vi, expect} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/output')
@@ -19,6 +19,6 @@ describe('sources', () => {
     // Then
     expect(formatSection).toHaveBeenCalledWith('extensions', 'extensions.source1\nextensions.source2')
     expect(formatSection).toHaveBeenCalledWith('arbitrary', 'arbitrary.text')
-    expect(outputInfo).toHaveBeenCalledWith('formatted section')
+    expect(outputResult).toHaveBeenCalledWith('formatted section')
   })
 })

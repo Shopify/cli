@@ -4,7 +4,7 @@ import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
 import {
   collectLog,
   consoleError,
-  consoleLog,
+  consoleWarn,
   Logger,
   LogLevel,
   outputContent,
@@ -594,7 +594,7 @@ interface RenderTextOptions {
  * Hello world!
  *
  */
-export function renderText({text, logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
+export function renderText({text, logLevel = 'info', logger = consoleWarn}: RenderTextOptions) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 

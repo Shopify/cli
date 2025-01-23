@@ -5,7 +5,7 @@ import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/fil
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 
 interface Options {
   role?: Role
@@ -32,7 +32,7 @@ export async function list(adminSession: AdminSession, options: Options) {
   }
 
   if (options.json) {
-    return outputInfo(JSON.stringify(storeThemes, null, 2))
+    return outputResult(JSON.stringify(storeThemes, null, 2))
   }
 
   const themes = storeThemes.map(({id, name, role}) => {

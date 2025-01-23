@@ -1,4 +1,4 @@
-import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../public/node/output.js'
+import {collectLog, consoleWarn, Logger, LogLevel, outputWhereAppropriate} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {treeKill} from '../../public/node/tree-kill.js'
 import {ReactElement} from 'react'
@@ -13,7 +13,7 @@ interface RenderOnceOptions {
 
 export function renderOnce(
   element: JSX.Element,
-  {logLevel = 'info', logger = consoleLog, renderOptions}: RenderOnceOptions,
+  {logLevel = 'info', logger = consoleWarn, renderOptions}: RenderOnceOptions,
 ) {
   const {output, unmount} = renderString(element, renderOptions)
 
