@@ -10,15 +10,7 @@ import {Box, Text, useStdin, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
-// Chars that can be arranged to form a colorless horizontal figure that displays progress as it moves.
-// The string is 15 chars long so it can always be displayed even within a box inside a 20-char-wide terminal.
-const hillString = '▁▂▃▄▅▆▇█▇▆▅▄▃▂▁'
-// Like the hill string, but forming a gentler slope for motion that is less jarring
-const gradualHillString = hillString
-  .split('')
-  .map((char) => char.repeat(2).split(''))
-  .flat()
-  .join('')
+const hillString = '▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁'
 
 export interface Task<TContext = unknown> {
   title: string
@@ -81,9 +73,7 @@ function Tasks<TContext>({
   const {twoThirds} = useLayout()
   let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   if (noColor ?? !shouldDisplayColors()) {
-    const fittingPattern = gradualHillString.length <= twoThirds ? gradualHillString : hillString
-    const fullyFittingRepeats = Math.floor(twoThirds / fittingPattern.length)
-    loadingBar = fittingPattern.repeat(Math.max(1, fullyFittingRepeats))
+    loadingBar = hillString.repeat(Math.ceil(twoThirds / hillString.length))
   }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
@@ -138,7 +128,7 @@ function Tasks<TContext>({
 
   return state === TasksState.Loading && !isAborted ? (
     <Box flexDirection="column">
-      <TextAnimation text={loadingBar} />
+      <TextAnimation text={loadingBar} maxWidth={twoThirds} />
       <Text>{currentTask.title} ...</Text>
     </Box>
   ) : null

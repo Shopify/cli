@@ -65,13 +65,13 @@ describe('Tasks', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁
+      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆
       task 1 ..."
     `)
     expect(firstTaskFunction).toHaveBeenCalled()
   })
 
-  test('shrinks the no-color display for narrow screens', async () => {
+  test('truncates the no-color display correctly for narrow screens', async () => {
     // Given
     vi.mocked(useStdout).mockReturnValue({
       stdout: new Stdout({
@@ -95,7 +95,7 @@ describe('Tasks', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▁▁▂▃▄▅▆▇█▇▆▅▄▃▂
+      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆
       task 1 ..."
     `)
     expect(firstTaskFunction).toHaveBeenCalled()
