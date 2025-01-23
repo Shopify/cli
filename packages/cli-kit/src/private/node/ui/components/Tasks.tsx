@@ -81,14 +81,9 @@ function Tasks<TContext>({
   const {twoThirds} = useLayout()
   let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   if (noColor ?? !shouldDisplayColors()) {
-    // fill loading bar with the no color chars, repeating until the length is two thirds but only using a whole number repeat of the no color chars
-    const repeatCount = Math.floor(twoThirds / gradualHillString.length)
-    if (repeatCount === 0) {
-      const shortRepeatCount = Math.floor(twoThirds / hillString.length)
-      loadingBar = hillString.repeat(Math.max(1, shortRepeatCount))
-    } else {
-      loadingBar = gradualHillString.repeat(repeatCount)
-    }
+    const fittingPattern = gradualHillString.length <= twoThirds ? gradualHillString : hillString
+    const fullyFittingRepeats = Math.floor(twoThirds / fittingPattern.length)
+    loadingBar = fittingPattern.repeat(Math.max(1, fullyFittingRepeats))
   }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
