@@ -7,6 +7,15 @@ export interface themedev {
   '-e, --environment <value>'?: string
 
   /**
+   * Controls the visibility of the error overlay when an theme asset upload fails:
+- silent Prevents the error overlay from appearing.
+- default Displays the error overlay.
+      
+   * @environment SHOPIFY_FLAG_ERROR_OVERLAY
+   */
+  '--error-overlay <value>'?: string
+
+  /**
    * Set which network interface the web server listens on. The default value is 127.0.0.1.
    * @environment SHOPIFY_FLAG_HOST
    */

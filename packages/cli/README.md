@@ -1796,9 +1796,10 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
-    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--port <value>]
-    [-s <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+  $ shopify theme dev [-e <value>] [--error-overlay silent|default] [--host <value>] [-x <value>]
+    [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password
+    <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
+    [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1820,6 +1821,13 @@ FLAGS
 
   -x, --ignore=<value>...
       Skip hot reloading any files that match the specified pattern.
+
+  --error-overlay=<option>
+      [default: default] Controls the visibility of the error overlay when an theme asset upload fails:
+      - silent Prevents the error overlay from appearing.
+      - default Displays the error overlay.
+
+      <options: silent|default>
 
   --host=<value>
       Set which network interface the web server listens on. The default value is 127.0.0.1.

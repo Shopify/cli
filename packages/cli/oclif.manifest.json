@@ -5123,6 +5123,19 @@
           "name": "environment",
           "type": "option"
         },
+        "error-overlay": {
+          "default": "default",
+          "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      ",
+          "env": "SHOPIFY_FLAG_ERROR_OVERLAY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "error-overlay",
+          "options": [
+            "silent",
+            "default"
+          ],
+          "type": "option"
+        },
         "force": {
           "allowNo": false,
           "char": "f",
@@ -6396,6 +6409,19 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "environment",
+          "type": "option"
+        },
+        "error-overlay": {
+          "default": "default",
+          "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      ",
+          "env": "SHOPIFY_FLAG_ERROR_OVERLAY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "error-overlay",
+          "options": [
+            "silent",
+            "default"
+          ],
           "type": "option"
         },
         "force": {
