@@ -1,7 +1,7 @@
 import versionList from './versions-list.js'
 import {renderCurrentlyUsedConfigInfo} from './context.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
-import {Organization, OrganizationSource} from '../models/organization.js'
+import {Organization} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -17,7 +17,6 @@ afterEach(() => {
 const ORG1: Organization = {
   id: 'org-id',
   businessName: 'name of org 1',
-  source: OrganizationSource.BusinessPlatform,
 }
 
 const remoteApp = testOrganizationApp({organizationId: ORG1.id, apiKey: 'api-key', title: 'app-title', id: 'app-id'})
@@ -143,13 +142,15 @@ describe('versions-list', () => {
 
     // Then
     expect(mockOutput.info())
-      .toMatchInlineSnapshot(`"VERSION       STATUS    MESSAGE        DATE CREATED         CREATED BY
-────────────  ────────  ─────────────  ───────────────────  ───────────
-versionTag    ★ active  message        2021-01-01 00:00:00  createdBy
-versionTag 2  released  message 2      2021-01-01 00:00:00  createdBy 2
-versionTag 3  released  long messa...  2021-01-01 00:00:00  createdBy 3
+      .toMatchInlineSnapshot(`
+        "VERSION       STATUS    MESSAGE        DATE CREATED         CREATED BY
+        ────────────  ────────  ─────────────  ───────────────────  ───────────
+        versionTag    ★ active  message        2021-01-01 00:00:00  createdBy
+        versionTag 2  released  message 2      2021-01-01 00:00:00  createdBy 2
+        versionTag 3  released  long messa...  2021-01-01 00:00:00  createdBy 3
 
-View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id/apps/app-id/versions )"`)
+        View all 31 app versions in the Developer Dashboard ( https://test.shopify.com/org-id/apps/app-id/versions )"
+      `)
   })
 
   test('render json when there are app versions', async () => {

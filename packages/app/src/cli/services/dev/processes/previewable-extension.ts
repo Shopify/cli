@@ -30,7 +30,7 @@ export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExte
   type: 'previewable-extension'
 }
 
-export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableExtensionOptions> = async (
+const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableExtensionOptions> = async (
   {stderr, stdout, abortSignal},
   {
     apiKey,

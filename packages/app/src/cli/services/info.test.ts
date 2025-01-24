@@ -1,6 +1,6 @@
 import {InfoOptions, info} from './info.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
-import {AppApiKeyAndOrgId, OrganizationApp, OrganizationSource} from '../models/organization.js'
+import {AppApiKeyAndOrgId, OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
@@ -29,7 +29,6 @@ const ORG1 = {
   flags: {},
   businessName: 'test',
   apps: {nodes: []},
-  source: OrganizationSource.BusinessPlatform,
 }
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
@@ -87,7 +86,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {...infoOptions(), webEnv: true})) as OutputMessage
+      const result = (await info(app, remoteApp, {...infoOptions(), webEnv: true})) as OutputMessage
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -107,7 +106,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {
+      const result = (await info(app, remoteApp, {
         ...infoOptions(),
         format: 'json',
         webEnv: true,
@@ -159,7 +158,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const result = (await info(app, remoteApp, infoOptions())) as AlertCustomSection[]
       const uiData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const checkoutData = tabularDataSectionFromInfo(result, 'checkout_ui_extension_external')
 
@@ -207,7 +206,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const result = (await info(app, remoteApp, infoOptions())) as AlertCustomSection[]
       const uiExtensionsData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const relevantExtension = extensionTitleRow(uiExtensionsData, 'handle-for-extension-1')
       const irrelevantExtension = extensionTitleRow(uiExtensionsData, 'point_of_sale')
@@ -241,7 +240,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, ORG1, {format: 'json', webEnv: false, developerPlatformClient})
+      const result = await info(app, remoteApp, {format: 'json', webEnv: false, developerPlatformClient})
 
       // Then
       expect(result).toBeInstanceOf(TokenizedString)

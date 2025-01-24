@@ -1,5 +1,3 @@
-import {gql} from 'graphql-request'
-
 export interface AppLogsSubscribeVariables {
   shopIds: string[]
   apiKey: string
@@ -13,13 +11,3 @@ export interface AppLogsSubscribeResponse {
     jwtToken: string
   }
 }
-
-export const AppLogsSubscribeMutation = gql`
-  mutation AppLogsSubscribe($apiKey: String!, $shopIds: [ID!]!) {
-    appLogsSubscribe(input: {apiKey: $apiKey, shopIds: $shopIds}) {
-      jwtToken
-      success
-      errors
-    }
-  }
-`

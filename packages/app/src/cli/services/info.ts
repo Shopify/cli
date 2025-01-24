@@ -4,7 +4,7 @@ import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {Organization, OrganizationApp} from '../models/organization.js'
+import {OrganizationApp} from '../models/organization.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {
@@ -29,11 +29,10 @@ export interface InfoOptions {
 export async function info(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
-  organization: Organization,
   options: InfoOptions,
 ): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.webEnv) {
-    return infoWeb(app, remoteApp, organization, options)
+    return infoWeb(app, remoteApp, options)
   } else {
     return infoApp(app, remoteApp, options)
   }
@@ -42,10 +41,9 @@ export async function info(
 async function infoWeb(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
-  organization: Organization,
   {format}: InfoOptions,
 ): Promise<OutputMessage> {
-  return outputEnv(app, remoteApp, organization, format)
+  return outputEnv(app, remoteApp, format)
 }
 
 async function infoApp(

@@ -69,7 +69,7 @@ interface ExtensionInitOptions {
   type: string
   name: string
   extensionFlavor: ExtensionFlavor | undefined
-  uid: string | undefined
+  uid: string
   onGetTemplateRepository: (url: string, destination: string) => Promise<void>
 }
 
@@ -83,7 +83,7 @@ export async function generateExtensionTemplate(
   )
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
   const url = options.cloneUrl || options.extensionTemplate.url
-  const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
+  const uid = randomUUID()
   const initOptions: ExtensionInitOptions = {
     directory,
     url,

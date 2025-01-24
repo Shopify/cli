@@ -1,7 +1,7 @@
 import link from './link.js'
 import {testOrganizationApp, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppApiKeyAndOrgId, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
+import {AppApiKeyAndOrgId, OrganizationApp} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -28,7 +28,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
     },
     async orgAndApps(orgId) {
       return {
-        organization: {id: orgId, businessName: 'test', source: OrganizationSource.BusinessPlatform},
+        organization: {id: orgId, businessName: 'test'},
         apps: [mockRemoteApp()],
         hasMorePages: false,
       }
@@ -65,7 +65,6 @@ describe('link, with minimal mocking', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue({
         id: '12345',
         businessName: 'test',
-        source: OrganizationSource.BusinessPlatform,
       })
 
       const options = {

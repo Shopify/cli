@@ -30,7 +30,7 @@ export async function setupAppWatcherProcess(options: AppWatcherProcessOptions):
   }
 }
 
-export const launchAppWatcher: DevProcessFunction<AppWatcherProcessOptions> = async (
+const launchAppWatcher: DevProcessFunction<AppWatcherProcessOptions> = async (
   {stdout, stderr, abortSignal},
   options: AppWatcherProcessOptions,
 ) => {

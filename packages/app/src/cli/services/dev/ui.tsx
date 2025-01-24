@@ -12,7 +12,6 @@ export async function renderDev({
   abortController,
   graphiqlUrl,
   graphiqlPort,
-  developerPreview,
   shopFqdn,
 }: DevProps) {
   if (terminalSupportsPrompting()) {
@@ -24,7 +23,6 @@ export async function renderDev({
         app={app}
         graphiqlUrl={graphiqlUrl}
         graphiqlPort={graphiqlPort}
-        developerPreview={developerPreview}
         isEditionWeek={isEditionWeek()}
         shopFqdn={shopFqdn}
       />,
@@ -33,22 +31,11 @@ export async function renderDev({
       },
     )
   } else {
-    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
+    await renderDevNonInteractive({processes, app, abortController, shopFqdn})
   }
 }
 
-async function renderDevNonInteractive({
-  processes,
-  app: {canEnablePreviewMode},
-  abortController,
-  developerPreview,
-}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
-  if (canEnablePreviewMode) {
-    await developerPreview.enable()
-    abortController?.signal.addEventListener('abort', async () => {
-      await developerPreview.disable()
-    })
-  }
+async function renderDevNonInteractive({processes, abortController}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
   return Promise.all(
     processes.map(async (concurrentProcess) => {
       await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)

@@ -1,9 +1,6 @@
 import {AccountInfo, fetchCurrentAccountInformation} from './partner-account-info.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {getCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
 import {clearCachedAccountInfo, getCachedAccountInfo, setCachedAccountInfo} from '../../utilities/app-conf-store.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -27,20 +24,16 @@ describe('fetchCurrentAccountInformation', () => {
     setCachedAccountInfo(userId, accountInfo)
 
     // When
-    const got = await fetchCurrentAccountInformation(testDeveloperPlatformClient(), userId)
+    const got = await fetchCurrentAccountInformation(userId)
 
     // Then
     expect(got).toEqual(accountInfo)
     expect(outputDebug).toHaveBeenCalledWith('Getting partner account info from cache')
-    expect(getCurrentAccountInfo).not.toHaveBeenCalled()
   })
 
   test('fetches and caches account info if not in cache', async () => {
-    // Given
-    vi.mocked(getCurrentAccountInfo).mockResolvedValue(accountInfo)
-
     // When
-    const got = await fetchCurrentAccountInformation(testDeveloperPlatformClient(), userId)
+    const got = await fetchCurrentAccountInformation(userId)
 
     // Then
     expect(got).toEqual(accountInfo)
@@ -53,10 +46,9 @@ describe('fetchCurrentAccountInformation', () => {
   test('when error fetching account info returns unknown partner info', async () => {
     // Given
     clearCachedAccountInfo()
-    vi.mocked(getCurrentAccountInfo).mockRejectedValue(new AbortError('Error'))
 
     // When
-    const got = await fetchCurrentAccountInformation(testDeveloperPlatformClient(), userId)
+    const got = await fetchCurrentAccountInformation(userId)
 
     // Then
     expect(got).toEqual({type: 'UnknownAccount'})

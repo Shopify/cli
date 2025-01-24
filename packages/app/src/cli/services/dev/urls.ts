@@ -1,9 +1,7 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfigurationInterface, AppLinkedInterface, CurrentAppConfiguration} from '../../models/app/app.js'
-import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {AppLinkedInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
@@ -182,40 +180,6 @@ function replaceHost(oldUrl: string, newUrl: string): string {
   const newUrlObject = new URL(newUrl)
   oldUrlObject.host = newUrlObject.host
   return oldUrlObject.toString().replace(/\/$/, '')
-}
-
-export async function updateURLs(
-  urls: PartnersURLs,
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-  localApp?: AppConfigurationInterface,
-): Promise<void> {
-  const variables: UpdateURLsVariables = {apiKey, ...urls}
-  const result: UpdateURLsSchema = await developerPlatformClient.updateURLs(variables)
-  if (result.appUpdate.userErrors.length > 0) {
-    const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(errors)
-  }
-
-  if (localApp && localApp.configuration.client_id === apiKey) {
-    const patch = {
-      application_url: urls.applicationUrl,
-      auth: {
-        redirect_urls: urls.redirectUrlWhitelist,
-      },
-      ...(urls.appProxy
-        ? {
-            app_proxy: {
-              url: urls.appProxy.proxyUrl,
-              subpath: urls.appProxy.proxySubPath,
-              prefix: urls.appProxy.proxySubPathPrefix,
-            },
-          }
-        : {}),
-    }
-
-    await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
-  }
 }
 
 export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Promise<PartnersURLs> {

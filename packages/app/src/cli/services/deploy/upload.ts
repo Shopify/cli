@@ -1,11 +1,8 @@
-import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
-import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppDeployOptions, AssetUrlSchema, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
-import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -14,47 +11,6 @@ import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui
 import {partition} from '@shopify/cli-kit/common/collection'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {cwd} from '@shopify/cli-kit/node/path'
-
-interface DeployThemeExtensionOptions {
-  /** The application API key */
-  apiKey: string
-
-  /** Set of local identifiers */
-  identifiers: Identifiers
-
-  /** The API client to send authenticated requests  */
-  developerPlatformClient: DeveloperPlatformClient
-}
-
-/**
- * Uploads theme extension(s)
- * @param options - The upload options
- */
-export async function uploadThemeExtensions(
-  themeExtensions: ExtensionInstance[],
-  options: DeployThemeExtensionOptions,
-): Promise<void> {
-  const {apiKey, identifiers, developerPlatformClient} = options
-  await Promise.all(
-    themeExtensions.map(async (themeExtension) => {
-      const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const themeId = identifiers.extensionIds[themeExtension.localIdentifier]!
-      const themeExtensionInput: ExtensionUpdateDraftMutationVariables = {
-        apiKey,
-        config: JSON.stringify(themeExtensionConfig),
-        context: undefined,
-        registrationId: themeId,
-        handle: themeExtension.handle,
-      }
-      const result = await developerPlatformClient.updateExtension(themeExtensionInput)
-      if (result.extensionUpdateDraft?.userErrors && result.extensionUpdateDraft?.userErrors.length > 0) {
-        const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-        throw new AbortError(errors)
-      }
-    }),
-  )
-}
 
 interface UploadExtensionsBundleOptions {
   /** The ID of the application */

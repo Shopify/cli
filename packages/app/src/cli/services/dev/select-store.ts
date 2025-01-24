@@ -1,19 +1,11 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
-import {
-  confirmConversionToTransferDisabledStorePrompt,
-  reloadStoreListPrompt,
-  selectStorePrompt,
-} from '../../prompts/dev.js'
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
+import {reloadStoreListPrompt, selectStorePrompt} from '../../prompts/dev.js'
+
+import {DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
-import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
-import {outputSuccess} from '@shopify/cli-kit/node/output'
+import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 
 /**
  * Select store from list or
@@ -30,7 +22,7 @@ export async function selectStore(
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> {
-  const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
+  const showDomainOnPrompt = true
   // If no stores, guide the developer through creating one
   // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
   let store = await selectStorePrompt({
@@ -53,12 +45,7 @@ export async function selectStore(
     store = await selectStore({stores, hasMorePages: false}, org, developerPlatformClient)
   }
 
-  let storeIsValid = await convertToTransferDisabledStoreIfNeeded(
-    store,
-    org.id,
-    developerPlatformClient,
-    'prompt-first',
-  )
+  let storeIsValid = await convertToTransferDisabledStoreIfNeeded(store)
   while (!storeIsValid) {
     // eslint-disable-next-line no-await-in-loop
     store = await selectStorePrompt({stores: [store], hasMorePages: false, showDomainOnPrompt})
@@ -66,7 +53,7 @@ export async function selectStore(
       throw new CancelExecution()
     }
     // eslint-disable-next-line no-await-in-loop
-    storeIsValid = await convertToTransferDisabledStoreIfNeeded(store, org.id, developerPlatformClient, 'prompt-first')
+    storeIsValid = await convertToTransferDisabledStoreIfNeeded(store)
   }
 
   return store
@@ -120,12 +107,7 @@ async function waitForCreatedStore(
  * @returns False, if the store is invalid and the user chose not to convert it. Otherwise true.
  * @throws If the store can't be found in the organization or we fail to make it a transfer-disabled store
  */
-export async function convertToTransferDisabledStoreIfNeeded(
-  store: OrganizationStore,
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-  conversionMode: 'prompt-first' | 'never',
-): Promise<boolean> {
+export async function convertToTransferDisabledStoreIfNeeded(store: OrganizationStore): Promise<boolean> {
   /**
    * It's not possible to convert stores to dev ones in spin environments. Should be created directly as development.
    * Against production (!isSpinEnvironment()), this allows you to reference other shops in a TOML file even if some of
@@ -140,51 +122,8 @@ export async function convertToTransferDisabledStoreIfNeeded(
     )
   }
 
-  switch (conversionMode) {
-    case 'prompt-first': {
-      const confirmed = await confirmConversionToTransferDisabledStorePrompt()
-      if (!confirmed) {
-        // tell caller the store is invalid and not converted. they may re-prompt etc.
-        return false
-      }
-      await convertStoreToTransferDisabled(store, orgId, developerPlatformClient)
-      return true
-    }
-    case 'never': {
-      throw new AbortError(
-        'The store you specified is not transfer-disabled',
-        "Try running 'dev --reset' and selecting a different store, or choosing to convert this one.",
-      )
-    }
-  }
-}
-
-/**
- * Convert a store to a transfer-disabled store so development apps can be installed
- * @param store - Store to convert
- * @param orgId - Current organization ID
- * @param developerPlatformClient - The client to access the platform API
- */
-async function convertStoreToTransferDisabled(
-  store: OrganizationStore,
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-) {
-  const variables: ConvertDevToTransferDisabledStoreVariables = {
-    input: {
-      organizationID: parseInt(orgId, 10),
-      shopId: store.shopId,
-    },
-  }
-  const result: ConvertDevToTransferDisabledSchema = await developerPlatformClient.convertToTransferDisabledStore(
-    variables,
+  throw new AbortError(
+    'The store you specified is not transfer-disabled',
+    "Try running 'dev --reset' and selecting a different store, or choosing to convert this one.",
   )
-  if (!result.convertDevToTestStore.convertedToTestStore) {
-    const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
-    throw new BugError(
-      `Error converting store ${store.shopDomain} to a transfer-disabled store: ${errors}`,
-      'This store might not be compatible with draft apps, please try a different store',
-    )
-  }
-  outputSuccess(`Converted ${store.shopDomain} to a transfer-disabled store`)
 }

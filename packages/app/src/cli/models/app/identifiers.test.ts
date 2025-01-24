@@ -168,7 +168,7 @@ type = "ui_extension"`,
           },
         },
         command: 'deploy',
-        developerPlatformClient: testDeveloperPlatformClient({supportsAtomicDeployments: true}),
+        developerPlatformClient: testDeveloperPlatformClient(),
       },
       {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
     )
@@ -208,12 +208,9 @@ describe('getAppIdentifiers', () => {
       })
 
       // When
-      const got = getAppIdentifiers(
-        {
-          app,
-        },
-        testDeveloperPlatformClient(),
-      )
+      const got = getAppIdentifiers({
+        app,
+      })
 
       // Then
       expect(got.app).toEqual('FOO')
@@ -238,7 +235,6 @@ describe('getAppIdentifiers', () => {
         {
           app,
         },
-        testDeveloperPlatformClient(),
         {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
       )
 
@@ -265,12 +261,9 @@ describe('getAppIdentifiers', () => {
       })
 
       // When
-      const got = getAppIdentifiers(
-        {
-          app,
-        },
-        testDeveloperPlatformClient({supportsAtomicDeployments: true}),
-      )
+      const got = getAppIdentifiers({
+        app,
+      })
 
       // Then
       expect(got.app).toEqual('FOO')
