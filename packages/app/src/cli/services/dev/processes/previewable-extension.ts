@@ -81,9 +81,6 @@ export async function setupPreviewableExtensionsProcess({
   checkoutCartUrl?: string
 }): Promise<PreviewableExtensionProcess | undefined> {
   const previewableExtensions = allExtensions.filter((ext) => ext.isPreviewable)
-  if (previewableExtensions.length === 0) {
-    return
-  }
 
   const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl)
 

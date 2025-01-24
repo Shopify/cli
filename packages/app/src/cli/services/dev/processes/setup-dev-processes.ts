@@ -63,6 +63,20 @@ export interface DevConfig {
   graphiqlKey?: string
 }
 
+/**
+ * Result of the setupDevProcesses function.
+ *
+ * appPreviewUrl is a direct URL to the app in the dev store.
+ * localProxyUrl is the URL that is exposed to the internet (usually the tunnel URL)
+ * graphiqlUrl is the URL that the GraphiQL server will be running at.
+ */
+export interface SetupDevProcessesResult {
+  processes: DevProcesses
+  appPreviewUrl: string
+  localProxyUrl: string
+  graphiqlUrl: string | undefined
+}
+
 export async function setupDevProcesses({
   localApp,
   remoteAppUpdated,
@@ -76,7 +90,8 @@ export async function setupDevProcesses({
   graphiqlKey,
 }: DevConfig): Promise<{
   processes: DevProcesses
-  previewUrl: string
+  appPreviewUrl: string
+  localProxyUrl: string
   graphiqlUrl: string | undefined
 }> {
   const apiKey = remoteApp.apiKey
@@ -180,13 +195,10 @@ export async function setupDevProcesses({
   // Add http server proxy & configure ports, for processes that need it
   const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort)
 
-  // Decide on the appropriate preview URL for a session with these processes
-  const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
-  const previewUrl = anyPreviewableExtensions.length > 0 ? `${network.proxyUrl}/extensions/dev-console` : appPreviewUrl
-
   return {
     processes: processesWithProxy,
-    previewUrl,
+    appPreviewUrl,
+    localProxyUrl: `${network.proxyUrl}/extensions/dev-console`,
     graphiqlUrl: shouldRenderGraphiQL
       ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
       : undefined,

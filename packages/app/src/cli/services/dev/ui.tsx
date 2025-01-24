@@ -7,10 +7,11 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 
 export async function renderDev({
   processes,
-  previewUrl,
+  appPreviewUrl,
+  localProxyUrl,
+  graphiqlUrl,
   app,
   abortController,
-  graphiqlUrl,
   graphiqlPort,
   developerPreview,
   shopFqdn,
@@ -20,7 +21,8 @@ export async function renderDev({
       <Dev
         processes={processes}
         abortController={abortController}
-        previewUrl={previewUrl}
+        appPreviewUrl={appPreviewUrl}
+        localProxyUrl={localProxyUrl}
         app={app}
         graphiqlUrl={graphiqlUrl}
         graphiqlPort={graphiqlPort}
@@ -42,7 +44,7 @@ async function renderDevNonInteractive({
   app: {canEnablePreviewMode},
   abortController,
   developerPreview,
-}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
+}: Omit<DevProps, 'appPreviewUrl' | 'localProxyUrl' | 'graphiqlPort'>) {
   if (canEnablePreviewMode) {
     await developerPreview.enable()
     abortController?.signal.addEventListener('abort', async () => {

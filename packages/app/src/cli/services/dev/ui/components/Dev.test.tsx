@@ -88,7 +88,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -169,7 +170,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -207,7 +209,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -234,7 +237,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -263,7 +267,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -307,7 +312,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -373,7 +379,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -433,7 +440,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -486,7 +494,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -529,7 +538,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -597,7 +607,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={{
@@ -655,7 +666,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -697,7 +709,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -761,7 +774,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -812,7 +826,8 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -852,7 +867,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -892,7 +908,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -930,7 +947,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
@@ -983,7 +1001,8 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
+        appPreviewUrl="https://shopify.com"
+        localProxyUrl="https://proxy-url.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={{

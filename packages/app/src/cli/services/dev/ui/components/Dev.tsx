@@ -25,7 +25,8 @@ export interface DeveloperPreviewController {
 export interface DevProps {
   processes: OutputProcess[]
   abortController: AbortController
-  previewUrl: string
+  localProxyUrl: string
+  appPreviewUrl: string
   graphiqlUrl?: string
   graphiqlPort: number
   app: {
@@ -52,7 +53,8 @@ const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: Exten
 const Dev: FunctionComponent<DevProps> = ({
   abortController,
   processes,
-  previewUrl,
+  appPreviewUrl,
+  localProxyUrl,
   graphiqlUrl = '',
   graphiqlPort,
   app,
@@ -63,11 +65,14 @@ const Dev: FunctionComponent<DevProps> = ({
 }) => {
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
 
+  const hasPreviewableExtensions = app.extensions.some((ext) => ext.isPreviewable)
+  const previewUrl = hasPreviewableExtensions ? localProxyUrl : appPreviewUrl
+
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const devSessionPollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const defaultStatusMessage = `Preview URL: ${previewUrl}${
+  const defaultStatusMessage = `Preview URL: ${appPreviewUrl}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
   }`
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)

@@ -41,7 +41,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
+      const appPreviewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
@@ -58,7 +58,8 @@ describe('ui', () => {
 
       await renderDev({
         processes,
-        previewUrl,
+        appPreviewUrl,
+        localProxyUrl: 'https://proxy-url.com',
         graphiqlUrl,
         graphiqlPort,
         app,
@@ -84,7 +85,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
+      const appPreviewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
@@ -101,7 +102,8 @@ describe('ui', () => {
 
       await renderDev({
         processes,
-        previewUrl,
+        appPreviewUrl,
+        localProxyUrl: 'https://proxy-url.com',
         graphiqlUrl,
         graphiqlPort,
         app,
@@ -123,7 +125,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
+      const appPreviewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
@@ -140,7 +142,8 @@ describe('ui', () => {
 
       await renderDev({
         processes,
-        previewUrl,
+        appPreviewUrl,
+        localProxyUrl: 'https://proxy-url.com',
         graphiqlUrl,
         graphiqlPort,
         app,
@@ -162,7 +165,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
+      const appPreviewUrl = 'https://lala.cloudflare.io/'
       const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
@@ -178,7 +181,17 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview, shopFqdn})
+      renderDev({
+        processes,
+        appPreviewUrl,
+        localProxyUrl: 'https://proxy-url.com',
+        graphiqlUrl,
+        graphiqlPort,
+        app,
+        abortController,
+        developerPreview,
+        shopFqdn,
+      })
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 

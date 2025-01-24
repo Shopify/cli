@@ -71,9 +71,9 @@ export interface DevOptions {
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
   await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  const {processes, graphiqlUrl, appPreviewUrl, localProxyUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
-  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
+  await launchDevProcesses({processes, appPreviewUrl, localProxyUrl, graphiqlUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -326,12 +326,14 @@ async function setupNetworkingOptions(
 
 async function launchDevProcesses({
   processes,
-  previewUrl,
+  appPreviewUrl,
+  localProxyUrl,
   graphiqlUrl,
   config,
 }: {
   processes: DevProcesses
-  previewUrl: string
+  appPreviewUrl: string
+  localProxyUrl: string
   graphiqlUrl: string | undefined
   config: DevConfig
 }) {
@@ -367,7 +369,8 @@ async function launchDevProcesses({
 
   return renderDev({
     processes: processesForTaskRunner,
-    previewUrl,
+    appPreviewUrl,
+    localProxyUrl,
     graphiqlUrl,
     graphiqlPort: config.graphiqlPort,
     app,
