@@ -158,15 +158,15 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       return eventStream.send().then(() => eventStream.flush())
     }
 
-    if (query.has('hmr-log')) {
-      const message = parseJSON(query.get('hmr-log') ?? '', null) as null | {
+    if (query.has('hr-log')) {
+      const message = parseJSON(query.get('hr-log') ?? '', null) as null | {
         type: string
         headline: string
         body?: string
       }
 
       if (message) {
-        message.headline = `[HMR] ${message.headline}`
+        message.headline = `[HotReload] ${message.headline}`
 
         if (message.type === 'error') {
           renderError(message)
@@ -175,7 +175,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
         } else if (message.type === 'info') {
           renderInfo(message)
         } else {
-          renderWarning({headline: `Unknown HMR log type: ${message.type}`})
+          renderWarning({headline: `Unknown HotReload log type: ${message.type}`})
         }
       }
 
