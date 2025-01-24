@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 import {hasGit, isTerminalInteractive} from './context/local.js'
-import {appendFileSync} from './fs.js'
+import {appendFileSync, detectEOL, fileExistsSync, readFileSync, writeFileSync} from './fs.js'
 import {AbortError} from './error.js'
-import {cwd} from './path.js'
+import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
@@ -61,6 +61,38 @@ export function createGitIgnore(directory: string, template: GitIgnoreTemplate):
   }
 
   appendFileSync(filePath, fileContent)
+}
+
+/**
+ * Add an entry to an existing .gitignore file.
+ *
+ * If the .gitignore file doesn't exist, or if the entry is already present,
+ * no changes will be made.
+ *
+ * @param root - The directory containing the .gitignore file.
+ * @param entry - The entry to add to the .gitignore file.
+ */
+export function addToGitIgnore(root: string, entry: string): void {
+  const gitIgnorePath = joinPath(root, '.gitignore')
+
+  if (!fileExistsSync(gitIgnorePath)) {
+    // When the .gitignore file does not exist, the CLI should not be opinionated about creating it
+    return
+  }
+
+  const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
+  const eol = detectEOL(gitIgnoreContent)
+
+  if (gitIgnoreContent.split(eol).some((line) => line.trim() === entry.trim())) {
+    // The file already existing in the .gitignore
+    return
+  }
+
+  if (gitIgnoreContent.endsWith(eol)) {
+    writeFileSync(gitIgnorePath, `${gitIgnoreContent}${entry}${eol}`)
+  } else {
+    writeFileSync(gitIgnorePath, `${gitIgnoreContent}${eol}${entry}${eol}`)
+  }
 }
 
 /**
