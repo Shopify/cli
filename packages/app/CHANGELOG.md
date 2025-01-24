@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.74.1
+
+### Patch Changes
+
+- 102ee88877: Allow use of `@shopify/shopify_function` version 0.x.y
+  - @shopify/cli-kit@3.74.1
+  - @shopify/theme@3.74.1
+  - @shopify/plugin-cloudflare@3.74.1
+
 ## 3.74.0
 
 ### Minor Changes
