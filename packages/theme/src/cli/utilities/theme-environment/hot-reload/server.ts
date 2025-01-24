@@ -189,6 +189,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
     }
 
     if (query.has('section_id') || query.has('app_block_id')) {
+      const sectionKey = query.get('section_key') ?? ''
       const sectionId = query.get('section_id') ?? ''
       const appBlockId = query.get('app_block_id') ?? ''
       const browserPathname = event.path.split('?')[0] ?? ''
@@ -205,7 +206,6 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
       const replaceTemplates: {[key: string]: string} = {}
 
       if (sectionId) {
-        const sectionKey = `sections/${sectionId.replace(/^[^_]+__/, '')}.liquid`
         const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys
 
         if (inMemoryTemplateFiles.has(sectionKey)) {
