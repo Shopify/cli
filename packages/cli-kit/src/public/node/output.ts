@@ -333,6 +333,20 @@ export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn)
 }
 
 /**
+ * Logs an unformatted message at the given log level.
+ * Note: By default,  messages are sent through the standard error.
+ *
+ * @param content - The content to be output to the user.
+ * @param logLevel - The log level associated with the message.
+ * @param logger - The logging function to use to output to the user.
+ */
+export function output(content: OutputMessage, logLevel: LogLevel = 'info', logger: Logger = consoleWarn): void {
+  if (isUnitTest()) collectLog(logLevel, content)
+  const message = stringifyMessage(content)
+  outputWhereAppropriate(logLevel, logger, message)
+}
+
+/**
  * Prints a new line in the terminal.
  */
 export function outputNewline(): void {
@@ -382,17 +396,8 @@ export interface OutputProcess {
  *
  * @param message - The message to print.
  */
-export function consoleLog(message: string): void {
+function consoleLog(message: string): void {
   process.stdout.write(`${withOrWithoutStyle(message)}\n`)
-}
-
-/**
- * Prints an error message in the console to stderr.
- *
- * @param message - The message to print.
- */
-export function consoleError(message: string): void {
-  process.stderr.write(`${withOrWithoutStyle(message)}\n`)
 }
 
 /**
@@ -400,7 +405,7 @@ export function consoleError(message: string): void {
  *
  * @param message - The message to print.
  */
-export function consoleWarn(message: string): void {
+function consoleWarn(message: string): void {
   process.stderr.write(`${withOrWithoutStyle(message)}\n`)
 }
 
