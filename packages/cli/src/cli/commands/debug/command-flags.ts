@@ -1,6 +1,6 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {consoleLog} from '@shopify/cli-kit/node/output'
-import {renderTable, renderText} from '@shopify/cli-kit/node/ui'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import {renderTable} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 
 export default class CommandFlags extends Command {
@@ -53,7 +53,7 @@ export default class CommandFlags extends Command {
       const header = `${columns.join(',')}\n`
       const rows = data.map((obj) => columns.map((key) => obj[key]).join(',')).join('\n')
       const csvString = header + rows
-      renderText({text: csvString, logger: consoleLog})
+      outputResult(csvString)
     } else {
       renderTable({
         rows: data,

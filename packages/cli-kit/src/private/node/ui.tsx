@@ -1,4 +1,4 @@
-import {collectLog, consoleWarn, Logger, LogLevel, outputWhereAppropriate} from '../../public/node/output.js'
+import {output, Logger, LogLevel} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {treeKill} from '../../public/node/tree-kill.js'
 import {ReactElement} from 'react'
@@ -11,20 +11,16 @@ interface RenderOnceOptions {
   renderOptions?: RenderOptions
 }
 
-export function renderOnce(
-  element: JSX.Element,
-  {logLevel = 'info', logger = consoleWarn, renderOptions}: RenderOnceOptions,
-) {
-  const {output, unmount} = renderString(element, renderOptions)
+export function renderOnce(element: JSX.Element, {logLevel = 'info', renderOptions}: RenderOnceOptions) {
+  const {output: renderedString, unmount} = renderString(element, renderOptions)
 
-  if (output) {
-    if (isUnitTest()) collectLog(logLevel, output)
-    outputWhereAppropriate(logLevel, logger, output)
+  if (renderedString) {
+    output(renderedString, logLevel)
   }
 
   unmount()
 
-  return output
+  return renderedString
 }
 
 export async function render(element: JSX.Element, options?: RenderOptions) {
