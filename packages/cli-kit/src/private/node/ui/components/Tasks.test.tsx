@@ -2,8 +2,28 @@ import {Task, Tasks} from './Tasks.js'
 import {getLastFrameAfterUnmount, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
+import {Stdout} from '../../ui.js'
 import React from 'react'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {useStdout} from 'ink'
+
+vi.mock('ink', async () => {
+  const original: any = await vi.importActual('ink')
+  return {
+    ...original,
+    useStdout: vi.fn(),
+  }
+})
+
+beforeEach(() => {
+  vi.mocked(useStdout).mockReturnValue({
+    stdout: new Stdout({
+      columns: 80,
+      rows: 80,
+    }) as any,
+    write: () => {},
+  })
+})
 
 describe('Tasks', () => {
   test('shows a loading state at the start', async () => {
@@ -24,6 +44,58 @@ describe('Tasks', () => {
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+      task 1 ..."
+    `)
+    expect(firstTaskFunction).toHaveBeenCalled()
+  })
+
+  test('shows a loading state that is useful in no-color mode', async () => {
+    // Given
+    const firstTaskFunction = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+    })
+
+    const firstTask = {
+      title: 'task 1',
+      task: firstTaskFunction,
+    }
+
+    // When
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} noColor />)
+
+    // Then
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆
+      task 1 ..."
+    `)
+    expect(firstTaskFunction).toHaveBeenCalled()
+  })
+
+  test('truncates the no-color display correctly for narrow screens', async () => {
+    // Given
+    vi.mocked(useStdout).mockReturnValue({
+      stdout: new Stdout({
+        columns: 10,
+        rows: 80,
+      }) as any,
+      write: () => {},
+    })
+
+    const firstTaskFunction = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+    })
+
+    const firstTask = {
+      title: 'task 1',
+      task: firstTaskFunction,
+    }
+
+    // When
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} noColor />)
+
+    // Then
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆
       task 1 ..."
     `)
     expect(firstTaskFunction).toHaveBeenCalled()

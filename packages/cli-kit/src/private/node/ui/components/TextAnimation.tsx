@@ -5,6 +5,7 @@ import gradient from 'gradient-string'
 
 interface TextAnimationProps {
   text: string
+  maxWidth?: number
 }
 
 function rainbow(text: string, frame: number) {
@@ -14,10 +15,21 @@ function rainbow(text: string, frame: number) {
   return gradient(leftColor, rightColor)(text, {interpolation: 'hsv', hsvSpin: 'long'})
 }
 
+function rotated(text: string, steps: number) {
+  const normalizedSteps = steps % text.length
+  const start = text.slice(-normalizedSteps)
+  const end = text.slice(0, -normalizedSteps)
+  return start + end
+}
+
+function truncated(text: string, maxWidth: number | undefined): string {
+  return maxWidth ? text.slice(0, maxWidth) : text
+}
+
 /**
  * `TextAnimation` applies a rainbow animation to text.
  */
-const TextAnimation = memo(({text}: TextAnimationProps): JSX.Element => {
+const TextAnimation = memo(({text, maxWidth}: TextAnimationProps): JSX.Element => {
   const frame = useRef(0)
   const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()
@@ -26,12 +38,12 @@ const TextAnimation = memo(({text}: TextAnimationProps): JSX.Element => {
     const newFrame = frame.current + 1
     frame.current = newFrame
 
-    setRenderedFrame(rainbow(text, frame.current))
+    setRenderedFrame(rainbow(truncated(rotated(text, frame.current), maxWidth), frame.current))
 
     timeout.current = setTimeout(() => {
       renderAnimation()
     }, 35)
-  }, [text])
+  }, [text, maxWidth])
 
   useLayoutEffect(() => {
     renderAnimation()
