@@ -171,3 +171,6 @@ testing.mjs
 
 # ESLint reports
 eslint-report.json
+
+# Generated docs
+docs/api
