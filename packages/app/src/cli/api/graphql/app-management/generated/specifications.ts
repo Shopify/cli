@@ -11,7 +11,9 @@ export type FetchSpecificationsQuery = {
     identifier: string
     externalIdentifier: string
     features: string[]
-    uidStrategy: {appModuleLimit: number} | {appModuleLimit: number}
+    uidStrategy:
+      | {appModuleLimit: number; isClientProvided: boolean}
+      | {appModuleLimit: number; isClientProvided: boolean}
     validationSchema?: {jsonSchema: string} | null
   }[]
 }
@@ -43,6 +45,7 @@ export const FetchSpecifications = {
                     kind: 'SelectionSet',
                     selections: [
                       {kind: 'Field', name: {kind: 'Name', value: 'appModuleLimit'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'isClientProvided'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
