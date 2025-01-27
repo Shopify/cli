@@ -1,4 +1,4 @@
-name: Deploy CLI Kit docs to Pages
+name: Build and Deploy GitHub Pages Site
 
 on:
   push:
@@ -34,12 +34,17 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: "22"
-      - name: Build
+      - name: Build TSDoc docs
         run: pnpm build-api-docs --output-style=stream
+      - name: Build Markdown files into HTML
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination:	./docs/_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs
+          path: ./docs/_site
 
   # Deployment job
   deploy:

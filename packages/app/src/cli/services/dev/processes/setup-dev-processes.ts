@@ -15,7 +15,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
 import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
-import {PartnersURLs} from '../urls.js'
+import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
@@ -46,7 +46,7 @@ interface DevNetworkOptions {
   proxyUrl: string
   frontendPort: number
   backendPort: number
-  currentUrls: PartnersURLs
+  currentUrls: ApplicationURLs
 }
 
 export interface DevConfig {
