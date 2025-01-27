@@ -136,6 +136,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   const eventHandler = async ({extensionEvents}: AppEvent) => {
     for (const event of extensionEvents) {
+      if (!event.extension.isPreviewable) continue
       const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
 
       switch (event.type) {
