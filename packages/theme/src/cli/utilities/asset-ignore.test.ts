@@ -1,6 +1,7 @@
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => {
   const originalFs: any = await vi.importActual('@shopify/cli-kit/node/fs')
@@ -11,6 +12,10 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
     fileExists: vi.fn(),
   }
 })
+
+vi.mock('@shopify/cli-kit/node/ui', () => ({
+  renderWarning: vi.fn(),
+}))
 
 vi.mock('@shopify/cli-kit/node/output')
 
@@ -372,6 +377,20 @@ describe('asset-ignore', () => {
         {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
         {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
       ])
+    })
+  })
+  describe('pattern warnings', () => {
+    test('should warn when a pattern ends with a slash', () => {
+      const options = {
+        ignore: ['assets/'],
+      }
+
+      applyIgnoreFilters(checksums, options)
+
+      expect(renderWarning).toHaveBeenCalledWith({
+        headline: 'Directory pattern may be misleading.',
+        body: 'For more reliable matching, consider using assets/* or assets/*.filename instead.',
+      })
     })
   })
 })
