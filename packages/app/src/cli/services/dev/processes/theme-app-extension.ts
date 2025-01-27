@@ -105,7 +105,7 @@ export async function setupPreviewThemeAppExtensionsProcess(
   }
 }
 
-export const runThemeAppExtensionsServer: DevProcessFunction<ThemeAppExtensionServerOptions> = async (
+const runThemeAppExtensionsServer: DevProcessFunction<ThemeAppExtensionServerOptions> = async (
   _,
   {theme, adminSession, storefrontPassword, themeExtensionDirectory, themeExtensionPort},
 ) => {

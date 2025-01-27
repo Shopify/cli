@@ -1,31 +1,24 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {fetchOrganizations} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppInterface, isCurrentAppSchema, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
-import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
-import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
 import {
   CreateAppOptions,
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {Token, TokenItem, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Token, TokenItem, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
@@ -74,11 +67,9 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
   let developerPlatformClient = options.developerPlatformClient
   if (!organizationId) {
     organizationId = '0'
-    if (developerPlatformClient.requiresOrganization) {
-      const org = await selectOrg()
-      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
-      organizationId = org.id
-    }
+    const org = await selectOrg()
+    developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+    organizationId = org.id
   }
   const app = await developerPlatformClient.appFromIdentifiers({
     apiKey: options.apiKey,
@@ -104,29 +95,6 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
   return app
 }
 
-export async function ensureThemeExtensionDevContext(
-  extension: ExtensionInstance,
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<ExtensionRegistration> {
-  const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations({
-    id: apiKey,
-    apiKey,
-    organizationId: '1',
-  })
-  const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
-    return extension.type === 'THEME_APP_EXTENSION'
-  })
-
-  if (remoteRegistrations[0]) {
-    return remoteRegistrations[0]
-  }
-
-  const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
-
-  return registration
-}
-
 /**
  * Make sure there is a valid context to execute `deploy`
  * That means we have a valid session, organization and app.
@@ -140,10 +108,10 @@ export async function ensureThemeExtensionDevContext(
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployOptions): Promise<Identifiers> {
-  const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
+  const {force, noRelease, app, remoteApp, developerPlatformClient} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  await checkIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force, developerPlatformClient})
+  await removeIncludeConfigOnDeployField(app)
 
   const identifiers = await ensureDeploymentIdsPresence({
     app,
@@ -152,7 +120,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ident
     force,
     release: !noRelease,
     developerPlatformClient,
-    envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
+    envIdentifiers: getAppIdentifiers({app}),
     remoteApp,
     activeAppVersion,
   })
@@ -160,51 +128,6 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ident
   await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
 
   return identifiers
-}
-
-interface ShouldOrPromptIncludeConfigDeployOptions {
-  appDirectory: string
-  localApp: AppInterface
-}
-
-async function checkIncludeConfigOnDeploy({
-  org,
-  app,
-  remoteApp,
-  reset,
-  force,
-  developerPlatformClient,
-}: {
-  org: Organization
-  app: AppInterface
-  remoteApp: OrganizationApp
-  reset: boolean
-  force: boolean
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  if (developerPlatformClient.supportsAtomicDeployments) {
-    await removeIncludeConfigOnDeployField(app)
-    return
-  }
-
-  let previousIncludeConfigOnDeploy = app.includeConfigOnDeploy
-  if (reset) previousIncludeConfigOnDeploy = undefined
-  if (force) previousIncludeConfigOnDeploy = previousIncludeConfigOnDeploy ?? false
-
-  renderCurrentlyUsedConfigInfo({
-    org: org.businessName,
-    appName: remoteApp.title,
-    appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
-    resetMessage: resetHelpMessage,
-    includeConfigOnDeploy: previousIncludeConfigOnDeploy,
-  })
-
-  if (force || previousIncludeConfigOnDeploy === true) return
-  await promptIncludeConfigOnDeploy({
-    appDirectory: app.directory,
-    localApp: app,
-  })
 }
 
 async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
@@ -244,28 +167,6 @@ function renderWarningAboutIncludeConfigOnDeploy() {
   })
 }
 
-async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
-  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
-  const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
-  localConfiguration.build = {
-    ...localConfiguration.build,
-    include_config_on_deploy: shouldIncludeConfigDeploy,
-  }
-  const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
-  await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
-}
-
-function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
-  return renderConfirmationPrompt({
-    message: `Include \`${basename(
-      configPath,
-    )}\` configuration on \`deploy\`? Soon, this will no longer be optional and configuration will be included on every deploy.`,
-    confirmationMessage: 'Yes, always (Recommended)',
-    cancellationMessage: 'No, not now',
-  })
-}
-
 export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): Promise<OrganizationApp> {
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
@@ -273,7 +174,7 @@ export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): P
   const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)
   remoteApp.developerPlatformClient = developerPlatformClient
 
-  await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
+  await logMetadataForLoadedContext(remoteApp)
 
   return remoteApp
 }
@@ -372,55 +273,12 @@ export function renderCurrentlyUsedConfigInfo({
   })
 }
 
-export async function logMetadataForLoadedContext(
-  app: {apiKey: string; organizationId: string},
-  organizationSource: OrganizationSource,
-) {
-  const orgIdKey = organizationSource === OrganizationSource.BusinessPlatform ? 'business_platform_id' : 'partner_id'
+export async function logMetadataForLoadedContext(app: {apiKey: string; organizationId: string}) {
+  const orgIdKey = 'business_platform_id'
   const organizationInfo = {[orgIdKey]: tryParseInt(app.organizationId)}
 
   await metadata.addPublicMetadata(() => ({
     ...organizationInfo,
     api_key: app.apiKey,
   }))
-}
-
-export async function enableDeveloperPreview({
-  apiKey,
-  developerPlatformClient,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  return developerPreviewUpdate({apiKey, developerPlatformClient, enabled: true})
-}
-
-export async function disableDeveloperPreview({
-  apiKey,
-  developerPlatformClient,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-}) {
-  await developerPreviewUpdate({apiKey, developerPlatformClient, enabled: false})
-}
-
-export async function developerPreviewUpdate({
-  apiKey,
-  developerPlatformClient,
-  enabled,
-}: {
-  apiKey: string
-  developerPlatformClient: DeveloperPlatformClient
-  enabled: boolean
-}) {
-  const input: DevelopmentStorePreviewUpdateInput = {
-    input: {
-      apiKey,
-      enabled,
-    },
-  }
-  const result: DevelopmentStorePreviewUpdateSchema = await developerPlatformClient.updateDeveloperPreview(input)
-  const userErrors = result.developmentStorePreviewUpdate.userErrors
-  return !userErrors || userErrors.length === 0
 }

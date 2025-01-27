@@ -95,7 +95,6 @@ interface GetAppIdentifiersOptions {
  */
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
-  developerPlatformClient: DeveloperPlatformClient,
   systemEnvironment = process.env,
 ): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
@@ -108,9 +107,7 @@ export function getAppIdentifiers(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      extensionsIdentifiers[extension.localIdentifier] = extension.uid
-    }
+    extensionsIdentifiers[extension.localIdentifier] = extension.uid
   }
   app.allExtensions.forEach(processExtension)
 

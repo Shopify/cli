@@ -17,7 +17,7 @@ export interface SendWebhookProcess extends BaseProcess<SendWebhookOptions> {
   type: 'send-webhook'
 }
 
-export const sendWebhook: DevProcessFunction<SendWebhookOptions> = async ({stdout}, options) => {
+const sendWebhook: DevProcessFunction<SendWebhookOptions> = async ({stdout}, options) => {
   await sendUninstallWebhookToAppServer({
     stdout,
     developerPlatformClient: options.developerPlatformClient,

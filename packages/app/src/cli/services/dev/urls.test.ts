@@ -1,5 +1,4 @@
 import {
-  updateURLs,
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generatePartnersURLs,
@@ -7,18 +6,11 @@ import {
   validatePartnersURLs,
   FrontendURLOptions,
 } from './urls.js'
-import {
-  DEFAULT_CONFIG,
-  testApp,
-  testAppWithConfig,
-  testDeveloperPlatformClient,
-} from '../../models/app/app.test-data.js'
-import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
+import {DEFAULT_CONFIG, testApp} from '../../models/app/app.test-data.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isSpin, spinFqdn, appPort, appHost, fetchSpinPort} from '@shopify/cli-kit/node/context/spin'
 import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -50,159 +42,6 @@ const defaultOptions: FrontendURLOptions = {
     port: 1111,
   },
 }
-
-describe('updateURLs', () => {
-  test('sends a request to update the URLs', async () => {
-    // Given
-    const urls = {
-      applicationUrl: 'https://example.com',
-      redirectUrlWhitelist: [
-        'https://example.com/auth/callback',
-        'https://example.com/auth/shopify/callback',
-        'https://example.com/api/auth/callback',
-      ],
-    }
-    const expectedVariables = {
-      apiKey: 'apiKey',
-      ...urls,
-    }
-    const developerPlatformClient = testDeveloperPlatformClient()
-
-    // When
-    await updateURLs(urls, 'apiKey', developerPlatformClient)
-
-    // Then
-    expect(developerPlatformClient.updateURLs).toHaveBeenCalledWith(expectedVariables)
-  })
-
-  test('when config as code is enabled, the configuration is updated as well', async () => {
-    // Given
-    const appWithConfig = testAppWithConfig()
-    const apiKey = appWithConfig.configuration.client_id
-    const urls = {
-      applicationUrl: 'https://example.com',
-      redirectUrlWhitelist: [
-        'https://example.com/auth/callback',
-        'https://example.com/auth/shopify/callback',
-        'https://example.com/api/auth/callback',
-      ],
-    }
-
-    // When
-    await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
-
-    // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: appWithConfig.configuration.path,
-        patch: {
-          application_url: 'https://example.com',
-          auth: {
-            redirect_urls: [
-              'https://example.com/auth/callback',
-              'https://example.com/auth/shopify/callback',
-              'https://example.com/api/auth/callback',
-            ],
-          },
-        },
-        schema: expect.any(Object),
-      }),
-    )
-  })
-
-  test('throws an error if requests has a user error', async () => {
-    // Given
-    const developerPlatformClient = testDeveloperPlatformClient({
-      updateURLs: (_input: UpdateURLsVariables) =>
-        Promise.resolve({appUpdate: {userErrors: [{field: [], message: 'Boom!'}]}}),
-    })
-    // vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
-    const urls = {
-      applicationUrl: 'https://example.com',
-      redirectUrlWhitelist: [],
-    }
-
-    // When
-    const got = updateURLs(urls, 'apiKey', developerPlatformClient)
-
-    // Then
-    await expect(got).rejects.toThrow(new AbortError(`Boom!`))
-  })
-
-  test('includes app proxy fields if passed in', async () => {
-    // Given
-    const urls = {
-      applicationUrl: 'https://example.com',
-      redirectUrlWhitelist: [
-        'https://example.com/auth/callback',
-        'https://example.com/auth/shopify/callback',
-        'https://example.com/api/auth/callback',
-      ],
-      appProxy: {
-        proxyUrl: 'https://example.com',
-        proxySubPath: 'subpath',
-        proxySubPathPrefix: 'prefix',
-      },
-    }
-    const developerPlatformClient = testDeveloperPlatformClient()
-    const expectedVariables = {
-      apiKey: 'apiKey',
-      ...urls,
-    }
-
-    // When
-    await updateURLs(urls, 'apiKey', developerPlatformClient)
-
-    // Then
-    expect(developerPlatformClient.updateURLs).toHaveBeenCalledWith(expectedVariables)
-  })
-
-  test('also updates app proxy url when config as code is enabled', async () => {
-    // Given
-    const appWithConfig = testAppWithConfig()
-    const apiKey = appWithConfig.configuration.client_id
-
-    const urls = {
-      applicationUrl: 'https://example.com',
-      redirectUrlWhitelist: [
-        'https://example.com/auth/callback',
-        'https://example.com/auth/shopify/callback',
-        'https://example.com/api/auth/callback',
-      ],
-      appProxy: {
-        proxyUrl: 'https://example.com',
-        proxySubPath: 'subpath',
-        proxySubPathPrefix: 'prefix',
-      },
-    }
-
-    // When
-    await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
-
-    // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: appWithConfig.configuration.path,
-        patch: {
-          application_url: 'https://example.com',
-          auth: {
-            redirect_urls: [
-              'https://example.com/auth/callback',
-              'https://example.com/auth/shopify/callback',
-              'https://example.com/api/auth/callback',
-            ],
-          },
-          app_proxy: {
-            url: 'https://example.com',
-            subpath: 'subpath',
-            prefix: 'prefix',
-          },
-        },
-        schema: expect.any(Object),
-      }),
-    )
-  })
-})
 
 describe('shouldOrPromptUpdateURLs', () => {
   const currentURLs = {

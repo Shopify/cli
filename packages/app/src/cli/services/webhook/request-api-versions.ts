@@ -4,12 +4,6 @@ export interface PublicApiVersionsSchema {
   publicApiVersions: string[]
 }
 
-export const GetApiVersionsQuery = `
-  query getApiVersions {
-    publicApiVersions
-  }
-`
-
 /**
  * Requests available api-versions in order to validate flags or present a list of options
  *

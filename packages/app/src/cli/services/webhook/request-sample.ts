@@ -25,20 +25,6 @@ export interface UserErrors {
   fields: string[]
 }
 
-// eslint-disable-next-line @shopify/cli/no-inline-graphql
-export const sendSampleWebhookMutation = `
-  mutation samplePayload($topic: String!, $api_version: String!, $address: String!, $delivery_method: String!, $shared_secret: String!, $api_key: String) {
-    sendSampleWebhook(input: {topic: $topic, apiVersion: $api_version, address: $address, deliveryMethod: $delivery_method, sharedSecret: $shared_secret, apiKey: $api_key}) {
-        samplePayload
-        success
-        headers
-        userErrors {
-          message
-        }
-    }
-  }
-`
-
 /**
  * Request the sample to partners. Partners will call core and the webhook will be emitted
  * In case the deliveryMethod is localhost and address is local, the response comes with the data the plugin

@@ -1,6 +1,6 @@
 import {addUidToTomlsIfNecessary} from './add-uid-to-extension-toml.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {testDeveloperPlatformClient, testUIExtension} from '../../models/app/app.test-data.js'
+import {testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, test, expect} from 'vitest'
 import {writeFile, readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -27,10 +27,8 @@ describe('addUidToTomlsIfNecessary', () => {
         uid: '123',
       })
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: false})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -56,10 +54,8 @@ describe('addUidToTomlsIfNecessary', () => {
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -99,10 +95,8 @@ describe('addUidToTomlsIfNecessary', () => {
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
-
       // When
-      await addUidToTomlsIfNecessary([extension, extension1], client)
+      await addUidToTomlsIfNecessary([extension, extension1])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -141,10 +135,8 @@ describe('addUidToTomlsIfNecessary', () => {
         },
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)
@@ -170,10 +162,8 @@ describe('addUidToTomlsIfNecessary', () => {
         configuration: {},
       } as ExtensionInstance
 
-      const client = testDeveloperPlatformClient({supportsAtomicDeployments: true})
-
       // When
-      await addUidToTomlsIfNecessary([extension], client)
+      await addUidToTomlsIfNecessary([extension])
 
       // Then
       const updatedContent = await readFile(tomlPath)

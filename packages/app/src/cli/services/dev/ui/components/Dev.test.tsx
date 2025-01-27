@@ -1,5 +1,4 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
-import {fetchAppPreviewMode} from '../../fetch.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
 import {devSessionStatus} from '../../processes/dev-session.js'
 import {
@@ -32,13 +31,6 @@ const testApp = {
   id: '123',
   developerPlatformClient,
   extensions: [],
-}
-
-const developerPreview = {
-  fetchMode: vi.fn(async () => true),
-  enable: vi.fn(async () => {}),
-  disable: vi.fn(async () => {}),
-  update: vi.fn(async (_state: boolean) => true),
 }
 
 describe('Dev', () => {
@@ -92,7 +84,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -110,7 +101,6 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ toggle development store preview: ✔ on
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
@@ -173,7 +163,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
       {stdin: new Stdin({isTTY: false})},
@@ -211,7 +200,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -238,7 +226,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -267,7 +254,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -311,7 +297,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -327,7 +312,6 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ toggle development store preview: ✔ on
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
@@ -344,7 +328,6 @@ describe('Dev', () => {
       00:00:00 │ backend │ third backend message
       "
     `)
-    expect(developerPreview.disable).toHaveBeenCalledOnce()
     expect(testApp.developerPlatformClient.devSessionDelete).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
@@ -377,7 +360,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -393,7 +375,6 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ toggle development store preview: ✔ on
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
@@ -410,7 +391,6 @@ describe('Dev', () => {
       00:00:00 │ backend │ third backend message
       "
     `)
-    expect(developerPreview.disable).toHaveBeenCalledOnce()
     expect(testApp.developerPlatformClient.devSessionDelete).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
@@ -437,7 +417,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -451,7 +430,6 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ toggle development store preview: ✔ on
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
@@ -490,434 +468,12 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
 
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('something went wrong')
     expect(abort).toHaveBeenNthCalledWith(1, new Error('something went wrong'))
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('polls for preview mode', async () => {
-    // Given
-    vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce({
-      developmentStorePreviewEnabled: false,
-    } as any)
-
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>((resolve) => {
-      backendPromiseResolve = resolve
-    })
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-
-        backendPromiseResolve()
-      },
-    }
-
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        pollingTime={200}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    await backendPromise
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    await waitForContent(renderInstance, 'off')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✖ off
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test("doesn't poll for preview mode when the app does not support it", async () => {
-    // Given
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-      },
-    }
-
-    // When
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={{
-          ...testApp,
-          canEnablePreviewMode: false,
-        }}
-        pollingTime={200}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    expect(developerPreview.fetchMode).not.toHaveBeenCalled()
-    expect(developerPreview.enable).not.toHaveBeenCalled()
-
-    await sendInputAndWait(renderInstance, 100, 'd')
-    expect(developerPreview.update).not.toHaveBeenCalled()
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('shows an error message when polling for preview mode fails', async () => {
-    // Given
-    vi.mocked(developerPreview.fetchMode).mockRejectedValueOnce(new Error('something went wrong'))
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-      },
-    }
-
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        pollingTime={200}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    await waitForContent(renderInstance, 'Failed to fetch the latest status')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:1234/graphiql
-      Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
-      "
-    `)
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('enables preview mode when pressing d', async () => {
-    // Given
-    vi.mocked(developerPreview.update).mockResolvedValueOnce(true)
-
-    const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'd')
-    expect(developerPreview.update).toHaveBeenCalledOnce()
-
-    await waitForContent(renderInstance, 'off')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✖ off
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test("shows an error message if enabling preview mode by pressing d doesn't succeed", async () => {
-    // Given
-    vi.mocked(developerPreview.update).mockResolvedValueOnce(false)
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-      },
-    }
-
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForContent(renderInstance, 'Failed to turn off development store preview.', 'd')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      Failed to turn off development store preview.
-      "
-    `)
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('shows an error message if enabling preview mode by pressing d throws an exception', async () => {
-    // Given
-    vi.mocked(developerPreview.update).mockRejectedValueOnce(new Error('something went wrong'))
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-      },
-    }
-
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForContent(renderInstance, 'Failed to turn off development store preview.', 'd')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      Failed to turn off development store preview.
-      "
-    `)
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('enables preview mode at startup', async () => {
-    // Given
-    const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    // wait for useEffect callbacks to be run
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    expect(developerPreview.enable).toHaveBeenCalledOnce()
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('shows an error message if enabling preview mode at startup fails', async () => {
-    // Given
-    vi.mocked(developerPreview.enable).mockRejectedValueOnce(new Error('something went wrong'))
-
-    const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
-        app={testApp}
-        developerPreview={developerPreview}
-        shopFqdn="mystore.shopify.io"
-      />,
-    )
-
-    await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✖ off
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      Failed to turn on development store preview automatically.
-      Try turning it on manually by pressing \`d\`.
-      "
-    `)
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -934,7 +490,6 @@ describe('Dev', () => {
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
@@ -943,7 +498,6 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ toggle development store preview: ✔ on
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
@@ -960,7 +514,6 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ toggle development store preview: ✔ on
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
@@ -988,13 +541,10 @@ describe('Dev', () => {
         graphiqlPort={1234}
         app={{
           ...testApp,
-          canEnablePreviewMode: false,
           developerPlatformClient: {
             ...testDeveloperPlatformClient(),
-            supportsDevSessions: true,
           },
         }}
-        developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )

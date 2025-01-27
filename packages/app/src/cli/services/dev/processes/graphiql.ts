@@ -26,7 +26,7 @@ export async function setupGraphiQLServerProcess(
   }
 }
 
-export const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptions> = async (
+const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptions> = async (
   {stdout, abortSignal},
   options: GraphiQLServerProcessOptions,
 ) => {

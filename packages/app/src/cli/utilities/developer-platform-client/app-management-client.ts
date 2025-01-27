@@ -16,7 +16,6 @@ import {
   AppVersionIdentifiers,
   DevSessionOptions,
   filterDisabledFlags,
-  ClientName,
   AppModuleVersion,
   CreateAppOptions,
 } from '../developer-platform-client.js'
@@ -27,7 +26,6 @@ import {
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
-  OrganizationSource,
   OrganizationStore,
 } from '../../models/organization.js'
 import {
@@ -37,16 +35,6 @@ import {
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
-import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
-import {
-  ConvertDevToTransferDisabledSchema,
-  ConvertDevToTransferDisabledStoreVariables,
-} from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
@@ -60,8 +48,6 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
-import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {
   MigrateToUiExtensionVariables,
@@ -69,10 +55,7 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
-import {
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateDraftMutationVariables,
-} from '../../api/graphql/partners/generated/update-draft.js'
+
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
@@ -131,7 +114,6 @@ import {
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
@@ -149,12 +131,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
-  public readonly clientName = ClientName.AppManagement
   public readonly webUiName = 'Developer Dashboard'
-  public readonly requiresOrganization = true
-  public readonly supportsAtomicDeployments = true
-  public readonly supportsDevSessions = true
-  public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -247,7 +224,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: org.name,
-      source: this.organizationSource,
     }))
   }
 
@@ -266,7 +242,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       id: orgId,
       businessName: org.name,
-      source: this.organizationSource,
     }
   }
 
@@ -564,10 +539,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async updateExtension(_extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {
-    throw new BugError('Not implemented: updateExtension')
-  }
-
   async deploy({
     appId,
     name,
@@ -721,26 +692,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
-    throw new BugError('Not implemented: createExtension')
-  }
-
-  async convertToTransferDisabledStore(
-    _input: ConvertDevToTransferDisabledStoreVariables,
-  ): Promise<ConvertDevToTransferDisabledSchema> {
-    throw new BugError('Not implemented: convertToTransferDisabledStore')
-  }
-
-  async updateDeveloperPreview(
-    _input: DevelopmentStorePreviewUpdateInput,
-  ): Promise<DevelopmentStorePreviewUpdateSchema> {
-    throw new BugError('Not implemented: updateDeveloperPreview')
-  }
-
-  async appPreviewMode(_input: FindAppPreviewModeVariables): Promise<FindAppPreviewModeSchema> {
-    throw new BugError('Not implemented: appPreviewMode')
-  }
-
   async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
     const query = CliTesting
     const variables = {
@@ -789,15 +740,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async migrateAppModule(_input: MigrateAppModuleVariables): Promise<MigrateAppModuleSchema> {
     throw new BugError('Not implemented: migrateAppModule')
-  }
-
-  async updateURLs(_input: UpdateURLsVariables): Promise<UpdateURLsSchema> {
-    outputDebug('⚠️ updateURLs is not implemented')
-    return {appUpdate: {userErrors: []}}
-  }
-
-  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
-    throw new BugError('Not implemented: currentAccountInfo')
   }
 
   async targetSchemaDefinition(

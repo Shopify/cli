@@ -1,12 +1,11 @@
 import {selectStore} from './select-store.js'
-import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
 import {
   reloadStoreListPrompt,
   selectStorePrompt,
   confirmConversionToTransferDisabledStorePrompt,
 } from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
-import {ClientName} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
@@ -20,7 +19,6 @@ vi.mock('@shopify/cli-kit/node/context/spin')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  source: OrganizationSource.BusinessPlatform,
 }
 const STORE1: OrganizationStore = {
   shopId: '1',
@@ -76,7 +74,7 @@ describe('selectStore', async () => {
   test('selectStorePrompt is called with showDomainOnPrompt = true if clientName is app-management', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
-    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
     const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient)
@@ -142,7 +140,6 @@ describe('selectStore', async () => {
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(developerPlatformClient.convertToTransferDisabledStore).not.toHaveBeenCalled()
     expect(selectStorePrompt).toHaveBeenCalledWith(
       expect.objectContaining({
         stores: [STORE1, STORE2],

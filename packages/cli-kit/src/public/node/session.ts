@@ -1,15 +1,12 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
-import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
-import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {
   AdminAPIScope,
   AppManagementAPIScope,
   BusinessPlatformScope,
-  PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
   setLastSeenAuthMethod,
@@ -27,36 +24,6 @@ export interface AdminSession {
 
 interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
-}
-
-/**
- * Ensure that we have a valid session to access the Partners API.
- * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
- * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored.
- *
- * @param scopes - Optional array of extra scopes to authenticate with.
- * @param env - Optional environment variables to use.
- * @param options - Optional extra options to use.
- * @returns The access token for the Partners API.
- */
-export async function ensureAuthenticatedPartners(
-  scopes: PartnersAPIScope[] = [],
-  env = process.env,
-  options: EnsureAuthenticatedAdditionalOptions = {},
-): Promise<{token: string; userId: string}> {
-  outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
-${outputToken.json(scopes)}
-`)
-  const envToken = getPartnersToken()
-  if (envToken) {
-    const result = await exchangeCustomPartnerToken(envToken)
-    return {token: result.accessToken, userId: result.userId}
-  }
-  const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
-  if (!tokens.partners) {
-    throw new BugError('No partners token found after ensuring authenticated')
-  }
-  return {token: tokens.partners, userId: tokens.userId}
 }
 
 /**

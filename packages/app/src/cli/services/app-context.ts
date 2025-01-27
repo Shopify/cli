@@ -4,7 +4,7 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
-import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
@@ -105,19 +105,14 @@ export async function linkedAppContext({
   // even if they are present in the file, so we can't be sure whether or not
   // it's necessary.
   if (!unsafeReportMode) {
-    await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
+    await addUidToTomlsIfNecessary(localApp.allExtensions)
   }
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
 async function logMetadata(app: {apiKey: string}, organization: Organization, resetUsed: boolean) {
-  let organizationInfo: {partner_id?: number; business_platform_id?: number}
-  if (organization.source === OrganizationSource.BusinessPlatform) {
-    organizationInfo = {business_platform_id: tryParseInt(organization.id)}
-  } else {
-    organizationInfo = {partner_id: tryParseInt(organization.id)}
-  }
+  const organizationInfo = {business_platform_id: tryParseInt(organization.id)}
 
   await metadata.addPublicMetadata(() => ({
     ...organizationInfo,

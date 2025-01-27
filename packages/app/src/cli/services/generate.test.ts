@@ -13,12 +13,12 @@ import {
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
 import * as developerPlatformClient from '../utilities/developer-platform-client.js'
-import {PartnersClient} from '../utilities/developer-platform-client/partners-client.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {AppManagementClient} from '../utilities/developer-platform-client/app-management-client.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
@@ -44,7 +44,7 @@ vi.mock('./local-storage.js')
 beforeEach(() => {
   // Never bother loading the app just to get a platform client
   vi.spyOn(developerPlatformClient, 'sniffServiceOptionsAndAppConfigToSelectPlatformClient').mockResolvedValue(
-    new PartnersClient(),
+    new AppManagementClient(),
   )
 })
 

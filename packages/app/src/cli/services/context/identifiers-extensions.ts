@@ -2,7 +2,6 @@ import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
-import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
@@ -21,7 +20,6 @@ import {
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {SingleWebhookSubscriptionType} from '../../models/extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
@@ -196,14 +194,13 @@ export async function deployConfirmed(
   const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
     singleAndDynamicStrategyExtensions,
     options.app,
-    options.appId,
     options.includeDraftExtensions,
     options.developerPlatformClient,
   )
 
   const validMatchesById: {[key: string]: string} = {}
   if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId, options.developerPlatformClient)
+    const newIdentifiers = await createExtensions(extensionsToCreate)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id
@@ -264,10 +261,9 @@ function loadExtensionIds(
   })
 }
 
-export async function ensureNonUuidManagedExtensionsIds(
+async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
-  appId: string,
   includeDraftExtensions = false,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
@@ -289,7 +285,7 @@ export async function ensureNonUuidManagedExtensionsIds(
   )
 
   if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
+    const newIdentifiers = await createExtensions(extensionsToCreate)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id
@@ -299,37 +295,18 @@ export async function ensureNonUuidManagedExtensionsIds(
   return {extensionsNonUuidManaged: validMatches, extensionsIdsNonUuidManaged: validMatchesById}
 }
 
-async function createExtensions(
-  extensions: LocalSource[],
-  appId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-  output = true,
-) {
+async function createExtensions(extensions: LocalSource[]) {
   const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      // Just pretend to create the extension, as it's not necessary to do anything
-      // in this case.
-      result[extension.localIdentifier] = {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        id: extension.uid!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        uuid: extension.uid!,
-        type: extension.type,
-        title: extension.handle,
-      }
-    } else {
-      // Create one at a time to avoid API rate limiting issues.
-      // eslint-disable-next-line no-await-in-loop
-      const registration = await createExtension(
-        appId,
-        extension.graphQLType,
-        extension.handle,
-        developerPlatformClient,
-        extension.contextValue,
-      )
-      if (output) outputCompleted(`Created extension ${extension.handle}.`)
-      result[extension.localIdentifier] = registration
+    // Just pretend to create the extension, as it's not necessary to do anything
+    // in this case.
+    result[extension.localIdentifier] = {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      id: extension.uid!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      uuid: extension.uid!,
+      type: extension.type,
+      title: extension.handle,
     }
   }
   return result

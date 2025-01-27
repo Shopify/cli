@@ -1,14 +1,8 @@
-import {fetchOrganizations, fetchStore, fetchStoreByDomain, NoOrgError} from './fetch.js'
-import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
+import {fetchStore, fetchStoreByDomain, NoOrgError} from './fetch.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
-import {
-  testPartnersServiceSession,
-  testPartnersUserSession,
-  testDeveloperPlatformClient,
-} from '../../models/app/app.test-data.js'
+import {testPartnersUserSession, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
-import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -17,12 +11,10 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  source: OrganizationSource.Partners,
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  source: OrganizationSource.Partners,
 }
 const STORE1: OrganizationStore = {
   shopId: '1',
@@ -51,48 +43,6 @@ vi.mock('../../utilities/developer-platform-client/app-management-client.js')
 afterEach(() => {
   mockAndCaptureOutput().clear()
   vi.unstubAllEnvs()
-})
-
-describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners and App Management', async () => {
-    // Given
-    const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG1]),
-    }) as PartnersClient
-    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([ORG2]),
-    }) as AppManagementClient
-    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
-
-    // When
-    const got = await fetchOrganizations()
-
-    // Then
-    expect(got).toEqual([ORG1, ORG2])
-    expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(appManagementClient.organizations).toHaveBeenCalled()
-  })
-
-  test('throws if there are no organizations', async () => {
-    // Given
-    const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([]),
-    }) as PartnersClient
-    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([]),
-    }) as AppManagementClient
-    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
-
-    // When
-    const got = fetchOrganizations()
-
-    // Then
-    await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
-    expect(partnersClient.organizations).toHaveBeenCalled()
-    expect(appManagementClient.organizations).toHaveBeenCalled()
-  })
 })
 
 describe('fetchStoreByDomain', async () => {
@@ -159,40 +109,6 @@ describe('NoOrgError', () => {
       │    • Your current active session is associated with the partner@shopify.com  │
       │      user account. To start a new session with a different account, run      │
       │      \`shopify auth logout\`                                                   │
-      │    • Have you created a Shopify Partners organization [1]?                   │
-      │    • Does your account include Manage app permissions?, please contact the   │
-      │      owner of the organization to grant you access.                          │
-      │    • Have you confirmed your accounts from the emails you received?          │
-      │    • Need to connect to a different App or organization? Run the command     │
-      │      again with \`--reset\`                                                    │
-      │    • Do you have access to the right Shopify Partners organization? The CLI  │
-      │      is loading this organization [2]                                        │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://partners.shopify.com/signup
-      [2] https://partner.shopify.com/3
-      "
-    `)
-  })
-
-  test('renders correctly for service account', () => {
-    // Given
-    const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError(testPartnersServiceSession.accountInfo, '3')
-
-    // When
-    renderFatalError(subject)
-
-    // Then
-    expect(mockOutput.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  No Organization found                                                       │
-      │                                                                              │
-      │  Next steps                                                                  │
-      │    • Your current active session is associated with the organization         │
-      │      organization account. To start a new session with a different account,  │
-      │      run \`shopify auth logout\`                                               │
       │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Does your account include Manage app permissions?, please contact the   │
       │      owner of the organization to grant you access.                          │

@@ -17,14 +17,6 @@ import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('./ui/components/Dev.js')
 vi.mock('../context.js')
-
-const developerPreview = {
-  fetchMode: vi.fn(async () => true),
-  enable: vi.fn(async () => {}),
-  disable: vi.fn(async () => {}),
-  update: vi.fn(async (_state: boolean) => true),
-}
-
 const developerPlatformClient = testDeveloperPlatformClient()
 
 afterEach(() => {
@@ -46,8 +38,6 @@ describe('ui', () => {
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
       const app = {
-        canEnablePreviewMode: true,
-        developmentStorePreviewEnabled: false,
         apiKey: '123',
         id: '123',
         developerPlatformClient,
@@ -63,7 +53,6 @@ describe('ui', () => {
         graphiqlPort,
         app,
         abortController,
-        developerPreview,
         shopFqdn,
       })
 
@@ -74,84 +63,6 @@ describe('ui', () => {
         process.stderr,
         abortController.signal,
       )
-    })
-
-    test("enable dev preview when terminal doesn't support TTY and the app supports it", async () => {
-      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
-      const concurrentProcess = {
-        prefix: 'prefix',
-        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
-      }
-
-      const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
-      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
-      const shopFqdn = 'mystore.shopify.io'
-      const graphiqlPort = 1234
-      const app = {
-        canEnablePreviewMode: true,
-        developmentStorePreviewEnabled: false,
-        apiKey: '123',
-        id: '123',
-        developerPlatformClient,
-        extensions: [],
-      }
-
-      const abortController = new AbortController()
-
-      await renderDev({
-        processes,
-        previewUrl,
-        graphiqlUrl,
-        graphiqlPort,
-        app,
-        abortController,
-        developerPreview,
-        shopFqdn,
-      })
-      abortController.abort()
-
-      expect(developerPreview.enable).toHaveBeenCalled()
-      expect(developerPreview.disable).toHaveBeenCalled()
-    })
-
-    test("don't enable dev preview when terminal doesn't support TTY and the app doesn't supports it", async () => {
-      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
-      const concurrentProcess = {
-        prefix: 'prefix',
-        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
-      }
-
-      const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
-      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
-      const shopFqdn = 'mystore.shopify.io'
-      const graphiqlPort = 1234
-      const app = {
-        canEnablePreviewMode: false,
-        developmentStorePreviewEnabled: false,
-        apiKey: '123',
-        id: '123',
-        developerPlatformClient,
-        extensions: [],
-      }
-
-      const abortController = new AbortController()
-
-      await renderDev({
-        processes,
-        previewUrl,
-        graphiqlUrl,
-        graphiqlPort,
-        app,
-        abortController,
-        developerPreview,
-        shopFqdn,
-      })
-      abortController.abort()
-
-      expect(developerPreview.enable).not.toHaveBeenCalled()
-      expect(developerPreview.disable).not.toHaveBeenCalled()
     })
 
     test('uses ink when terminal supports TTY', async () => {
@@ -167,8 +78,6 @@ describe('ui', () => {
       const shopFqdn = 'mystore.shopify.io'
       const graphiqlPort = 1234
       const app = {
-        canEnablePreviewMode: true,
-        developmentStorePreviewEnabled: false,
         apiKey: '123',
         id: '123',
         developerPlatformClient,
@@ -178,7 +87,7 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview, shopFqdn})
+      renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, shopFqdn})
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 

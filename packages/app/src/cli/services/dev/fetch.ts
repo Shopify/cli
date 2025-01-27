@@ -1,5 +1,4 @@
-import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
-import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
 import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   AccountInfo,
@@ -92,18 +91,10 @@ export async function fetchOrganizations(): Promise<Organization[]> {
   if (organizations.length === 0) {
     const developerPlatformClient = selectDeveloperPlatformClient()
     const session = await developerPlatformClient.session()
-    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient, session.userId)
+    const accountInfo = await fetchCurrentAccountInformation(session.userId)
     throw new NoOrgError(accountInfo)
   }
   return organizations
-}
-
-export async function fetchAppPreviewMode(
-  apiKey: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<boolean | undefined> {
-  const res: FindAppPreviewModeSchema = await developerPlatformClient.appPreviewMode({apiKey})
-  return res.app?.developmentStorePreviewEnabled
 }
 
 export async function fetchOrgFromId(
@@ -136,10 +127,7 @@ export async function fetchStoreByDomain(
   if (!org) {
     return undefined
   }
-  const source = developerPlatformClient.requiresOrganization
-    ? OrganizationSource.BusinessPlatform
-    : OrganizationSource.Partners
-  const parsedOrg = {id: org.id, businessName: org.businessName, source}
+  const parsedOrg = {id: org.id, businessName: org.businessName}
   const store = org.stores.nodes[0]
 
   return {organization: parsedOrg, store}

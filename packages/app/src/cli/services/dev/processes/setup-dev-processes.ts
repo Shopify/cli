@@ -1,7 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
-import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
@@ -33,7 +32,6 @@ type DevProcessDefinition =
   | WebProcess
   | ProxyServerProcess
   | PreviewableExtensionProcess
-  | DraftableExtensionProcess
   | GraphiQLServerProcess
   | DevSessionProcess
   | AppLogsSubscribeProcess
@@ -58,7 +56,6 @@ export interface DevConfig {
   storeId: string
   commandOptions: DevOptions
   network: DevNetworkOptions
-  partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
 }
@@ -126,25 +123,16 @@ export async function setupDevProcesses({
       appDirectory: reloadedApp.directory,
       appWatcher,
     }),
-    developerPlatformClient.supportsDevSessions
-      ? await setupDevSessionProcess({
-          app: reloadedApp,
-          apiKey,
-          developerPlatformClient,
-          url: network.proxyUrl,
-          appId: remoteApp.id,
-          organizationId: remoteApp.organizationId,
-          storeFqdn,
-          appWatcher,
-        })
-      : await setupDraftableExtensionsProcess({
-          localApp: reloadedApp,
-          remoteApp,
-          apiKey,
-          developerPlatformClient,
-          proxyUrl: network.proxyUrl,
-          appWatcher,
-        }),
+    await setupDevSessionProcess({
+      app: reloadedApp,
+      apiKey,
+      developerPlatformClient,
+      url: network.proxyUrl,
+      appId: remoteApp.id,
+      organizationId: remoteApp.organizationId,
+      storeFqdn,
+      appWatcher,
+    }),
     await setupPreviewThemeAppExtensionsProcess({
       remoteApp,
       localApp: reloadedApp,
@@ -240,7 +228,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
   return newProcesses
 }
 
-export const startProxyServer: DevProcessFunction<{port: number; rules: {[key: string]: string}}> = async (
+const startProxyServer: DevProcessFunction<{port: number; rules: {[key: string]: string}}> = async (
   {abortSignal},
   {port, rules},
 ) => {

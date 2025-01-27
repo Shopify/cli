@@ -760,12 +760,7 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
 describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
   test('creates all local extensions when there are no remote ones', async () => {
     // When
-    const got = await automaticMatchmaking(
-      [EXTENSION_A, EXTENSION_B],
-      [],
-      {},
-      testDeveloperPlatformClient({supportsAtomicDeployments: true}),
-    )
+    const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_B], [], {}, testDeveloperPlatformClient())
 
     // Then
     const expected = {
@@ -783,7 +778,7 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A],
       {},
-      testDeveloperPlatformClient({supportsAtomicDeployments: true}),
+      testDeveloperPlatformClient(),
     )
 
     // Then

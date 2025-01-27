@@ -109,7 +109,7 @@ async function getWebProcessPort({
   }
 }
 
-export async function launchWebProcess(
+async function launchWebProcess(
   {stdout, stderr, abortSignal: signal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
   {
     port,

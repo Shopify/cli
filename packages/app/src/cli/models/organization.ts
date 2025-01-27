@@ -1,15 +1,9 @@
 import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
 import {Flag, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
-export enum OrganizationSource {
-  Partners = 'Partners',
-  BusinessPlatform = 'BusinessPlatform',
-}
-
 export interface Organization {
   id: string
   businessName: string
-  source: OrganizationSource
 }
 
 export interface AppApiKeyAndOrgId {
