@@ -22,7 +22,7 @@ interface AppProxy {
   proxySubPathPrefix: string
 }
 
-export interface PartnersURLs {
+export interface ApplicationURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
   appProxy?: AppProxy
@@ -138,11 +138,11 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
   })
 }
 
-export function generatePartnersURLs(
+export function generateApplicationURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
   proxyFields?: CurrentAppConfiguration['app_proxy'],
-): PartnersURLs {
+): ApplicationURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
@@ -185,7 +185,7 @@ function replaceHost(oldUrl: string, newUrl: string): string {
 }
 
 export async function updateURLs(
-  urls: PartnersURLs,
+  urls: ApplicationURLs,
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
   localApp?: AppConfigurationInterface,
@@ -218,8 +218,8 @@ export async function updateURLs(
   }
 }
 
-export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Promise<PartnersURLs> {
-  const result: PartnersURLs = {
+export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Promise<ApplicationURLs> {
+  const result: ApplicationURLs = {
     applicationUrl: remoteAppConfig?.application_url ?? '',
     redirectUrlWhitelist: remoteAppConfig?.auth?.redirect_urls ?? [],
   }
@@ -234,7 +234,7 @@ export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Prom
 }
 
 interface ShouldOrPromptUpdateURLsOptions {
-  currentURLs: PartnersURLs
+  currentURLs: ApplicationURLs
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
@@ -269,7 +269,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
   return shouldUpdateURLs
 }
 
-export function validatePartnersURLs(urls: PartnersURLs): void {
+export function validateApplicationURLs(urls: ApplicationURLs): void {
   if (!isValidURL(urls.applicationUrl))
     throw new AbortError(`Invalid application URL: ${urls.applicationUrl}`, 'Valid format: "https://example.com"')
 
