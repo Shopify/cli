@@ -67,12 +67,22 @@ const Dev: FunctionComponent<DevProps> = ({
   const pollingInterval = useRef<NodeJS.Timeout>()
   const devSessionPollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const defaultStatusMessage = `Preview URL: ${previewUrl}${
+  const defaultPreviewURL = previewUrl
+  const defaultStatusMessage = `Preview URL: ${defaultPreviewURL}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
   }`
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
+  const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
+  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatus().isDevSessionReady)
+  const [appPreviewURL, setAppPreviewURL] = useState<string>(defaultPreviewURL)
+  const [error, setError] = useState<string | undefined>(undefined)
+
+  // This is a flag to prevent the status message from being updated when the dev is shutting down
+  // Will be updated in a future PR to use states.
+  let isShuttingDown = false
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
+    isShuttingDown = true
     if (err) {
       setStatusMessage('Shutting down dev because of an error ...')
     } else {
@@ -89,10 +99,6 @@ const Dev: FunctionComponent<DevProps> = ({
     await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     await developerPreview.disable()
   })
-
-  const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
-  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatus().isDevSessionReady)
-  const [error, setError] = useState<string | undefined>(undefined)
 
   const errorHandledProcesses = useMemo(() => {
     return processes.map((process) => {
@@ -121,9 +127,9 @@ const Dev: FunctionComponent<DevProps> = ({
    */
   useEffect(() => {
     const pollDevSession = async () => {
-      const {isDevSessionReady} = devSessionStatus()
+      const {isDevSessionReady, devSessionPreviewURL} = devSessionStatus()
       setDevSessionEnabled(isDevSessionReady)
-      if (isDevSessionReady) clearInterval(devSessionPollingInterval.current)
+      if (devSessionPreviewURL && appPreviewURL !== devSessionPreviewURL) setAppPreviewURL(devSessionPreviewURL)
     }
 
     if (app.developerPlatformClient.supportsDevSessions) {
@@ -135,6 +141,11 @@ const Dev: FunctionComponent<DevProps> = ({
 
     return () => clearInterval(devSessionPollingInterval.current)
   }, [devSessionStatus])
+
+  useEffect(() => {
+    const newMessage = `Preview URL: ${appPreviewURL}${graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''}`
+    if (!isShuttingDown) setStatusMessage(newMessage)
+  }, [appPreviewURL])
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
@@ -190,11 +201,11 @@ const Dev: FunctionComponent<DevProps> = ({
         try {
           setError('')
 
-          if (input === 'p' && previewUrl && devSessionEnabled) {
+          if (input === 'p' && appPreviewURL && devSessionEnabled) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,
             }))
-            await openURL(previewUrl)
+            await openURL(appPreviewURL)
           } else if (input === 'g' && graphiqlUrl && devSessionEnabled) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
