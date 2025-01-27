@@ -56,7 +56,7 @@
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
-    "refresh-documentation": "nx refresh-documentation"
+    "refresh-code-documentation": "nx refresh-code-documentation"
   },
   "eslintConfig": {
     "extends": [

@@ -102,10 +102,10 @@
         "cwd": "packages/cli-kit"
       }
     },
-    "refresh-documentation": {
+    "refresh-code-documentation": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "FORCE_HYPERLINK=0 node --loader ts-node/esm ./bin/refresh-documentation.ts",
+        "command": "FORCE_HYPERLINK=0 node --loader ts-node/esm ./bin/refresh-code-documentation.ts",
         "cwd": "packages/cli-kit"
       }
     },
