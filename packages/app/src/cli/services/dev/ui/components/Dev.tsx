@@ -66,27 +66,19 @@ const Dev: FunctionComponent<DevProps> = ({
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const defaultPreviewURL = previewUrl
-  const defaultStatusMessage = `Preview URL: ${defaultPreviewURL}${
-    graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
-  }`
-  const defaultDevSessionStatus = devSessionStatusManager.status
-  const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
+  const graphiqlURLMessage = graphiqlUrl ? `GraphiQL URL: ${localhostGraphiqlUrl}` : ''
+
+  const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
-  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(defaultDevSessionStatus.isReady)
-  const [appPreviewURL, setAppPreviewURL] = useState<string>(defaultPreviewURL)
+  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatusManager.status.isReady)
+  const [appPreviewURL, setAppPreviewURL] = useState<string>(previewUrl)
   const [error, setError] = useState<string | undefined>(undefined)
 
-  // This is a flag to prevent the status message from being updated when the dev is shutting down
-  // Will be updated in a future PR to use states.
-  let isShuttingDown = false
-
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
-    isShuttingDown = true
     if (err) {
-      setStatusMessage('Shutting down dev because of an error ...')
+      setIsShuttingDownMessage('Shutting down dev because of an error ...')
     } else {
-      setStatusMessage('Shutting down dev ...')
+      setIsShuttingDownMessage('Shutting down dev ...')
       setTimeout(() => {
         if (isUnitTest()) return
         treeKill(process.pid, 'SIGINT', false, () => {
@@ -132,11 +124,6 @@ const Dev: FunctionComponent<DevProps> = ({
       devSessionStatusManager.off('dev-session-update', handleDevSessionUpdate)
     }
   }, [])
-
-  useEffect(() => {
-    const newMessage = `Preview URL: ${appPreviewURL}${graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''}`
-    if (!isShuttingDown) setStatusMessage(newMessage)
-  }, [appPreviewURL])
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
@@ -292,9 +279,18 @@ const Dev: FunctionComponent<DevProps> = ({
               </Text>
             </Box>
           ) : null}
-          <Box marginTop={canUseShortcuts ? 1 : 0}>
-            <Text>{statusMessage}</Text>
+
+          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+            {isShuttingDownMessage ? (
+              <Text>{isShuttingDownMessage}</Text>
+            ) : (
+              <>
+                <Text>{`Preview URL: ${appPreviewURL}`}</Text>
+                {graphiqlUrl ? <Text>{graphiqlURLMessage}</Text> : null}
+              </>
+            )}
           </Box>
+
           {error ? <Text color="red">{error}</Text> : null}
         </Box>
       ) : null}
