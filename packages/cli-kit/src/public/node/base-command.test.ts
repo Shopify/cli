@@ -158,6 +158,19 @@ describe('applying environments', async () => {
     expect(outputMock.info()).toEqual('')
   })
 
+  runTestInTmpDir('does not apply flags when multiple environments are specified', async (tmpDir: string) => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When
+    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--environment', 'validEnvironment'])
+
+    // Then
+    expect(testResult).toEqual({})
+    expect(outputMock.info()).toEqual('')
+  })
+
   runTestInTmpDir('applies a environment when one is specified', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()

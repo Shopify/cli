@@ -32,7 +32,7 @@ describe('list', () => {
     vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
     vi.mocked(getHostTheme).mockReturnValue(hostThemeId.toString())
 
-    await list(session, {json: false})
+    await list({json: false}, session)
 
     expect(renderTable).toBeCalledWith({
       rows: [
@@ -54,7 +54,7 @@ describe('list', () => {
       {id: 5, name: 'Theme 5', role: 'development'},
     ] as Theme[])
 
-    await list(session, {role: 'live', name: '*eMe 3*', json: false})
+    await list({role: 'live', name: '*eMe 3*', json: false}, session)
 
     expect(renderTable).toBeCalledWith({
       rows: [{id: '#3', name: 'Theme 3', role: '[live]'}],
@@ -70,7 +70,7 @@ describe('list', () => {
       {id: 2, name: 'Theme 2', role: ''},
     ] as Theme[])
 
-    await list(session, {json: true})
+    await list({json: true}, session)
 
     expect(mockOutput.info()).toMatchInlineSnapshot(`
     "[

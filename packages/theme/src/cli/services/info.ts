@@ -21,7 +21,7 @@ interface ThemeInfo {
 interface ThemeInfoOptions {
   store?: string
   password?: string
-  environment?: string
+  environment?: string[]
   development?: boolean
   theme?: string
   json?: boolean
