@@ -1,4 +1,4 @@
-name: Deploy CLI Kit docs to Pages
+name: Build and Deploy GitHub Pages Site
 
 on:
   push:
