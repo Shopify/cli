@@ -1,9 +1,5 @@
-import {
-  setupDevSessionProcess,
-  pushUpdatesForDevSession,
-  resetDevSessionStatus,
-  devSessionStatus,
-} from './dev-session.js'
+import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session.js'
+import {devSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -87,7 +83,7 @@ describe('pushUpdatesForDevSession', () => {
     app = testAppLinked()
     appWatcher = new AppEventWatcher(app)
     abortController = new AbortController()
-    resetDevSessionStatus()
+    devSessionStatusManager.reset()
     options = {
       developerPlatformClient,
       appWatcher,
@@ -231,7 +227,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(devSessionStatus().devSessionPreviewURL).toBe(options.appLocalProxyURL)
+    expect(devSessionStatusManager.status.previewURL).toBe(options.appLocalProxyURL)
   })
 
   test('updates preview URL to appPreviewURL when no previewable extensions', async () => {
@@ -247,7 +243,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(devSessionStatus().devSessionPreviewURL).toBe(options.appPreviewURL)
+    expect(devSessionStatusManager.status.previewURL).toBe(options.appPreviewURL)
   })
 
   test('resets dev session status when calling resetDevSessionStatus', async () => {
@@ -263,14 +259,14 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(devSessionStatus().isDevSessionReady).toBe(true)
-    expect(devSessionStatus().devSessionPreviewURL).toBeDefined()
+    expect(devSessionStatusManager.status.isReady).toBe(true)
+    expect(devSessionStatusManager.status.previewURL).toBeDefined()
 
     // When
-    resetDevSessionStatus()
+    devSessionStatusManager.reset()
 
     // Then
-    expect(devSessionStatus().isDevSessionReady).toBe(false)
-    expect(devSessionStatus().devSessionPreviewURL).toBeUndefined()
+    expect(devSessionStatusManager.status.isReady).toBe(false)
+    expect(devSessionStatusManager.status.previewURL).toBeUndefined()
   })
 })

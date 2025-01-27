@@ -1,4 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
+import {devSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
@@ -64,23 +65,6 @@ type DevSessionResult =
 
 let bundleControllers: AbortController[] = []
 
-// Current status of the dev session
-// Since the watcher can emit events before the dev session is ready, we need to keep track of the status
-let isDevSessionReady = false
-let devSessionPreviewURL: string | undefined
-
-export function devSessionStatus() {
-  return {
-    isDevSessionReady,
-    devSessionPreviewURL,
-  }
-}
-
-export function resetDevSessionStatus() {
-  isDevSessionReady = false
-  devSessionPreviewURL = undefined
-}
-
 export async function setupDevSessionProcess({
   app,
   apiKey,
@@ -112,7 +96,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
   appWatcher
     .onEvent(async (event) => {
-      if (!isDevSessionReady) {
+      if (!devSessionStatusManager.status.isReady) {
         await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)
         return
       }
@@ -177,7 +161,7 @@ async function handleDevSessionResult(
     await printSuccess(`✅ Updated`, processOptions.stdout)
     await printActionRequiredMessages(processOptions, event)
   } else if (result.status === 'created') {
-    isDevSessionReady = true
+    devSessionStatusManager.updateStatus({isReady: true})
     await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
@@ -187,7 +171,9 @@ async function handleDevSessionResult(
 
   // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
   // async nature of the process.
-  if (!isDevSessionReady && !isUnitTest()) throw new AbortError('Failed to start dev session.')
+  if (!devSessionStatusManager.status.isReady && !isUnitTest()) {
+    throw new AbortError('Failed to start dev session.')
+  }
 }
 
 /**
@@ -264,7 +250,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   // Create or update the dev session
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
-    if (isDevSessionReady) {
+    if (devSessionStatusManager.status.isReady) {
       const result = await devSessionUpdateWithRetry(payload, options.developerPlatformClient)
       const errors = result.devSessionUpdate?.userErrors ?? []
       if (errors.length) return {status: 'remote-error', error: errors}
@@ -373,5 +359,6 @@ async function printLogMessage(message: string, stdout: Writable, prefix?: strin
 
 async function updatePreviewURL(options: DevSessionProcessOptions, event: AppEvent) {
   const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
-  devSessionPreviewURL = hasPreview ? options.appLocalProxyURL : options.appPreviewURL
+  const newPreviewURL = hasPreview ? options.appLocalProxyURL : options.appPreviewURL
+  devSessionStatusManager.updateStatus({previewURL: newPreviewURL})
 }

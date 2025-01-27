@@ -1,7 +1,7 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
-import {devSessionStatus} from '../../processes/dev-session.js'
+import {devSessionStatusManager} from '../../processes/dev-session-status-manager.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -13,7 +13,7 @@ import {
 } from '@shopify/cli-kit/node/testing/ui'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import React from 'react'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
@@ -42,10 +42,6 @@ const developerPreview = {
 }
 
 describe('Dev', () => {
-  beforeEach(() => {
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: undefined})
-  })
-
   test('renders a stream of concurrent outputs from sub-processes, shortcuts and a preview url', async () => {
     // Given
     let backendPromiseResolve: () => void
@@ -706,6 +702,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -861,6 +859,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -939,6 +939,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -977,7 +979,7 @@ describe('Dev', () => {
 
   test('updates UI when devSessionEnabled changes from false to true', async () => {
     // Given
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: false, devSessionPreviewURL: undefined})
+    devSessionStatusManager.updateStatus({isReady: false})
 
     const renderInstance = render(
       <Dev
@@ -999,6 +1001,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     // Initial state - dev session not ready
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
@@ -1012,7 +1016,7 @@ describe('Dev', () => {
     `)
 
     // When dev session becomes ready
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: 'https://shopify.com'})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: 'https://shopify.com'})
 
     // Wait for the polling interval to update the UI
     await waitForContent(renderInstance, 'preview in your browser')
@@ -1039,7 +1043,7 @@ describe('Dev', () => {
     // Given
     const initialPreviewUrl = 'https://shopify.com'
     const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: undefined})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: undefined})
 
     const renderInstance = render(
       <Dev
@@ -1060,11 +1064,13 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     // Initial state should show the default preview URL
     expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${initialPreviewUrl}`)
 
     // When dev session provides a new preview URL
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: newPreviewUrl})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: newPreviewUrl})
 
     // Wait for the polling interval to update the UI
     await waitForContent(renderInstance, newPreviewUrl)
@@ -1080,7 +1086,7 @@ describe('Dev', () => {
     // Given
     const initialPreviewUrl = 'https://shopify.com'
     const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: undefined})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: undefined})
 
     const renderInstance = render(
       <Dev
@@ -1101,11 +1107,13 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     // Initial state should show the default preview URL
     expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${initialPreviewUrl}`)
 
     // When dev session provides a new preview URL
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: newPreviewUrl})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: newPreviewUrl})
 
     // Wait for the polling interval to update the UI
     await waitForContent(renderInstance, newPreviewUrl)

@@ -1,7 +1,7 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {devSessionStatus} from '../../processes/dev-session.js'
+import {devSessionStatusManager, DevSessionStatus} from '../../processes/dev-session-status-manager.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -65,15 +65,15 @@ const Dev: FunctionComponent<DevProps> = ({
 
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
-  const devSessionPollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultPreviewURL = previewUrl
   const defaultStatusMessage = `Preview URL: ${defaultPreviewURL}${
     graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
   }`
+  const defaultDevSessionStatus = devSessionStatusManager.status
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
-  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatus().isDevSessionReady)
+  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(defaultDevSessionStatus.isReady)
   const [appPreviewURL, setAppPreviewURL] = useState<string>(defaultPreviewURL)
   const [error, setError] = useState<string | undefined>(undefined)
 
@@ -95,7 +95,6 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
-    clearInterval(devSessionPollingInterval.current)
     await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     await developerPreview.disable()
   })
@@ -116,31 +115,23 @@ const Dev: FunctionComponent<DevProps> = ({
     })
   }, [processes, abortController])
 
-  /*
-   * Poll Dev Session status
-   *
-   * Polling mechanism to check if the dev session is ready.
-   * When the session is ready, the polling stops and the shortcuts are shown.
-   * Reason is that shortcuts won't work properly until the session is ready and the app is installed.
-   *
-   * This only applies for App Management dev-sessions.
-   */
+  // Subscribe to dev session status updates
   useEffect(() => {
-    const pollDevSession = async () => {
-      const {isDevSessionReady, devSessionPreviewURL} = devSessionStatus()
-      setDevSessionEnabled(isDevSessionReady)
-      if (devSessionPreviewURL && appPreviewURL !== devSessionPreviewURL) setAppPreviewURL(devSessionPreviewURL)
+    const handleDevSessionUpdate = (status: DevSessionStatus) => {
+      setDevSessionEnabled(status.isReady)
+      if (status.previewURL) setAppPreviewURL(status.previewURL)
     }
 
     if (app.developerPlatformClient.supportsDevSessions) {
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      devSessionPollingInterval.current = setInterval(pollDevSession, 200)
+      devSessionStatusManager.on('dev-session-update', handleDevSessionUpdate)
     } else {
       setDevSessionEnabled(true)
     }
 
-    return () => clearInterval(devSessionPollingInterval.current)
-  }, [devSessionStatus])
+    return () => {
+      devSessionStatusManager.off('dev-session-update', handleDevSessionUpdate)
+    }
+  }, [])
 
   useEffect(() => {
     const newMessage = `Preview URL: ${appPreviewURL}${graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''}`
