@@ -6,6 +6,7 @@ query fetchSpecifications {
     features
     uidStrategy {
       appModuleLimit
+      isClientProvided
     }
     validationSchema {
       jsonSchema
