@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: "22"
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache  --target=docs:generate --output-style=stream
+        run: pnpm build-api-docs --output-style=stream
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

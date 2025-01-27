@@ -27,20 +27,20 @@
         "cwd": "packages/cli-kit"
       }
     },
-    "docs:generate": {
+    "build-api-docs": {
       "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/docs"
       ],
       "options": {
-        "command": "node ./scripts/generate-docs.js",
+        "command": "node ./scripts/build-api-docs.js",
         "cwd": "packages/cli-kit"
       }
     },
-    "docs:open": {
+    "open-api-docs": {
       "executor": "nx:run-commands",
       "dependsOn": [
-        "docs:generate"
+        "build-api-docs"
       ],
       "options": {
         "command": "open ../../docs/api/cli-kit/index.html",
