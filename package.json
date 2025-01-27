@@ -30,12 +30,12 @@
     "changeset-build-no-docs": "changeset version && pnpm install --no-frozen-lockfile && pnpm build && bin/update-cli-kit-version.js",
     "refresh-code-documentation": "nx run-many --target=refresh-code-documentation --all --skip-nx-cache",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
-    "build-docs": "sh ./bin/docs/build-docs.sh",
+    "build-dev-docs": "sh ./bin/docs/build-dev-docs.sh",
     "knip": "knip",
     "graphql-codegen": "nx run-many --target=graphql-codegen --all",
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
     "deploy-experimental": "node bin/deploy-experimental.js",
-    "update-docs": "pnpm shopify docs generate && pnpm build-docs"
+    "update-docs": "pnpm shopify docs generate && pnpm build-dev-docs"
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
