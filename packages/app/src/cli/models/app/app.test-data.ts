@@ -623,6 +623,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -640,6 +641,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -652,6 +654,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -669,6 +672,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 50,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -686,6 +690,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 5,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -705,6 +710,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -722,6 +728,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'dashboard',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -734,6 +741,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -751,6 +759,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -763,6 +772,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -775,6 +785,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 300,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -787,6 +798,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -799,6 +811,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 50,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -811,6 +824,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -823,6 +837,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -835,6 +850,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -847,6 +863,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -859,6 +876,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -871,6 +889,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -883,6 +902,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -895,6 +915,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -907,6 +928,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -919,6 +941,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     validationSchema: {
       jsonSchema:
@@ -935,6 +958,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     validationSchema: {
       jsonSchema:

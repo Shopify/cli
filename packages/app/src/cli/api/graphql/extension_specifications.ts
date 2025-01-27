@@ -39,6 +39,7 @@ export interface RemoteSpecification {
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
+    uidIsClientProvided: boolean
   }
   features?: {
     argo?: {

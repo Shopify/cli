@@ -321,6 +321,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         options: {
           managementExperience: 'cli',
           registrationLimit: spec.uidStrategy.appModuleLimit,
+          uidIsClientProvided: spec.uidStrategy.isClientProvided,
         },
         experience: experience(spec.identifier),
         validationSchema: spec.validationSchema,
