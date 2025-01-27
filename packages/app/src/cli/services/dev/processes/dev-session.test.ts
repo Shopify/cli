@@ -200,6 +200,7 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
     expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'dev-session', stripAnsi: false}, expect.anything())
+    contextSpy.mockRestore()
   })
 
   test('update is retried if there is an error', async () => {
@@ -272,5 +273,19 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(devSessionStatus().isDevSessionReady).toBe(false)
     expect(devSessionStatus().devSessionPreviewURL).toBeUndefined()
+  })
+
+  test('handles error events from the app watcher', async () => {
+    // Given
+    const testError = new Error('Watcher error')
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    appWatcher.emit('error', testError)
+    await flushPromises()
+
+    // Then
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Watcher error'))
   })
 })

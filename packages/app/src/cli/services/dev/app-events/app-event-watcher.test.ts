@@ -382,8 +382,8 @@ describe('app-event-watcher', () => {
         }
 
         // Given
-        const esbuildError = {message: 'Build failed'}
-        flowExtension.buildForBundle = vi.fn().mockRejectedValueOnce(esbuildError)
+        const buildError = {message: 'Build failed'}
+        flowExtension.buildForBundle = vi.fn().mockRejectedValueOnce(buildError)
 
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
@@ -404,6 +404,44 @@ describe('app-event-watcher', () => {
 
         // Then
         expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
+      })
+    })
+
+    test('uncaught errors are emitted', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const fileWatchEvent: WatcherEvent = {
+          type: 'file_updated',
+          path: '/extensions/ui_extension_1/src/file.js',
+          extensionPath: '/extensions/ui_extension_1',
+          startTime: [0, 0],
+        }
+
+        // Given
+        const uncaughtError = new Error('Unexpected error')
+
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [extension1],
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+        })
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+
+        // When
+        const mockManager = new MockESBuildContextManager()
+        mockManager.updateContexts = vi.fn().mockRejectedValueOnce(uncaughtError)
+
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const stderr = {write: vi.fn()} as unknown as Writable
+        const stdout = {write: vi.fn()} as unknown as Writable
+        const errorHandler = vi.fn()
+        watcher.onError(errorHandler)
+
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+
+        await flushPromises()
+
+        // Then
+        expect(errorHandler).toHaveBeenCalledWith(uncaughtError)
       })
     })
   })
