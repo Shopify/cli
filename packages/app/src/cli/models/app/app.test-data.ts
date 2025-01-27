@@ -966,6 +966,23 @@ const testRemoteSpecifications: RemoteSpecification[] = [
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
     },
   },
+  {
+    name: 'Remote Extension With Schema, Without local spec, config-style management',
+    externalName: 'Extension Test 4',
+    identifier: 'remote_only_extension_schema_config_style',
+    externalIdentifier: 'remote_only_extension_schema_config_style_external',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+      uidIsClientProvided: false,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
+    },
+  },
 ]
 
 const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {
