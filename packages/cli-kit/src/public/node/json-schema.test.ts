@@ -52,7 +52,7 @@ describe('jsonSchemaValidate', () => {
       zod.object({foo: zod.number().max(99)}),
       {foo: 100},
     ],
-  ])('matches the zod behaviour for %s', (name, contract, zodVersion, subject) => {
+  ])('matches the zod behaviour for %s', (_name, contract, zodVersion, subject) => {
     const zodParsed = zodVersion.safeParse(subject)
     expect(zodParsed.success).toBe(false)
     if (zodParsed.success) {
@@ -61,7 +61,7 @@ describe('jsonSchemaValidate', () => {
 
     const zodErrors = zodParsed.error.errors.map((error) => ({path: error.path, message: error.message}))
 
-    const schemaParsed = jsonSchemaValidate(subject, contract, `test-${name}`)
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
     expect(schemaParsed.state).toBe('error')
     expect(schemaParsed.errors, `Converting ${JSON.stringify(schemaParsed.rawErrors)}`).toEqual(zodErrors)
   })
@@ -77,8 +77,37 @@ describe('jsonSchemaValidate', () => {
       },
       'x-taplo': {foo: 'bar'},
     }
-    const schemaParsed = jsonSchemaValidate(subject, contract, 'test2')
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
     expect(schemaParsed.state).toBe('ok')
+  })
+
+  test('removes additional properties', () => {
+    const subject = {
+      foo: 'bar',
+      baz: 'qux',
+    }
+    const contract = {additionalProperties: false, type: 'object', properties: {foo: {type: 'string'}}}
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
+    expect(schemaParsed.state).toBe('ok')
+    expect(schemaParsed.data).toEqual({foo: 'bar'})
+    // confirm we don't mutate input parameters
+    expect(schemaParsed.data).not.toEqual(subject)
+  })
+
+  test('fails on additional properties', () => {
+    const subject = {
+      foo: 'bar',
+      baz: 'qux',
+    }
+    const contract = {additionalProperties: false, type: 'object', properties: {foo: {type: 'string'}}}
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'fail')
+    expect(schemaParsed.state).toBe('error')
+    expect(schemaParsed.errors).toEqual([
+      {
+        path: [],
+        message: 'must NOT have additional properties',
+      },
+    ])
   })
 
   test('deals with a union mismatch with a preferred branch', () => {
@@ -121,7 +150,7 @@ describe('jsonSchemaValidate', () => {
         },
       },
     }
-    const schemaParsed = jsonSchemaValidate(subject, contract, 'test3')
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
     expect(schemaParsed.state).toBe('error')
     expect(schemaParsed.errors).toEqual([
       {
@@ -175,7 +204,7 @@ describe('jsonSchemaValidate', () => {
         },
       },
     }
-    const schemaParsed = jsonSchemaValidate(subject, contract, 'test4')
+    const schemaParsed = jsonSchemaValidate(subject, contract, 'fail')
     expect(schemaParsed.state).toBe('error')
     expect(schemaParsed.errors).toEqual([
       {

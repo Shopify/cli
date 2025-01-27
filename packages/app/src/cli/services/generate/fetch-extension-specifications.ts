@@ -10,7 +10,7 @@ import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
+import {HandleInvalidAdditionalProperties, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -75,7 +75,21 @@ async function mergeLocalAndRemoteSpecs(
     const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
       FlattenedRemoteSpecification
 
-    const parseConfigurationObject = await unifiedConfigurationParserFactory(merged)
+    // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
+    let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
+    switch (merged.uidStrategy) {
+      case 'uuid':
+        handleInvalidAdditionalProperties = 'fail'
+        break
+      case 'single':
+        handleInvalidAdditionalProperties = 'strip'
+        break
+      case 'dynamic':
+        handleInvalidAdditionalProperties = 'fail'
+        break
+    }
+
+    const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
 
     return {
       ...merged,
