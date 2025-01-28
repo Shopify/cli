@@ -16,6 +16,8 @@ import {
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
   AppLinkedInterface,
+  appHiddenConfigPath,
+  AppHiddenConfig,
 } from './app.js'
 import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -32,7 +34,7 @@ import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_sc
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
-import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -346,6 +348,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
     const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
 
+    const hiddenConfig = await loadHiddenConfig(directory)
+
     if (!this.previousApp) {
       await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
     }
@@ -368,6 +372,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specifications: this.specifications,
       configSchema,
       remoteFlags: this.remoteFlags,
+      hiddenConfig,
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -1065,6 +1070,18 @@ async function getAllLinkedConfigClientIds(
     )
   ).filter((entry) => entry !== undefined)
   return Object.fromEntries(entries)
+}
+
+async function loadHiddenConfig(appDirectory: string): Promise<AppHiddenConfig> {
+  const hiddenConfigPath = appHiddenConfigPath(appDirectory)
+  if (fileExistsSync(hiddenConfigPath)) {
+    return JSON.parse(await readFile(hiddenConfigPath, {encoding: 'utf8'}))
+  } else {
+    // If the hidden config file doesn't exist, create an empty one.
+    await mkdir(dirname(hiddenConfigPath))
+    await writeFile(hiddenConfigPath, '{}')
+    return {}
+  }
 }
 
 export async function loadAppName(appDirectory: string): Promise<string> {

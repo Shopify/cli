@@ -102,8 +102,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     organization: commandOptions.organization,
   })
 
-  // Update the dev_store_url in the app configuration if it doesn't match the store domain
-  if (app.configuration.build?.dev_store_url !== store.shopDomain) {
+  // If the dev_store_url is set in the app configuration, keep updating it.
+  // If not, `store-context.ts` will take care of caching it in the hidden config.
+  if (app.configuration.build?.dev_store_url) {
     app.configuration.build = {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
