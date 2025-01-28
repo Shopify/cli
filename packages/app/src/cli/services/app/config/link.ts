@@ -144,6 +144,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
+    if (options.isNewApp) remoteApp.newApp = true
 
     return {
       remoteApp,
@@ -347,7 +348,7 @@ async function loadConfigurationFileName(
   const currentToml = existingTomls[remoteApp.apiKey]
   if (currentToml) return currentToml
 
-  return selectConfigName(localAppInfo.appDirectory || options.directory, remoteApp.title)
+  return selectConfigName(localAppInfo.appDirectory ?? options.directory, remoteApp.title)
 }
 
 /**
@@ -483,8 +484,8 @@ function buildAppConfigurationFromRemoteAppProperties(
 
 function addRemoteAppHomeConfig(remoteApp: OrganizationApp) {
   const homeConfig = {
-    application_url: remoteApp.applicationUrl?.replace(/\/$/, '') || '',
-    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
+    application_url: remoteApp.applicationUrl?.replace(/\/$/, '') ?? '',
+    embedded: remoteApp.embedded ?? true,
   }
   return remoteApp.preferencesUrl
     ? {
@@ -510,8 +511,8 @@ function addRemoteAppProxyConfig(remoteApp: OrganizationApp) {
 
 function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
   const hasAnyPrivacyWebhook =
-    remoteApp.gdprWebhooks?.customerDataRequestUrl ||
-    remoteApp.gdprWebhooks?.customerDeletionUrl ||
+    remoteApp.gdprWebhooks?.customerDataRequestUrl ??
+    remoteApp.gdprWebhooks?.customerDeletionUrl ??
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   const privacyComplianceContent = {
@@ -524,7 +525,7 @@ function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
 
   return {
     webhooks: {
-      api_version: remoteApp.webhookApiVersion || '2023-07',
+      api_version: remoteApp.webhookApiVersion ?? '2023-07',
       ...(hasAnyPrivacyWebhook ? privacyComplianceContent : {}),
     },
   }
@@ -560,7 +561,7 @@ function addRemoteAppAccessConfig(locallyProvidedScopes: string, remoteApp: Orga
 function addPosConfig(remoteApp: OrganizationApp) {
   return {
     pos: {
-      embedded: remoteApp.posEmbedded || false,
+      embedded: remoteApp.posEmbedded ?? false,
     },
   }
 }
