@@ -133,20 +133,7 @@ export class FileWatcher {
    * @param event - The event to be added
    */
   private pushEvent(event: WatcherEvent) {
-    const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
-    const watchPaths = extension?.devSessionWatchPaths
-    const ignoreInstance = this.ignored[event.extensionPath]
-
-    // If the affected extension defines custom watch paths, ignore the event if it's not in the list
-    // ELSE, if the extension has a custom gitignore file, ignore the event if it matches the patterns
-    // Explicit watch paths have priority over custom gitignore files
-    if (watchPaths) {
-      const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
-      if (!isAValidWatchedPath) return
-    } else if (ignoreInstance) {
-      const relative = relativePath(event.extensionPath, event.path)
-      if (ignoreInstance.ignores(relative)) return
-    }
+    if (this.shouldIgnoreEvent(event)) return
 
     // If the event is for a new extension folder, create a new ignore instance
     if (event.type === 'extension_folder_created') {
@@ -157,6 +144,32 @@ export class FileWatcher {
     if (this.currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
     this.currentEvents.push(event)
     this.debouncedEmit()
+  }
+
+  /**
+   * Whether an event should be ignored or not based on the extension's watch paths and gitignore file.
+   * Never ignores extension create/delete events.
+   *
+   * If the affected extension defines custom watch paths, ignore the event if the path is not in the list
+   * ELSE, if the extension has a custom gitignore file, ignore the event if the path matches the patterns
+   * Explicit watch paths have priority over custom gitignore files
+   */
+  private shouldIgnoreEvent(event: WatcherEvent) {
+    if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
+
+    const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
+    const watchPaths = extension?.devSessionWatchPaths
+    const ignoreInstance = this.ignored[event.extensionPath]
+
+    if (watchPaths) {
+      const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
+      return !isAValidWatchedPath
+    } else if (ignoreInstance) {
+      const relative = relativePath(event.extensionPath, event.path)
+      return ignoreInstance.ignores(relative)
+    }
+
+    return false
   }
 
   private readonly handleFileEvent = (event: string, path: string) => {
