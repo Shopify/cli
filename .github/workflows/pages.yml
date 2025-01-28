@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: "22"
       - name: Build TSDoc docs
-        run: pnpm nx run-many --all --skip-nx-cache  --target=docs:generate --output-style=stream
+        run: pnpm build-api-docs --output-style=stream
       - name: Build Markdown files into HTML
         uses: actions/jekyll-build-pages@v1
         with:

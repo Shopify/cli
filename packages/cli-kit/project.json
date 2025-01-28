@@ -27,20 +27,20 @@
         "cwd": "packages/cli-kit"
       }
     },
-    "docs:generate": {
+    "build-api-docs": {
       "executor": "nx:run-commands",
       "outputs": [
         "{workspaceRoot}/docs"
       ],
       "options": {
-        "command": "node ./scripts/generate-docs.js",
+        "command": "node ./scripts/build-api-docs.js",
         "cwd": "packages/cli-kit"
       }
     },
-    "docs:open": {
+    "open-api-docs": {
       "executor": "nx:run-commands",
       "dependsOn": [
-        "docs:generate"
+        "build-api-docs"
       ],
       "options": {
         "command": "open ../../docs/api/cli-kit/index.html",
@@ -102,10 +102,10 @@
         "cwd": "packages/cli-kit"
       }
     },
-    "refresh-documentation": {
+    "refresh-code-documentation": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "FORCE_HYPERLINK=0 node --loader ts-node/esm ./bin/refresh-documentation.ts",
+        "command": "FORCE_HYPERLINK=0 node --loader ts-node/esm ./bin/refresh-code-documentation.ts",
         "cwd": "packages/cli-kit"
       }
     },

@@ -46,8 +46,8 @@
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
-    "docs:generate": "nx docs:generate",
-    "docs:open": "nx docs:open",
+    "build-api-docs": "nx build-api-docs",
+    "open-api-docs": "nx open-api-docs",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
@@ -56,7 +56,7 @@
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
-    "refresh-documentation": "nx refresh-documentation"
+    "refresh-code-documentation": "nx refresh-code-documentation"
   },
   "eslintConfig": {
     "extends": [
