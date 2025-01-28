@@ -5,6 +5,15 @@ interface Error {
 
 const POLARIS_STYLESHEET_URL = 'https://unpkg.com/@shopify/polaris@13.9.2/build/esm/styles.css'
 
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export function getErrorPage(options: {title: string; header: string; errors: Error[]}) {
   const html = String.raw
   return html`<!DOCTYPE html>
@@ -64,9 +73,9 @@ export function getErrorPage(options: {title: string; header: string; errors: Er
                         .map(
                           (error) => `
                           <div>
-                            <span class="Polaris-Text--root Polaris-Text--headingSm">${error.message}</span>
+                            <span class="Polaris-Text--root Polaris-Text--headingSm">${escapeHtml(error.message)}</span>
                             <ul class="Polaris-List">
-                              <li class="Polaris-List__Item">${error.code}</li>
+                              <li class="Polaris-List__Item">${escapeHtml(error.code)}</li>
                             </ul>
                           </div>`,
                         )
