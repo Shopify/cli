@@ -3,6 +3,10 @@ name: Build and Deploy GitHub Pages Site
 on:
   push:
     branches: ["main"]
+    paths:
+      - packages/cli-kit/package.json
+      - "docs/**"
+
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
