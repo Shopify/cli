@@ -150,6 +150,9 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
       await handleDevSessionResult(result, {...processOptions, app: event.app})
     })
+    .onError(async (error) => {
+      await handleDevSessionResult({status: 'unknown-error', error}, processOptions)
+    })
 }
 
 async function handleDevSessionResult(

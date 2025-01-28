@@ -165,7 +165,7 @@ export class AppEventWatcher extends EventEmitter {
           this.emit('all', appEvent)
         })
         .catch((error) => {
-          this.options.stderr.write(`Error handling event: ${error.message}`)
+          this.emit('error', error)
         })
     })
     await this.fileWatcher.start()
@@ -201,6 +201,12 @@ export class AppEventWatcher extends EventEmitter {
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       this.once('ready', listener)
     }
+    return this
+  }
+
+  onError(listener: (error: Error) => Promise<void> | void) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.addListener('error', listener)
     return this
   }
 
