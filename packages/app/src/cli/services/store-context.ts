@@ -6,8 +6,7 @@ import metadata from '../metadata.js'
 import {configurationFileNames} from '../constants.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {appendFile, readFile} from '@shopify/cli-kit/node/fs'
+import {addToGitIgnore} from '@shopify/cli-kit/node/git'
 
 /**
  * Input options for the `storeContext` function.
@@ -64,7 +63,7 @@ export async function storeContext({
   // Save the selected store in the hidden config file
   if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
     await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
-    await addHiddenConfigToGitIgnoreIfNeeded(app.directory)
+    await addToGitIgnore(app.directory, configurationFileNames.hiddenFolder)
   }
 
   return selectedStore
@@ -79,17 +78,4 @@ async function logMetadata(selectedStore: OrganizationStore, resetUsed: boolean)
   await metadata.addSensitiveMetadata(() => ({
     store_fqdn: selectedStore.shopDomain,
   }))
-}
-
-/**
- * Adds the hidden config folder to the .gitignore file if it's not already there.
- *
- * This should be part of a larger mitration in the future.
- */
-async function addHiddenConfigToGitIgnoreIfNeeded(appDirectory: string) {
-  const gitIgnorePath = joinPath(appDirectory, '.gitignore')
-  const gitIgnoreContent = await readFile(gitIgnorePath)
-  if (!gitIgnoreContent.includes(configurationFileNames.hiddenFolder)) {
-    await appendFile(gitIgnorePath, `\n${configurationFileNames.hiddenFolder}/*\n`)
-  }
 }
