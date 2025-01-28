@@ -77,12 +77,18 @@ describe('fetchExtensionSpecifications', () => {
       expect.arrayContaining([
         expect.objectContaining({
           identifier: 'remote_only_extension_schema',
+          uidStrategy: 'uuid',
         }),
         expect.objectContaining({
           identifier: 'remote_only_extension_schema_with_localization',
+          uidStrategy: 'uuid',
         }),
         expect.not.objectContaining({
           identifier: 'remote_only_extension_without_schema',
+        }),
+        expect.objectContaining({
+          identifier: 'remote_only_extension_schema_config_style',
+          uidStrategy: 'single',
         }),
       ]),
     )

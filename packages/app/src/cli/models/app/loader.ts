@@ -33,8 +33,8 @@ import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/ap
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
-import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -916,11 +916,7 @@ async function loadAppConfigurationFromState<
       }
     }
 
-    const parseStrictSchemaEnabled = specifications.length > 0
     schemaForConfigurationFile = appSchema
-    if (parseStrictSchemaEnabled) {
-      schemaForConfigurationFile = deepStrict(appSchema)
-    }
   }
 
   const configuration = (await parseConfigurationFile(

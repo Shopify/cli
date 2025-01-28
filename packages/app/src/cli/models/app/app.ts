@@ -131,7 +131,7 @@ export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<T
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
-  allowDynamicallySpecifiedConfigs = false,
+  allowDynamicallySpecifiedConfigs = true,
 ): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
