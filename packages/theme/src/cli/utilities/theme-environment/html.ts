@@ -32,7 +32,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         assertThemeId(response, html, String(theme.id))
 
-        if (ctx.localThemeFileSystem.uploadErrors.size > 0) {
+        if (ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0) {
           html = getErrorPage({
             title: 'Failed to Upload Theme Files',
             header: 'Upload Errors',

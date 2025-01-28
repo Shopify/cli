@@ -96,6 +96,7 @@ describe('setupDevServer', () => {
       liveReload: 'hot-reload',
       open: false,
       themeEditorSync: false,
+      errorOverlay: 'default',
     },
   }
 

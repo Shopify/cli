@@ -9,7 +9,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import type {LiveReload} from '../../utilities/theme-environment/types.js'
+import type {ErrorOverlayMode, LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -53,6 +53,15 @@ You can run this command only in a directory that matches the [default Shopify t
       default: 'hot-reload',
       options: ['hot-reload', 'full-page', 'off'],
       env: 'SHOPIFY_FLAG_LIVE_RELOAD',
+    }),
+    'error-overlay': Flags.string({
+      description: `Controls the visibility of the error overlay when an theme asset upload fails:
+- silent Prevents the error overlay from appearing.
+- default Displays the error overlay.
+      `,
+      options: ['silent', 'default'],
+      default: 'default',
+      env: 'SHOPIFY_FLAG_ERROR_OVERLAY',
     }),
     poll: Flags.boolean({
       hidden: true,
@@ -147,6 +156,7 @@ You can run this command only in a directory that matches the [default Shopify t
       host: flags.host,
       port: flags.port,
       'live-reload': flags['live-reload'] as LiveReload,
+      'error-overlay': flags['error-overlay'] as ErrorOverlayMode,
       force: flags.force,
       open: flags.open,
       'theme-editor-sync': flags['theme-editor-sync'],
