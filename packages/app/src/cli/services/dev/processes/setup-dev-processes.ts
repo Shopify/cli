@@ -90,6 +90,11 @@ export async function setupDevProcesses({
   const reloadedApp = await reloadApp(localApp)
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
+  // Decide on the appropriate preview URL for a session with these processes
+  const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
+  const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
+  const previewUrl = anyPreviewableExtensions ? devConsoleURL : appPreviewUrl
+
   const processes = [
     ...(await setupWebProcesses({
       webs: reloadedApp.webs,
@@ -136,6 +141,8 @@ export async function setupDevProcesses({
           organizationId: remoteApp.organizationId,
           storeFqdn,
           appWatcher,
+          appPreviewURL: appPreviewUrl,
+          appLocalProxyURL: devConsoleURL,
         })
       : await setupDraftableExtensionsProcess({
           localApp: reloadedApp,
@@ -179,10 +186,6 @@ export async function setupDevProcesses({
 
   // Add http server proxy & configure ports, for processes that need it
   const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort)
-
-  // Decide on the appropriate preview URL for a session with these processes
-  const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
-  const previewUrl = anyPreviewableExtensions.length > 0 ? `${network.proxyUrl}/extensions/dev-console` : appPreviewUrl
 
   return {
     processes: processesWithProxy,

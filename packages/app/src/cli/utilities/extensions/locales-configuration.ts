@@ -5,7 +5,7 @@ import fs from 'fs'
 
 export async function loadLocalesConfig(extensionPath: string, extensionIdentifier: string) {
   const localesPaths = await glob(joinPath(extensionPath, 'locales/*.json'))
-  if (localesPaths.length === 0) return {}
+  if (!localesPaths || localesPaths.length === 0) return {}
 
   // Bundle validations
   const defaultLanguageCode = findDefaultLocale(localesPaths)
