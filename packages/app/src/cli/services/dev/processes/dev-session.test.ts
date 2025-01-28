@@ -1,5 +1,5 @@
 import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session.js'
-import {devSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -25,6 +25,8 @@ vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
 
+const devSessionStatusManager = new DevSessionStatusManager()
+
 describe('setupDevSessionProcess', () => {
   test('returns a dev session process with correct configuration', async () => {
     // Given
@@ -39,6 +41,7 @@ describe('setupDevSessionProcess', () => {
       appWatcher: {} as AppEventWatcher,
       appPreviewURL: 'https://test.preview.url',
       appLocalProxyURL: 'https://test.local.url',
+      devSessionStatusManager,
     }
 
     // When
@@ -60,6 +63,7 @@ describe('setupDevSessionProcess', () => {
         appWatcher: options.appWatcher,
         appPreviewURL: options.appPreviewURL,
         appLocalProxyURL: options.appLocalProxyURL,
+        devSessionStatusManager,
       },
     })
   })
@@ -92,6 +96,7 @@ describe('pushUpdatesForDevSession', () => {
       organizationId: 'org123',
       appPreviewURL: 'https://test.preview.url',
       appLocalProxyURL: 'https://test.local.url',
+      devSessionStatusManager,
     }
   })
 

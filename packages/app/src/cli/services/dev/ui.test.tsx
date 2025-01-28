@@ -1,5 +1,6 @@
 import {renderDev} from './ui.js'
 import {Dev} from './ui/components/Dev.js'
+import {DevSessionStatusManager} from './processes/dev-session-status-manager.js'
 import {
   testApp,
   testDeveloperPlatformClient,
@@ -26,9 +27,11 @@ const developerPreview = {
 }
 
 const developerPlatformClient = testDeveloperPlatformClient()
+const devSessionStatusManager = new DevSessionStatusManager()
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
+  devSessionStatusManager.reset()
 })
 
 describe('ui', () => {
@@ -65,6 +68,7 @@ describe('ui', () => {
         abortController,
         developerPreview,
         shopFqdn,
+        devSessionStatusManager,
       })
 
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
@@ -108,6 +112,7 @@ describe('ui', () => {
         abortController,
         developerPreview,
         shopFqdn,
+        devSessionStatusManager,
       })
       abortController.abort()
 
@@ -147,6 +152,7 @@ describe('ui', () => {
         abortController,
         developerPreview,
         shopFqdn,
+        devSessionStatusManager,
       })
       abortController.abort()
 
@@ -178,7 +184,17 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, graphiqlUrl, graphiqlPort, app, abortController, developerPreview, shopFqdn})
+      renderDev({
+        processes,
+        previewUrl,
+        graphiqlUrl,
+        graphiqlPort,
+        app,
+        abortController,
+        developerPreview,
+        shopFqdn,
+        devSessionStatusManager,
+      })
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 

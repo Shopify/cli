@@ -6,10 +6,15 @@ export interface DevSessionStatus {
   previewURL?: string
 }
 
-class DevSessionStatusManager extends EventEmitter {
+export class DevSessionStatusManager extends EventEmitter {
   private currentStatus: DevSessionStatus = {
     isReady: false,
     previewURL: undefined,
+  }
+
+  constructor(defaultStatus?: DevSessionStatus) {
+    super()
+    if (defaultStatus) this.currentStatus = defaultStatus
   }
 
   updateStatus(status: Partial<DevSessionStatus>) {
@@ -32,5 +37,3 @@ class DevSessionStatusManager extends EventEmitter {
     }
   }
 }
-
-export const devSessionStatusManager = new DevSessionStatusManager()
