@@ -24,4 +24,4 @@ deploy:
     - bash -i -c "npm_config_loglevel=verbose pnpm changeset-build-no-docs"
     - bash -i -c "npm_config_loglevel=verbose NODE_ENV=production pnpm bundle"
     - bash -i -c "npm_config_loglevel=verbose node bin/create-cli-duplicate-package.js"
-    - bash -i -c "npm_config_loglevel=verbose NPM_CONFIG_PROVENANCE=true pnpm changeset publish --tag experimental"
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag experimental"
