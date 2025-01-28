@@ -55,7 +55,7 @@ export async function unifiedConfigurationParserFactory(
     }
     return {
       state: 'ok',
-      data: zodValidatedData as BaseConfigType,
+      data: jsonSchemaParse.data as BaseConfigType,
       errors: undefined,
     }
   }
