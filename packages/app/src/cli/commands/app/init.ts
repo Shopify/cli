@@ -7,6 +7,7 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
+import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -72,7 +73,8 @@ export default class Init extends AppCommand {
     validateFlavorValue(flags.template, flags.flavor)
 
     const inferredPackageManager = inferPackageManager(flags['package-manager'])
-    const name = flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path}))
+    const name =
+      flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path, isValidName}))
 
     // Force user authentication before prompting.
     let developerPlatformClient = selectDeveloperPlatformClient()

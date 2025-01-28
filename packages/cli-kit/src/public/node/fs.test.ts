@@ -218,6 +218,27 @@ describe('makeDirectoryWithRandomName', () => {
       expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
     })
   })
+
+  test('rerolls the name if an invalid name is produced', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('invalid')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('name')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('valid')
+      vi.mocked(takeRandomFromArray).mockReturnValueOnce('name')
+
+      // When
+      const got = await generateRandomNameForSubdirectory({
+        suffix: 'app',
+        directory: tmpDir,
+        isValidName: (name: string) => name !== 'invalid-name-app',
+      })
+
+      // Then
+      expect(got).toEqual('valid-name-app')
+      expect(takeRandomFromArray).toHaveBeenCalledTimes(4)
+    })
+  })
 })
 
 describe('readFileSync', () => {
