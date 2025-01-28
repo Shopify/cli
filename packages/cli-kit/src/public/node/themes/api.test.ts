@@ -9,7 +9,7 @@ import {
   fetchChecksums,
   bulkUploadThemeAssets,
   AssetParams,
-  deleteThemeAsset,
+  deleteThemeAssets,
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
@@ -17,6 +17,7 @@ import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
+import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 import {OnlineStoreThemeFileBodyInputType} from '../../../cli/api/graphql/admin/generated/types.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
@@ -318,63 +319,51 @@ describe('themePublish', () => {
   }
 })
 
-describe('deleteThemeAsset', () => {
+describe('deleteThemeAssets', () => {
   test('deletes a theme asset', async () => {
     // Given
     const id = 123
     const key = 'snippets/product-variant-picker.liquid'
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {message: 'snippets/product-variant-picker.liquid was succesfully deleted'},
-      status: 200,
-      headers: {},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesDelete: {
+        deletedThemeFiles: [{filename: key}],
+        userErrors: [],
+      },
     })
 
     // When
-    const output = await deleteThemeAsset(id, key, session)
+    const output = await deleteThemeAssets(id, [key], session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
-    expect(output).toBe(true)
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeFilesDelete, session, {
+      themeId: `gid://shopify/OnlineStoreTheme/${id}`,
+      files: [key],
+    })
+    expect(output).toEqual([{key, success: true, operation: 'DELETE'}])
   })
 
-  test('returns true when attemping to delete an nonexistent asset', async () => {
+  test('returns success when attempting to delete nonexistent assets', async () => {
     // Given
     const id = 123
     const key = 'snippets/product-variant-picker.liquid'
 
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {},
-      status: 200,
-      headers: {},
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesDelete: {
+        deletedThemeFiles: [{filename: key}],
+        userErrors: [],
+      },
     })
 
     // When
-    const output = await deleteThemeAsset(id, key, session)
+    const output = await deleteThemeAssets(id, [key], session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
-    expect(output).toBe(true)
-  })
-
-  test('throws an AbortError when the server responds with a 403', async () => {
-    // Given
-    const id = 123
-    const key = 'config/settings_data.json'
-    const message = 'You are not authorized to edit themes on "my-shop.myshopify.com".'
-
-    vi.mocked(restRequest).mockResolvedValue({
-      json: {message},
-      status: 403,
-      headers: {},
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeFilesDelete, session, {
+      themeId: `gid://shopify/OnlineStoreTheme/${id}`,
+      files: [key],
     })
-
-    // When
-    const deletePromise = () => deleteThemeAsset(id, key, session)
-
-    // Then
-    await expect(deletePromise).rejects.toThrow(new AbortError(message))
-    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
+    expect(output).toEqual([{key, success: true, operation: 'DELETE'}])
   })
 })
 
@@ -383,7 +372,6 @@ describe('themeDelete', () => {
     test(`deletes a theme with graphql with a ${sessionType} session`, async () => {
       // Given
       const id = 123
-      const name = 'store theme'
 
       vi.mocked(adminRequestDoc).mockResolvedValue({
         themeDelete: {

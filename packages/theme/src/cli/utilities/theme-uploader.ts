@@ -4,7 +4,7 @@ import {renderTasksToStdErr} from './theme-ui.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -52,7 +52,7 @@ export function uploadTheme(
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
     .then(() => reportFailedUploads(uploadResults))
-    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
 
   const workPromise = options?.deferPartialWork
     ? themeCreationPromise
@@ -131,6 +131,7 @@ function buildDeleteJob(
   theme: Theme,
   session: AdminSession,
   options: Pick<UploadOptions, 'nodelete'>,
+  uploadResults: Map<string, Result>,
 ): SyncJob {
   if (options.nodelete) {
     return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
@@ -139,21 +140,32 @@ function buildDeleteJob(
   const remoteFilesToBeDeleted = getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
-  let failedDeleteAttempts = 0
   const progress = {current: 0, total: orderedFiles.length}
-  const promise = Promise.all(
-    orderedFiles.map((file) =>
-      deleteThemeAsset(theme.id, file.key, session)
-        .catch((error: Error) => {
-          failedDeleteAttempts++
-          if (failedDeleteAttempts > 3) throw error
-          createSyncingCatchError(file.key, 'delete')(error)
-        })
-        .finally(() => {
-          progress.current++
-        }),
-    ),
-  ).then(() => {
+  if (orderedFiles.length === 0) {
+    return {progress, promise: Promise.resolve()}
+  }
+
+  const deleteBatches = []
+  for (let i = 0; i < orderedFiles.length; i += MAX_BATCH_FILE_COUNT) {
+    const batch = orderedFiles.slice(i, i + MAX_BATCH_FILE_COUNT)
+    const promise = deleteThemeAssets(
+      theme.id,
+      batch.map((file) => file.key),
+      session,
+    ).then((results) => {
+      results.forEach((result) => {
+        uploadResults.set(result.key, result)
+        if (!result.success) {
+          const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
+          createSyncingCatchError(result.key, 'delete')(new Error(`Failed to delete ${result.key}: ${errorMessage}`))
+        }
+      })
+      progress.current += batch.length
+    })
+    deleteBatches.push(promise)
+  }
+
+  const promise = Promise.all(deleteBatches).then(() => {
     progress.current = progress.total
   })
 
