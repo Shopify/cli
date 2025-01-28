@@ -2,7 +2,11 @@ import {FlattenedRemoteSpecification} from '../api/graphql/extension_specificati
 import {BaseConfigType} from '../models/extensions/schemas.js'
 import {configWithoutFirstClassFields, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
-import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
+import {
+  HandleInvalidAdditionalProperties,
+  jsonSchemaValidate,
+  normaliseJsonSchema,
+} from '@shopify/cli-kit/node/json-schema'
 import {isEmpty} from '@shopify/cli-kit/common/object'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
@@ -13,6 +17,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
  */
 export async function unifiedConfigurationParserFactory(
   merged: RemoteAwareExtensionSpecification & FlattenedRemoteSpecification,
+  handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip',
 ) {
   const contractJsonSchema = merged.validationSchema?.jsonSchema
   if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
@@ -30,7 +35,12 @@ export async function unifiedConfigurationParserFactory(
     const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
 
     const subjectForAjvWithoutFirstClassFields = configWithoutFirstClassFields(subjectForAjv)
-    const jsonSchemaParse = jsonSchemaValidate(subjectForAjvWithoutFirstClassFields, contract, extensionIdentifier)
+    const jsonSchemaParse = jsonSchemaValidate(
+      subjectForAjvWithoutFirstClassFields,
+      contract,
+      handleInvalidAdditionalProperties,
+      extensionIdentifier,
+    )
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
     let errors = zodParse.errors || []
@@ -55,7 +65,7 @@ export async function unifiedConfigurationParserFactory(
     }
     return {
       state: 'ok',
-      data: zodValidatedData as BaseConfigType,
+      data: jsonSchemaParse.data as BaseConfigType,
       errors: undefined,
     }
   }

@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ParseConfigurationResult} from './schema.js'
+import {randomUUID} from './crypto.js'
 import {getPathValue} from '../common/object.js'
 import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject, ValidateFunction} from 'ajv'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
+import cloneDeep from 'lodash/cloneDeep.js'
+
+export type HandleInvalidAdditionalProperties = 'strip' | 'fail'
 
 type AjvError = ErrorObject<string, {[key: string]: unknown}>
 
@@ -22,6 +26,29 @@ export async function normaliseJsonSchema(schema: string): Promise<SchemaObject>
   return parsedSchema
 }
 
+function createAjvValidator(
+  handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties,
+  schema: SchemaObject,
+) {
+  // allowUnionTypes: Allows types like `type: ["string", "number"]`
+  // removeAdditional: Removes extraneous properties from the subject if `additionalProperties: false` is specified
+  let removeAdditional
+  switch (handleInvalidAdditionalProperties) {
+    case 'strip':
+      removeAdditional = true
+      break
+    case 'fail':
+      removeAdditional = undefined
+      break
+  }
+  const ajv = new Ajv({allowUnionTypes: true, removeAdditional})
+  ajv.addKeyword('x-taplo')
+
+  const validator = ajv.compile(schema)
+
+  return validator
+}
+
 const validatorsCache = new Map<string, ValidateFunction>()
 
 /**
@@ -31,27 +58,29 @@ const validatorsCache = new Map<string, ValidateFunction>()
  *
  * @param subject - The object to validate.
  * @param schema - The JSON schema to validate against.
+ * @param handleInvalidAdditionalProperties - Whether to strip or fail on invalid additional properties.
  * @param identifier - The identifier of the schema being validated, used to cache the validator.
  * @returns The result of the validation. If the state is 'error', the errors will be in a zod-like format.
  */
 export function jsonSchemaValidate(
   subject: object,
   schema: SchemaObject,
-  identifier: string,
+  handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties,
+  identifier?: string,
 ): ParseConfigurationResult<unknown> & {rawErrors?: AjvError[]} {
-  const ajv = new Ajv({allowUnionTypes: true})
+  const subjectToModify = cloneDeep(subject)
 
-  ajv.addKeyword('x-taplo')
+  const cacheKey = identifier ?? randomUUID()
 
-  const validator = validatorsCache.get(identifier) ?? ajv.compile(schema)
-  validatorsCache.set(identifier, validator)
+  const validator = validatorsCache.get(cacheKey) ?? createAjvValidator(handleInvalidAdditionalProperties, schema)
+  validatorsCache.set(cacheKey, validator)
 
-  validator(subject)
+  validator(subjectToModify)
 
   // Errors from the contract are post-processed to be more zod-like and to deal with unions better
   let jsonSchemaErrors
   if (validator.errors && validator.errors.length > 0) {
-    jsonSchemaErrors = convertJsonSchemaErrors(validator.errors, subject, schema)
+    jsonSchemaErrors = convertJsonSchemaErrors(validator.errors, subjectToModify, schema)
     return {
       state: 'error',
       data: undefined,
@@ -61,7 +90,7 @@ export function jsonSchemaValidate(
   }
   return {
     state: 'ok',
-    data: subject,
+    data: subjectToModify,
     errors: undefined,
     rawErrors: undefined,
   }
@@ -162,8 +191,6 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
  * @returns A simplified list of errors.
  */
 function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: SchemaObject): AjvError[] {
-  const ajv = new Ajv({allowUnionTypes: true})
-  ajv.addKeyword('x-taplo')
   let errors = rawErrors
 
   const resolvedUnionErrors = new Set()
@@ -191,7 +218,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
       // we know that none of the union schemas are correct, but for each of them we can measure how wrong they are
       const correctValuesAndErrors = unionSchemas
         .map((candidateSchemaFromUnion: SchemaObject) => {
-          const candidateSchemaValidator = ajv.compile(candidateSchemaFromUnion)
+          const candidateSchemaValidator = createAjvValidator('fail', candidateSchemaFromUnion)
           candidateSchemaValidator(subjectValue)
 
           let score = 0
@@ -202,7 +229,7 @@ function simplifyUnionErrors(rawErrors: AjvError[], subject: object, schema: Sch
               const subSchema = candidateSchemaFromUnion.properties[propertyName] as SchemaObject
               const subjectValueSlice = getPathValue(subjectValue, propertyName)
 
-              const subValidator = ajv.compile(subSchema)
+              const subValidator = createAjvValidator('fail', subSchema)
               if (subValidator(subjectValueSlice)) {
                 return acc + 1
               }
