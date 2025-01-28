@@ -1,7 +1,7 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {devSessionStatusManager, DevSessionStatus} from '../../processes/dev-session-status-manager.js'
+import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session-status-manager.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -40,6 +40,7 @@ export interface DevProps {
   developerPreview: DeveloperPreviewController
   isEditionWeek?: boolean
   shopFqdn: string
+  devSessionStatusManager: DevSessionStatusManager
 }
 
 const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: ExtensionInstance[]) => {
@@ -60,6 +61,7 @@ const Dev: FunctionComponent<DevProps> = ({
   developerPreview,
   isEditionWeek,
   shopFqdn,
+  devSessionStatusManager,
 }) => {
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
 

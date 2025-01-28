@@ -1,7 +1,7 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
-import {devSessionStatusManager} from '../../processes/dev-session-status-manager.js'
+import {DevSessionStatusManager} from '../../processes/dev-session-status-manager.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -13,7 +13,7 @@ import {
 } from '@shopify/cli-kit/node/testing/ui'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import React from 'react'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
@@ -24,6 +24,7 @@ vi.mock('../../fetch.js')
 vi.mock('../../processes/dev-session.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()
+const devSessionStatusManager = new DevSessionStatusManager()
 
 const testApp = {
   canEnablePreviewMode: true,
@@ -40,6 +41,10 @@ const developerPreview = {
   disable: vi.fn(async () => {}),
   update: vi.fn(async (_state: boolean) => true),
 }
+
+afterEach(() => {
+  devSessionStatusManager.reset()
+})
 
 describe('Dev', () => {
   test('renders a stream of concurrent outputs from sub-processes, shortcuts and a preview url', async () => {
@@ -90,6 +95,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -171,6 +177,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
       {stdin: new Stdin({isTTY: false})},
     )
@@ -209,6 +216,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -236,6 +244,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -265,6 +274,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -309,6 +319,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -375,6 +386,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -435,6 +447,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -488,6 +501,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -532,6 +546,7 @@ describe('Dev', () => {
         pollingTime={200}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -603,6 +618,7 @@ describe('Dev', () => {
         pollingTime={200}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -658,6 +674,7 @@ describe('Dev', () => {
         pollingTime={200}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -699,6 +716,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -765,6 +783,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -816,6 +835,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -856,6 +876,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -898,6 +919,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -936,6 +958,7 @@ describe('Dev', () => {
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -998,6 +1021,7 @@ describe('Dev', () => {
         }}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -1061,6 +1085,7 @@ describe('Dev', () => {
         }}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 
@@ -1104,6 +1129,7 @@ describe('Dev', () => {
         }}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
+        devSessionStatusManager={devSessionStatusManager}
       />,
     )
 

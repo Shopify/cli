@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {devSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
@@ -31,6 +31,7 @@ interface DevSessionOptions {
   appWatcher: AppEventWatcher
   appPreviewURL: string
   appLocalProxyURL: string
+  devSessionStatusManager: DevSessionStatusManager
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
@@ -88,7 +89,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   {stderr, stdout, abortSignal: signal},
   options,
 ) => {
-  const {appWatcher} = options
+  const {appWatcher, devSessionStatusManager} = options
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
 
@@ -160,16 +161,18 @@ async function handleDevSessionResult(
   processOptions: DevSessionProcessOptions,
   event?: AppEvent,
 ) {
+  const {devSessionStatusManager, stdout} = processOptions
+
   if (result.status === 'updated') {
-    await printSuccess(`✅ Updated`, processOptions.stdout)
+    await printSuccess(`✅ Updated`, stdout)
     await printActionRequiredMessages(processOptions, event)
   } else if (result.status === 'created') {
     devSessionStatusManager.updateStatus({isReady: true})
-    await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
+    await printSuccess(`✅ Ready, watching for changes in your app `, stdout)
   } else if (result.status === 'aborted') {
-    outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
+    outputDebug('❌ Session update aborted (new change detected or error in Session Update)', stdout)
   } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
-    await processUserErrors(result.error, processOptions, processOptions.stdout)
+    await processUserErrors(result.error, processOptions, stdout)
   }
 
   // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
@@ -253,7 +256,7 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   // Create or update the dev session
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
-    if (devSessionStatusManager.status.isReady) {
+    if (options.devSessionStatusManager.status.isReady) {
       const result = await devSessionUpdateWithRetry(payload, options.developerPlatformClient)
       const errors = result.devSessionUpdate?.userErrors ?? []
       if (errors.length) return {status: 'remote-error', error: errors}
@@ -363,5 +366,5 @@ async function printLogMessage(message: string, stdout: Writable, prefix?: strin
 async function updatePreviewURL(options: DevSessionProcessOptions, event: AppEvent) {
   const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
   const newPreviewURL = hasPreview ? options.appLocalProxyURL : options.appPreviewURL
-  devSessionStatusManager.updateStatus({previewURL: newPreviewURL})
+  options.devSessionStatusManager.updateStatus({previewURL: newPreviewURL})
 }

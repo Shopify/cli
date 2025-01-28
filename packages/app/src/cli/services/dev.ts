@@ -25,6 +25,7 @@ import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {DevSessionStatusManager} from './dev/processes/dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -71,9 +72,9 @@ export interface DevOptions {
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
   await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  const {processes, graphiqlUrl, previewUrl, devSessionStatusManager} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
-  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
+  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config, devSessionStatusManager})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -330,11 +331,13 @@ async function launchDevProcesses({
   previewUrl,
   graphiqlUrl,
   config,
+  devSessionStatusManager,
 }: {
   processes: DevProcesses
   previewUrl: string
   graphiqlUrl: string | undefined
   config: DevConfig
+  devSessionStatusManager: DevSessionStatusManager
 }) {
   const abortController = new AbortController()
   const processesForTaskRunner: OutputProcess[] = processes.map((process) => {
@@ -375,6 +378,7 @@ async function launchDevProcesses({
     abortController,
     developerPreview: developerPreviewController(apiKey, developerPlatformClient),
     shopFqdn: config.storeFqdn,
+    devSessionStatusManager,
   })
 }
 
