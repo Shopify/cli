@@ -43,7 +43,7 @@ const developerPreview = {
 
 describe('Dev', () => {
   beforeEach(() => {
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true})
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: undefined})
   })
 
   test('renders a stream of concurrent outputs from sub-processes, shortcuts and a preview url', async () => {
@@ -977,7 +977,7 @@ describe('Dev', () => {
 
   test('updates UI when devSessionEnabled changes from false to true', async () => {
     // Given
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: false})
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: false, devSessionPreviewURL: undefined})
 
     const renderInstance = render(
       <Dev
@@ -1012,7 +1012,7 @@ describe('Dev', () => {
     `)
 
     // When dev session becomes ready
-    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true})
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: 'https://shopify.com'})
 
     // Wait for the polling interval to update the UI
     await waitForContent(renderInstance, 'preview in your browser')
@@ -1032,6 +1032,90 @@ describe('Dev', () => {
     `)
 
     // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('updates preview URL when devSessionStatus provides a new URL', async () => {
+    // Given
+    const initialPreviewUrl = 'https://shopify.com'
+    const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: undefined})
+
+    const renderInstance = render(
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl={initialPreviewUrl}
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={{
+          ...testApp,
+          developerPlatformClient: {
+            ...testDeveloperPlatformClient(),
+            supportsDevSessions: true,
+          },
+        }}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    // Initial state should show the default preview URL
+    expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${initialPreviewUrl}`)
+
+    // When dev session provides a new preview URL
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: newPreviewUrl})
+
+    // Wait for the polling interval to update the UI
+    await waitForContent(renderInstance, newPreviewUrl)
+
+    // Then - status message should show the new preview URL
+    expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${newPreviewUrl}`)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('opens the updated preview URL when p is pressed after URL changes', async () => {
+    // Given
+    const initialPreviewUrl = 'https://shopify.com'
+    const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: undefined})
+
+    const renderInstance = render(
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl={initialPreviewUrl}
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={{
+          ...testApp,
+          developerPlatformClient: {
+            ...testDeveloperPlatformClient(),
+            supportsDevSessions: true,
+          },
+        }}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    // Initial state should show the default preview URL
+    expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${initialPreviewUrl}`)
+
+    // When dev session provides a new preview URL
+    vi.mocked(devSessionStatus).mockReturnValue({isDevSessionReady: true, devSessionPreviewURL: newPreviewUrl})
+
+    // Wait for the polling interval to update the UI
+    await waitForContent(renderInstance, newPreviewUrl)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 100, 'p')
+
+    // Then
+    expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, newPreviewUrl)
+
     renderInstance.unmount()
   })
 })

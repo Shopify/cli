@@ -1,4 +1,9 @@
-import {setupDevSessionProcess, pushUpdatesForDevSession, resetDevSessionStatus} from './dev-session.js'
+import {
+  setupDevSessionProcess,
+  pushUpdatesForDevSession,
+  resetDevSessionStatus,
+  devSessionStatus,
+} from './dev-session.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -7,6 +12,7 @@ import {
   testAppAccessConfigExtension,
   testAppLinked,
   testDeveloperPlatformClient,
+  testFlowActionExtension,
   testUIExtension,
   testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
@@ -35,6 +41,8 @@ describe('setupDevSessionProcess', () => {
       organizationId: 'org123',
       appId: 'app123',
       appWatcher: {} as AppEventWatcher,
+      appPreviewURL: 'https://test.preview.url',
+      appLocalProxyURL: 'https://test.local.url',
     }
 
     // When
@@ -54,6 +62,8 @@ describe('setupDevSessionProcess', () => {
         organizationId: options.organizationId,
         appId: options.appId,
         appWatcher: options.appWatcher,
+        appPreviewURL: options.appPreviewURL,
+        appLocalProxyURL: options.appLocalProxyURL,
       },
     })
   })
@@ -84,6 +94,8 @@ describe('pushUpdatesForDevSession', () => {
       storeFqdn: 'test.myshopify.com',
       appId: 'app123',
       organizationId: 'org123',
+      appPreviewURL: 'https://test.preview.url',
+      appLocalProxyURL: 'https://test.local.url',
     }
   })
 
@@ -204,5 +216,61 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
+  })
+
+  test('updates preview URL when extension is previewable', async () => {
+    // Given
+    const extension = await testUIExtension({type: 'ui_extension'})
+    const newApp = testAppLinked({allExtensions: [extension]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatus().devSessionPreviewURL).toBe(options.appLocalProxyURL)
+  })
+
+  test('updates preview URL to appPreviewURL when no previewable extensions', async () => {
+    // Given
+    const extension = await testFlowActionExtension()
+    const newApp = testAppLinked({allExtensions: [extension]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatus().devSessionPreviewURL).toBe(options.appPreviewURL)
+  })
+
+  test('resets dev session status when calling resetDevSessionStatus', async () => {
+    // Given
+    const extension = await testUIExtension({type: 'ui_extension'})
+    const newApp = testAppLinked({allExtensions: [extension]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatus().isDevSessionReady).toBe(true)
+    expect(devSessionStatus().devSessionPreviewURL).toBeDefined()
+
+    // When
+    resetDevSessionStatus()
+
+    // Then
+    expect(devSessionStatus().isDevSessionReady).toBe(false)
+    expect(devSessionStatus().devSessionPreviewURL).toBeUndefined()
   })
 })

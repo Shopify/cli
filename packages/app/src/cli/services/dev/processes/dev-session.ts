@@ -28,6 +28,8 @@ interface DevSessionOptions {
   organizationId: string
   appId: string
   appWatcher: AppEventWatcher
+  appPreviewURL: string
+  appLocalProxyURL: string
 }
 
 interface DevSessionProcessOptions extends DevSessionOptions {
@@ -65,15 +67,18 @@ let bundleControllers: AbortController[] = []
 // Current status of the dev session
 // Since the watcher can emit events before the dev session is ready, we need to keep track of the status
 let isDevSessionReady = false
+let devSessionPreviewURL: string | undefined
 
 export function devSessionStatus() {
   return {
     isDevSessionReady,
+    devSessionPreviewURL,
   }
 }
 
 export function resetDevSessionStatus() {
   isDevSessionReady = false
+  devSessionPreviewURL = undefined
 }
 
 export async function setupDevSessionProcess({
@@ -115,6 +120,8 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       // If there are any build errors, don't update the dev session
       const anyError = event.extensionEvents.some((eve) => eve.buildResult?.status === 'error')
       if (anyError) return
+
+      await updatePreviewURL(processOptions, event)
 
       // Cancel any ongoing bundle and upload process
       bundleControllers.forEach((controller) => controller.abort())
@@ -362,4 +369,9 @@ async function printLogMessage(message: string, stdout: Writable, prefix?: strin
   await useConcurrentOutputContext({outputPrefix: prefix ?? 'dev-session', stripAnsi: false}, () => {
     stdout.write(message)
   })
+}
+
+async function updatePreviewURL(options: DevSessionProcessOptions, event: AppEvent) {
+  const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
+  devSessionPreviewURL = hasPreview ? options.appLocalProxyURL : options.appPreviewURL
 }
