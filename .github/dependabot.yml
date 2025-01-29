@@ -17,27 +17,6 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
     groups:
-      minor_versions:
-        dependency-type: "production"
-        update-types:
-          - 'minor'
-          - 'patch'
-        exclude-patterns:
-          - "oclif"
-          - "@oclif/*"
-          - "nx"
-          - "@nx/*"
-          - "ink"
-          - "typescript"
-          - "esbuild"
-          - "react"
-          - "@babel/*"
-          - "javy-cli"
-      development_dependencies:
-        dependency-type: "development"
-        update-types:
-          - 'minor'
-          - 'patch'
       oclif:
         patterns:
           - "oclif"
@@ -46,3 +25,25 @@ updates:
         patterns:
           - "nx"
           - "@nx/*"
+      esbuild:
+        patterns:
+          - "esbuild"
+      babel:
+        patterns:
+          - "@babel/*"
+      typescript:
+        patterns:
+          - "typescript"
+      minor_versions:
+        dependency-type: "production"
+        update-types:
+          - 'minor'
+          - 'patch'
+        exclude-patterns:
+          - "ink"
+          - "react"
+      development_dependencies:
+        dependency-type: "development"
+        update-types:
+          - 'minor'
+          - 'patch'
