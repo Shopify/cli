@@ -4,12 +4,14 @@ import {EventEmitter} from 'events'
 export interface DevSessionStatus {
   isReady: boolean
   previewURL?: string
+  graphiqlUrl?: string
 }
 
 export class DevSessionStatusManager extends EventEmitter {
   private currentStatus: DevSessionStatus = {
     isReady: false,
     previewURL: undefined,
+    graphiqlUrl: undefined,
   }
 
   constructor(defaultStatus?: DevSessionStatus) {
@@ -34,6 +36,7 @@ export class DevSessionStatusManager extends EventEmitter {
     this.currentStatus = {
       isReady: false,
       previewURL: undefined,
+      graphiqlUrl: undefined,
     }
   }
 }

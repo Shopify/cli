@@ -1,4 +1,5 @@
 import {Dev, DevProps} from './ui/components/Dev.js'
+import {DevSessionUI} from './ui/components/DevSession.js'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -15,7 +16,17 @@ export async function renderDev({
   developerPreview,
   shopFqdn,
 }: DevProps) {
-  if (terminalSupportsPrompting()) {
+  if (!terminalSupportsPrompting()) {
+    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
+  } else if (app.developerPlatformClient.supportsDevSessions) {
+    return render(
+      <DevSessionUI
+        processes={processes}
+        abortController={abortController}
+        devSessionStatusManager={devSessionStatusManager}
+      />,
+    )
+  } else {
     return render(
       <Dev
         processes={processes}
@@ -32,8 +43,6 @@ export async function renderDev({
         exitOnCtrlC: false,
       },
     )
-  } else {
-    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   }
 }
 

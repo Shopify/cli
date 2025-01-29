@@ -96,7 +96,16 @@ export async function setupDevProcesses({
   const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
   const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
   const defaultPreviewURL = anyPreviewableExtensions ? devConsoleURL : appPreviewUrl
-  const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL: defaultPreviewURL})
+
+  const graphiqlUrl = shouldRenderGraphiQL
+    ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
+    : undefined
+
+  const devSessionStatusManager = new DevSessionStatusManager({
+    isReady: false,
+    previewURL: defaultPreviewURL,
+    graphiqlUrl,
+  })
 
   const processes = [
     ...(await setupWebProcesses({
