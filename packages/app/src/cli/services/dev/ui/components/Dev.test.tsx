@@ -1,7 +1,8 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
-import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient} from '../../../../models/app/app.test-data.js'
 import {DevSessionStatusManager} from '../../processes/dev-session-status-manager.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -1096,23 +1097,33 @@ describe('Dev', () => {
 })
 
 describe('calculatePrefixColumnSize', () => {
-  test('returns max size of processes and extensions', async () => {
+  test('returns max handle length if processes are shorter', async () => {
     // Given
     const processes = [
       {prefix: '1', action: async () => {}},
       {prefix: '12', action: async () => {}},
       {prefix: '123', action: async () => {}},
     ]
-    const extensions = [
-      await testUIExtension({configuration: {name: 'Extension 1', handle: '1234', type: 'ui_extension'}}),
-      await testUIExtension({configuration: {name: 'Extension 2', handle: '12345', type: 'ui_extension'}}),
-      await testUIExtension({configuration: {name: 'Extension 3', handle: '123456', type: 'ui_extension'}}),
+
+    // When
+    const result = calculatePrefixColumnSize(processes)
+
+    // Then
+    expect(result).toBe(MAX_EXTENSION_HANDLE_LENGTH)
+  })
+
+  test('returns max size of processes when longer than max handle length', async () => {
+    // Given
+    const processes = [
+      {prefix: '1', action: async () => {}},
+      {prefix: '12', action: async () => {}},
+      {prefix: 'process-with-a-very-very-very-long-prefix-over-50-characters-or-more', action: async () => {}},
     ]
 
     // When
-    const result = calculatePrefixColumnSize(processes, extensions)
+    const result = calculatePrefixColumnSize(processes)
 
     // Then
-    expect(result).toBe(6)
+    expect(result).toBe(68)
   })
 })

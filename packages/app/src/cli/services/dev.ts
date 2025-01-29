@@ -359,10 +359,8 @@ async function launchDevProcesses({
           organizationId: config.remoteApp.organizationId,
         }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
-    apiKey,
     id: config.remoteApp.id,
     developerPlatformClient,
-    extensions: config.localApp.allExtensions,
   }
 
   return renderDev({

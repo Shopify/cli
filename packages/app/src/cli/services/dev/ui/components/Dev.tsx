@@ -1,7 +1,7 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session-status-manager.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -29,9 +29,7 @@ export interface DevProps {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
     id: string
-    apiKey: string
     developerPlatformClient: DeveloperPlatformClient
-    extensions: ExtensionInstance[]
   }
   pollingTime?: number
   developerPreview: DeveloperPreviewController
@@ -40,11 +38,9 @@ export interface DevProps {
   devSessionStatusManager: DevSessionStatusManager
 }
 
-const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: ExtensionInstance[]) => {
-  return Math.max(
-    ...processes.map((process) => process.prefix.length),
-    ...extensions.map((extension) => extension.handle.length),
-  )
+// Max between the length of the processes prefix and the max length of the extension handle
+const calculatePrefixColumnSize = (processes: OutputProcess[]) => {
+  return Math.max(...processes.map((process) => process.prefix.length), MAX_EXTENSION_HANDLE_LENGTH)
 }
 
 const Dev: FunctionComponent<DevProps> = ({
@@ -218,7 +214,7 @@ const Dev: FunctionComponent<DevProps> = ({
     <>
       <ConcurrentOutput
         processes={errorHandledProcesses}
-        prefixColumnSize={calculatePrefixColumnSize(errorHandledProcesses, app.extensions)}
+        prefixColumnSize={calculatePrefixColumnSize(errorHandledProcesses)}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
         useAlternativeColorPalette={app.developerPlatformClient.supportsDevSessions}
