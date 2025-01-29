@@ -22,6 +22,7 @@ export interface AppConfigurationUsedByCli {
   webhooks?: WebhooksConfig
   access_scopes?: {
     scopes?: string
+    required_scopes?: string[]
     use_legacy_install_flow?: boolean
   }
   auth?: {

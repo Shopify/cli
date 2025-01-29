@@ -377,13 +377,31 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
     remoteAppConfiguration = buildAppConfigurationFromRemoteAppProperties(remoteApp, locallyProvidedScopes)
   }
 
+  // Create a clean version of the local config without scopes/require_scopes
+  const cleanLocalConfig = {...(localAppOptions.existingConfig ?? {})}
+
+  if ('access_scopes' in cleanLocalConfig) {
+    const accessScopes = cleanLocalConfig.access_scopes as {
+      scopes?: unknown
+      required_scopes?: unknown
+    }
+
+    // If remote has required_scopes, remove scopes from local
+    if (remoteAppConfiguration?.access_scopes?.required_scopes) {
+      delete accessScopes.scopes
+    }
+
+    // If remote has scopes, remove required_scopes from local
+    if (remoteAppConfiguration?.access_scopes?.scopes) {
+      delete accessScopes.required_scopes
+    }
+  }
+
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
 
   const mergedAppConfiguration = {
     ...deepMergeObjects<AppConfiguration, CurrentAppConfiguration>(
-      {
-        ...(localAppOptions.existingConfig ?? {}),
-      },
+      cleanLocalConfig,
       {
         client_id: remoteApp.apiKey,
         path: configFilePath,
