@@ -6281,6 +6281,21 @@
           "name": "theme",
           "type": "option"
         },
+        "unique-name": {
+          "allowNo": false,
+          "description": "Make the push to an unpublished theme",
+          "env": "SHOPIFY_FLAG_UNIQUENAME",
+          "name": "unique-name",
+          "relationships": [
+            {
+              "flags": [
+                "unpublished"
+              ],
+              "type": "all"
+            }
+          ],
+          "type": "boolean"
+        },
         "unpublished": {
           "allowNo": false,
           "char": "u",

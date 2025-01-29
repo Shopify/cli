@@ -2208,6 +2208,7 @@ FLAGS
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
       --strict               Require theme check to pass without errors before pushing. Warnings are allowed.
+      --unique-name          Make the push to an unpublished theme
       --verbose              Increase the verbosity of the output.
 
 DESCRIPTION
