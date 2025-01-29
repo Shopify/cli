@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {currentProcessIsGlobal} from './is-global.js'
@@ -350,7 +349,7 @@ export function output(content: OutputMessage, logLevel: LogLevel = 'info', logg
  * Prints a new line in the terminal.
  */
 export function outputNewline(): void {
-  console.warn()
+  consoleWarn('')
 }
 
 /**
@@ -476,5 +475,3 @@ export function formatSection(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
   return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
 }
-
-/* eslint-enable no-console */
