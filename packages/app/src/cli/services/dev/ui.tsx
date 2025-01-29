@@ -14,7 +14,6 @@ export async function renderDev({
   graphiqlPort,
   developerPreview,
   shopFqdn,
-  devSessionStatusManager,
 }: DevProps) {
   if (terminalSupportsPrompting()) {
     return render(
@@ -28,7 +27,6 @@ export async function renderDev({
         developerPreview={developerPreview}
         isEditionWeek={isEditionWeek()}
         shopFqdn={shopFqdn}
-        devSessionStatusManager={devSessionStatusManager}
       />,
       {
         exitOnCtrlC: false,
@@ -44,7 +42,7 @@ async function renderDevNonInteractive({
   app: {canEnablePreviewMode},
   abortController,
   developerPreview,
-}: Omit<DevProps, 'previewUrl' | 'graphiqlPort' | 'devSessionStatusManager'>) {
+}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
   if (canEnablePreviewMode) {
     await developerPreview.enable()
     abortController?.signal.addEventListener('abort', async () => {
