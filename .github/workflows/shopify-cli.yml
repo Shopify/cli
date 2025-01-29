@@ -131,7 +131,7 @@ jobs:
   pr-platform-agnostic-lint:
     name: '[PR] Run lint with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]) || github.event_name == 'merge_group'' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -183,7 +183,7 @@ jobs:
   pr-platform-agnostic-knip:
     name: '[PR] Run knip with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'}}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -207,7 +207,7 @@ jobs:
   pr-platform-agnostic-graphql-schema:
     name: '[PR] Check graphql-codegen has been run'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'}}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -233,7 +233,7 @@ jobs:
   oclif-checks:
     name: '[PR] Check OCLIF manifests & readme & docs'
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]) || github.event_name == 'merge_group'' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
@@ -313,7 +313,7 @@ jobs:
   pr-test-coverage:
     name: '[PR] Run Test Coverage with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ (github.event_name == 'pull_request' || github.event_name == 'merge_group') && github.event.pull_request.user.login != 'dependabot[bot]' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]) || github.event_name == 'merge_group'' }}
     timeout-minutes: 30
     strategy:
       matrix:
