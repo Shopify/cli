@@ -7,7 +7,7 @@ settings:
 overrides:
   '@types/react': 17.0.2
   vite: 5.4.12
-  '@oclif/core': 3.26.5
+  '@oclif/core': 3.27.0
   whatwg-url: 14.0.0
   supports-hyperlinks: 3.1.0
   '@shopify/cli-hydrogen>@shopify/cli-kit': link:./packages/cli-kit
@@ -150,8 +150,8 @@ importers:
         specifier: 3.8.1
         version: 3.8.1(esbuild@0.24.0)(graphql-tag@2.12.6)(graphql@16.8.1)
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 3.27.0
+        version: 3.27.0
       '@shopify/cli-kit':
         specifier: 3.74.0
         version: link:../cli-kit
@@ -254,8 +254,8 @@ importers:
         version: 0.24.0
     devDependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 3.27.0
+        version: 3.27.0
       '@oclif/plugin-commands':
         specifier: 3.3.4
         version: 3.3.4
@@ -308,8 +308,8 @@ importers:
         specifier: 2.2.5
         version: 2.2.5
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 3.27.0
+        version: 3.27.0
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -620,8 +620,8 @@ importers:
   packages/plugin-cloudflare:
     dependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 3.27.0
+        version: 3.27.0
       '@shopify/cli-kit':
         specifier: 3.74.0
         version: link:../cli-kit
@@ -633,8 +633,8 @@ importers:
   packages/plugin-did-you-mean:
     dependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 3.27.0
+        version: 3.27.0
       '@shopify/cli-kit':
         specifier: 3.74.0
         version: link:../cli-kit
@@ -649,8 +649,8 @@ importers:
   packages/theme:
     dependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 3.27.0
+        version: 3.27.0
       '@shopify/cli-kit':
         specifier: 3.74.0
         version: link:../cli-kit
@@ -5581,8 +5581,8 @@ packages:
       - debug
     dev: true
 
-  /@oclif/core@3.26.5:
-    resolution: {integrity: sha512-uRmAujGJjLhhgpLylbiuHuPt9Ec7u6aJ72utuSPNTRw47+W5vbQSGnLGPiil1Mt5YDL+zFOyTVH6Uv3NSP2SaQ==}
+  /@oclif/core@3.27.0:
+    resolution: {integrity: sha512-Fg93aNFvXzBq5L7ztVHFP2nYwWU1oTCq48G0TjF/qC1UN36KWa2H5Hsm72kERd5x/sjy2M2Tn4kDEorUlpXOlw==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@types/cli-progress': 3.11.6
@@ -5618,7 +5618,7 @@ packages:
     resolution: {integrity: sha512-jjn24eE4gXY59Jmq6w48tPnH7WLJSt9QoDdJBcN4VLHqQlwkXpTllVKetCR0QG3pDt7ap1nl6kIRs/nAbbownw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       lodash: 4.17.21
     dev: true
 
@@ -5626,7 +5626,7 @@ packages:
     resolution: {integrity: sha512-BA0h1fbheN74cdrITKIwqfsRtnw/G+oysHbn+IsqWcsecgy5HZwI37/cCRLXZSZQndsgoYAhqvVpyleXv3g83A==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
     dev: true
 
   /@oclif/plugin-not-found@3.2.38(@types/node@18.19.70):
@@ -5634,7 +5634,7 @@ packages:
     engines: {node: '>=18.0.0'}
     dependencies:
       '@inquirer/prompts': 7.2.4(@types/node@18.19.70)
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       ansis: 3.10.0
       fast-levenshtein: 3.0.0
     transitivePeerDependencies:
@@ -5645,7 +5645,7 @@ packages:
     resolution: {integrity: sha512-76SgC2MX3/GkTVTOdJBVTRVmUuu5gJt+ZVBwxaAWgZnvYWEOW9XGQXw4RhW35f5vKdJL/C6dIiid9Zkg3t+jDw==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       ansis: 3.10.0
       debug: 4.4.0(supports-color@8.1.1)
       npm: 10.9.2
@@ -5664,7 +5664,7 @@ packages:
     resolution: {integrity: sha512-0ZN7o+Tv00gYrwlKsfMQ8VvJGb9Vhr3UYStFJh1AbEdGTPlURv51aatTW27AIV2atfluCh0MMntVZSzoDcuxSQ==}
     engines: {node: '>=18.0.0'}
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       ansis: 3.10.0
       debug: 4.4.0(supports-color@8.1.1)
       http-call: 5.3.0
@@ -6489,9 +6489,9 @@ packages:
     dependencies:
       '@ast-grep/napi': 0.11.0
       '@graphql-codegen/cli': 5.0.2(@types/node@18.19.70)(graphql@16.8.1)(typescript@5.7.2)
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.0(@oclif/core@3.27.0)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.0
       chokidar: 3.5.3
@@ -6599,19 +6599,19 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+  /@shopify/oxygen-cli@4.6.0(@oclif/core@3.27.0)(@shopify/cli-kit@packages+cli-kit):
     resolution: {integrity: sha512-Khph5joWTkwhAjh1Uq7/7widK1AMDnoQkT3JZboeUjzSH1M95XhOY7Hs57l6TNLsMHjkDG/8/nAzLkJ7mHNkkQ==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
     peerDependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       '@shopify/cli-kit': ^3.58.0
     dependencies:
       '@bugsnag/core': 8.1.1
       '@bugsnag/js': 8.1.2
       '@bugsnag/node': 8.1.1
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
     dev: true
@@ -14188,7 +14188,7 @@ packages:
       '@inquirer/confirm': 3.2.0
       '@inquirer/input': 2.3.0
       '@inquirer/select': 2.5.0
-      '@oclif/core': 3.26.5
+      '@oclif/core': 3.27.0
       '@oclif/plugin-help': 6.2.23
       '@oclif/plugin-not-found': 3.2.38(@types/node@18.19.70)
       '@oclif/plugin-warn-if-update-available': 3.1.31
