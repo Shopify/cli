@@ -1,6 +1,7 @@
 {
   "name": "@shopify/plugin-cloudflare",
   "version": "3.74.0",
+  "packageManager": "pnpm@8.15.7",
   "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
