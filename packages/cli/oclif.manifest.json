@@ -4821,7 +4821,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -4941,7 +4941,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5032,7 +5032,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5119,7 +5119,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5309,7 +5309,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5492,7 +5492,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5572,6 +5572,10 @@
       "hiddenAliases": [
       ],
       "id": "theme:list",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -5591,7 +5595,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5687,7 +5691,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5811,7 +5815,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5912,7 +5916,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5999,7 +6003,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6138,7 +6142,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6305,7 +6309,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6394,7 +6398,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6580,7 +6584,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
