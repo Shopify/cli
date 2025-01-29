@@ -77,8 +77,6 @@ export async function setupDevProcesses({
   graphiqlKey,
 }: DevConfig): Promise<{
   processes: DevProcesses
-  previewUrl: string
-  graphiqlUrl: string | undefined
   devSessionStatusManager: DevSessionStatusManager
 }> {
   const apiKey = remoteApp.apiKey
@@ -92,11 +90,20 @@ export async function setupDevProcesses({
   const reloadedApp = await reloadApp(localApp)
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
-  // Decide on the appropriate preview URL for a session with these processes
+  // Default preview URL, it can change if extensions are added/removed within a dev session
   const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
   const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
   const defaultPreviewURL = anyPreviewableExtensions ? devConsoleURL : appPreviewUrl
-  const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL: defaultPreviewURL})
+
+  const graphiqlUrl = shouldRenderGraphiQL
+    ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
+    : undefined
+
+  const devSessionStatusManager = new DevSessionStatusManager({
+    isReady: false,
+    previewURL: defaultPreviewURL,
+    graphiqlUrl,
+  })
 
   const processes = [
     ...(await setupWebProcesses({
@@ -191,14 +198,7 @@ export async function setupDevProcesses({
   // Add http server proxy & configure ports, for processes that need it
   const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort)
 
-  return {
-    processes: processesWithProxy,
-    previewUrl: defaultPreviewURL,
-    devSessionStatusManager,
-    graphiqlUrl: shouldRenderGraphiQL
-      ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
-      : undefined,
-  }
+  return {processes: processesWithProxy, devSessionStatusManager}
 }
 
 const stripUndefineds = <T>(process: T | undefined | false): process is T => {

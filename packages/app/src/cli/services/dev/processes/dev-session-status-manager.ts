@@ -4,12 +4,20 @@ import {EventEmitter} from 'events'
 export interface DevSessionStatus {
   isReady: boolean
   previewURL?: string
+  graphiqlUrl?: string
 }
 
+/**
+ * This class handles status updates between the DevSession and the Dev UI renderer.
+ *
+ * When there is a dev-session update that should be reflected in the UI,
+ * the DevSessionStatusManager will emit an event that the Dev UI renderer will listen for.
+ */
 export class DevSessionStatusManager extends EventEmitter {
   private currentStatus: DevSessionStatus = {
     isReady: false,
     previewURL: undefined,
+    graphiqlUrl: undefined,
   }
 
   constructor(defaultStatus?: DevSessionStatus) {
@@ -34,6 +42,7 @@ export class DevSessionStatusManager extends EventEmitter {
     this.currentStatus = {
       isReady: false,
       previewURL: undefined,
+      graphiqlUrl: undefined,
     }
   }
 }

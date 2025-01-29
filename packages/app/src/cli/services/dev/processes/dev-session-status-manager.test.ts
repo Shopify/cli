@@ -12,6 +12,7 @@ describe('DevSessionStatusManager', () => {
     expect(devSessionStatusManager.status).toEqual({
       isReady: false,
       previewURL: undefined,
+      graphiqlUrl: undefined,
     })
   })
 
@@ -21,6 +22,7 @@ describe('DevSessionStatusManager', () => {
     expect(devSessionStatusManager.status).toEqual({
       isReady: true,
       previewURL: undefined,
+      graphiqlUrl: undefined,
     })
   })
 
@@ -31,11 +33,13 @@ describe('DevSessionStatusManager', () => {
     devSessionStatusManager.updateStatus({
       isReady: true,
       previewURL: 'http://localhost:3000',
+      graphiqlUrl: 'http://localhost:3000/graphiql',
     })
 
     expect(listener).toHaveBeenCalledWith({
       isReady: true,
       previewURL: 'http://localhost:3000',
+      graphiqlUrl: 'http://localhost:3000/graphiql',
     })
   })
 
@@ -47,6 +51,7 @@ describe('DevSessionStatusManager', () => {
     devSessionStatusManager.updateStatus({
       isReady: true,
       previewURL: 'http://localhost:3000',
+      graphiqlUrl: 'http://localhost:3000/graphiql',
     })
 
     // Clear the mock to start fresh
@@ -56,6 +61,7 @@ describe('DevSessionStatusManager', () => {
     devSessionStatusManager.updateStatus({
       isReady: true,
       previewURL: 'http://localhost:3000',
+      graphiqlUrl: 'http://localhost:3000/graphiql',
     })
 
     expect(listener).not.toHaveBeenCalled()
@@ -66,6 +72,7 @@ describe('DevSessionStatusManager', () => {
     devSessionStatusManager.updateStatus({
       isReady: true,
       previewURL: 'http://localhost:3000',
+      graphiqlUrl: 'http://localhost:3000/graphiql',
     })
 
     devSessionStatusManager.reset()
@@ -73,6 +80,7 @@ describe('DevSessionStatusManager', () => {
     expect(devSessionStatusManager.status).toEqual({
       isReady: false,
       previewURL: undefined,
+      graphiqlUrl: undefined,
     })
   })
 
@@ -86,6 +94,7 @@ describe('DevSessionStatusManager', () => {
     expect(originalStatus).toEqual({
       isReady: false,
       previewURL: undefined,
+      graphiqlUrl: undefined,
     })
   })
 })

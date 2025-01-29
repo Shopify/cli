@@ -7,11 +7,8 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 
 export async function renderDev({
   processes,
-  previewUrl,
   app,
   abortController,
-  graphiqlUrl,
-  graphiqlPort,
   developerPreview,
   shopFqdn,
   devSessionStatusManager,
@@ -21,10 +18,7 @@ export async function renderDev({
       <Dev
         processes={processes}
         abortController={abortController}
-        previewUrl={previewUrl}
         app={app}
-        graphiqlUrl={graphiqlUrl}
-        graphiqlPort={graphiqlPort}
         developerPreview={developerPreview}
         isEditionWeek={isEditionWeek()}
         shopFqdn={shopFqdn}

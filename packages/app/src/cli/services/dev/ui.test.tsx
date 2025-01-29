@@ -1,17 +1,9 @@
 import {renderDev} from './ui.js'
 import {Dev} from './ui/components/Dev.js'
 import {DevSessionStatusManager} from './processes/dev-session-status-manager.js'
-import {
-  testApp,
-  testDeveloperPlatformClient,
-  testFunctionExtension,
-  testThemeExtensions,
-  testUIExtension,
-} from '../../models/app/app.test-data.js'
-import {AppInterface} from '../../models/app/app.js'
+import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
@@ -27,11 +19,14 @@ const developerPreview = {
 }
 
 const developerPlatformClient = testDeveloperPlatformClient()
-const devSessionStatusManager = new DevSessionStatusManager()
+const devSessionStatusManager = new DevSessionStatusManager({
+  isReady: true,
+  previewURL: 'https://lala.cloudflare.io/',
+  graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
+})
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
-  devSessionStatusManager.reset()
 })
 
 describe('ui', () => {
@@ -44,10 +39,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
-      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
-      const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
@@ -61,9 +53,6 @@ describe('ui', () => {
 
       await renderDev({
         processes,
-        previewUrl,
-        graphiqlUrl,
-        graphiqlPort,
         app,
         abortController,
         developerPreview,
@@ -88,10 +77,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
-      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
-      const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
@@ -105,9 +91,6 @@ describe('ui', () => {
 
       await renderDev({
         processes,
-        previewUrl,
-        graphiqlUrl,
-        graphiqlPort,
         app,
         abortController,
         developerPreview,
@@ -128,10 +111,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
-      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
-      const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: false,
         developmentStorePreviewEnabled: false,
@@ -145,9 +125,6 @@ describe('ui', () => {
 
       await renderDev({
         processes,
-        previewUrl,
-        graphiqlUrl,
-        graphiqlPort,
         app,
         abortController,
         developerPreview,
@@ -168,10 +145,7 @@ describe('ui', () => {
       }
 
       const processes = [concurrentProcess]
-      const previewUrl = 'https://lala.cloudflare.io/'
-      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const shopFqdn = 'mystore.shopify.io'
-      const graphiqlPort = 1234
       const app = {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
@@ -186,9 +160,6 @@ describe('ui', () => {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       renderDev({
         processes,
-        previewUrl,
-        graphiqlUrl,
-        graphiqlPort,
         app,
         abortController,
         developerPreview,
@@ -203,26 +174,3 @@ describe('ui', () => {
     })
   })
 })
-
-async function mockApp(newConfig = false): Promise<AppInterface> {
-  const nodeDependencies: {[key: string]: string} = {}
-  nodeDependencies['@shopify/cli'] = '2.2.2'
-
-  const functionExtension = await testFunctionExtension()
-  const themeExtension = await testThemeExtensions()
-  const uiExtension = await testUIExtension()
-  const configurationPath = joinPath('/', newConfig ? 'shopify.app.staging.toml' : 'shopify.app.toml')
-
-  const result = testApp(
-    {
-      name: 'my-super-customer-accounts-app',
-      directory: '/',
-      nodeDependencies,
-      allExtensions: [functionExtension, themeExtension, uiExtension],
-    },
-    newConfig ? 'current' : 'legacy',
-  )
-  result.configuration.path = configurationPath
-
-  return result
-}

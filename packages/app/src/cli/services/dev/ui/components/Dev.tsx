@@ -25,9 +25,6 @@ export interface DeveloperPreviewController {
 export interface DevProps {
   processes: OutputProcess[]
   abortController: AbortController
-  previewUrl: string
-  graphiqlUrl?: string
-  graphiqlPort: number
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -53,9 +50,6 @@ const calculatePrefixColumnSize = (processes: OutputProcess[], extensions: Exten
 const Dev: FunctionComponent<DevProps> = ({
   abortController,
   processes,
-  previewUrl,
-  graphiqlUrl = '',
-  graphiqlPort,
   app,
   pollingTime = 5000,
   developerPreview,
@@ -67,14 +61,10 @@ const Dev: FunctionComponent<DevProps> = ({
 
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
-  const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const graphiqlURLMessage = graphiqlUrl ? `GraphiQL URL: ${localhostGraphiqlUrl}` : ''
-
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
-  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatusManager.status.isReady)
-  const [appPreviewURL, setAppPreviewURL] = useState<string>(previewUrl)
   const [error, setError] = useState<string | undefined>(undefined)
+  const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
     if (err) {
@@ -111,19 +101,15 @@ const Dev: FunctionComponent<DevProps> = ({
 
   // Subscribe to dev session status updates
   useEffect(() => {
-    const handleDevSessionUpdate = (status: DevSessionStatus) => {
-      setDevSessionEnabled(status.isReady)
-      if (status.previewURL) setAppPreviewURL(status.previewURL)
-    }
-
     if (app.developerPlatformClient.supportsDevSessions) {
-      devSessionStatusManager.on('dev-session-update', handleDevSessionUpdate)
+      devSessionStatusManager.on('dev-session-update', setStatus)
     } else {
-      setDevSessionEnabled(true)
+      // If dev sessions are not supported, set the status to the current status and isReady to true
+      setStatus({...devSessionStatusManager.status, isReady: true})
     }
 
     return () => {
-      devSessionStatusManager.off('dev-session-update', handleDevSessionUpdate)
+      devSessionStatusManager.off('dev-session-update', setStatus)
     }
   }, [])
 
@@ -181,16 +167,16 @@ const Dev: FunctionComponent<DevProps> = ({
         try {
           setError('')
 
-          if (input === 'p' && appPreviewURL && devSessionEnabled) {
+          if (input === 'p' && status.previewURL && status.isReady) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,
             }))
-            await openURL(appPreviewURL)
-          } else if (input === 'g' && graphiqlUrl && devSessionEnabled) {
+            await openURL(status.previewURL)
+          } else if (input === 'g' && status.graphiqlUrl && status.isReady) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
             }))
-            await openURL(localhostGraphiqlUrl)
+            await openURL(status.graphiqlUrl)
           } else if (input === 'q') {
             abortController.abort()
           } else if (input === 'e' && isEditionWeek) {
@@ -265,13 +251,13 @@ const Dev: FunctionComponent<DevProps> = ({
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}
-              {graphiqlUrl && devSessionEnabled ? (
+              {status.graphiqlUrl && status.isReady ? (
                 <Text>
                   {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
                   your browser
                 </Text>
               ) : null}
-              {devSessionEnabled ? (
+              {status.isReady ? (
                 <Text>
                   {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
                 </Text>
@@ -287,8 +273,8 @@ const Dev: FunctionComponent<DevProps> = ({
               <Text>{isShuttingDownMessage}</Text>
             ) : (
               <>
-                <Text>{`Preview URL: ${appPreviewURL}`}</Text>
-                {graphiqlUrl ? <Text>{graphiqlURLMessage}</Text> : null}
+                <Text>{`Preview URL: ${status.previewURL}`}</Text>
+                {status.graphiqlUrl ? <Text>{`GraphiQL URL: ${status.graphiqlUrl}`}</Text> : null}
               </>
             )}
           </Box>

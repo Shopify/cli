@@ -13,7 +13,7 @@ import {
 } from '@shopify/cli-kit/node/testing/ui'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import React from 'react'
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
@@ -42,8 +42,12 @@ const developerPreview = {
   update: vi.fn(async (_state: boolean) => true),
 }
 
-afterEach(() => {
-  devSessionStatusManager.reset()
+beforeEach(() => {
+  devSessionStatusManager.updateStatus({
+    isReady: true,
+    previewURL: 'https://shopify.com',
+    graphiqlUrl: 'http://localhost:1234/graphiql',
+  })
 })
 
 describe('Dev', () => {
@@ -89,9 +93,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -171,9 +172,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -205,14 +203,11 @@ describe('Dev', () => {
   })
 
   test('opens the previewUrl when p is pressed', async () => {
-    // When
+    // Given
     const renderInstance = render(
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -238,9 +233,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -268,9 +260,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -313,9 +302,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -380,9 +366,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -441,9 +424,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -495,9 +475,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={abortController}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -539,9 +516,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -608,9 +582,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={{
           ...testApp,
           canEnablePreviewMode: false,
@@ -667,9 +638,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -710,9 +678,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -777,9 +742,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -829,9 +791,6 @@ describe('Dev', () => {
       <Dev
         processes={[backendProcess]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -870,9 +829,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -913,9 +869,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -952,9 +905,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
@@ -1008,9 +958,6 @@ describe('Dev', () => {
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={{
           ...testApp,
           canEnablePreviewMode: false,
@@ -1067,15 +1014,12 @@ describe('Dev', () => {
     // Given
     const initialPreviewUrl = 'https://shopify.com'
     const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
-    devSessionStatusManager.updateStatus({isReady: true, previewURL: undefined})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: initialPreviewUrl})
 
     const renderInstance = render(
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl={initialPreviewUrl}
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={{
           ...testApp,
           developerPlatformClient: {
@@ -1111,15 +1055,12 @@ describe('Dev', () => {
     // Given
     const initialPreviewUrl = 'https://shopify.com'
     const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
-    devSessionStatusManager.updateStatus({isReady: true, previewURL: undefined})
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: initialPreviewUrl})
 
     const renderInstance = render(
       <Dev
         processes={[]}
         abortController={new AbortController()}
-        previewUrl={initialPreviewUrl}
-        graphiqlUrl="https://graphiql.shopify.com"
-        graphiqlPort={1234}
         app={{
           ...testApp,
           developerPlatformClient: {

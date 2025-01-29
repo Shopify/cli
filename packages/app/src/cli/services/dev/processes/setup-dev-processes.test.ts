@@ -156,7 +156,9 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
+    expect(res.devSessionStatusManager.status.previewURL).toBe('https://example.com/proxy/extensions/dev-console')
+    expect(res.devSessionStatusManager.status.graphiqlUrl).toBe('http://localhost:1234/graphiql?key=somekey')
+
     expect(res.processes[0]).toMatchObject({
       type: 'web',
       prefix: 'web-backend-frontend',
