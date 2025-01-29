@@ -80,7 +80,7 @@ export default abstract class ThemeCommand extends Command {
           environment: [environment],
         }
 
-        if (!this.validConfig(environmentConfig as FlagValues, requiredFlags)) return
+        if (!this.validConfig(environmentConfig as FlagValues, requiredFlags, environment)) return
 
         const session = sessions[environment]
 
@@ -99,18 +99,20 @@ export default abstract class ThemeCommand extends Command {
     return ensureAuthenticatedThemes(ensureThemeStore({store}), password)
   }
 
-  private validConfig(environmentConfig: FlagValues, requiredFlags: string[]): boolean {
+  private validConfig(environmentConfig: FlagValues, requiredFlags: string[], environmentName: string): boolean {
     if (!environmentConfig) {
       renderWarning({body: 'Environment configuration is empty.'})
       return false
     }
-
-    const required = ['store', 'password', ...requiredFlags]
+    const required = [...requiredFlags]
     const missingFlags = required.filter((flag) => !environmentConfig[flag])
 
     if (missingFlags.length > 0) {
       renderWarning({
-        body: ['Missing required flags in environment configuration:', {list: {items: missingFlags}}],
+        body: [
+          `Missing required flags in environment configuration${environmentName ? ` for ${environmentName}` : ''}:`,
+          {list: {items: missingFlags}},
+        ],
       })
       return false
     }

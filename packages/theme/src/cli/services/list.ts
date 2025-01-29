@@ -5,13 +5,14 @@ import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/fil
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 interface Options {
   role?: Role
   name?: string
   id?: number
   json: boolean
+  environment?: string
 }
 
 export async function list(options: Options, adminSession: AdminSession) {
@@ -31,7 +32,9 @@ export async function list(options: Options, adminSession: AdminSession) {
     storeThemes = filterThemes(store, storeThemes, filter)
   }
 
-  outputInfo(`Store: ${store}`)
+  if (options.environment) {
+    outputInfo(outputContent`${outputToken.italic(`Store: ${store} Environment: ${options.environment}`)}\n`)
+  }
 
   if (options.json) {
     return outputInfo(JSON.stringify(storeThemes, null, 2))
@@ -53,4 +56,5 @@ export async function list(options: Options, adminSession: AdminSession) {
   })
 
   renderTable({rows: themes, columns})
+  outputInfo('\n')
 }
