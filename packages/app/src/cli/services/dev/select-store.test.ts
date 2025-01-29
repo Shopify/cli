@@ -1,5 +1,5 @@
 import {selectStore} from './select-store.js'
-import {Organization, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
   reloadStoreListPrompt,
   selectStorePrompt,
@@ -20,6 +20,7 @@ vi.mock('@shopify/cli-kit/node/context/spin')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
 }
 const STORE1: OrganizationStore = {
   shopId: '1',
@@ -60,11 +61,16 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
+    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: defaultShowDomainOnPrompt,
+      }),
+    )
   })
 
   test('selectStorePrompt is called with showDomainOnPrompt = true if clientName is app-management', async () => {
@@ -73,11 +79,16 @@ describe('selectStore', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
+    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], true)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: true,
+      }),
+    )
   })
 
   test('prompts user to convert store to non-transferable if selection is invalid', async () => {
@@ -86,11 +97,16 @@ describe('selectStore', async () => {
     vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
+    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(STORE2)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: defaultShowDomainOnPrompt,
+      }),
+    )
     expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
@@ -101,11 +117,16 @@ describe('selectStore', async () => {
     vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(false)
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
+    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: defaultShowDomainOnPrompt,
+      }),
+    )
     expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
   })
 
@@ -117,12 +138,17 @@ describe('selectStore', async () => {
     const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    const got = await selectStore([STORE1, STORE2], ORG1, developerPlatformClient)
+    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient)
 
     // Then
     expect(got).toEqual(STORE2)
     expect(developerPlatformClient.convertToTransferDisabledStore).not.toHaveBeenCalled()
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: defaultShowDomainOnPrompt,
+      }),
+    )
   })
 
   test('throws if store is non convertible', async () => {
@@ -130,7 +156,11 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE3)
 
     // When
-    const got = selectStore([STORE1, STORE2, STORE3], ORG1, testDeveloperPlatformClient())
+    const got = selectStore(
+      {stores: [STORE1, STORE2, STORE3], hasMorePages: false},
+      ORG1,
+      testDeveloperPlatformClient(),
+    )
 
     // Then
     await expect(got).rejects.toThrow('The store you specified (domain3) is not a dev store')
@@ -142,11 +172,16 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = () => selectStore([STORE1, STORE2], ORG1, testDeveloperPlatformClient())
+    const got = () => selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
 
     // Then
     await expect(got).rejects.toThrowError()
-    expect(selectStorePrompt).toHaveBeenCalledWith([STORE1, STORE2], defaultShowDomainOnPrompt)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: defaultShowDomainOnPrompt,
+      }),
+    )
   })
 
   test('prompts user to create & reload, fetches 10 times and tries again if reload is true', async () => {
@@ -157,7 +192,7 @@ describe('selectStore', async () => {
     const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    const got = selectStore([], ORG1, developerPlatformClient)
+    const got = selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient)
 
     // Then
     await expect(got).rejects.toThrow()

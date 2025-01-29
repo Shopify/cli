@@ -11,6 +11,7 @@ import {
   type FixApplicator,
   type Offense,
   type Theme,
+  path as pathUtils,
 } from '@shopify/theme-check-node'
 import YAML from 'yaml'
 
@@ -37,7 +38,9 @@ interface TransformedOffenseMap {
 }
 
 type SeverityCounts = Partial<{
-  [K in keyof typeof Severity]: number
+  [Severity.ERROR]: number
+  [Severity.WARNING]: number
+  [Severity.INFO]: number
 }>
 
 export type FailLevel = 'error' | 'suggestion' | 'style' | 'warning' | 'info' | 'crash'
@@ -71,8 +74,9 @@ function severityToLabel(severity: Severity) {
 /**
  * Returns a code snippet from a file. All line numbers given MUST be zero indexed
  */
-function getSnippet(absolutePath: string, startLine: number, endLine: number) {
-  const fileContent = readFileSync(absolutePath).toString()
+function getSnippet(uri: string, startLine: number, endLine: number) {
+  const fsPath = pathUtils.fsPath(uri)
+  const fileContent = readFileSync(fsPath).toString()
   const lines = fileContent.split('\n')
   const snippetLines = lines.slice(startLine, endLine + 1)
   const isSingleLine = snippetLines.length === 1
@@ -110,9 +114,9 @@ function severityToToken(severity: Severity) {
  */
 export function formatOffenses(offenses: Offense[]) {
   const offenseBodies = offenses.map((offense, index) => {
-    const {message, absolutePath, start, end, check, severity} = offense
+    const {message, uri, start, end, check, severity} = offense
     // Theme check line numbers are zero indexed, but intuitively 1-indexed
-    const codeSnippet = getSnippet(absolutePath, start.line, end.line)
+    const codeSnippet = getSnippet(uri, start.line, end.line)
 
     // Ensure enough padding between offenses
     const offensePadding = index === offenses.length - 1 ? '' : '\n\n'
@@ -132,12 +136,14 @@ const offenseSeverityAscending = (offenseA: Offense, offenseB: Offense) => offen
 export function sortOffenses(offenses: Offense[]): OffenseMap {
   // Bucket offenses by filename
   const offensesByFile = offenses.reduce((acc: OffenseMap, offense: Offense) => {
-    const {absolutePath} = offense
-    if (!acc[absolutePath]) {
-      acc[absolutePath] = []
+    const {uri} = offense
+    const filePath = pathUtils.fsPath(uri)
+    if (!acc[filePath]) {
+      acc[filePath] = []
     }
 
-    acc[absolutePath]!.push(offense)
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    acc[filePath]!.push(offense)
     return acc
   }, {})
 
@@ -222,9 +228,9 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
     return {
       path,
       offenses: transformedOffenses,
-      errorCount: counts[Severity.ERROR] || 0,
-      warningCount: counts[Severity.WARNING] || 0,
-      infoCount: counts[Severity.INFO] || 0,
+      errorCount: counts[Severity.ERROR] ?? 0,
+      warningCount: counts[Severity.WARNING] ?? 0,
+      infoCount: counts[Severity.INFO] ?? 0,
     }
   })
 }
@@ -274,7 +280,8 @@ export async function initConfig(root: string) {
 
 const saveToDiskFixApplicator: FixApplicator = async (sourceCode, fix) => {
   const updatedSource = applyFixToString(sourceCode.source, fix)
-  await writeFile(sourceCode.absolutePath, updatedSource)
+  const absolutePath = pathUtils.fsPath(sourceCode.uri)
+  await writeFile(absolutePath, updatedSource)
 }
 
 export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) {
@@ -282,7 +289,7 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
 }
 
 export async function outputActiveConfig(themeRoot: string, configPath?: string) {
-  const {ignore, settings, root} = await loadConfig(configPath, themeRoot)
+  const {ignore, settings, rootUri} = await loadConfig(configPath, themeRoot)
 
   const config = {
     // loadConfig flattens all configs, it doesn't extend anything
@@ -292,7 +299,7 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string)
     // duplicate patterns to ignore. We can clean them before outputting.
     ignore: [...new Set(ignore)],
 
-    root,
+    rootUri,
 
     // Dump out the active settings for all checks.
     ...settings,
@@ -314,7 +321,7 @@ export async function outputActiveChecks(root: string, configPath?: string) {
       return acc
     }
 
-    const severityLabel = severityToLabel(severity === undefined ? Severity.INFO : severity)
+    const severityLabel = severityToLabel(severity ?? Severity.INFO)
 
     // Map metafields from the check into desired output format
     const meta = checks.find((check) => check.meta.code === checkCode)

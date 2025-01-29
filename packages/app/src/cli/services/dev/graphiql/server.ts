@@ -146,7 +146,12 @@ export function setupGraphiQLServer({
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const apiVersion = apiVersions.sort().reverse()[0]!
 
-    const query = req.query.query ? decodeURIComponent(req.query.query as string).replace(/\n/g, '\\n') : undefined
+    function decodeQueryString(input: string | undefined) {
+      return input ? decodeURIComponent(input).replace(/\n/g, '\\n') : undefined
+    }
+
+    const query = decodeQueryString(req.query.query as string)
+    const variables = decodeQueryString(req.query.variables as string)
 
     res.send(
       await renderLiquidTemplate(
@@ -162,6 +167,7 @@ export function setupGraphiQLServer({
           url,
           defaultQueries: [{query: defaultQuery}],
           query,
+          variables,
         },
       ),
     )

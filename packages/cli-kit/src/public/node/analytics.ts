@@ -10,6 +10,7 @@ import {recordMetrics} from '../../private/node/otel-metrics.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {reportingRateLimit} from '../../private/node/constants.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+import {requestIdsCollection} from '../../private/node/request-ids.js'
 import {Interfaces} from '@oclif/core'
 
 export type CommandExitMode =
@@ -154,6 +155,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       cmd_all_timing_active_ms: totalTimeWithoutSubtimers,
       cmd_all_exit: exitMode,
       user_id: await getLastSeenUserIdAfterAuth(),
+      request_ids: requestIdsCollection.getRequestIds(),
     },
     sensitive: {
       args: startArgs.join(' '),

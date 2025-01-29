@@ -1,10 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {
-  AppConfigurationInterface,
-  AppInterface,
-  CurrentAppConfiguration,
-  isCurrentAppSchema,
-} from '../../models/app/app.js'
+import {AppConfigurationInterface, AppLinkedInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
@@ -27,7 +22,7 @@ interface AppProxy {
   proxySubPathPrefix: string
 }
 
-export interface PartnersURLs {
+export interface ApplicationURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
   appProxy?: AppProxy
@@ -143,11 +138,11 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
   })
 }
 
-export function generatePartnersURLs(
+export function generateApplicationURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
   proxyFields?: CurrentAppConfiguration['app_proxy'],
-): PartnersURLs {
+): ApplicationURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
@@ -190,7 +185,7 @@ function replaceHost(oldUrl: string, newUrl: string): string {
 }
 
 export async function updateURLs(
-  urls: PartnersURLs,
+  urls: ApplicationURLs,
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
   localApp?: AppConfigurationInterface,
@@ -202,7 +197,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
+  if (localApp && localApp.configuration.client_id === apiKey) {
     const patch = {
       application_url: urls.applicationUrl,
       auth: {
@@ -223,8 +218,8 @@ export async function updateURLs(
   }
 }
 
-export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Promise<PartnersURLs> {
-  const result: PartnersURLs = {
+export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Promise<ApplicationURLs> {
+  const result: ApplicationURLs = {
     applicationUrl: remoteAppConfig?.application_url ?? '',
     redirectUrlWhitelist: remoteAppConfig?.auth?.redirect_urls ?? [],
   }
@@ -239,11 +234,11 @@ export async function getURLs(remoteAppConfig?: AppConfigurationUsedByCli): Prom
 }
 
 interface ShouldOrPromptUpdateURLsOptions {
-  currentURLs: PartnersURLs
+  currentURLs: ApplicationURLs
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
-  localApp?: AppInterface
+  localApp?: AppLinkedInterface
   apiKey: string
 }
 
@@ -258,7 +253,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.redirectUrlWhitelist,
     )
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
+    if (options.localApp) {
       const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
@@ -274,7 +269,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
   return shouldUpdateURLs
 }
 
-export function validatePartnersURLs(urls: PartnersURLs): void {
+export function validateApplicationURLs(urls: ApplicationURLs): void {
   if (!isValidURL(urls.applicationUrl))
     throw new AbortError(`Invalid application URL: ${urls.applicationUrl}`, 'Valid format: "https://example.com"')
 

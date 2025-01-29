@@ -337,7 +337,7 @@ describe('setup-dev-processes', () => {
       graphiqlKey: 'somekey',
     })
 
-    expect(res.processes[2]).toMatchObject({
+    expect(res.processes[3]).toMatchObject({
       type: 'dev-session',
       prefix: 'dev-session',
       function: pushUpdatesForDevSession,

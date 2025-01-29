@@ -1,8 +1,8 @@
 import {
   FrontendURLOptions,
-  PartnersURLs,
+  ApplicationURLs,
   generateFrontendURL,
-  generatePartnersURLs,
+  generateApplicationURLs,
   getURLs,
   shouldOrPromptUpdateURLs,
   startTunnelPlugin,
@@ -18,7 +18,7 @@ import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
-import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
+import {renderDev} from './dev/ui.js'
 import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -102,8 +102,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     organization: commandOptions.organization,
   })
 
-  // Update the dev_store_url in the app configuration if it doesn't match the store domain
-  if (app.configuration.build?.dev_store_url !== store.shopDomain) {
+  // If the dev_store_url is set in the app configuration, keep updating it.
+  // If not, `store-context.ts` will take care of caching it in the hidden config.
+  if (app.configuration.build?.dev_store_url) {
     app.configuration.build = {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
@@ -249,7 +250,7 @@ async function handleUpdatingOfPartnerUrls(
   commandSpecifiedToUpdate: boolean,
   network: {
     proxyUrl: string
-    currentUrls: PartnersURLs
+    currentUrls: ApplicationURLs
   },
   localApp: AppLinkedInterface,
   cachedUpdateURLs: boolean | undefined,
@@ -261,10 +262,10 @@ async function handleUpdatingOfPartnerUrls(
   let shouldUpdateURLs = false
   if (frontendConfig ?? backendConfig) {
     if (commandSpecifiedToUpdate) {
-      const newURLs = generatePartnersURLs(
+      const newURLs = generateApplicationURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
+        localApp.configuration.app_proxy,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
@@ -277,7 +278,6 @@ async function handleUpdatingOfPartnerUrls(
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
       if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }
   return shouldUpdateURLs

@@ -24,8 +24,9 @@ export async function handleWatcherEvents(
   const appReloadNeeded = events.some((event) => eventsThatRequireReload.includes(event.type))
   const otherEvents = events.filter((event) => !eventsThatRequireReload.includes(event.type))
 
-  let appEvent: AppEvent = {app, extensionEvents: [], path: events[0].path, startTime: events[0].startTime}
-  if (appReloadNeeded) appEvent = await ReloadAppHandler({event: events[0], app, options, extensions: []})
+  if (appReloadNeeded) return ReloadAppHandler({event: events[0], app, options, extensions: []})
+
+  const appEvent: AppEvent = {app, extensionEvents: [], path: events[0].path, startTime: events[0].startTime}
 
   for (const event of otherEvents) {
     const affectedExtensions = app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
@@ -73,7 +74,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
  */
 function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput): AppEvent {
   const events = extensions.map((ext) => {
-    app.removeExtension(ext.handle)
+    app.removeExtension(ext.uid)
     return {type: EventType.Deleted, extension: ext}
   })
   return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
@@ -119,7 +120,7 @@ async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
   const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
   const updatedEvents = diff.updated.map((ext) => ({type: EventType.Updated, extension: ext}))
   const extensionEvents = [...createdEvents, ...deletedEvents, ...updatedEvents]
-  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path}
+  return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path, appWasReloaded: true}
 }
 
 /*

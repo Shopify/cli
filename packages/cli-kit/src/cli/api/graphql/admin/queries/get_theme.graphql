@@ -1,0 +1,9 @@
+
+query getTheme($id: ID!) {
+  theme(id: $id) {
+    id
+    name
+    role
+    processing
+  }
+}

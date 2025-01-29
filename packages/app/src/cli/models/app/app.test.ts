@@ -1,4 +1,5 @@
 import {
+  AppSchema,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
   getAppScopes,
@@ -30,6 +31,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   path: '',
   name: 'app 1',
   client_id: '12345',
+  extension_directories: ['extensions/*'],
   webhooks: {
     api_version: '2023-04',
     privacy_compliance: {
@@ -90,6 +92,33 @@ describe('app schema validation', () => {
       delete config.client_id
 
       expect(isCurrentAppSchema(config)).toBe(false)
+    })
+
+    test('extension_directories should be transformed to double asterisks', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        extension_directories: ['extensions/*'],
+      }
+      const parsed = AppSchema.parse(config)
+      expect(parsed.extension_directories).toEqual(['extensions/**'])
+    })
+
+    test('extension_directories is not transformed if it ends with double asterisks', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        extension_directories: ['extensions/**'],
+      }
+      const parsed = AppSchema.parse(config)
+      expect(parsed.extension_directories).toEqual(['extensions/**'])
+    })
+
+    test('extension_directories is not transformed if it doesnt end with a wildcard', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        extension_directories: ['extensions'],
+      }
+      const parsed = AppSchema.parse(config)
+      expect(parsed.extension_directories).toEqual(['extensions'])
     })
   })
 })
@@ -205,6 +234,7 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
     description: 'description',
     build: {
       command: 'echo "hello world"',
+      wasm_opt: true,
     },
     api_version: '2022-07',
     configuration_ui: true,

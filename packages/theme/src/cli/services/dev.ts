@@ -1,5 +1,5 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {DevServerContext, LiveReload} from '../utilities/theme-environment/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
@@ -38,13 +38,12 @@ export interface DevOptions {
 }
 
 export async function dev(options: DevOptions) {
-  if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
+  if (!(await hasRequiredThemeDirectories(options.directory)) && !(await ensureDirectoryConfirmed(options.force))) {
     return
   }
 
-  const storefrontPasswordPromise = isStorefrontPasswordProtected(options.adminSession.storeFqdn).then(
-    (needsPassword) =>
-      needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
+  const storefrontPasswordPromise = await isStorefrontPasswordProtected(options.adminSession).then((needsPassword) =>
+    needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
   )
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()

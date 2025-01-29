@@ -1,5 +1,101 @@
 # @shopify/theme
 
+## 3.74.0
+
+### Minor Changes
+
+- b7cda8c890: Add `theme profile` command which allows users to get a performance profile for Liquid rendering on a given page
+- 1b8ad07153: Give theme info a facelift using standard UI components
+- 6380277a7a: Unify how asset upload errors are reported in the `theme dev` command
+
+### Patch Changes
+
+- 7e34195c30: Store theme asset upload errors encountered while running the theme dev command
+- 1a5aec270d: Fix `shopify theme dev` to no longer fail when development themes expire in internationalized stores
+- 404fa77c90: When the `.shopify/metafields.json` file gets created, the CLI now proposes to add it to `.gitignore` by default
+- 5be14a5b08: Update documentation for `theme push --only`
+- f004019bb9: Utilize Admin API to determine if a storefront is password protected
+- Updated dependencies [7e34195c30]
+- Updated dependencies [1a5aec270d]
+- Updated dependencies [bb3b100731]
+- Updated dependencies [369351435b]
+- Updated dependencies [f004019bb9]
+  - @shopify/cli-kit@3.74.0
+
+## 3.73.0
+
+### Minor Changes
+
+- beab713acd: Developers can now use the `shopify theme metafields pull` command to download metafields, which can then be used for more refined code completion.
+
+### Patch Changes
+
+- 9d47c0f5f2: Support theme blocks in the `theme package` command
+- a92307dce8: Bump Shopify/theme-tools packages
+- df9d347d73: [Bug Fix] Reduce theme upload batch size to prevent timeout
+- 4d722c64fc: Ensure git directory is clean when running `theme pull`
+- Updated dependencies [beab713acd]
+- Updated dependencies [4d722c64fc]
+- Updated dependencies [03fb93e3c9]
+  - @shopify/cli-kit@3.73.0
+
+## 3.72.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+
+## 3.71.4
+
+### Patch Changes
+
+- Updated dependencies [94953a671e]
+  - @shopify/cli-kit@3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- Updated dependencies [a395820e7b]
+  - @shopify/cli-kit@3.71.2
+
+## 3.71.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.71.1
+
+## 3.71.0
+
+### Minor Changes
+
+- 5107f4e805: Add `--strict` flag to `theme push` command, which will report `theme check` warnings and abort the operation if there are errors.
+- 057e2c6189: Add shortcut keys to theme dev commands
+
+### Patch Changes
+
+- ff994c34d3: Fix password validation to support localized URLs when authenticating storefronts.
+- 1e267a2e04: Update `shopify theme dev` to no longer display redundant URLs
+- 7017b9e31c: Improve storefront password detection for password-protected shops with redirects
+- 9548a34471: Fix password validation to handle capitalized store names on `shopify theme dev`
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [5531731c11]
+  - @shopify/cli-kit@3.71.0
+
 ## 3.70.0
 
 ### Minor Changes

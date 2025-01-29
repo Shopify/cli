@@ -81,7 +81,7 @@ export function reduceWebhooks(
     const existingSubscription = findSubscription(accumulator, subscription)
     if (existingSubscription) {
       if (property && subscription?.[property]?.length) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-non-null-assertion
         existingSubscription[property]?.push(...subscription[property]!)
       } else {
         if (subscription.topics) {

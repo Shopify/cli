@@ -3,6 +3,7 @@ export const environmentVariableNames = {
   disableGraphiQLExplorer: 'SHOPIFY_CLI_DISABLE_GRAPHIQL',
   useDynamicConfigSpecifications: 'SHOPIFY_CLI_DYNAMIC_CONFIG',
   enableAppLogPolling: 'SHOPIFY_CLI_ENABLE_APP_LOG_POLLING',
+  templatesJsonPath: 'SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH',
 }
 
 export const configurationFileNames = {
@@ -10,6 +11,8 @@ export const configurationFileNames = {
   web: 'shopify.web.toml',
   appEnvironments: 'shopify.environments.toml',
   lockFile: '.shopify.lock',
+  hiddenConfig: 'project.json',
+  hiddenFolder: '.shopify',
 } as const
 
 export const dotEnvFileNames = {

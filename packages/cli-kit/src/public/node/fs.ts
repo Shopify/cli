@@ -43,6 +43,7 @@ import {
   chmod as fsChmod,
   access as fsAccess,
   rename as fsRename,
+  unlink as fsUnlink,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
@@ -329,12 +330,22 @@ export function fileSizeSync(path: string): number {
 }
 
 /**
- * Unlink a file at the given path.
+ * Synchronously unlink a file at the given path.
+ *
  * @param path - Path to the file.
- * @returns A promise that resolves when the file is unlinked.
  */
 export function unlinkFileSync(path: string): void {
   fsUnlinkSync(path)
+}
+
+/**
+ * Unlink a file at the given path.
+ *
+ * @param path - Path to the file.
+ * @returns A promise that resolves when the file is unlinked.
+ */
+export function unlinkFile(path: string): Promise<void> {
+  return fsUnlink(path)
 }
 
 /**
@@ -503,6 +514,43 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
 export function pathToFileURL(path: string): URL {
   return pathToFile(path)
 }
+
+/**
+ * The operating system-specific end-of-line marker:
+ * - `\n` on POSIX
+ * - `\r\n` on Windows
+ */
+export type EOL = '\r\n' | '\n'
+
+/**
+ * Detects the end-of-line marker used in a string.
+ *
+ * @param content - file contents to analyze
+ *
+ * @returns The detected end-of-line marker
+ */
+export function detectEOL(content: string): EOL {
+  const match = content.match(/\r\n|\n/g)
+
+  if (!match) {
+    return defaultEOL()
+  }
+
+  const crlf = match.filter((eol) => eol === '\r\n').length
+  const lf = match.filter((eol) => eol === '\n').length
+
+  return crlf > lf ? '\r\n' : '\n'
+}
+
+/**
+ * Returns the operating system's end-of-line marker.
+ *
+ * @returns The OS-specific end-of-line marker
+ */
+export function defaultEOL(): EOL {
+  return os.EOL as EOL
+}
+
 /**
  * Find a file by walking parent directories.
  *

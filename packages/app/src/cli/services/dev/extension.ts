@@ -1,7 +1,13 @@
+/* eslint-disable no-await-in-loop */
 import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupHTTPServer} from './extension/server.js'
-import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
-import {AppEvent, AppEventWatcher} from './app-events/app-event-watcher.js'
+import {
+  ExtensionsPayloadStore,
+  ExtensionsPayloadStoreOptions,
+  getExtensionsPayloadStoreRawPayload,
+} from './extension/payload/store.js'
+import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
+import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -109,32 +115,54 @@ export interface ExtensionDevOptions {
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
-  const payloadStoreOptions = {
+  const payloadOptions: ExtensionsPayloadStoreOptions = {
     ...options,
     websocketURL: getWebSocketUrl(options.url),
   }
-  const bundlePath = options.appWatcher.buildOutputPath
-  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions, bundlePath)
-  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
-  outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
-  const httpServer = setupHTTPServer({devOptions: options, payloadStore})
+  // NOTE: Always use `payloadOptions`, never `options` directly. This way we can mutate `payloadOptions` without
+  // affecting the original `options` object and we only need to care about `payloadOptions` in this function.
 
-  outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
-  const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
-  outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
+  const bundlePath = payloadOptions.appWatcher.buildOutputPath
+  const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
+  const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
+
+  outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
+  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore})
+
+  outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
+  const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
+  outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
   const eventHandler = async ({extensionEvents}: AppEvent) => {
     for (const event of extensionEvents) {
+      if (!event.extension.isPreviewable) continue
       const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
-      // eslint-disable-next-line no-await-in-loop
-      await payloadStore.updateExtension(event.extension, options, bundlePath, {status})
+
+      switch (event.type) {
+        case EventType.Created:
+          payloadOptions.extensions.push(event.extension)
+          if (!payloadOptions.checkoutCartUrl) {
+            const cartUrl = await buildCartURLIfNeeded(payloadOptions.extensions, payloadOptions.storeFqdn)
+            // eslint-disable-next-line require-atomic-updates
+            payloadOptions.checkoutCartUrl = cartUrl
+          }
+          await payloadStore.addExtension(event.extension, bundlePath)
+          break
+        case EventType.Updated:
+          await payloadStore.updateExtension(event.extension, payloadOptions, bundlePath, {status})
+          break
+        case EventType.Deleted:
+          payloadOptions.extensions = payloadOptions.extensions.filter((ext) => ext.devUUID !== event.extension.devUUID)
+          await payloadStore.deleteExtension(event.extension)
+          break
+      }
     }
   }
 
-  options.appWatcher.onEvent(eventHandler).onStart(eventHandler)
+  payloadOptions.appWatcher.onEvent(eventHandler).onStart(eventHandler)
 
-  options.signal.addEventListener('abort', () => {
+  payloadOptions.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
     websocketConnection.close()
     httpServer.close()

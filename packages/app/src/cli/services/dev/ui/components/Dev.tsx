@@ -1,6 +1,7 @@
 import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {devSessionStatusManager, DevSessionStatus} from '../../processes/dev-session-status-manager.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -65,16 +66,19 @@ const Dev: FunctionComponent<DevProps> = ({
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const defaultStatusMessage = `Preview URL: ${previewUrl}${
-    graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
-  }`
-  const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
+  const graphiqlURLMessage = graphiqlUrl ? `GraphiQL URL: ${localhostGraphiqlUrl}` : ''
+
+  const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
+  const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
+  const [devSessionEnabled, setDevSessionEnabled] = useState<boolean>(devSessionStatusManager.status.isReady)
+  const [appPreviewURL, setAppPreviewURL] = useState<string>(previewUrl)
+  const [error, setError] = useState<string | undefined>(undefined)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
     if (err) {
-      setStatusMessage('Shutting down dev because of an error ...')
+      setIsShuttingDownMessage('Shutting down dev because of an error ...')
     } else {
-      setStatusMessage('Shutting down dev ...')
+      setIsShuttingDownMessage('Shutting down dev ...')
       setTimeout(() => {
         if (isUnitTest()) return
         treeKill(process.pid, 'SIGINT', false, () => {
@@ -86,9 +90,6 @@ const Dev: FunctionComponent<DevProps> = ({
     await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
     await developerPreview.disable()
   })
-
-  const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
-  const [error, setError] = useState<string | undefined>(undefined)
 
   const errorHandledProcesses = useMemo(() => {
     return processes.map((process) => {
@@ -105,6 +106,24 @@ const Dev: FunctionComponent<DevProps> = ({
       }
     })
   }, [processes, abortController])
+
+  // Subscribe to dev session status updates
+  useEffect(() => {
+    const handleDevSessionUpdate = (status: DevSessionStatus) => {
+      setDevSessionEnabled(status.isReady)
+      if (status.previewURL) setAppPreviewURL(status.previewURL)
+    }
+
+    if (app.developerPlatformClient.supportsDevSessions) {
+      devSessionStatusManager.on('dev-session-update', handleDevSessionUpdate)
+    } else {
+      setDevSessionEnabled(true)
+    }
+
+    return () => {
+      devSessionStatusManager.off('dev-session-update', handleDevSessionUpdate)
+    }
+  }, [])
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
@@ -160,12 +179,12 @@ const Dev: FunctionComponent<DevProps> = ({
         try {
           setError('')
 
-          if (input === 'p' && previewUrl) {
+          if (input === 'p' && appPreviewURL && devSessionEnabled) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,
             }))
-            await openURL(previewUrl)
-          } else if (input === 'g' && graphiqlUrl) {
+            await openURL(appPreviewURL)
+          } else if (input === 'g' && graphiqlUrl && devSessionEnabled) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
             }))
@@ -244,23 +263,34 @@ const Dev: FunctionComponent<DevProps> = ({
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}
-              {graphiqlUrl ? (
+              {graphiqlUrl && devSessionEnabled ? (
                 <Text>
                   {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
                   your browser
                 </Text>
               ) : null}
-              <Text>
-                {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-              </Text>
+              {devSessionEnabled ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                </Text>
+              ) : null}
               <Text>
                 {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
               </Text>
             </Box>
           ) : null}
-          <Box marginTop={canUseShortcuts ? 1 : 0}>
-            <Text>{statusMessage}</Text>
+
+          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+            {isShuttingDownMessage ? (
+              <Text>{isShuttingDownMessage}</Text>
+            ) : (
+              <>
+                <Text>{`Preview URL: ${appPreviewURL}`}</Text>
+                {graphiqlUrl ? <Text>{graphiqlURLMessage}</Text> : null}
+              </>
+            )}
           </Box>
+
           {error ? <Text color="red">{error}</Text> : null}
         </Box>
       ) : null}

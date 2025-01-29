@@ -5,6 +5,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadConfigForAppCreation} from '../../models/app/loader.js'
 import {SelectAppOrNewAppNameResult} from '../../commands/app/init.js'
+import {linkedAppContext} from '../app-context.js'
 import {
   findUpAndReadPackageJson,
   lockfiles,
@@ -179,7 +180,7 @@ async function init(options: InitOptions) {
       {
         title: 'Cleaning up',
         task: async () => {
-          await cleanup(templateScaffoldDir)
+          await cleanup(templateScaffoldDir, packageManager)
         },
       },
       {
@@ -199,7 +200,7 @@ async function init(options: InitOptions) {
   if (options.selectedAppOrNameResult.result === 'new') {
     const creationOptions = await loadConfigForAppCreation(outputDirectory, options.name)
     const org = options.selectedAppOrNameResult.org
-    app = await options.developerPlatformClient.createApp(org, options.name, creationOptions)
+    app = await options.developerPlatformClient.createApp(org, creationOptions)
   } else {
     app = options.selectedAppOrNameResult.app
   }
@@ -218,6 +219,14 @@ async function init(options: InitOptions) {
     false,
   )
 
+  const appContextResult = await linkedAppContext({
+    directory: outputDirectory,
+    clientId: undefined,
+    forceRelink: false,
+    userProvidedConfigName: undefined,
+    unsafeReportMode: false,
+  })
+
   renderSuccess({
     headline: [{userInput: hyphenizedName}, 'is ready for you to build!'],
     nextSteps: [
@@ -234,7 +243,7 @@ async function init(options: InitOptions) {
     ],
   })
 
-  return {outputDirectory}
+  return {app: appContextResult.app}
 }
 
 async function ensureAppDirectoryIsAvailable(directory: string, name: string): Promise<void> {

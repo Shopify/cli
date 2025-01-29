@@ -120,6 +120,84 @@ export type Scalars = {
   UtcOffset: {input: any; output: any}
 }
 
+/** Possible types of a metafield's owner resource. */
+export type MetafieldOwnerType =
+  /** The Api Permission metafield owner type. */
+  | 'API_PERMISSION'
+  /** The Article metafield owner type. */
+  | 'ARTICLE'
+  /** The Blog metafield owner type. */
+  | 'BLOG'
+  /** The Brand metafield owner type. */
+  | 'BRAND'
+  /** The Cart Transform metafield owner type. */
+  | 'CARTTRANSFORM'
+  /** The Collection metafield owner type. */
+  | 'COLLECTION'
+  /** The Company metafield owner type. */
+  | 'COMPANY'
+  /** The Company Location metafield owner type. */
+  | 'COMPANY_LOCATION'
+  /** The Customer metafield owner type. */
+  | 'CUSTOMER'
+  /** The Delivery Customization metafield owner type. */
+  | 'DELIVERY_CUSTOMIZATION'
+  /** The Delivery Method metafield owner type. */
+  | 'DELIVERY_METHOD'
+  /** The Delivery Option Generator metafield owner type. */
+  | 'DELIVERY_OPTION_GENERATOR'
+  /** The Discount metafield owner type. */
+  | 'DISCOUNT'
+  /** The draft order metafield owner type. */
+  | 'DRAFTORDER'
+  /** The Fulfillment Constraint Rule metafield owner type. */
+  | 'FULFILLMENT_CONSTRAINT_RULE'
+  /** The Gate Configuration metafield owner type. */
+  | 'GATE_CONFIGURATION'
+  /** The GiftCardTransaction metafield owner type. */
+  | 'GIFT_CARD_TRANSACTION'
+  /** The Location metafield owner type. */
+  | 'LOCATION'
+  /** The Market metafield owner type. */
+  | 'MARKET'
+  /** The Media Image metafield owner type. */
+  | 'MEDIA_IMAGE'
+  /** The Order metafield owner type. */
+  | 'ORDER'
+  /** The Order Routing Location Rule metafield owner type. */
+  | 'ORDER_ROUTING_LOCATION_RULE'
+  /** The Page metafield owner type. */
+  | 'PAGE'
+  /** The Payment Customization metafield owner type. */
+  | 'PAYMENT_CUSTOMIZATION'
+  /** The Product metafield owner type. */
+  | 'PRODUCT'
+  /** The Product Variant metafield owner type. */
+  | 'PRODUCTVARIANT'
+  /** The Selling Plan metafield owner type. */
+  | 'SELLING_PLAN'
+  /** The Shop metafield owner type. */
+  | 'SHOP'
+  /** The Validation metafield owner type. */
+  | 'VALIDATION'
+
+/** The input fields for the theme file body. */
+export type OnlineStoreThemeFileBodyInput = {
+  /** The input type of the theme file body. */
+  type: OnlineStoreThemeFileBodyInputType
+  /** The body of the theme file. */
+  value: Scalars['String']['input']
+}
+
+/** The input type for a theme file body. */
+export type OnlineStoreThemeFileBodyInputType =
+  /** The base64 encoded body of a theme file. */
+  | 'BASE64'
+  /** The text body of the theme file. */
+  | 'TEXT'
+  /** The url of the body of a theme file. */
+  | 'URL'
+
 /** Type of a theme file operation result. */
 export type OnlineStoreThemeFileResultType =
   /** Operation was malformed or invalid. */
@@ -136,6 +214,35 @@ export type OnlineStoreThemeFileResultType =
   | 'TIMEOUT'
   /** Operation could not be processed due to issues with input data. */
   | 'UNPROCESSABLE_ENTITY'
+
+/** The input fields for the file to create or update. */
+export type OnlineStoreThemeFilesUpsertFileInput = {
+  /** The body of the theme file. */
+  body: OnlineStoreThemeFileBodyInput
+  /** The filename of the theme file. */
+  filename: Scalars['String']['input']
+}
+
+/** Possible error codes that can be returned by `OnlineStoreThemeFilesUserErrors`. */
+export type OnlineStoreThemeFilesUserErrorsCode =
+  /** Access denied. */
+  | 'ACCESS_DENIED'
+  /** There are files with the same filename. */
+  | 'DUPLICATE_FILE_INPUT'
+  /** Error. */
+  | 'ERROR'
+  /** The file is invalid. */
+  | 'FILE_VALIDATION_ERROR'
+  /** The input value should be less than or equal to the maximum value allowed. */
+  | 'LESS_THAN_OR_EQUAL_TO'
+  /** The record with the ID used as the input value couldn't be found. */
+  | 'NOT_FOUND'
+  /** There are theme files with conflicts. */
+  | 'THEME_FILES_CONFLICT'
+  /** This action is not available on your current plan. Please upgrade to access theme editing features. */
+  | 'THEME_LIMITED_PLAN'
+  /** Too many updates in a short period. Please try again later. */
+  | 'THROTTLED'
 
 /** The input fields for Theme attributes to update. */
 export type OnlineStoreThemeInput = {
@@ -164,7 +271,7 @@ export type ThemeRole =
    * publishing are restricted until the merchant resolves the licensing issue.
    */
   | 'LOCKED'
-  /** TThe currently published theme. There can only be one main theme at any time. */
+  /** The currently published theme. There can only be one main theme at any time. */
   | 'MAIN'
   /** The currently published theme that is only accessible to a mobile client. */
   | 'MOBILE'

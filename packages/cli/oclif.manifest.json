@@ -22,7 +22,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "Application's Client ID that will be exposed at build time.",
+          "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -59,6 +59,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "skip-dependencies-installation": {
           "allowNo": false,
@@ -99,6 +110,9 @@
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
@@ -132,6 +146,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -164,6 +189,18 @@
       "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "descriptionWithMarkdown": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -183,8 +220,11 @@
         },
         "reset": {
           "allowNo": false,
-          "description": "Reset current configuration.",
+          "description": "Reset all your settings.",
           "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
           "hidden": false,
           "name": "reset",
           "type": "boolean"
@@ -555,6 +595,18 @@
       "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "descriptionWithMarkdown": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -591,6 +643,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -619,6 +682,18 @@
       "description": "Displays environment variables that can be used to deploy apps and app extensions.",
       "descriptionWithMarkdown": "Displays environment variables that can be used to deploy apps and app extensions.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -645,6 +720,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -674,6 +760,18 @@
       "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "descriptionWithMarkdown": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -701,6 +799,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -743,7 +852,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "Application's Client ID",
+          "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -800,6 +909,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -837,6 +957,18 @@
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -893,6 +1025,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -934,7 +1077,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID to fetch the schema with.",
+          "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -973,6 +1116,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "stdout": {
           "allowNo": false,
           "description": "Output the schema to stdout instead of writing to a file.",
@@ -1009,6 +1163,18 @@
       "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -1036,6 +1202,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -1231,7 +1408,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID to fetch the schema with.",
+          "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -1269,6 +1446,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "stdout": {
           "allowNo": false,
@@ -1344,6 +1532,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
@@ -1371,6 +1570,18 @@
       "description": "The information returned includes the following:\n\n  - The app and development store or Plus sandbox store that's used when you run the \"dev\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using \"`dev --reset`\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The \"structure\" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The \"access scopes\" (https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The app and development store or Plus sandbox store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [`dev --reset`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -1406,6 +1617,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -1675,6 +1897,18 @@
       "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -1701,6 +1935,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -1794,6 +2039,9 @@
           "allowNo": false,
           "description": "Reset all your settings.",
           "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
           "hidden": false,
           "name": "reset",
           "type": "boolean"
@@ -1856,7 +2104,7 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID to fetch versions for.",
+          "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
           "exclusive": [
             "config"
@@ -1902,6 +2150,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -2015,6 +2274,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "shared-secret": {
           "description": "Deprecated. Please use client-secret.",
@@ -2308,6 +2578,18 @@
       },
       "customPluginName": "@shopify/app",
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -2334,6 +2616,17 @@
           "name": "path",
           "noCacheDefault": true,
           "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -5313,6 +5606,86 @@
       "pluginType": "core",
       "strict": true
     },
+    "theme:metafields:pull": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
+      "descriptionWithMarkdown": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
+      "flags": {
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "environment",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:metafields:pull",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Download metafields definitions from your shop into a local file."
+    },
     "theme:open": {
       "aliases": [
       ],
@@ -5452,6 +5825,107 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Package your theme into a .zip file, ready to upload to the Online Store."
+    },
+    "theme:profile": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "flags": {
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "environment",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store-password",
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "theme",
+          "type": "option"
+        },
+        "url": {
+          "default": "/",
+          "description": "The url to be used as context",
+          "env": "SHOPIFY_FLAG_URL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "url",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:profile",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Profile the Liquid rendering of a theme page.",
+      "usage": [
+        "theme profile",
+        "theme profile --url /products/classic-leather-jacket"
+      ]
     },
     "theme:publish": {
       "aliases": [
@@ -5750,7 +6224,7 @@
         },
         "only": {
           "char": "o",
-          "description": "Download only the specified files (Multiple flags allowed).",
+          "description": "Push only the specified files (Multiple flags allowed).",
           "env": "SHOPIFY_FLAG_ONLY",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6333,6 +6807,17 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
         "shared-secret": {
           "description": "Deprecated. Please use client-secret.",
           "env": "SHOPIFY_FLAG_SHARED_SECRET",
@@ -6365,5 +6850,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.70.0"
+  "version": "3.74.0"
 }

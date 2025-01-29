@@ -1,12 +1,12 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
-import {createSyncingCatchError} from './errors.js'
+import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {AssetParams, bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Task} from '@shopify/cli-kit/node/ui'
-import {outputDebug, outputInfo, outputNewline, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
   nodelete?: boolean
@@ -17,10 +17,18 @@ interface UploadOptions {
 type ChecksumWithSize = Checksum & {size: number}
 type FileBatch = ChecksumWithSize[]
 
+/**
+ * Even though the API itself can handle a higher batch size, we limit the batch file count + bytesize
+ * to avoid timeout issues happening on the theme access proxy level.
+ *
+ * The higher the batch size, the longer the proxy request lasts. We should also generally avoid long running
+ * queries against our API (i.e. over 30 seconds). There is no specific reason for these values, but were
+ * previously used against the AssetController.
+ */
 // Limits for Bulk Requests
-export const MAX_BATCH_FILE_COUNT = 10
-// 100KB
-export const MAX_BATCH_BYTESIZE = 102400
+export const MAX_BATCH_FILE_COUNT = 20
+// 1MB
+export const MAX_BATCH_BYTESIZE = 1024 * 1024
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
 export function uploadTheme(
@@ -44,7 +52,7 @@ export function uploadTheme(
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
     .then(() => reportFailedUploads(uploadResults))
-    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
 
   const workPromise = options?.deferPartialWork
     ? themeCreationPromise
@@ -123,6 +131,7 @@ function buildDeleteJob(
   theme: Theme,
   session: AdminSession,
   options: Pick<UploadOptions, 'nodelete'>,
+  uploadResults: Map<string, Result>,
 ): SyncJob {
   if (options.nodelete) {
     return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
@@ -131,21 +140,32 @@ function buildDeleteJob(
   const remoteFilesToBeDeleted = getRemoteFilesToBeDeleted(remoteChecksums, themeFileSystem)
   const orderedFiles = orderFilesToBeDeleted(remoteFilesToBeDeleted)
 
-  let failedDeleteAttempts = 0
   const progress = {current: 0, total: orderedFiles.length}
-  const promise = Promise.all(
-    orderedFiles.map((file) =>
-      deleteThemeAsset(theme.id, file.key, session)
-        .catch((error: Error) => {
-          failedDeleteAttempts++
-          if (failedDeleteAttempts > 3) throw error
-          createSyncingCatchError(file.key, 'delete')(error)
-        })
-        .finally(() => {
-          progress.current++
-        }),
-    ),
-  ).then(() => {
+  if (orderedFiles.length === 0) {
+    return {progress, promise: Promise.resolve()}
+  }
+
+  const deleteBatches = []
+  for (let i = 0; i < orderedFiles.length; i += MAX_BATCH_FILE_COUNT) {
+    const batch = orderedFiles.slice(i, i + MAX_BATCH_FILE_COUNT)
+    const promise = deleteThemeAssets(
+      theme.id,
+      batch.map((file) => file.key),
+      session,
+    ).then((results) => {
+      results.forEach((result) => {
+        uploadResults.set(result.key, result)
+        if (!result.success) {
+          const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
+          createSyncingCatchError(result.key, 'delete')(new Error(`Failed to delete ${result.key}: ${errorMessage}`))
+        }
+      })
+      progress.current += batch.length
+    })
+    deleteBatches.push(promise)
+  }
+
+  const promise = Promise.all(deleteBatches).then(() => {
     progress.current = progress.total
   })
 
@@ -168,6 +188,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.sectionJsonFiles,
     ...fileSets.otherJsonFiles,
     ...fileSets.sectionLiquidFiles,
+    ...fileSets.blockLiquidFiles,
     ...fileSets.otherLiquidFiles,
     ...fileSets.configFiles,
     ...fileSets.staticAssetFiles,
@@ -176,8 +197,14 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
 
 export const MINIMUM_THEME_ASSETS = [
   {key: 'config/settings_schema.json', value: '[]'},
-  {key: 'layout/password.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
-  {key: 'layout/theme.liquid', value: '{{ content_for_header }}{{ content_for_layout }}'},
+  {
+    key: 'layout/password.liquid',
+    value: '{{ content_for_header }}{{ content_for_layout }}',
+  },
+  {
+    key: 'layout/theme.liquid',
+    value: '{{ content_for_header }}{{ content_for_layout }}',
+  },
 ] as const
 /**
  * If there's no theme in the remote, we need to create it first so that
@@ -231,11 +258,12 @@ function buildUploadJob(
     (promise, fileType) => promise.then(() => uploadFileBatches(fileType)),
     Promise.resolve(),
   )
-  // Wait for dependent files upload to be started before starting this one:
+
+  // Dependant and independant files are uploaded concurrently
   const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
   const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
-    progress.current += progress.total
+    progress.current = progress.total
   })
 
   return {progress, promise}
@@ -283,6 +311,7 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
     independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
     // Follow order of dependencies:
     dependentFiles: [
+      fileSets.blockLiquidFiles,
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,
       fileSets.templateJsonFiles,
@@ -353,7 +382,17 @@ async function uploadBatch(
   // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
     uploadResults.set(result.key, result)
+    updateUploadErrors(result, localThemeFileSystem)
   })
+}
+
+export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFileSystem) {
+  if (result.success) {
+    localThemeFileSystem.uploadErrors.delete(result.key)
+  } else {
+    const errors = result.errors?.asset ?? ['Response was not successful.']
+    localThemeFileSystem.uploadErrors.set(result.key, errors)
+  }
 }
 
 async function handleBulkUpload(
@@ -415,10 +454,8 @@ async function handleFailedUploads(
 function reportFailedUploads(uploadResults: Map<string, Result>) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
-      const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
-      outputWarn(`Failed to upload file ${key}:`)
-      outputInfo(`${errorMessage}`)
-      outputNewline()
+      const errorMessage = result.errors?.asset?.join('\n') ?? 'File upload failed'
+      renderThrownError(key, new Error(errorMessage))
     }
   }
 }

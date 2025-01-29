@@ -4,11 +4,17 @@ import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {OrganizationApp} from '../models/organization.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {linesToColumns} from '@shopify/cli-kit/common/string'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
-import {OutputMessage, outputContent, outputToken, formatSection, stringifyMessage} from '@shopify/cli-kit/node/output'
+import {
+  OutputMessage,
+  formatPackageManagerCommand,
+  outputContent,
+  shouldDisplayColors,
+  stringifyMessage,
+} from '@shopify/cli-kit/node/output'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 export type Format = 'json' | 'text'
@@ -19,18 +25,15 @@ export interface InfoOptions {
   webEnv: boolean
   developerPlatformClient: DeveloperPlatformClient
 }
-interface Configurable {
-  type: string
-  externalType: string
-}
 
 export async function info(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  organization: Organization,
   options: InfoOptions,
-): Promise<OutputMessage> {
+): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.webEnv) {
-    return infoWeb(app, remoteApp, options)
+    return infoWeb(app, remoteApp, organization, options)
   } else {
     return infoApp(app, remoteApp, options)
   }
@@ -39,16 +42,17 @@ export async function info(
 async function infoWeb(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  organization: Organization,
   {format}: InfoOptions,
 ): Promise<OutputMessage> {
-  return outputEnv(app, remoteApp, format)
+  return outputEnv(app, remoteApp, organization, format)
 }
 
 async function infoApp(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
   options: InfoOptions,
-): Promise<OutputMessage> {
+): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
@@ -103,8 +107,9 @@ function withPurgedSchemas(extensions: object[]): object[] {
   })
 }
 
-const UNKNOWN_TEXT = outputContent`${outputToken.italic('unknown')}`.value
-const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configured')}`.value
+const UNKNOWN_TEXT = 'unknown'
+const NOT_CONFIGURED_TOKEN: InlineToken = {subdued: 'Not yet configured'}
+const NOT_LOADED_TEXT = 'NOT LOADED'
 
 class AppInfo {
   private readonly app: AppLinkedInterface
@@ -117,157 +122,168 @@ class AppInfo {
     this.options = options
   }
 
-  async output(): Promise<string> {
-    const sections: [string, string][] = [
-      await this.devConfigsSection(),
+  async output(): Promise<AlertCustomSection[]> {
+    return [
+      ...(await this.devConfigsSection()),
       this.projectSettingsSection(),
-      await this.appComponentsSection(),
+      ...(await this.appComponentsSection()),
       await this.systemInfoSection(),
     ]
-    return sections.map((sectionContents: [string, string]) => formatSection(...sectionContents)).join('\n\n')
   }
 
-  async devConfigsSection(): Promise<[string, string]> {
-    const title = `Current app configuration`
-    const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
-      this.app.packageManager,
-      'dev',
-      '--reset',
-    )}`.value
-
-    let updateUrls = NOT_CONFIGURED_TEXT
+  async devConfigsSection(): Promise<AlertCustomSection[]> {
+    let updateUrls = NOT_CONFIGURED_TOKEN
     if (this.app.configuration.build?.automatically_update_urls_on_dev !== undefined) {
       updateUrls = this.app.configuration.build.automatically_update_urls_on_dev ? 'Yes' : 'No'
     }
 
-    let partnersAccountInfo = ['Partners account', 'unknown']
+    let userAccountInfo: [string, string] = ['User', 'unknown']
     const retrievedAccountInfo = await this.options.developerPlatformClient.accountInfo()
     if (isServiceAccount(retrievedAccountInfo)) {
-      partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
+      userAccountInfo = ['Service account', retrievedAccountInfo.orgName]
     } else if (isUserAccount(retrievedAccountInfo)) {
-      partnersAccountInfo = ['Partners account', retrievedAccountInfo.email]
+      userAccountInfo[1] = retrievedAccountInfo.email
     }
 
-    const lines = [
-      ['Configuration file', basename(this.app.configuration.path) || configurationFileNames.app],
-      ['App name', this.remoteApp.title || NOT_CONFIGURED_TEXT],
-      ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TEXT],
-      ['Access scopes', getAppScopes(this.app.configuration)],
-      ['Dev store', this.app.configuration.build?.dev_store_url || NOT_CONFIGURED_TEXT],
-      ['Update URLs', updateUrls],
-      partnersAccountInfo,
+    return [
+      this.tableSection(
+        'Current app configuration',
+        [
+          ['Configuration file', {filePath: basename(this.app.configuration.path) || configurationFileNames.app}],
+          ['App name', this.remoteApp.title ? {userInput: this.remoteApp.title} : NOT_CONFIGURED_TOKEN],
+          ['Client ID', this.remoteApp.apiKey || NOT_CONFIGURED_TOKEN],
+          ['Access scopes', getAppScopes(this.app.configuration)],
+          [
+            'Dev store',
+            this.app.configuration.build?.dev_store_url ?? this.app.hiddenConfig.dev_store_url ?? NOT_CONFIGURED_TOKEN,
+          ],
+          ['Update URLs', updateUrls],
+          userAccountInfo,
+        ],
+        {isFirstItem: true},
+      ),
+      {
+        body: [
+          '💡 To change these, run',
+          {command: formatPackageManagerCommand(this.app.packageManager, 'shopify app config link')},
+        ],
+      },
     ]
-    return [title, `${linesToColumns(lines)}\n\n${postscript}`]
   }
 
-  projectSettingsSection(): [string, string] {
-    const title = 'Your Project'
-    const lines = [['Root location', this.app.directory]]
-    return [title, linesToColumns(lines)]
+  projectSettingsSection(): AlertCustomSection {
+    return this.tableSection('Your Project', [['Root location', {filePath: this.app.directory}]])
   }
 
-  async appComponentsSection(): Promise<[string, string]> {
-    const title = 'Directory Components'
-
-    let body = this.webComponentsSection()
-
-    function augmentWithExtensions<TExtension extends Configurable>(
-      extensions: TExtension[],
-      outputFormatter: (extension: TExtension) => string,
-    ) {
-      const types = new Set(extensions.map((ext) => ext.type))
-      types.forEach((extensionType: string) => {
-        const relevantExtensions = extensions.filter((extension: TExtension) => extension.type === extensionType)
-        if (relevantExtensions[0]) {
-          body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
-          relevantExtensions.forEach((extension: TExtension) => {
-            body += outputFormatter(extension)
-          })
-        }
-      })
-    }
-
-    const supportedExtensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
-    augmentWithExtensions(supportedExtensions, this.extensionSubSection.bind(this))
-
-    if (this.app.errors?.isEmpty() === false) {
-      body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
-      supportedExtensions.forEach((extension) => {
-        body += this.invalidExtensionSubSection(extension)
-      })
-    }
-    return [title, body]
+  async appComponentsSection(): Promise<AlertCustomSection[]> {
+    const webComponentsSection = this.webComponentsSection()
+    return [
+      {
+        title: '\nDirectory components'.toUpperCase(),
+        body: '',
+      },
+      ...(webComponentsSection ? [webComponentsSection] : []),
+      ...this.extensionsSections(),
+    ]
   }
 
-  webComponentsSection(): string {
+  webComponentsSection(): AlertCustomSection | undefined {
     const errors: OutputMessage[] = []
-    const subtitle = outputContent`${outputToken.subheading('web')}`.value
-    const toplevel = ['📂 web', '']
-    const sublevels: [string, string][] = []
+    const sublevels: InlineToken[][] = []
+    if (!this.app.webs[0]) return
     this.app.webs.forEach((web) => {
       if (web.configuration) {
         if (web.configuration.name) {
           const {name, roles} = web.configuration
-          sublevels.push([`    📂 ${name} (${roles.join(',')})`, relativePath(this.app.directory, web.directory)])
+          const pathToWeb = relativePath(this.app.directory, web.directory)
+          sublevels.push([`    📂 ${name}`, {filePath: pathToWeb || '/'}])
+          if (roles.length > 0) {
+            sublevels.push(['         roles', roles.join(', ')])
+          }
         } else {
           web.configuration.roles.forEach((role) => {
-            sublevels.push([`    📂 ${role}`, relativePath(this.app.directory, web.directory)])
+            sublevels.push([`    📂 ${role}`, {filePath: relativePath(this.app.directory, web.directory)}])
           })
         }
       } else {
-        sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
+        sublevels.push([{subdued: `  📂 ${UNKNOWN_TEXT}`}, {filePath: relativePath(this.app.directory, web.directory)}])
       }
       if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
         if (error) errors.push(error)
       }
     })
-    let errorContent = `\n${errors.map((error) => this.formattedError(error)).join('\n')}`
-    if (errorContent.trim() === '') errorContent = ''
 
-    return `${subtitle}\n${linesToColumns([toplevel, ...sublevels])}${errorContent}`
+    return this.subtableSection('web', [
+      ['📂 web', ''],
+      ...sublevels,
+      ...errors.map((error): InlineToken[] => [{error: 'error'}, {error: this.formattedError(error)}]),
+    ])
   }
 
-  extensionSubSection(extension: ExtensionInstance): string {
+  extensionsSections(): AlertCustomSection[] {
+    const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
+    const types = Array.from(new Set(extensions.map((ext) => ext.type)))
+    return types
+      .map((extensionType: string): AlertCustomSection | undefined => {
+        const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
+        if (relevantExtensions[0]) {
+          return this.subtableSection(
+            relevantExtensions[0].externalType,
+            relevantExtensions.map((ext) => this.extensionSubSection(ext)).flat(),
+          )
+        }
+      })
+      .filter((section: AlertCustomSection | undefined) => section !== undefined)
+  }
+
+  extensionSubSection(extension: ExtensionInstance): InlineToken[][] {
     const config = extension.configuration
-    const details = [
-      [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configurationPath)],
+    const details: InlineToken[][] = [
+      [`📂 ${extension.handle || NOT_LOADED_TEXT}`, {filePath: relativePath(this.app.directory, extension.directory)}],
+      ['     config file', {filePath: relativePath(extension.directory, extension.configurationPath)}],
     ]
     if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
-
-    return `\n${linesToColumns(details)}`
-  }
-
-  invalidExtensionSubSection(extension: ExtensionInstance): string {
     const error = this.app.errors?.getError(extension.configurationPath)
-    if (!error) return ''
-    const details = [
-      [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configurationPath)],
-    ]
-    const formattedError = this.formattedError(error)
-    return `\n${linesToColumns(details)}\n${formattedError}`
+    if (error) {
+      details.push([{error: '     error'}, {error: this.formattedError(error)}])
+    }
+
+    return details
   }
 
   formattedError(str: OutputMessage): string {
-    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).split('\n')
-    const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
-    return outputContent`${outputToken.errorText(errorLines.join('\n'))}`.value
+    // Some errors have newlines at the beginning for no apparent reason
+    const rawErrorMessage = stringifyMessage(str).trim()
+    if (shouldDisplayColors()) return rawErrorMessage
+    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).trim().split('\n')
+    return [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)].join('\n')
   }
 
-  async systemInfoSection(): Promise<[string, string]> {
-    const title = 'Tooling and System'
+  async systemInfoSection(): Promise<AlertCustomSection> {
     const {platform, arch} = platformAndArch()
-    const lines: string[][] = [
+    return this.tableSection('Tooling and System', [
       ['Shopify CLI', CLI_KIT_VERSION],
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
-      ['Shell', process.env.SHELL || 'unknown'],
+      ['Shell', process.env.SHELL ?? 'unknown'],
       ['Node version', process.version],
-    ]
-    return [title, linesToColumns(lines)]
+    ])
+  }
+
+  tableSection(title: string, rows: InlineToken[][], {isFirstItem = false} = {}): AlertCustomSection {
+    return {
+      title: `${isFirstItem ? '' : '\n'}${title.toUpperCase()}\n`,
+      body: {tabularData: rows, firstColumnSubdued: true},
+    }
+  }
+
+  subtableSection(title: string, rows: InlineToken[][]): AlertCustomSection {
+    return {
+      title,
+      body: {tabularData: rows, firstColumnSubdued: true},
+    }
   }
 }

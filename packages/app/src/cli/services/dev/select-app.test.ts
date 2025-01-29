@@ -1,6 +1,6 @@
 import {selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {MinimalAppIdentifiers, Organization} from '../../models/organization.js'
+import {AppApiKeyAndOrgId, Organization, OrganizationSource} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
@@ -25,6 +25,7 @@ const LOCAL_APP: AppInterface = testApp({
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
+  source: OrganizationSource.BusinessPlatform,
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({
@@ -41,7 +42,7 @@ const APPS = [
 function mockDeveloperPlatformClient() {
   const developerPlatformClient = testDeveloperPlatformClient({
     createApp: async () => ({...APP1, newApp: true}),
-    async appFromId({apiKey}: MinimalAppIdentifiers) {
+    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId) {
       if (apiKey === APP1.apiKey) return APP1
       if (apiKey === APP2.apiKey) return APP2
       throw new Error(`App with client ID ${apiKey} not found`)
@@ -58,7 +59,7 @@ describe('selectOrCreateApp', () => {
 
     // When
     const {developerPlatformClient} = mockDeveloperPlatformClient()
-    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
+    const got = await selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})
 
     // Then
     expect(got).toEqual(APP1)
@@ -74,11 +75,11 @@ describe('selectOrCreateApp', () => {
 
     // When
     const {developerPlatformClient} = mockDeveloperPlatformClient()
-    const got = await selectOrCreateApp(LOCAL_APP.name, APPS, false, ORG1, developerPlatformClient, {})
+    const got = await selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})
 
     // Then
     expect(got).toEqual({...APP1, newApp: true})
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
-    expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, 'app-name', {})
+    expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, {name: 'app-name'})
   })
 })

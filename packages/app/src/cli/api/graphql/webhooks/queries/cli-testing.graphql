@@ -1,0 +1,8 @@
+mutation CliTesting($address: String!, $apiKey: String, $apiVersion: String!, $deliveryMethod: String!, $sharedSecret: String!, $topic: String!) {
+  cliTesting(address: $address, apiKey: $apiKey, apiVersion: $apiVersion, deliveryMethod: $deliveryMethod, sharedSecret: $sharedSecret, topic: $topic) {
+    headers
+    samplePayload
+    success
+    errors
+  }
+}

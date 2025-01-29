@@ -1,7 +1,8 @@
 import {linkedAppContext} from './app-context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import link from './app/config/link.js'
-import {appFromId} from './context.js'
+import {appFromIdentifiers} from './context.js'
 
 import * as localStorage from './local-storage.js'
 import {fetchOrgFromId} from './dev/fetch.js'
@@ -18,6 +19,7 @@ vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context.js')
 vi.mock('./dev/fetch.js')
+vi.mock('./app/add-uid-to-extension-toml.js')
 
 async function writeAppConfig(tmp: string, content: string) {
   const appConfigPath = joinPath(tmp, 'shopify.app.toml')
@@ -37,7 +39,7 @@ const mockRemoteApp = testOrganizationApp({
 
 beforeEach(() => {
   vi.mocked(fetchSpecifications).mockResolvedValue([])
-  vi.mocked(appFromId).mockResolvedValue(mockRemoteApp)
+  vi.mocked(appFromIdentifiers).mockResolvedValue(mockRemoteApp)
   vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
 })
 
@@ -121,7 +123,7 @@ describe('linkedAppContext', () => {
   test('updates cached app info when remoteApp matches', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: 'test-api-key-new'})
+      vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: 'test-api-key-new'})
       const content = `client_id="test-api-key-new"`
       await writeAppConfig(tmp, content)
       localStorage.setCachedAppInfo({
@@ -159,7 +161,7 @@ describe('linkedAppContext', () => {
       await writeAppConfig(tmp, content)
       const newClientId = 'new-api-key'
 
-      vi.mocked(appFromId).mockResolvedValue({...mockRemoteApp, apiKey: newClientId})
+      vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: newClientId})
 
       // When
       const result = await linkedAppContext({
@@ -173,7 +175,7 @@ describe('linkedAppContext', () => {
       expect(link).not.toHaveBeenCalled()
       expect(result.remoteApp.apiKey).toBe(newClientId)
       expect(result.app.configuration.client_id).toEqual('new-api-key')
-      expect(appFromId).toHaveBeenCalledWith(expect.objectContaining({apiKey: newClientId}))
+      expect(appFromIdentifiers).toHaveBeenCalledWith(expect.objectContaining({apiKey: newClientId}))
     })
   })
 
@@ -232,11 +234,12 @@ describe('linkedAppContext', () => {
       const meta = metadata.getAllPublicMetadata()
       expect(meta).toEqual(
         expect.objectContaining({
-          partner_id: tryParseInt(mockRemoteApp.organizationId),
+          business_platform_id: tryParseInt(mockOrganization.id),
           api_key: mockRemoteApp.apiKey,
           cmd_app_reset_used: false,
         }),
       )
+      expect(meta).not.toHaveProperty('partner_id')
     })
   })
 
@@ -257,6 +260,7 @@ describe('linkedAppContext', () => {
       })
 
       // Then
+      expect(vi.mocked(addUidToTomlsIfNecessary)).not.toHaveBeenCalled()
       expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'report'}))
       loadSpy.mockRestore()
     })
@@ -278,6 +282,7 @@ describe('linkedAppContext', () => {
       })
 
       // Then
+      expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
       expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'strict'}))
       loadSpy.mockRestore()
     })

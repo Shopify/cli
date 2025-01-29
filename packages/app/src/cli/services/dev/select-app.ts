@@ -2,8 +2,9 @@ import {searchForAppsByNameFactory} from './prompt-helpers.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationFileName} from '../../models/app/loader.js'
+import {BugError} from '@shopify/cli-kit/node/error'
 
 /**
  * Select an app from env, list or create a new one:
@@ -15,27 +16,22 @@ import {AppConfigurationFileName} from '../../models/app/loader.js'
  * @returns The selected (or created) app
  */
 export async function selectOrCreateApp(
-  localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
-  options?: {
-    isLaunchable?: boolean
-    scopesArray?: string[]
-    directory?: string
-  },
+  options: CreateAppOptions,
 ): Promise<OrganizationApp> {
   let createNewApp = apps.length === 0
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(localAppName)
-    return developerPlatformClient.createApp(org, name, options)
+    const name = await appNamePrompt(options.name)
+    return developerPlatformClient.createApp(org, {...options, name})
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages, {
-      directory: options?.directory,
+      directory: options.directory,
     })
 
     const data = getCachedCommandInfo()
@@ -44,8 +40,15 @@ export async function selectOrCreateApp(
 
     if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
-    const fullSelectedApp = await developerPlatformClient.appFromId(app)
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return fullSelectedApp!
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
+
+    if (!fullSelectedApp) {
+      // This is unlikely, and a bug. But we still want a nice user facing message plus appropriate context logged.
+      throw new BugError(
+        `Unable to fetch app ${app.apiKey} from Shopify`,
+        'Try running `shopify app config link` to connect to an app you have access to.',
+      )
+    }
+    return fullSelectedApp
   }
 }

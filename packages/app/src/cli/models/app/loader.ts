@@ -15,8 +15,9 @@ import {
   LegacyAppConfiguration,
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
-  AppCreationDefaultOptions,
   AppLinkedInterface,
+  appHiddenConfigPath,
+  AppHiddenConfig,
 } from './app.js'
 import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -26,14 +27,14 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
-import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
-import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -82,7 +83,7 @@ export async function loadConfigurationFileContent(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     // TOML errors have line, pos and col properties
-    if (err.line && err.pos && err.col) {
+    if (err.line !== undefined && err.pos !== undefined && err.col !== undefined) {
       return abortOrReport(
         outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
         {},
@@ -213,7 +214,7 @@ export async function checkFolderIsValidApp(directory: string) {
   )
 }
 
-export async function loadConfigForAppCreation(directory: string, name: string): Promise<AppCreationDefaultOptions> {
+export async function loadConfigForAppCreation(directory: string, name: string): Promise<CreateAppOptions> {
   const state = await getAppConfigurationState(directory)
   const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
   const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
@@ -221,10 +222,15 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const loader = new AppLoader({loadedConfiguration})
   const webs = await loader.loadWebs(directory)
 
+  const isLaunchable = webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
+
   return {
-    isLaunchable: webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend)),
+    isLaunchable,
     scopesArray: getAppScopesArray(config),
     name,
+    directory,
+    // By default, and ONLY for `app init`, we consider the app as embedded if it is launchable.
+    isEmbedded: isLaunchable,
   }
 }
 
@@ -342,6 +348,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
     const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
 
+    const hiddenConfig = await loadHiddenConfig(directory)
+
     if (!this.previousApp) {
       await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
     }
@@ -364,6 +372,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specifications: this.specifications,
       configSchema,
       remoteFlags: this.remoteFlags,
+      hiddenConfig,
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -907,11 +916,7 @@ async function loadAppConfigurationFromState<
       }
     }
 
-    const parseStrictSchemaEnabled = specifications.length > 0
     schemaForConfigurationFile = appSchema
-    if (parseStrictSchemaEnabled) {
-      schemaForConfigurationFile = deepStrict(appSchema)
-    }
   }
 
   const configuration = (await parseConfigurationFile(
@@ -1035,7 +1040,7 @@ async function getAllLinkedConfigClientIds(
 ): Promise<{[key: string]: string}> {
   const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
 
-  const entries = (
+  const entries: [string, string][] = (
     await Promise.all(
       candidates.map(async (candidateFile) => {
         const configName = basename(candidateFile)
@@ -1059,8 +1064,20 @@ async function getAllLinkedConfigClientIds(
         }
       }),
     )
-  ).filter((entry) => entry !== undefined) as [string, string][]
+  ).filter((entry) => entry !== undefined)
   return Object.fromEntries(entries)
+}
+
+async function loadHiddenConfig(appDirectory: string): Promise<AppHiddenConfig> {
+  const hiddenConfigPath = appHiddenConfigPath(appDirectory)
+  if (fileExistsSync(hiddenConfigPath)) {
+    return JSON.parse(await readFile(hiddenConfigPath, {encoding: 'utf8'}))
+  } else {
+    // If the hidden config file doesn't exist, create an empty one.
+    await mkdir(dirname(hiddenConfigPath))
+    await writeFile(hiddenConfigPath, '{}')
+    return {}
+  }
 }
 
 export async function loadAppName(appDirectory: string): Promise<string> {
@@ -1155,7 +1172,8 @@ async function logMetadataForLoadedAppUsingRawValues(
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {
-        extensionsBreakdownMapping[extension.type]++
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        extensionsBreakdownMapping[extension.type]!++
       }
     }
 

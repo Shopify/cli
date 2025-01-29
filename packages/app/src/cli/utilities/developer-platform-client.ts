@@ -3,6 +3,7 @@ import {AppManagementClient} from './developer-platform-client/app-management-cl
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -36,8 +37,8 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../models/app/template.js'
-import {TargetSchemaDefinitionQueryVariables} from '../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../api/graphql/functions/api_schema_definition.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -54,7 +55,7 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -76,9 +77,7 @@ export interface AppVersionIdentifiers {
 }
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
-  const clients: DeveloperPlatformClient[] = [new PartnersClient()]
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) clients.push(new AppManagementClient())
-  return clients
+  return isAppManagementDisabled() ? [new PartnersClient()] : [new PartnersClient(), new AppManagementClient()]
 }
 
 /**
@@ -117,11 +116,9 @@ export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isTruthy(process.env.USE_APP_MANAGEMENT_API)) {
-    if (organization) return selectDeveloperPlatformClientByOrg(organization)
-    return selectDeveloperPlatformClientByConfig(configuration)
-  }
-  return new PartnersClient()
+  if (isAppManagementDisabled()) return new PartnersClient()
+  if (organization) return selectDeveloperPlatformClientByOrg(organization)
+  return selectDeveloperPlatformClientByConfig(configuration)
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
@@ -136,9 +133,11 @@ function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration |
 }
 
 export interface CreateAppOptions {
+  name: string
   isLaunchable?: boolean
   scopesArray?: string[]
   directory?: string
+  isEmbedded?: boolean
 }
 
 interface AppModuleVersionSpecification {
@@ -210,18 +209,19 @@ export interface DeveloperPlatformClient {
   readonly supportsAtomicDeployments: boolean
   readonly requiresOrganization: boolean
   readonly supportsDevSessions: boolean
+  readonly organizationSource: OrganizationSource
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (app: MinimalAppIdentifiers) => Promise<OrganizationApp | undefined>
+  appFromIdentifiers: (app: AppApiKeyAndOrgId) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
-  createApp: (org: Organization, name: string, options?: CreateAppOptions) => Promise<OrganizationApp>
-  devStoresForOrg: (orgId: string) => Promise<OrganizationStore[]>
+  createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
+  devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
@@ -241,15 +241,23 @@ export interface DeveloperPlatformClient {
   ) => Promise<ConvertDevToTransferDisabledSchema>
   updateDeveloperPreview: (input: DevelopmentStorePreviewUpdateInput) => Promise<DevelopmentStorePreviewUpdateSchema>
   appPreviewMode: (input: FindAppPreviewModeVariables) => Promise<FindAppPreviewModeSchema>
-  sendSampleWebhook: (input: SendSampleWebhookVariables) => Promise<SendSampleWebhookSchema>
-  apiVersions: () => Promise<PublicApiVersionsSchema>
-  topics: (input: WebhookTopicsVariables) => Promise<WebhookTopicsSchema>
+  sendSampleWebhook: (input: SendSampleWebhookVariables, organizationId: string) => Promise<SendSampleWebhookSchema>
+  apiVersions: (organizationId: string) => Promise<PublicApiVersionsSchema>
+  topics: (input: WebhookTopicsVariables, organizationId: string) => Promise<WebhookTopicsSchema>
   migrateFlowExtension: (input: MigrateFlowExtensionVariables) => Promise<MigrateFlowExtensionSchema>
   migrateAppModule: (input: MigrateAppModuleVariables) => Promise<MigrateAppModuleSchema>
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   currentAccountInfo: () => Promise<CurrentAccountInfoSchema>
-  targetSchemaDefinition: (input: TargetSchemaDefinitionQueryVariables) => Promise<string | null>
-  apiSchemaDefinition: (input: ApiSchemaDefinitionQueryVariables) => Promise<string | null>
+  targetSchemaDefinition: (
+    input: SchemaDefinitionByTargetQueryVariables,
+    apiKey: string,
+    organizationId: string,
+  ) => Promise<string | null>
+  apiSchemaDefinition: (
+    input: SchemaDefinitionByApiTypeQueryVariables,
+    apiKey: string,
+    organizationId: string,
+  ) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>

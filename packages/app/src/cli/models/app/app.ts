@@ -8,13 +8,14 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../exte
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
-import {Flag} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
+import {configurationFileNames} from '../../constants.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, findPathUp, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
@@ -22,6 +23,12 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 // Schemas for loading app configuration
+
+const ExtensionDirectoriesSchema = zod
+  .array(zod.string())
+  .optional()
+  .transform(removeTrailingPathSeparator)
+  .transform(fixSingleWildcards)
 
 /**
  * Schema for a freshly minted app template.
@@ -34,7 +41,7 @@ export const LegacyAppSchema = zod
       .string()
       .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
       .default(''),
-    extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
+    extension_directories: ExtensionDirectoriesSchema,
     web_directories: zod.array(zod.string()).optional(),
     webhooks: zod
       .object({
@@ -49,12 +56,19 @@ function removeTrailingPathSeparator(value: string[] | undefined) {
   // eslint-disable-next-line no-useless-escape
   return value?.map((dir) => dir.replace(/[\/\\]+$/, ''))
 }
+
+// If a path ends with a single asterisk, modify it to end with a double asterisk.
+// This is to support the glob pattern used by chokidar and watch for changes in subfolders.
+function fixSingleWildcards(value: string[] | undefined) {
+  // eslint-disable-next-line no-useless-escape
+  return value?.map((dir) => dir.replace(/([^\*])\*$/, '$1**'))
+}
+
 /**
  * Schema for a normal, linked app. Properties from modules are not validated.
  */
 export const AppSchema = zod.object({
   client_id: zod.string(),
-  app_id: zod.string().optional(),
   organization_id: zod.string().optional(),
   build: zod
     .object({
@@ -63,9 +77,18 @@ export const AppSchema = zod.object({
       include_config_on_deploy: zod.boolean().optional(),
     })
     .optional(),
-  extension_directories: zod.array(zod.string()).optional().transform(removeTrailingPathSeparator),
+  extension_directories: ExtensionDirectoriesSchema,
   web_directories: zod.array(zod.string()).optional(),
 })
+
+/**
+ * Hidden configuration for an app. Stored inside ./shopify/project.json
+ * This is a set of values that are needed by the CLI that are not part of the app configuration.
+ * These are not meant to be git tracked and the user doesn't need to know about their existence.
+ */
+export interface AppHiddenConfig {
+  dev_store_url?: string
+}
 
 /**
  * Utility schema that matches freshly minted or normal, linked, apps.
@@ -108,7 +131,7 @@ export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<T
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
-  allowDynamicallySpecifiedConfigs = false,
+  allowDynamicallySpecifiedConfigs = true,
 ): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
@@ -164,6 +187,10 @@ export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
   if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
   return false
+}
+
+export function appHiddenConfigPath(appDirectory: string) {
+  return joinPath(appDirectory, configurationFileNames.hiddenFolder, configurationFileNames.hiddenConfig)
 }
 
 /**
@@ -243,6 +270,7 @@ export interface AppInterface<
   realExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   errors?: AppErrors
+  hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -258,9 +286,10 @@ export interface AppInterface<
   /**
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
-  creationDefaultOptions(): AppCreationDefaultOptions
+  creationDefaultOptions(): CreateAppOptions
   manifest: () => Promise<JsonMapType>
-  removeExtension: (extensionHandle: string) => void
+  removeExtension: (extensionUid: string) => void
+  updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
 }
 
 type AppConstructor<
@@ -277,6 +306,7 @@ type AppConstructor<
   errors?: AppErrors
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
+  hiddenConfig: AppHiddenConfig
 }
 
 export class App<
@@ -298,6 +328,7 @@ export class App<
   configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
+  hiddenConfig: AppHiddenConfig
 
   constructor({
     name,
@@ -313,6 +344,7 @@ export class App<
     specifications,
     configSchema,
     remoteFlags,
+    hiddenConfig,
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
@@ -327,6 +359,7 @@ export class App<
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
+    this.hiddenConfig = hiddenConfig
   }
 
   get allExtensions() {
@@ -356,7 +389,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
-          assets: module.configuration.uid ?? module.handle,
+          assets: module.uid,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
         }
@@ -373,6 +406,11 @@ export class App<
   async updateDependencies() {
     const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
     this.nodeDependencies = nodeDependencies
+  }
+
+  async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
+    this.hiddenConfig = {...this.hiddenConfig, ...values}
+    await writeFile(appHiddenConfigPath(this.directory), JSON.stringify(this.hiddenConfig, null, 2))
   }
 
   async preDeployValidation() {
@@ -417,19 +455,26 @@ export class App<
     const frontendConfig = this.webs.find((web) => isWebType(web, WebType.Frontend))
     const backendConfig = this.webs.find((web) => isWebType(web, WebType.Backend))
 
-    return Boolean(frontendConfig || backendConfig)
+    return Boolean(frontendConfig ?? backendConfig)
   }
 
-  creationDefaultOptions(): AppCreationDefaultOptions {
+  get appIsEmbedded() {
+    if (isCurrentAppSchema(this.configuration)) return this.configuration.embedded
+    return this.appIsLaunchable()
+  }
+
+  creationDefaultOptions(): CreateAppOptions {
     return {
       isLaunchable: this.appIsLaunchable(),
       scopesArray: getAppScopesArray(this.configuration),
       name: this.name,
+      isEmbedded: this.appIsEmbedded,
+      directory: this.directory,
     }
   }
 
-  removeExtension(extensionHandle: string) {
-    this.realExtensions = this.realExtensions.filter((ext) => ext.handle !== extensionHandle)
+  removeExtension(extensionUid: string) {
+    this.realExtensions = this.realExtensions.filter((ext) => ext.uid !== extensionUid)
   }
 
   get includeConfigOnDeploy() {
@@ -534,10 +579,4 @@ export async function getDependencyVersion(dependency: string, directory: string
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: dependency, version: packageContent.version}
-}
-
-export interface AppCreationDefaultOptions {
-  isLaunchable: boolean
-  scopesArray: string[]
-  name: string
 }

@@ -7,7 +7,6 @@ import {
   CliBuildPreferences,
   getAppScopes,
   LegacyAppConfiguration,
-  AppCreationDefaultOptions,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -20,13 +19,14 @@ import {
 import {
   fetchOrCreateOrganizationApp,
   logMetadataForLoadedContext,
-  appFromId,
+  appFromIdentifiers,
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
 import {
   Flag,
   DeveloperPlatformClient,
   sniffServiceOptionsAndAppConfigToSelectPlatformClient,
+  CreateAppOptions,
 } from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -87,7 +87,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     format: localAppOptions.configFormat,
   })
 
-  await logMetadataForLoadedContext(remoteApp)
+  await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
 
   // Finally, merge the remote app's configuration with the local app's configuration, and write it to the filesystem
   const mergedAppConfiguration = await overwriteLocalConfigFileWithRemoteAppConfiguration({
@@ -131,13 +131,12 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
   let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
 
   const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
-  const appDirectory = possibleAppDirectory || options.directory
+  const appDirectory = possibleAppDirectory ?? options.directory
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromId({
+    const remoteApp = await appFromIdentifiers({
       apiKey: options.apiKey,
-      id: options.appId,
       developerPlatformClient,
       organizationId: options.organizationId,
     })
@@ -145,6 +144,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
+    if (options.isNewApp) remoteApp.newApp = true
 
     return {
       remoteApp,
@@ -153,7 +153,7 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     }
   }
 
-  const remoteApp = await fetchOrCreateOrganizationApp(creationOptions, appDirectory)
+  const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
 
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -174,13 +174,15 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
  * @returns Default options for creating a new app; the app's actual directory if loaded.
  */
 async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise<{
-  creationOptions: AppCreationDefaultOptions
+  creationOptions: CreateAppOptions
   appDirectory?: string
 }> {
   const appCreationDefaults = {
     isLaunchable: false,
     scopesArray: [] as string[],
     name: '',
+    directory: options.directory,
+    isEmbedded: false,
   }
   try {
     const app = await loadApp({
@@ -190,12 +192,9 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       userProvidedConfigName: options.baseConfigName,
       remoteFlags: undefined,
     })
-    const configuration = app.configuration
 
-    if (!isCurrentAppSchema(configuration)) {
-      return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
-    }
-    return {creationOptions: appCreationDefaults}
+    return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
+
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {creationOptions: appCreationDefaults}
@@ -349,7 +348,7 @@ async function loadConfigurationFileName(
   const currentToml = existingTomls[remoteApp.apiKey]
   if (currentToml) return currentToml
 
-  return selectConfigName(localAppInfo.appDirectory || options.directory, remoteApp.title)
+  return selectConfigName(localAppInfo.appDirectory ?? options.directory, remoteApp.title)
 }
 
 /**
@@ -387,7 +386,6 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
         ...(localAppOptions.existingConfig ?? {}),
       },
       {
-        app_id: remoteApp.id,
         client_id: remoteApp.apiKey,
         path: configFilePath,
         ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
@@ -486,8 +484,8 @@ function buildAppConfigurationFromRemoteAppProperties(
 
 function addRemoteAppHomeConfig(remoteApp: OrganizationApp) {
   const homeConfig = {
-    application_url: remoteApp.applicationUrl?.replace(/\/$/, '') || '',
-    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
+    application_url: remoteApp.applicationUrl?.replace(/\/$/, '') ?? '',
+    embedded: remoteApp.embedded ?? true,
   }
   return remoteApp.preferencesUrl
     ? {
@@ -513,8 +511,8 @@ function addRemoteAppProxyConfig(remoteApp: OrganizationApp) {
 
 function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
   const hasAnyPrivacyWebhook =
-    remoteApp.gdprWebhooks?.customerDataRequestUrl ||
-    remoteApp.gdprWebhooks?.customerDeletionUrl ||
+    remoteApp.gdprWebhooks?.customerDataRequestUrl ??
+    remoteApp.gdprWebhooks?.customerDeletionUrl ??
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   const privacyComplianceContent = {
@@ -527,7 +525,7 @@ function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
 
   return {
     webhooks: {
-      api_version: remoteApp.webhookApiVersion || '2023-07',
+      api_version: remoteApp.webhookApiVersion ?? '2023-07',
       ...(hasAnyPrivacyWebhook ? privacyComplianceContent : {}),
     },
   }
@@ -563,7 +561,7 @@ function addRemoteAppAccessConfig(locallyProvidedScopes: string, remoteApp: Orga
 function addPosConfig(remoteApp: OrganizationApp) {
   return {
     pos: {
-      embedded: remoteApp.posEmbedded || false,
+      embedded: remoteApp.posEmbedded ?? false,
     },
   }
 }

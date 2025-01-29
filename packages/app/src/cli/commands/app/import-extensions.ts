@@ -84,7 +84,7 @@ export default class ImportExtensions extends AppCommand {
     const appContext = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
-      forceRelink: false,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

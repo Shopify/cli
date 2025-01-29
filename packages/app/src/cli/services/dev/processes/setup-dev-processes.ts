@@ -15,7 +15,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
 import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
-import {PartnersURLs} from '../urls.js'
+import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
@@ -46,7 +46,7 @@ interface DevNetworkOptions {
   proxyUrl: string
   frontendPort: number
   backendPort: number
-  currentUrls: PartnersURLs
+  currentUrls: ApplicationURLs
 }
 
 export interface DevConfig {
@@ -89,6 +89,11 @@ export async function setupDevProcesses({
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
+
+  // Decide on the appropriate preview URL for a session with these processes
+  const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
+  const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
+  const previewUrl = anyPreviewableExtensions ? devConsoleURL : appPreviewUrl
 
   const processes = [
     ...(await setupWebProcesses({
@@ -136,6 +141,8 @@ export async function setupDevProcesses({
           organizationId: remoteApp.organizationId,
           storeFqdn,
           appWatcher,
+          appPreviewURL: appPreviewUrl,
+          appLocalProxyURL: devConsoleURL,
         })
       : await setupDraftableExtensionsProcess({
           localApp: reloadedApp,
@@ -156,6 +163,7 @@ export async function setupDevProcesses({
       webs: reloadedApp.webs,
       backendPort: network.backendPort,
       frontendPort: network.frontendPort,
+      organizationId: remoteApp.organizationId,
       developerPlatformClient,
       storeFqdn,
       apiSecret,
@@ -178,10 +186,6 @@ export async function setupDevProcesses({
 
   // Add http server proxy & configure ports, for processes that need it
   const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort)
-
-  // Decide on the appropriate preview URL for a session with these processes
-  const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
-  const previewUrl = anyPreviewableExtensions.length > 0 ? `${network.proxyUrl}/extensions/dev-console` : appPreviewUrl
 
   return {
     processes: processesWithProxy,

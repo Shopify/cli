@@ -11,10 +11,12 @@ import {
   filterDisabledFlags,
   ClientName,
   AppVersionWithContext,
+  CreateAppOptions,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -99,12 +101,10 @@ import {
 } from '../../api/graphql/template_specifications.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {
-  TargetSchemaDefinitionQueryVariables,
   TargetSchemaDefinitionQuerySchema,
   TargetSchemaDefinitionQuery,
 } from '../../api/graphql/functions/target_schema_definition.js'
 import {
-  ApiSchemaDefinitionQueryVariables,
   ApiSchemaDefinitionQuerySchema,
   ApiSchemaDefinitionQuery,
 } from '../../api/graphql/functions/api_schema_definition.js'
@@ -153,6 +153,8 @@ import {
   DevStoresByOrgQuery,
   DevStoresByOrgQueryVariables,
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -212,6 +214,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsAtomicDeployments = false
   public readonly requiresOrganization = false
   public readonly supportsDevSessions = false
+  public readonly organizationSource = OrganizationSource.Partners
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -263,7 +266,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId({apiKey}: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
     const variables: FindAppQueryVariables = {apiKey}
     const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
     const app = res.app
@@ -283,7 +286,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       return result.organizations.nodes!.map((org) => ({
         id: org!.id,
         businessName: org!.businessName,
-        source: OrganizationSource.Partners,
+        source: this.organizationSource,
       }))
     } catch (error: unknown) {
       if ((error as {statusCode?: number}).statusCode === 404) {
@@ -297,9 +300,8 @@ export class PartnersClient implements DeveloperPlatformClient {
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const variables: FindOrganizationBasicVariables = {id: orgId}
     const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
-    const org: Organization | undefined = result.organizations.nodes[0]
-    if (org) org.source = OrganizationSource.Partners
-    return org
+    const org: Omit<Organization, 'source'> | undefined = result.organizations.nodes[0]
+    return org ? {...org, source: this.organizationSource} : undefined
   }
 
   async orgAndApps(orgId: string): Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>> {
@@ -322,7 +324,14 @@ export class PartnersClient implements DeveloperPlatformClient {
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
-    return result.extensionSpecifications
+    // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
+    return result.extensionSpecifications.map((spec) => ({
+      ...spec,
+      options: {
+        ...spec.options,
+        uidIsClientProvided: true,
+      },
+    }))
   }
 
   async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
@@ -337,16 +346,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     })
   }
 
-  async createApp(
-    org: Organization,
-    name: string,
-    options?: {
-      isLaunchable?: boolean
-      scopesArray?: string[]
-      directory?: string
-    },
-  ): Promise<OrganizationApp> {
-    const variables: CreateAppQueryVariables = getAppVars(org, name, options?.isLaunchable, options?.scopesArray)
+  async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
+    const variables: CreateAppQueryVariables = getAppVars(org, options.name, options.isLaunchable, options.scopesArray)
     const result: CreateAppQuerySchema = await this.request(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
@@ -357,10 +358,13 @@ export class PartnersClient implements DeveloperPlatformClient {
     return {...result.appCreate.app, organizationId: org.id, newApp: true, flags, developerPlatformClient: this}
   }
 
-  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+  async devStoresForOrg(orgId: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
     const variables: DevStoresByOrgQueryVariables = {id: orgId}
     const result: DevStoresByOrgQuery = await this.requestDoc(DevStoresByOrg, variables)
-    return result.organizations.nodes![0]!.stores.nodes as OrganizationStore[]
+    return {
+      stores: result.organizations.nodes![0]!.stores.nodes as OrganizationStore[],
+      hasMorePages: false,
+    }
   }
 
   async appExtensionRegistrations(
@@ -474,15 +478,18 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(FindAppPreviewModeQuery, input)
   }
 
-  async sendSampleWebhook(input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
+  async sendSampleWebhook(
+    input: SendSampleWebhookVariables,
+    _organizationId: string,
+  ): Promise<SendSampleWebhookSchema> {
     return this.request(sendSampleWebhookMutation, input)
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
+  async apiVersions(_organizationId: string): Promise<PublicApiVersionsSchema> {
     return this.request(GetApiVersionsQuery)
   }
 
-  async topics(input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
+  async topics(input: WebhookTopicsVariables, _organizationId: string): Promise<WebhookTopicsSchema> {
     return this.request(getTopicsQuery, input)
   }
 
@@ -502,13 +509,36 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(CurrentAccountInfoQuery)
   }
 
-  async targetSchemaDefinition(input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
-    const response: TargetSchemaDefinitionQuerySchema = await this.request(TargetSchemaDefinitionQuery, input)
+  async targetSchemaDefinition(
+    input: SchemaDefinitionByTargetQueryVariables,
+    apiKey: string,
+    _organizationId: string,
+  ): Promise<string | null> {
+    // Ensures compatibility with existing partners requests
+    // Can remove once migrated to AMF
+    const transformedInput = {
+      target: input.handle,
+      version: input.version,
+      apiKey,
+    }
+
+    const response: TargetSchemaDefinitionQuerySchema = await this.request(
+      TargetSchemaDefinitionQuery,
+      transformedInput,
+    )
     return response.definition
   }
 
-  async apiSchemaDefinition(input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
-    const response: ApiSchemaDefinitionQuerySchema = await this.request(ApiSchemaDefinitionQuery, input)
+  async apiSchemaDefinition(
+    input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string},
+    apiKey: string,
+    _organizationId: string,
+    _appId?: string,
+  ): Promise<string | null> {
+    const response: ApiSchemaDefinitionQuerySchema = await this.request(ApiSchemaDefinitionQuery, {
+      ...input,
+      apiKey,
+    })
     return response.definition
   }
 
@@ -561,7 +591,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const partnersSession = await this.session()
       throw new NoOrgError(partnersSession.accountInfo, orgId)
     }
-    const parsedOrg = {id: org.id, businessName: org.businessName, source: OrganizationSource.Partners}
+    const parsedOrg = {id: org.id, businessName: org.businessName, source: this.organizationSource}
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
   }

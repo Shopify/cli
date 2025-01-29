@@ -3,12 +3,14 @@ import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import {shouldDisplayColors} from '../../../../public/node/output.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import {handleCtrlC} from '../../ui.js'
 import {Box, Text, useStdin, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
+const hillString = '▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁'
 
 export interface Task<TContext = unknown> {
   title: string
@@ -20,11 +22,12 @@ export interface Task<TContext = unknown> {
   skip?: (ctx: TContext) => boolean
 }
 
-export interface TasksProps<TContext> {
+interface TasksProps<TContext> {
   tasks: Task<TContext>[]
   silent?: boolean
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
+  noColor?: boolean
 }
 
 enum TasksState {
@@ -65,9 +68,13 @@ function Tasks<TContext>({
   silent = isUnitTest(),
   onComplete = noop,
   abortSignal,
+  noColor,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
-  const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
+  let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
+  if (noColor ?? !shouldDisplayColors()) {
+    loadingBar = hillString.repeat(Math.ceil(twoThirds / hillString.length))
+  }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
@@ -121,7 +128,7 @@ function Tasks<TContext>({
 
   return state === TasksState.Loading && !isAborted ? (
     <Box flexDirection="column">
-      <TextAnimation text={loadingBar} />
+      <TextAnimation text={loadingBar} maxWidth={twoThirds} />
       <Text>{currentTask.title} ...</Text>
     </Box>
   ) : null

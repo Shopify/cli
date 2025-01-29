@@ -2,12 +2,13 @@ import {Banner, BannerType} from './Banner.js'
 import {Link} from './Link.js'
 import {List} from './List.js'
 import {BoldToken, InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {TabularData, TabularDataProps} from './TabularData.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 
 export interface CustomSection {
   title?: string
-  body: TokenItem
+  body: TabularDataProps | TokenItem
 }
 
 export interface AlertProps {
@@ -57,7 +58,11 @@ const Alert: FunctionComponent<AlertProps> = ({
           {customSections.map((section, index) => (
             <Box key={index} flexDirection="column">
               {section.title ? <Text bold>{section.title}</Text> : null}
-              <TokenizedText item={section.body} />
+              {typeof section.body === 'object' && 'tabularData' in section.body ? (
+                <TabularData {...section.body} />
+              ) : (
+                <TokenizedText item={section.body} />
+              )}
             </Box>
           ))}
         </Box>

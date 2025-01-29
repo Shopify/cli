@@ -1,5 +1,39 @@
 # @shopify/cli
 
+## 3.74.0
+
+## 3.73.0
+
+### Minor Changes
+
+- beab713acd: Developers can now use the `shopify theme metafields pull` command to download metafields, which can then be used for more refined code completion.
+
+### Patch Changes
+
+- cbfc36ca88: Bump cli-hydrogen package to 9.0.3
+
+## 3.72.0
+
+## 3.71.5
+
+## 3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- 05a1eda9eb: Updated link extension import to match a target format similar to action extesions
+
+## 3.71.2
+
+## 3.71.1
+
+## 3.71.0
+
+### Patch Changes
+
+- 93d65a6c38: Remove PHP template from app creation options
+
 ## 3.70.0
 
 ### Minor Changes

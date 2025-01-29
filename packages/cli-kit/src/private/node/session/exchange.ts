@@ -5,8 +5,8 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
+import {isAppManagementDisabled} from '../../../public/node/context/local.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import * as jose from 'jose'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
@@ -34,14 +34,13 @@ export async function exchangeAccessForApplicationTokens(
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
-  const appManagementEnabled = isTruthy(process.env.USE_APP_MANAGEMENT_API)
 
   const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
     requestAppToken('partners', token, scopes.partners),
     requestAppToken('storefront-renderer', token, scopes.storefront),
     requestAppToken('business-platform', token, scopes.businessPlatform),
     store ? requestAppToken('admin', token, scopes.admin, store) : {},
-    appManagementEnabled ? requestAppToken('app-management', token, scopes.appManagement) : {},
+    isAppManagementDisabled() ? {} : requestAppToken('app-management', token, scopes.appManagement),
   ])
 
   return {

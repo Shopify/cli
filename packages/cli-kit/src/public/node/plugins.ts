@@ -28,7 +28,11 @@ export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEven
   return Object.fromEntries(res.successes.map(({result, plugin}) => [plugin.name, result])) as any
 }
 
-type AppSpecificMonorailFields = PickByPrefix<MonorailEventPublic, 'app_', 'project_type' | 'api_key' | 'partner_id'> &
+type AppSpecificMonorailFields = PickByPrefix<
+  MonorailEventPublic,
+  'app_',
+  'project_type' | 'api_key' | 'partner_id' | 'business_platform_id'
+> &
   PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'>
 

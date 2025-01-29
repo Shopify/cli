@@ -9,7 +9,7 @@ import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
 import type {
   ThemeFileSystem,
@@ -34,7 +34,7 @@ const THEME_DIRECTORY_PATTERNS = [
 
 const THEME_PARTITION_REGEX = {
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
-  liquidRegex: /\.liquid$/,
+  blockLiquidRegex: /^blocks\/.+\.liquid$/,
   configRegex: /^config\/(settings_schema|settings_data)\.json$/,
   sectionJsonRegex: /^sections\/.+\.json$/,
   templateJsonRegex: /^templates\/.+\.json$/,
@@ -45,6 +45,7 @@ const THEME_PARTITION_REGEX = {
 
 export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
+  const uploadErrors = new Map<string, string[]>()
   const unsyncedFileKeys = new Set<string>()
   const filterPatterns = {
     ignoreFromFile: [] as string[],
@@ -147,12 +148,12 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
         const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
 
-        if (!result?.success) {
-          throw new Error(
-            result?.errors?.asset
-              ? `\n\n${result.errors.asset.map((error) => `- ${error}`).join('\n')}`
-              : 'Response was not successful.',
-          )
+        if (result?.success) {
+          uploadErrors.delete(fileKey)
+        } else {
+          const errors = result?.errors?.asset ?? ['Response was not successful.']
+          uploadErrors.set(fileKey, errors)
+          throw new Error(errors.join('\n'))
         }
 
         unsyncedFileKeys.delete(fileKey)
@@ -191,9 +192,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
     const syncPromise = options?.noDelete
       ? Promise.resolve()
-      : deleteThemeAsset(Number(themeId), fileKey, adminSession)
-          .then(async (success) => {
-            if (!success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
+      : deleteThemeAssets(Number(themeId), [fileKey], adminSession)
+          .then(async (results) => {
+            if (!results[0]?.success) throw new Error(`Failed to delete file "${fileKey}" from remote theme.`)
             unsyncedFileKeys.delete(fileKey)
             outputSyncResult('delete', fileKey)
             return true
@@ -223,6 +224,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     root,
     files,
     unsyncedFileKeys,
+    uploadErrors,
     ready: () => themeSetupPromise,
     delete: async (fileKey: string) => {
       files.delete(fileKey)
@@ -318,12 +320,15 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   const contextualizedJsonFiles: T[] = []
   const configFiles: T[] = []
   const staticAssetFiles: T[] = []
+  const blockLiquidFiles: T[] = []
 
   files.forEach((file) => {
     const fileKey = file.key
     if (fileKey.endsWith('.liquid')) {
       if (THEME_PARTITION_REGEX.sectionLiquidRegex.test(fileKey)) {
         sectionLiquidFiles.push(file)
+      } else if (THEME_PARTITION_REGEX.blockLiquidRegex.test(fileKey)) {
+        blockLiquidFiles.push(file)
       } else {
         otherLiquidFiles.push(file)
       }
@@ -353,6 +358,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
     otherJsonFiles,
     configFiles,
     staticAssetFiles,
+    blockLiquidFiles,
   }
 }
 

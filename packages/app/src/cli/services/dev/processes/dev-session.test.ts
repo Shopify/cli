@@ -1,4 +1,5 @@
 import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session.js'
+import {devSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -7,6 +8,7 @@ import {
   testAppAccessConfigExtension,
   testAppLinked,
   testDeveloperPlatformClient,
+  testFlowActionExtension,
   testUIExtension,
   testWebhookExtensions,
 } from '../../../models/app/app.test-data.js'
@@ -35,6 +37,8 @@ describe('setupDevSessionProcess', () => {
       organizationId: 'org123',
       appId: 'app123',
       appWatcher: {} as AppEventWatcher,
+      appPreviewURL: 'https://test.preview.url',
+      appLocalProxyURL: 'https://test.local.url',
     }
 
     // When
@@ -54,6 +58,8 @@ describe('setupDevSessionProcess', () => {
         organizationId: options.organizationId,
         appId: options.appId,
         appWatcher: options.appWatcher,
+        appPreviewURL: options.appPreviewURL,
+        appLocalProxyURL: options.appLocalProxyURL,
       },
     })
   })
@@ -77,12 +83,15 @@ describe('pushUpdatesForDevSession', () => {
     app = testAppLinked()
     appWatcher = new AppEventWatcher(app)
     abortController = new AbortController()
+    devSessionStatusManager.reset()
     options = {
       developerPlatformClient,
       appWatcher,
       storeFqdn: 'test.myshopify.com',
       appId: 'app123',
       organizationId: 'org123',
+      appPreviewURL: 'https://test.preview.url',
+      appLocalProxyURL: 'https://test.local.url',
     }
   })
 
@@ -187,5 +196,92 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
     expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'dev-session', stripAnsi: false}, expect.anything())
+    contextSpy.mockRestore()
+  })
+
+  test('update is retried if there is an error', async () => {
+    // Given
+    developerPlatformClient.devSessionUpdate = vi.fn().mockRejectedValue(new Error('Test error'))
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then
+    expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
+  })
+
+  test('updates preview URL when extension is previewable', async () => {
+    // Given
+    const extension = await testUIExtension({type: 'ui_extension'})
+    const newApp = testAppLinked({allExtensions: [extension]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatusManager.status.previewURL).toBe(options.appLocalProxyURL)
+  })
+
+  test('updates preview URL to appPreviewURL when no previewable extensions', async () => {
+    // Given
+    const extension = await testFlowActionExtension()
+    const newApp = testAppLinked({allExtensions: [extension]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatusManager.status.previewURL).toBe(options.appPreviewURL)
+  })
+
+  test('resets dev session status when calling resetDevSessionStatus', async () => {
+    // Given
+    const extension = await testUIExtension({type: 'ui_extension'})
+    const newApp = testAppLinked({allExtensions: [extension]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatusManager.status.isReady).toBe(true)
+    expect(devSessionStatusManager.status.previewURL).toBeDefined()
+
+    // When
+    devSessionStatusManager.reset()
+
+    // Then
+    expect(devSessionStatusManager.status.isReady).toBe(false)
+    expect(devSessionStatusManager.status.previewURL).toBeUndefined()
+  })
+
+  test('handles error events from the app watcher', async () => {
+    // Given
+    const testError = new Error('Watcher error')
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    appWatcher.emit('error', testError)
+    await flushPromises()
+
+    // Then
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Watcher error'))
   })
 })

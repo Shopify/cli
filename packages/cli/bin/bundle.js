@@ -72,6 +72,10 @@ esBuild({
           to: ['./dist/assets'],
         },
         {
+          from: ['../theme/assets/**/*'],
+          to: ['./dist/assets'],
+        },
+        {
           from: ['../app/templates/**/*'],
           to: ['./dist/templates'],
         },

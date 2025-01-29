@@ -1,6 +1,7 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
+import {devSessionStatusManager} from '../../processes/dev-session-status-manager.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -20,6 +21,7 @@ import {Writable} from 'stream'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../../context.js')
 vi.mock('../../fetch.js')
+vi.mock('../../processes/dev-session.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()
 
@@ -700,6 +702,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -855,6 +859,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -933,6 +939,8 @@ describe('Dev', () => {
       />,
     )
 
+    await waitForInputsToBeReady()
+
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -966,6 +974,156 @@ describe('Dev', () => {
     `)
 
     // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('updates UI when devSessionEnabled changes from false to true', async () => {
+    // Given
+    devSessionStatusManager.updateStatus({isReady: false})
+
+    const renderInstance = render(
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={{
+          ...testApp,
+          canEnablePreviewMode: false,
+          developerPlatformClient: {
+            ...testDeveloperPlatformClient(),
+            supportsDevSessions: true,
+          },
+        }}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Initial state - dev session not ready
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
+      "
+    `)
+
+    // When dev session becomes ready
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: 'https://shopify.com'})
+
+    // Wait for the polling interval to update the UI
+    await waitForContent(renderInstance, 'preview in your browser')
+
+    // Then - preview shortcut should be visible
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press g │ open GraphiQL (Admin API) in your browser
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
+      "
+    `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('updates preview URL when devSessionStatus provides a new URL', async () => {
+    // Given
+    const initialPreviewUrl = 'https://shopify.com'
+    const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: undefined})
+
+    const renderInstance = render(
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl={initialPreviewUrl}
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={{
+          ...testApp,
+          developerPlatformClient: {
+            ...testDeveloperPlatformClient(),
+            supportsDevSessions: true,
+          },
+        }}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Initial state should show the default preview URL
+    expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${initialPreviewUrl}`)
+
+    // When dev session provides a new preview URL
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: newPreviewUrl})
+
+    // Wait for the polling interval to update the UI
+    await waitForContent(renderInstance, newPreviewUrl)
+
+    // Then - status message should show the new preview URL
+    expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${newPreviewUrl}`)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('opens the updated preview URL when p is pressed after URL changes', async () => {
+    // Given
+    const initialPreviewUrl = 'https://shopify.com'
+    const newPreviewUrl = 'https://my-new-preview-url.shopify.com'
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: undefined})
+
+    const renderInstance = render(
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl={initialPreviewUrl}
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={{
+          ...testApp,
+          developerPlatformClient: {
+            ...testDeveloperPlatformClient(),
+            supportsDevSessions: true,
+          },
+        }}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Initial state should show the default preview URL
+    expect(unstyled(renderInstance.lastFrame()!)).toContain(`Preview URL: ${initialPreviewUrl}`)
+
+    // When dev session provides a new preview URL
+    devSessionStatusManager.updateStatus({isReady: true, previewURL: newPreviewUrl})
+
+    // Wait for the polling interval to update the UI
+    await waitForContent(renderInstance, newPreviewUrl)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 100, 'p')
+
+    // Then
+    expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, newPreviewUrl)
+
     renderInstance.unmount()
   })
 })

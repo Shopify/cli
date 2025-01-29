@@ -1,14 +1,14 @@
 import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension, bundleFlowTemplateExtension} from '../extensions/bundle.js'
-import {buildJSFunction} from '../function/build.js'
+import {buildJSFunction, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
@@ -91,12 +91,14 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     env.APP_URL = options.appURL
   }
 
+  const {main, assets} = extension.getBundleExtensionStdinContent()
+
   try {
     await bundleExtension({
       minify: true,
       outputPath: extension.outputPath,
       stdin: {
-        contents: extension.getBundleExtensionStdinContent(),
+        contents: main,
         resolveDir: extension.directory,
         loader: 'tsx',
       },
@@ -106,6 +108,25 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       stdout: options.stdout,
       sourceMaps: extension.isSourceMapGeneratingExtension,
     })
+    if (assets) {
+      await Promise.all(
+        assets.map(async (asset) => {
+          await bundleExtension({
+            minify: true,
+            outputPath: joinPath(dirname(extension.outputPath), asset.outputFileName),
+            stdin: {
+              contents: asset.content,
+              resolveDir: extension.directory,
+              loader: 'tsx',
+            },
+            environment: options.environment,
+            env,
+            stderr: options.stderr,
+            stdout: options.stdout,
+          })
+        }),
+      )
+    }
   } catch (extensionBundlingError) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
     throw new AbortError(
@@ -154,11 +175,32 @@ export async function buildFunctionExtension(
     } else {
       await buildOtherFunction(extension, options)
     }
+
+    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build.wasm_opt
+    if (fileExistsSync(extension.outputPath) && wasmOpt) {
+      await runWasmOpt(extension.outputPath)
+    }
+
     if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
       const base64Contents = await readFile(extension.outputPath, {encoding: 'base64'})
       await touchFile(bundlePath)
       await writeFile(bundlePath, base64Contents)
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.
+    // In this case, we need to keep the ESBuild details for the logs. (the `errors` array).
+    // If the error is already an AbortError, we can just rethrow it.
+    if (error instanceof AbortError) {
+      throw error
+    }
+
+    const errorMessage = (error as Error).message ?? 'Unknown error occurred'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newError: any = new AbortError('Failed to build function.', errorMessage)
+    // Inject ESBuild errors if present
+    newError.errors = error.errors
+    throw newError
   } finally {
     await releaseLock()
   }

@@ -1,7 +1,7 @@
 /* eslint-disable tsdoc/syntax */
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
-import {currentDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
@@ -56,9 +56,6 @@ export interface PushFlags {
   /** Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com). */
   store?: string
 
-  /** The environment to apply to the current command. */
-  environment?: string
-
   /** Theme ID or name of the remote theme. */
   theme?: string
 
@@ -74,7 +71,7 @@ export interface PushFlags {
   /** Runs the push command without deleting local files. */
   nodelete?: boolean
 
-  /** Download only the specified files (Multiple flags allowed). */
+  /** Push only the specified files (Multiple flags allowed). */
   only?: string[]
 
   /** Skip downloading the specified files (Multiple flags allowed). */
@@ -133,7 +130,7 @@ export async function push(flags: PushFlags): Promise<void> {
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
   const workingDirectory = path ? resolvePath(path) : cwd()
-  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await currentDirectoryConfirmed(force))) {
+  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
     return
   }
 

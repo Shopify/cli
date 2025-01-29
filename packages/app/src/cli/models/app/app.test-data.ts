@@ -17,6 +17,8 @@ import {
   MinimalAppIdentifiers,
   OrganizationApp,
   MinimalOrganizationApp,
+  AppApiKeyAndOrgId,
+  OrganizationSource,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -55,8 +57,6 @@ import {
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
-import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
 import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
@@ -69,6 +69,8 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
+import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -117,6 +119,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     specifications: app.specifications ?? [],
     configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
+    hiddenConfig: app.hiddenConfig ?? {},
   })
 
   if (app.updateDependencies) {
@@ -175,6 +178,7 @@ export function testOrganization(): Organization {
   return {
     id: '1',
     businessName: 'org1',
+    source: OrganizationSource.BusinessPlatform,
   }
 }
 
@@ -219,8 +223,30 @@ export async function testUIExtension(
       },
     },
     extension_points: [
-      {target: 'target1', module: 'module1'},
-      {target: 'target2', module: 'module2'},
+      {
+        target: 'target1',
+        module: 'module1',
+        build_manifest: {
+          assets: {
+            main: {
+              module: 'module1',
+              filepath: uiExtension?.handle ? `/${uiExtension.handle}.js` : '/test-ui-extension.js',
+            },
+          },
+        },
+      },
+      {
+        target: 'target2',
+        module: 'module2',
+        build_manifest: {
+          assets: {
+            main: {
+              module: 'module2',
+              filepath: uiExtension?.handle ? `/${uiExtension.handle}.js` : '/test-ui-extension.js',
+            },
+          },
+        },
+      },
     ],
   }
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
@@ -478,6 +504,8 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     type: 'product_discounts',
     build: {
       command: 'echo "hello world"',
+      watch: ['src/**/*.rs'],
+      wasm_opt: true,
     },
     api_version: '2022-07',
     configuration_ui: true,
@@ -596,6 +624,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -613,6 +642,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -625,6 +655,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -642,6 +673,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 50,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -659,6 +691,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 5,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -678,6 +711,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -695,6 +729,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'dashboard',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -707,6 +742,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     features: {
       argo: {
@@ -724,6 +760,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -736,6 +773,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -748,6 +786,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 300,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -760,6 +799,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 100,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -772,6 +812,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 50,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -784,6 +825,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -796,6 +838,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -808,6 +851,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -820,6 +864,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -832,6 +877,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -844,6 +890,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -856,6 +903,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -868,6 +916,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: false,
     },
   },
   {
@@ -880,6 +929,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
   },
   {
@@ -892,6 +942,7 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     validationSchema: {
       jsonSchema:
@@ -908,10 +959,28 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
+      uidIsClientProvided: true,
     },
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
+    },
+  },
+  {
+    name: 'Remote Extension With Schema, Without local spec, config-style management',
+    externalName: 'Extension Test 4',
+    identifier: 'remote_only_extension_schema_config_style',
+    externalIdentifier: 'remote_only_extension_schema_config_style_external',
+    gated: false,
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+      uidIsClientProvided: false,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
     },
   },
 ]
@@ -1291,10 +1360,11 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     supportsDevSessions: stubs.supportsDevSessions ?? false,
+    organizationSource: OrganizationSource.BusinessPlatform,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromId: (_app: MinimalAppIdentifiers) => Promise.resolve(testOrganizationApp()),
+    appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
@@ -1302,9 +1372,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     templateSpecifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteExtensionTemplates),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
-    createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
-      Promise.resolve(testOrganizationApp()),
-    devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
+    createApp: (_organization: Organization, _options: CreateAppOptions) => Promise.resolve(testOrganizationApp()),
+    devStoresForOrg: (_organizationId: string) => Promise.resolve({stores: [], hasMorePages: false}),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
@@ -1328,8 +1397,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
     currentAccountInfo: () => Promise.resolve(currentAccountInfoResponse),
-    targetSchemaDefinition: (_input: TargetSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
-    apiSchemaDefinition: (_input: ApiSchemaDefinitionQueryVariables) => Promise.resolve('schema'),
+    targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables & {apiKey?: string}, _orgId: string) =>
+      Promise.resolve('schema'),
+    apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string}, _orgId: string) =>
+      Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
@@ -1349,7 +1420,12 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          'requiresOrganization' | 'supportsAtomicDeployments' | 'clientName' | 'webUiName' | 'supportsDevSessions'
+          | 'requiresOrganization'
+          | 'supportsAtomicDeployments'
+          | 'clientName'
+          | 'webUiName'
+          | 'supportsDevSessions'
+          | 'organizationSource'
         >
       ] = vi.fn().mockImplementation(value)
     }

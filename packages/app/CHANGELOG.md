@@ -1,5 +1,135 @@
 # @shopify/app
 
+## 3.74.0
+
+### Minor Changes
+
+- bb3b100731: Give `app info` a facelift and correct a few display bugs
+
+### Patch Changes
+
+- 2d92db780b: Add support for "variables" query param in graphiql
+- 6df2563cb8: Remove localization file size validations from the CLI and move them into Shopify's backend.
+- 4969c1f0a8: Better error message for certain types of invalid app TOML files
+- f4c7577151: Validate the @shopify/shopify_function NPM package version is compatible with the Javy version
+- f004019bb9: Utilize Admin API to determine if a storefront is password protected
+- Updated dependencies [7e34195c30]
+- Updated dependencies [b7cda8c890]
+- Updated dependencies [1b8ad07153]
+- Updated dependencies [1a5aec270d]
+- Updated dependencies [404fa77c90]
+- Updated dependencies [bb3b100731]
+- Updated dependencies [5be14a5b08]
+- Updated dependencies [369351435b]
+- Updated dependencies [6380277a7a]
+- Updated dependencies [f004019bb9]
+  - @shopify/cli-kit@3.74.0
+  - @shopify/theme@3.74.0
+  - @shopify/plugin-cloudflare@3.74.0
+
+## 3.73.0
+
+### Minor Changes
+
+- d5b69b8c24: Bump function-runner version to v7.0.0
+- adcce6d664: Use Shopify Functions Javy plugin instead of default Javy plugin for building JS Shopify Functions
+
+### Patch Changes
+
+- a92307dce8: Bump Shopify/theme-tools packages
+- 03fb93e3c9: Remove all template lockfiles, except the one used to install dependencies
+- Updated dependencies [9d47c0f5f2]
+- Updated dependencies [a92307dce8]
+- Updated dependencies [df9d347d73]
+- Updated dependencies [beab713acd]
+- Updated dependencies [beab713acd]
+- Updated dependencies [4d722c64fc]
+- Updated dependencies [03fb93e3c9]
+  - @shopify/theme@3.73.0
+  - @shopify/cli-kit@3.73.0
+  - @shopify/plugin-cloudflare@3.73.0
+
+## 3.72.0
+
+### Minor Changes
+
+- 178c17e820: Bump minor version
+
+### Patch Changes
+
+- @shopify/cli-kit@3.72.0
+- @shopify/theme@3.72.0
+- @shopify/plugin-cloudflare@3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- 44844a7752: Update function-runner to v6.4.0
+- 78cbc67c26: Download Javy plugin ahead of time with Javy CLI
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+  - @shopify/plugin-cloudflare@3.71.5
+  - @shopify/theme@3.71.5
+
+## 3.71.4
+
+### Patch Changes
+
+- Updated dependencies [94953a671e]
+  - @shopify/cli-kit@3.71.4
+  - @shopify/plugin-cloudflare@3.71.4
+  - @shopify/theme@3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- d5b0856f78: Increase extension localization file size limit
+- 73eb727757: Fix function drafts not working during dev
+  - @shopify/cli-kit@3.71.3
+  - @shopify/theme@3.71.3
+  - @shopify/plugin-cloudflare@3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- Updated dependencies [a395820e7b]
+  - @shopify/cli-kit@3.71.2
+  - @shopify/plugin-cloudflare@3.71.2
+  - @shopify/theme@3.71.2
+
+## 3.71.1
+
+### Patch Changes
+
+- 4b93d76290: Fix error when downloading Javy plugin in parallel
+  - @shopify/cli-kit@3.71.1
+  - @shopify/theme@3.71.1
+  - @shopify/plugin-cloudflare@3.71.1
+
+## 3.71.0
+
+### Patch Changes
+
+- 1c9d74988e: Update Javy invocation to use Javy plugin
+- 08f3ddba1f: Update Javy to 3.2.0 and function-runner to 6.3.0
+- 93d65a6c38: Remove PHP template from app creation options
+- 33f713e06e: Bump @shopify/theme-check-node & @shopify/theme-language-server
+- Updated dependencies [5107f4e805]
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [ff994c34d3]
+- Updated dependencies [1e267a2e04]
+- Updated dependencies [7017b9e31c]
+- Updated dependencies [5531731c11]
+- Updated dependencies [057e2c6189]
+- Updated dependencies [9548a34471]
+- Updated dependencies [33f713e06e]
+  - @shopify/theme@3.71.0
+  - @shopify/cli-kit@3.71.0
+  - @shopify/plugin-cloudflare@3.71.0
+
 ## 3.70.0
 
 ### Minor Changes

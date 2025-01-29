@@ -222,10 +222,12 @@ export function cleanSingleStackTracePath(filePath: string): string {
 function errorMessageImpliesEnvironmentIssue(message: string): boolean {
   const environmentIssueMessages = [
     'EPERM: operation not permitted, scandir',
+    'EPERM: operation not permitted, rename',
     'EACCES: permission denied',
     'EPERM: operation not permitted, symlink',
     'This version of npm supports the following node versions',
-    'EBUSY: resource busy or locked, rmdir',
+    'EBUSY: resource busy or locked',
+    'ENOTEMPTY: directory not empty',
     'getaddrinfo ENOTFOUND',
     'Client network socket disconnected before secure TLS connection was established',
     'spawn EPERM',

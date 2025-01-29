@@ -25,6 +25,7 @@ const FunctionExtensionSchema = BaseSchema.extend({
       .optional(),
     path: zod.string().optional(),
     watch: zod.union([zod.string(), zod.string().array()]).optional(),
+    wasm_opt: zod.boolean().optional().default(true),
   }),
   configuration_ui: zod.boolean().optional().default(true),
   ui: zod

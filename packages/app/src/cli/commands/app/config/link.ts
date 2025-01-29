@@ -2,7 +2,6 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
-import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigLink extends AppCommand {
@@ -18,11 +17,6 @@ export default class ConfigLink extends AppCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-    }),
   }
 
   public async run(): Promise<AppCommandOutput> {

@@ -3,8 +3,10 @@ import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
+import {configurationFileNames} from '../constants.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {addToGitIgnore} from '@shopify/cli-kit/node/git'
 
 /**
  * Input options for the `storeContext` function.
@@ -34,8 +36,13 @@ export async function storeContext({
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
 
+  const devStoreUrlFromAppConfig = app.configuration.build?.dev_store_url
+  const devStoreUrlFromHiddenConfig = app.hiddenConfig.dev_store_url
+
+  const cachedStoreURL = devStoreUrlFromAppConfig ?? devStoreUrlFromHiddenConfig
+
   // If forceReselectStore is true, ignore the cached storeFqdn in the app configuration.
-  const cachedStoreInToml = forceReselectStore ? undefined : app.configuration.build?.dev_store_url
+  const cachedStoreInToml = forceReselectStore ? undefined : cachedStoreURL
 
   // An explicit storeFqdn has preference over anything else.
   const storeFqdnToUse = storeFqdn ?? cachedStoreInToml
@@ -52,6 +59,12 @@ export async function storeContext({
 
   await logMetadata(selectedStore, forceReselectStore)
   selectedStore.shopDomain = await normalizeStoreFqdn(selectedStore.shopDomain)
+
+  // Save the selected store in the hidden config file
+  if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
+    await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
+    await addToGitIgnore(app.directory, configurationFileNames.hiddenFolder)
+  }
 
   return selectedStore
 }

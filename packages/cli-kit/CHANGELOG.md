@@ -1,5 +1,57 @@
 # @shopify/cli-kit
 
+## 3.74.0
+
+### Minor Changes
+
+- bb3b100731: Add tabular data display component to UI kit
+
+### Patch Changes
+
+- 7e34195c30: Store theme asset upload errors encountered while running the theme dev command
+- 1a5aec270d: Fix `shopify theme dev` to no longer fail when development themes expire in internationalized stores
+- 369351435b: Ensure no-color mode is respected for warnings and errors
+- f004019bb9: Utilize Admin API to determine if a storefront is password protected
+
+## 3.73.0
+
+### Patch Changes
+
+- beab713acd: Introduce method to fetch metafield definitions by ownerType from Admin API
+- 4d722c64fc: Ensure git directory is clean when running `theme pull`
+- 03fb93e3c9: Remove all template lockfiles, except the one used to install dependencies
+
+## 3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- 94a7d4ce4f: Fix bug preventing empty theme files from uploading
+
+## 3.71.4
+
+### Patch Changes
+
+- 94953a671e: Fix bug preventing empty theme files from uploading
+
+## 3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- a395820e7b: Fix dev for Ruby apps by avoiding the command safety check to raise an error when not found
+
+## 3.71.1
+
+## 3.71.0
+
+### Patch Changes
+
+- 5fd19d2920: Improve display of links for terminals that don't support hyperlinks
+- 5531731c11: Skip notifications when using --json, -j or SHOPIFY_FLAG_JSON
+
 ## 3.70.0
 
 ### Minor Changes

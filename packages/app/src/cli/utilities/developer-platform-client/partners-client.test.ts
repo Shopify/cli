@@ -1,7 +1,7 @@
 import {PartnersClient} from './partners-client.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {Organization, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
   testPartnersUserSession,
   testApp,
@@ -32,11 +32,13 @@ const LOCAL_APP: AppInterface = testApp({
   name: 'my-app',
 })
 
-const ORG1: Organization = {
+type OrganizationInPartnersResponse = Omit<Organization, 'source'>
+
+const ORG1: OrganizationInPartnersResponse = {
   id: '1',
   businessName: 'org1',
 }
-const ORG2: Organization = {
+const ORG2: OrganizationInPartnersResponse = {
   id: '2',
   businessName: 'org2',
 }
@@ -88,10 +90,15 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await partnersClient.createApp(ORG1, localApp.name, {
-      scopesArray: ['write_products'],
-      isLaunchable: true,
-    })
+    const got = await partnersClient.createApp(
+      {...ORG1, source: OrganizationSource.Partners},
+      {
+        name: localApp.name,
+        scopesArray: ['write_products'],
+        isLaunchable: true,
+        directory: '',
+      },
+    )
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
@@ -113,10 +120,14 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await partnersClient.createApp(ORG1, LOCAL_APP.name, {
-      isLaunchable: false,
-      scopesArray: ['write_products'],
-    })
+    const got = await partnersClient.createApp(
+      {...ORG1, source: OrganizationSource.Partners},
+      {
+        name: LOCAL_APP.name,
+        isLaunchable: false,
+        scopesArray: ['write_products'],
+      },
+    )
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
@@ -132,7 +143,7 @@ describe('createApp', () => {
     })
 
     // When
-    const got = partnersClient.createApp(ORG2, LOCAL_APP.name)
+    const got = partnersClient.createApp({...ORG2, source: OrganizationSource.Partners}, {name: LOCAL_APP.name})
 
     // Then
     await expect(got).rejects.toThrow(`some-error`)

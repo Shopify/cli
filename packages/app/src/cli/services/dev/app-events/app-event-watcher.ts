@@ -80,9 +80,10 @@ export interface AppEvent {
   extensionEvents: ExtensionEvent[]
   path: string
   startTime: [number, number]
+  appWasReloaded?: boolean
 }
 
-type ExtensionBuildResult = {status: 'ok'; handle: string} | {status: 'error'; error: string; handle: string}
+type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; uid: string}
 
 /**
  * App event watcher will emit events when changes are detected in the file system.
@@ -150,6 +151,7 @@ export class AppEventWatcher extends EventEmitter {
           if (!appEvent || appEvent.extensionEvents.length === 0) return
 
           this.app = appEvent.app
+          if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
@@ -163,7 +165,7 @@ export class AppEventWatcher extends EventEmitter {
           this.emit('all', appEvent)
         })
         .catch((error) => {
-          this.options.stderr.write(`Error handling event: ${error.message}`)
+          this.emit('error', error)
         })
     })
     await this.fileWatcher.start()
@@ -202,6 +204,12 @@ export class AppEventWatcher extends EventEmitter {
     return this
   }
 
+  onError(listener: (error: Error) => Promise<void> | void) {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    this.addListener('error', listener)
+    return this
+  }
+
   /**
    * Deletes the build output for the given extensions.
    *
@@ -228,12 +236,12 @@ export class AppEventWatcher extends EventEmitter {
       const ext = extEvent.extension
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
-          if (this.esbuildManager.contexts[ext.handle]) {
+          if (this.esbuildManager.contexts?.[ext.uid]?.length) {
             await this.esbuildManager.rebuildContext(ext)
           } else {
             await this.buildExtension(ext)
           }
-          extEvent.buildResult = {status: 'ok', handle: ext.handle}
+          extEvent.buildResult = {status: 'ok', uid: ext.uid}
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
           // If there is an `errors` array, it's an esbuild error, format it and log it
@@ -247,7 +255,7 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             this.options.stderr.write(error.message)
           }
-          extEvent.buildResult = {status: 'error', error: error.message, handle: ext.handle}
+          extEvent.buildResult = {status: 'error', error: error.message, uid: ext.uid}
         }
       })
     })

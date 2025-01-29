@@ -5,16 +5,11 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
+import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {
-  AppInterface,
-  isCurrentAppSchema,
-  CurrentAppConfiguration,
-  AppCreationDefaultOptions,
-  AppLinkedInterface,
-} from '../models/app/app.js'
+import {AppInterface, isCurrentAppSchema, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -24,7 +19,11 @@ import {
   DevelopmentStorePreviewUpdateInput,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {
+  CreateAppOptions,
+  DeveloperPlatformClient,
+  selectDeveloperPlatformClient,
+} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, TokenItem, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -38,20 +37,39 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   }
 }
 
-export const resetHelpMessage: Token[] = [
-  'You can pass ',
+export const resetHelpMessage = [
+  'You can pass',
   {command: '--reset'},
-  ' to your command to reset your app configuration.',
+  'to your command to reset your app configuration.',
+]
+
+const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
+  {
+    list: {
+      title: 'Next steps:',
+      items: [
+        'Check that your account has permission to develop apps for this organization or contact the owner of the organization to grant you permission',
+        [
+          'Run',
+          {command: 'shopify auth logout'},
+          'to log into a different',
+          isOrg ? 'organization' : 'account',
+          'than',
+          {bold: accountIdentifier},
+        ],
+        ['Pass', {command: '--reset'}, 'to your command to create a new app'],
+      ],
+    },
+  },
 ]
 
 interface AppFromIdOptions {
   apiKey: string
-  id?: string
   organizationId?: string
   developerPlatformClient: DeveloperPlatformClient
 }
 
-export const appFromId = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
+export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
   let organizationId = options.organizationId
   let developerPlatformClient = options.developerPlatformClient
   if (!organizationId) {
@@ -62,12 +80,27 @@ export const appFromId = async (options: AppFromIdOptions): Promise<Organization
       organizationId = org.id
     }
   }
-  const app = await developerPlatformClient.appFromId({
-    id: options.id ?? 'no-id-available',
+  const app = await developerPlatformClient.appFromIdentifiers({
     apiKey: options.apiKey,
     organizationId,
   })
-  if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: options.apiKey}], resetHelpMessage)
+  if (!app) {
+    const accountInfo = await developerPlatformClient.accountInfo()
+    let identifier = 'Unknown account'
+    let isOrg = false
+
+    if (isServiceAccount(accountInfo)) {
+      identifier = accountInfo.orgName
+      isOrg = true
+    } else if (isUserAccount(accountInfo)) {
+      identifier = accountInfo.email
+    }
+
+    throw new AbortError(
+      [`No app with client ID`, {command: options.apiKey}, 'found'],
+      appNotFoundHelpMessage(identifier, isOrg),
+    )
+  }
   return app
 }
 
@@ -233,22 +266,14 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   })
 }
 
-export async function fetchOrCreateOrganizationApp(
-  options: AppCreationDefaultOptions,
-  directory?: string,
-): Promise<OrganizationApp> {
-  const {isLaunchable, scopesArray, name} = options
+export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): Promise<OrganizationApp> {
   const org = await selectOrg()
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-  const remoteApp = await selectOrCreateApp(name, apps, hasMorePages, organization, developerPlatformClient, {
-    isLaunchable,
-    scopesArray,
-    directory,
-  })
+  const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)
   remoteApp.developerPlatformClient = developerPlatformClient
 
-  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
+  await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
 
   return remoteApp
 }
@@ -347,9 +372,15 @@ export function renderCurrentlyUsedConfigInfo({
   })
 }
 
-export async function logMetadataForLoadedContext(app: {organizationId: string; apiKey: string}) {
+export async function logMetadataForLoadedContext(
+  app: {apiKey: string; organizationId: string},
+  organizationSource: OrganizationSource,
+) {
+  const orgIdKey = organizationSource === OrganizationSource.BusinessPlatform ? 'business_platform_id' : 'partner_id'
+  const organizationInfo = {[orgIdKey]: tryParseInt(app.organizationId)}
+
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(app.organizationId),
+    ...organizationInfo,
     api_key: app.apiKey,
   }))
 }

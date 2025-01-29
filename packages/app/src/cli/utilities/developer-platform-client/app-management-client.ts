@@ -4,6 +4,7 @@ import {
   OrganizationBetaFlagsQueryVariables,
   organizationBetaFlagsQuery,
 } from './app-management-client/graphql/organization_beta_flags.js'
+import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   DeveloperPlatformClient,
@@ -17,10 +18,12 @@ import {
   filterDisabledFlags,
   ClientName,
   AppModuleVersion,
+  CreateAppOptions,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
+  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -46,7 +49,11 @@ import {
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
-import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {
+  SampleWebhook,
+  SendSampleWebhookSchema,
+  SendSampleWebhookVariables,
+} from '../../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {
@@ -56,8 +63,6 @@ import {
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
-import {TargetSchemaDefinitionQueryVariables} from '../../api/graphql/functions/target_schema_definition.js'
-import {ApiSchemaDefinitionQueryVariables} from '../../api/graphql/functions/api_schema_definition.js'
 import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
@@ -71,7 +76,6 @@ import {
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
-import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
@@ -86,10 +90,10 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
-  ActiveAppRelease,
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
+import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
@@ -100,6 +104,20 @@ import {FetchSpecifications} from '../../api/graphql/app-management/generated/sp
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
 import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
+import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
+import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
+import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
+import {
+  SchemaDefinitionByTarget,
+  SchemaDefinitionByTargetQuery,
+  SchemaDefinitionByTargetQueryVariables,
+} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {
+  SchemaDefinitionByApiType,
+  SchemaDefinitionByApiTypeQuery,
+  SchemaDefinitionByApiTypeQueryVariables,
+} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -115,6 +133,9 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
+import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -133,6 +154,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
+  public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
   private _businessPlatformToken: string | undefined
 
@@ -200,7 +222,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appIdentifiers: MinimalAppIdentifiers): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers(appIdentifiers: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(appIdentifiers)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
@@ -225,7 +247,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: org.name,
-      source: OrganizationSource.BusinessPlatform,
+      source: this.organizationSource,
     }))
   }
 
@@ -244,7 +266,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return {
       id: orgId,
       businessName: org.name,
-      source: OrganizationSource.BusinessPlatform,
+      source: this.organizationSource,
     }
   }
 
@@ -299,6 +321,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         options: {
           managementExperience: 'cli',
           registrationLimit: spec.uidStrategy.appModuleLimit,
+          uidIsClientProvided: spec.uidStrategy.isClientProvided,
         },
         experience: experience(spec.identifier),
         validationSchema: spec.validationSchema,
@@ -307,24 +330,27 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
-    let response
     let templates: GatedExtensionTemplate[]
-    try {
-      response = await fetch(TEMPLATE_JSON_URL)
-      templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
-    } catch (_e) {
-      throw new AbortError(
-        [
+    const {templatesJsonPath} = environmentVariableNames
+    const overrideFile = process.env[templatesJsonPath]
+    if (overrideFile) {
+      if (!(await fileExists(overrideFile))) {
+        throw new AbortError('There is no file at the path specified for template specifications')
+      }
+      const templatesJson = await readFile(overrideFile)
+      templates = JSON.parse(templatesJson)
+    } else {
+      try {
+        const response = await fetch(TEMPLATE_JSON_URL)
+        templates = await (response.json() as Promise<GatedExtensionTemplate[]>)
+      } catch (_e) {
+        throw new AbortError([
           'Failed to fetch extension templates from',
           {link: {url: TEMPLATE_JSON_URL}},
           {char: '.'},
           'This likely means a problem with your internet connection.',
-        ],
-        [
-          {link: {url: 'https://www.githubstatus.com', label: 'Check if GitHub is experiencing downtime'}},
-          'or try again later.',
-        ],
-      )
+        ])
+      }
     }
     // Fake the sortPriority as ascending, since the templates are already sorted
     // in the static JSON file. This can be removed once PartnersClient, which
@@ -337,16 +363,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     ).map((template) => ({...template, sortPriority: counter++}))
   }
 
-  async createApp(
-    org: Organization,
-    name: string,
-    options?: {
-      isLaunchable?: boolean
-      scopesArray?: string[]
-      directory?: string
-    },
-  ): Promise<OrganizationApp> {
-    const variables = createAppVars(name, options?.isLaunchable, options?.scopesArray)
+  async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
+    // Query for latest api version
+    const apiVersions = await this.apiVersions(org.id)
+    const apiVersion =
+      apiVersions.publicApiVersions
+        .filter((version) => version !== 'unstable')
+        .sort()
+        .at(-1) ?? 'unstable'
+
+    const variables = createAppVars(options, apiVersion)
 
     const mutation = CreateApp
     const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
@@ -358,11 +384,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // Need to figure this out still
     const flags = filterDisabledFlags([])
     const createdApp = result.appCreate.app
+    const apiSecretKeys = createdApp.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
       ...createdApp,
-      title: name,
+      title: options.name,
       apiKey: createdApp.key,
-      apiSecretKeys: [],
+      apiSecretKeys,
       grantedScopes: options?.scopesArray ?? [],
       organizationId: org.id,
       newApp: true,
@@ -374,11 +401,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // we are returning OrganizationStore type here because we want to keep types consistent btwn
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
-  async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
+  async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
     const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
+      {searchTerm},
     )
     const organization = storesResult.organization
 
@@ -387,7 +415,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    return mapBusinessPlatformStoresToOrganizationStores(shopArray)
+    return {
+      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray),
+      hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
+    }
   }
 
   async appExtensionRegistrations(
@@ -711,25 +742,46 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: appPreviewMode')
   }
 
-  async sendSampleWebhook(_input: SendSampleWebhookVariables): Promise<SendSampleWebhookSchema> {
-    outputDebug('⚠️ sendSampleWebhook is not implemented')
-    return {
-      sendSampleWebhook: {
-        samplePayload: '',
-        headers: '{}',
-        success: true,
-        userErrors: [],
-      },
+  async sendSampleWebhook(input: SendSampleWebhookVariables, organizationId: string): Promise<SendSampleWebhookSchema> {
+    const query = CliTesting
+    const variables = {
+      address: input.address,
+      apiKey: input.api_key,
+      apiVersion: input.api_version,
+      deliveryMethod: input.delivery_method,
+      sharedSecret: input.shared_secret,
+      topic: input.topic,
     }
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+    let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
+    const cliTesting = result.cliTesting
+    if (cliTesting) {
+      sendSampleWebhook = {
+        samplePayload: cliTesting.samplePayload ?? '{}',
+        headers: cliTesting.headers ?? '{}',
+        success: cliTesting.success,
+        userErrors: cliTesting.errors.map((error) => ({message: error, fields: []})),
+      }
+    }
+    return {sendSampleWebhook}
   }
 
-  async apiVersions(): Promise<PublicApiVersionsSchema> {
-    outputDebug('⚠️ apiVersions is not implemented')
-    return {publicApiVersions: ['unstable']}
+  async apiVersions(organizationId: string): Promise<PublicApiVersionsSchema> {
+    const result = await webhooksRequest(organizationId, PublicApiVersions, await this.token(), {})
+    return {publicApiVersions: result.publicApiVersions.map((version) => version.handle)}
   }
 
-  async topics(_input: WebhookTopicsVariables): Promise<WebhookTopicsSchema> {
-    throw new BugError('Not implemented: topics')
+  async topics(
+    {api_version: apiVersion}: WebhookTopicsVariables,
+    organizationId: string,
+  ): Promise<WebhookTopicsSchema> {
+    const query = AvailableTopics
+    const variables = {apiVersion}
+    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+
+    return {
+      webhookTopics: result.availableTopics ?? [],
+    }
   }
 
   async migrateFlowExtension(_input: MigrateFlowExtensionVariables): Promise<MigrateFlowExtensionSchema> {
@@ -749,12 +801,53 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: currentAccountInfo')
   }
 
-  async targetSchemaDefinition(_input: TargetSchemaDefinitionQueryVariables): Promise<string | null> {
-    throw new BugError('Not implemented: targetSchemaDefinition')
+  async targetSchemaDefinition(
+    input: SchemaDefinitionByTargetQueryVariables,
+    apiKey: string,
+    organizationId: string,
+  ): Promise<string | null> {
+    try {
+      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const appIdNumber = String(numberFromGid(app.id))
+      const token = await this.token()
+      const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
+        organizationId,
+        SchemaDefinitionByTarget,
+        token,
+        appIdNumber,
+        {
+          handle: input.handle,
+          version: input.version,
+        },
+      )
+
+      return result?.target?.api?.schema?.definition ?? null
+    } catch (error) {
+      throw new AbortError(`Failed to fetch schema definition: ${error}`)
+    }
   }
 
-  async apiSchemaDefinition(_input: ApiSchemaDefinitionQueryVariables): Promise<string | null> {
-    throw new BugError('Not implemented: apiSchemaDefinition')
+  async apiSchemaDefinition(
+    input: SchemaDefinitionByApiTypeQueryVariables,
+    apiKey: string,
+    organizationId: string,
+  ): Promise<string | null> {
+    try {
+      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const appIdNumber = String(numberFromGid(app.id))
+      const token = await this.token()
+      const result = await functionsRequestDoc<SchemaDefinitionByApiTypeQuery, SchemaDefinitionByApiTypeQueryVariables>(
+        organizationId,
+        SchemaDefinitionByApiType,
+        token,
+        appIdNumber,
+        input,
+      )
+
+      return result?.api?.schema?.definition ?? null
+    } catch (error) {
+      throw new AbortError(`Failed to fetch schema definition: ${error}`)
+    }
   }
 
   async migrateToUiExtension(_input: MigrateToUiExtensionVariables): Promise<MigrateToUiExtensionSchema> {
@@ -792,8 +885,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private async activeAppVersionRawResult({id, organizationId}: MinimalAppIdentifiers): Promise<ActiveAppReleaseQuery> {
-    return appManagementRequestDoc(organizationId, ActiveAppRelease, await this.token(), {appId: id})
+  private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
+    return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
   }
 
   private async organizationBetaFlags(
@@ -820,7 +913,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]): CreateAppMutationVariables {
+function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
+  const {isLaunchable, scopesArray, name, isEmbedded} = options
   return {
     appSource: {
       appModules: [
@@ -830,7 +924,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           specificationIdentifier: AppHomeSpecIdentifier,
           config: {
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-            embedded: isLaunchable,
+            embedded: isEmbedded,
           },
         },
         {
@@ -843,7 +937,7 @@ function createAppVars(name: string, isLaunchable = true, scopesArray?: string[]
           // Change the uid to WebhooksSpecIdentifier
           uid: 'webhooks',
           specificationIdentifier: WebhooksSpecIdentifier,
-          config: {api_version: '2024-01'},
+          config: {api_version: apiVersion},
         },
         {
           // Change the uid to AppAccessSpecIdentifier

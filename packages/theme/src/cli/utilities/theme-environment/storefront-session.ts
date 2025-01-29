@@ -3,18 +3,13 @@ import {defaultHeaders} from './storefront-utils.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {type AdminSession} from '@shopify/cli-kit/node/session'
+import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 
 export class ShopifyEssentialError extends Error {}
 
-export async function isStorefrontPasswordProtected(storeURL: string): Promise<boolean> {
-  const response = await fetch(prependHttps(storeURL), {
-    method: 'GET',
-    redirect: 'manual',
-  })
-
-  if (response.status !== 302) return false
-
-  return response.headers.get('location')?.endsWith('/password') ?? false
+export async function isStorefrontPasswordProtected(session: AdminSession): Promise<boolean> {
+  return passwordProtected(session)
 }
 
 /**
@@ -45,9 +40,21 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
     )
   }
 
-  const isValidRedirect = new RegExp(`^${storeUrl}/?$`, 'i')
+  const locationHeader = response.headers.get('location') ?? ''
+  let redirectUrl: URL
 
-  return response.status === 302 && isValidRedirect.test(response.headers.get('location') ?? '')
+  try {
+    redirectUrl = new URL(locationHeader, storeUrl)
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
+  }
+
+  const storeOrigin = new URL(storeUrl).origin
+
+  return response.status === 302 && redirectUrl.origin === storeOrigin
 }
 
 export async function getStorefrontSessionCookies(

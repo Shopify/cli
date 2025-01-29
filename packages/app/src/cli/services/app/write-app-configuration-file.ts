@@ -28,29 +28,18 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
 }
 
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
-  // Remove app_id if organization_id is not present.
-  // This will become unnecessary when we remove app_id from App Management apps.
-  let configCopy = config
-  if (typeof config === 'object' && config !== null && config !== undefined) {
-    if ('app_id' in config && !('organization_id' in config)) {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const {app_id, ...rest} = config
-      configCopy = rest
-    }
-  }
-
   if (schema === null || schema === undefined) return null
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
-    return rewriteConfiguration(schema.unwrap(), configCopy)
+    return rewriteConfiguration(schema.unwrap(), config)
   if (schema instanceof zod.ZodArray) {
-    return (configCopy as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
+    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
   }
   if (schema instanceof zod.ZodEffects) {
-    return rewriteConfiguration(schema._def.schema, configCopy)
+    return rewriteConfiguration(schema._def.schema, config)
   }
   if (schema instanceof zod.ZodObject) {
     const entries = Object.entries(schema.shape)
-    const confObj = configCopy as {[key: string]: unknown}
+    const confObj = config as {[key: string]: unknown}
     let result: {[key: string]: unknown} = {}
     entries.forEach(([key, subSchema]) => {
       if (confObj !== undefined && confObj[key] !== undefined) {

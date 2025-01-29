@@ -1,7 +1,7 @@
 import versionList from './versions-list.js'
 import {renderCurrentlyUsedConfigInfo} from './context.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
-import {Organization} from '../models/organization.js'
+import {Organization, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -17,6 +17,7 @@ afterEach(() => {
 const ORG1: Organization = {
   id: 'org-id',
   businessName: 'name of org 1',
+  source: OrganizationSource.BusinessPlatform,
 }
 
 const remoteApp = testOrganizationApp({organizationId: ORG1.id, apiKey: 'api-key', title: 'app-title', id: 'app-id'})

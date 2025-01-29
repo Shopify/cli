@@ -3,6 +3,7 @@ import {fetchOrganizations} from '../../dev/fetch.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
@@ -23,15 +24,15 @@ describe('env show', () => {
       id: '123',
       flags: {},
       businessName: 'test',
+      source: OrganizationSource.BusinessPlatform,
       apps: {nodes: []},
     }
-    const organizationApp = testOrganizationApp()
 
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
 
     // When
-    const result = await showEnv(app, remoteApp)
+    const result = await showEnv(app, remoteApp, organization)
 
     // Then
     expect(file.writeFile).not.toHaveBeenCalled()

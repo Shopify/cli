@@ -56,12 +56,6 @@ export default class WebhookTrigger extends AppCommand {
       env: 'SHOPIFY_FLAG_DELIVERY_METHOD',
       description: `Method chosen to deliver the topic payload. If not passed, it's inferred from the address.`,
     }),
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
     'shared-secret': Flags.string({
       required: false,
       hidden: false,
@@ -101,7 +95,7 @@ export default class WebhookTrigger extends AppCommand {
     const appContextResult = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
-      forceRelink: false,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
@@ -115,6 +109,7 @@ export default class WebhookTrigger extends AppCommand {
       clientSecret: flags['client-secret'] || flags['shared-secret'],
       path: flags.path,
       config: flags.config,
+      organizationId: appContextResult.organization.id,
     }
 
     await webhookTriggerService(usedFlags)

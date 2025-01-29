@@ -1,5 +1,72 @@
 # @shopify/plugin-did-you-mean
 
+## 3.74.0
+
+### Patch Changes
+
+- Updated dependencies [7e34195c30]
+- Updated dependencies [1a5aec270d]
+- Updated dependencies [bb3b100731]
+- Updated dependencies [369351435b]
+- Updated dependencies [f004019bb9]
+  - @shopify/cli-kit@3.74.0
+
+## 3.73.0
+
+### Patch Changes
+
+- Updated dependencies [beab713acd]
+- Updated dependencies [4d722c64fc]
+- Updated dependencies [03fb93e3c9]
+  - @shopify/cli-kit@3.73.0
+
+## 3.72.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.72.0
+
+## 3.71.5
+
+### Patch Changes
+
+- Updated dependencies [94a7d4ce4f]
+  - @shopify/cli-kit@3.71.5
+
+## 3.71.4
+
+### Patch Changes
+
+- Updated dependencies [94953a671e]
+  - @shopify/cli-kit@3.71.4
+
+## 3.71.3
+
+### Patch Changes
+
+- @shopify/cli-kit@3.71.3
+
+## 3.71.2
+
+### Patch Changes
+
+- Updated dependencies [a395820e7b]
+  - @shopify/cli-kit@3.71.2
+
+## 3.71.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.71.1
+
+## 3.71.0
+
+### Patch Changes
+
+- Updated dependencies [5fd19d2920]
+- Updated dependencies [5531731c11]
+  - @shopify/cli-kit@3.71.0
+
 ## 3.70.0
 
 ### Patch Changes

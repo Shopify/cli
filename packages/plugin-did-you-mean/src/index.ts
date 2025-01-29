@@ -16,13 +16,14 @@ function sanitizeCmd(cmd: string): string {
 function relativeScore(commandBigrams: string[], userCommandBigrams: string[]): number {
   const map: {[key: string]: number} = {}
   commandBigrams.forEach((elem) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     map[elem] = map[elem] ? map[elem]! + 1 : 1
   })
   const result: string[] = []
   for (const key of userCommandBigrams) {
     if (key in map && map[key]! > 0) {
       result.push(key)
-      map[key]--
+      map[key] = map[key]! - 1
     }
   }
   return result.length

@@ -35,6 +35,22 @@ export async function staticService() {
   })
 
   renderInfo({
+    headline: 'About your app',
+    customSections: [
+      {
+        body: {
+          tabularData: [
+            ['Configuration file', {filePath: 'shopify.app.scalable-transaction-app.toml'}],
+            ['App name', {userInput: 'scalable-transaction-app'}],
+            ['Access scopes', 'read_products,write_products'],
+          ],
+          firstColumnSubdued: true,
+        },
+      },
+    ],
+  })
+
+  renderInfo({
     headline: [{userInput: 'my-app'}, 'initialized and ready to build.'],
     nextSteps: [
       [

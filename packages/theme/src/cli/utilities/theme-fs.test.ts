@@ -11,10 +11,10 @@ import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.j
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
-import {deleteThemeAsset, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
+import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import EventEmitter from 'events'
-import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
@@ -59,6 +59,7 @@ describe('theme-fs', () => {
           fsEntry({checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'}),
         ]),
         unsyncedFileKeys: new Set(),
+        uploadErrors: new Map(),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
@@ -82,6 +83,7 @@ describe('theme-fs', () => {
         root,
         files: new Map(),
         unsyncedFileKeys: new Set(),
+        uploadErrors: new Map(),
         ready: expect.any(Function),
         delete: expect.any(Function),
         write: expect.any(Function),
@@ -398,10 +400,19 @@ describe('theme-fs', () => {
         {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
         {key: 'templates/404.context.uk.json', checksum: '11'},
+        {key: 'blocks/block.liquid', checksum: '12'},
       ]
       // When
-      const {sectionLiquidFiles, otherLiquidFiles, templateJsonFiles, otherJsonFiles, configFiles, staticAssetFiles} =
-        partitionThemeFiles(files)
+      const {
+        sectionLiquidFiles,
+        otherLiquidFiles,
+        templateJsonFiles,
+        otherJsonFiles,
+        configFiles,
+        staticAssetFiles,
+        contextualizedJsonFiles,
+        blockLiquidFiles,
+      } = partitionThemeFiles(files)
 
       // Then
       expect(sectionLiquidFiles).toEqual([{key: 'sections/announcement-bar.liquid', checksum: '10'}])
@@ -421,6 +432,8 @@ describe('theme-fs', () => {
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
       ])
+      expect(contextualizedJsonFiles).toEqual([{key: 'templates/404.context.uk.json', checksum: '11'}])
+      expect(blockLiquidFiles).toEqual([{key: 'blocks/block.liquid', checksum: '12'}])
     })
 
     test('should handle empty file array', () => {
@@ -508,7 +521,9 @@ describe('theme-fs', () => {
           stats: {size: 100, mtime: 100},
         },
       ])
-      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Delete},
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -529,7 +544,7 @@ describe('theme-fs', () => {
       await deleteOperationPromise
 
       // Then
-      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
     })
 
     test('does not delete file from remote when options.noDelete is true', async () => {
@@ -543,7 +558,9 @@ describe('theme-fs', () => {
           stats: {size: 100, mtime: 100},
         },
       ])
-      vi.mocked(deleteThemeAsset).mockResolvedValue(true)
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Delete},
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root, {noDelete: true})
@@ -564,7 +581,7 @@ describe('theme-fs', () => {
       await deleteOperationPromise
 
       // Then
-      expect(deleteThemeAsset).not.toHaveBeenCalled()
+      expect(deleteThemeAssets).not.toHaveBeenCalled()
     })
 
     test('renders a warning to debug if the file deletion fails', async () => {
@@ -577,7 +594,9 @@ describe('theme-fs', () => {
           stats: {size: 100, mtime: 100},
         },
       ])
-      vi.mocked(deleteThemeAsset).mockResolvedValue(false)
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: false, operation: Operation.Delete},
+      ])
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -598,7 +617,7 @@ describe('theme-fs', () => {
       await deleteOperationPromise
 
       // Then
-      expect(deleteThemeAsset).toHaveBeenCalledWith(Number(themeId), 'assets/base.css', adminSession)
+      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Failed to delete file "assets/base.css" from remote theme.',
         body: expect.any(String),

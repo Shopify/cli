@@ -1,9 +1,10 @@
-import {appFromId} from './context.js'
+import {appFromIdentifiers} from './context.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
 import {fetchOrgFromId} from './dev/fetch.js'
-import {Organization, OrganizationApp} from '../models/organization.js'
+import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
+import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
@@ -74,8 +75,7 @@ export async function linkedAppContext({
   if (!remoteApp) {
     const apiKey = configState.basicConfiguration.client_id
     const organizationId = configState.basicConfiguration.organization_id
-    const id = configState.basicConfiguration.app_id
-    remoteApp = await appFromId({apiKey, developerPlatformClient, organizationId, id})
+    remoteApp = await appFromIdentifiers({apiKey, developerPlatformClient, organizationId})
   }
   developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
 
@@ -98,14 +98,29 @@ export async function linkedAppContext({
     setCachedAppInfo({appId: remoteApp.apiKey, title: remoteApp.title, directory, orgId: remoteApp.organizationId})
   }
 
-  await logMetadata(remoteApp, forceRelink)
+  await logMetadata(remoteApp, organization, forceRelink)
+
+  // Add UIDs to extension TOML files if using app-management.
+  // If in unsafe report mode, it is possible the UIDs are not loaded in memory
+  // even if they are present in the file, so we can't be sure whether or not
+  // it's necessary.
+  if (!unsafeReportMode) {
+    await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
+  }
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
-async function logMetadata(app: {organizationId: string; apiKey: string}, resetUsed: boolean) {
+async function logMetadata(app: {apiKey: string}, organization: Organization, resetUsed: boolean) {
+  let organizationInfo: {partner_id?: number; business_platform_id?: number}
+  if (organization.source === OrganizationSource.BusinessPlatform) {
+    organizationInfo = {business_platform_id: tryParseInt(organization.id)}
+  } else {
+    organizationInfo = {partner_id: tryParseInt(organization.id)}
+  }
+
   await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(app.organizationId),
+    ...organizationInfo,
     api_key: app.apiKey,
     cmd_app_reset_used: resetUsed,
   }))

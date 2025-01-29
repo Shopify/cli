@@ -38,6 +38,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
 
 import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
@@ -329,7 +330,6 @@ wrong = "property"
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
     vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
-    vi.mocked(localCLIVersion).mockResolvedValue('3.65.0')
     const mockOutput = mockAndCaptureOutput()
     await writeConfig(appConfiguration, {
       workspaces: ['packages/*'],
@@ -347,7 +347,7 @@ wrong = "property"
       │                                                                              │
       │  Two Shopify CLI installations found – using local dependency                │
       │                                                                              │
-      │  A global installation (v3.68.0) and a local dependency (v3.65.0) were       │
+      │  A global installation (v3.68.0) and a local dependency (v${CLI_KIT_VERSION}) were       │
       │  detected.                                                                   │
       │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
       │  your package.json, unless you want to use different versions across         │
@@ -3204,6 +3204,8 @@ describe('loadConfigForAppCreation', () => {
         isLaunchable: false,
         scopesArray: ['read_orders', 'write_products'],
         name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
       })
     })
   })
@@ -3236,6 +3238,8 @@ dev = "echo 'Hello, world!'"
         isLaunchable: true,
         scopesArray: ['write_products'],
         name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: true,
       })
     })
   })
@@ -3271,6 +3275,8 @@ dev = "echo 'Hello, world!'"
         isLaunchable: true,
         scopesArray: ['write_products'],
         name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: true,
       })
     })
   })
@@ -3295,6 +3301,8 @@ dev = "echo 'Hello, world!'"
         isLaunchable: false,
         scopesArray: ['read_orders', 'write_products'],
         name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
       })
     })
   })
@@ -3317,6 +3325,8 @@ dev = "echo 'Hello, world!'"
         isLaunchable: false,
         scopesArray: [],
         name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
       })
     })
   })
