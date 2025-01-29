@@ -68,6 +68,9 @@ export interface PushFlags {
   /** Create a new unpublished theme and push to it. */
   unpublished?: boolean
 
+  /** Controls whether a push to an unpublished theme should update a theme with the same name if it exists. */
+  upsert?: boolean
+
   /** Runs the push command without deleting local files. */
   nodelete?: boolean
 
@@ -299,12 +302,12 @@ function handleOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
 }
 
 export async function createOrSelectTheme(adminSession: AdminSession, flags: PushFlags): Promise<Theme | undefined> {
-  const {live, development, unpublished, theme} = flags
+  const {live, development, unpublished, theme, upsert} = flags
 
   if (development) {
     const themeManager = new DevelopmentThemeManager(adminSession)
     return themeManager.findOrCreate()
-  } else if (unpublished) {
+  } else if (unpublished && !upsert) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
     return createTheme(
       {
@@ -313,6 +316,24 @@ export async function createOrSelectTheme(adminSession: AdminSession, flags: Pus
       },
       adminSession,
     )
+  } else if (unpublished && upsert) {
+    const themeName = theme ?? (await promptThemeName('Name of the theme'))
+    // go see if the theme exists already.
+    // return it if if it does
+    // otherwise make a new one
+
+    return createTheme(
+      {
+        name: themeName,
+        role: UNPUBLISHED_THEME_ROLE,
+      },
+      adminSession,
+    )
+
+    // shopify theme push --unpublished
+    // shopify theme push --theme <name> --unpublished
+    // shopify theme push --unpublished --upsert
+    // shopify theme push --theme <name> --unpublished --upsert
   } else {
     const selectedTheme = await findOrSelectTheme(adminSession, {
       create: true,

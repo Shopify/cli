@@ -6281,11 +6281,19 @@
           "name": "theme",
           "type": "option"
         },
-        "unique-name": {
+        "unpublished": {
           "allowNo": false,
-          "description": "Make the push to an unpublished theme",
-          "env": "SHOPIFY_FLAG_UNIQUENAME",
-          "name": "unique-name",
+          "char": "u",
+          "description": "Create a new unpublished theme and push to it.",
+          "env": "SHOPIFY_FLAG_UNPUBLISHED",
+          "name": "unpublished",
+          "type": "boolean"
+        },
+        "upsert": {
+          "allowNo": false,
+          "description": "Make pushes to unpublished theme do an update if a theme with the name already exists.",
+          "env": "SHOPIFY_FLAG_UPSERT",
+          "name": "upsert",
           "relationships": [
             {
               "flags": [
@@ -6294,14 +6302,6 @@
               "type": "all"
             }
           ],
-          "type": "boolean"
-        },
-        "unpublished": {
-          "allowNo": false,
-          "char": "u",
-          "description": "Create a new unpublished theme and push to it.",
-          "env": "SHOPIFY_FLAG_UNPUBLISHED",
-          "name": "unpublished",
           "type": "boolean"
         },
         "verbose": {

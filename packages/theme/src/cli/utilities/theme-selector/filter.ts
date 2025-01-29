@@ -15,7 +15,7 @@ function filterByRole(store: string, themes: Theme[], filter: Filter) {
 
   const error = `No themes on the store ${store} match the role "${role}"`
 
-  return filterArray(themes, (theme) => {
+  return filterArrayOrThrow(themes, (theme) => {
     return theme.role === role
   }).orThrow(error)
 }
@@ -26,7 +26,7 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
   return identifiers.flatMap((identifier) => {
     const error = `No themes on the store ${store} match the ID or name "${identifier}"`
 
-    return filterArray(themes, (theme) => {
+    return filterArrayOrThrow(themes, (theme) => {
       if (`${theme.id}` === identifier) {
         return true
       }
@@ -40,11 +40,15 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
   })
 }
 
-function filterArray(
+function filterArray(themes: Theme[], predicate: (theme: Theme) => boolean): Theme[] {
+  return themes.filter(predicate)
+}
+
+function filterArrayOrThrow(
   themes: Theme[],
   predicate: (theme: Theme) => boolean,
 ): {orThrow: (error: string) => Theme[] | never} {
-  const filteredThemes = themes.filter(predicate)
+  const filteredThemes = filterArray(themes, predicate)
 
   if (filteredThemes.length > 0) {
     return {orThrow: (_errorMessage: string) => filteredThemes}
