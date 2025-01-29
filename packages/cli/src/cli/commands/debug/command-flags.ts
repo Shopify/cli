@@ -52,7 +52,7 @@ export default class CommandFlags extends Command {
       const columns = ['pluginName', 'command', 'flagName', 'flagChar', 'flagEnv'] as const
       const header = `${columns.join(',')}\n`
       const rows = data.map((obj) => columns.map((key) => obj[key]).join(',')).join('\n')
-      const csvString = header + rows
+      const csvString = `${header}${rows}\n`
       outputResult(csvString)
     } else {
       renderTable({
