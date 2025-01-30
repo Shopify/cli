@@ -1,6 +1,6 @@
 import {Dev, DevProps} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
-import {devSessionStatusManager} from './processes/dev-session-status-manager.js'
+import {DevSessionStatusManager} from './processes/dev-session-status-manager.js'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -16,7 +16,8 @@ export async function renderDev({
   graphiqlPort,
   developerPreview,
   shopFqdn,
-}: DevProps) {
+  devSessionStatusManager,
+}: DevProps & {devSessionStatusManager: DevSessionStatusManager}) {
   if (!terminalSupportsPrompting()) {
     await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   } else if (app.developerPlatformClient.supportsDevSessions) {
