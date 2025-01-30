@@ -42,8 +42,8 @@
     "@changesets/cli": "2.27.12",
     "@graphql-codegen/cli": "5.0.2",
     "@graphql-codegen/near-operation-file-preset": "3.0.0",
-    "@nx/eslint-plugin": "19.3.0",
-    "@nx/workspace": "19.3.0",
+    "@nx/eslint-plugin": "19.8.14",
+    "@nx/workspace": "19.8.14",
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "20.1.1",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
@@ -55,7 +55,7 @@
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
-    "esbuild": "0.24.0",
+    "esbuild": "0.24.2",
     "eslint": "^8.48.0",
     "execa": "^7.2.0",
     "fast-glob": "3.3.3",
@@ -68,7 +68,7 @@
     "knip": "^5.10.0",
     "liquidjs": "10.20.1",
     "node-fetch": "^3.3.2",
-    "nx": "19.3.0",
+    "nx": "19.8.14",
     "oclif": "4.6.1",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
@@ -77,7 +77,7 @@
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "vitest": "^1.6.0"
   },
   "workspaces": {
@@ -102,7 +102,8 @@
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
-    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
+    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare",
+    "nanoid": "3.3.8"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",
