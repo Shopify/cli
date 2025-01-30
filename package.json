@@ -55,7 +55,7 @@
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
-    "esbuild": "0.24.0",
+    "esbuild": "0.24.2",
     "eslint": "^8.48.0",
     "execa": "^7.2.0",
     "fast-glob": "3.3.3",
@@ -69,7 +69,7 @@
     "liquidjs": "10.20.1",
     "node-fetch": "^3.3.2",
     "nx": "19.8.14",
-    "oclif": "4.6.1",
+    "oclif": "4.17.20",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^1.8.0",
@@ -77,7 +77,7 @@
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
-    "typescript": "5.7.2",
+    "typescript": "5.7.3",
     "vitest": "^3.0.4"
   },
   "workspaces": {
@@ -98,7 +98,7 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "6.0.11",
-    "@oclif/core": "3.26.5",
+    "@oclif/core": "3.27.0",
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
