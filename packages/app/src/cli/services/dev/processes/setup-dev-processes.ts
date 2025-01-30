@@ -8,6 +8,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
+import {devSessionStatusManager} from './dev-session-status-manager.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
@@ -93,7 +94,13 @@ export async function setupDevProcesses({
   // Decide on the appropriate preview URL for a session with these processes
   const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
   const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
-  const previewUrl = anyPreviewableExtensions ? devConsoleURL : appPreviewUrl
+  const previewURL = anyPreviewableExtensions ? devConsoleURL : appPreviewUrl
+
+  const graphiqlURL = shouldRenderGraphiQL
+    ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
+    : undefined
+
+  devSessionStatusManager.updateStatus({isReady: false, previewURL, graphiqlURL})
 
   const processes = [
     ...(await setupWebProcesses({
@@ -189,10 +196,8 @@ export async function setupDevProcesses({
 
   return {
     processes: processesWithProxy,
-    previewUrl,
-    graphiqlUrl: shouldRenderGraphiQL
-      ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
-      : undefined,
+    previewUrl: previewURL,
+    graphiqlUrl: graphiqlURL,
   }
 }
 
