@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
@@ -80,8 +82,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
  *
  */
 export function canProxyRequest(event: H3Event) {
-  // eslint-disable-next-line no-console
-  console.log('checkout: ', event.path.match(CHECKOUT_PATTERN))
+  // console.log('checkout: ', event.path.match(CHECKOUT_PATTERN))
   if (event.method !== 'GET') return true
   if (event.path.match(CART_PATTERN)) return true
   if (event.path.match(CHECKOUT_PATTERN)) return true
@@ -215,6 +216,9 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
     setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
     const latestShopifyEssential = setCookieHeader.join(',').match(SESSION_COOKIE_REGEXP)?.[1]
     if (latestShopifyEssential) {
+      console.log(
+        `!! setting the new shopify essential cookie: ${latestShopifyEssential}, it was ${ctx.session.sessionCookies[SESSION_COOKIE_NAME]}`,
+      )
       ctx.session.sessionCookies[SESSION_COOKIE_NAME] = latestShopifyEssential
     }
   }
@@ -259,23 +263,75 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
+  const fetchOpts = event.path.match(CHECKOUT_PATTERN)
+    ? {
+        redirect: 'manual',
+      }
+    : {
+        redirect: 'manual',
+      }
+
+  console.log('sending the proxy................ ', event.method, url.toString())
+  const headers3 = {
+    'Accept-Encoding': 'none',
+    'ACCEPT-LANGUAGE': headers['accept-language'] || headers['ACCEPT-LANGUAGE'],
+    ACCEPT: headers.accept || headers.ACCEPT,
+    'CACHE-CONTROL': 'max-age=0',
+    CONNECTION: 'keep-alive',
+    Cookie: buildCookies(ctx.session, {headers}),
+    DNT: '1',
+    Host: 'se-gopro-en-c7m9.myshopify.com',
+    REFERER: 'http://127.0.0.1:9292/',
+    'SEC-CH-UA-MOBILE': '?0',
+    'SEC-CH-UA-PLATFORM': '"macOS"',
+    'SEC-CH-UA': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    'SEC-FETCH-DEST': 'document',
+    'SEC-FETCH-MODE': 'navigate',
+    'SEC-FETCH-SITE': 'same-origin',
+    'SEC-FETCH-USER': '?1',
+    'UPGRADE-INSECURE-REQUESTS': '1',
+    'User-Agent': 'Shopify CLI',
+    VERSION: 'HTTP/1.1',
+    'X-Forwarded-For': '127.0.0.1',
+  }
+  console.log('---------------------------------')
+  console.log('Request Headers:')
+  Object.entries(headers3).forEach(([name, value]) => {
+    console.log(`${name}: ${value}`)
+  })
+  console.log('---------------------------------')
+
+  // For cart URLs, ensure we pass the shopify_essential cookie
+  if (url.hostname === 'se-gopro-en-c7m9.myshopify.com' && url.pathname === '/cart') {
+    const shopifyEssential = ctx.session.sessionCookies[SESSION_COOKIE_NAME]
+    if (shopifyEssential) {
+      console.log(`Adding shopify_essential cookie for cart: ${shopifyEssential}`)
+      headers3.Cookie = headers3.Cookie
+        ? `${headers3.Cookie}; ${SESSION_COOKIE_NAME}=${shopifyEssential}`
+        : `${SESSION_COOKIE_NAME}=${shopifyEssential}`
+    }
+  }
+
   return sendProxy(event, url.toString(), {
-    headers: {
-      ...headers,
-      // Required header for CDN requests
-      referer: url.origin,
-      // Update the cookie with the latest session
-      cookie: buildCookies(ctx.session, {headers}),
-    },
+    headers: headers3,
     fetchOptions: {
       ignoreResponseError: false,
       method: event.method,
       body,
       duplex: body ? 'half' : undefined,
       // Important to return 3xx responses to the client
-      redirect: 'manual',
-    },
+      ...fetchOpts,
+    } as any,
     async onResponse(event, response) {
+      console.log('we got a response!')
+
+      console.log('---------------------------------')
+      console.log('Response Headers:')
+      response.headers.forEach((value, name) => {
+        console.log(`${name}: ${value}`)
+      })
+      console.log('---------------------------------')
+
       logRequestLine(event, response)
 
       patchProxiedResponseHeaders(ctx, event, response)
@@ -288,6 +344,8 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       }
     },
   }).catch(async (error: H3Error) => {
+    console.log('we got an error!')
+
     const pathname = event.path.split('?')[0]!
     if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
       const cause = error.cause as undefined | Error
