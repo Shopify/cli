@@ -1,9 +1,8 @@
 import {list} from './list.js'
-import {columns} from './list.columns.js'
 import {getDevelopmentTheme} from './local-storage.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {describe, expect, vi, test} from 'vitest'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -19,7 +18,7 @@ const session = {
 }
 
 describe('list', () => {
-  test('should call the table render function, with correctly formatted data', async () => {
+  test('should call the renderInfo function, with correctly formatted data', async () => {
     const developmentThemeId = 5
     const hostThemeId = 6
     vi.mocked(fetchStoreThemes).mockResolvedValue([
@@ -34,19 +33,27 @@ describe('list', () => {
 
     await list({json: false}, session)
 
-    expect(renderTable).toBeCalledWith({
-      rows: [
-        {id: '#1', name: 'Theme 1', role: '[live]'},
-        {id: '#2', name: 'Theme 2', role: ''},
-        {id: '#3', name: 'Theme 3', role: '[development]'},
-        {id: '#5', name: 'Theme 5', role: '[development] [yours]'},
-        {id: '#6', name: 'Theme 6', role: '[development] [yours]'},
+    expect(renderInfo).toHaveBeenCalledWith({
+      customSections: [
+        {
+          title: '',
+          body: {
+            tabularData: [
+              ['name', 'role', 'id'],
+              ['───────────────────────────────', '──────────────────────', '──────────────'],
+              ['Theme 1', '[live]', '#1'],
+              ['Theme 2', '', '#2'],
+              ['Theme 3', '[development]', '#3'],
+              ['Theme 5', '[development] [yours]', '#5'],
+              ['Theme 6', '[development] [yours]', '#6'],
+            ],
+          },
+        },
       ],
-      columns,
     })
   })
 
-  test('should call the table render function, with correctly formatted and filtered data', async () => {
+  test('should call the renderInfo function, with correctly formatted and filtered data', async () => {
     vi.mocked(fetchStoreThemes).mockResolvedValue([
       {id: 1, name: 'Theme 1', role: 'unpublished'},
       {id: 2, name: 'Theme 2', role: 'demo'},
@@ -56,9 +63,19 @@ describe('list', () => {
 
     await list({role: 'live', name: '*eMe 3*', json: false}, session)
 
-    expect(renderTable).toBeCalledWith({
-      rows: [{id: '#3', name: 'Theme 3', role: '[live]'}],
-      columns,
+    expect(renderInfo).toHaveBeenCalledWith({
+      customSections: [
+        {
+          title: '',
+          body: {
+            tabularData: [
+              ['name', 'role', 'id'],
+              ['───────────────────────────────', '──────────────────────', '──────────────'],
+              ['Theme 3', '[live]', '#3'],
+            ],
+          },
+        },
+      ],
     })
   })
 

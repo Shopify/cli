@@ -1,11 +1,10 @@
-import {columns} from './list.columns.js'
 import {getDevelopmentTheme} from './local-storage.js'
 import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 interface Options {
   role?: Role
@@ -13,6 +12,16 @@ interface Options {
   id?: number
   json: boolean
   environment?: string
+}
+
+function tabularSection(
+  title: string,
+  data: InlineToken[][],
+): {title: string; body: {tabularData: InlineToken[][]; firstColumnSubdued?: boolean}} {
+  return {
+    title,
+    body: {tabularData: data},
+  }
 }
 
 export async function list(options: Options, adminSession: AdminSession) {
@@ -32,10 +41,6 @@ export async function list(options: Options, adminSession: AdminSession) {
     storeThemes = filterThemes(store, storeThemes, filter)
   }
 
-  if (options.environment) {
-    outputInfo(outputContent`${outputToken.italic(`Store: ${store} Environment: ${options.environment}`)}\n`)
-  }
-
   if (options.json) {
     return outputInfo(JSON.stringify(storeThemes, null, 2))
   }
@@ -48,13 +53,26 @@ export async function list(options: Options, adminSession: AdminSession) {
         formattedRole += ' [yours]'
       }
     }
-    return {
-      id: `#${id}`,
-      name,
-      role: formattedRole,
-    }
+    return [name, formattedRole, `#${id}`]
   })
 
-  renderTable({rows: themes, columns})
-  outputInfo('\n')
+  const tableData = [
+    ['name', 'role', 'id'],
+    ['───────────────────────────────', '──────────────────────', '──────────────'],
+    ...themes,
+  ]
+
+  renderInfo({
+    customSections: [
+      ...(options.environment
+        ? [
+            {
+              title: `${store} theme library`,
+              body: [{subdued: `Environment name: ${options.environment}`}],
+            },
+          ]
+        : []),
+      tabularSection('', tableData),
+    ],
+  })
 }

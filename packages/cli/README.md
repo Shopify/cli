@@ -2188,24 +2188,6 @@ USAGE
   $ shopify theme push --unpublished --json
 
 FLAGS
-  -a, --allow-live           Allow push to a live theme.
-  -d, --development          Push theme files from your remote development theme.
-  -e, --environment=<value>  The environment to apply to the current command.
-  -j, --json                 Output the result as JSON.
-  -l, --live                 Push theme files from your remote live theme.
-  -n, --nodelete             Prevent deleting remote files that don't exist locally.
-  -o, --only=<value>...      Push only the specified files (Multiple flags allowed).
-  -p, --publish              Publish as the live theme after uploading.
-  -s, --store=<value>        Store URL. It can be the store prefix (example) or the full myshopify.com URL
-                             (example.myshopify.com, https://example.myshopify.com).
-  -t, --theme=<value>        Theme ID or name of the remote theme.
-  -u, --unpublished          Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...    Skip uploading the specified files (Multiple flags allowed).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --path=<value>         The path to your theme directory.
-      --strict               Require theme check to pass without errors before pushing. Warnings are allowed.
-      --verbose              Increase the verbosity of the output.
   -a, --allow-live              Allow push to a live theme.
   -d, --development             Push theme files from your remote development theme.
   -e, --environment=<value>...  The environment to apply to the current command.
@@ -2218,7 +2200,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
   -u, --unpublished             Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path to your theme directory.
