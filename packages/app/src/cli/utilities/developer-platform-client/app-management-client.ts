@@ -118,6 +118,7 @@ import {
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
+import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -424,7 +425,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     appIdentifiers: MinimalAppIdentifiers,
     activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
+    const app = activeAppVersion ?? (await this.activeAppVersion(appIdentifiers))
 
     const configurationRegistrations: ExtensionRegistration[] = []
     const extensionRegistrations: ExtensionRegistration[] = []
@@ -481,32 +482,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appVersionByTag(
-    {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
-    tag: string,
+    {id: appId, organizationId}: MinimalOrganizationApp,
+    versionTag: string,
   ): Promise<AppVersionWithContext> {
-    const query = AppVersions
-    const variables = {appId}
+    const query = AppVersionByTag
+    const variables = {versionTag}
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
-    if (!result.app) {
-      throw new AbortError(`App not found for API key: ${apiKey}`)
-    }
-    const version = result.versions.find((version) => version.metadata.versionTag === tag)
+    const version = result.versionByTag
     if (!version) {
-      throw new AbortError(`Version not found for tag: ${tag}`)
+      throw new AbortError(`Version not found for tag: ${versionTag}`)
     }
-
-    const query2 = AppVersionById
-    const variables2 = {versionId: version.id}
-    const result2 = await appManagementRequestDoc(organizationId, query2, await this.token(), variables2)
-    const versionInfo = result2.version
 
     return {
-      id: parseInt(versionInfo.id, 10),
-      uuid: versionInfo.id,
-      versionTag: versionInfo.metadata.versionTag,
-      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
-      message: versionInfo.metadata.message ?? '',
-      appModuleVersions: versionInfo.appModules.map(appModuleVersion),
+      id: parseInt(version.id, 10),
+      uuid: version.id,
+      versionTag: version.metadata.versionTag,
+      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(version.id)].join('/'),
+      message: version.metadata.message ?? '',
+      appModuleVersions: version.appModules.map(appModuleVersion),
     }
   }
 
