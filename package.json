@@ -101,6 +101,7 @@
     "@oclif/core": "3.26.5",
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
+    "@graphql-tools/utils": "10.7.2",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
     "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
   },
