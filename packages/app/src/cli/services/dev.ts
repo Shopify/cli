@@ -373,6 +373,11 @@ async function launchDevProcesses({
     extensions: config.localApp.allExtensions,
   }
 
+  // If the dev session is aborted, delete the dev session
+  abortController.signal.addEventListener('abort', async () => {
+    await developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn: config.storeFqdn})
+  })
+
   return renderDev({
     processes: processesForTaskRunner,
     previewUrl,

@@ -25,6 +25,8 @@ vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
 
+const devSessionStatusManager = new DevSessionStatusManager()
+
 describe('setupDevSessionProcess', () => {
   test('returns a dev session process with correct configuration', async () => {
     // Given

@@ -161,16 +161,18 @@ async function handleDevSessionResult(
   processOptions: DevSessionProcessOptions,
   event?: AppEvent,
 ) {
+  const {devSessionStatusManager, stdout} = processOptions
+
   if (result.status === 'updated') {
-    await printSuccess(`✅ Updated`, processOptions.stdout)
+    await printSuccess(`✅ Updated`, stdout)
     await printActionRequiredMessages(processOptions, event)
   } else if (result.status === 'created') {
-    processOptions.devSessionStatusManager.updateStatus({isReady: true})
-    await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
+    devSessionStatusManager.updateStatus({isReady: true})
+    await printSuccess(`✅ Ready, watching for changes in your app `, stdout)
   } else if (result.status === 'aborted') {
-    outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
+    outputDebug('❌ Session update aborted (new change detected or error in Session Update)', stdout)
   } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
-    await processUserErrors(result.error, processOptions, processOptions.stdout)
+    await processUserErrors(result.error, processOptions, stdout)
   }
 
   // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the

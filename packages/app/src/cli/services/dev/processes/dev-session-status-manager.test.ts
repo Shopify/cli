@@ -1,12 +1,13 @@
 import {DevSessionStatus, DevSessionStatusManager} from './dev-session-status-manager.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 
+let devSessionStatusManager: DevSessionStatusManager
+
 describe('DevSessionStatusManager', () => {
   const devSessionStatusManager = new DevSessionStatusManager()
 
   beforeEach(() => {
-    devSessionStatusManager.removeAllListeners()
-    devSessionStatusManager.reset()
+    devSessionStatusManager = new DevSessionStatusManager()
   })
 
   test('initializes with default status', () => {
