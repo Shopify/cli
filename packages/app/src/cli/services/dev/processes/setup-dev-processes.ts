@@ -8,7 +8,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
-import {devSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
@@ -79,6 +79,7 @@ export async function setupDevProcesses({
   processes: DevProcesses
   previewUrl: string
   graphiqlUrl: string | undefined
+  devSessionStatusManager: DevSessionStatusManager
 }> {
   const apiKey = remoteApp.apiKey
   const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
@@ -100,7 +101,7 @@ export async function setupDevProcesses({
     ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
     : undefined
 
-  devSessionStatusManager.updateStatus({isReady: false, previewURL, graphiqlURL})
+  const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
 
   const processes = [
     ...(await setupWebProcesses({
@@ -150,6 +151,7 @@ export async function setupDevProcesses({
           appWatcher,
           appPreviewURL: appPreviewUrl,
           appLocalProxyURL: devConsoleURL,
+          devSessionStatusManager,
         })
       : await setupDraftableExtensionsProcess({
           localApp: reloadedApp,
@@ -198,6 +200,7 @@ export async function setupDevProcesses({
     processes: processesWithProxy,
     previewUrl: previewURL,
     graphiqlUrl: graphiqlURL,
+    devSessionStatusManager,
   }
 }
 
