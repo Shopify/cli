@@ -68,8 +68,10 @@
  theme init                     @shopify/cli 
  theme language-server          @shopify/cli 
  theme list                     @shopify/cli 
+ theme metafields pull          @shopify/cli 
  theme open                     @shopify/cli 
  theme package                  @shopify/cli 
+ theme profile                  @shopify/cli 
  theme publish                  @shopify/cli 
  theme pull                     @shopify/cli 
  theme push                     @shopify/cli 
