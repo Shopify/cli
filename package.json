@@ -40,7 +40,7 @@
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
-    "@graphql-codegen/cli": "5.0.2",
+    "@graphql-codegen/cli": "5.0.4",
     "@graphql-codegen/near-operation-file-preset": "3.0.0",
     "@nx/eslint-plugin": "19.8.14",
     "@nx/workspace": "19.8.14",
@@ -61,7 +61,7 @@
     "fast-glob": "3.3.3",
     "find-up": "^6.3.0",
     "fs-extra": "^11.1.0",
-    "graphql": "^16.8.1",
+    "graphql": "^16.10.0",
     "graphql-codegen-typescript-operation-types": "2.0.1",
     "graphql-tag": "^2.12.6",
     "json-stringify-deterministic": "1.0.12",
