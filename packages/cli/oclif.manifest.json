@@ -2360,61 +2360,46 @@
       "args": {
       },
       "customPluginName": "@oclif/plugin-commands",
-      "description": "list all the commands",
+      "description": "List all <%= config.bin %> commands.",
       "enableJsonFlag": true,
       "flags": {
         "columns": {
-          "description": "only show provided columns (comma-separated)",
+          "char": "c",
+          "delimiter": ",",
+          "description": "Only show provided columns (comma-separated).",
           "exclusive": [
-            "extended"
+            "tree"
           ],
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "columns",
-          "type": "option"
-        },
-        "csv": {
-          "allowNo": false,
-          "description": "output is csv format [alias: --output=csv]",
-          "exclusive": [
-            "no-truncate"
+          "options": [
+            "id",
+            "plugin",
+            "summary",
+            "type"
           ],
-          "name": "csv",
-          "type": "boolean"
+          "type": "option"
         },
         "deprecated": {
           "allowNo": false,
-          "description": "show deprecated commands",
+          "description": "Show deprecated commands.",
           "name": "deprecated",
           "type": "boolean"
         },
         "extended": {
           "allowNo": false,
           "char": "x",
-          "description": "show extra columns",
+          "description": "Show extra columns.",
           "exclusive": [
-            "columns"
+            "tree"
           ],
           "name": "extended",
           "type": "boolean"
         },
-        "filter": {
-          "description": "filter property by partial string matching, ex: name=foo",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "filter",
-          "type": "option"
-        },
-        "help": {
-          "allowNo": false,
-          "char": "h",
-          "description": "Show CLI help.",
-          "name": "help",
-          "type": "boolean"
-        },
         "hidden": {
           "allowNo": false,
-          "description": "show hidden commands",
+          "description": "Show hidden commands.",
           "name": "hidden",
           "type": "boolean"
         },
@@ -2425,50 +2410,35 @@
           "name": "json",
           "type": "boolean"
         },
-        "no-header": {
-          "allowNo": false,
-          "description": "hide table header from output",
-          "exclusive": [
-            "csv"
-          ],
-          "name": "no-header",
-          "type": "boolean"
-        },
         "no-truncate": {
           "allowNo": false,
-          "description": "do not truncate output to fit screen",
+          "description": "Do not truncate output.",
           "exclusive": [
-            "csv"
+            "tree"
           ],
           "name": "no-truncate",
           "type": "boolean"
         },
-        "output": {
-          "description": "output in a more machine friendly format",
-          "exclusive": [
-            "no-truncate",
-            "csv"
-          ],
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "output",
-          "options": [
-            "csv",
-            "json",
-            "yaml"
-          ],
-          "type": "option"
-        },
         "sort": {
-          "description": "property to sort by (prepend '-' for descending)",
+          "default": "id",
+          "description": "Property to sort by.",
+          "exclusive": [
+            "tree"
+          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "sort",
+          "options": [
+            "id",
+            "plugin",
+            "summary",
+            "type"
+          ],
           "type": "option"
         },
         "tree": {
           "allowNo": false,
-          "description": "show tree of commands",
+          "description": "Show tree of commands.",
           "name": "tree",
           "type": "boolean"
         }
@@ -4654,7 +4624,7 @@
         }
       },
       "customPluginName": "@oclif/plugin-plugins",
-      "description": "Links a plugin into the CLI for development.\nInstallation of a linked plugin will override a user-installed or core plugin.\n\ne.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello' command will override the user-installed or core plugin implementation. This is useful for development work.\n",
+      "description": "Installation of a linked plugin will override a user-installed or core plugin.\n\ne.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello' command will override the user-installed or core plugin implementation. This is useful for development work.\n",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> <%- config.pjson.oclif.examplePlugin || \"myplugin\" %> "
@@ -4687,7 +4657,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true
+      "strict": true,
+      "summary": "Links a plugin into the CLI for development."
     },
     "plugins:reset": {
       "aliases": [
