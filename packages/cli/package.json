@@ -1,6 +1,7 @@
 {
   "name": "@shopify/cli",
   "version": "3.74.0",
+  "packageManager": "pnpm@8.15.7",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -103,7 +104,7 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
-    "esbuild": "0.24.0"
+    "esbuild": "0.24.2"
   },
   "devDependencies": {
     "@oclif/core": "3.26.5",

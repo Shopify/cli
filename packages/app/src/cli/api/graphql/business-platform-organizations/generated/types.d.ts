@@ -20,6 +20,8 @@ export type Scalars = {
   /** The ID for a ActionAudit. */
   ActionAuditID: {input: any; output: any}
   GlobalID: {input: string; output: string}
+  /** The ID for a GovernmentIdentifier. */
+  GovernmentIdentifierID: {input: any; output: any}
   /** The ID for a Group. */
   GroupID: {input: any; output: any}
   /** An ISO 8601-encoded date */

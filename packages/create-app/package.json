@@ -1,6 +1,7 @@
 {
   "name": "@shopify/create-app",
   "version": "3.74.0",
+  "packageManager": "pnpm@8.15.7",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "keywords": [
@@ -55,7 +56,7 @@
     ]
   },
   "dependencies": {
-    "esbuild": "0.24.0"
+    "esbuild": "0.24.2"
   },
   "devDependencies": {
     "@shopify/cli-kit": "3.74.0",
