@@ -25,6 +25,7 @@ import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {injectAppConfigSchema} from './dev/inject-app-config-schema.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -73,6 +74,14 @@ export async function dev(commandOptions: DevOptions) {
   await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
+
+  await injectAppConfigSchema(
+    config.localApp.configuration.path,
+    config.developerPlatformClient,
+    config.localApp.directory,
+    config.localApp.specifications,
+  )
+
   await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
 
