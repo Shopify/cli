@@ -2,7 +2,7 @@
 
 # Contributors documentation
 
-This page contains resources for people interested in contributing to this repository or developing a [plugin](./plugins.md)](./plugins.md).
+This page contains resources for people interested in contributing to this repository or developing a [plugin](./plugins.md).
 
 ## CLI
 
