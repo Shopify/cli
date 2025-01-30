@@ -20,13 +20,12 @@ the diff below and figure out what is broken.
 `
 
 When(/I list the available commands/, async function () {
-  const commandFlags = ['commands', '--columns=id,plugin']
+  const commandFlags = ['commands', '--tree']
   this.commandResult = (await this.execCLI(commandFlags)).stdout
 })
 
 Then(/I see all commands matching the snapshot/, async function () {
   const snapshot: string = await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})
-  const normalize = (value: string) => value.replace(/\r\n/g, '\n').replace(/\s/g, '').trimEnd().split('\n').join('\n')
-
+  const normalize = (value: string) => value.replace(/\r\n/g, '\n').trimEnd()
   assert.equal(normalize(snapshot), normalize(this.commandResult), errorMessage)
 })

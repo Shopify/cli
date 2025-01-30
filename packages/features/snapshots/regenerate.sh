@@ -6,4 +6,4 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # regenerate commands snapshot file
-../../cli/bin/dev.js commands --columns=id,plugin > commands.txt
+../../cli/bin/dev.js commands --tree > commands.txt

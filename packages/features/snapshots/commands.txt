@@ -1,86 +1,98 @@
-┌────────────────────────────────┬──────────────┐
-│ Id                             │ Plugin       │
-├────────────────────────────────┼──────────────┤
-│ app build                      │ @shopify/cli │
-│ app config link                │ @shopify/cli │
-│ app config use                 │ @shopify/cli │
-│ app deploy                     │ @shopify/cli │
-│ app dev                        │ @shopify/cli │
-│ app env pull                   │ @shopify/cli │
-│ app env show                   │ @shopify/cli │
-│ app function build             │ @shopify/cli │
-│ app function replay            │ @shopify/cli │
-│ app function run               │ @shopify/cli │
-│ app function schema            │ @shopify/cli │
-│ app function typegen           │ @shopify/cli │
-│ app generate extension         │ @shopify/cli │
-│ app import-extensions          │ @shopify/cli │
-│ app info                       │ @shopify/cli │
-│ app init                       │ @shopify/cli │
-│ app logs                       │ @shopify/cli │
-│ app logs sources               │ @shopify/cli │
-│ app release                    │ @shopify/cli │
-│ app versions list              │ @shopify/cli │
-│ app webhook trigger            │ @shopify/cli │
-│ auth logout                    │ @shopify/cli │
-│ commands                       │ @shopify/cli │
-│ config autocorrect off         │ @shopify/cli │
-│ config autocorrect on          │ @shopify/cli │
-│ config autocorrect status      │ @shopify/cli │
-│ help                           │ @shopify/cli │
-│ hydrogen build                 │ @shopify/cli │
-│ hydrogen check                 │ @shopify/cli │
-│ hydrogen codegen               │ @shopify/cli │
-│ hydrogen customer-account-push │ @shopify/cli │
-│ hydrogen debug cpu             │ @shopify/cli │
-│ hydrogen deploy                │ @shopify/cli │
-│ hydrogen dev                   │ @shopify/cli │
-│ hydrogen env list              │ @shopify/cli │
-│ hydrogen env pull              │ @shopify/cli │
-│ hydrogen env push              │ @shopify/cli │
-│ hydrogen generate route        │ @shopify/cli │
-│ hydrogen generate routes       │ @shopify/cli │
-│ hydrogen init                  │ @shopify/cli │
-│ hydrogen link                  │ @shopify/cli │
-│ hydrogen list                  │ @shopify/cli │
-│ hydrogen login                 │ @shopify/cli │
-│ hydrogen logout                │ @shopify/cli │
-│ hydrogen preview               │ @shopify/cli │
-│ hydrogen setup                 │ @shopify/cli │
-│ hydrogen setup css             │ @shopify/cli │
-│ hydrogen setup markets         │ @shopify/cli │
-│ hydrogen setup vite            │ @shopify/cli │
-│ hydrogen shortcut              │ @shopify/cli │
-│ hydrogen unlink                │ @shopify/cli │
-│ hydrogen upgrade               │ @shopify/cli │
-│ plugins add                    │ @shopify/cli │
-│ plugins inspect                │ @shopify/cli │
-│ plugins install                │ @shopify/cli │
-│ plugins link                   │ @shopify/cli │
-│ plugins remove                 │ @shopify/cli │
-│ plugins reset                  │ @shopify/cli │
-│ plugins uninstall              │ @shopify/cli │
-│ plugins unlink                 │ @shopify/cli │
-│ plugins update                 │ @shopify/cli │
-│ search                         │ @shopify/cli │
-│ theme check                    │ @shopify/cli │
-│ theme console                  │ @shopify/cli │
-│ theme delete                   │ @shopify/cli │
-│ theme dev                      │ @shopify/cli │
-│ theme info                     │ @shopify/cli │
-│ theme init                     │ @shopify/cli │
-│ theme language-server          │ @shopify/cli │
-│ theme list                     │ @shopify/cli │
-│ theme metafields pull          │ @shopify/cli │
-│ theme open                     │ @shopify/cli │
-│ theme package                  │ @shopify/cli │
-│ theme profile                  │ @shopify/cli │
-│ theme publish                  │ @shopify/cli │
-│ theme pull                     │ @shopify/cli │
-│ theme push                     │ @shopify/cli │
-│ theme rename                   │ @shopify/cli │
-│ theme share                    │ @shopify/cli │
-│ upgrade                        │ @shopify/cli │
-│ version                        │ @shopify/cli │
-└────────────────────────────────┴──────────────┘
-
+├─ app
+│  ├─ build
+│  ├─ config
+│  │  ├─ link
+│  │  └─ use
+│  ├─ deploy
+│  ├─ dev
+│  ├─ env
+│  │  ├─ pull
+│  │  └─ show
+│  ├─ function
+│  │  ├─ build
+│  │  ├─ replay
+│  │  ├─ run
+│  │  ├─ schema
+│  │  └─ typegen
+│  ├─ generate
+│  │  └─ extension
+│  ├─ import-extensions
+│  ├─ info
+│  ├─ init
+│  ├─ logs
+│  │  └─ sources
+│  ├─ release
+│  ├─ versions
+│  │  └─ list
+│  └─ webhook
+│     └─ trigger
+├─ auth
+│  └─ logout
+├─ commands
+├─ config
+│  └─ autocorrect
+│     ├─ off
+│     ├─ on
+│     └─ status
+├─ help
+├─ hydrogen
+│  ├─ build
+│  ├─ check
+│  ├─ codegen
+│  ├─ customer-account-push
+│  ├─ debug
+│  │  └─ cpu
+│  ├─ deploy
+│  ├─ dev
+│  ├─ env
+│  │  ├─ list
+│  │  ├─ pull
+│  │  └─ push
+│  ├─ generate
+│  │  ├─ route
+│  │  └─ routes
+│  ├─ init
+│  ├─ link
+│  ├─ list
+│  ├─ login
+│  ├─ logout
+│  ├─ preview
+│  ├─ setup
+│  │  ├─ css
+│  │  ├─ markets
+│  │  └─ vite
+│  ├─ shortcut
+│  ├─ unlink
+│  └─ upgrade
+├─ plugins
+│  ├─ add
+│  ├─ inspect
+│  ├─ install
+│  ├─ link
+│  ├─ remove
+│  ├─ reset
+│  ├─ uninstall
+│  ├─ unlink
+│  └─ update
+├─ search
+├─ theme
+│  ├─ check
+│  ├─ console
+│  ├─ delete
+│  ├─ dev
+│  ├─ info
+│  ├─ init
+│  ├─ language-server
+│  ├─ list
+│  ├─ metafields
+│  │  └─ pull
+│  ├─ open
+│  ├─ package
+│  ├─ profile
+│  ├─ publish
+│  ├─ pull
+│  ├─ push
+│  ├─ rename
+│  └─ share
+├─ upgrade
+└─ version
