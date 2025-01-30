@@ -18,9 +18,15 @@ interface DevSesionUIProps {
   processes: OutputProcess[]
   abortController: AbortController
   devSessionStatusManager: DevSessionStatusManager
+  onAbort: () => Promise<void>
 }
 
-const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({abortController, processes, devSessionStatusManager}) => {
+const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
+  abortController,
+  processes,
+  devSessionStatusManager,
+  onAbort,
+}) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
 
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
@@ -39,6 +45,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({abortController, pro
         })
       }, 2000)
     }
+    await onAbort()
   })
 
   const errorHandledProcesses = useMemo(() => {

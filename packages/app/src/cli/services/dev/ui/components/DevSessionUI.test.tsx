@@ -26,6 +26,8 @@ const initialStatus: DevSessionStatus = {
   graphiqlURL: 'https://graphiql.shopify.com',
 }
 
+const onAbort = vi.fn()
+
 describe('DevSessionUI', () => {
   beforeEach(() => {
     devSessionStatusManager = new DevSessionStatusManager()
@@ -76,6 +78,7 @@ describe('DevSessionUI', () => {
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -111,6 +114,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -130,6 +134,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -153,6 +158,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -179,6 +185,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -220,6 +227,7 @@ describe('DevSessionUI', () => {
         processes={[backendProcess]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -265,6 +273,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -297,6 +306,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
@@ -338,6 +348,7 @@ describe('DevSessionUI', () => {
         processes={[errorProcess]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        onAbort={onAbort}
       />,
     )
 
