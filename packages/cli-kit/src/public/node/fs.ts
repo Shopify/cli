@@ -468,15 +468,7 @@ interface GenerateRandomDirectoryOptions {
 
   /** Type of word to use for random name. */
   family?: RandomNameFamily
-
-  /** Used to to track how many attempts have been made to generate the name. */
-  attempts?: number
-
-  /** Predicate for validating the generated name. */
-  isValidName?: (name: string) => boolean
 }
-
-const defaultIsValidName = () => true
 
 /**
  * It generates a random directory directory name for a sub-directory.
@@ -486,19 +478,15 @@ const defaultIsValidName = () => true
  * @returns It returns the name of the directory.
  */
 export async function generateRandomNameForSubdirectory(options: GenerateRandomDirectoryOptions): Promise<string> {
-  options.attempts = (options.attempts || 0) + 1
-  if (options.attempts > 3) return ''
-
   const generated = `${getRandomName(options.family ?? 'business')}-${options.suffix}`
-
-  const validName = (options.isValidName ?? defaultIsValidName)(generated)
-  if (!validName) return generateRandomNameForSubdirectory(options)
-
   const randomDirectoryPath = joinPath(options.directory, generated)
   const isAppDirectoryTaken = await fileExists(randomDirectoryPath)
-  if (isAppDirectoryTaken) return generateRandomNameForSubdirectory(options)
 
-  return generated
+  if (isAppDirectoryTaken) {
+    return generateRandomNameForSubdirectory(options)
+  } else {
+    return generated
+  }
 }
 
 /**

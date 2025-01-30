@@ -73,8 +73,7 @@ export default class Init extends AppCommand {
     validateFlavorValue(flags.template, flags.flavor)
 
     const inferredPackageManager = inferPackageManager(flags['package-manager'])
-    const name =
-      flags.name ?? (await generateRandomNameForSubdirectory({suffix: 'app', directory: flags.path, isValidName}))
+    const name = flags.name ?? (await getAppName(flags.path))
 
     // Force user authentication before prompting.
     let developerPlatformClient = selectDeveloperPlatformClient()
@@ -126,6 +125,15 @@ export default class Init extends AppCommand {
 
     return {app}
   }
+}
+
+async function getAppName(directory: string): Promise<string> {
+  for (let i = 0; i < 3; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const name = await generateRandomNameForSubdirectory({suffix: 'app', directory})
+    if (isValidName(name)) return name
+  }
+  return ''
 }
 
 export type SelectAppOrNewAppNameResult =
