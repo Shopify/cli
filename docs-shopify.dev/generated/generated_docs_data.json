@@ -2332,8 +2332,8 @@
   },
   {
     "name": "commands",
-    "description": "list all the commands",
-    "overviewPreviewDescription": "list all the commands",
+    "description": "List all <%= config.bin %> commands.",
+    "overviewPreviewDescription": "List all <%= config.bin %> commands.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2362,33 +2362,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--columns <value>",
-                "value": "string",
-                "description": "only show provided columns (comma-separated)",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--csv",
-                "value": "\"\"",
-                "description": "output is csv format [alias: --output=csv]",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--deprecated",
                 "value": "\"\"",
-                "description": "show deprecated commands",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--filter <value>",
-                "value": "string",
-                "description": "filter property by partial string matching, ex: name=foo",
+                "description": "Show deprecated commands.",
                 "isOptional": true
               },
               {
@@ -2396,7 +2372,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--hidden",
                 "value": "\"\"",
-                "description": "show hidden commands",
+                "description": "Show hidden commands.",
                 "isOptional": true
               },
               {
@@ -2410,25 +2386,9 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--no-header",
-                "value": "\"\"",
-                "description": "hide table header from output",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--no-truncate",
                 "value": "\"\"",
-                "description": "do not truncate output to fit screen",
-                "isOptional": true
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--output <value>",
-                "value": "string",
-                "description": "output in a more machine friendly format",
+                "description": "Do not truncate output.",
                 "isOptional": true
               },
               {
@@ -2436,7 +2396,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--sort <value>",
                 "value": "string",
-                "description": "property to sort by (prepend '-' for descending)",
+                "description": "Property to sort by.",
                 "isOptional": true
               },
               {
@@ -2444,15 +2404,15 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--tree",
                 "value": "\"\"",
-                "description": "show tree of commands",
+                "description": "Show tree of commands.",
                 "isOptional": true
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-h, --help",
-                "value": "\"\"",
-                "description": "Show CLI help.",
+                "name": "-c, --columns <value>",
+                "value": "string",
+                "description": "Only show provided columns (comma-separated).",
                 "isOptional": true
               },
               {
@@ -2460,11 +2420,11 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --extended",
                 "value": "\"\"",
-                "description": "show extra columns",
+                "description": "Show extra columns.",
                 "isOptional": true
               }
             ],
-            "value": "export interface commands {\n  /**\n   * only show provided columns (comma-separated)\n   *\n   */\n  '--columns <value>'?: string\n\n  /**\n   * output is csv format [alias: --output=csv]\n   *\n   */\n  '--csv'?: ''\n\n  /**\n   * show deprecated commands\n   *\n   */\n  '--deprecated'?: ''\n\n  /**\n   * show extra columns\n   *\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * filter property by partial string matching, ex: name=foo\n   *\n   */\n  '--filter <value>'?: string\n\n  /**\n   * Show CLI help.\n   *\n   */\n  '-h, --help'?: ''\n\n  /**\n   * show hidden commands\n   *\n   */\n  '--hidden'?: ''\n\n  /**\n   * Format output as json.\n   *\n   */\n  '--json'?: ''\n\n  /**\n   * hide table header from output\n   *\n   */\n  '--no-header'?: ''\n\n  /**\n   * do not truncate output to fit screen\n   *\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * output in a more machine friendly format\n   *\n   */\n  '--output <value>'?: string\n\n  /**\n   * property to sort by (prepend '-' for descending)\n   *\n   */\n  '--sort <value>'?: string\n\n  /**\n   * show tree of commands\n   *\n   */\n  '--tree'?: ''\n}"
+            "value": "export interface commands {\n  /**\n   * Only show provided columns (comma-separated).\n   *\n   */\n  '-c, --columns <value>'?: string\n\n  /**\n   * Show deprecated commands.\n   *\n   */\n  '--deprecated'?: ''\n\n  /**\n   * Show extra columns.\n   *\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * Show hidden commands.\n   *\n   */\n  '--hidden'?: ''\n\n  /**\n   * Format output as json.\n   *\n   */\n  '--json'?: ''\n\n  /**\n   * Do not truncate output.\n   *\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * Property to sort by.\n   *\n   */\n  '--sort <value>'?: string\n\n  /**\n   * Show tree of commands.\n   *\n   */\n  '--tree'?: ''\n}"
           }
         }
       }
