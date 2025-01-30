@@ -98,6 +98,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     flags,
     appDirectory,
     localAppOptions,
+    isNewApp: options.isNewApp,
   })
 
   if (shouldRenderSuccess) {
@@ -362,6 +363,7 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
   configFileName: AppConfigurationFileName
   appDirectory: string
   localAppOptions: LocalAppOptions
+  isNewApp?: boolean
 }): Promise<CurrentAppConfiguration> {
   const {remoteApp, developerPlatformClient, specifications, flags, configFileName, appDirectory, localAppOptions} =
     options
@@ -372,6 +374,7 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
     specifications,
     flags,
   )
+
   if (!remoteAppConfiguration) {
     const locallyProvidedScopes = localAppOptions.scopes
     remoteAppConfiguration = buildAppConfigurationFromRemoteAppProperties(remoteApp, locallyProvidedScopes)
@@ -382,8 +385,8 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
 
   if ('access_scopes' in cleanLocalConfig) {
     const accessScopes = cleanLocalConfig.access_scopes as {
-      scopes?: unknown
-      required_scopes?: unknown
+      scopes?: string
+      required_scopes?: string[]
     }
 
     // If remote has required_scopes, remove scopes from local
@@ -393,7 +396,22 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
 
     // If remote has scopes, remove required_scopes from local
     if (remoteAppConfiguration?.access_scopes?.scopes) {
+      // ZL_TODO: prompt to see if we should replace scopes with required_scopes?
       delete accessScopes.required_scopes
+    }
+
+    if (options.isNewApp && accessScopes?.scopes) {
+      accessScopes.required_scopes = accessScopes.scopes.split(',').map((scope) => scope.trim())
+      delete accessScopes.scopes
+    }
+  }
+
+  if (options.isNewApp && remoteAppConfiguration?.access_scopes?.scopes) {
+    const scopes = remoteAppConfiguration.access_scopes.scopes
+
+    if (remoteAppConfiguration.access_scopes) {
+      remoteAppConfiguration.access_scopes.required_scopes = scopes.split(',').map((scope) => scope.trim())
+      delete remoteAppConfiguration.access_scopes.scopes
     }
   }
 
@@ -553,7 +571,7 @@ function addRemoteAppAccessConfig(locallyProvidedScopes: string, remoteApp: Orga
   // if we have upstream scopes, use them
   if (remoteApp.requestedAccessScopes) {
     accessScopesContent = {
-      scopes: remoteApp.requestedAccessScopes.join(','),
+      required_scopes: remoteApp.requestedAccessScopes,
     }
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
   } else if (locallyProvidedScopes === '') {
@@ -563,7 +581,7 @@ function addRemoteAppAccessConfig(locallyProvidedScopes: string, remoteApp: Orga
     // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
   } else {
     accessScopesContent = {
-      scopes: locallyProvidedScopes,
+      required_scopes: locallyProvidedScopes.split(',').map((scope) => scope.trim()),
       use_legacy_install_flow: true,
     }
   }
