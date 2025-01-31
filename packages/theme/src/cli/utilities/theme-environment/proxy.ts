@@ -201,9 +201,11 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
   const locationHeader = response.headers.get('Location')
   if (locationHeader) {
     const url = new URL(locationHeader, 'https://shopify.dev')
-    url.searchParams.delete('_fd')
-    url.searchParams.delete('pb')
-    setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+    if (!CHECKOUT_PATTERN.test(url.pathname)) {
+      url.searchParams.delete('_fd')
+      url.searchParams.delete('pb')
+      setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+    }
   }
 
   // Cookies are set for the vanity domain, fix it for localhost:
