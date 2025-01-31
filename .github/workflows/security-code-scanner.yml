@@ -104,6 +104,6 @@ jobs:
         if: steps.upload-sarif.outcome == 'failure' || steps.upload-sarif.outcome == 'cancelled'
         run: echo "security_code_scanner.gha_sarif_upload_failed:1|c|" >> $GITHUB_WORKSPACE/metrics.txt
       - name: ":observe: Emit Metrics"
-        uses: Shopify/security-code-scanner/emit-metrics-js@main
+        uses: Shopify/security-code-scanner/emit-metrics-js@5f7400975eed0698f96a6f718438353ae643a9d0 # pin@main
         if: ${{ hashFiles(format('{0}/metrics.txt', github.workspace)) != '' }}
         id: emit-metrics

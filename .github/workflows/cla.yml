@@ -17,7 +17,7 @@ jobs:
       )
       || (github.event.pull_request && !github.event.pull_request.merged)
     steps:
-      - uses: Shopify/shopify-cla-action@c6bc827f3c22da647ed72a556b0b30b8641786eb # pin@v1
+      - uses: Shopify/shopify-cla-action@9938f4b43524d1cfa7471ce9a803edf226697284 # pin@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cla-token: ${{ secrets.CLA_TOKEN }}
