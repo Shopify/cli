@@ -127,7 +127,7 @@
     "del": "6.1.1",
     "dotenv": "16.4.7",
     "env-paths": "3.0.0",
-    "execa": "7.2.0",
+    "execa": "9.5.2",
     "fast-glob": "3.3.3",
     "figures": "5.0.0",
     "find-up": "6.3.0",
