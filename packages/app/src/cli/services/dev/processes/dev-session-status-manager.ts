@@ -14,6 +14,11 @@ export class DevSessionStatusManager extends EventEmitter {
     graphiqlURL: undefined,
   }
 
+  constructor(defaultStatus?: DevSessionStatus) {
+    super()
+    if (defaultStatus) this.currentStatus = defaultStatus
+  }
+
   updateStatus(status: Partial<DevSessionStatus>) {
     const newStatus = {...this.currentStatus, ...status}
     // Only emit if status has changed
@@ -35,5 +40,3 @@ export class DevSessionStatusManager extends EventEmitter {
     }
   }
 }
-
-export const devSessionStatusManager = new DevSessionStatusManager()
