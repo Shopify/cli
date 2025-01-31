@@ -267,8 +267,8 @@ importers:
         specifier: 3.74.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 9.0.3
-        version: 9.0.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.5
+        version: 9.0.5(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.74.0
         version: link:../cli-kit
@@ -6494,15 +6494,15 @@ packages:
     resolution: {integrity: sha512-fTIQwLF+Qhuws31iw7Ncl1R3HUDtGwIipiJ9iU+UsDUwMhegFcQKQHd51nZjb7CArq0MvON8rbgCGQYWHUKAdg==}
     dev: true
 
-  /@shopify/cli-hydrogen@9.0.3(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-xqNx1P9aBao1eqT7nVdsiw8o7j5ZMpuVaZOnYNfVw7Wog2wNtghH8UI6Jb0TklnTon+imQtJKY5ErYlGfgSssQ==}
+  /@shopify/cli-hydrogen@9.0.5(@graphql-codegen/cli@5.0.2)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-x0eOZD9oZl3IMwhapJLvBG0hfuGe8BCE14LJXBLJdcgKRXFHAHjQcve+0CH01oD9yY/e1oGe5u8wb7dpVeT+Mw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.1.0
       '@shopify/hydrogen-codegen': ^0.3.2
-      '@shopify/mini-oxygen': ^3.1.0
+      '@shopify/mini-oxygen': ^3.1.1
       graphql-config: ^5.0.3
       vite: 5.4.12
     peerDependenciesMeta:
@@ -6523,16 +6523,16 @@ packages:
       '@graphql-codegen/cli': 5.0.2(@types/node@18.19.70)(graphql@16.8.1)(typescript@5.7.3)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.6(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
-      ansi-escapes: 6.2.0
+      ansi-escapes: 6.2.1
       chokidar: 3.5.3
       cli-truncate: 4.0.0
       diff: 5.2.0
       get-port: 7.1.0
       gunzip-maybe: 1.4.2
       prettier: 2.8.8
-      semver: 7.5.4
+      semver: 7.6.3
       source-map: 0.7.4
       source-map-support: 0.5.21
       tar-fs: 2.1.1
@@ -6631,8 +6631,8 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.6.0(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-Khph5joWTkwhAjh1Uq7/7widK1AMDnoQkT3JZboeUjzSH1M95XhOY7Hs57l6TNLsMHjkDG/8/nAzLkJ7mHNkkQ==}
+  /@shopify/oxygen-cli@4.6.6(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+    resolution: {integrity: sha512-cdxyw7wu0lhpfC1RB9jRUOW5TP1SDsDjeJHg6XwzC/2hsFXuwJiJtb9IoMMkoPoX0uEUSJdMjltheauOnvCzuA==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
@@ -8761,17 +8761,9 @@ packages:
       type-fest: 1.4.0
     dev: false
 
-  /ansi-escapes@6.2.0:
-    resolution: {integrity: sha512-kzRaCqXnpzWs+3z5ABPQiVke+iq0KXkHo8xiWV4RPTi5Yli0l97BEQuhXV1s7+aSU/fu1kUuxgS4MsQ0fRuygw==}
-    engines: {node: '>=14.16'}
-    dependencies:
-      type-fest: 3.13.1
-    dev: true
-
   /ansi-escapes@6.2.1:
     resolution: {integrity: sha512-4nJ3yixlEthEJ9Rk4vPcdBRkZvQZlYyu8j4/Mqz5sgIkddmEnH2Yj2ZrnP9S3tQOvSNRUIgVNF/1yPpRAGNRig==}
     engines: {node: '>=14.16'}
-    dev: false
 
   /ansi-regex@4.1.1:
     resolution: {integrity: sha512-ILlv4k/3f6vfQ4OoP2AGvirOktlQ98ZEL1k9FaQjxa3L1abBgbuTDAdPOpvbGncC0BTVQrl+OM8xZGK6tWXt7g==}
@@ -15955,14 +15947,6 @@ packages:
       lru-cache: 6.0.0
     dev: true
 
-  /semver@7.5.4:
-    resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dependencies:
-      lru-cache: 6.0.0
-    dev: true
-
   /semver@7.6.2:
     resolution: {integrity: sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==}
     engines: {node: '>=10'}
@@ -17059,11 +17043,6 @@ packages:
   /type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
-
-  /type-fest@3.13.1:
-    resolution: {integrity: sha512-tLq3bSNx+xSpwvAJnzrK0Ep5CLNWjvFTOp71URMaAEWBfRb9nnJiBoUe0tF8bI4ZFO3omgBR6NvnbzVUT3Ly4g==}
-    engines: {node: '>=14.16'}
-    dev: true
 
   /type-fest@4.23.0:
     resolution: {integrity: sha512-ZiBujro2ohr5+Z/hZWHESLz3g08BBdrdLMieYFULJO+tWc437sn8kQsWLJoZErY8alNhxre9K4p3GURAG11n+w==}
