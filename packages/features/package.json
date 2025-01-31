@@ -8,7 +8,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx run features:test",
-    "cucumber-esm": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" cucumber-js",
+    "cucumber-esm": "cucumber-js --loader ts-node/esm",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
