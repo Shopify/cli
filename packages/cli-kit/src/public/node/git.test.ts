@@ -444,4 +444,38 @@ describe('addToGitIgnore()', () => {
       expect(gitIgnoreContent).toBe('node_modules\ndist\n.shopify\n')
     })
   })
+
+  test('does nothing when .shopify/* pattern exists in .gitignore', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+      const gitIgnoreContent = '.shopify/*\nnode_modules\n'
+
+      writeFileSync(gitIgnorePath, gitIgnoreContent)
+
+      // When
+      git.addToGitIgnore(tmpDir, '.shopify')
+
+      // Then
+      const actualContent = readFileSync(gitIgnorePath).toString()
+      expect(actualContent).toBe(gitIgnoreContent)
+    })
+  })
+
+  test('does nothing when .shopify/** pattern exists in .gitignore', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const gitIgnorePath = `${tmpDir}/.gitignore`
+      const gitIgnoreContent = '.shopify/**\nnode_modules\n'
+
+      writeFileSync(gitIgnorePath, gitIgnoreContent)
+
+      // When
+      git.addToGitIgnore(tmpDir, '.shopify')
+
+      // Then
+      const actualContent = readFileSync(gitIgnorePath).toString()
+      expect(actualContent).toBe(gitIgnoreContent)
+    })
+  })
 })

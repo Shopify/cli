@@ -2203,7 +2203,7 @@ FLAGS
                              (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
   -u, --unpublished          Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...    Skip uploading the specified files (Multiple flags allowed).
       --no-color             Disable color output.
       --password=<value>     Password generated from the Theme Access app.
       --path=<value>         The path to your theme directory.
