@@ -29,7 +29,8 @@ export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
 const CART_PATTERN = /^\/cart\//
-const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?)?\/?$/
+const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
+const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
 
@@ -81,6 +82,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 export function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
   if (event.path.match(CART_PATTERN)) return true
+  if (event.path.match(CHECKOUT_PATTERN)) return true
   if (event.path.match(ACCOUNT_PATTERN)) return true
   if (event.path.match(VANITY_CDN_PATTERN)) return true
   if (event.path.match(EXTENSION_CDN_PATTERN)) return true
