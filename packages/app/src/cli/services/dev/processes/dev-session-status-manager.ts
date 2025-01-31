@@ -4,12 +4,19 @@ import {EventEmitter} from 'events'
 export interface DevSessionStatus {
   isReady: boolean
   previewURL?: string
+  graphiqlURL?: string
 }
 
-class DevSessionStatusManager extends EventEmitter {
+export class DevSessionStatusManager extends EventEmitter {
   private currentStatus: DevSessionStatus = {
     isReady: false,
     previewURL: undefined,
+    graphiqlURL: undefined,
+  }
+
+  constructor(defaultStatus?: DevSessionStatus) {
+    super()
+    if (defaultStatus) this.currentStatus = defaultStatus
   }
 
   updateStatus(status: Partial<DevSessionStatus>) {
@@ -29,8 +36,7 @@ class DevSessionStatusManager extends EventEmitter {
     this.currentStatus = {
       isReady: false,
       previewURL: undefined,
+      graphiqlURL: undefined,
     }
   }
 }
-
-export const devSessionStatusManager = new DevSessionStatusManager()

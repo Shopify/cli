@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
-    "@changesets/cli": "2.26.2",
+    "@changesets/cli": "2.27.12",
     "@graphql-codegen/cli": "5.0.4",
     "@graphql-codegen/near-operation-file-preset": "3.0.0",
     "@nx/eslint-plugin": "19.8.14",
@@ -103,7 +103,8 @@
     "supports-hyperlinks": "3.1.0",
     "@graphql-tools/utils": "10.7.2",
     "@shopify/cli-hydrogen>@shopify/cli-kit": "link:./packages/cli-kit",
-    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare"
+    "@shopify/cli-hydrogen>@shopify/plugin-cloudflare": "link:./packages/plugin-cloudflare",
+    "nanoid": "3.3.8"
   },
   "knip": {
     "$schema": "https://unpkg.com/knip@5/schema.json",

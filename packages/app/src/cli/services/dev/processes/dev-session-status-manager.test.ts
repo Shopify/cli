@@ -1,7 +1,9 @@
-import {devSessionStatusManager, DevSessionStatus} from './dev-session-status-manager.js'
+import {DevSessionStatus, DevSessionStatusManager} from './dev-session-status-manager.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 
 describe('DevSessionStatusManager', () => {
+  const devSessionStatusManager = new DevSessionStatusManager()
+
   beforeEach(() => {
     devSessionStatusManager.removeAllListeners()
     devSessionStatusManager.reset()
