@@ -1,0 +1,109 @@
+name: 'Shopify Security Code Scanner'
+
+on:
+  workflow_call:
+    inputs:
+      scanner_image:
+        description: 'The tag for the security-code-scanner image used by the workflow. Test changes to the image by specifying your branch name in this input.'
+        type: string
+        default: 'main'
+      runs_on:
+        description: 'GitHub runner to use. Defaults to shopify-ubuntu-latest-2'
+        type: string
+        default: shopify-ubuntu-latest-2
+    secrets:
+      token:
+        required: true
+
+jobs:
+  code-scanning:
+    runs-on: ${{ inputs.runs_on }}
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+      pull-requests: read
+      id-token: write # required to access the google container registry and the security-code-scanner image
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }} # If we're in a pull request we only need to get the files changed before head, otherwise we need to whote tree to accurately compare commits.
+          token: ${{ secrets.token }}
+      - name: Get changed files
+        id: changed-files # Required to reference variables in other steps
+        # This step gets the difference from the pull request relative to main, or the difference between the current commit and the previous commit for scanning.
+        run: |
+            if ${{ github.event_name == 'pull_request' }}; then
+              changed_files=""
+              for file in $(git diff --name-only -r HEAD^1 HEAD); do
+                  changed_files="$changed_files $file"
+              done
+              echo "changed_files=$changed_files" | sed -e 's/= /=/' >> $GITHUB_OUTPUT
+            else
+              changed_files=""
+              for file in $(git diff --name-only ${{ github.event.before }} ${{ github.event.after }}); do
+                  changed_files="$changed_files $file"
+              done
+              echo "changed_files=$changed_files" | sed -e 's/= /=/' >> $GITHUB_OUTPUT
+            fi
+      - run: echo ${{ steps.changed-files.outputs.changed_files }}
+        # PRs with massive amount of files like https://github.com/Shopify/web/pull/115958
+        # will raise errors like "/usr/bin/envsubst: Argument list too long". This happens because
+        # the OS is configured with a maximum argument length. You can check this limit using:
+        # $ getconf ARG_MAX
+        #
+        # 1 is an arbitrary number for now and a way to not block stakeholders. Chances are that
+        # any PRs changing this amount of files are not really changing the logic in the code and
+        # just moving files around.
+      - name: Check if number of files changed is more than 1000
+        run: |
+          if [ $(echo ${{ steps.changed-files.outputs.changed_files }} | wc -w) -gt 1000 ]; then
+            exit 0
+          fi
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        with:
+          workload_identity_provider: 'projects/197494322927/locations/global/workloadIdentityPools/github-actions/providers/github-actions'
+          # This ServiceAccount is available to any repo in Shopify
+          service_account: 'github-actions-gcr-pull@shopify-github-action-runners.iam.gserviceaccount.com'
+          token_format: 'access_token'
+      - uses: docker/login-action@e92390c5fb421da1463c202d546fed0ec5c39f20 # v3.1.0
+        with:
+          registry: 'gcr.io'
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+        # Github actions requires you to run container actions as a root user: https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
+      - run: echo "Workflow_ref ${{ github.workflow_ref }}"; echo "Base_ref ${{ github.ref_name }}"; echo "Github.ref ${{ github.ref }}"
+      - name: ":semgrep: Semgrep"
+        run: |
+          docker run  --user="root" \
+          -e APPLICATION_ROOT='/github/workspace' -e GITHUB_WORKSPACE='/github/workspace' -e GITHUB_ACTIONS=true -e FILES_CHANGED="${{ steps.changed-files.outputs.changed_files }}" \
+          -e SHOPIFY_BUILD_STATSD_ADDR='' -e BASE_SHA="${{ github.event.pull_request.base.sha }}" -e GITHUB_REF_NAME="${{ github.ref_name }}" \
+          -v "${{ github.workspace }}":"/github/workspace" -w="/github/workspace" \
+          --rm gcr.io/shopify-docker-images/apps/production/security-code-scanner:${{ inputs.scanner_image }} shopify-semgrep
+        shell: bash
+      - name: ":semgrep: Experimental Semgrep"
+        run: |
+          docker run  --user="root" \
+          -e APPLICATION_ROOT='/github/workspace' -e GITHUB_WORKSPACE='/github/workspace' -e GITHUB_ACTIONS=true -e FILES_CHANGED="${{ steps.changed-files.outputs.changed_files }}" \
+          -e SHOPIFY_BUILD_STATSD_ADDR='' -e BASE_SHA="${{ github.event.pull_request.base.sha }}" -e GITHUB_REF_NAME="${{ github.ref_name }}" \
+          -v "${{ github.workspace }}":"/github/workspace" -w="/github/workspace" \
+          --rm gcr.io/shopify-docker-images/apps/production/security-code-scanner:${{ inputs.scanner_image }} shopify-experimental-semgrep
+        shell: bash
+
+      - uses: github/codeql-action/upload-sarif@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        id: upload-sarif
+        # If we run this without generating a SARIF file, we don't want the workflow to fail
+        if: steps.changed-files.outputs.changed_files != '' && github.ref_name != 'master' && github.ref_name != 'main' && ${{ hashFiles(format('{0}/results/*', github.workspace)) != '' }}
+        with:
+          sarif_file: ${{ github.workspace }}/results/ # This will upload any .sarif files created
+          token: ${{ secrets.token }}
+      - name: "Check for SARIF Upload Failure"
+        # We don't want to report a failure if the step is just skipped because there are no results
+        if: steps.upload-sarif.outcome == 'failure' || steps.upload-sarif.outcome == 'cancelled'
+        run: echo "security_code_scanner.gha_sarif_upload_failed:1|c|" >> $GITHUB_WORKSPACE/metrics.txt
+      - name: ":observe: Emit Metrics"
+        uses: Shopify/security-code-scanner/emit-metrics-js@main
+        if: ${{ hashFiles(format('{0}/metrics.txt', github.workspace)) != '' }}
+        id: emit-metrics
