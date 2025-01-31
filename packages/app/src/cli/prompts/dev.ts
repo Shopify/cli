@@ -3,6 +3,7 @@ import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdent
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {Paginateable} from '../utilities/developer-platform-client.js'
+import {APP_NAME_MAX_LENGTH} from '../models/app/validation/common.js'
 import {
   RenderAutocompleteOptions,
   renderAutocompletePrompt,
@@ -129,8 +130,8 @@ export async function appNamePrompt(currentName: string): Promise<string> {
       if (value.length === 0) {
         return "App name can't be empty"
       }
-      if (value.length > 30) {
-        return 'Enter a shorter name (30 character max.)'
+      if (value.length > APP_NAME_MAX_LENGTH) {
+        return `Enter a shorter name (${APP_NAME_MAX_LENGTH} character max.)`
       }
       if (value.includes('shopify')) {
         return 'Name can\'t contain "shopify." Enter another name.'
