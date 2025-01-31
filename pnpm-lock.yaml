@@ -401,6 +401,9 @@ importers:
       graphql-request:
         specifier: 5.2.0
         version: 5.2.0(graphql@16.8.1)
+      ignore:
+        specifier: 6.0.2
+        version: 6.0.2
       ink:
         specifier: 4.4.1
         version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
@@ -4322,7 +4325,7 @@ packages:
       debug: 4.4.0(supports-color@8.1.1)
       espree: 9.6.1
       globals: 13.24.0
-      ignore: 5.3.1
+      ignore: 5.3.2
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -11413,7 +11416,7 @@ packages:
       glob-parent: 6.0.2
       globals: 13.24.0
       graphemer: 1.4.0
-      ignore: 5.3.1
+      ignore: 5.3.2
       imurmurhash: 0.1.4
       is-glob: 4.0.3
       is-path-inside: 3.0.3
