@@ -4,7 +4,7 @@ import {testAppLinked, testFunctionExtension} from '../../../../../../models/app
 import {runFunction} from '../../../../runner.js'
 import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {render, waitFor} from '@shopify/cli-kit/node/testing/ui'
+import {render} from '@shopify/cli-kit/node/testing/ui'
 import {test, describe, vi, expect} from 'vitest'
 import React from 'react'
 import {Writable} from 'stream'
@@ -78,10 +78,7 @@ describe('useFunctionWatcher', () => {
       }),
     )
 
-    await waitFor(
-      () => {},
-      () => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size,
-    )
+    await vi.waitUntil(() => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size)
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
@@ -113,11 +110,7 @@ describe('useFunctionWatcher', () => {
       }),
     )
 
-    // needed to await the render
-    await waitFor(
-      () => {},
-      () => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size,
-    )
+    await vi.waitUntil(() => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({
@@ -128,10 +121,7 @@ describe('useFunctionWatcher', () => {
     })
 
     appWatcher.emit('all', event)
-    await waitFor(
-      () => {},
-      () => hook.lastResult?.recentFunctionRuns[0].size === SECOND_EXEC_RESPONSE.size,
-    )
+    await vi.waitUntil(() => hook.lastResult?.recentFunctionRuns[0].size === SECOND_EXEC_RESPONSE.size)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
@@ -162,17 +152,10 @@ describe('useFunctionWatcher', () => {
       }),
     )
 
-    // needed to await the render
-    await waitFor(
-      () => {},
-      () => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size,
-    )
+    await vi.waitUntil(() => hook.lastResult?.recentFunctionRuns[0].size === EXEC_RESPONSE.size)
 
     appWatcher.emit('all', event)
-    await waitFor(
-      () => {},
-      () => hook.lastResult?.error !== undefined,
-    )
+    await vi.waitUntil(() => hook.lastResult?.error !== undefined)
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
