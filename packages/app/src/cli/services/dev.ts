@@ -24,7 +24,7 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
-import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {replaceScopesWithRequiredScopes, patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -45,6 +45,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {confirmConversionFromScopesToRequiredScopes} from '../prompts/dev.js'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -193,6 +194,14 @@ export async function warnIfScopesDifferBeforeDev({
 }: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient'>) {
   if (developerPlatformClient.supportsDevSessions) return
   if (isCurrentAppSchema(localApp.configuration)) {
+
+    if (localApp.configuration.access_scopes?.scopes) {
+      const shouldMigrate = await confirmConversionFromScopesToRequiredScopes();
+      if (shouldMigrate) {
+        await replaceScopesWithRequiredScopes(localApp.configuration.path)
+      }
+    }
+
     const localAccess = localApp.configuration.access_scopes
     const remoteAccess = remoteApp.configuration?.access_scopes
 
@@ -206,6 +215,8 @@ export async function warnIfScopesDifferBeforeDev({
     }
     const localScopes = rationaliseScopes(localAccess?.scopes)
     const remoteScopes = rationaliseScopes(remoteAccess?.scopes)
+
+    console.log("ZL- local vs remote scopes", localScopes, remoteScopes)
 
     if (!localAccess?.use_legacy_install_flow && localScopes !== remoteScopes) {
       const nextSteps = [
@@ -353,11 +364,11 @@ async function launchDevProcesses({
     canEnablePreviewMode: developerPlatformClient.supportsDevSessions
       ? false
       : await canEnablePreviewMode({
-          localApp: config.localApp,
-          developerPlatformClient,
-          apiKey,
-          organizationId: config.remoteApp.organizationId,
-        }),
+        localApp: config.localApp,
+        developerPlatformClient,
+        apiKey,
+        organizationId: config.remoteApp.organizationId,
+      }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
     id: config.remoteApp.id,

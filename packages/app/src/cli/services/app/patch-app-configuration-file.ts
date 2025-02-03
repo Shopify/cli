@@ -3,6 +3,7 @@ import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
+import {config} from 'process'
 
 export interface PatchTomlOptions {
   path: string
@@ -37,6 +38,28 @@ export async function patchAppConfigurationFile({path, patch, schema}: PatchToml
 
   let encodedString = encodeToml(updatedConfig)
   encodedString = addDefaultCommentsToToml(encodedString)
+  await writeFile(path, encodedString)
+}
+
+export async function replaceScopesWithRequiredScopes(path: string) {
+  const tomlContents = await readFile(path)
+  const configuration = decodeToml(tomlContents)
+
+  if (configuration.access_scopes &&
+    typeof configuration.access_scopes === 'object' &&
+    'scopes' in configuration.access_scopes &&
+    configuration.access_scopes.scopes) {
+    const scopes = configuration.access_scopes.scopes
+    configuration.access_scopes = {
+      ...configuration.access_scopes,
+      required_scopes: typeof scopes === 'string' ? scopes.split(',').map((scope) => scope.trim()) : [],
+    }
+    delete configuration.access_scopes.scopes
+  }
+
+  let encodedString = encodeToml(configuration)
+  encodedString = addDefaultCommentsToToml(encodedString)
+
   await writeFile(path, encodedString)
 }
 
