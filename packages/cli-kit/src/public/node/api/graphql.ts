@@ -3,6 +3,8 @@ import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graph
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
+import {endHRTimeInMs, startHRTime} from '../hrtime.js'
+import {outputContent, outputToken} from '../output.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -75,8 +77,13 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     // there is a errorPolicy option which returns rather than throwing on errors, but we _do_ ultimately want to
     // throw.
     try {
+      const time = startHRTime()
       fullResponse = await client.rawRequest<TResult>(queryAsString, variables)
       await logLastRequestIdFromResponse(fullResponse)
+      const firstLine = queryAsString.split('\n')[0] ?? ''
+      const secondLine = queryAsString.split('\n')[1] ?? ''
+      const validLine = firstLine.includes('query') ? firstLine : secondLine
+      console.log(`${endHRTimeInMs(time)}ms - Network: ${outputContent`${outputToken.yellow(validLine)}`.value}`)
       return fullResponse
     } catch (error) {
       if (error instanceof ClientError) {

@@ -49,6 +49,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
         withinRateLimit = true
       },
     })
+    console.log('All network time:', payload.public.cmd_all_timing_network_ms)
     if (!withinRateLimit) {
       outputDebug(outputContent`Skipping command analytics due to rate limiting, payload: ${outputToken.json(payload)}`)
       return
