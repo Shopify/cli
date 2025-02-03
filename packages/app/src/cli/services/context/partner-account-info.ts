@@ -5,6 +5,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface PartnersSession {
   token: string
+  businessPlatformToken: string
   accountInfo: AccountInfo
   userId: string
 }

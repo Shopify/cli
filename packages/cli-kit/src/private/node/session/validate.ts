@@ -6,7 +6,6 @@ import {sessionConstants} from '../constants.js'
 import {outputDebug} from '../../../public/node/output.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
-import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -36,9 +35,7 @@ export async function validateSession(
 ): Promise<ValidationResult> {
   if (!session) return 'needs_full_auth'
   const scopesAreValid = validateScopes(scopes, session.identity)
-  const start = startHRTime()
   const identityIsValid = await validateIdentityToken(session.identity.accessToken)
-  console.log(`${endHRTimeInMs(start)}ms - Auth: Identity token introspection (${identityIsValid ? 'OK' : 'FAILED'})`)
   if (!scopesAreValid) return 'needs_full_auth'
   let tokensAreExpired = isTokenExpired(session.identity)
 

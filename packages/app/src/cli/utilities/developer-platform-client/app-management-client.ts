@@ -118,7 +118,7 @@ import {
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
-import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -156,7 +156,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
-  private _businessPlatformToken: string | undefined
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -171,20 +170,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
-      const userInfoResult = await businessPlatformRequestDoc(UserInfo, await this.businessPlatformToken())
-      const {token, userId} = await ensureAuthenticatedAppManagement()
-      if (userInfoResult.currentUserAccount) {
+
+      const {appToken, userId, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+      const userAccount = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+
+      if (userAccount.currentUserAccount) {
         this._session = {
-          token,
+          token: appToken,
+          businessPlatformToken,
           accountInfo: {
             type: 'UserAccount',
-            email: userInfoResult.currentUserAccount.email,
+            email: userAccount.currentUserAccount.email,
           },
           userId,
         }
       } else {
         this._session = {
-          token,
+          token: appToken,
+          businessPlatformToken,
           accountInfo: {
             type: 'UnknownAccount',
           },
@@ -199,23 +202,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).token
   }
 
-  async refreshToken(): Promise<string> {
-    const {token} = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
-    const session = await this.session()
-    if (token) {
-      session.token = token
-    }
-    return session.token
+  async businessPlatformToken(): Promise<string> {
+    return (await this.session()).businessPlatformToken
   }
 
-  async businessPlatformToken(): Promise<string> {
-    if (isUnitTest()) {
-      throw new Error('AppManagementClient.businessPlatformToken() should not be invoked dynamically in a unit test')
-    }
-    if (!this._businessPlatformToken) {
-      this._businessPlatformToken = await ensureAuthenticatedBusinessPlatform()
-    }
-    return this._businessPlatformToken
+  async refreshToken(): Promise<string> {
+    const {appToken, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform(
+      [],
+      [],
+      process.env,
+      {noPrompt: true},
+    )
+    const session = await this.session()
+    session.token = appToken
+    session.businessPlatformToken = businessPlatformToken
+
+    return session.token
   }
 
   async accountInfo(): Promise<PartnersSession['accountInfo']> {

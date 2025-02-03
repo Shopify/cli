@@ -229,11 +229,12 @@ export class PartnersClient implements DeveloperPlatformClient {
       const {token, userId} = await ensureAuthenticatedPartners()
       this._session = {
         token,
+        businessPlatformToken: '',
         accountInfo: {type: 'UnknownAccount'},
         userId,
       }
       const accountInfo = await fetchCurrentAccountInformation(this, userId)
-      this._session = {token, accountInfo, userId}
+      this._session = {token, businessPlatformToken: '', accountInfo, userId}
     }
     return this._session
   }

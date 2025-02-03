@@ -1,6 +1,5 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
-import {startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
@@ -54,9 +53,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   const sanitizedUrl = sanitizeURL(url)
   let response: T = {} as T
   try {
-    const start = startHRTime()
     response = await request()
-    // console.log(`${endHRTimeInMs(start)}ms - Network: ${outputContent`${outputToken.magenta(url)}`.value}`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response.headers.forEach((value: any, key: any) => {
       if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
