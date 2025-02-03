@@ -5,24 +5,16 @@ import {logRequestLine} from '../log-request-line.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {
   defineEventHandler,
-  clearResponseHeaders,
-  sendProxy,
   getRequestHeaders,
   getRequestWebStream,
   getRequestIP,
   type H3Event,
-  type H3Error,
-  sendError,
-  setResponseHeaders,
-  setResponseHeader,
-  removeResponseHeader,
-  setResponseStatus,
-  send,
+  createError,
+  H3Error,
 } from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
-import type {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import type {DevServerContext} from './types.js'
 
 export const VANITY_CDN_PREFIX = '/cdn/'
@@ -59,6 +51,34 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 
     if (canProxyRequest(event)) {
       return proxyStorefrontRequest(event, ctx)
+        .then(async (response) => {
+          logRequestLine(event, response)
+
+          if (response.ok) {
+            const fileName = event.path.split('?')[0]?.split('/').at(-1) ?? ''
+            if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
+              const newBody = injectCdnProxy(await response.text(), ctx)
+              return new Response(newBody, response)
+            }
+          }
+
+          return response
+        })
+        .catch(async (error: H3Error) => {
+          const pathname = event.path.split('?')[0]!
+          if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
+            const cause = error.cause as undefined | Error
+            renderWarning({
+              headline: `Failed to proxy request to ${pathname}`,
+              body: cause?.stack ?? error.stack ?? error.message,
+            })
+          }
+
+          return new Response(error.message, {
+            status: error.statusCode,
+            statusText: error.statusMessage,
+          })
+        })
     }
   })
 }
@@ -155,21 +175,22 @@ function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
  * Patches the result of an SFR HTML response to include the local proxies
  * and fix domain inconsistencies between remote instance and local dev.
  */
-export async function patchRenderingResponse(ctx: DevServerContext, event: H3Event, response: NodeResponse) {
-  setResponseStatus(event, response.status, response.statusText)
-  setResponseHeaders(event, Object.fromEntries(response.headers.entries()))
-  patchProxiedResponseHeaders(ctx, event, response)
+export async function patchRenderingResponse(
+  ctx: DevServerContext,
+  rawResponse: Response,
+  patchCallback?: (html: string) => string | undefined,
+) {
+  const response = patchProxiedResponseHeaders(ctx, rawResponse)
 
-  // We are decoding the payload here, remove the header:
-  let html = await response.text()
-  removeResponseHeader(event, 'content-encoding')
   // Ensure the content type indicates UTF-8 charset:
-  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8')
+  response.headers.set('content-type', 'text/html; charset=utf-8')
 
+  let html = await response.text()
   html = injectCdnProxy(html, ctx)
   html = patchBaseUrlAttributes(html, ctx)
+  if (patchCallback) html = patchCallback(html) ?? html
 
-  return html
+  return new Response(html, response)
 }
 
 // These headers are meaningful only for a single transport-level connection,
@@ -189,13 +210,20 @@ const HOP_BY_HOP_HEADERS = [
   'host',
 ]
 
-function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, response: Response | NodeResponse) {
-  // Safari adds upgrade-insecure-requests to CSP and it needs to be removed:
-  clearResponseHeaders(event, HOP_BY_HOP_HEADERS)
+function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Response) {
+  const response = new Response(rawResponse.body, rawResponse)
+
+  // Node's `fetch` always decompresses the body, so we must remove these headers
+  // to prevent the browser from decompressing it again:
+  response.headers.delete('content-length')
+  response.headers.delete('content-encoding')
+  for (const header of HOP_BY_HOP_HEADERS) {
+    response.headers.delete(header)
+  }
 
   // Link header preloads resources from global CDN, proxy it:
   const linkHeader = response.headers.get('Link')
-  if (linkHeader) setResponseHeader(event, 'Link', injectCdnProxy(linkHeader, ctx))
+  if (linkHeader) response.headers.set('Link', injectCdnProxy(linkHeader, ctx))
 
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
@@ -204,20 +232,22 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
     if (!CHECKOUT_PATTERN.test(url.pathname)) {
       url.searchParams.delete('_fd')
       url.searchParams.delete('pb')
-      setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+      response.headers.set('Location', url.href.replace(url.origin, ''))
     }
   }
 
   // Cookies are set for the vanity domain, fix it for localhost:
-  const setCookieHeader =
-    'raw' in response.headers ? response.headers.raw()['set-cookie'] : response.headers.getSetCookie()
+  const setCookieHeader = response.headers.getSetCookie()
   if (setCookieHeader?.length) {
-    setResponseHeader(event, 'Set-Cookie', patchCookieDomains(setCookieHeader, ctx))
+    response.headers.set('Set-Cookie', patchCookieDomains(setCookieHeader, ctx).join(','))
+
     const latestShopifyEssential = setCookieHeader.join(',').match(SESSION_COOKIE_REGEXP)?.[1]
     if (latestShopifyEssential) {
       ctx.session.sessionCookies[SESSION_COOKIE_NAME] = latestShopifyEssential
     }
   }
+
+  return response
 }
 
 /**
@@ -241,7 +271,7 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   return proxyRequestHeaders
 }
 
-function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
+export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): Promise<Response> {
   const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
@@ -259,7 +289,13 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  return sendProxy(event, url.toString(), {
+  return fetch(url.toString(), {
+    method: event.method,
+    body,
+    // @ts-expect-error Not included in official Node types
+    duplex: body ? 'half' : undefined,
+    // Important to return 3xx responses to the client
+    redirect: 'manual',
     headers: {
       ...headers,
       // Required header for CDN requests
@@ -267,39 +303,14 @@ function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext) {
       // Update the cookie with the latest session
       cookie: buildCookies(ctx.session, {headers}),
     },
-    fetchOptions: {
-      ignoreResponseError: false,
-      method: event.method,
-      body,
-      duplex: body ? 'half' : undefined,
-      // Important to return 3xx responses to the client
-      redirect: 'manual',
-    },
-    async onResponse(event, response) {
-      logRequestLine(event, response)
-
-      patchProxiedResponseHeaders(ctx, event, response)
-
-      const fileName = url.pathname.split('/').at(-1)
-      if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
-        // Patch Liquid assets like .css.liquid
-        const body = await response.text()
-        await send(event, injectCdnProxy(body, ctx))
-      }
-    },
-  }).catch(async (error: H3Error) => {
-    const pathname = event.path.split('?')[0]!
-    if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
-      const cause = error.cause as undefined | Error
-      renderWarning({
-        headline: `Failed to proxy request to ${pathname} - ${error.statusCode} - ${error.statusMessage}`,
-        body: cause?.stack ?? error.stack ?? error.message,
-      })
-    }
-
-    await sendError(event, error)
-
-    // Ensure other middlewares are not called:
-    return null
   })
+    .then((response) => patchProxiedResponseHeaders(ctx, response))
+    .catch((error) => {
+      throw createError({
+        status: 502,
+        statusText: 'Bad Gateway',
+        data: {url},
+        cause: error,
+      })
+    })
 }

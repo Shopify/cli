@@ -8,7 +8,6 @@ import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
@@ -188,7 +187,7 @@ describe('setupDevServer', () => {
     ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node
-      let body: string
+      let body = ''
       const resWrite = res.write.bind(res)
       res.write = (chunk) => {
         body ??= ''
@@ -197,12 +196,19 @@ describe('setupDevServer', () => {
       }
       const resEnd = res.end.bind(res)
       res.end = (content) => {
-        body ??= content
+        if (!body) body = content ?? ''
         return resEnd(content)
       }
 
       await server.dispatchEvent(event)
-      return {res, status: res.statusCode, body: body!}
+
+      if (!body && '_data' in res) {
+        // When returning a Response from H3, we get the body here:
+        // eslint-disable-next-line require-atomic-updates
+        body = await new Response(res._data as ReadableStream).text()
+      }
+
+      return {res, status: res.statusCode, body}
     }
 
     test('mocks known endpoints', async () => {
@@ -255,7 +261,7 @@ describe('setupDevServer', () => {
 
     test('renders HTML', async () => {
       vi.mocked(render).mockResolvedValueOnce(
-        new NodeResponse(
+        new Response(
           html`<html>
           <head>
             <link href="https://cdn.shopify.com/path/to/assets/file1.css"></link>
@@ -282,7 +288,7 @@ describe('setupDevServer', () => {
 
     test('proxies other requests to SFR', async () => {
       const fetchStub = vi.fn(
-        () =>
+        async () =>
           new Response('mocked', {
             headers: {'proxy-authorization': 'true', 'content-type': 'application/javascript'},
           }),
@@ -329,7 +335,7 @@ describe('setupDevServer', () => {
 
     test('proxies .css.liquid assets with injected CDN', async () => {
       const fetchStub = vi.fn(
-        () =>
+        async () =>
           new Response(
             `.some-class {
               font-family: "My Font";
@@ -350,7 +356,7 @@ describe('setupDevServer', () => {
     })
 
     test('proxies .js.liquid assets replacing the error query string', async () => {
-      const fetchStub = vi.fn(() => new Response())
+      const fetchStub = vi.fn(async () => new Response())
       vi.stubGlobal('fetch', fetchStub)
       vi.useFakeTimers()
       const now = Date.now()

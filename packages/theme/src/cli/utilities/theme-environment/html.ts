@@ -4,10 +4,9 @@ import {render} from './storefront-renderer.js'
 import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
-import {defineEventHandler, getCookie, H3Event, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {defineEventHandler, getCookie, type H3Error} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {Response} from '@shopify/cli-kit/node/http'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -19,7 +18,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0
 
     if (shouldRenderUploadErrorPage) {
-      return renderUploadErrorPage(ctx, event)
+      return renderUploadErrorPage(ctx)
     }
 
     return render(ctx.session, {
@@ -35,26 +34,21 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       .then(async (response) => {
         logRequestLine(event, response)
 
-        let html = await patchRenderingResponse(ctx, event, response)
-
-        assertThemeId(response, html, String(theme.id))
-
-        if (ctx.options.liveReload !== 'off') {
-          html = injectHotReloadScript(html)
-        }
-
-        return html
+        return patchRenderingResponse(ctx, response, (body) => {
+          assertThemeId(response, body, String(theme.id))
+          return ctx.options.liveReload === 'off' ? body : injectHotReloadScript(body)
+        })
       })
       .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
-        let headline = `Failed to render storefront with status ${error.statusCode} (${error.statusMessage}).`
+        const status = error.statusCode ?? 502
+        const statusText = error.statusMessage ?? 'Bad Gateway'
+
+        let headline = `Failed to render storefront with status ${status} (${statusText}).`
         if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
         if (error.data?.url) headline += `\nURL: ${error.data.url}`
 
         const cause = error.cause as undefined | Error
         renderError({headline, body: cause?.stack ?? error.stack ?? error.message})
-
-        setResponseStatus(event, error.statusCode ?? 502, error.statusMessage)
-        setResponseHeader(event, 'Content-Type', 'text/html')
 
         const [title, ...rest] = headline.split('\n') as [string, ...string[]]
         let errorPageHtml = getErrorPage({
@@ -72,14 +66,16 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
           errorPageHtml = injectHotReloadScript(errorPageHtml)
         }
 
-        return errorPageHtml
+        return new Response(errorPageHtml, {
+          status,
+          statusText,
+          headers: {'Content-Type': 'text/html'},
+        })
       })
   })
 }
 
-function renderUploadErrorPage(ctx: DevServerContext, event: H3Event) {
-  setResponseStatus(event, 500, 'Failed to Upload Theme Files')
-  setResponseHeader(event, 'Content-Type', 'text/html')
+function renderUploadErrorPage(ctx: DevServerContext) {
   let html = getErrorPage({
     title: 'Failed to Upload Theme Files',
     header: 'Upload Errors',
@@ -93,7 +89,11 @@ function renderUploadErrorPage(ctx: DevServerContext, event: H3Event) {
     html = injectHotReloadScript(html)
   }
 
-  return html
+  return new Response(html, {
+    status: 500,
+    statusText: 'Internal Server Error',
+    headers: {'Content-Type': 'text/html'},
+  })
 }
 
 function assertThemeId(response: Response, html: string, expectedThemeId: string) {

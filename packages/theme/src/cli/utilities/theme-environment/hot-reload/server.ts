@@ -1,16 +1,8 @@
 import {getClientScripts, HotReloadEvent} from './client.js'
 import {render} from '../storefront-renderer.js'
-import {patchRenderingResponse} from '../proxy.js'
 import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-ext-server.js'
-import {
-  createError,
-  createEventStream,
-  defineEventHandler,
-  getProxyRequestHeaders,
-  getQuery,
-  sendError,
-  type H3Error,
-} from 'h3'
+import {patchRenderingResponse} from '../proxy.js'
+import {createError, createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, type H3Error} from 'h3'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
@@ -250,18 +242,20 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
             })
           }
 
-          return patchRenderingResponse(ctx, event, response)
+          return patchRenderingResponse(ctx, response)
         })
         .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
-          let headline = `Failed to render section on Hot Reload with status ${error.statusCode} (${error.statusMessage}).`
+          const status = error.statusCode ?? 502
+          const statusText = error.statusMessage ?? 'Bad Gateway'
+
+          let headline = `Failed to render section on Hot Reload with status ${status} (${statusText}).`
           if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
           if (error.data?.url) headline += `\nURL: ${error.data.url}`
 
           const cause = error.cause as undefined | Error
           renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
 
-          await sendError(event, error)
-          return null
+          return new Response(null, {status, statusText})
         })
     }
   })
