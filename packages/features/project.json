@@ -10,8 +10,11 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "command": "pnpm cucumber-esm",
-        "cwd": "packages/features"
+        "command": "pnpm cucumber",
+        "cwd": "packages/features",
+        "env": {
+          "NODE_OPTIONS": "--loader ts-node/esm"
+        }
       }
     },
     "lint": {

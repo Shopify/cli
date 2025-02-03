@@ -82,3 +82,12 @@ export function getIdentityTokenInformation(): {accessToken: string; refreshToke
 export function jsonOutputEnabled(environment = getEnvironmentVariables()): boolean {
   return sniffForJson() || isTruthy(environment[environmentVariables.json])
 }
+
+/**
+ * If true, the CLI should not use the Partners API.
+ *
+ * @returns True if the SHOPIFY_CLI_NEVER_USE_PARTNERS_API environment variable is set.
+ */
+export function blockPartnersAccess(): boolean {
+  return isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])
+}
