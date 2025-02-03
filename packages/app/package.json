@@ -83,7 +83,7 @@
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
     "@types/ws": "^8.5.13",
-    "@vitest/coverage-istanbul": "^1.6.0"
+    "@vitest/coverage-istanbul": "^3.0.4"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

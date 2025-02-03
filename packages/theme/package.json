@@ -51,7 +51,7 @@
     "yaml": "2.7.0"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^1.6.0",
+    "@vitest/coverage-istanbul": "^3.0.4",
     "node-stream-zip": "^1.15.0"
   },
   "engines": {
