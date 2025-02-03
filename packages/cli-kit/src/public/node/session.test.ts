@@ -226,7 +226,7 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
 
     // Then
     expect(got).toEqual({
-      appToken: 'app_management_token',
+      appManagementToken: 'app_management_token',
       businessPlatformToken: 'business_platform_token',
       userId: '1234-5678',
     })

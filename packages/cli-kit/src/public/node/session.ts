@@ -62,18 +62,18 @@ ${outputToken.json(scopes)}
 /**
  * Ensure that we have a valid session to access the App Management API.
  *
+ * @param options - Optional extra options to use.
  * @param appManagementScopes - Optional array of extra scopes to authenticate with.
  * @param businessPlatformScopes - Optional array of extra scopes to authenticate with.
  * @param env - Optional environment variables to use.
- * @param options - Optional extra options to use.
  * @returns The access token for the App Management API.
  */
 export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
+  options: EnsureAuthenticatedAdditionalOptions = {},
   appManagementScopes: AppManagementAPIScope[] = [],
   businessPlatformScopes: BusinessPlatformScope[] = [],
   env = process.env,
-  options: EnsureAuthenticatedAdditionalOptions = {},
-): Promise<{appToken: string; userId: string; businessPlatformToken: string}> {
+): Promise<{appManagementToken: string; userId: string; businessPlatformToken: string}> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
 ${outputToken.json(appManagementScopes)}
 `)
@@ -87,7 +87,7 @@ ${outputToken.json(appManagementScopes)}
   }
 
   return {
-    appToken: tokens.appManagement,
+    appManagementToken: tokens.appManagement,
     userId: tokens.userId,
     businessPlatformToken: tokens.businessPlatform,
   }

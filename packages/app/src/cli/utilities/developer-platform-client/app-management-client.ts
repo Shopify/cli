@@ -171,22 +171,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
 
-      const {appToken, userId, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
-      const userAccount = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+      const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+      const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
-      if (userAccount.currentUserAccount) {
+      const userInfoResult = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+
+      if (userInfoResult.currentUserAccount) {
         this._session = {
-          token: appToken,
+          token: appManagementToken,
           businessPlatformToken,
           accountInfo: {
             type: 'UserAccount',
-            email: userAccount.currentUserAccount.email,
+            email: userInfoResult.currentUserAccount.email,
           },
           userId,
         }
       } else {
         this._session = {
-          token: appToken,
+          token: appManagementToken,
           businessPlatformToken,
           accountInfo: {
             type: 'UnknownAccount',
@@ -207,15 +209,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const {appToken, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform(
-      [],
-      [],
-      process.env,
-      {noPrompt: true},
-    )
+    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true})
     const session = await this.session()
-    session.token = appToken
-    session.businessPlatformToken = businessPlatformToken
+    session.token = result.appManagementToken
+    session.businessPlatformToken = result.businessPlatformToken
 
     return session.token
   }
