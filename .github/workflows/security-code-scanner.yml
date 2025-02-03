@@ -1,9 +1,9 @@
 name: 'Shopify Security Code Scanner'
 
-on: [push]
+on: [ push ]
 
 jobs:
   Security-Code-Scanner:
-    uses: shopify/security-code-scanner/.github/workflows/main.yml@main
+    uses: shopify/security-code-scanner/.github/workflows/main.yml@5f7400975eed0698f96a6f718438353ae643a9d0 # pin@main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
