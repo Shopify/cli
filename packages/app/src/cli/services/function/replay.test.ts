@@ -10,7 +10,9 @@ import {readFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, beforeAll, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {readdirSync} from 'fs'
+import {getLogsDir} from '@shopify/cli-kit/node/logs'
+
+import {existsSync, readdirSync} from 'fs'
 
 vi.mock('fs')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -111,6 +113,7 @@ describe('replay', () => {
 
   test('throws error if no logs available', async () => {
     // Given
+    mockFileOperations([])
 
     // When/Then
     await expect(async () => {
@@ -122,7 +125,24 @@ describe('replay', () => {
         json: true,
         watch: false,
       })
-    }).rejects.toThrow()
+    }).rejects.toThrow(new AbortError(`No logs found in ${getLogsDir()}`))
+  })
+
+  test('throws error if log directory does not exist', async () => {
+    // Given
+    vi.mocked(existsSync).mockReturnValue(false)
+
+    // When/Then
+    await expect(async () => {
+      await replay({
+        app: testAppLinked(),
+        extension,
+        stdout: false,
+        path: 'test-path',
+        json: true,
+        watch: false,
+      })
+    }).rejects.toThrow(new AbortError(`No logs found in ${getLogsDir()}`))
   })
 
   test('delegates to renderReplay when watch is true', async () => {
@@ -285,6 +305,7 @@ function expectFunctionRun(functionExtension: ExtensionInstance<FunctionConfigTy
 }
 
 function mockFileOperations(data: {run: FunctionRunData; path: string}[]) {
+  vi.mocked(existsSync).mockReturnValue(true)
   vi.mocked(readdirSync).mockReturnValue([...data].reverse().map(({path}) => path) as any)
   vi.mocked(readFile).mockImplementation((path) => {
     const run = data.find((file) => path.endsWith(file.path))
