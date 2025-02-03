@@ -5,7 +5,7 @@ import {strict as assert} from 'assert'
 const errorMessage = `
 SNAPSHOT TEST FAILED!
 
-The result of 'yarn shopify commands' has changed! We run this to check that
+The result of 'shopify commands' has changed! We run this to check that
 all commands can load successfully.
 
 It's normal to see this test fail when you add or remove a command in the CLI.
@@ -20,21 +20,12 @@ the diff below and figure out what is broken.
 `
 
 When(/I list the available commands/, async function () {
-  const commandFlags = ['commands', '--no-header', '--columns=Command,Plugin']
+  const commandFlags = ['commands', '--tree']
   this.commandResult = (await this.execCLI(commandFlags)).stdout
 })
 
 Then(/I see all commands matching the snapshot/, async function () {
   const snapshot: string = await fs.readFile('snapshots/commands.txt', {encoding: 'utf8'})
-  const normalize = (value: string) =>
-    value
-      .replace(/\r\n/g, '\n')
-      .replace(/\s/g, '')
-      .trimEnd()
-      .split('\n')
-      // temporary workaround while hydrogen is being bundled
-      .filter((line) => !line.includes('hydrogen'))
-      .join('\n')
-
+  const normalize = (value: string) => value.replace(/\r\n/g, '\n').trimEnd()
   assert.equal(normalize(snapshot), normalize(this.commandResult), errorMessage)
 })
