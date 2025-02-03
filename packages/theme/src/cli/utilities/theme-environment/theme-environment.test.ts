@@ -99,6 +99,9 @@ describe('setupDevServer', () => {
     },
   }
 
+  const targetQuerystring = '_fd=0&pb=0'
+  const referer = `https://${defaultServerContext.session.storeFqdn}`
+
   test('should upload the development theme to remote', async () => {
     // Given
     const context: DevServerContext = {
@@ -301,11 +304,9 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
-      const referer = `https://${defaultServerContext.session.storeFqdn}`
-      const targetQuerystring = '?_fd=0&pb=0'
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js${targetQuerystring}`,
+        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -324,7 +325,7 @@ describe('setupDevServer', () => {
       await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css${targetQuerystring}`,
+        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css?${targetQuerystring}`,
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -367,9 +368,55 @@ describe('setupDevServer', () => {
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
       expect(fetchStub).toHaveBeenCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&_fd=0&pb=0`,
+        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&${targetQuerystring}`,
         expect.any(Object),
       )
+    })
+
+    test('falls back to proxying if a rendering request fails with 4xx status', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      fetchStub.mockResolvedValueOnce(new Response(null, {status: 302}))
+      vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
+
+      const eventPromise = dispatchEvent('/non-renderable-path')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).toHaveBeenCalled()
+
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        `https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`,
+        expect.objectContaining({
+          method: 'GET',
+          redirect: 'manual',
+          headers: {referer},
+        }),
+      )
+
+      await expect(eventPromise).resolves.toHaveProperty('status', 302)
+    })
+
+    test('forwards rendering error after proxy failure', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      fetchStub.mockResolvedValueOnce(new Response(null, {status: 404}))
+      vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
+
+      const eventPromise = dispatchEvent('/non-renderable-path')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).toHaveBeenCalled()
+
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        `https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`,
+        expect.objectContaining({
+          method: 'GET',
+          redirect: 'manual',
+          headers: {referer},
+        }),
+      )
+
+      await expect(eventPromise).resolves.toHaveProperty('status', 401)
     })
   })
 })
