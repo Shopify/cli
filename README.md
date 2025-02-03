@@ -15,7 +15,7 @@ Learn more in the [commands docs](./packages/cli/README.md#commands).
 
 ### Before you begin ###
 
-Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/getting-started) (or another package manager of your choice).
+Install the latest version of [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/getting-started) (or another package manager of your choice).
 
 <p>&nbsp;</p>
 
