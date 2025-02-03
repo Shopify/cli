@@ -167,6 +167,7 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
+    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if requesting partners and is expired', async () => {
@@ -184,6 +185,7 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
+    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if requesting storefront and is expired', async () => {
@@ -201,6 +203,7 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
+    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if requesting admin and is expired', async () => {
@@ -218,6 +221,7 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
+    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if session does not include requested store', async () => {
@@ -235,5 +239,6 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
+    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 })
