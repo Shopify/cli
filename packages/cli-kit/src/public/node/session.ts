@@ -62,25 +62,37 @@ ${outputToken.json(scopes)}
 /**
  * Ensure that we have a valid session to access the App Management API.
  *
- * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param appManagementScopes - Optional array of extra scopes to authenticate with.
+ * @param businessPlatformScopes - Optional array of extra scopes to authenticate with.
  * @param env - Optional environment variables to use.
  * @param options - Optional extra options to use.
  * @returns The access token for the App Management API.
  */
-export async function ensureAuthenticatedAppManagement(
-  scopes: AppManagementAPIScope[] = [],
+export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
+  appManagementScopes: AppManagementAPIScope[] = [],
+  businessPlatformScopes: BusinessPlatformScope[] = [],
   env = process.env,
   options: EnsureAuthenticatedAdditionalOptions = {},
-): Promise<{token: string; userId: string}> {
+): Promise<{appToken: string; userId: string; businessPlatformToken: string}> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
-${outputToken.json(scopes)}
+${outputToken.json(appManagementScopes)}
 `)
-  const tokens = await ensureAuthenticated({appManagementApi: {scopes}}, env, options)
+  const tokens = await ensureAuthenticated(
+    {appManagementApi: {scopes: appManagementScopes}, businessPlatformApi: {scopes: businessPlatformScopes}},
+    env,
+    options,
+  )
   if (!tokens) {
     throw new BugError('No App Management token found after ensuring authenticated')
   }
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  return {token: tokens.appManagement!, userId: tokens.userId}
+
+  return {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    appToken: tokens.appManagement!,
+    userId: tokens.userId,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    businessPlatformToken: tokens.businessPlatform!,
+  }
 }
 
 /**

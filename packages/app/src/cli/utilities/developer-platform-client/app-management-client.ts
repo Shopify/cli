@@ -118,7 +118,10 @@ import {
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
-import {ensureAuthenticatedAppManagement, ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {
+  ensureAuthenticatedAppManagementAndBusinessPlatform,
+  ensureAuthenticatedBusinessPlatform,
+} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -171,20 +174,23 @@ export class AppManagementClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
-      const userInfoResult = await businessPlatformRequestDoc(UserInfo, await this.businessPlatformToken())
-      const {token, userId} = await ensureAuthenticatedAppManagement()
-      if (userInfoResult.currentUserAccount) {
+
+      const {appToken, userId, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+      this._businessPlatformToken = businessPlatformToken
+      const userAccount = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+
+      if (userAccount.currentUserAccount) {
         this._session = {
-          token,
+          token: appToken,
           accountInfo: {
             type: 'UserAccount',
-            email: userInfoResult.currentUserAccount.email,
+            email: userAccount.currentUserAccount.email,
           },
           userId,
         }
       } else {
         this._session = {
-          token,
+          token: appToken,
           accountInfo: {
             type: 'UnknownAccount',
           },
@@ -200,10 +206,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const {token} = await ensureAuthenticatedAppManagement([], process.env, {noPrompt: true})
+    const {appToken, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform(
+      [],
+      [],
+      process.env,
+      {noPrompt: true},
+    )
     const session = await this.session()
-    if (token) {
-      session.token = token
+    if (appToken) {
+      session.token = appToken
+    }
+    if (businessPlatformToken) {
+      this._businessPlatformToken = businessPlatformToken
     }
     return session.token
   }
