@@ -177,7 +177,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
       const {appToken, userId, businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
       this._businessPlatformToken = businessPlatformToken
-      const userAccount = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+      const userAccount = await businessPlatformRequestDoc(UserInfo, businessPlatformToken, undefined, '1h')
 
       if (userAccount.currentUserAccount) {
         this._session = {
@@ -272,6 +272,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       FindOrganizations,
       await this.businessPlatformToken(),
       variables,
+      '1h',
     )
     const org = organizationResult.currentUserAccount?.organization
     if (!org) {
@@ -324,7 +325,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), undefined, '1h')
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
