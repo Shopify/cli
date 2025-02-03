@@ -2,7 +2,6 @@ export {
   getLastFrameAfterUnmount,
   render,
   Stdin,
-  waitFor,
   waitForInputsToBeReady,
   waitForContent,
   sendInputAndWait,
