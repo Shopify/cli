@@ -117,7 +117,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     })
 
   // If there is no cache config for this query, just execute it and return the result.
-  if (cacheOptions === undefined) {
+  if (cacheOptions === undefined || noCacheFlagIsPresent()) {
     return executeWithTimer()
   }
 
@@ -180,4 +180,8 @@ export async function graphqlRequestDoc<TResult, TVariables extends Variables>(
     ...options,
     queryAsString: resolveRequestDocument(options.query).query,
   })
+}
+
+function noCacheFlagIsPresent(argv = process.argv): boolean {
+  return argv.includes('--no-cache')
 }
