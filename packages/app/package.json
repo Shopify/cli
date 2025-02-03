@@ -65,7 +65,7 @@
     "diff": "5.2.0",
     "esbuild": "0.24.2",
     "express": "4.21.2",
-    "graphql-request": "5.2.0",
+    "graphql-request": "6.1.0",
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
     "ignore": "6.0.2",
