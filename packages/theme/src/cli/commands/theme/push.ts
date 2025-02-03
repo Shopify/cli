@@ -77,7 +77,7 @@ export default class Push extends ThemeCommand {
     }),
     ignore: Flags.string({
       char: 'x',
-      description: 'Skip downloading the specified files (Multiple flags allowed).',
+      description: 'Skip uploading the specified files (Multiple flags allowed).',
       multiple: true,
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
