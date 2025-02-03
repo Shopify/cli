@@ -51,7 +51,7 @@
     "open-api-docs": "nx open-api-docs",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx test",
     "test:js": "nx test:js",
     "test:coverage": "nx test:coverage",
