@@ -1164,6 +1164,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
 
 export const testPartnersUserSession: PartnersSession = {
   token: 'token',
+  businessPlatformToken: 'businessPlatformToken',
   accountInfo: {
     type: 'UserAccount',
     email: 'partner@shopify.com',
@@ -1435,6 +1436,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
 
 export const testPartnersServiceSession: PartnersSession = {
   token: 'partnersToken',
+  businessPlatformToken: 'businessPlatformToken',
   accountInfo: {
     type: 'ServiceAccount',
     orgName: 'organization',
