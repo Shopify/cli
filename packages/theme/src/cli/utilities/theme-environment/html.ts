@@ -1,4 +1,4 @@
-import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
+import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
 import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getErrorPage} from './hot-reload/error-page.js'
@@ -7,6 +7,7 @@ import {logRequestLine} from '../log-request-line.js'
 import {defineEventHandler, getCookie, type H3Error} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -32,6 +33,28 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {
+        if (response.status >= 400 && response.status < 500) {
+          // We have tried to render a route that can't be handled by SFR.
+          // Ideally, this should be caught by `canProxyRequest` in `proxy.ts`,
+          // but we can't be certain for all cases (e.g. an arbitrary app's route).
+          // Fallback to proxying to see if that works:
+
+          outputDebug(`Render failed for ${event.path} with ${response.status}, trying proxy...`)
+
+          // eslint-disable-next-line promise/no-nesting
+          const proxyResponse = await proxyStorefrontRequest(event, ctx).catch(
+            (error: H3Error) => new Response(null, {status: error.statusCode ?? 502}),
+          )
+
+          if (proxyResponse.status < 400) {
+            outputDebug(`Proxy status: ${proxyResponse.status}. Returning proxy response.`)
+            logRequestLine(event, proxyResponse)
+            return proxyResponse
+          } else {
+            outputDebug(`Proxy status: ${proxyResponse.status}. Returning render error.`)
+          }
+        }
+
         logRequestLine(event, response)
 
         return patchRenderingResponse(ctx, response, (body) => {
