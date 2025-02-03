@@ -1,4 +1,4 @@
-import {Exact, GraphQLVariables, graphqlRequest, graphqlRequestDoc} from './graphql.js'
+import {CacheTTL, Exact, GraphQLVariables, graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {handleDeprecations} from './partners.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -27,17 +27,23 @@ async function setupRequest(token: string) {
  * @param query - GraphQL query to execute.
  * @param token - Business Platform token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param cacheTTL - Time to live for the cache in milliseconds.
+ * @param cacheExtraKey - Extra cache key to use for the cache.
  * @returns The response of the query of generic type <T>.
  */
 export async function businessPlatformRequest<T>(
   query: string,
   token: string,
   variables?: GraphQLVariables,
+  cacheTTL?: CacheTTL,
+  cacheExtraKey?: string,
 ): Promise<T> {
   return graphqlRequest<T>({
     ...(await setupRequest(token)),
     query,
     variables,
+    cacheTTL,
+    cacheExtraKey,
   })
 }
 
@@ -47,17 +53,23 @@ export async function businessPlatformRequest<T>(
  * @param query - GraphQL query to execute.
  * @param token - Business Platform token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param cacheTTL - Time to live for the cache in milliseconds.
+ * @param cacheExtraKey - Extra cache key to use for the cache.
  * @returns The response of the query of generic type <TResult>.
  */
 export async function businessPlatformRequestDoc<TResult, TVariables extends Variables>(
   query: TypedDocumentNode<TResult, TVariables>,
   token: string,
   variables?: TVariables,
+  cacheTTL?: CacheTTL,
+  cacheExtraKey?: string,
 ): Promise<TResult> {
   return graphqlRequestDoc<TResult, TVariables>({
     ...(await setupRequest(token)),
     query,
     variables,
+    cacheTTL,
+    cacheExtraKey,
   })
 }
 

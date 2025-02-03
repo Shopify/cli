@@ -3,6 +3,8 @@ import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graph
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
+import {nonRandomUUID} from '../crypto.js'
+import {cacheRetrieveOrRepopulate, GraphQLRequestKey} from '../../../private/node/conf-store.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -23,12 +25,16 @@ export interface GraphQLVariables {
 
 export type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
 
+export type CacheTTL = '1h' | '6h' | '12h' | '1d' | '3d' | '7d' | '14d' | '30d'
+
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
   url: string
   token?: string
   addedHeaders?: {[header: string]: string}
   responseOptions?: GraphQLResponseOptions<TResult>
+  cacheTTL?: CacheTTL
+  cacheExtraKey?: string
 }
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
@@ -88,19 +94,43 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     }
   }
 
-  return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    const response = await retryAwareRequest(
-      {request: performRequest, url},
-      responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-      unauthorizedHandler,
-    )
+  const executeWithTimer = () =>
+    runWithTimer('cmd_all_timing_network_ms')(async () => {
+      const response = await retryAwareRequest(
+        {request: performRequest, url},
+        responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+        unauthorizedHandler,
+      )
 
-    if (responseOptions?.onResponse) {
-      responseOptions.onResponse(response)
-    }
+      if (responseOptions?.onResponse) {
+        responseOptions.onResponse(response)
+      }
 
-    return response.data
-  })
+      return response.data
+    })
+
+  const {cacheTTL, cacheExtraKey} = options
+
+  // If there is no cache config for this query, just execute it and return the result.
+  if (cacheTTL === undefined) {
+    return executeWithTimer()
+  }
+
+  // If there is a cache config for this query, cache the result.
+  const queryHash = nonRandomUUID(JSON.stringify(queryAsString))
+  const variablesHash = nonRandomUUID(JSON.stringify(variables ?? {}))
+  const cacheKey: GraphQLRequestKey = `q-${queryHash}-${variablesHash}-${cacheExtraKey ?? ''}`
+
+  const result = await cacheRetrieveOrRepopulate(
+    cacheKey,
+    async () => {
+      const result = await executeWithTimer()
+      return JSON.stringify(result)
+    },
+    cacheTTLToMs(cacheTTL),
+  )
+
+  return JSON.parse(result) as TResult
 }
 
 async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) {
@@ -142,4 +172,27 @@ export async function graphqlRequestDoc<TResult, TVariables extends Variables>(
     ...options,
     queryAsString: resolveRequestDocument(options.query).query,
   })
+}
+
+function cacheTTLToMs(cacheTTL: CacheTTL) {
+  const oneHour = 1000 * 60 * 60
+  const oneDay = 1000 * 60 * 60 * 24
+  switch (cacheTTL) {
+    case '1h':
+      return oneHour
+    case '6h':
+      return oneHour * 6
+    case '12h':
+      return oneHour * 12
+    case '1d':
+      return oneDay
+    case '3d':
+      return oneDay * 3
+    case '7d':
+      return oneDay * 7
+    case '14d':
+      return oneDay * 14
+    case '30d':
+      return oneDay * 30
+  }
 }
