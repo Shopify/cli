@@ -8,13 +8,20 @@ export type AppVersionsQueryVariables = Types.Exact<{
 }>
 
 export type AppVersionsQuery = {
-  app: {id: string; activeRelease: {id: string; version: {id: string}}}
-  versions: {
+  app: {
     id: string
-    createdAt: string
-    createdBy?: string | null
-    metadata: {message?: string | null; versionTag?: string | null}
-  }[]
+    activeRelease: {id: string; version: {id: string}}
+    versions?: {
+      edges: {
+        node: {
+          id: string
+          createdAt: string
+          createdBy?: string | null
+          metadata: {message?: string | null; versionTag?: string | null}
+        }
+      }[]
+    } | null
+  }
 }
 
 export const AppVersions = {
@@ -70,34 +77,50 @@ export const AppVersions = {
                     ],
                   },
                 },
-                {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: {kind: 'Name', value: 'versions'},
-            arguments: [
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'appId'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {kind: 'Field', name: {kind: 'Name', value: 'id'}},
-                {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},
-                {kind: 'Field', name: {kind: 'Name', value: 'createdBy'}},
                 {
                   kind: 'Field',
-                  name: {kind: 'Name', value: 'metadata'},
+                  name: {kind: 'Name', value: 'versions'},
+                  arguments: [
+                    {kind: 'Argument', name: {kind: 'Name', value: 'first'}, value: {kind: 'IntValue', value: '20'}},
+                  ],
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      {kind: 'Field', name: {kind: 'Name', value: 'message'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'edges'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'Field',
+                              name: {kind: 'Name', value: 'node'},
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'createdBy'}},
+                                  {
+                                    kind: 'Field',
+                                    name: {kind: 'Name', value: 'metadata'},
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {kind: 'Field', name: {kind: 'Name', value: 'message'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
+                                        {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                      ],
+                                    },
+                                  },
+                                  {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                                ],
+                              },
+                            },
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },

@@ -469,20 +469,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
         organizationId,
         title,
         appVersions: {
-          nodes: result.versions.map((version) => {
-            return {
-              createdAt: version.createdAt,
-              createdBy: {
-                displayName: version.createdBy,
-              },
-              versionTag: version.metadata.versionTag,
-              status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
-              versionId: version.id,
-              message: version.metadata.message,
-            }
-          }),
+          nodes:
+            result.app.versions?.edges.map((edge) => {
+              const version = edge.node
+              return {
+                createdAt: version.createdAt,
+                createdBy: {
+                  displayName: version.createdBy,
+                },
+                versionTag: version.metadata.versionTag,
+                status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
+                versionId: version.id,
+                message: version.metadata.message,
+              }
+            }) ?? [],
           pageInfo: {
-            totalResults: result.versions.length,
+            totalResults: result.app.versions?.edges.length ?? 0,
           },
         },
       },
