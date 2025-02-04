@@ -484,7 +484,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
               }
             }) ?? [],
           pageInfo: {
-            totalResults: result.app.versions?.edges.length ?? 0,
+            totalResults: result.app.versionsCount,
           },
         },
       },

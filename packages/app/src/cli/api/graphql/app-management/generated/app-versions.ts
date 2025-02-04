@@ -10,6 +10,7 @@ export type AppVersionsQueryVariables = Types.Exact<{
 export type AppVersionsQuery = {
   app: {
     id: string
+    versionsCount: number
     activeRelease: {id: string; version: {id: string}}
     versions?: {
       edges: {
@@ -125,6 +126,7 @@ export const AppVersions = {
                     ],
                   },
                 },
+                {kind: 'Field', name: {kind: 'Name', value: 'versionsCount'}},
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
               ],
             },
