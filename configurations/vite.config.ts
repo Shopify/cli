@@ -12,7 +12,11 @@ const TIMEOUTS = {
   debug: 180000,
 }
 
-export default function config(packagePath: string) {
+interface ConfigOptions {
+  poolStrategy: 'threads' | 'forks'
+}
+
+export default function config(packagePath: string, {poolStrategy}: ConfigOptions = {poolStrategy: 'threads'}) {
   // always treat environment as one that doesn't support hyperlinks -- otherwise assertions are hard to keep consistent
   process.env['FORCE_HYPERLINK'] = '0'
   process.env['FORCE_COLOR'] = '1'
@@ -38,7 +42,7 @@ export default function config(packagePath: string) {
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
       reporters: ['verbose', 'hanging-process'],
-      threads: false,
+      pool: poolStrategy,
       coverage: {
         provider: 'istanbul',
         include: ['**/src/**'],
