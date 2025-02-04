@@ -67,5 +67,12 @@ export const aliases = (packagePath: string) => {
       },
     },
     {find: '@shopify/cli-kit', replacement: path.join(packagePath, '../cli-kit/src/index')},
+    {
+      find: /@shopify\/theme\/(.+)/,
+      replacement: (importedModule: string) => {
+        return path.join(packagePath, `../theme/src/${importedModule.replace('@shopify/theme/', '')}`)
+      },
+    },
+    {find: '@shopify/theme', replacement: path.join(packagePath, '../theme/src/index')},
   ]
 }

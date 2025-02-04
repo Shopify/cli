@@ -2,6 +2,7 @@
     "extends": "./tsconfig.json",
     "exclude": ["**/*.test.ts"],
     "references": [
-      {"path": "../cli-kit"}
+      {"path": "../cli-kit"},
+      {"path": "../theme"}
     ]
 }
