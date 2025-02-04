@@ -199,7 +199,7 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
     stderr: options.stderr,
     signal: options.signal,
   }
-  let args = ['install']
+  let args = [options.packageManager === 'yarn' ? 'add' : 'install']
   if (options.args) {
     args = args.concat(options.args)
   }
