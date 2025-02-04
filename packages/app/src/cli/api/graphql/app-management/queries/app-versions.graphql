@@ -7,14 +7,18 @@ query AppVersions($appId: ID!) {
         id
       }
     }
-  }
-  versions(appId: $appId) {
-    id
-    createdAt
-    createdBy
-    metadata {
-      message
-      versionTag
+    versions(first: 20) {
+      edges {
+        node {
+          id
+          createdAt
+          createdBy
+          metadata {
+            message
+              versionTag
+          }
+        }
+      }
     }
   }
 }
