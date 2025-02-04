@@ -20,5 +20,6 @@ query AppVersions($appId: ID!) {
         }
       }
     }
+    versionsCount
   }
 }
