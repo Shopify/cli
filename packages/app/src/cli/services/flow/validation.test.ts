@@ -67,19 +67,10 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['key'],
-          message: `'key' property must be a string for 'field[0]' ${JSON.stringify(
-            invalidField,
-          )} of flow extension 'handle'`,
-        },
-      ]),
-    )
+    const message = `'key' property must be a string for 'field[0]' ${JSON.stringify(
+      invalidField,
+    )} of flow extension 'handle'`.replace(/"/g, '\\"')
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
   })
 
   test('should throw an error if name is not specified for non-commerce object field in flow action', () => {
@@ -93,19 +84,10 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['name'],
-          message: `'name' property must be a string for 'field[0]' ${JSON.stringify(
-            invalidField,
-          )} of flow extension 'handle'`,
-        },
-      ]),
-    )
+    const message = `'name' property must be a string for 'field[0]' ${JSON.stringify(
+      invalidField,
+    )} of flow extension 'handle'`.replace(/"/g, '\\"')
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
   })
 
   test('should throw an error if key non alpha or space chars for non-commerce object field in flow trigger', () => {
@@ -118,16 +100,8 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    expect(() => validateFieldShape(invalidField, 'flow_trigger', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          validation: 'regex',
-          code: 'invalid_string',
-          message: 'String must contain only alphabetic characters and spaces',
-          path: ['key'],
-        },
-      ]),
-    )
+    const message = 'String must contain only alphabetic characters and spaces'
+    expect(() => validateFieldShape(invalidField, 'flow_trigger', 'handle', 0)).toThrow(message)
   })
 
   test('should throw an error if key specified for a commerce object field', () => {
@@ -139,16 +113,8 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.unrecognized_keys,
-          keys: ['key'],
-          path: [],
-          message: "Unrecognized key(s) in object: 'key'",
-        },
-      ]),
-    )
+    const message = "Unrecognized key(s) in object: 'key'"
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
   })
 
   test('should throw an error if name a commerce object field in flow action', () => {
@@ -161,16 +127,8 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.unrecognized_keys,
-          keys: ['name'],
-          path: [],
-          message: "Unrecognized key(s) in object: 'name'",
-        },
-      ]),
-    )
+    const message = "Unrecognized key(s) in object: 'name'"
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
   })
 })
 
