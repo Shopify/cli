@@ -373,6 +373,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       configSchema,
       remoteFlags: this.remoteFlags,
       hiddenConfig,
+      devApplicationURLs: this.previousApp?.devApplicationURLs,
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types

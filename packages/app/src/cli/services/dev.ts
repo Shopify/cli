@@ -1,8 +1,8 @@
 import {
-  FrontendURLOptions,
   ApplicationURLs,
-  generateFrontendURL,
+  FrontendURLOptions,
   generateApplicationURLs,
+  generateFrontendURL,
   getURLs,
   shouldOrPromptUpdateURLs,
   startTunnelPlugin,
@@ -278,7 +278,11 @@ async function handleUpdatingOfPartnerUrls(
       })
       // When running dev app urls are pushed directly to API Client config instead of creating a new app version
       // so current app version and API Client config will have diferent url values.
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
+      if (shouldUpdateURLs) {
+        await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
+        // eslint-disable-next-line require-atomic-updates
+        localApp.devApplicationURLs = newURLs
+      }
     }
   }
   return shouldUpdateURLs
