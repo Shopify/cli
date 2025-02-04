@@ -1,5 +1,6 @@
 import {
   ensureAuthenticatedAdmin,
+  ensureAuthenticatedAppManagementAndBusinessPlatform,
   ensureAuthenticatedBusinessPlatform,
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
@@ -208,5 +209,37 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
+  })
+})
+
+describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
+  test('returns app management and business platform tokens if success', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({
+      appManagement: 'app_management_token',
+      businessPlatform: 'business_platform_token',
+      userId: '1234-5678',
+    })
+
+    // When
+    const got = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+
+    // Then
+    expect(got).toEqual({
+      appManagementToken: 'app_management_token',
+      businessPlatformToken: 'business_platform_token',
+      userId: '1234-5678',
+    })
+  })
+
+  test('throws error if there are no tokens', async () => {
+    // Given
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({userId: '1234-5678'})
+
+    // When
+    const got = ensureAuthenticatedAppManagementAndBusinessPlatform()
+
+    // Then
+    await expect(got).rejects.toThrow('No App Management or Business Platform token found after ensuring authenticated')
   })
 })
