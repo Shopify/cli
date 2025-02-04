@@ -111,7 +111,7 @@ describe('packageManagerFromUserAgent', () => {
 })
 
 describe('install', () => {
-  test('runs the install command', async () => {
+  test('runs the install command with npm', async () => {
     // Given
     const packageManager = 'npm'
     const directory = '/path/to/project'
@@ -125,6 +125,58 @@ describe('install', () => {
 
     // Then
     expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install', 'arg1'], {
+      cwd: directory,
+    })
+  })
+
+  test('runs the install command with yarn', async () => {
+    // Given
+    const packageManager = 'yarn'
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager,
+      args: ['arg1'],
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith(packageManager, ['add', 'arg1'], {
+      cwd: directory,
+    })
+  })
+
+  test('runs the install command for all packages with npm', async () => {
+    // Given
+    const packageManager = 'npm'
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager,
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith(packageManager, ['install'], {
+      cwd: directory,
+    })
+  })
+
+  test('runs the install command for all packages with yarn', async () => {
+    // Given
+    const packageManager = 'yarn'
+    const directory = '/path/to/project'
+
+    // When
+    await installNodeModules({
+      directory,
+      packageManager,
+    })
+
+    // Then
+    expect(mockedExec).toHaveBeenCalledWith(packageManager, [], {
       cwd: directory,
     })
   })
