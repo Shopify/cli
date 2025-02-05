@@ -45,7 +45,6 @@
     },
     "test:coverage": {
       "executor": "nx:run-commands",
-      "dependsOn": ["build"],
       "options": {
         "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
         "cwd": "packages/app"
@@ -53,7 +52,6 @@
     },
     "test:watch": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
       "options": {
         "command": "pnpm vitest watch",
         "cwd": "packages/app"
