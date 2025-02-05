@@ -8,6 +8,8 @@ import {
   cloudEnvironment,
   macAddress,
   isAppManagementDisabled,
+  getThemeKitAccessDomain,
+  opentelemetryDomain,
 } from './local.js'
 import {getPartnersToken} from '../environment.js'
 import {fileExists} from '../fs.js'
@@ -304,5 +306,53 @@ describe('ciPlatform', () => {
       name: 'azure',
       metadata: {},
     })
+  })
+})
+
+describe('getThemeKitAccessDomain', () => {
+  test('returns default domain when env var not set', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = getThemeKitAccessDomain(env)
+
+    // Then
+    expect(got).toBe('theme-kit-access.shopifyapps.com')
+  })
+
+  test('returns custom domain when env var set', () => {
+    // Given
+    const env = {SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN: 'theme-kit-staging.shopifyapps.com'}
+
+    // When
+    const got = getThemeKitAccessDomain(env)
+
+    // Then
+    expect(got).toBe('theme-kit-staging.shopifyapps.com')
+  })
+})
+
+describe('opentelemetryDomain', () => {
+  test('returns default domain when env var not set', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = opentelemetryDomain(env)
+
+    // Then
+    expect(got).toBe('https://otlp-http-production-cli.shopifysvc.com')
+  })
+
+  test('returns custom domain when env var set', () => {
+    // Given
+    const env = {SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT: 'custom-otel-domain.com'}
+
+    // When
+    const got = opentelemetryDomain(env)
+
+    // Then
+    expect(got).toBe('custom-otel-domain.com')
   })
 })
