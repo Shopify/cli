@@ -2,14 +2,14 @@ name: Build and Deploy GitHub Pages Site
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
     paths:
       - packages/cli-kit/package.json
       - "docs/**"
 
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
@@ -44,7 +44,7 @@ jobs:
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./docs
-          destination:	./docs/_site
+          destination: ./docs/_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

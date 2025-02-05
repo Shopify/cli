@@ -3,7 +3,8 @@ name: Update GraphQL Dependencies
 on:
   schedule:
     - cron: '13 0,6,12,18 * * *' # Runs at 00:13, 06:13, 12:13, and 18:13 UTC
-  workflow_dispatch:  # Allows manual triggering from the GitHub UI
+  workflow_dispatch:
+    # Allows manual triggering from the GitHub UI
 
 env:
   DEBUG: '1'
