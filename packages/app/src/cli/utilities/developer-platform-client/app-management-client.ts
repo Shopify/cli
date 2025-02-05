@@ -575,6 +575,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     organizationId,
     versionTag,
     message,
+    commitReference,
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
@@ -602,7 +603,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }
         }),
       },
-      metadata: {versionTag, message},
+      metadata: {versionTag, message, sourceControlUrl: commitReference},
     }
 
     const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
