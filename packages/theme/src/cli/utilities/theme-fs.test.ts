@@ -14,7 +14,9 @@ import chokidar from 'chokidar'
 import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import EventEmitter from 'events'
+import {fileURLToPath} from 'node:url'
 
 vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
@@ -34,10 +36,12 @@ beforeEach(async () => {
 })
 
 describe('theme-fs', () => {
+  const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
+
   describe('mountThemeFileSystem', async () => {
     test('mounts the local theme file system when the directory is valid', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -72,7 +76,7 @@ describe('theme-fs', () => {
 
     test('mounts an empty file system when the directory is invalid', async () => {
       // Given
-      const root = 'src/cli/utilities/invalid-directory'
+      const root = joinPath(locationOfThisFile, 'invalid-directory')
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -96,7 +100,7 @@ describe('theme-fs', () => {
 
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -112,7 +116,7 @@ describe('theme-fs', () => {
   describe('themeFileSystem.delete', () => {
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -127,7 +131,7 @@ describe('theme-fs', () => {
 
     test('does nothing when the theme file does not exist on local disk', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -142,7 +146,7 @@ describe('theme-fs', () => {
     test('delete updates files map before the async removeFile call', async () => {
       // Given
       const fileKey = 'assets/base.css'
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
       const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
@@ -164,7 +168,7 @@ describe('theme-fs', () => {
   describe('themeFileSystem.write', () => {
     test('"write" creates a file on the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
       // When
       const themeFileSystem = mountThemeFileSystem(root)
@@ -186,7 +190,7 @@ describe('theme-fs', () => {
 
     test('"write" creates an image file on the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
       const attachment = '0x123!'
       const buffer = Buffer.from(attachment, 'base64')
 
@@ -210,7 +214,7 @@ describe('theme-fs', () => {
 
     test('write updates files map before the async writeFile call', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures'
+      const root = joinPath(locationOfThisFile, 'fixtures')
       const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
 
@@ -240,7 +244,7 @@ describe('theme-fs', () => {
   describe('themeFileSystem.read', async () => {
     test('"read" returns the content from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
       const key = 'templates/404.json'
       const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
@@ -270,7 +274,7 @@ describe('theme-fs', () => {
 
   describe('themeFileSystem.applyIgnoreFilters', async () => {
     test('applies ignore filters to the theme files', async () => {
-      const root = 'src/cli/utilities/fixtures'
+      const root = joinPath(locationOfThisFile, 'fixtures')
       const files = [{key: 'assets/file.css'}, {key: 'assets/file.json'}]
       const options = {filters: {ignore: ['assets/*.css']}}
 
@@ -290,7 +294,7 @@ describe('theme-fs', () => {
   describe('readThemeFile', () => {
     test('reads theme file when it exists', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
       const key = 'templates/404.json'
 
       // When
@@ -312,7 +316,7 @@ describe('theme-fs', () => {
 
     test(`returns undefined when theme file doesn't exist`, async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
       const key = 'templates/invalid.json'
 
       // When
@@ -324,7 +328,7 @@ describe('theme-fs', () => {
 
     test('returns Buffer for image files', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
       const key = 'assets/sparkle.gif'
 
       // When
@@ -477,7 +481,7 @@ describe('theme-fs', () => {
   describe('hasRequiredThemeDirectories', () => {
     test(`returns true when directory has all required theme directories`, async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
       // When
       const result = await hasRequiredThemeDirectories(root)
@@ -488,7 +492,7 @@ describe('theme-fs', () => {
 
     test(`returns false when directory doesn't have all required theme directories`, async () => {
       // Given
-      const root = 'src/cli/utilities'
+      const root = locationOfThisFile
 
       // When
       const result = await hasRequiredThemeDirectories(root)
@@ -501,7 +505,7 @@ describe('theme-fs', () => {
   describe('handleFileDelete', () => {
     const themeId = '1'
     const adminSession = {token: 'token', storeFqdn: 'store.myshopify.com'}
-    const root = 'src/cli/utilities/fixtures/theme'
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
 
     beforeEach(() => {
       const mockWatcher = new EventEmitter()

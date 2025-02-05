@@ -1,8 +1,12 @@
 import {calculateChecksum, rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {readThemeFile} from './theme-fs.js'
 import {describe, expect, test} from 'vitest'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {fileURLToPath} from 'node:url'
 
 describe('asset-checksum', () => {
+  const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
+
   describe('calculateChecksum', async () => {
     const testCases = [
       {file: 'assets/base.css', expectedChecksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17'},
@@ -19,7 +23,7 @@ describe('asset-checksum', () => {
     testCases.forEach(({file, expectedChecksum}) => {
       test(`returns the expected checksum for "${file}"`, async () => {
         // Given
-        const root = 'src/cli/utilities/fixtures/theme'
+        const root = joinPath(locationOfThisFile, 'fixtures/theme')
         const content = await readThemeFile(root, file)
 
         // When
