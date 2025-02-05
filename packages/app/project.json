@@ -38,7 +38,6 @@
     },
     "test": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
       "options": {
         "command": "pnpm vitest run",
         "cwd": "packages/app"
