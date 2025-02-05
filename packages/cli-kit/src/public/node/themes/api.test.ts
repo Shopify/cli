@@ -1,5 +1,5 @@
 import {
-  createTheme,
+  themeCreate,
   themeDelete,
   fetchTheme,
   fetchThemes,
@@ -15,6 +15,7 @@ import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
+import {ThemeCreate} from '../../../cli/api/graphql/admin/generated/theme_create.js'
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
 import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
@@ -22,7 +23,7 @@ import {OnlineStoreThemeFileBodyInputType} from '../../../cli/api/graphql/admin/
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {test, vi, expect, describe} from 'vitest'
-import {adminRequestDoc, restRequest, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {adminRequestDoc, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ClientError} from 'graphql-request'
 
@@ -155,33 +156,39 @@ describe('fetchChecksums', () => {
   })
 })
 
-describe('createTheme', () => {
+describe('themeCreate', () => {
   const id = 123
   const name = 'new theme'
   const role = 'unpublished'
-  const processing = false
   const params: ThemeParams = {name, role}
 
   test('creates a theme', async () => {
     // Given
-    vi.mocked(restRequest).mockResolvedValueOnce({
-      json: {theme: {id, name, role, processing}},
-      status: 200,
-      headers: {},
-    })
-
-    vi.mocked(adminRequestDoc).mockResolvedValue({
-      themeFilesUpsert: {
-        upsertedThemeFiles: [],
+    vi.mocked(adminRequestDoc).mockResolvedValueOnce({
+      themeCreate: {
+        theme: {
+          id: `gid://shopify/OnlineStoreTheme/${id}`,
+          name,
+          role,
+        },
         userErrors: [],
       },
     })
 
     // When
-    const theme = await createTheme(params, session)
+    const theme = await themeCreate(params, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('POST', '/themes', session, {theme: params}, {})
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      ThemeCreate,
+      session,
+      {
+        name: params.name,
+        source: 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip',
+        role: 'UNPUBLISHED',
+      },
+      '2025-04',
+    )
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -189,34 +196,33 @@ describe('createTheme', () => {
     expect(theme!.processing).toBeFalsy()
   })
 
-  test('does not upload minimum theme assets when src is provided', async () => {
+  test('does not use skeletonThemeCdn when src is provided', async () => {
     // Given
-    vi.mocked(restRequest)
-      .mockResolvedValueOnce({
-        json: {theme: {id, name, role, processing}},
-        status: 200,
-        headers: {},
-      })
-      .mockResolvedValueOnce({
-        json: {
-          results: [],
+    vi.mocked(adminRequestDoc).mockResolvedValueOnce({
+      themeCreate: {
+        theme: {
+          id: `gid://shopify/OnlineStoreTheme/${id}`,
+          name,
+          role,
         },
-        status: 207,
-        headers: {},
-      })
+        userErrors: [],
+      },
+    })
 
     // When
-    const theme = await createTheme({...params, src: 'https://example.com/theme.zip'}, session)
+    const theme = await themeCreate({...params, src: 'https://example.com/theme.zip'}, session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'POST',
-      '/themes',
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      ThemeCreate,
       session,
-      {theme: {...params, src: 'https://example.com/theme.zip'}},
-      {},
+      {
+        name: params.name,
+        source: 'https://example.com/theme.zip',
+        role: 'UNPUBLISHED',
+      },
+      '2025-04',
     )
-    expect(restRequest).not.toHaveBeenCalledWith('PUT', `/themes/${id}/assets/bulk`, session, undefined, {})
   })
 })
 

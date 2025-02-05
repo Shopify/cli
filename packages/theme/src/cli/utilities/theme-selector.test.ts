@@ -5,7 +5,7 @@ import {test, describe, vi, expect} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {promptThemeName} from '@shopify/cli-kit/node/themes/utils'
-import {createTheme} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('./theme-selector/fetch.js')
 vi.mock('../services/local-storage.js')
@@ -91,7 +91,7 @@ describe('findOrSelectTheme', () => {
 
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(newThemeOption(session).value)
     vi.mocked(promptThemeName).mockResolvedValue(expectedThemeName)
-    vi.mocked(createTheme).mockResolvedValue(expectedTheme)
+    vi.mocked(themeCreate).mockResolvedValue(expectedTheme)
     vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
 
     // When
@@ -102,7 +102,7 @@ describe('findOrSelectTheme', () => {
     })
 
     // Then
-    expect(createTheme).toBeCalledWith({name: 'my new theme', role: 'unpublished'}, session)
+    expect(themeCreate).toBeCalledWith({name: 'my new theme', role: 'unpublished'}, session)
     expect(actualTheme).toBe(expectedTheme)
   })
 })

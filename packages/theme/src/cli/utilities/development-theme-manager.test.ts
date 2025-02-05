@@ -4,7 +4,7 @@ import {
   DEVELOPMENT_THEME_NOT_FOUND,
 } from './development-theme-manager.js'
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/local-storage.js'
-import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate, fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -31,7 +31,7 @@ describe('DevelopmentThemeManager', () => {
     vi.mocked(removeDevelopmentTheme).mockImplementation(() => undefined)
 
     vi.mocked(fetchTheme).mockImplementation((id: number) => Promise.resolve(themeTestDatabase[id]))
-    vi.mocked(createTheme).mockImplementation(({name, role}) =>
+    vi.mocked(themeCreate).mockImplementation(({name, role}) =>
       Promise.resolve(
         buildTheme({
           id: newThemeId,
