@@ -1,3 +1,3 @@
 import config from '../../configurations/vite.config'
 
-export default config(__dirname, {poolStrategy: 'forks'})
+export default config(__dirname)
