@@ -1,5 +1,5 @@
 import {getProxyStorefrontHeaders, patchRenderingResponse} from './proxy.js'
-import {getInMemoryTemplates, injectHotReloadScript} from './hot-reload/server.js'
+import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
 import {render} from './storefront-renderer.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
@@ -27,15 +27,11 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       .then(async (response) => {
         logRequestLine(event, response)
 
-        let html = await patchRenderingResponse(ctx, event, response)
+        const html = await patchRenderingResponse(ctx, event, response)
 
         assertThemeId(response, html, String(theme.id))
 
-        if (ctx.options.liveReload !== 'off') {
-          html = injectHotReloadScript(html)
-        }
-
-        return html
+        return handleHotReloadScriptInjection(html, ctx)
       })
       .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
         let headline = `Failed to render storefront with status ${error.statusCode} (${error.statusMessage}).`
@@ -49,18 +45,14 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         setResponseHeader(event, 'Content-Type', 'text/html')
 
         const [title, ...rest] = headline.split('\n') as [string, ...string[]]
-        let errorPageHtml = getErrorPage({
+        const errorPageHtml = getErrorPage({
           title,
           header: title,
           message: [...rest, cause?.message ?? error.message].join('<br>'),
           code: error.stack?.replace(`${error.message}\n`, '') ?? '',
         })
 
-        if (ctx.options.liveReload !== 'off') {
-          errorPageHtml = injectHotReloadScript(errorPageHtml)
-        }
-
-        return errorPageHtml
+        return handleHotReloadScriptInjection(errorPageHtml, ctx)
       })
   })
 }

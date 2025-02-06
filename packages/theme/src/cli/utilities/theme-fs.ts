@@ -2,6 +2,7 @@ import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
+import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -11,6 +12,7 @@ import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
+import {fileURLToPath} from 'node:url'
 import type {
   ThemeFileSystem,
   ThemeFileSystemOptions,
@@ -94,6 +96,13 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     adminSession: AdminSession,
     filePath: string,
   ) {
+    if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD && filePath === inferLocalHotReloadScriptPath()) {
+      // Trigger a full browser when the local hot reload logic changes.
+      // This only happens during local Shopifolk development.
+      triggerBrowserFullReload(filePath)
+      return
+    }
+
     const fileKey = getKey(filePath)
 
     notifyFileChange(fileKey)
@@ -173,10 +182,11 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
           })
           .catch(() => {})
       },
-      onSync: (fn) => {
+      onSync: (onSuccess, onError) => {
         syncPromise
           .then((didSync) => {
-            if (didSync) fn()
+            if (didSync) onSuccess()
+            else onError?.()
           })
           .catch(() => {})
       },
@@ -219,6 +229,11 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const directoriesToWatch = new Set(
     THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
   )
+
+  if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD) {
+    // Watch the local hot reload script to trigger full browser reloads on change.
+    directoriesToWatch.add(inferLocalHotReloadScriptPath())
+  }
 
   return {
     root,
@@ -416,4 +431,11 @@ function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
     outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
   )
+}
+
+export function inferLocalHotReloadScriptPath() {
+  const envVar = process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD
+  return !envVar || envVar === 'true'
+    ? joinPath(fileURLToPath(import.meta.url.split('/cli/')[0] ?? ''), 'theme-hot-reload/dist/theme-hot-reload.js')
+    : envVar
 }
