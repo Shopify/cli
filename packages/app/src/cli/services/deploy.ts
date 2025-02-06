@@ -12,7 +12,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import type {Task} from '@shopify/cli-kit/node/ui'
+import type {InlineToken, Task} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
   /** The app to be built and uploaded */
@@ -160,8 +160,9 @@ async function outputCompletionMessage({
   release: boolean
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 }) {
-  const linkAndMessage = [
-    {link: {label: uploadExtensionsBundleResult.versionTag ?? 'version', url: uploadExtensionsBundleResult.location}},
+  const {location} = uploadExtensionsBundleResult
+  const linkAndMessage: InlineToken[] = [
+    ...(location ? [{link: {label: uploadExtensionsBundleResult.versionTag ?? 'version', url: location}}] : []),
     uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
   ]
   if (release) {

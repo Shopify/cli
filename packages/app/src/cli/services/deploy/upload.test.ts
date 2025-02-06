@@ -132,20 +132,14 @@ describe('uploadExtensionsBundle', () => {
     })
   })
 
-  test("throws a specific error based on what is returned from partners when response doesn't include an app version", async () => {
+  test("throws a specific error based on what is returned from any backend when response doesn't include an app version", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const errorResponse: AppDeploySchema = {
         appDeploy: {
-          appVersion: {
-            uuid: 'uuid',
-            id: 1,
-            versionTag: 'version-tag',
-            location: 'location',
-            message: 'message',
-            appModuleVersions: [],
-          },
+          appVersion: null,
           userErrors: [
+            // Partners style errors
             {
               message: 'Missing expected key(s).',
               field: ['base'],
@@ -206,6 +200,13 @@ describe('uploadExtensionsBundle', () => {
                 },
               ],
             },
+            // App Management style errors
+            {
+              message: 'is not allowed',
+              category: 'invalid',
+              field: ['customers_redact_url'],
+              details: [],
+            },
           ],
         },
       }
@@ -242,6 +243,11 @@ describe('uploadExtensionsBundle', () => {
       } catch (error: any) {
         expect(error.message).toEqual("Version couldn't be created.")
         expect(error.customSections).toEqual([
+          // App Management error
+          {
+            body: 'customers_redact_url: is not allowed',
+          },
+          // Partners errors
           {
             title: 'amortizable-marketplace-ext',
             body: [

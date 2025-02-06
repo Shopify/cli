@@ -87,7 +87,7 @@ export interface AppDeploySchema {
           message: string
         }[]
       }[]
-    }
+    } | null
     userErrors: {
       field?: string[] | null
       message: string

@@ -106,7 +106,7 @@ export interface UploadExtensionsBundleOutput {
   validationErrors: UploadExtensionValidationError[]
   versionTag?: string | null
   message?: string | null
-  location: string
+  location: string | undefined
   deployError?: string
 }
 
@@ -179,17 +179,18 @@ export async function uploadExtensionsBundle(
     }
   }
 
-  const validationErrors = result.appDeploy.appVersion.appModuleVersions
-    .filter((ver) => ver.validationErrors.length > 0)
-    .map((ver) => {
-      return {uuid: ver.registrationUuid, errors: ver.validationErrors}
-    })
+  const validationErrors =
+    result.appDeploy.appVersion?.appModuleVersions
+      .filter((ver) => ver.validationErrors.length > 0)
+      .map((ver) => {
+        return {uuid: ver.registrationUuid, errors: ver.validationErrors}
+      }) ?? []
 
   return {
     validationErrors,
-    versionTag: result.appDeploy.appVersion.versionTag,
-    location: result.appDeploy.appVersion.location,
-    message: result.appDeploy.appVersion.message,
+    versionTag: result.appDeploy.appVersion?.versionTag,
+    location: result.appDeploy.appVersion?.location,
+    message: result.appDeploy.appVersion?.message,
     deployError,
   }
 }
@@ -252,7 +253,8 @@ function generalErrorsSection(
     if (errors.length === 1) {
       return [
         {
-          body: errors[0]?.message ?? '',
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          body: messageIncludingField(errors[0]!),
         },
       ]
     }
@@ -261,7 +263,7 @@ function generalErrorsSection(
       {
         body: {
           list: {
-            items: errors.map((error) => error.message),
+            items: errors.map((error) => messageIncludingField(error)),
           },
         },
       },
@@ -273,8 +275,7 @@ function generalErrorsSection(
 
 function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
   return errors.reduce<ErrorCustomSection[]>((sections, error) => {
-    const field = (error.field ?? ['unknown']).join('.').replace('extension_points', 'extensions.targeting')
-    const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
+    const errorMessage = messageIncludingField(error, ['unknown'])
 
     const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
     const specificationIdentifier = error.details.find(
@@ -372,6 +373,14 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
         section.errorCount > 1 ? 's' : ''
       } found in your extension. Fix these issues in the Partner Dashboard and try deploying again.`,
     })) as ErrorCustomSection[]
+}
+
+function messageIncludingField(
+  {field, message}: AppDeploySchema['appDeploy']['userErrors'][number],
+  defaultField: string[] = [],
+): string {
+  const errorField = (field ?? defaultField).join('.').replace('extension_points', 'extensions.targeting')
+  return errorField === 'base' || errorField === '' ? message : `${errorField}: ${message}`
 }
 
 /**
