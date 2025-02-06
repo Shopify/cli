@@ -39,7 +39,10 @@ class MockCommand extends Command {
       default: 'default stringy',
     }),
     password: Flags.string({}),
-    environment: Flags.string({}),
+    environment: Flags.string({
+      multiple: true,
+      default: [],
+    }),
     nonTTYRequiredFlag: Flags.string({}),
     noRelease: Flags.boolean({}),
   }
@@ -137,7 +140,7 @@ describe('applying environments', async () => {
     expect(testResult).toEqual({
       path: resolvePath(path),
       someStringWithDefault: 'default stringy',
-      environment,
+      environment: [environment],
       ...envFlags,
     })
   }
@@ -151,9 +154,10 @@ describe('applying environments', async () => {
     await MockCommand.run(['--path', tmpDir])
 
     // Then
-    expect(testResult).toEqual({
+    expect(testResult).toMatchObject({
       path: resolvePath(tmpDir),
       someStringWithDefault: 'default stringy',
+      environment: [],
     })
     expect(outputMock.info()).toEqual('')
   })
@@ -167,7 +171,11 @@ describe('applying environments', async () => {
     await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--environment', 'validEnvironment'])
 
     // Then
-    expect(testResult).toEqual({})
+    expect(testResult).toEqual({
+      path: resolvePath(tmpDir),
+      environment: ['validEnvironment', 'validEnvironment'],
+      someStringWithDefault: 'default stringy',
+    })
     expect(outputMock.info()).toEqual('')
   })
 
@@ -235,7 +243,7 @@ describe('applying environments', async () => {
     // Then
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
-      environment: 'nonexistentEnvironment',
+      environment: ['nonexistentEnvironment'],
       someStringWithDefault: 'default stringy',
     })
   })
@@ -247,7 +255,7 @@ describe('applying environments', async () => {
     // Then
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
-      environment: 'validEnvironmentWithIrrelevantFlag',
+      environment: ['validEnvironmentWithIrrelevantFlag'],
       ...validEnvironment,
       someStringWithDefault: 'default stringy',
     })
@@ -396,6 +404,10 @@ describe('applying environments', async () => {
     await MockCommand.run()
 
     // Then
+    expect(testResult).toMatchObject({
+      environment: [],
+      someStringWithDefault: 'default stringy',
+    })
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
