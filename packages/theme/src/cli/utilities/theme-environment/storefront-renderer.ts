@@ -5,6 +5,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetch, type Response} from '@shopify/cli-kit/node/http'
 import {createError} from 'h3'
+import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
@@ -131,7 +132,7 @@ function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBloc
 
 export function buildBaseStorefrontUrl(session: AdminSession) {
   if (isThemeAccessSession(session)) {
-    return 'https://theme-kit-access.shopifyapps.com/cli/sfr'
+    return `https://${getThemeKitAccessDomain()}/cli/sfr`
   } else {
     return `https://${session.storeFqdn}`
   }
