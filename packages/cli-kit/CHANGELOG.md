@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.75.0
+
+### Minor Changes
+
+- 4aee075: Improve display of loading bar in no-color mode
+
+### Patch Changes
+
+- da606a6: Improve mechanism that adds `.shopify` to `.gitignore` to avoid duplicate entries
+- ab407f3: Add `addToGitIgnore` to cli-kit to append entries to existing `.gitignore` files
+
 ## 3.74.0
 
 ### Minor Changes
