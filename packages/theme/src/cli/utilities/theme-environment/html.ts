@@ -4,7 +4,7 @@ import {render} from './storefront-renderer.js'
 import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
-import {defineEventHandler, getCookie, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
+import {defineEventHandler, getCookie, H3Event, setResponseHeader, setResponseStatus, type H3Error} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {Response} from '@shopify/cli-kit/node/http'
@@ -14,6 +14,13 @@ import type {DevServerContext} from './types.js'
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
+
+    const shouldRenderUploadErrorPage =
+      ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0
+
+    if (shouldRenderUploadErrorPage) {
+      return renderUploadErrorPage(ctx, event)
+    }
 
     return render(ctx.session, {
       method: event.method,
@@ -31,19 +38,6 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         let html = await patchRenderingResponse(ctx, event, response)
 
         assertThemeId(response, html, String(theme.id))
-
-        if (ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0) {
-          setResponseStatus(event, 500, 'Failed to Upload Theme Files')
-          setResponseHeader(event, 'Content-Type', 'text/html')
-          html = getErrorPage({
-            title: 'Failed to Upload Theme Files',
-            header: 'Upload Errors',
-            errors: Array.from(ctx.localThemeFileSystem.uploadErrors.entries()).map(([file, errors]) => ({
-              message: file,
-              code: errors.join('\n'),
-            })),
-          })
-        }
 
         if (ctx.options.liveReload !== 'off') {
           html = injectHotReloadScript(html)
@@ -81,6 +75,25 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
         return errorPageHtml
       })
   })
+}
+
+function renderUploadErrorPage(ctx: DevServerContext, event: H3Event) {
+  setResponseStatus(event, 500, 'Failed to Upload Theme Files')
+  setResponseHeader(event, 'Content-Type', 'text/html')
+  let html = getErrorPage({
+    title: 'Failed to Upload Theme Files',
+    header: 'Upload Errors',
+    errors: Array.from(ctx.localThemeFileSystem.uploadErrors.entries()).map(([file, errors]) => ({
+      message: file,
+      code: errors.join('\n'),
+    })),
+  })
+
+  if (ctx.options.liveReload !== 'off') {
+    html = injectHotReloadScript(html)
+  }
+
+  return html
 }
 
 function assertThemeId(response: Response, html: string, expectedThemeId: string) {
