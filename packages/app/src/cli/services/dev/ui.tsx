@@ -1,4 +1,6 @@
 import {Dev, DevProps} from './ui/components/Dev.js'
+import {DevSessionUI} from './ui/components/DevSessionUI.js'
+import {DevSessionStatusManager} from './processes/dev-session-status-manager.js'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -14,8 +16,25 @@ export async function renderDev({
   graphiqlPort,
   developerPreview,
   shopFqdn,
-}: DevProps) {
-  if (terminalSupportsPrompting()) {
+  devSessionStatusManager,
+}: DevProps & {devSessionStatusManager: DevSessionStatusManager}) {
+  if (!terminalSupportsPrompting()) {
+    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
+  } else if (app.developerPlatformClient.supportsDevSessions) {
+    return render(
+      <DevSessionUI
+        processes={processes}
+        abortController={abortController}
+        devSessionStatusManager={devSessionStatusManager}
+        onAbort={async () => {
+          await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
+        }}
+      />,
+      {
+        exitOnCtrlC: false,
+      },
+    )
+  } else {
     return render(
       <Dev
         processes={processes}
@@ -32,8 +51,6 @@ export async function renderDev({
         exitOnCtrlC: false,
       },
     )
-  } else {
-    await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   }
 }
 

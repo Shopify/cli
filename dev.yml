@@ -1,4 +1,4 @@
-name: shopify-cli-next
+name: cli
 
 up:
   - node:
@@ -60,7 +60,5 @@ commands:
     run: bin/spin
 
 check:
-  build: pnpm build
   type-check: pnpm nx affected --target=type-check
   lint: pnpm nx affected --target=lint
-  unit-tests: pnpm nx affected --target=test --exclude=features

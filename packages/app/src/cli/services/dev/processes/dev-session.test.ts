@@ -1,5 +1,5 @@
 import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session.js'
-import {devSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -39,6 +39,7 @@ describe('setupDevSessionProcess', () => {
       appWatcher: {} as AppEventWatcher,
       appPreviewURL: 'https://test.preview.url',
       appLocalProxyURL: 'https://test.local.url',
+      devSessionStatusManager: new DevSessionStatusManager(),
     }
 
     // When
@@ -60,6 +61,7 @@ describe('setupDevSessionProcess', () => {
         appWatcher: options.appWatcher,
         appPreviewURL: options.appPreviewURL,
         appLocalProxyURL: options.appLocalProxyURL,
+        devSessionStatusManager: options.devSessionStatusManager,
       },
     })
   })
@@ -73,6 +75,7 @@ describe('pushUpdatesForDevSession', () => {
   let appWatcher: AppEventWatcher
   let app: AppLinkedInterface
   let abortController: AbortController
+  let devSessionStatusManager: DevSessionStatusManager
 
   beforeEach(() => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
@@ -83,7 +86,7 @@ describe('pushUpdatesForDevSession', () => {
     app = testAppLinked()
     appWatcher = new AppEventWatcher(app)
     abortController = new AbortController()
-    devSessionStatusManager.reset()
+    devSessionStatusManager = new DevSessionStatusManager()
     options = {
       developerPlatformClient,
       appWatcher,
@@ -92,6 +95,7 @@ describe('pushUpdatesForDevSession', () => {
       organizationId: 'org123',
       appPreviewURL: 'https://test.preview.url',
       appLocalProxyURL: 'https://test.local.url',
+      devSessionStatusManager,
     }
   })
 

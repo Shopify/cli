@@ -1,12 +1,16 @@
 import {mountThemeExtensionFileSystem} from './theme-ext-fs.js'
 import {test, describe, expect} from 'vitest'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {fileURLToPath} from 'node:url'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 describe('theme-ext-fs', () => {
+  const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
+
   describe('mountThemeExtensionFileSystem', async () => {
     test('mounts the local theme file system when the directory is valid', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme-ext'
+      const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
 
       // When
       const themeFileSystem = mountThemeExtensionFileSystem(root)
@@ -33,7 +37,7 @@ describe('theme-ext-fs', () => {
 
     test('mounts an empty file system when the directory is invalid', async () => {
       // Given
-      const root = 'src/cli/utilities/invalid-directory'
+      const root = joinPath(locationOfThisFile, 'invalid-directory')
 
       // When
       const themeFileSystem = mountThemeExtensionFileSystem(root)
@@ -57,7 +61,7 @@ describe('theme-ext-fs', () => {
   describe('delete', () => {
     test('"delete" removes the file from the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme-ext'
+      const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
       const themeFileSystem = mountThemeExtensionFileSystem(root)
       await themeFileSystem.ready()
 
@@ -71,7 +75,7 @@ describe('theme-ext-fs', () => {
 
     test('does nothing when the theme file does not exist', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme-ext'
+      const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
 
       // When
       const themeFileSystem = mountThemeExtensionFileSystem(root)
@@ -86,7 +90,7 @@ describe('theme-ext-fs', () => {
   describe('write', () => {
     test('"write" creates a file on the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme-ext'
+      const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
       const themeFileSystem = mountThemeExtensionFileSystem(root)
       await themeFileSystem.ready()
 
@@ -104,7 +108,7 @@ describe('theme-ext-fs', () => {
 
     test('"write" creates an image file on the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme-ext'
+      const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
       const attachment = '0x123!'
       const themeFileSystem = mountThemeExtensionFileSystem(root)
       await themeFileSystem.ready()
@@ -126,7 +130,7 @@ describe('theme-ext-fs', () => {
   describe('read', async () => {
     test('"read" returns returns the content from the local disk and updates the file map', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme-ext'
+      const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')
       const key = 'snippets/stars.liquid'
       const themeFileSystem = mountThemeExtensionFileSystem(root)
       await themeFileSystem.ready()

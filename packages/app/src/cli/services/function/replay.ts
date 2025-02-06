@@ -12,7 +12,7 @@ import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
-import {readdirSync} from 'fs'
+import {existsSync, readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
 
@@ -124,7 +124,7 @@ async function findFunctionRun(
   functionHandle: string,
   identifier: string,
 ): Promise<string | undefined> {
-  const fileName = readdirSync(functionRunsDir).find((filename) => {
+  const fileName = getAllFunctionRunFileNames(functionRunsDir).find((filename) => {
     const fileMetadata = parseLogFilename(filename)
     return (
       fileMetadata?.namespace === 'extensions' &&
@@ -147,7 +147,7 @@ async function getRunFromSelector(functionRunsDir: string, functionHandle: strin
 }
 
 async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
-  const allFunctionRunFileNames = readdirSync(functionRunsDir)
+  const allFunctionRunFileNames = getAllFunctionRunFileNames(functionRunsDir)
     .filter((filename) => {
       // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
       const fileMetadata = parseLogFilename(filename)
@@ -190,4 +190,8 @@ async function getFunctionRunData(functionRunsDir: string, functionHandle: strin
 
 function getIdentifierFromFilename(fileName: string): string {
   return fileName.split('_').pop()!.substring(0, 6)
+}
+
+function getAllFunctionRunFileNames(functionRunsDir: string): string[] {
+  return existsSync(functionRunsDir) ? readdirSync(functionRunsDir) : []
 }

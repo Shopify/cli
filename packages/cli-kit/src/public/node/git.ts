@@ -6,6 +6,7 @@ import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
+import ignore from 'ignore'
 
 /**
  * Initialize a git repository at the given directory.
@@ -83,8 +84,14 @@ export function addToGitIgnore(root: string, entry: string): void {
   const gitIgnoreContent = readFileSync(gitIgnorePath).toString()
   const eol = detectEOL(gitIgnoreContent)
 
-  if (gitIgnoreContent.split(eol).some((line) => line.trim() === entry.trim())) {
-    // The file already existing in the .gitignore
+  const lines = gitIgnoreContent.split(eol).map((line) => line.trim())
+  const ignoreManager = ignore.default({allowRelativePaths: true}).add(lines)
+
+  const isIgnoredEntry = ignoreManager.ignores(joinPath(entry))
+  const isIgnoredEntryAsDir = ignoreManager.ignores(joinPath(entry, 'ignored.txt'))
+  const isAlreadyIgnored = isIgnoredEntry || isIgnoredEntryAsDir
+  if (isAlreadyIgnored) {
+    // The file is already ignored by an existing pattern
     return
   }
 

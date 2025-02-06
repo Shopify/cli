@@ -174,3 +174,24 @@ eslint-report.json
 
 # Generated docs
 docs/api
+
+vite.config.ts.timestamp*
+
+# from nested gitignores
+packages/app/assets/dev-console
+packages/ui-extensions-server-kit/*.d.ts
+packages/ui-extensions-server-kit/!typings.d.ts
+packages/ui-extensions-server-kit/index.*
+packages/ui-extensions-server-kit/testing.*
+packages/ui-extensions-server-kit/dist
+packages/app/src/cli/api/graphql/*/*_schema.graphql
+packages/ui-extensions-test-utils/*.d.ts
+packages/ui-extensions-test-utils/!typings.d.ts
+packages/ui-extensions-test-utils/dist
+packages/ui-extensions-dev-console/*.js
+packages/ui-extensions-dev-console/*.d.ts
+packages/ui-extensions-dev-console/!typings.d.ts
+packages/ui-extensions-dev-console/.eslintrc.js
+packages/ui-extensions-dev-console/css-transform.js
+packages/ui-extensions-dev-console/dist
+packages/cli-kit/src/cli/api/graphql/*/*_schema.graphql

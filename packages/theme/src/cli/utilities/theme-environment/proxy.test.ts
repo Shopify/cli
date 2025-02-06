@@ -235,6 +235,11 @@ describe('dev proxy', () => {
       expect(canProxyRequest(event)).toBeTruthy()
     })
 
+    test('should proxy Checkout requests as they are not supported by the SFR client', () => {
+      const event = createH3Event('GET', '/checkouts/xyz')
+      expect(canProxyRequest(event)).toBeTruthy()
+    })
+
     test('should proxy CDN requests', () => {
       const event = createH3Event('GET', '/cdn/some-path')
       expect(canProxyRequest(event)).toBeTruthy()
@@ -293,6 +298,11 @@ describe('dev proxy', () => {
 
     test('should proxy /account/login/multipass/<token> requests', () => {
       const event = createH3Event('GET', '/account/login/multipass/<token>')
+      expect(canProxyRequest(event)).toBeTruthy()
+    })
+
+    test('should proxy /account/logout requests', () => {
+      const event = createH3Event('GET', '/account/logout')
       expect(canProxyRequest(event)).toBeTruthy()
     })
   })

@@ -19,7 +19,7 @@ export interface themepush {
   '-e, --environment <value>'?: string
 
   /**
-   * Skip downloading the specified files (Multiple flags allowed).
+   * Skip uploading the specified files (Multiple flags allowed).
    * @environment SHOPIFY_FLAG_IGNORE
    */
   '-x, --ignore <value>'?: string

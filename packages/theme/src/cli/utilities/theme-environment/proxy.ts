@@ -29,7 +29,8 @@ export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
 const CART_PATTERN = /^\/cart\//
-const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?)?\/?$/
+const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
+const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
 
@@ -81,6 +82,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 export function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
   if (event.path.match(CART_PATTERN)) return true
+  if (event.path.match(CHECKOUT_PATTERN)) return true
   if (event.path.match(ACCOUNT_PATTERN)) return true
   if (event.path.match(VANITY_CDN_PATTERN)) return true
   if (event.path.match(EXTENSION_CDN_PATTERN)) return true
@@ -199,9 +201,11 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, event: H3Event, resp
   const locationHeader = response.headers.get('Location')
   if (locationHeader) {
     const url = new URL(locationHeader, 'https://shopify.dev')
-    url.searchParams.delete('_fd')
-    url.searchParams.delete('pb')
-    setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+    if (!CHECKOUT_PATTERN.test(url.pathname)) {
+      url.searchParams.delete('_fd')
+      url.searchParams.delete('pb')
+      setResponseHeader(event, 'Location', url.href.replace(url.origin, ''))
+    }
   }
 
   // Cookies are set for the vanity domain, fix it for localhost:

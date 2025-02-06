@@ -20,3 +20,9 @@ function isValidUrl(input: string, httpsOnly: boolean) {
 export function ensurePathStartsWithSlash(arg: unknown) {
   return typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg
 }
+
+export const APP_NAME_MAX_LENGTH = 30
+
+export function isValidName(name: string): boolean {
+  return name.length <= APP_NAME_MAX_LENGTH
+}

@@ -110,7 +110,6 @@ const SAFE_RANDOM_BUSINESS_NOUNS = [
   'franchise',
   'subsidiary',
   'logistics',
-  'infrastructure',
   'sponsorship',
   'partnership',
   'tax',

@@ -20,6 +20,7 @@
       "jsx": "react",
       "paths": {
         "@shopify/cli-kit/*": ["../packages/cli-kit/src/public/*"],
+        "@shopify/theme/*": ["../packages/theme/src/*"],
         "@shopify/cli-kit/typing/*": ["../packages/cli-kit/src/typing/*"],
       },
       "types": [

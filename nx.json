@@ -56,7 +56,9 @@
           "graphql-codegen:generate:partners",
           "graphql-codegen:generate:webhooks",
           "graphql-codegen:postfix",
-          "graphql-codegen:formatting"
+          "graphql-codegen:formatting",
+          "type-check",
+          "lint"
         ],
         "runtimeCacheInputs": [
           "node bin/cache-inputs.js || node ../../bin/cache-inputs.js || node ../bin/cache-inputs.js"

@@ -1,7 +1,7 @@
 import {isSpin} from './spin.js'
 import {isTruthy} from './utilities.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
-import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
+import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
 import {getPartnersToken} from '../environment.js'
@@ -288,6 +288,22 @@ export function macAddress(): Promise<string> {
 }
 
 /**
+ * Get the domain for theme kit access.
+ *
+ * It can be overridden via the SHOPIFY_CLI_THEME_KIT_ACCESS_DOMAIN environment
+ * variable.
+ *
+ * @param env - The environment variables from the environment of the process.
+ *
+ * @returns The domain for theme kit access.
+ */
+export function getThemeKitAccessDomain(env = process.env): string {
+  const domain = env[environmentVariables.themeKitAccessDomain]
+
+  return isSet(domain) ? domain : defaultThemeKitAccessDomain
+}
+
+/**
  * Get the domain to send OTEL metrics to.
  *
  * It can be overridden via the SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
@@ -295,11 +311,10 @@ export function macAddress(): Promise<string> {
  * @param env - The environment variables from the environment of the current process.
  * @returns The domain to send OTEL metrics to.
  */
-export function opentelemetryDomain(env = process.env): string | undefined {
-  if (isSet(env[environmentVariables.otelURL])) {
-    return env[environmentVariables.otelURL]
-  }
-  return 'https://otlp-http-production-cli.shopifysvc.com'
+export function opentelemetryDomain(env = process.env): string {
+  const domain = env[environmentVariables.otelURL]
+
+  return isSet(domain) ? domain : 'https://otlp-http-production-cli.shopifysvc.com'
 }
 
 export type CIMetadata = Metadata

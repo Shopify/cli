@@ -56,6 +56,8 @@ import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-ses
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
+import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -77,7 +79,17 @@ export interface AppVersionIdentifiers {
 }
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
-  return isAppManagementDisabled() ? [new PartnersClient()] : [new PartnersClient(), new AppManagementClient()]
+  const clients: DeveloperPlatformClient[] = []
+  if (!blockPartnersAccess()) {
+    clients.push(new PartnersClient())
+  }
+  if (!isAppManagementDisabled()) {
+    clients.push(new AppManagementClient())
+  }
+  if (clients.length === 0) {
+    throw new AbortError('Both Partners and App Management APIs are deactivated.')
+  }
+  return clients
 }
 
 /**

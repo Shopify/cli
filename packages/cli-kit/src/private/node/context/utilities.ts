@@ -1,7 +1,7 @@
 /**
  * Returns whether an environment variable has been set and is non-empty
  */
-export function isSet(variable: string | undefined): boolean {
+export function isSet(variable: string | undefined): variable is string {
   if (variable === undefined || variable.trim() === '') {
     return false
   }
