@@ -11,7 +11,7 @@ import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
@@ -241,7 +241,7 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
     const message = `The theme '${theme.name}' was pushed with errors`
     output.theme.warning = message
   }
-  outputInfo(JSON.stringify(output))
+  outputResult(JSON.stringify(output))
 }
 
 /**

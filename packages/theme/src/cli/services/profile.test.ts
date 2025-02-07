@@ -4,7 +4,7 @@ import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
 import {Headers, Response} from 'node-fetch'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {readFile} from 'fs/promises'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -56,7 +56,7 @@ describe('profile', () => {
         },
       },
     )
-    expect(outputInfo).toHaveBeenCalledWith(JSON.stringify(mockProfileData))
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify(mockProfileData))
   })
 
   test('opens profile in browser when asJson is false', async () => {

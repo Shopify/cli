@@ -10,7 +10,7 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {loadApp} from '../../models/app/loader.js'
-import {outputSuccess, consoleError} from '@shopify/cli-kit/node/output'
+import {outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -83,7 +83,7 @@ describe('webhookTriggerService', () => {
 
     // Then
     expectCalls(aVersion, anOrganizationId)
-    expect(consoleError).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
+    expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
   test('Safe notification in case of unexpected request errors', async () => {
@@ -106,7 +106,7 @@ describe('webhookTriggerService', () => {
 
     // Then
     expectCalls(aVersion, anOrganizationId)
-    expect(consoleError).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
+    expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
   test('notifies about real delivery being sent', async () => {
@@ -240,7 +240,7 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(consoleError).toHaveBeenCalledWith('Localhost delivery failed')
+      expect(outputWarn).toHaveBeenCalledWith('Localhost delivery failed')
     })
   })
 
