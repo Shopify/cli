@@ -50,7 +50,7 @@ export function createAbortCatchError(headline: string) {
 }
 
 /* ---- Fetch Errors ---- */
-export type FetchError = H3Error<{requestId?: string; url?: string}>
+type FetchError = H3Error<{requestId?: string; url?: string}>
 
 /**
  * Creates a FetchError from an actual Error object or a Response.
