@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.75.0
+
+### Patch Changes
+
+- da606a6: Improve mechanism that adds `.shopify` to `.gitignore` to avoid duplicate entries
+- f3498c3: Fix the local dev proxy for `/checkouts` and `/accounts/logout` to avoid 401 and 403 errors.
+- 88ba848: Update `shopify theme push -x` documentation (it uploads, doesn't download)
+- Updated dependencies [da606a6]
+- Updated dependencies [4aee075]
+- Updated dependencies [ab407f3]
+  - @shopify/cli-kit@3.75.0
+
 ## 3.74.0
 
 ### Minor Changes
