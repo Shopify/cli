@@ -1,10 +1,13 @@
 import {deepCompare} from '@shopify/cli-kit/common/object'
 import {EventEmitter} from 'events'
 
+export type DevSessionStatusMessageType = 'error' | 'success' | 'loading'
+
 export interface DevSessionStatus {
   isReady: boolean
   previewURL?: string
   graphiqlURL?: string
+  statusMessage?: {message: string; type: DevSessionStatusMessageType}
 }
 
 export class DevSessionStatusManager extends EventEmitter {
@@ -12,6 +15,7 @@ export class DevSessionStatusManager extends EventEmitter {
     isReady: false,
     previewURL: undefined,
     graphiqlURL: undefined,
+    statusMessage: undefined,
   }
 
   constructor(defaultStatus?: DevSessionStatus) {
@@ -37,6 +41,7 @@ export class DevSessionStatusManager extends EventEmitter {
       isReady: false,
       previewURL: undefined,
       graphiqlURL: undefined,
+      statusMessage: undefined,
     }
   }
 }
