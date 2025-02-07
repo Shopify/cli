@@ -1,17 +1,9 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
 import {logRequestLine} from '../log-request-line.js'
+import {createFetchError, extractFetchErrorInfo} from '../errors.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-import {
-  defineEventHandler,
-  getRequestHeaders,
-  getRequestWebStream,
-  getRequestIP,
-  type H3Event,
-  createError,
-  H3Error,
-} from 'h3'
+import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -50,12 +42,14 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
     }
 
     if (canProxyRequest(event)) {
+      const pathname = event.path.split('?')[0] ?? ''
+
       return proxyStorefrontRequest(event, ctx)
         .then(async (response) => {
           logRequestLine(event, response)
 
           if (response.ok) {
-            const fileName = event.path.split('?')[0]?.split('/').at(-1) ?? ''
+            const fileName = pathname.split('/').at(-1) ?? ''
             if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
               const newBody = injectCdnProxy(await response.text(), ctx)
               return new Response(newBody, response)
@@ -64,20 +58,17 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 
           return response
         })
-        .catch(async (error: H3Error) => {
-          const pathname = event.path.split('?')[0]!
-          if (error.statusCode >= 500 && !pathname.endsWith('.js.map')) {
-            const cause = error.cause as undefined | Error
-            renderWarning({
-              headline: `Failed to proxy request to ${pathname}`,
-              body: cause?.stack ?? error.stack ?? error.message,
-            })
+        .catch(async (error: Error) => {
+          const {status, statusText, ...errorInfo} = extractFetchErrorInfo(
+            error,
+            `Failed to proxy request to ${pathname}`,
+          )
+
+          if (status >= 500 && !pathname.endsWith('.js.map')) {
+            renderWarning(errorInfo)
           }
 
-          return new Response(error.message, {
-            status: error.statusCode,
-            statusText: error.statusMessage,
-          })
+          return new Response(error.message, {status, statusText})
         })
     }
   })
@@ -289,7 +280,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  return fetch(url.toString(), {
+  return fetch(url, {
     method: event.method,
     body,
     // @ts-expect-error Not included in official Node types
@@ -305,12 +296,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     },
   })
     .then((response) => patchProxiedResponseHeaders(ctx, response))
-    .catch((error) => {
-      throw createError({
-        status: 502,
-        statusText: 'Bad Gateway',
-        data: {url},
-        cause: error,
-      })
+    .catch((error: Error) => {
+      throw createFetchError(error, url)
     })
 }

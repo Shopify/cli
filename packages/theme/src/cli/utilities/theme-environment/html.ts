@@ -4,7 +4,8 @@ import {render} from './storefront-renderer.js'
 import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
-import {defineEventHandler, getCookie, type H3Error} from 'h3'
+import {extractFetchErrorInfo} from '../errors.js'
+import {defineEventHandler, getCookie} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -47,7 +48,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
           // eslint-disable-next-line promise/no-nesting
           const proxyResponse = await proxyStorefrontRequest(event, ctx).catch(
-            (error: H3Error) => new Response(null, {status: error.statusCode ?? 502}),
+            (error) => new Response(null, extractFetchErrorInfo(error)),
           )
 
           if (proxyResponse.status < 400) {
@@ -66,25 +67,18 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
           return ctx.options.liveReload === 'off' ? body : injectHotReloadScript(body)
         })
       })
-      .catch(async (error: H3Error<{requestId?: string; url?: string}>) => {
-        const status = error.statusCode ?? 502
-        const statusText = error.statusMessage ?? 'Bad Gateway'
+      .catch(async (error) => {
+        const {status, statusText, cause, ...errorInfo} = extractFetchErrorInfo(error, 'Failed to render storefront')
+        renderError(errorInfo)
 
-        let headline = `Failed to render storefront with status ${status} (${statusText}).`
-        if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
-        if (error.data?.url) headline += `\nURL: ${error.data.url}`
-
-        const cause = error.cause as undefined | Error
-        renderError({headline, body: cause?.stack ?? error.stack ?? error.message})
-
-        const [title, ...rest] = headline.split('\n') as [string, ...string[]]
+        const [title, ...rest] = errorInfo.headline.split('\n') as [string, ...string[]]
         let errorPageHtml = getErrorPage({
           title,
           header: title,
           errors: [
             {
-              message: [...rest, cause?.message ?? error.message].join('<br>'),
-              code: error.stack?.replace(`${error.message}\n`, '') ?? '',
+              message: [...rest, cause?.message ?? ''].join('<br>'),
+              code: cause?.stack?.replace(`${cause?.message ?? ''}\n`, '') ?? '',
             },
           ],
         })

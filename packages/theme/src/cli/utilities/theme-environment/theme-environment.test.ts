@@ -306,7 +306,7 @@ describe('setupDevServer', () => {
 
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js?${targetQuerystring}`,
+        new URL(`https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js?${targetQuerystring}`),
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -325,7 +325,9 @@ describe('setupDevServer', () => {
       await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css?${targetQuerystring}`,
+        new URL(
+          `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css?${targetQuerystring}`,
+        ),
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -368,7 +370,7 @@ describe('setupDevServer', () => {
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
       expect(fetchStub).toHaveBeenCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&${targetQuerystring}`,
+        new URL(`https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&${targetQuerystring}`),
         expect.any(Object),
       )
     })
@@ -385,7 +387,7 @@ describe('setupDevServer', () => {
 
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`,
+        new URL(`https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`),
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -408,7 +410,7 @@ describe('setupDevServer', () => {
 
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`,
+        new URL(`https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`),
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
