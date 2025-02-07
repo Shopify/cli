@@ -248,12 +248,14 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
           const status = error.statusCode ?? 502
           const statusText = error.statusMessage ?? 'Bad Gateway'
 
-          let headline = `Failed to render section on Hot Reload with status ${status} (${statusText}).`
-          if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
-          if (error.data?.url) headline += `\nURL: ${error.data.url}`
+          if (!appBlockId) {
+            let headline = `Failed to render section on Hot Reload with status ${status} (${statusText}).`
+            if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
+            if (error.data?.url) headline += `\nURL: ${error.data.url}`
 
-          const cause = error.cause as undefined | Error
-          renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
+            const cause = error.cause as undefined | Error
+            renderWarning({headline, body: cause?.stack ?? error.stack ?? error.message})
+          }
 
           return new Response(null, {status, statusText})
         })
