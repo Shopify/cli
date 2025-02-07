@@ -90,6 +90,7 @@ async function contextDevServerContext(
       port: port.toString(),
       liveReload: 'hot-reload',
       open: false,
+      errorOverlay: 'default',
     },
   }
 }

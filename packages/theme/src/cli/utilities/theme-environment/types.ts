@@ -50,6 +50,13 @@ export interface DevServerSession extends AdminSession {
 export type LiveReload = 'hot-reload' | 'full-page' | 'off'
 
 /**
+ * Controls the visibility of the error overlay when an asset upload fails. Options: ['silent', 'default']
+ * - silent: Prevents the error overlay from appearing.
+ * - default: Displays the error overlay.
+ */
+export type ErrorOverlayMode = 'silent' | 'default'
+
+/**
  * Maintains the state of local and remote assets in theme development server.
  */
 export interface DevServerContext {
@@ -117,6 +124,11 @@ export interface DevServerContext {
      * Automatically open the theme preview in the default browser.
      */
     open: boolean
+
+    /**
+     * Controls the visibility of the error overlay when an asset upload fails.
+     */
+    errorOverlay: ErrorOverlayMode
   }
 }
 
