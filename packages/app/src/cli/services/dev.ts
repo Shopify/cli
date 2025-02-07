@@ -275,6 +275,8 @@ async function handleUpdatingOfPartnerUrls(
         newApp: remoteApp.newApp,
         localApp,
         apiKey,
+        newURLs,
+        developerPlatformClient,
       })
 
       if (shouldUpdateURLs) {
