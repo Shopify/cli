@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.74.2
+
+### Patch Changes
+
+- d33a82f5a0: Bump cli-hydrogen to 9.0.5
+
 ## 3.74.1
 
 ## 3.74.0
