@@ -7,6 +7,7 @@ import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
+import {replaceScopesWithRequiredScopes} from '../../services/app/patch-app-configuration-file.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -99,6 +100,11 @@ export default class Deploy extends AppCommand {
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
+
+    const shouldUpdateToml = await app.migrateScopesToRequiredScopes()
+    if (shouldUpdateToml) {
+      await replaceScopesWithRequiredScopes(app.configuration.path)
+    }
 
     const result = await deploy({
       app,

@@ -11,6 +11,7 @@ import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
+import {confirmConversionFromScopesToRequiredScopes} from '../../prompts/config.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -274,6 +275,7 @@ export interface AppInterface<
   creationDefaultOptions(): CreateAppOptions
   manifest: () => Promise<JsonMapType>
   removeExtension: (extensionUid: string) => void
+  migrateScopesToRequiredScopes: () => Promise<boolean>
 }
 
 type AppConstructor<
@@ -351,6 +353,10 @@ export class App<
     return this.realExtensions.filter(
       (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
     )
+  }
+
+  get appAccessExtension() {
+    return this.realExtensions.find((ext) => ext.specification.identifier === AppAccessSpecIdentifier)
   }
 
   get appManagementApiEnabled() {
@@ -456,6 +462,40 @@ export class App<
     if (isLegacyAppSchema(this.configuration)) return false
     if (this.appManagementApiEnabled) return true
     return this.configuration.build?.include_config_on_deploy
+  }
+
+  async migrateScopesToRequiredScopes() {
+    if (isCurrentAppSchema(this.configuration) && this.configuration.access_scopes?.scopes) {
+      // Check if the user wants to migrate the scopes to required scopes
+      const shouldMigrate = await confirmConversionFromScopesToRequiredScopes()
+      if (shouldMigrate) {
+        // Update required_scopes in app configuration
+        this.configuration.access_scopes = {
+          ...this.configuration.access_scopes,
+          required_scopes: this.configuration.access_scopes.scopes.split(',').map((scope) => scope.trim()),
+        }
+        delete this.configuration.access_scopes.scopes
+
+        // Update required_scopes in app access module configuration
+        if (this.appAccessExtension) {
+          const accessConfig = this.appAccessExtension.configuration as {
+            access_scopes?: {scopes?: string; required_scopes?: string[]}
+          }
+          if (accessConfig.access_scopes?.scopes) {
+            accessConfig.access_scopes = {
+              ...accessConfig.access_scopes,
+              required_scopes: accessConfig.access_scopes.scopes.split(',').map((scope) => scope.trim()),
+            }
+
+            delete accessConfig.access_scopes.scopes
+          }
+        }
+
+        // Should we update the app configuration file in here? or in the command service?
+        return true
+      }
+    }
+    return false
   }
 }
 

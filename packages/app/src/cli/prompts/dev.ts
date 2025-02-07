@@ -121,15 +121,6 @@ export async function confirmConversionToTransferDisabledStorePrompt(): Promise<
   })
 }
 
-export async function confirmConversionFromScopesToRequiredScopes(): Promise<boolean> {
-  return renderConfirmationPrompt({
-    message: `'scopes' is being deprecated in favor of 'required_scopes'. Would you like to convert your 'scopes' to 'required_scopes'?`,
-    confirmationMessage: `Yes, convert 'scopes' to 'required_scopes'`,
-    cancellationMessage: 'No, not now',
-    defaultValue: true,
-  })
-}
-
 export async function appNamePrompt(currentName: string): Promise<string> {
   return renderTextPrompt({
     message: 'App name',

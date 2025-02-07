@@ -33,6 +33,7 @@ import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {confirmConversionFromScopesToRequiredScopes} from '../prompts/config.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -45,7 +46,6 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {confirmConversionFromScopesToRequiredScopes} from '../prompts/dev.js'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -194,9 +194,8 @@ export async function warnIfScopesDifferBeforeDev({
 }: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient'>) {
   if (developerPlatformClient.supportsDevSessions) return
   if (isCurrentAppSchema(localApp.configuration)) {
-
     if (localApp.configuration.access_scopes?.scopes) {
-      const shouldMigrate = await confirmConversionFromScopesToRequiredScopes();
+      const shouldMigrate = await confirmConversionFromScopesToRequiredScopes()
       if (shouldMigrate) {
         await replaceScopesWithRequiredScopes(localApp.configuration.path)
       }
@@ -216,7 +215,7 @@ export async function warnIfScopesDifferBeforeDev({
     const localScopes = rationaliseScopes(localAccess?.scopes)
     const remoteScopes = rationaliseScopes(remoteAccess?.scopes)
 
-    console.log("ZL- local vs remote scopes", localScopes, remoteScopes)
+    console.log('ZL- local vs remote scopes', localScopes, remoteScopes)
 
     if (!localAccess?.use_legacy_install_flow && localScopes !== remoteScopes) {
       const nextSteps = [
@@ -364,11 +363,11 @@ async function launchDevProcesses({
     canEnablePreviewMode: developerPlatformClient.supportsDevSessions
       ? false
       : await canEnablePreviewMode({
-        localApp: config.localApp,
-        developerPlatformClient,
-        apiKey,
-        organizationId: config.remoteApp.organizationId,
-      }),
+          localApp: config.localApp,
+          developerPlatformClient,
+          apiKey,
+          organizationId: config.remoteApp.organizationId,
+        }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey,
     id: config.remoteApp.id,

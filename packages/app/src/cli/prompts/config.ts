@@ -77,3 +77,12 @@ export function validate(value: string): string | undefined {
   // Max filename size for Windows/Mac including the prefix/postfix
   if (result.length > 238) return 'The file name is too long.'
 }
+
+export async function confirmConversionFromScopesToRequiredScopes(): Promise<boolean> {
+  return renderConfirmationPrompt({
+    message: `'scopes' is being deprecated in favor of 'required_scopes'. Would you like to convert your 'scopes' to 'required_scopes'?`,
+    confirmationMessage: `Yes, convert 'scopes' to 'required_scopes'`,
+    cancellationMessage: 'No, not now',
+    defaultValue: true,
+  })
+}

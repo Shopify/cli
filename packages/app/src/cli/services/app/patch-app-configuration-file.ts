@@ -3,7 +3,6 @@ import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
-import {config} from 'process'
 
 export interface PatchTomlOptions {
   path: string
@@ -45,10 +44,12 @@ export async function replaceScopesWithRequiredScopes(path: string) {
   const tomlContents = await readFile(path)
   const configuration = decodeToml(tomlContents)
 
-  if (configuration.access_scopes &&
+  if (
+    configuration.access_scopes &&
     typeof configuration.access_scopes === 'object' &&
     'scopes' in configuration.access_scopes &&
-    configuration.access_scopes.scopes) {
+    configuration.access_scopes.scopes
+  ) {
     const scopes = configuration.access_scopes.scopes
     configuration.access_scopes = {
       ...configuration.access_scopes,
