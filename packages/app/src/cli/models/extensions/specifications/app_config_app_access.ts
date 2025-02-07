@@ -1,9 +1,11 @@
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const AppAccessSchema = zod.object({
   access: zod
@@ -51,6 +53,19 @@ const appAccessSpec = createConfigExtensionSpecification({
     const scopesURL = await buildAppURLForWeb(storeFqdn, appConfig.client_id)
     return outputContent`Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`.value
   },
+  preDeployValidation: async (extension) => {
+    return rejectScopes(extension)
+  },
 })
+
+async function rejectScopes(extension: ExtensionInstance): Promise<void> {
+  const accessConfig = extension.configuration as {
+    access_scopes?: {scopes?: string;}
+  }
+
+  if (accessConfig.access_scopes?.scopes) {
+    throw new AbortError('`scopes` are no longer supported. Use `required_scopes` instead.')
+  }
+}
 
 export default appAccessSpec

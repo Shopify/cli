@@ -194,6 +194,7 @@ export async function warnIfScopesDifferBeforeDev({
 }: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient'>) {
   if (developerPlatformClient.supportsDevSessions) return
   if (isCurrentAppSchema(localApp.configuration)) {
+    // ZL - Should move this to a separate method
     if (localApp.configuration.access_scopes?.scopes) {
       const shouldMigrate = await confirmConversionFromScopesToRequiredScopes()
       if (shouldMigrate) {
