@@ -39,7 +39,11 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
           // but we can't be certain for all cases (e.g. an arbitrary app's route).
           // Fallback to proxying to see if that works:
 
-          outputDebug(`Render failed for ${event.path} with ${response.status}, trying proxy...`)
+          outputDebug(
+            `Render failed for ${event.path} with ${response.status} (x-request-id: ${response.headers.get(
+              'x-request-id',
+            )}), trying proxy...`,
+          )
 
           // eslint-disable-next-line promise/no-nesting
           const proxyResponse = await proxyStorefrontRequest(event, ctx).catch(
