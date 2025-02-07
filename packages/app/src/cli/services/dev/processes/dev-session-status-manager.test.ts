@@ -13,6 +13,8 @@ describe('DevSessionStatusManager', () => {
     expect(devSessionStatusManager.status).toEqual({
       isReady: false,
       previewURL: undefined,
+      graphiqlURL: undefined,
+      statusMessage: undefined,
     })
   })
 
