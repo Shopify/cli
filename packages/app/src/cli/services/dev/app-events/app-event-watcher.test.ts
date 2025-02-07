@@ -146,6 +146,18 @@ const testCases: TestCase[] = [
     extensionEvents: [{type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', uid: 'uid1'}}],
   },
   {
+    name: 'file_updated not affecting any extension',
+    fileWatchEvent: {
+      type: 'file_updated',
+      path: '/extensions/ui_extension_unknown/locales/en.json',
+      extensionPath: '/extensions/ui_extension_unknown',
+      startTime: [0, 0],
+    },
+    initialExtensions: [extension1, extension2, posExtension],
+    finalExtensions: [extension1, extension2, posExtension],
+    extensionEvents: [],
+  },
+  {
     name: 'file_created affecting a multiple extensions',
     fileWatchEvent: {
       type: 'file_created',

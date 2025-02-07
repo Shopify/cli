@@ -288,4 +288,108 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Watcher error'))
   })
+
+  test('sets correct status messages during dev session lifecycle', async () => {
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    // Then - Initial loading state
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Preparing dev session',
+      type: 'loading',
+    })
+
+    // When - Start the session
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Then - Ready state
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Ready, watching for changes in your app',
+      type: 'success',
+    })
+
+    // When - Emit an update event
+    const extension = await testUIExtension()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension}]})
+
+    // Then - Loading state during update
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Change detected, updating dev session',
+      type: 'loading',
+    })
+
+    // Then - Updated state after successful update
+    await flushPromises()
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Updated',
+      type: 'success',
+    })
+  })
+
+  test('sets error status message on build error', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const errorEvent = {
+      app,
+      extensionEvents: [
+        {
+          type: 'updated',
+          extension,
+          buildResult: {status: 'error'},
+        },
+      ],
+    }
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', errorEvent)
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Build error. Please review your code and try again',
+      type: 'error',
+    })
+  })
+
+  test('sets error status message on remote error', async () => {
+    // Given
+    const userErrors = [{message: 'Update error', category: 'test'}]
+    developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({devSessionUpdate: {userErrors}})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Error updating dev session',
+      type: 'error',
+    })
+  })
+
+  test('sets validation error status message when error cause is validation-error', async () => {
+    // Given
+    const validationError = new Error('Validation failed')
+    validationError.cause = 'validation-error'
+    developerPlatformClient.devSessionUpdate = vi.fn().mockRejectedValue(validationError)
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Validation error in your app configuration',
+      type: 'error',
+    })
+  })
 })

@@ -135,6 +135,6 @@ async function reload(app: AppLinkedInterface): Promise<AppLinkedInterface> {
     return newApp
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    throw new Error(`Error reloading app: ${error.message}`)
+    throw new Error(`Error reloading app: ${error.message}`, {cause: 'validation-error'})
   }
 }
