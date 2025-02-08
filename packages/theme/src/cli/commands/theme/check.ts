@@ -29,6 +29,8 @@ export default class Check extends ThemeCommand {
 
   static description = this.descriptionWithoutMarkdown()
 
+  static hiddenAliases: string[] = ['vibe:check']
+
   static flags = {
     ...globalFlags,
     path: themeFlags.path,
