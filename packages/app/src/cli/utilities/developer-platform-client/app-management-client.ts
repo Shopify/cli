@@ -460,20 +460,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
         organizationId,
         title,
         appVersions: {
-          nodes: result.versions.map((version) => {
-            return {
-              createdAt: version.createdAt,
-              createdBy: {
-                displayName: version.createdBy,
-              },
-              versionTag: version.metadata.versionTag,
-              status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
-              versionId: version.id,
-              message: version.metadata.message,
-            }
-          }),
+          nodes:
+            result.app.versions?.edges.map((edge) => {
+              const version = edge.node
+              return {
+                createdAt: version.createdAt,
+                createdBy: {
+                  displayName: version.createdBy,
+                },
+                versionTag: version.metadata.versionTag,
+                status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
+                versionId: version.id,
+                message: version.metadata.message,
+              }
+            }) ?? [],
           pageInfo: {
-            totalResults: result.versions.length,
+            totalResults: result.app.versionsCount,
           },
         },
       },
@@ -490,7 +492,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (!result.app) {
       throw new AbortError(`App not found for API key: ${apiKey}`)
     }
-    const version = result.versions.find((version) => version.metadata.versionTag === tag)
+    const version = result.app.versions?.edges
+      .map((edge) => edge.node)
+      .find((version) => version.metadata.versionTag === tag)
     if (!version) {
       throw new AbortError(`Version not found for tag: ${tag}`)
     }
