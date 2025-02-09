@@ -1,0 +1,5 @@
+query AppVersionByTag($versionTag: String!) {
+  versionByTag(tag: $versionTag) {
+    ...VersionInfo
+  }
+}
