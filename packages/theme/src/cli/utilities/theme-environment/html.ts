@@ -77,8 +77,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
           header: title,
           errors: [
             {
-              message: [...rest, cause?.message ?? ''].join('<br>'),
-              code: cause?.stack?.replace(`${cause?.message ?? ''}\n`, '') ?? '',
+              message: [...rest, cause.message].join('<br>'),
+              code: cause.stack?.replace(`${cause.message}\n`, '') ?? '',
             },
           ],
         })

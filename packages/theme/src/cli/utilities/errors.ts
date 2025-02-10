@@ -83,11 +83,11 @@ export function extractFetchErrorInfo(fetchError: Error | FetchError, context = 
   if (error.data?.requestId) headline += `\nRequest ID: ${error.data.requestId}`
   if (error.data?.url) headline += `\nURL: ${error.data.url}`
 
-  const cause = error.cause as undefined | Error
+  const cause = (error.cause ?? fetchError) as Error
 
   return {
     headline,
-    body: cause?.stack ?? error.stack ?? error.message ?? statusText,
+    body: cause.stack ?? error.stack ?? error.message ?? statusText,
     status,
     statusText,
     cause,
