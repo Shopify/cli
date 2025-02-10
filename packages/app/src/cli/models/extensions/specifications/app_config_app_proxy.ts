@@ -17,6 +17,15 @@ export const AppProxySpecIdentifier = 'app_proxy'
 const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
+  patchWithAppDevURLs: (config, urls) => {
+    if ('app_proxy' in config && urls.appProxy) {
+      config.app_proxy = {
+        url: urls.appProxy.proxyUrl,
+        subpath: urls.appProxy.proxySubPath,
+        prefix: urls.appProxy.proxySubPathPrefix,
+      }
+    }
+  },
 })
 
 export default appProxySpec

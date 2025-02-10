@@ -24,6 +24,11 @@ const appHomeSpec = createConfigExtensionSpecification({
   identifier: AppHomeSpecIdentifier,
   schema: AppHomeSchema,
   transformConfig: AppHomeTransformConfig,
+  patchWithAppDevURLs: (config, urls) => {
+    if ('application_url' in config) {
+      config.application_url = urls.applicationUrl
+    }
+  },
 })
 
 export default appHomeSpec

@@ -51,6 +51,11 @@ const appAccessSpec = createConfigExtensionSpecification({
     const scopesURL = await buildAppURLForWeb(storeFqdn, appConfig.client_id)
     return outputContent`Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`.value
   },
+  patchWithAppDevURLs: (config, urls) => {
+    if ('auth' in config && urls.redirectUrlWhitelist) {
+      config.auth = {redirect_urls: urls.redirectUrlWhitelist}
+    }
+  },
 })
 
 export default appAccessSpec
