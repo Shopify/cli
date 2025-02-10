@@ -19,7 +19,7 @@ export function getErrorPage(options: {title: string; header: string; errors: Er
   return html`<!DOCTYPE html>
     <html>
       <head>
-        <title>${options.title ?? 'Upload Errors'}</title>
+        <title>${options.title}</title>
         <link rel="stylesheet" href="${POLARIS_STYLESHEET_URL}" />
       </head>
       <body>

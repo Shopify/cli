@@ -3,7 +3,6 @@ import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
-import {Headers, Response} from 'node-fetch'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {readFile} from 'fs/promises'
 

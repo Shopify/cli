@@ -4,7 +4,6 @@ import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
 import {describe, test, expect, vi} from 'vitest'
 import {createEvent} from 'h3'
-import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from '../types.js'
@@ -13,14 +12,6 @@ import type {Theme, ThemeFSEventName} from '@shopify/cli-kit/node/themes/types'
 vi.mock('../storefront-renderer.js')
 
 describe('hot-reload server', () => {
-  const mockTheme: Theme = {
-    id: 123,
-    name: 'my-theme',
-    createdAtRuntime: false,
-    processing: false,
-    role: 'main',
-  }
-
   test('emits hot-reload events with proper data', async () => {
     const testSectionType = 'my-test'
     const testSectionFileKey = `sections/${testSectionType}.liquid`
@@ -67,9 +58,9 @@ describe('hot-reload server', () => {
 
     // -- Renders the section HTML:
     vi.mocked(render).mockResolvedValue(
-      new NodeResponse('<div><link href="https://my-store.myshopify.com/cdn/path/assets/file.css"></link></div>'),
+      new Response('<div><link href="https://my-store.myshopify.com/cdn/path/assets/file.css"></link></div>'),
     )
-    const renderResult = await hotReloadHandler(
+    const renderResponse = await hotReloadHandler(
       createH3Event(`/__hot-reload/render?section-id=123__first&section-template-name=${testSectionFileKey}`).event,
     )
     expect(render).toHaveBeenCalledOnce()
@@ -82,7 +73,10 @@ describe('hot-reload server', () => {
       }),
     )
     // Patches the rendering response:
-    expect(renderResult).toEqual('<div><link href="/cdn/path/assets/file.css"></link></div>')
+    expect(renderResponse).toBeInstanceOf(Response)
+    await expect((renderResponse as Response).text()).resolves.toEqual(
+      '<div><link href="/cdn/path/assets/file.css"></link></div>',
+    )
 
     // -- Deletes in-memory section after syncing
     await nextTick()
