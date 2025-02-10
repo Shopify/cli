@@ -6,9 +6,8 @@ import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
@@ -96,8 +95,17 @@ describe('setupDevServer', () => {
       liveReload: 'hot-reload',
       open: false,
       themeEditorSync: false,
+      errorOverlay: 'default',
     },
   }
+
+  const targetQuerystring = '_fd=0&pb=0'
+  const referer = `https://${defaultServerContext.session.storeFqdn}`
+
+  afterEach(() => {
+    localThemeFileSystem.uploadErrors.clear()
+    localThemeFileSystem.unsyncedFileKeys.clear()
+  })
 
   test('should upload the development theme to remote', async () => {
     // Given
@@ -187,7 +195,7 @@ describe('setupDevServer', () => {
     ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node
-      let body: string
+      let body = ''
       const resWrite = res.write.bind(res)
       res.write = (chunk) => {
         body ??= ''
@@ -196,12 +204,19 @@ describe('setupDevServer', () => {
       }
       const resEnd = res.end.bind(res)
       res.end = (content) => {
-        body ??= content
+        if (!body) body = content ?? ''
         return resEnd(content)
       }
 
       await server.dispatchEvent(event)
-      return {res, status: res.statusCode, body: body!}
+
+      if (!body && '_data' in res) {
+        // When returning a Response from H3, we get the body here:
+        // eslint-disable-next-line require-atomic-updates
+        body = await new Response(res._data as ReadableStream).text()
+      }
+
+      return {res, status: res.statusCode, body}
     }
 
     test('mocks known endpoints', async () => {
@@ -254,7 +269,7 @@ describe('setupDevServer', () => {
 
     test('renders HTML', async () => {
       vi.mocked(render).mockResolvedValueOnce(
-        new NodeResponse(
+        new Response(
           html`<html>
           <head>
             <link href="https://cdn.shopify.com/path/to/assets/file1.css"></link>
@@ -281,7 +296,7 @@ describe('setupDevServer', () => {
 
     test('proxies other requests to SFR', async () => {
       const fetchStub = vi.fn(
-        () =>
+        async () =>
           new Response('mocked', {
             headers: {'proxy-authorization': 'true', 'content-type': 'application/javascript'},
           }),
@@ -294,11 +309,9 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
-      const referer = `https://${defaultServerContext.session.storeFqdn}`
-      const targetQuerystring = '?_fd=0&pb=0'
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js${targetQuerystring}`,
+        new URL(`https://${defaultServerContext.session.storeFqdn}/path/to/something-else.js?${targetQuerystring}`),
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -317,7 +330,9 @@ describe('setupDevServer', () => {
       await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css${targetQuerystring}`,
+        new URL(
+          `https://${defaultServerContext.session.storeFqdn}/cdn/somepathhere/assets/file42.css?${targetQuerystring}`,
+        ),
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
@@ -328,7 +343,7 @@ describe('setupDevServer', () => {
 
     test('proxies .css.liquid assets with injected CDN', async () => {
       const fetchStub = vi.fn(
-        () =>
+        async () =>
           new Response(
             `.some-class {
               font-family: "My Font";
@@ -349,7 +364,7 @@ describe('setupDevServer', () => {
     })
 
     test('proxies .js.liquid assets replacing the error query string', async () => {
-      const fetchStub = vi.fn(() => new Response())
+      const fetchStub = vi.fn(async () => new Response())
       vi.stubGlobal('fetch', fetchStub)
       vi.useFakeTimers()
       const now = Date.now()
@@ -360,9 +375,87 @@ describe('setupDevServer', () => {
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
       expect(fetchStub).toHaveBeenCalledWith(
-        `https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&_fd=0&pb=0`,
+        new URL(`https://${defaultServerContext.session.storeFqdn}${pathname}?v=${now}&${targetQuerystring}`),
         expect.any(Object),
       )
+    })
+
+    test('falls back to proxying if a rendering request fails with 4xx status', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      fetchStub.mockResolvedValueOnce(new Response(null, {status: 302}))
+      vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
+
+      const eventPromise = dispatchEvent('/non-renderable-path')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).toHaveBeenCalled()
+
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        new URL(`https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`),
+        expect.objectContaining({
+          method: 'GET',
+          redirect: 'manual',
+          headers: {referer},
+        }),
+      )
+
+      await expect(eventPromise).resolves.toHaveProperty('status', 302)
+    })
+
+    test('forwards rendering error after proxy failure', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      fetchStub.mockResolvedValueOnce(new Response(null, {status: 404}))
+      vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
+
+      const eventPromise = dispatchEvent('/non-renderable-path')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).toHaveBeenCalled()
+
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        new URL(`https://${defaultServerContext.session.storeFqdn}/non-renderable-path?${targetQuerystring}`),
+        expect.objectContaining({
+          method: 'GET',
+          redirect: 'manual',
+          headers: {referer},
+        }),
+      )
+
+      await expect(eventPromise).resolves.toHaveProperty('status', 401)
+    })
+
+    test('renders error page on network errors with hot reload script injected', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(render).mockRejectedValueOnce(new Error('Network error'))
+
+      const eventPromise = dispatchEvent('/')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
+      expect(body).toMatch(/<title>Failed to render storefront with status 502/i)
+      expect(body).toMatch('hotReloadScript')
+    })
+
+    test('renders error page on upload errors with hot reload script injected', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      localThemeFileSystem.uploadErrors.set('templates/asset.json', ['Error 1', 'Error 2'])
+
+      const eventPromise = dispatchEvent('/')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
+      expect(body).toMatch(/<title>Failed to Upload Theme Files/i)
+      expect(body).toMatch(/Error 1/)
+      expect(body).toMatch(/Error 2/)
+      expect(body).toMatch('hotReloadScript')
     })
   })
 })

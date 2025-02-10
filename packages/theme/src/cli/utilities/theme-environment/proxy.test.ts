@@ -1,7 +1,6 @@
 import {canProxyRequest, getProxyStorefrontHeaders, injectCdnProxy, patchRenderingResponse} from './proxy.js'
 import {describe, test, expect} from 'vitest'
 import {createEvent} from 'h3'
-import {Response as NodeResponse} from '@shopify/cli-kit/node/http'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from './types.js'
@@ -127,7 +126,7 @@ describe('dev proxy', () => {
     test('replaces CDN links in body and headers', async () => {
       const event = createH3Event()
 
-      const renderingResponse = new NodeResponse(
+      const renderingResponse = new Response(
         html`<html>
           <head>
             <script src="https://my-store.myshopify.com/cdn/path/to/assets/file1"></script>
@@ -169,7 +168,9 @@ describe('dev proxy', () => {
         },
       )
 
-      await expect(patchRenderingResponse(ctx, event, renderingResponse)).resolves.toMatchInlineSnapshot(`
+      const patchedResponse = await patchRenderingResponse(ctx, renderingResponse)
+
+      await expect(patchedResponse.text()).resolves.toMatchInlineSnapshot(`
         "<html>
                   <head>
                     <script src=\\"/cdn/path/to/assets/file1\\"></script>
@@ -181,11 +182,11 @@ describe('dev proxy', () => {
                 </html>"
       `)
 
-      expect(event.node.res.getHeader('link')).toMatchInlineSnapshot(
+      expect(patchedResponse.headers.get('link')).toMatchInlineSnapshot(
         `"<https://cdn.shopify.com>; rel=\\"preconnect\\", <https://cdn.shopify.com>; rel=\\"preconnect\\"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as=\\"style\\"; rel=\\"preload\\""`,
       )
 
-      expect(event.node.res.getHeader('set-cookie')).toMatchInlineSnapshot(
+      expect(patchedResponse.headers.getSetCookie()).toMatchInlineSnapshot(
         `
         [
           "keep_alive=b810fe75-4242-4554-a19c-0a5ecb70e92f; path=/; expires=Fri, 16 Aug 2024 12:16:24 GMT; HttpOnly; SameSite=Lax, secure_customer_sig=; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; secure; HttpOnly; SameSite=Lax, localization=ES; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; SameSite=Lax, cart_currency=EUR; path=/; expires=Fri, 30 Aug 2024 11:46:24 GMT; SameSite=Lax, _tracking_consent=%7B..%22; path=/; expires=Sat, 16 Aug 2025 11:46:24 GMT; SameSite=Lax, _cmp_a=%7B..%22purposes%22%; path=/; expires=Sat, 17 Aug 2024 11:46:24 GMT; SameSite=Lax, _shopify_essential=:AZFbAlZ..yAAH:; path=/; Max-Age=31536000; secure; HttpOnly; SameSite=Lax, _shopify_sa_t=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_sa_p=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_y=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax, _shopify_s=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0; Path=/; SameSite=Lax",

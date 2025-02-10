@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import {EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX} from './theme-environment/proxy.js'
 import {timestampDateFormat} from '../constants.js'
-import {Response as CliKitResponse} from '@shopify/cli-kit/node/http'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 
 const CHARACTER_TRUNCATION_LIMIT = 80
 
-export function logRequestLine(event: H3Event, response: CliKitResponse | Response) {
+interface MinimalResponse {
+  status: number
+  headers: {get: (key: string) => string | null}
+}
+
+export function logRequestLine(event: H3Event, response: MinimalResponse) {
   if (!shouldLog(event)) return
 
   const truncatedPath =

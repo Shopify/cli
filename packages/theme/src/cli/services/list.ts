@@ -1,8 +1,7 @@
-import {columns} from './list.columns.js'
 import {getDevelopmentTheme} from './local-storage.js'
 import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -12,9 +11,20 @@ interface Options {
   name?: string
   id?: number
   json: boolean
+  environment?: string
 }
 
-export async function list(adminSession: AdminSession, options: Options) {
+function tabularSection(
+  title: string,
+  data: InlineToken[][],
+): {title: string; body: {tabularData: InlineToken[][]; firstColumnSubdued?: boolean}} {
+  return {
+    title,
+    body: {tabularData: data},
+  }
+}
+
+export async function list(options: Options, adminSession: AdminSession) {
   const store = adminSession.storeFqdn
   const filter = new Filter({
     ...ALLOWED_ROLES.reduce((roles: FilterProps, role) => {
@@ -43,12 +53,26 @@ export async function list(adminSession: AdminSession, options: Options) {
         formattedRole += ' [yours]'
       }
     }
-    return {
-      id: `#${id}`,
-      name,
-      role: formattedRole,
-    }
+    return [name, formattedRole, `#${id}`]
   })
 
-  renderTable({rows: themes, columns})
+  const tableData = [
+    ['name', 'role', 'id'],
+    ['───────────────────────────────', '──────────────────────', '──────────────'],
+    ...themes,
+  ]
+
+  renderInfo({
+    customSections: [
+      ...(options.environment
+        ? [
+            {
+              title: `${store} theme library`,
+              body: [{subdued: `Environment name: ${options.environment}`}],
+            },
+          ]
+        : []),
+      tabularSection('', tableData),
+    ],
+  })
 }
