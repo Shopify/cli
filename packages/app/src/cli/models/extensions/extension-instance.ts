@@ -151,11 +151,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification = options.specification
     this.handle = this.buildHandle()
     const uuidFromHandle = nonRandomUUID(this.handle)
-    this.devUUID = `dev-${uuidFromHandle}`
+    this.uid = this.configuration.uid ?? uuidFromHandle
+    this.devUUID = this.uid
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
-    this.uid = this.configuration.uid ?? uuidFromHandle
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
