@@ -93,7 +93,7 @@ function matchGlob(key: string, pattern: string) {
     warnedPatterns.add(pattern)
     renderWarning({
       headline: 'Directory pattern may be misleading.',
-      body: `For more reliable matching, consider using ${pattern}* or ${pattern}*.filename instead.`,
+      body: `For more reliable matching, consider using "${pattern}*" or "${pattern}*.<file_extension>" instead.`,
     })
     return false
   }
