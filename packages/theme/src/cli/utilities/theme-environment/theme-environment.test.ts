@@ -6,7 +6,7 @@ import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
@@ -101,6 +101,11 @@ describe('setupDevServer', () => {
 
   const targetQuerystring = '_fd=0&pb=0'
   const referer = `https://${defaultServerContext.session.storeFqdn}`
+
+  afterEach(() => {
+    localThemeFileSystem.uploadErrors.clear()
+    localThemeFileSystem.unsyncedFileKeys.clear()
+  })
 
   test('should upload the development theme to remote', async () => {
     // Given
@@ -419,6 +424,38 @@ describe('setupDevServer', () => {
       )
 
       await expect(eventPromise).resolves.toHaveProperty('status', 401)
+    })
+
+    test('renders error page on network errors with hot reload script injected', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      vi.mocked(render).mockRejectedValueOnce(new Error('Network error'))
+
+      const eventPromise = dispatchEvent('/')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
+      expect(body).toMatch(/<title>Failed to render storefront with status 502/i)
+      expect(body).toMatch('hotReloadScript')
+    })
+
+    test('renders error page on upload errors with hot reload script injected', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      localThemeFileSystem.uploadErrors.set('templates/asset.json', ['Error 1', 'Error 2'])
+
+      const eventPromise = dispatchEvent('/')
+      await expect(eventPromise).resolves.not.toThrow()
+      expect(vi.mocked(render)).not.toHaveBeenCalled()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
+      expect(body).toMatch(/<title>Failed to Upload Theme Files/i)
+      expect(body).toMatch(/Error 1/)
+      expect(body).toMatch(/Error 2/)
+      expect(body).toMatch('hotReloadScript')
     })
   })
 })

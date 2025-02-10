@@ -5,7 +5,7 @@ import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
 import {extractFetchErrorInfo} from '../errors.js'
-import {defineEventHandler, getCookie} from 'h3'
+import {defineEventHandler, getCookie, type H3Event} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -20,7 +20,18 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0
 
     if (shouldRenderUploadErrorPage) {
-      return renderUploadErrorPage(ctx)
+      return createErrorPageResponse(
+        ctx,
+        {status: 500, statusText: 'Internal Server Error'},
+        {
+          title: 'Failed to Upload Theme Files',
+          header: 'Upload Errors',
+          errors: Array.from(ctx.localThemeFileSystem.uploadErrors.entries()).map(([file, errors]) => ({
+            message: file,
+            code: errors.join('\n'),
+          })),
+        },
+      )
     }
 
     return render(ctx.session, {
@@ -39,24 +50,10 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
           // Ideally, this should be caught by `canProxyRequest` in `proxy.ts`,
           // but we can't be certain for all cases (e.g. an arbitrary app's route).
           // Fallback to proxying to see if that works:
-
-          outputDebug(
-            `Render failed for ${event.path} with ${response.status} (x-request-id: ${response.headers.get(
-              'x-request-id',
-            )}), trying proxy...`,
-          )
-
-          // eslint-disable-next-line promise/no-nesting
-          const proxyResponse = await proxyStorefrontRequest(event, ctx).catch(
-            (error) => new Response(null, extractFetchErrorInfo(error)),
-          )
-
-          if (proxyResponse.status < 400) {
-            outputDebug(`Proxy status: ${proxyResponse.status}. Returning proxy response.`)
+          const proxyResponse = await tryProxyRequest(event, ctx, response)
+          if (proxyResponse) {
             logRequestLine(event, proxyResponse)
             return proxyResponse
-          } else {
-            outputDebug(`Proxy status: ${proxyResponse.status}. Returning render error.`)
           }
         }
 
@@ -69,52 +66,62 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       })
       .catch(async (error) => {
         const {status, statusText, cause, ...errorInfo} = extractFetchErrorInfo(error, 'Failed to render storefront')
+        const [title, ...rest] = errorInfo.headline.split('\n') as [string, ...string[]]
+
         renderError(errorInfo)
 
-        const [title, ...rest] = errorInfo.headline.split('\n') as [string, ...string[]]
-        let errorPageHtml = getErrorPage({
-          title,
-          header: title,
-          errors: [
-            {
-              message: [...rest, cause.message].join('<br>'),
-              code: cause.stack?.replace(`${cause.message}\n`, '') ?? '',
-            },
-          ],
-        })
-
-        if (ctx.options.liveReload !== 'off') {
-          errorPageHtml = injectHotReloadScript(errorPageHtml)
-        }
-
-        return new Response(errorPageHtml, {
-          status,
-          statusText,
-          headers: {'Content-Type': 'text/html'},
-        })
+        return createErrorPageResponse(
+          ctx,
+          {status, statusText},
+          {
+            title,
+            header: title,
+            errors: [
+              {
+                message: [...rest, cause.message].join('<br>'),
+                code: cause.stack?.replace(`${cause.message}\n`, '') ?? '',
+              },
+            ],
+          },
+        )
       })
   })
 }
 
-function renderUploadErrorPage(ctx: DevServerContext) {
-  let html = getErrorPage({
-    title: 'Failed to Upload Theme Files',
-    header: 'Upload Errors',
-    errors: Array.from(ctx.localThemeFileSystem.uploadErrors.entries()).map(([file, errors]) => ({
-      message: file,
-      code: errors.join('\n'),
-    })),
-  })
+function createErrorPageResponse(
+  ctx: DevServerContext,
+  responseInit: ResponseInit,
+  options: Parameters<typeof getErrorPage>[0],
+) {
+  let html = getErrorPage(options)
 
   if (ctx.options.liveReload !== 'off') {
     html = injectHotReloadScript(html)
   }
 
   return new Response(html, {
-    status: 500,
-    statusText: 'Internal Server Error',
-    headers: {'Content-Type': 'text/html'},
+    ...responseInit,
+    headers: responseInit.headers ?? {'Content-Type': 'text/html; charset=utf-8'},
   })
+}
+
+async function tryProxyRequest(event: H3Event, ctx: DevServerContext, response: Response) {
+  outputDebug(
+    `Render failed for ${event.path} with ${response.status} (x-request-id: ${response.headers.get(
+      'x-request-id',
+    )}), trying proxy...`,
+  )
+
+  const proxyResponse = await proxyStorefrontRequest(event, ctx).catch(
+    (error) => new Response(null, extractFetchErrorInfo(error)),
+  )
+
+  if (proxyResponse.status < 400) {
+    outputDebug(`Proxy status: ${proxyResponse.status}. Returning proxy response.`)
+    return proxyResponse
+  } else {
+    outputDebug(`Proxy status: ${proxyResponse.status}. Returning render error.`)
+  }
 }
 
 function assertThemeId(response: Response, html: string, expectedThemeId: string) {
