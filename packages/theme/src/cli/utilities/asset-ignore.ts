@@ -87,15 +87,12 @@ function matchGlob(key: string, pattern: string) {
 
   if (originalMatchGlob(key, pattern, matchOpts)) return true
 
-  if (isRegex(pattern)) return regexMatch(key, asRegex(pattern))
-
   if (!pattern.includes('*') && pattern.endsWith('/') && !warnedPatterns.has(pattern)) {
     warnedPatterns.add(pattern)
     renderWarning({
       headline: 'Directory pattern may be misleading.',
-      body: `For more reliable matching, consider using ${pattern}* or ${pattern}*.filename instead.`,
+      body: `For more reliable matching, consider using "${pattern}*" or "${pattern}*.<file_extension>" instead.`,
     })
-    return false
   }
 
   // When the the standard match fails and the pattern includes '/*.', we

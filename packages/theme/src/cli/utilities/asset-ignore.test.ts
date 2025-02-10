@@ -389,7 +389,7 @@ describe('asset-ignore', () => {
 
       expect(renderWarning).toHaveBeenCalledWith({
         headline: 'Directory pattern may be misleading.',
-        body: 'For more reliable matching, consider using assets/* or assets/*.filename instead.',
+        body: 'For more reliable matching, consider using "assets/*" or "assets/*.<file_extension>" instead.',
       })
     })
   })
