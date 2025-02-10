@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.76.0
+
+### Minor Changes
+
+- fd32347: Add multi-environment infrastructure and allow multiple environment usage in theme list command
+
 ## 3.75.0
 
 ### Patch Changes
