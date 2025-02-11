@@ -3,7 +3,7 @@ import {getHostTheme, removeHostTheme, setHostTheme} from '@shopify/cli-kit/node
 import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {createTheme} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate} from '@shopify/cli-kit/node/themes/api'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -52,7 +52,7 @@ export class HostThemeManager extends ThemeManager {
 
       try {
         // eslint-disable-next-line no-await-in-loop
-        const theme = await createTheme(options, this.adminSession)
+        const theme = await themeCreate(options, this.adminSession)
         if (theme) {
           this.setTheme(theme.id.toString())
           outputDebug(`Waiting for theme with id "${theme.id}" to be processed`)
@@ -69,7 +69,7 @@ export class HostThemeManager extends ThemeManager {
     }
 
     outputDebug(`Theme creation failed after ${retryAttemps} retries. Creating theme using fallback theme zip`)
-    const theme = await createTheme({...options, src: FALLBACK_THEME_ZIP}, this.adminSession)
+    const theme = await themeCreate({...options, src: FALLBACK_THEME_ZIP}, this.adminSession)
     if (!theme) {
       outputDebug(`Theme creation failed. Exiting process.`)
       throw new BugError(`Could not create theme with name "${options.name}" and role "${options.role}"`)

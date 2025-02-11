@@ -7,7 +7,7 @@ import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
-import {createTheme, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
   DEVELOPMENT_THEME_ROLE,
@@ -191,7 +191,7 @@ describe('push', () => {
 describe('createOrSelectTheme', async () => {
   test('creates unpublished theme when unpublished flag is provided', async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(buildTheme({id: 2, name: 'Theme', role: UNPUBLISHED_THEME_ROLE}))
+    vi.mocked(themeCreate).mockResolvedValue(buildTheme({id: 2, name: 'Theme', role: UNPUBLISHED_THEME_ROLE}))
     vi.mocked(fetchTheme).mockResolvedValue(undefined)
 
     const flags: PushFlags = {unpublished: true}
@@ -206,7 +206,7 @@ describe('createOrSelectTheme', async () => {
 
   test('creates development theme when development flag is provided', async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))
+    vi.mocked(themeCreate).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))
     vi.mocked(fetchTheme).mockResolvedValue(undefined)
     const flags: PushFlags = {development: true}
 
@@ -220,7 +220,7 @@ describe('createOrSelectTheme', async () => {
 
   test('creates development theme when development and unpublished flags are provided', async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))
+    vi.mocked(themeCreate).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))
     vi.mocked(fetchTheme).mockResolvedValue(undefined)
     const flags: PushFlags = {development: true, unpublished: true}
 
