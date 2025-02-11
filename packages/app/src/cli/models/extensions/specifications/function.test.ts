@@ -38,6 +38,13 @@ describe('functionConfiguration', () => {
         key: 'key',
       },
     },
+    targeting: [
+      {
+        target: 'purchase.discount.cart_run',
+        export: 'run',
+        operations: ['addProductDiscounts', 'addOrderDiscounts'],
+      },
+    ],
   }
 
   beforeEach(async () => {
@@ -82,7 +89,14 @@ describe('functionConfiguration', () => {
         },
         enable_creation_ui: true,
         localization: {},
-        targets: undefined,
+        targets: [
+          {
+            export: 'run',
+            handle: 'purchase.discount.cart_run',
+            input_query: undefined,
+            operations: '["addProductDiscounts", "addOrderDiscounts"]',
+          },
+        ],
         module_id: expect.any(String),
       })
     })
