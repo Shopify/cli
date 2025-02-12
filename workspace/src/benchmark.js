@@ -12,17 +12,19 @@ import {promises as fs, existsSync} from 'fs'
 import {cloneCLIRepository} from './utils/git.js'
 import {logMessage, logSection} from './utils/log.js'
 
-const TOTAL_TIMES = 5
+const TOTAL_TIMES = 1
 
 async function benchmark(directory, {name}) {
   const results = {}
   for (let time = 1; time < TOTAL_TIMES; time++) {
     logSection(`Benchmarking ${name}. Time ${time}`)
 
-    for (const pluginName of ['app', 'theme']) {
-      const oclifManifestPath = path.join(directory, 'packages', pluginName, 'oclif.manifest.json')
-      const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
-      const commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
+    const oclifManifestPath = path.join(directory, 'packages', 'cli', 'oclif.manifest.json')
+    const oclifManifest = JSON.parse(await fs.readFile(oclifManifestPath))
+    for (const pluginName of ['app']) {
+      // 'theme'
+      let commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
+      commands = commands.filter((command) => command[0] === pluginName)
       for (const command of commands) {
         const startTimestamp = Date.now()
         const {stdout} = await execa(path.join(directory, 'packages/cli/bin/dev.js'), command, {
@@ -97,7 +99,7 @@ ${markdownTable}
 await temporaryDirectoryTask(async (tmpDir) => {
   const baselineDirectory = await cloneCLIRepository(tmpDir)
   const currentDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
-  const baselineBenchmark = await benchmark(baselineDirectory, {}, {name: 'baseline'})
-  const currentBenchmark = await benchmark(currentDirectory, {}, {name: 'current'})
+  const baselineBenchmark = await benchmark(baselineDirectory, {name: 'baseline'})
+  const currentBenchmark = await benchmark(currentDirectory, {name: 'current'})
   await report(currentBenchmark, baselineBenchmark)
 })
