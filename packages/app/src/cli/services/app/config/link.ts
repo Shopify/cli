@@ -378,13 +378,29 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
     remoteAppConfiguration = buildAppConfigurationFromRemoteAppProperties(remoteApp, locallyProvidedScopes)
   }
 
+  // Create a clean version of the local config without scopes/require_scopes
+  const cleanLocalConfig = {...(localAppOptions.existingConfig ?? {})}
+
+  if ('access_scopes' in cleanLocalConfig) {
+    const accessScopes = cleanLocalConfig.access_scopes as {
+      scopes?: string
+      required_scopes?: string[]
+    }
+    // If remote has required_scopes, remove scopes from local
+    if (remoteAppConfiguration?.access_scopes?.required_scopes) {
+      delete accessScopes.scopes
+    }
+    // If remote has scopes, remove required_scopes from local
+    if (remoteAppConfiguration?.access_scopes?.scopes) {
+      delete accessScopes.required_scopes
+    }
+  }
+
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
 
   const mergedAppConfiguration = {
     ...deepMergeObjects<AppConfiguration, CurrentAppConfiguration>(
-      {
-        ...(localAppOptions.existingConfig ?? {}),
-      },
+      cleanLocalConfig,
       {
         client_id: remoteApp.apiKey,
         path: configFilePath,
@@ -536,7 +552,7 @@ function addRemoteAppAccessConfig(locallyProvidedScopes: string, remoteApp: Orga
   // if we have upstream scopes, use them
   if (remoteApp.requestedAccessScopes) {
     accessScopesContent = {
-      scopes: remoteApp.requestedAccessScopes.join(','),
+      required_scopes: remoteApp.requestedAccessScopes,
     }
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
   } else if (locallyProvidedScopes === '') {
@@ -546,10 +562,11 @@ function addRemoteAppAccessConfig(locallyProvidedScopes: string, remoteApp: Orga
     // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
   } else {
     accessScopesContent = {
-      scopes: locallyProvidedScopes,
+      required_scopes: locallyProvidedScopes.split(',').map((scope) => scope.trim()),
       use_legacy_install_flow: true,
     }
   }
+
   return {
     auth: {
       redirect_urls: remoteApp.redirectUrlWhitelist ?? [],

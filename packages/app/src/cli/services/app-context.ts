@@ -108,6 +108,8 @@ export async function linkedAppContext({
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
 
+  await localApp.migratePendingSchemaChanges()
+
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 

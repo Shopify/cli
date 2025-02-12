@@ -2,9 +2,11 @@ import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const AppAccessSchema = BaseSchema.extend({
   access: zod
@@ -57,6 +59,22 @@ const appAccessSpec = createConfigExtensionSpecification({
       config.auth = {redirect_urls: urls.redirectUrlWhitelist}
     }
   },
+  migratePendingSchemaChanges: async (extension) => {
+    return migrateScopesToRequiredScopes(extension)
+  },
 })
+
+async function migrateScopesToRequiredScopes(extension: ExtensionInstance) {
+  const accessConfig = extension.configuration as {
+    access_scopes?: {scopes?: string; required_scopes?: string[]}
+  }
+
+  if (accessConfig.access_scopes?.scopes) {
+    accessConfig.access_scopes.required_scopes = accessConfig.access_scopes.scopes
+      .split(',')
+      .map((scope) => scope.trim())
+    delete accessConfig.access_scopes.scopes
+  }
+}
 
 export default appAccessSpec

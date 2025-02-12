@@ -1032,7 +1032,7 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
           type: AppAccessSpecIdentifier,
           config: {
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
-            ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
+            ...(scopesArray && {required_scopes: scopesArray.map((scope) => scope.trim())}),
           },
         },
       ],
