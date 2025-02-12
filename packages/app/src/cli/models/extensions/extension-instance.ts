@@ -22,7 +22,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
+import {AppConfigurationWithoutPath, AppLinkedInterface, CurrentAppConfiguration} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -215,9 +215,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.validate(this.configuration, this.configurationPath, this.directory)
   }
 
-  preDeployValidation(): Promise<void> {
+  preDeployValidation(app: AppLinkedInterface): Promise<void> {
     if (!this.specification.preDeployValidation) return Promise.resolve()
-    return this.specification.preDeployValidation(this)
+    return this.specification.preDeployValidation(this, app)
   }
 
   buildValidation(): Promise<void> {
