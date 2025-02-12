@@ -1,6 +1,7 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -138,7 +139,14 @@ const functionSpec = createExtensionSpecification({
       targets,
     }
   },
-  preDeployValidation: async (extension) => {
+  preDeployValidation: async (extension, app) => {
+    if (extension.configuration.ui?.handle) {
+      const errors = validateFunctionExtensionsWithUiHandle(extension, app.allExtensions)
+      if (errors) {
+        throw new AbortError('Invalid function configuration', errors.join('\n'))
+      }
+    }
+
     const wasmExists = await fileExists(extension.outputPath)
     if (!wasmExists) {
       throw new AbortError(
@@ -148,6 +156,31 @@ const functionSpec = createExtensionSpecification({
     }
   },
 })
+
+function validateFunctionExtensionsWithUiHandle(
+  extension: ExtensionInstance<FunctionConfigType>,
+  allExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+
+  const uiHandle = extension.configuration.ui?.handle
+
+  if (!uiHandle) return
+  const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
+  if (!matchingExtension) {
+    errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
+  } else if (matchingExtension.configuration.type !== 'ui_extension') {
+    errors.push(
+      `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
+    )
+  }
+
+  return errors.length > 0 ? errors : undefined
+}
+
+function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
+  return allExtensions.find((ext) => ext.handle === handle)
+}
 
 async function readInputQuery(path: string): Promise<string> {
   if (await fileExists(path)) {
