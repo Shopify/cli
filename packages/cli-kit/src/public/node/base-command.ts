@@ -54,7 +54,13 @@ abstract class BaseCommand extends Command {
     }
     this.showNpmFlagWarning()
     await showNotificationsIfNeeded()
-    return super.init()
+    const ret = super.init()
+
+    if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
+      process.exit(0)
+    }
+
+    return ret
   }
 
   // NPM creates an environment variable for every flag passed to a script.
@@ -85,7 +91,7 @@ abstract class BaseCommand extends Command {
       { "timestamp": ${Date.now()} }
       SHOPIFY_CLI_TIMESTAMP_END
       `)
-      process.exit(0)
+      // process.exit(0)
     }
   }
 

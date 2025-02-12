@@ -7,8 +7,10 @@ import {setOutput} from '@actions/core'
 import {promises as fs} from 'fs'
 import {logMessage, logSection} from './utils/log.js'
 import * as url from 'url'
+import {homedir} from 'os'
 
 const TOTAL_TIMES = 1
+const DEBUG = true
 
 async function benchmark(directory, {name}) {
   const results = {}
@@ -19,17 +21,27 @@ async function benchmark(directory, {name}) {
   for (const pluginName of ['app']) {
     let commands = Object.keys(oclifManifest.commands).map((command) => command.split(':'))
     commands = commands.filter((command) => command[0] === pluginName)
+
+    if (DEBUG) {
+      commands = commands.slice(0, 1)
+    }
+
     for (const command of commands) {
       const startTimestamp = Date.now()
       const {stdout} = await execa(path.join(directory, 'packages/cli/bin/dev.js'), command, {
-        env: {SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1'},
+        env: {
+          SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN: '1',
+          SHOPIFY_FLAG_PATH: path.join(homedir(), 'Documents/shopify_apps/benchmark-app'),
+        },
         cwd: directory,
         stdout: 'pipe',
         stderr: 'pipe',
       })
-      const endTimestamp = JSON.parse(
-        stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
-      ).timestamp
+      console.log('stdout', stdout)
+      // const endTimestamp = JSON.parse(
+      //   stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
+      // ).timestamp
+      const endTimestamp = Date.now()
       const diff = endTimestamp - startTimestamp
       const commandId = command.join(' ')
       logMessage(`${commandId}: ${diff} ms`)
