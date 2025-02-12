@@ -6,6 +6,7 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
+import {formatSection} from '@shopify/cli-kit/node/output'
 
 interface ThemeInfo {
   theme: {
@@ -82,5 +83,28 @@ function tabularSection(title: string, data: InlineToken[][]): AlertCustomSectio
   return {
     title,
     body: {tabularData: data, firstColumnSubdued: true},
+  }
+}
+
+export async function formatThemeInfo(output: ThemeInfo, flags: {environment?: string}) {
+  const infoMessage = Object.entries(output.theme)
+    .map(([key, val]) => formatSection(key, `${val}`))
+    .join('\n\n')
+
+  return {
+    customSections: [
+      ...(flags.environment
+        ? [
+            {
+              title: `Theme information`,
+              body: [{subdued: `Environment name: ${flags.environment}`}],
+            },
+          ]
+        : []),
+      {
+        title: '',
+        body: infoMessage,
+      },
+    ],
   }
 }

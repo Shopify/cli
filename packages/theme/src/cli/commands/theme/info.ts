@@ -1,13 +1,15 @@
 import {themeFlags} from '../../flags.js'
-import {fetchThemeInfo, fetchDevInfo} from '../../services/info.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
+import {fetchThemeInfo, fetchDevInfo, formatThemeInfo} from '../../services/info.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {formatSection, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+
+type InfoFlags = OutputFlags<typeof Info.flags>
 
 export default class Info extends ThemeCommand {
   static description =
@@ -31,12 +33,9 @@ export default class Info extends ThemeCommand {
     }),
   }
 
-  public async run(): Promise<void> {
-    const {flags} = await this.parse(Info)
+  static multiEnvironmentsFlags = ['store', 'password']
 
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-
+  async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
     if (flags.theme || flags.development) {
       const output = await fetchThemeInfo(adminSession, flags)
       if (!output) {
@@ -47,10 +46,8 @@ export default class Info extends ThemeCommand {
         return outputInfo(JSON.stringify(output, null, 2))
       }
 
-      const infoMessage = Object.entries(output.theme)
-        .map(([key, val]) => formatSection(key, `${val}`))
-        .join('\n\n')
-      outputInfo(infoMessage)
+      const formattedInfo = await formatThemeInfo(output, flags)
+      renderInfo(formattedInfo)
     } else {
       const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
       renderInfo({customSections: infoMessage})
