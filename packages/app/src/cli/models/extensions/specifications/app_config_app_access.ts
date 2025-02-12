@@ -6,6 +6,7 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const AppAccessSchema = BaseSchema.extend({
   access: zod
@@ -58,6 +59,9 @@ const appAccessSpec = createConfigExtensionSpecification({
       config.auth = {redirect_urls: urls.redirectUrlWhitelist}
     }
   },
+  preDeployValidation: async (extension) => {
+    return rejectScopes(extension)
+  },
   migratePendingSchemaChanges: async (extension) => {
     return migrateScopesToRequiredScopes(extension)
   },
@@ -65,6 +69,15 @@ const appAccessSpec = createConfigExtensionSpecification({
     return pendingSchemaChanges(extension)
   },
 })
+
+async function rejectScopes(extension: ExtensionInstance) {
+  const accessConfig = extension.configuration as {
+    access_scopes?: {scopes?: string}
+  }
+  if (accessConfig.access_scopes?.scopes) {
+    throw new AbortError('`scopes` are no longer supported. Use `required_scopes` instead.')
+  }
+}
 
 async function migrateScopesToRequiredScopes(extension: ExtensionInstance) {
   const accessConfig = extension.configuration as {
