@@ -1,6 +1,6 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputTrace} from '@shopify/cli-kit/node/output'
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 import {performance} from 'perf_hooks'
@@ -150,6 +150,7 @@ export async function simpleRequestWithDebugLog<T extends {headers: Headers; sta
 ): Promise<T> {
   const result = await makeVerboseRequest({request, url})
 
+  outputTrace(outputContent`Request to ${url.toString()}`)
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
 With response headers:
 ${result.sanitizedHeaders}
@@ -205,6 +206,7 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
   let retriesUsed = 0
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
 
+  outputTrace(outputContent`Request to ${url.toString()}`)
   let result = await makeVerboseRequest({request, url})
 
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms

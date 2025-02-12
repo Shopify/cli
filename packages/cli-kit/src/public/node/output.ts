@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import {isUnitTest, isVerbose} from './context/local.js'
+import {isTracing, isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {AbortSignal} from './abort.js'
@@ -179,10 +179,10 @@ export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace' |
  */
 function logLevelValue(level: LogLevel): number {
   switch (level) {
-    case 'trace':
-      return 10
     case 'debug':
       return 20
+    case 'trace':
+      return 25
     case 'info':
       return 30
     case 'warn':
@@ -204,6 +204,8 @@ function logLevelValue(level: LogLevel): number {
 function currentLogLevel(): LogLevel {
   if (isVerbose()) {
     return 'debug'
+  } else if (isTracing()) {
+    return 'trace'
   } else {
     return 'info'
   }
@@ -304,6 +306,16 @@ export function outputDebug(content: OutputMessage, logger: Logger = consoleLog)
   if (isUnitTest()) collectLog('debug', content)
   const message = colors.gray(stringifyMessage(content))
   outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
+}
+
+/**
+ *
+ * @param content
+ * @param logger
+ */
+export function outputTrace(content: OutputMessage, logger: Logger = consoleLog): void {
+  const message = colors.gray(stringifyMessage(content))
+  outputWhereAppropriate('trace', logger, `${new Date().toISOString()}: ${message}`)
 }
 
 /**

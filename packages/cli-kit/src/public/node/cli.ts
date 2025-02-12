@@ -135,6 +135,11 @@ export const globalFlags = {
     description: 'Increase the verbosity of the output.',
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
+  tracing: Flags.boolean({
+    hidden: true,
+    description: 'Enable only network logs.',
+    env: 'SHOPIFY_FLAG_TRACING',
+  }),
 }
 
 export const jsonFlag = {

@@ -48,6 +48,14 @@ export function isVerbose(env = process.env): boolean {
 }
 
 /**
+ *
+ * @param env
+ */
+export function isTracing(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.tracing]) || process.argv.includes('--tracing')
+}
+
+/**
  * It returns true if the App Management API is disabled.
  * This should only be relevant when using a Partners token.
  *
