@@ -37,7 +37,6 @@ async function benchmark(directory, {name}) {
         stdout: 'pipe',
         stderr: 'pipe',
       })
-      console.log('stdout', stdout)
       // const endTimestamp = JSON.parse(
       //   stdout.replace('SHOPIFY_CLI_TIMESTAMP_START', '').replace('SHOPIFY_CLI_TIMESTAMP_END', ''),
       // ).timestamp
