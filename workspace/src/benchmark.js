@@ -23,7 +23,12 @@ async function benchmark(directory, {name}) {
     commands = commands.filter((command) => command[0] === pluginName)
 
     if (DEBUG) {
-      commands = commands.slice(0, 1)
+      // commands = commands.slice(0, 1)
+      commands = [
+        ['app', 'info'],
+        ['app', 'build'],
+        ['app', 'env', 'show'],
+      ]
     }
 
     for (const command of commands) {
