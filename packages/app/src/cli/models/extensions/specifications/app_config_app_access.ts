@@ -5,7 +5,6 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 const AppAccessSchema = zod.object({
   access: zod
@@ -56,6 +55,9 @@ const appAccessSpec = createConfigExtensionSpecification({
   migratePendingSchemaChanges: async (extension) => {
     return migrateScopesToRequiredScopes(extension)
   },
+  pendingSchemaChanges: (extension) => {
+    return pendingSchemaChanges(extension)
+  },
 })
 
 async function migrateScopesToRequiredScopes(extension: ExtensionInstance) {
@@ -69,6 +71,19 @@ async function migrateScopesToRequiredScopes(extension: ExtensionInstance) {
       .map((scope) => scope.trim())
     delete accessConfig.access_scopes.scopes
   }
+}
+
+function pendingSchemaChanges(extension: ExtensionInstance): string[] {
+  const accessConfig = extension.configuration as {
+    access_scopes?: {scopes?: string}
+  }
+
+  const migrationMessages = []
+  if (accessConfig.access_scopes?.scopes) {
+    migrationMessages.push('Replace `scopes(string)` with `required_scopes(string array)`.')
+  }
+
+  return migrationMessages
 }
 
 export default appAccessSpec

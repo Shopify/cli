@@ -9,3 +9,13 @@ export async function showApiKeyDeprecationWarning() {
     body: ['The flag', {command: 'api-key'}, 'has been deprecated in favor of', {command: 'client-id'}],
   })
 }
+
+export async function confirmApplyPendingMigrations(migrations: string[]): Promise<boolean> {
+  return renderConfirmationPrompt({
+    message: `There are pending migrations, would you like to apply them now?`,
+    infoTable: {'': migrations},
+    confirmationMessage: 'Yes, apply migrations',
+    cancellationMessage: 'No, apply migrations later',
+    defaultValue: true,
+  })
+}
