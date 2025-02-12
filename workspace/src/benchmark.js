@@ -28,6 +28,7 @@ async function benchmark(directory, {name}) {
         ['app', 'info'],
         ['app', 'build'],
         ['app', 'env', 'show'],
+        ['app', 'versions', 'list'],
       ]
     }
 
