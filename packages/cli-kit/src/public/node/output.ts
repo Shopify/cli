@@ -315,7 +315,7 @@ export function outputDebug(content: OutputMessage, logger: Logger = consoleLog)
  */
 export function outputTrace(content: OutputMessage, logger: Logger = consoleLog): void {
   const message = colors.gray(stringifyMessage(content))
-  outputWhereAppropriate('trace', logger, `${new Date().toISOString()}: ${message}`)
+  outputWhereAppropriate('trace', logger, message)
 }
 
 /**
