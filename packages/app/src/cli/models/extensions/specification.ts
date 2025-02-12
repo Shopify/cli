@@ -74,6 +74,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   migratePendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
+  pendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => string[]
   getDevSessionActionUpdateMessage?: (
     config: TConfiguration,
     appConfig: CurrentAppConfiguration,
@@ -237,6 +238,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   ) => Promise<string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
   migratePendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
+  pendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => string[]
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -252,6 +254,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
     migratePendingSchemaChanges: spec.migratePendingSchemaChanges,
+    pendingSchemaChanges: spec.pendingSchemaChanges,
   })
 }
 

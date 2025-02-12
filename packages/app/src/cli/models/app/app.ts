@@ -14,6 +14,7 @@ import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile, replaceScopesWithRequiredScopesInToml} from '../../services/app/patch-app-configuration-file.js'
+import {confirmApplyPendingMigrations} from '../../prompts/deprecation-warnings.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -24,6 +25,7 @@ import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {renderText, renderSuccess} from '@shopify/cli-kit/node/ui'
 
 // Schemas for loading app configuration
 
@@ -319,7 +321,8 @@ type AppConstructor<
 export class App<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
-> implements AppInterface<TConfig, TModuleSpec> {
+> implements AppInterface<TConfig, TModuleSpec>
+{
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
@@ -434,12 +437,25 @@ export class App<
   }
 
   async migratePendingSchemaChanges() {
-    await this.migrateScopesToRequiredScopes()
-    await Promise.all([this.realExtensions.map((ext) => ext.migratePendingSchemaChanges())])
+    const pendingMigrations = this.getPendingMigrationMessages()
+    if (pendingMigrations.length > 0) {
+      const shouldMigrate = await confirmApplyPendingMigrations(pendingMigrations)
+      if (shouldMigrate) {
+        await this.migrateScopesToRequiredScopes()
+        await Promise.all([this.realExtensions.map((ext) => ext.migratePendingSchemaChanges())])
+        renderSuccess({headline: 'Migration completed locally, run `shopify app deploy` to push the changes.'})
+      }
+    }
+  }
+
+  getPendingMigrationMessages(): string[] {
+    return this.realExtensions.map((ext) => ext.pendingSchemaChanges()).flat()
   }
 
   async migrateScopesToRequiredScopes() {
     if (isCurrentAppSchema(this.configuration) && this.configuration.access_scopes?.scopes) {
+      renderText({text: 'Migration: Replacing `scopes` with `required_scopes` locally.'})
+
       const accessConfig = this.configuration as {
         access_scopes: {scopes?: string; required_scopes?: string[]}
       }

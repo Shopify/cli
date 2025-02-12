@@ -225,6 +225,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.migratePendingSchemaChanges(this)
   }
 
+  pendingSchemaChanges(): string[] {
+    if (!this.specification.pendingSchemaChanges) return []
+    return this.specification.pendingSchemaChanges(this)
+  }
+
   buildValidation(): Promise<void> {
     if (!this.specification.buildValidation) return Promise.resolve()
     return this.specification.buildValidation(this)
