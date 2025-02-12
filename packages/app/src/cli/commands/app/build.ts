@@ -34,27 +34,22 @@ export default class Build extends AppCommand {
   }
 
   async run(): Promise<AppCommandOutput> {
-    console.log('Build 1')
     const {flags} = await this.parse(Build)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] ?? flags['api-key']
-    console.log('Build 2')
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
-    console.log('Build 3')
     const {app} = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    console.log('Build 4')
 
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
-    console.log('Build 5')
 
     return {app}
   }
