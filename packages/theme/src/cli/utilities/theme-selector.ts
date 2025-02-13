@@ -4,7 +4,7 @@ import {getDevelopmentTheme} from '../services/local-storage.js'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {capitalize} from '@shopify/cli-kit/common/string'
-import {createTheme} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate} from '@shopify/cli-kit/node/themes/api'
 import {promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -97,7 +97,7 @@ export function newThemeOption(session: AdminSession): {
     value: async () => {
       const role = UNPUBLISHED_THEME_ROLE
       const name = await promptThemeName('Name of the new theme')
-      const theme = await createTheme({name, role}, session)
+      const theme = await themeCreate({name, role}, session)
 
       if (!theme) {
         throw new AbortError('The theme could not be created.')
