@@ -4,9 +4,10 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {writeFileSync} from 'fs'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -84,7 +85,7 @@ const uiExtensionSpec = createExtensionSpecification({
     return needsCart ? [...basic, 'cart_url'] : basic
   },
   validate: async (config, path, directory) => {
-    return validateUIExtensionPointConfig(directory, config.extension_points, path)
+    return validateUIExtensionPointConfig(directory, config.extension_points, path, config.api_version === '2025-04')
   },
   deployConfig: async (config, directory) => {
     const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
@@ -101,8 +102,12 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   getBundleExtensionStdinContent: (config) => {
     const main = config.extension_points
-      .map(({module}) => {
-        return `import '${module}'; `
+      .map(({target, module}, index) => {
+        // Hardcoded to test
+        if (config.api_version === '2025-04') {
+          return `import Target${index} from '${module}'; extend('${target}', () => Target${index}());`
+        }
+        return `import '${module}';`
       })
       .join('\n')
 
@@ -159,6 +164,7 @@ async function validateUIExtensionPointConfig(
   directory: string,
   extensionPoints: NewExtensionPointSchemaType[],
   configPath: string,
+  shouldGenerateTypes: boolean,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
   const uniqueTargets: string[] = []
@@ -169,6 +175,7 @@ async function validateUIExtensionPointConfig(
   }
 
   for await (const {module, target} of extensionPoints) {
+    let hasError = false
     const fullPath = joinPath(directory, module)
     const exists = await fileExists(fullPath)
 
@@ -179,12 +186,22 @@ async function validateUIExtensionPointConfig(
         outputContent`Couldn't find ${notFoundPath}
 Please check the module path for ${target}`.value,
       )
+      hasError = true
     }
 
     if (uniqueTargets.includes(target)) {
       duplicateTargets.push(target)
+      hasError = true
     } else {
       uniqueTargets.push(target)
+    }
+
+    if (!hasError && shouldGenerateTypes) {
+      const template = `import type {TargetApi} from '@shopify/ui-extensions/admin';\n
+declare global {
+  const shopify: TargetApi<'${target}'>
+}`
+      writeFileSync(joinPath(dirname(fullPath), 'types.d.ts'), template)
     }
   }
 
