@@ -91,7 +91,11 @@ export class ESBuildContextManager {
   async updateContexts(appEvent: AppEvent) {
     this.dotEnvVariables = appEvent.app.dotenv?.variables ?? {}
     const createdEsBuild = appEvent.extensionEvents
-      .filter((extEvent) => extEvent.type === EventType.Created && extEvent.extension.isESBuildExtension)
+      .filter(
+        (extEvent) =>
+          (extEvent.type === EventType.Created || extEvent.type === EventType.Updated) &&
+          extEvent.extension.isESBuildExtension,
+      )
       .map((extEvent) => extEvent.extension)
     await this.createContexts(createdEsBuild)
 
