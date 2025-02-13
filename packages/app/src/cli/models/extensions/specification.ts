@@ -235,6 +235,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     appConfig: CurrentAppConfiguration,
     storeFqdn: string,
   ) => Promise<string>
+  preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   migratePendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   pendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => string[]
 }): ExtensionSpecification<TConfiguration> {
@@ -250,6 +251,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
+    preDeployValidation: spec.preDeployValidation,
     migratePendingSchemaChanges: spec.migratePendingSchemaChanges,
     pendingSchemaChanges: spec.pendingSchemaChanges,
   })
