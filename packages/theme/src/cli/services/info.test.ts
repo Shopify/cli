@@ -1,13 +1,30 @@
-import {themeInfoJSON, fetchThemeInfo} from './info.js'
+import {themeInfoJSON, fetchThemeInfo, formatThemeInfo} from './info.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {themePreviewUrl, themeEditorUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {describe, vi, test, expect} from 'vitest'
+import {describe, vi, test, expect, beforeEach, afterEach} from 'vitest'
+import {formatSection} from '@shopify/cli-kit/node/output'
 
 vi.mock('../utilities/development-theme-manager.js')
 vi.mock('../utilities/theme-selector.js', () => {
   return {findOrSelectTheme: vi.fn()}
+})
+
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
+  return {
+    ...actual,
+    formatSection: vi.fn((key, val) => `${key}: ${val}`),
+    consoleLog: vi.fn(),
+    consoleWarn: vi.fn(),
+    consoleError: vi.fn(),
+    outputToken: {
+      raw: vi.fn(),
+      cyan: vi.fn(),
+    },
+    outputContent: vi.fn(),
+  }
 })
 
 const storeFqdn = 'my-shop.myshopify.com'
@@ -82,5 +99,56 @@ describe('info', () => {
         editor_url: themeEditorUrl(developmentTheme, session),
       },
     })
+  })
+})
+
+describe('formatThemeInfo', () => {
+  beforeEach(() => {
+    vi.mocked(formatSection).mockImplementation((key, val) => `${key}: ${val}`)
+  })
+
+  afterEach(() => {
+    // eslint-disable-next-line @shopify/cli/no-vi-manual-mock-clear
+    vi.clearAllMocks()
+  })
+
+  test('formats theme info with environment flag', async () => {
+    // Given
+    const themeInfo = {
+      theme: {
+        id: 1234,
+        name: 'Test Theme',
+        role: 'development',
+        shop: 'test-shop.myshopify.com',
+        editor_url: 'https://test-shop.myshopify.com/editor',
+        preview_url: 'https://test-shop.myshopify.com/preview',
+      },
+    }
+
+    // When
+    const result = await formatThemeInfo(themeInfo, {environment: 'production'})
+
+    // Then
+    expect(result).toEqual({
+      customSections: [
+        {
+          title: 'Theme information',
+          body: [{subdued: 'Environment name: production'}],
+        },
+        {
+          title: '',
+          body: [
+            'id: 1234',
+            'name: Test Theme',
+            'role: development',
+            'shop: test-shop.myshopify.com',
+            'editor_url: https://test-shop.myshopify.com/editor',
+            'preview_url: https://test-shop.myshopify.com/preview',
+          ].join('\n\n'),
+        },
+      ],
+    })
+
+    expect(formatSection).toHaveBeenCalledTimes(6)
   })
 })
