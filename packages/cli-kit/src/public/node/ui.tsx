@@ -43,6 +43,7 @@ import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTab
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
+import {FakeDev} from '../../private/node/ui/components/FakeDev.js'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
@@ -662,6 +663,10 @@ This usually happens when running a command non-interactively, for example in a 
     errorMessage,
     'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
   )
+}
+
+export async function renderFakeDev() {
+  renderOnce(<FakeDev />, {})
 }
 
 export type Key = InkKey

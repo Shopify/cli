@@ -1,6 +1,7 @@
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {
   renderError,
+  renderFakeDev,
   renderFatalError,
   renderInfo,
   renderSuccess,
@@ -9,6 +10,9 @@ import {
 } from '@shopify/cli-kit/node/ui'
 
 export async function staticService() {
+  renderFakeDev()
+  return
+
   // Banners
   renderInfo({
     headline: 'CLI update available.',
