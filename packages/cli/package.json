@@ -115,7 +115,7 @@
     "@shopify/plugin-cloudflare": "3.75.0",
     "@shopify/plugin-did-you-mean": "3.75.0",
     "@shopify/theme": "3.75.0",
-    "@shopify/cli-hydrogen": "9.0.6",
+    "@shopify/cli-hydrogen": "9.0.7",
     "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
