@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.75.1
+
+### Patch Changes
+
+- f00adc5: Fix search for dev stores prompt
+  - @shopify/cli-kit@3.75.1
+  - @shopify/theme@3.75.1
+  - @shopify/plugin-cloudflare@3.75.1
+
 ## 3.75.0
 
 ### Patch Changes
