@@ -1,0 +1,45 @@
+name: Release - Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'
+        required: true
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - nightly
+          - experimental
+
+concurrency:
+  group: changeset-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  PNPM_VERSION: '8.15.7'
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: shopify-ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
+        with:
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 18.20.3
+
+      - name: Publish to NPM
+        uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a
+        with:
+          version: pnpm release-version ${{ inputs.tag }}
+          publish: pnpm release ${{ inputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

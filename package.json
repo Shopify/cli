@@ -26,6 +26,8 @@
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
+    "release": "./bin/release",
+    "release-version": "./bin/version",
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "test:affected": "nx affected --target=test",

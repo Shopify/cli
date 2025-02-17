@@ -1,4 +1,4 @@
-name: changeset
+name: Release
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ env:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: shopify-ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
@@ -34,6 +34,11 @@ jobs:
           action: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a # pin@v1
           attempt_limit: 3
           attempt_delay: 2000
+          # When the Version Packages PR is merged, the "publish" script is triggered.
           with: |
             version: pnpm changeset-manifests
             title: Version Packages - ${{ github.ref_name }}
+            publish: pnpm release latest
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
