@@ -214,6 +214,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsAtomicDeployments = false
   public readonly requiresOrganization = false
   public readonly supportsDevSessions = false
+  public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
   private _session: PartnersSession | undefined
 

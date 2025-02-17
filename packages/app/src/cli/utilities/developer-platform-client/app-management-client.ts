@@ -154,6 +154,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
+  public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
 

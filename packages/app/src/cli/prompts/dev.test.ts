@@ -189,7 +189,6 @@ describe('selectStore', () => {
         {label: 'store2', value: '2'},
       ],
       hasMorePages: false,
-      search: expect.any(Function),
     })
   })
 
@@ -210,7 +209,6 @@ describe('selectStore', () => {
         {label: 'store2 (domain2)', value: '2'},
       ],
       hasMorePages: false,
-      search: expect.any(Function),
     })
   })
 
