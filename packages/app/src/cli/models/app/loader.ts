@@ -52,6 +52,7 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
+import {addToGitIgnore} from '@shopify/cli-kit/node/git'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -348,7 +349,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
     const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
 
-    const hiddenConfig = await loadHiddenConfig(directory)
+    const hiddenConfig = await loadHiddenConfig(directory, configuration)
 
     if (!this.previousApp) {
       await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
@@ -1069,14 +1070,34 @@ async function getAllLinkedConfigClientIds(
   return Object.fromEntries(entries)
 }
 
-async function loadHiddenConfig(appDirectory: string): Promise<AppHiddenConfig> {
+export async function loadHiddenConfig(
+  appDirectory: string,
+  configuration: AppConfiguration,
+): Promise<AppHiddenConfig> {
+  if (!configuration.client_id || typeof configuration.client_id !== 'string') return {}
+
   const hiddenConfigPath = appHiddenConfigPath(appDirectory)
   if (fileExistsSync(hiddenConfigPath)) {
-    return JSON.parse(await readFile(hiddenConfigPath, {encoding: 'utf8'}))
+    try {
+      const allConfigs: {[key: string]: AppHiddenConfig} = JSON.parse(await readFile(hiddenConfigPath))
+      const currentAppConfig = allConfigs[configuration.client_id]
+
+      if (currentAppConfig) return currentAppConfig
+
+      // Migration from legacy format, can be safely removed in version >=3.77
+      const oldConfig = allConfigs.dev_store_url
+      if (oldConfig !== undefined && typeof oldConfig === 'string') return {dev_store_url: oldConfig}
+
+      return {}
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return {}
+    }
   } else {
     // If the hidden config file doesn't exist, create an empty one.
     await mkdir(dirname(hiddenConfigPath))
     await writeFile(hiddenConfigPath, '{}')
+    await addToGitIgnore(appDirectory, configurationFileNames.hiddenFolder)
     return {}
   }
 }
