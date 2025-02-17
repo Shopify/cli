@@ -32,11 +32,15 @@ jobs:
           github_comment_included_packages: '@shopify/cli'
           custom_message_suffix: "
             > [!TIP]
-            > If you get an ETARGET error, try to install it with NPM adding the flag `--@shopify:registry=https://registry.npmjs.org`
+
+            > If you get an `ETARGET` error, install it with NPM and the flag `--@shopify:registry=https://registry.npmjs.org`
 
             > [!CAUTION]
+
             > After installing, validate the version by running just `shopify` in your terminal.
+
             > If the versions don't match, you might have multiple global instances installed.
+
             > Use `which shopify` to find out which one you are running and uninstall it."
           build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream"
         env:
