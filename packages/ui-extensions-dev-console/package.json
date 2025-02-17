@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-dev-console-app",
-  "version": "3.75.1",
+  "version": "3.75.2",
   "packageManager": "pnpm@8.15.7",
   "private": true,
   "scripts": {
