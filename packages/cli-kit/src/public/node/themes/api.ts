@@ -148,11 +148,12 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
       // eslint-disable-next-line no-await-in-loop
       ...(await Promise.all(
         nodes.map(async (file) => {
-          const content = await parseThemeFileContent(file.body)
+          const {attachment, value} = await parseThemeFileContent(file.body)
           return {
+            attachment,
             key: file.filename,
             checksum: file.checksumMd5 as string,
-            value: content,
+            value,
           }
         }),
       )),
@@ -437,16 +438,20 @@ type OnlineStoreThemeFileBody =
   | {__typename: 'OnlineStoreThemeFileBodyText'; content: string}
   | {__typename: 'OnlineStoreThemeFileBodyUrl'; url: string}
 
-async function parseThemeFileContent(body: OnlineStoreThemeFileBody): Promise<string> {
+export async function parseThemeFileContent(
+  body: OnlineStoreThemeFileBody,
+): Promise<{value?: string; attachment?: string}> {
   switch (body.__typename) {
     case 'OnlineStoreThemeFileBodyText':
-      return body.content
+      return {value: body.content}
     case 'OnlineStoreThemeFileBodyBase64':
-      return Buffer.from(body.contentBase64, 'base64').toString()
+      return {attachment: body.contentBase64}
     case 'OnlineStoreThemeFileBodyUrl':
       try {
         const response = await fetch(body.url)
-        return await response.text()
+
+        const arrayBuffer = await response.arrayBuffer()
+        return {attachment: Buffer.from(arrayBuffer).toString('base64')}
       } catch (error) {
         // Raise error if we can't download the file
         throw new AbortError(`Error downloading content from URL: ${body.url}`)

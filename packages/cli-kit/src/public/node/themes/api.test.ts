@@ -10,6 +10,7 @@ import {
   bulkUploadThemeAssets,
   AssetParams,
   deleteThemeAssets,
+  parseThemeFileContent,
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
@@ -22,13 +23,14 @@ import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_f
 import {OnlineStoreThemeFileBodyInputType} from '../../../cli/api/graphql/admin/generated/types.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
-import {test, vi, expect, describe} from 'vitest'
+import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {adminRequestDoc, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ClientError} from 'graphql-request'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/system')
+vi.stubGlobal('fetch', vi.fn())
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com', refresh: async () => {}}
 const themeAccessSession = {...session, token: 'shptka_token'}
@@ -540,5 +542,57 @@ describe('bulkUploadThemeAssets', async () => {
     await expect(bulkUploadThemeAssets(id, assets, session)).rejects.toThrow(
       'Error uploading theme files: Something went wrong',
     )
+  })
+})
+
+describe('parseThemeFileContent', () => {
+  const normalContent = 'foo'
+  const base64Content = Buffer.from(normalContent).toString('base64')
+
+  describe('when the body type is OnlineStoreThemeFileBodyText', () => {
+    test('returns the content field as a value', async () => {
+      const body = {
+        __typename: 'OnlineStoreThemeFileBodyText' as const,
+        content: normalContent,
+      }
+
+      const parsedContent = await parseThemeFileContent(body)
+
+      expect(parsedContent).toEqual({value: normalContent})
+    })
+  })
+
+  describe('when the body type is OnlineStoreThemeFileBodyBase64', () => {
+    test('returns the contentBase64 field as an attachment', async () => {
+      const body = {
+        __typename: 'OnlineStoreThemeFileBodyBase64' as const,
+        contentBase64: base64Content,
+      }
+
+      const parsedContent = await parseThemeFileContent(body)
+
+      expect(parsedContent).toEqual({attachment: base64Content})
+    })
+  })
+
+  describe('when the body type is OnlineStoreThemeFileBodyUrl', () => {
+    beforeEach(() => {
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(normalContent, {
+          headers: {'Content-Type': 'application/javascript'},
+        }),
+      )
+    })
+
+    test('fetches the content from the url and returns it as an attachment', async () => {
+      const body = {
+        __typename: 'OnlineStoreThemeFileBodyUrl' as const,
+        url: 'https://example.com/foo',
+      }
+
+      const parsedContent = await parseThemeFileContent(body)
+
+      expect(parsedContent).toEqual({attachment: base64Content})
+    })
   })
 })
