@@ -5,6 +5,7 @@ import {outputDebug, outputWarn} from '../../../public/node/output.js'
 import {getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
 import Command from '../../../public/node/base-command.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
+import {fetchNotificationsInBackground} from '../notifications-system.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -23,6 +24,7 @@ export const hook: Hook.Prerun = async (options) => {
   await warnOnAvailableUpgrade()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
+  if (!Command.hidden) fetchNotificationsInBackground(Command.id)
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
