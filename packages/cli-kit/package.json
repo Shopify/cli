@@ -53,7 +53,6 @@
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx test",
-    "test:js": "nx test:js",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
