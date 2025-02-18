@@ -23,7 +23,7 @@ env:
 jobs:
   release:
     name: Release
-    runs-on: shopify-ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
