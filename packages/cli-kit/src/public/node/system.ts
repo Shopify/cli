@@ -27,10 +27,17 @@ export interface ExecOptions {
  * Opens a URL in the user's default browser.
  *
  * @param url - URL to open.
+ * @returns A promise that resolves true if the URL was opened successfully, false otherwise.
  */
-export async function openURL(url: string): Promise<void> {
+export async function openURL(url: string): Promise<boolean> {
   const externalOpen = await import('open')
-  await externalOpen.default(url)
+  try {
+    await externalOpen.default(url)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return false
+  }
 }
 
 /**
