@@ -91,3 +91,15 @@ export function jsonOutputEnabled(environment = getEnvironmentVariables()): bool
 export function blockPartnersAccess(): boolean {
   return isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])
 }
+
+/**
+ * If true, the CLI should not use the network level retry.
+ *
+ * If there is an error when calling a network API that looks like a DNS or connectivity issue, the CLI will by default
+ * automatically retry the request.
+ *
+ * @returns True if the SHOPIFY_CLI_SKIP_NETWORK_LEVEL_RETRY environment variable is set.
+ */
+export function skipNetworkLevelRetry(): boolean {
+  return isTruthy(getEnvironmentVariables()[environmentVariables.skipNetworkLevelRetry])
+}
