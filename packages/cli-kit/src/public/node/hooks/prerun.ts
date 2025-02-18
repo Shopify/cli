@@ -24,7 +24,7 @@ export const hook: Hook.Prerun = async (options) => {
   await warnOnAvailableUpgrade()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
-  if (!Command.hidden) fetchNotificationsInBackground(Command.id)
+  if (!options.Command.hidden) fetchNotificationsInBackground(options.Command.id)
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
