@@ -69,17 +69,12 @@ describe('cacheRetrieveOrRepopulate', () => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       const cacheValue = {
-        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now()},
+        'notifications-IDENTITYURL': {value: 'URL1', timestamp: Date.now()},
       }
       config.set('cache', cacheValue)
 
       // When
-      const got = await cacheRetrieveOrRepopulate(
-        'identity-introspection-url-IDENTITYURL',
-        async () => 'URL2',
-        60 * 1000,
-        config,
-      )
+      const got = await cacheRetrieveOrRepopulate('notifications-IDENTITYURL', async () => 'URL2', 60 * 1000, config)
 
       // Then
       // Uses the prior run to return the cached value
@@ -93,12 +88,7 @@ describe('cacheRetrieveOrRepopulate', () => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
       // When
-      const got = await cacheRetrieveOrRepopulate(
-        'identity-introspection-url-IDENTITYURL',
-        async () => 'URL1',
-        60 * 1000,
-        config,
-      )
+      const got = await cacheRetrieveOrRepopulate('notifications-IDENTITYURL', async () => 'URL1', 60 * 1000, config)
 
       // Then
       expect(got).toEqual('URL1')
@@ -110,17 +100,12 @@ describe('cacheRetrieveOrRepopulate', () => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
       const cacheValue = {
-        'identity-introspection-url-IDENTITYURL': {value: 'URL1', timestamp: Date.now() - 60 * 1000},
+        'notifications-IDENTITYURL': {value: 'URL1', timestamp: Date.now() - 60 * 1000},
       }
       config.set('cache', cacheValue)
 
       // When
-      const got = await cacheRetrieveOrRepopulate(
-        'identity-introspection-url-IDENTITYURL',
-        async () => 'URL2',
-        0,
-        config,
-      )
+      const got = await cacheRetrieveOrRepopulate('notifications-IDENTITYURL', async () => 'URL2', 0, config)
 
       // Then
       // Fetches a new value because the old one is outdated per the current request
@@ -132,16 +117,11 @@ describe('cacheRetrieveOrRepopulate', () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<any>({cwd})
-      const cacheValue = {'identity-introspection-url-IDENTITYURL': {value: undefined, timestamp: Date.now()}}
+      const cacheValue = {'notifications-IDENTITYURL': {value: undefined, timestamp: Date.now()}}
       config.set('cache', cacheValue)
 
       // When
-      const got = await cacheRetrieveOrRepopulate(
-        'identity-introspection-url-IDENTITYURL',
-        async () => 'URL2',
-        60 * 1000,
-        config,
-      )
+      const got = await cacheRetrieveOrRepopulate('notifications-IDENTITYURL', async () => 'URL2', 60 * 1000, config)
 
       // Then
       // Fetches a new value because the old one is wrong
@@ -156,11 +136,11 @@ describe('cacheRetrieve', () => {
       // Given
       const config = new LocalStorage<any>({cwd})
       const cacheValue = {value: 'URL1', timestamp: Date.now()}
-      const cacheEntry = {'identity-introspection-url-IDENTITYURL': cacheValue}
+      const cacheEntry = {'notifications-IDENTITYURL': cacheValue}
       config.set('cache', cacheEntry)
 
       // When
-      const got = cacheRetrieve('identity-introspection-url-IDENTITYURL', config)
+      const got = cacheRetrieve('notifications-IDENTITYURL', config)
 
       // Then
       expect(got).toEqual(cacheValue)
@@ -174,7 +154,7 @@ describe('cacheRetrieve', () => {
       config.set('cache', {})
 
       // When
-      const got = cacheRetrieve('identity-introspection-url-IDENTITYURL', config)
+      const got = cacheRetrieve('notifications-IDENTITYURL', config)
 
       // Then
       expect(got).toBeUndefined()

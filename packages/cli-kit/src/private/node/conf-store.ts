@@ -7,7 +7,6 @@ interface CacheValue<T> {
   timestamp: number
 }
 
-export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
 export type NotificationsKey = `notifications-${string}`
 export type NotificationKey = `notification-${string}`
@@ -15,10 +14,9 @@ export type GraphQLRequestKey = `q-${string}-${string}-${string}`
 type MostRecentOccurrenceKey = `most-recent-occurrence-${string}`
 type RateLimitKey = `rate-limited-occurrences-${string}`
 
-type ExportedKey = IntrospectionUrlKey | PackageVersionKey | NotificationsKey | NotificationKey | GraphQLRequestKey
+type ExportedKey = PackageVersionKey | NotificationsKey | NotificationKey | GraphQLRequestKey
 
 interface Cache {
-  [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
   [packageVersionKey: PackageVersionKey]: CacheValue<string>
   [notifications: NotificationsKey]: CacheValue<string>
   [notification: NotificationKey]: CacheValue<string>
