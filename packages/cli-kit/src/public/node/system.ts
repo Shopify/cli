@@ -4,6 +4,7 @@ import {cwd, dirname} from './path.js'
 import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
+import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import which from 'which'
@@ -57,7 +58,9 @@ export async function captureOutput(command: string, args: string[], options?: E
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
   const commandProcess = buildExec(command, args, options)
 
-  if (options?.background) {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+  if (options?.background && !runningOnWindows) {
+    // Detaching on Windows causes a new terminal to open
     commandProcess.unref()
   }
 
