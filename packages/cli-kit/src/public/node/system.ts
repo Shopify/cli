@@ -22,6 +22,7 @@ export interface ExecOptions {
   signal?: AbortSignal
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
+  // Ignored on Windows
   background?: boolean
 }
 
@@ -56,11 +57,15 @@ export async function captureOutput(command: string, args: string[], options?: E
  * @param options - Optional settings for how to run the command.
  */
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
+  if (options) {
+    // Windows opens a new console window when running a command in the background, so we disable it.
+    const runningOnWindows = platformAndArch().platform === 'windows'
+    options.background = runningOnWindows ? false : options.background
+  }
+
   const commandProcess = buildExec(command, args, options)
 
-  const runningOnWindows = platformAndArch().platform === 'windows'
-  if (options?.background && !runningOnWindows) {
-    // Detaching on Windows causes a new terminal to open
+  if (options?.background) {
     commandProcess.unref()
   }
 
