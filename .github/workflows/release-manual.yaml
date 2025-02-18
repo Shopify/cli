@@ -5,7 +5,6 @@ on:
     inputs:
       tag:
         description: 'Tag'
-        required: true
         default: 'latest'
         type: choice
         options:
@@ -34,12 +33,8 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 18.20.3
-
-      - name: Publish to NPM
-        uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a
-        with:
-          version: pnpm release-version ${{ inputs.tag }}
-          publish: pnpm release ${{ inputs.tag }}
+      - name: Release
+        run:  pnpm release ${{ inputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -24,6 +24,10 @@ if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ]; then
   pnpm changeset-build-no-docs
 fi
 
+if [ "$tag" = "latest" ]; then
+  pnpm changeset-manifests
+fi
+
 # Bundle the packages
 pnpm bundle-for-release
 
@@ -31,7 +35,7 @@ pnpm bundle-for-release
 node bin/create-cli-duplicate-package.js
 
 # Publish the packages
-pnpm changeset publish --tag $1
+pnpm changeset publish --tag $tag
 
 # Create a PR to update homebrew
 ./bin/package.js
