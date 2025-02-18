@@ -15,14 +15,14 @@ interface RunCLIOptions {
   development: boolean
 }
 
-async function warnIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.versions) {
+async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.versions) {
   const nodeVersion = versions.node
   const nodeMajorVersion = Number(nodeVersion.split('.')[0])
 
   const currentSupportedNodeVersion = 18
   if (nodeMajorVersion < currentSupportedNodeVersion) {
-    const {renderWarning} = await import('./ui.js')
-    renderWarning({
+    const {renderError} = await import('./ui.js')
+    renderError({
       headline: 'Upgrade to a supported Node version now.',
       body: [
         `Node ${nodeMajorVersion} has reached end-of-life and poses security risks. When you upgrade to a`,
@@ -36,6 +36,7 @@ async function warnIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.v
         "you'll be able to use Shopify CLI without interruption.",
       ],
     })
+    process.exit(1)
   }
 }
 
@@ -85,7 +86,7 @@ export async function runCLI(
     await addInitToArgvWhenRunningCreateCLI(options, argv)
   }
   forceNoColor(argv, env)
-  await warnIfOldNodeVersion(versions)
+  await exitIfOldNodeVersion(versions)
   return launchCLI({moduleURL: options.moduleURL})
 }
 

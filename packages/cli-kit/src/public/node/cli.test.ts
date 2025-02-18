@@ -56,12 +56,13 @@ describe('cli', () => {
     expect(env.SHOPIFY_CLI_ENV).toBe('development')
   })
 
-  test('warns if running an old Node version', async () => {
+  test('exits if running an old Node version', async () => {
     const launchCLI = vi.fn()
     const outputMock = mockAndCaptureOutput()
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '17.9'} as any)
+    const run = runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '17.9'} as any)
+    await expect(run).rejects.toThrow()
     expect(outputMock.output()).toMatchInlineSnapshot(`
-      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  Upgrade to a supported Node version now.                                    │
       │                                                                              │
