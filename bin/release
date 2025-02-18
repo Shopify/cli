@@ -12,7 +12,6 @@ if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimenta
   exit 1
 fi
 
-
 if [ "$tag" = "experimental" ]; then
   # Only for experimental releases, force an empty changeset to ensure a build is created
   echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-experimental-build.md
