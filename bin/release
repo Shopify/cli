@@ -1,0 +1,44 @@
+#! /usr/bin/env bash
+
+tag=$1
+
+## If no tag is provided, default to latest
+if [ -z "$tag" ]; then
+  tag="latest"
+fi
+
+if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimental" ]; then
+  echo "Error: tag must be one of: latest, nightly, experimental"
+  exit 1
+fi
+
+
+if [ "$tag" = "experimental" ]; then
+  # Only for experimental releases, force an empty changeset to ensure a build is created
+  echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-experimental-build.md
+fi
+
+# Only for nightly and experimental releases, set the snapshot version
+if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ]; then
+  pnpm changeset version --snapshot $tag
+  pnpm changeset-build-no-docs
+fi
+
+if [ "$tag" = "latest" ]; then
+  pnpm changeset-manifests
+fi
+
+# Bundle the packages
+pnpm bundle-for-release
+
+# Create a duplicate package for the CLI (to be deployed as just `shopify`)
+node bin/create-cli-duplicate-package.js
+
+# Publish the packages
+pnpm changeset publish --tag $tag
+
+# Create a PR to update homebrew
+./bin/package.js
+
+# Create a PR to update the docs
+./bin/create-doc-pr.js

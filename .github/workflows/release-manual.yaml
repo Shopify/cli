@@ -1,11 +1,16 @@
-name: changeset
+name: Release - Manual
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - stable/3.*
+    inputs:
+      tag:
+        description: 'Tag'
+        default: 'latest'
+        type: choice
+        options:
+          - latest
+          - nightly
+          - experimental
 
 concurrency:
   group: changeset-${{ github.head_ref || github.run_id }}
@@ -28,12 +33,9 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 18.20.3
-      - name: Create Release Pull Request
-        uses: Wandalen/wretry.action@e6cf3db7de3777ba5f999f903c2f4efdd9ac7288 # pin@v1.0.36
-        with:
-          action: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a # pin@v1
-          attempt_limit: 3
-          attempt_delay: 2000
-          with: |
-            version: pnpm changeset-manifests
-            title: Version Packages - ${{ github.ref_name }}
+      - name: Release
+        run:  pnpm release ${{ inputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
