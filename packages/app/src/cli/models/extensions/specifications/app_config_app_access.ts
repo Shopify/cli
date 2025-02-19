@@ -18,17 +18,14 @@ const AppAccessSchema = zod.object({
     .optional(),
   access_scopes: zod
     .object({
-      scopes: zod
-        .string()
-        .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
-        .optional(),
-      required_scopes: zod.array(zod.string()).optional(),
-      optional_scopes: zod.array(zod.string()).optional(),
-      use_legacy_install_flow: zod.boolean().optional(),
+      scopes: zod.any(),
+      required_scopes: zod.any(),
+      optional_scopes: zod.any(),
+      use_legacy_install_flow: zod.any(),
     })
     .optional(),
   auth: zod.object({
-    redirect_urls: zod.array(validateUrl(zod.string())),
+    redirect_urls: zod.any(),
   }),
 })
 
