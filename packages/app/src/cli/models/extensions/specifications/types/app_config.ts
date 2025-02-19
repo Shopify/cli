@@ -27,4 +27,7 @@ export interface AppConfigurationUsedByCli {
   auth?: {
     redirect_urls: string[]
   }
+  translations?: {
+    extra_app_context?: string
+  }
 }
