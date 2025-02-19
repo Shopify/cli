@@ -4,7 +4,7 @@ import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warning
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {Args, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 
 export default class VersionsList extends AppCommand {
   static summary = 'List deployed versions of your app.'
@@ -25,10 +25,6 @@ export default class VersionsList extends AppCommand {
       env: 'SHOPIFY_FLAG_API_KEY',
       exclusive: ['config'],
     }),
-  }
-
-  static args = {
-    file: Args.string(),
   }
 
   public async run(): Promise<AppCommandOutput> {
