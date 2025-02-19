@@ -4,9 +4,14 @@ import * as debugRequest from '../../../private/node/api/graphql.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
 import * as metadata from '../metadata.js'
+import * as confStore from '../../../private/node/conf-store.js'
+import {inTemporaryDirectory} from '../fs.js'
+import {LocalStorage} from '../local-storage.js'
+import {ConfSchema} from '../../../private/node/conf-store.js'
 import {GraphQLClient} from 'graphql-request'
 import {test, vi, describe, expect, beforeEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 let mockedRequestId = 'request-id-123'
 
@@ -147,5 +152,98 @@ describe('graphqlRequestDoc', () => {
       mockVariables,
       expect.anything(),
     )
+  })
+})
+
+describe('graphqlRequest with caching', () => {
+  test('uses cache when TTL is provided', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // Given
+      const mockQueryHash = '84f38895-31ed-05b5-0d7b-dbf2f1eecd46e2580db0'
+      const mockVariablesHash = 'e6959ad8-4a7c-c23d-e7b8-be1ae774e05751514949'
+      const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
+
+      const cacheRetrieveSpy = vi
+        .spyOn(confStore, 'cacheRetrieveOrRepopulate')
+        .mockResolvedValue(JSON.stringify({data: 'cached-response'}))
+
+      // When
+      await graphqlRequest({
+        query: 'query',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: mockVariables,
+        cacheOptions: {
+          cacheTTL: 1000 * 60 * 60,
+          cacheExtraKey: 'extra',
+          cacheStore,
+        },
+      })
+
+      // Then
+      expect(cacheRetrieveSpy).toHaveBeenCalledWith(
+        `q-${mockQueryHash}-${mockVariablesHash}-${CLI_KIT_VERSION}-extra`,
+        expect.any(Function),
+        1000 * 60 * 60,
+        cacheStore,
+      )
+    })
+  })
+
+  test('uses cache key when no extra key provided', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // Given
+      const mockQueryHash = '84f38895-31ed-05b5-0d7b-dbf2f1eecd46e2580db0'
+      const mockVariablesHash = 'e6959ad8-4a7c-c23d-e7b8-be1ae774e05751514949'
+
+      const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
+
+      const cacheRetrieveSpy = vi
+        .spyOn(confStore, 'cacheRetrieveOrRepopulate')
+        .mockResolvedValue(JSON.stringify({data: 'cached-response'}))
+
+      // When
+      await graphqlRequest({
+        query: 'query',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: mockVariables,
+        cacheOptions: {
+          cacheTTL: 1000 * 60 * 60 * 24,
+          cacheStore,
+        },
+      })
+
+      // Then
+      expect(cacheRetrieveSpy).toHaveBeenCalledWith(
+        `q-${mockQueryHash}-${mockVariablesHash}-${CLI_KIT_VERSION}-`,
+        expect.any(Function),
+        1000 * 60 * 60 * 24,
+        cacheStore,
+      )
+    })
+  })
+
+  test('skips cache when no TTL is provided', async () => {
+    const retryAwareSpy = vi
+      .spyOn(api, 'retryAwareRequest')
+      .mockImplementation(async () => ({status: 200, headers: new Headers()}))
+
+    const cacheRetrieveSpy = vi.spyOn(confStore, 'cacheRetrieveOrRepopulate')
+
+    // When
+    await graphqlRequest({
+      query: 'query',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      variables: mockVariables,
+    })
+
+    // Then
+    expect(cacheRetrieveSpy).not.toHaveBeenCalled()
+    expect(retryAwareSpy).toHaveBeenCalled()
   })
 })
