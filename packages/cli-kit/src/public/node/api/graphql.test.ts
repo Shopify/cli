@@ -338,4 +338,33 @@ describe('graphqlRequest with caching', () => {
     expect(cacheRetrieveSpy).not.toHaveBeenCalled()
     expect(retryAwareSpy).toHaveBeenCalled()
   })
+
+  test('skips cache when no-cache flag is present', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      const retryAwareSpy = vi
+        .spyOn(api, 'retryAwareRequest')
+        .mockImplementation(async () => ({status: 200, headers: new Headers()}))
+      const cacheRetrieveSpy = vi.spyOn(confStore, 'cacheRetrieveOrRepopulate')
+      const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
+
+      process.argv.push('--no-cache')
+
+      // When
+      await graphqlRequest({
+        query: 'query',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: mockVariables,
+        cacheOptions: {
+          cacheTTL: 1000 * 60 * 60,
+          cacheStore,
+        },
+      })
+
+      // Then
+      expect(cacheRetrieveSpy).not.toHaveBeenCalled()
+      expect(retryAwareSpy).toHaveBeenCalled()
+    })
+  })
 })

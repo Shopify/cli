@@ -136,6 +136,11 @@ export const globalFlags = {
     description: 'Increase the verbosity of the output.',
     env: 'SHOPIFY_FLAG_VERBOSE',
   }),
+  'no-cache': Flags.boolean({
+    hidden: true,
+    description: 'Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.',
+    env: 'SHOPIFY_FLAG_NO_CACHE',
+  }),
 }
 
 export const jsonFlag = {

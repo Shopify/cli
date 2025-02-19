@@ -43,6 +43,14 @@
           "name": "name",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",

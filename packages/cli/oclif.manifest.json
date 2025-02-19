@@ -43,6 +43,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -129,6 +137,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -200,6 +216,14 @@
           "multiple": false,
           "name": "client-id",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -308,6 +332,14 @@
           "multiple": false,
           "name": "message",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -451,6 +483,14 @@
           "multiple": false,
           "name": "graphiql-port",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -626,6 +666,14 @@
           "name": "env-file",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -704,6 +752,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -781,6 +837,14 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -890,6 +954,14 @@
           "multiple": false,
           "name": "log",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -1007,6 +1079,14 @@
           "name": "json",
           "type": "boolean"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1098,6 +1178,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1184,6 +1272,14 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -1316,6 +1412,14 @@
           "name": "name",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1426,6 +1530,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1512,6 +1624,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1596,6 +1716,14 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -1696,6 +1824,14 @@
           "multiple": false,
           "name": "name",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -1809,6 +1945,14 @@
           "name": "json",
           "type": "boolean"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1916,6 +2060,14 @@
           "name": "config",
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -2013,6 +2165,14 @@
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
           "name": "force",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -2126,6 +2286,14 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -2563,6 +2731,14 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -4853,6 +5029,14 @@
           "required": false,
           "type": "boolean"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -4938,6 +5122,14 @@
           "multiple": true,
           "name": "environment",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -5036,6 +5228,14 @@
           "description": "Skip confirmation.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -5169,6 +5369,14 @@
             "off"
           ],
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -5329,6 +5537,14 @@
           "name": "json",
           "type": "boolean"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -5413,6 +5629,14 @@
           "name": "latest",
           "type": "boolean"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -5459,6 +5683,14 @@
       "description": "Starts the \"Language Server\" (https://shopify.dev/docs/themes/tools/cli/language-server).",
       "descriptionWithMarkdown": "Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).",
       "flags": {
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -5527,6 +5759,14 @@
           "multiple": false,
           "name": "name",
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -5613,6 +5853,14 @@
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
           "name": "force",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -5710,6 +5958,14 @@
           "name": "live",
           "type": "boolean"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -5772,6 +6028,14 @@
       "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
       "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
       "flags": {
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -5833,6 +6097,14 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -5933,6 +6205,14 @@
           "description": "Skip confirmation.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -6038,6 +6318,14 @@
           "description": "Pull theme files from your remote live theme.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -6186,6 +6474,14 @@
           "description": "Push theme files from your remote live theme.",
           "env": "SHOPIFY_FLAG_LIVE",
           "name": "live",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
@@ -6338,6 +6634,14 @@
           "required": false,
           "type": "option"
         },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -6461,6 +6765,14 @@
             "off"
           ],
           "type": "option"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -6615,6 +6927,14 @@
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
           "name": "force",
+          "type": "boolean"
+        },
+        "no-cache": {
+          "allowNo": false,
+          "description": "Disable the CLI GraphQL cache. Use it if need to fetch fresh data from the API.",
+          "env": "SHOPIFY_FLAG_NO_CACHE",
+          "hidden": true,
+          "name": "no-cache",
           "type": "boolean"
         },
         "no-color": {
