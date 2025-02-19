@@ -27,7 +27,13 @@ describe('appManagementRequestDoc', () => {
 
     // When
     const query = 'query' as unknown as TypedDocumentNode<object, {variables: string}>
-    await appManagementRequestDoc(orgId, query, mockedToken, {variables: 'variables'})
+    await appManagementRequestDoc(
+      orgId,
+      query,
+      mockedToken,
+      {variables: 'variables'},
+      {cacheTTL: {hours: 1}, cacheExtraKey: '1234'},
+    )
 
     // Then
     expect(graphqlRequestDoc).toHaveBeenLastCalledWith({
@@ -37,6 +43,7 @@ describe('appManagementRequestDoc', () => {
       token: mockedToken,
       variables: {variables: 'variables'},
       responseOptions: {onResponse: handleDeprecations},
+      cacheOptions: {cacheTTL: {hours: 1}, cacheExtraKey: `1234${orgId}`},
     })
   })
 })
