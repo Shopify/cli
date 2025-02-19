@@ -33,6 +33,7 @@ import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/ap
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
+import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -1086,8 +1087,10 @@ export async function loadHiddenConfig(
 
       // Migration from legacy format, can be safely removed in version >=3.77
       const oldConfig = allConfigs.dev_store_url
-      if (oldConfig !== undefined && typeof oldConfig === 'string') return {dev_store_url: oldConfig}
-
+      if (oldConfig !== undefined && typeof oldConfig === 'string') {
+        await patchAppHiddenConfigFile(hiddenConfigPath, configuration.client_id, {dev_store_url: oldConfig})
+        return {dev_store_url: oldConfig}
+      }
       return {}
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
