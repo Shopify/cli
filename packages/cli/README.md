@@ -19,6 +19,7 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
+* [`shopify app translate](#shopoify-app-translate)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -650,6 +651,10 @@ DESCRIPTION
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
+
+## `shopify app translate`
+
+TODO
 
 ## `shopify app versions list`
 

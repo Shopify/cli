@@ -19,6 +19,7 @@ import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import Release from './commands/app/release.js'
+import Translate from './commands/app/translate.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
 import WebhookTriggerDeprecated from './commands/webhook/trigger.js'
@@ -40,6 +41,7 @@ export const commands: {[key: string]: typeof AppCommand} = {
   'app:info': AppInfo,
   'app:init': Init,
   'app:release': Release,
+  'app:translate': Translate,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
   'app:env:pull': EnvPull,
