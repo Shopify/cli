@@ -1,4 +1,3 @@
-import {configExtensionsIdentifiersBreakdown} from './context/breakdown-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {AppTranslateSchema} from '../api/graphql/app_translate.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -26,15 +25,20 @@ export async function translate(options: ReleaseOptions) {
   const {developerPlatformClient, app, remoteApp} = options
   console.log('find me 1')
 
-  console.log({developerPlatformClient, app, remoteApp})
-  const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
-    developerPlatformClient,
-    apiKey: remoteApp.apiKey,
-    localApp: app,
-    remoteApp,
+  //   console.log({developerPlatformClient, app, remoteApp})
+  //   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
+  //     developerPlatformClient,
+  //     apiKey: remoteApp.apiKey,
+  //     localApp: app,
+  //     remoteApp,
+  //   })
+
+  console.log({
+    title: remoteApp.title,
+    name: app.name,
+    extraAppContext: app.configuration.translations?.extra_app_context,
   })
 
-  console.log({configExtensionIdentifiersBreakdown})
   //   const confirmed = await deployOrReleaseConfirmationPrompt({
   //     configExtensionIdentifiersBreakdown,
   //     extensionIdentifiersBreakdown,
