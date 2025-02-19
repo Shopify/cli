@@ -137,6 +137,7 @@ import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -901,6 +902,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 }
 
+interface AppVersionSource {
+  source: {
+    name: string
+    modules: {
+      uid?: string
+      type: string
+      handle?: string
+      config: {[key: string]: unknown}
+    }[]
+  }
+}
+
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
@@ -908,34 +921,27 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
   const {isLaunchable, scopesArray, name, isEmbedded} = options
-  return {
-    appSource: {
-      appModules: [
+  const source: AppVersionSource = {
+    source: {
+      name,
+      modules: [
         {
-          // Change the uid to AppHomeSpecIdentifier
-          uid: 'app_home',
-          specificationIdentifier: AppHomeSpecIdentifier,
+          type: AppHomeSpecIdentifier,
           config: {
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
             embedded: isEmbedded,
           },
         },
         {
-          // Change the uid to BrandingSpecIdentifier
-          uid: 'branding',
-          specificationIdentifier: BrandingSpecIdentifier,
+          type: BrandingSpecIdentifier,
           config: {name},
         },
         {
-          // Change the uid to WebhooksSpecIdentifier
-          uid: 'webhooks',
-          specificationIdentifier: WebhooksSpecIdentifier,
+          type: WebhooksSpecIdentifier,
           config: {api_version: apiVersion},
         },
         {
-          // Change the uid to AppAccessSpecIdentifier
-          uid: 'app_access',
-          specificationIdentifier: AppAccessSpecIdentifier,
+          type: AppAccessSpecIdentifier,
           config: {
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
@@ -943,8 +949,9 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
         },
       ],
     },
-    name,
   }
+
+  return {initialVersion: {source: source.source as unknown as JsonMapType}}
 }
 
 // Business platform uses base64-encoded GIDs, while App Management uses
