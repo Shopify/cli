@@ -76,7 +76,7 @@ export async function setupPreviewableExtensionsProcess({
   storeFqdn,
   checkoutCartUrl,
   ...options
-}: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'previewableExtensions' | 'port' | 'cartUrl'> & {
+}: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'previewableExtensions' | 'cartUrl'> & {
   allExtensions: ExtensionInstance[]
   checkoutCartUrl?: string
 }): Promise<PreviewableExtensionProcess | undefined> {
@@ -90,7 +90,6 @@ export async function setupPreviewableExtensionsProcess({
     function: launchPreviewableExtensionProcess,
     options: {
       pathPrefix: '/extensions',
-      port: -1,
       storeFqdn,
       previewableExtensions,
       cartUrl,

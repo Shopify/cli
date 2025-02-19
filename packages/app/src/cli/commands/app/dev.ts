@@ -103,6 +103,11 @@ If you're using the Ruby app template, then you need to complete the following s
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
+    'previewable-extension-port': Flags.integer({
+      hidden: false,
+      description: 'Local port of the extension preview development server.',
+      env: 'SHOPIFY_FLAG_PREVIEWABLE_EXTENSION_PORT',
+    }),
     notify: Flags.string({
       description:
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
@@ -174,6 +179,7 @@ If you're using the Ruby app template, then you need to complete the following s
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      previewableExtensionPort: flags['previewable-extension-port'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
