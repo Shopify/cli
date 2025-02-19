@@ -149,3 +149,99 @@ describe('graphqlRequestDoc', () => {
     )
   })
 })
+
+describe('sanitizeVariables', () => {
+  test('masks sensitive data at the top level', () => {
+    const variables = {
+      apiKey: 'secret-key',
+      normalField: 'normal-value',
+      serialized_script: 'sensitive-script'
+    }
+
+    const result = debugRequest.sanitizeVariables(variables)
+    const parsed = JSON.parse(result)
+
+    expect(parsed.apiKey).toBe('*****')
+    expect(parsed.normalField).toBe('normal-value')
+    expect(parsed.serialized_script).toBe('*****')
+  })
+
+  test('masks sensitive data in deeply nested objects', () => {
+    const variables = {
+      level1: {
+        apiKey: 'secret-key',
+        level2: {
+          serialized_script: 'sensitive-script',
+          normal: 'normal-value'
+        }
+      },
+      topLevel: 'normal'
+    }
+
+    const result = debugRequest.sanitizeVariables(variables)
+    const parsed = JSON.parse(result)
+
+    expect(parsed.level1.apiKey).toBe('*****')
+    expect(parsed.level1.level2.serialized_script).toBe('*****')
+    expect(parsed.level1.level2.normal).toBe('normal-value')
+    expect(parsed.topLevel).toBe('normal')
+  })
+
+  test('handles arrays correctly', () => {
+    const variables = {
+      items: [
+        { apiKey: 'secret1' },
+        { apiKey: 'secret2' },
+        { normal: 'value' }
+      ]
+    }
+
+    const result = debugRequest.sanitizeVariables(variables)
+    const parsed = JSON.parse(result)
+
+    expect(parsed.items[0].apiKey).toBe('*****')
+    expect(parsed.items[1].apiKey).toBe('*****')
+    expect(parsed.items[2].normal).toBe('value')
+  })
+
+  test('does not change primitive values', () => {
+    const variables = {
+      number: 123,
+      string: 'normal',
+      boolean: true,
+      null: null,
+      undefined: undefined
+    }
+
+    const result = debugRequest.sanitizeVariables(variables)
+    const parsed = JSON.parse(result)
+
+    expect(parsed.number).toBe(123)
+    expect(parsed.string).toBe('normal')
+    expect(parsed.boolean).toBe(true)
+    expect(parsed.null).toBe(null)
+    expect(parsed.undefined).toBe(undefined)
+  })
+
+  test('hides values in json string', () => {
+    const variables = {
+      json: '{"api_version": 1, "serialized_script": "ddddddddd"}'
+    }
+
+    const result = debugRequest.sanitizeVariables(variables)
+    const parsed = JSON.parse(result)
+
+    expect(parsed.json).toBe('{"api_version":1,"serialized_script":"*****"}')
+  })
+
+  test('handling invalid json', () => {
+    const variables = {
+      json: '{"api_version": 1'
+    }
+
+    const result = debugRequest.sanitizeVariables(variables)
+    const parsed = JSON.parse(result)
+
+    expect(parsed.json).toBe('{"api_version": 1')
+  })
+})

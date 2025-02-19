@@ -19,12 +19,49 @@ ${sanitizedHeadersOutput(headers)}\n
 to ${sanitizeURL(url)}`)
 }
 
-function sanitizeVariables(variables: Variables): string {
+export function sanitizeVariables(variables: Variables): string {
   const result: Variables = {...variables}
-  if ('apiKey' in result) {
-    result.apiKey = '*****'
+  const sensitiveKeys = ['apiKey', 'serialized_script']
+
+  const sanitizedResult = sanitizeDeepVariables(result, sensitiveKeys)
+
+  return JSON.stringify(sanitizedResult, null, 2)
+}
+
+function sanitizeDeepVariables(value: unknown, sensitiveKeys: string[]): unknown {
+  // Checking for JSON
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (typeof parsed === 'object' && parsed !== null) {
+        const sanitized = sanitizeDeepVariables(parsed, sensitiveKeys)
+        return JSON.stringify(sanitized, null)
+      }
+    } catch (error) {
+      return value
+    }
   }
-  return JSON.stringify(result, null, 2)
+
+  if (typeof value !== 'object' || value === null) {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeDeepVariables(item, sensitiveKeys))
+  }
+
+  const result: Variables = {}
+
+  for (const [key, val] of Object.entries(value)) {
+    if (sensitiveKeys.includes(key) && typeof val === 'string') {
+      result[key] = '*****'
+      continue
+    }
+
+    result[key] = sanitizeDeepVariables(val, sensitiveKeys)
+  }
+
+  return result
 }
 
 export function errorHandler(api: string): (error: unknown, requestId?: string) => unknown {
