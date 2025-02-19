@@ -652,13 +652,13 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
-## `shopify app:translate --someflag <value>`
+## `shopify app:translate --force-all --resume <value>`
 
 Translate an app.
 
 ```
 USAGE
-  $ shopify app translate --someflag <value>
+  $ shopify app translate --force-all --resume <value>
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -671,7 +671,7 @@ FLAGS
 DESCRIPTION
   Translate an app.
 
-  Translate an app version. Do a thing using the `--someflag` flag.
+  Translate an app. Resume a previous request with the `--resume` flag.
 ```
 
 ## `shopify app versions list`

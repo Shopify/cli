@@ -48,6 +48,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
+import {AppTranslateSchema} from '../../api/graphql/app_translate.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
   SampleWebhook,
@@ -682,6 +683,34 @@ export class AppManagementClient implements DeveloperPlatformClient {
           category: '',
           details: [],
         })),
+      },
+    }
+  }
+
+  async translate({app: {id: appId, organizationId}}: {app: MinimalOrganizationApp}): Promise<AppTranslateSchema> {
+    console.log({appId, organizationId, location: 'app-management-client#translate'})
+    // const AppTranslationVariables = {appId}
+    // const releaseResult = await appManagementRequestDoc(
+    //   organizationId,
+    //   ReleaseVersion,
+    //   await this.token(),
+    //   AppTranslationVariables,
+    // )
+    // if (!releaseResult.appReleaseCreate?.release) {
+    //   throw new AbortError('Failed to start translation request')
+    // }
+    // errors = releaseResult.appReleaseCreate.userErrors?.map((err) => ({
+    //   field: err.field,
+    //   message: err.message,
+    //   category: '',
+    //   details: [],
+    // }))
+    return {
+      appTranslate: {
+        translationRequest: {
+          id: 'bla',
+        },
+        userErrors: [], // errors
       },
     }
   }

@@ -50,6 +50,7 @@ import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../service
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
+import {AppTranslateSchema} from '../../api/graphql/app_translate.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
   MigrateFlowExtensionSchema,
@@ -1318,6 +1319,15 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
+const translateResponse: AppTranslateSchema = {
+  appTranslate: {
+    translationRequest: {
+      id: 'bla',
+    },
+    userErrors: [],
+  },
+}
+
 const generateSignedUploadUrlResponse: AssetUrlSchema = {
   assetUrl: 'signed-upload-url',
   userErrors: [],
@@ -1438,6 +1448,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
+    translate: (_input: {app: MinimalAppIdentifiers}) => Promise.resolve(translateResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
       Promise.resolve(convertedToTransferDisabledStoreResponse),

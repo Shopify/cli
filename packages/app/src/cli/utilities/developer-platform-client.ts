@@ -26,6 +26,7 @@ import {
 } from '../api/graphql/development_preview.js'
 import {FindAppPreviewModeSchema, FindAppPreviewModeVariables} from '../api/graphql/find_app_preview_mode.js'
 import {AppReleaseSchema} from '../api/graphql/app_release.js'
+import {AppTranslateSchema} from '../api/graphql/app_translate.js'
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../services/webhook/request-sample.js'
 import {PublicApiVersionsSchema} from '../services/webhook/request-api-versions.js'
@@ -249,6 +250,7 @@ export interface DeveloperPlatformClient {
   updateExtension: (input: ExtensionUpdateDraftMutationVariables) => Promise<ExtensionUpdateDraftMutation>
   deploy: (input: AppDeployOptions) => Promise<AppDeploySchema>
   release: (input: {app: MinimalOrganizationApp; version: AppVersionIdentifiers}) => Promise<AppReleaseSchema>
+  translate: (input: {app: MinimalOrganizationApp}) => Promise<AppTranslateSchema>
   convertToTransferDisabledStore: (
     input: ConvertDevToTransferDisabledStoreVariables,
   ) => Promise<ConvertDevToTransferDisabledSchema>

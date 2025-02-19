@@ -10,9 +10,9 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 export default class Translate extends AppCommand {
   static summary = 'Translate an app.'
 
-  static usage = `app:translate --someflag <value>`
+  static usage = `app:translate --force-all --resume <value>`
 
-  static descriptionWithMarkdown = `Translate an app version. Do a thing using the \`--someflag\` flag.`
+  static descriptionWithMarkdown = `Translate an app. Resume a previous request with the \`--resume\` flag.`
 
   static description = this.descriptionWithoutMarkdown()
 

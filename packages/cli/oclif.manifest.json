@@ -2080,8 +2080,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Translate an app version. Do a thing using the `--someflag` flag.",
-      "descriptionWithMarkdown": "Translate an app version. Do a thing using the `--someflag` flag.",
+      "description": "Translate an app. Resume a previous request with the `--resume` flag.",
+      "descriptionWithMarkdown": "Translate an app. Resume a previous request with the `--resume` flag.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -2151,7 +2151,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Translate an app.",
-      "usage": "app:translate --someflag <value>"
+      "usage": "app:translate --force-all --resume <value>"
     },
     "app:versions:list": {
       "aliases": [

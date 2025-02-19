@@ -75,6 +75,7 @@ import {
   AppVersionsDiffVariables,
 } from '../../api/graphql/app_versions_diff.js'
 import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
+import {AppTranslate, AppTranslateSchema, AppTranslateVariables} from '../../api/graphql/app_translate.js'
 import {
   AppVersionByTagQuery,
   AppVersionByTagSchema,
@@ -462,6 +463,11 @@ export class PartnersClient implements DeveloperPlatformClient {
   }): Promise<AppReleaseSchema> {
     const input: AppReleaseVariables = {apiKey, appVersionId}
     return this.request(AppRelease, input)
+  }
+
+  async translate({app: {apiKey}}: {app: MinimalOrganizationApp}): Promise<AppTranslateSchema> {
+    const input: AppTranslateVariables = {apiKey}
+    return this.request(AppTranslate, input)
   }
 
   async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
