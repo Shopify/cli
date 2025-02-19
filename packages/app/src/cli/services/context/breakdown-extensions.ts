@@ -93,6 +93,36 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   }
 }
 
+// TODO, what is this?
+export async function extensionsIdentifiersTranslateBreakdown(
+  developerPlatformClient: DeveloperPlatformClient,
+  app: MinimalOrganizationApp,
+  version: string,
+) {
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(app, version, developerPlatformClient)
+
+  const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
+    extensions
+      .filter(
+        (extension) =>
+          extension.specification.experience === 'extension' &&
+          extension.specification.identifier !== 'webhook_subscription',
+      )
+      .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle))
+  const mapIsDashboard = (extensions: AppVersionsDiffExtensionSchema[]) =>
+    extensions
+      .filter((extension) => extension.specification.options.managementExperience === 'dashboard')
+      .map((extension) => buildDashboardBreakdownInfo(extension.registrationTitle))
+
+  const extensionIdentifiersBreakdown = {
+    onlyRemote: [...mapIsExtension(versionsDiff.removed), ...mapIsDashboard(versionsDiff.removed)],
+    toCreate: [...mapIsExtension(versionsDiff.added), ...mapIsDashboard(versionsDiff.added)],
+    toUpdate: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
+  }
+
+  return {extensionIdentifiersBreakdown, versionDetails}
+}
+
 export async function extensionsIdentifiersReleaseBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
   app: MinimalOrganizationApp,
