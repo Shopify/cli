@@ -265,8 +265,8 @@ importers:
         specifier: 3.75.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 9.0.7
-        version: 9.0.7(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.8
+        version: 9.0.8(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.75.0
         version: link:../cli-kit
@@ -2944,10 +2944,10 @@ packages:
       '@bugsnag/core': 7.25.0
     dev: false
 
-  /@bugsnag/browser@8.1.2:
-    resolution: {integrity: sha512-COP3OanbGCOS/K4g0rGwSYk2/RcIooG2PqxqdrF0MDY4u3Nz44iOaJg8w7WlOr8CckmDEiwSW2DVR+M7qZcoQw==}
+  /@bugsnag/browser@8.2.0:
+    resolution: {integrity: sha512-C4BfE3eVsjOAqoXbdrPXfKbgp/hz2H7mKBU0p11Jf9uz+5gUCfZK+39JLrQKvRXwqoDcTlBSfz9Xz5kXLyHg2Q==}
     dependencies:
-      '@bugsnag/core': 8.1.1
+      '@bugsnag/core': 8.2.0
     dev: true
 
   /@bugsnag/core@7.25.0:
@@ -2960,8 +2960,8 @@ packages:
       stack-generator: 2.0.10
     dev: false
 
-  /@bugsnag/core@8.1.1:
-    resolution: {integrity: sha512-ytOWqwm4H2h8rADqYPR+tQpDHsBav3NEZ5E2VSCCxPbT2R89Q0/t0PZTbQVlOS+TRutajO29VxTV9qsAREfpSw==}
+  /@bugsnag/core@8.2.0:
+    resolution: {integrity: sha512-dFSs80ZwJ508nlC6UTLTUMdHgTaHY5UKvMiuHqstCQrQrOjqFcIv+x4o+l2WrSyOpoYhHAxDlKfzKN8AjwslQw==}
     dependencies:
       '@bugsnag/cuid': 3.1.1
       '@bugsnag/safe-json-stringify': 6.0.0
@@ -2980,11 +2980,11 @@ packages:
       '@bugsnag/node': 7.25.0
     dev: false
 
-  /@bugsnag/js@8.1.2:
-    resolution: {integrity: sha512-vMl/TlMTpm0Xv4IKqYpmsjeVE4nPWAZL8uOxOi0JI6dgTaWE8+VQF6KuSpeKiA7Pr34uUxpWhSBrkZ3uSwCBdg==}
+  /@bugsnag/js@8.2.0:
+    resolution: {integrity: sha512-DTtQwV1Ly5VXSOnVtzW8gSwB+ld3qIc/h0yMS836DEYUfA3V9JPwJE3+2EbD8Ea2ogkDWZ+a0jl0SNSNGiOmfA==}
     dependencies:
-      '@bugsnag/browser': 8.1.2
-      '@bugsnag/node': 8.1.1
+      '@bugsnag/browser': 8.2.0
+      '@bugsnag/node': 8.2.0
     dev: true
 
   /@bugsnag/node@7.25.0:
@@ -3001,7 +3001,18 @@ packages:
   /@bugsnag/node@8.1.1:
     resolution: {integrity: sha512-Ckdgj4tQto3CH4wWo12BAG0lQuS9s5SUpZvwmYF3meW5Qxq7D8XHZzrfGQo9nb1VTvmwOB+uyMt8En6Cy86Jcg==}
     dependencies:
-      '@bugsnag/core': 8.1.1
+      '@bugsnag/core': 8.2.0
+      byline: 5.0.0
+      error-stack-parser: 2.1.4
+      iserror: 0.0.2
+      pump: 3.0.0
+      stack-generator: 2.0.10
+    dev: true
+
+  /@bugsnag/node@8.2.0:
+    resolution: {integrity: sha512-6XC/KgX61m6YFgsBQP/GaH1UzlJkJmpi3AwlZQLsXloRh3O9lM/0EIk6+2sZm+vlz+GwxCFavcuIDgVmH/qi7Q==}
+    dependencies:
+      '@bugsnag/core': 8.2.0
       byline: 5.0.0
       error-stack-parser: 2.1.4
       iserror: 0.0.2
@@ -6307,8 +6318,8 @@ packages:
     resolution: {integrity: sha512-fTIQwLF+Qhuws31iw7Ncl1R3HUDtGwIipiJ9iU+UsDUwMhegFcQKQHd51nZjb7CArq0MvON8rbgCGQYWHUKAdg==}
     dev: true
 
-  /@shopify/cli-hydrogen@9.0.7(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-noIVp4xh85fqG9MRqq7CzIRfmzEQJZ3BJ3rCXKR/WNzxQwqfQvNGAjvglS1uXRTTLbmE8r5e3NzB9qoWZHKhQw==}
+  /@shopify/cli-hydrogen@9.0.8(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-vvEQINtgau6/C3irLKZ4yVCVcFojCAEKt2BJTtKVZfq75g0/Bg262OUJGGf45kY9j8tlVQqGVxckzslbPz8agA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
@@ -6336,7 +6347,7 @@ packages:
       '@graphql-codegen/cli': 5.0.4(@types/node@18.19.70)(graphql@16.10.0)(typescript@5.7.3)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.6(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.10(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.1
       chokidar: 3.5.3
@@ -6445,8 +6456,8 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.6.6(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-cdxyw7wu0lhpfC1RB9jRUOW5TP1SDsDjeJHg6XwzC/2hsFXuwJiJtb9IoMMkoPoX0uEUSJdMjltheauOnvCzuA==}
+  /@shopify/oxygen-cli@4.6.10(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
+    resolution: {integrity: sha512-Riekd/TGICdyW4ly4nIk+Chn2K+PvDzrDLjDnQpjwxAERjn2Xl5Q0Mo4rX24o+sAjuA1EUMx1KpyohLuwRMc3w==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
@@ -6454,8 +6465,8 @@ packages:
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': ^3.58.0
     dependencies:
-      '@bugsnag/core': 8.1.1
-      '@bugsnag/js': 8.1.2
+      '@bugsnag/core': 8.2.0
+      '@bugsnag/js': 8.2.0
       '@bugsnag/node': 8.1.1
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
