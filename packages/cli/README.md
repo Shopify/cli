@@ -19,7 +19,7 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
-* [`shopify app translate](#shopoify-app-translate)
+* [`shopify app:translate --someflag <value>`](#shopify-apptranslate---someflag-value)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -652,9 +652,27 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
-## `shopify app translate`
+## `shopify app:translate --someflag <value>`
 
-TODO
+Translate an app.
+
+```
+USAGE
+  $ shopify app translate --someflag <value>
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Translate an app.
+
+  Translate an app version. Do a thing using the `--someflag` flag.
+```
 
 ## `shopify app versions list [FILE]`
 
