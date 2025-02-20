@@ -36,7 +36,14 @@ export const pollAppLogs = async ({
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
+    // Needs to know if should use dev dash or not, usually part of the developer platform client
+    // consider refactor to move this there
+
+    // Idea:
+    // If Partners do
     const httpResponse = await fetchAppLogs(jwtToken, cursor)
+    // If Dev Dashboard do
+    // const httpResponse = await fetchAppLogsDevDashboard(jwtToken, organizationId, appId, cursor)
 
     const response = await httpResponse.json()
     const {errors} = response as {errors: string[]}

@@ -129,16 +129,20 @@ const generateFetchAppLogUrlDevDashboard = async (
   const fqdn = await appManagementFqdn()
   let url = `https://${fqdn}/functions/unstable/organizations/${orgId}/${appId}/app_logs/poll`
 
-  if (!cursor && !filters) {
+  if (!cursor) {
     return url
   }
 
-  const params = new URLSearchParams()
-  if (cursor) params.set('cursor', cursor)
-  if (filters?.status) params.set('status', filters.status)
-  if (filters?.source) params.set('source', filters.source)
+  url += `?cursor=${cursor}`
 
-  return `${url}?${params.toString()}`
+  if (filters?.status) {
+    url += `&status=${filters.status}`
+  }
+  if (filters?.source) {
+    url += `&source=${filters.source}`
+  }
+
+  return url
 }
 
 export const fetchAppLogs = async (
