@@ -1,5 +1,5 @@
-mutation CreateAppVersion($appId: ID!, $appSource: AppSourceInput!, $name: String!, $metadata: VersionMetadataInput) {
-  appVersionCreate(appId: $appId, appSource: $appSource, name: $name, metadata: $metadata) {
+mutation CreateAppVersion($appId: ID!, $version: AppVersionInput!, $metadata: VersionMetadataInput) {
+  appVersionCreate(appId: $appId, version: $version, metadata: $metadata) {
     version {
       id
       appModules {
