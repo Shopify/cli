@@ -160,7 +160,7 @@ describe('sanitizeVariables', () => {
     const variables = {
       apiKey: 'secret-key',
       normalField: 'normal-value',
-      serialized_script: 'sensitive-script'
+      serialized_script: 'sensitive-script',
     }
 
     const result = debugRequest.sanitizeVariables(variables)
@@ -177,10 +177,10 @@ describe('sanitizeVariables', () => {
         apiKey: 'secret-key',
         level2: {
           serialized_script: 'sensitive-script',
-          normal: 'normal-value'
-        }
+          normal: 'normal-value',
+        },
       },
-      topLevel: 'normal'
+      topLevel: 'normal',
     }
 
     const result = debugRequest.sanitizeVariables(variables)
@@ -194,11 +194,7 @@ describe('sanitizeVariables', () => {
 
   test('handles arrays correctly', () => {
     const variables = {
-      items: [
-        { apiKey: 'secret1' },
-        { apiKey: 'secret2' },
-        { normal: 'value' }
-      ]
+      items: [{apiKey: 'secret1'}, {apiKey: 'secret2'}, {normal: 'value'}],
     }
 
     const result = debugRequest.sanitizeVariables(variables)
@@ -215,7 +211,7 @@ describe('sanitizeVariables', () => {
       string: 'normal',
       boolean: true,
       null: null,
-      undefined: undefined
+      undefined,
     }
 
     const result = debugRequest.sanitizeVariables(variables)
@@ -230,7 +226,7 @@ describe('sanitizeVariables', () => {
 
   test('hides values in json string', () => {
     const variables = {
-      json: '{"api_version": 1, "serialized_script": "ddddddddd"}'
+      json: '{"api_version": 1, "serialized_script": "ddddddddd"}',
     }
 
     const result = debugRequest.sanitizeVariables(variables)
@@ -241,7 +237,7 @@ describe('sanitizeVariables', () => {
 
   test('handling invalid json', () => {
     const variables = {
-      json: '{"api_version": 1'
+      json: '{"api_version": 1',
     }
 
     const result = debugRequest.sanitizeVariables(variables)

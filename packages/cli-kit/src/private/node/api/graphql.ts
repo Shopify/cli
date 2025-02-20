@@ -37,6 +37,7 @@ function sanitizeDeepVariables(value: unknown, sensitiveKeys: string[]): unknown
         const sanitized = sanitizeDeepVariables(parsed, sensitiveKeys)
         return JSON.stringify(sanitized, null)
       }
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       return value
     }
