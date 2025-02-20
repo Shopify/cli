@@ -13,6 +13,7 @@ import * as templates from '../templates.js'
 import * as payload from '../payload.js'
 import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
+import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {describe, expect, vi, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as h3 from 'h3'
@@ -62,6 +63,15 @@ function getMockNext() {
   const next = vi.fn()
 
   return next as unknown as (err?: Error) => unknown
+}
+
+function getOptions({devOptions}: {devOptions: Partial<GetExtensionsMiddlewareOptions['devOptions']>}) {
+  const extensions = devOptions.extensions
+  return {
+    devOptions,
+    payloadStore: {},
+    getExtensions: () => extensions,
+  } as unknown as GetExtensionsMiddlewareOptions
 }
 
 describe('corsMiddleware()', () => {
@@ -197,7 +207,7 @@ describe('getExtensionAssetMiddleware()', () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
-      const options = {
+      const options = getOptions({
         devOptions: {
           extensions: [
             await testUIExtension({
@@ -206,8 +216,7 @@ describe('getExtensionAssetMiddleware()', () => {
             }),
           ],
         },
-        payloadStore: {},
-      } as unknown as GetExtensionsMiddlewareOptions
+      })
 
       const response = getMockResponse()
 
@@ -233,19 +242,20 @@ describe('getExtensionAssetMiddleware()', () => {
 
   test('returns the file for that asset path', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
-      const response = getMockResponse()
-      const fileName = 'test-ui-extension.js'
       const extension = await testUIExtension({})
       const outputPath = extension.getOutputPathForDirectory(tmpDir)
-      const options = {
+
+      const options = getOptions({
         devOptions: {
           extensions: [extension],
           appWatcher: {
             buildOutputPath: tmpDir,
-          },
+          } as unknown as AppEventWatcher,
         },
-        payloadStore: {},
-      } as unknown as GetExtensionsMiddlewareOptions
+      })
+
+      const response = getMockResponse()
+      const fileName = 'test-ui-extension.js'
 
       await mkdir(dirname(outputPath))
       await touchFile(outputPath)
@@ -277,7 +287,7 @@ describe('getExtensionPayloadMiddleware()', () => {
 
     const actualExtensionId = '123abc'
     const requestedExtensionId = '456dev'
-    const options = {
+    const options = getOptions({
       devOptions: {
         url: 'http://mock.url',
         extensions: [
@@ -286,8 +296,7 @@ describe('getExtensionPayloadMiddleware()', () => {
           }),
         ],
       },
-      payloadStore: {},
-    } as unknown as GetExtensionsMiddlewareOptions
+    })
 
     const response = getMockResponse()
 
@@ -315,7 +324,7 @@ describe('getExtensionPayloadMiddleware()', () => {
       vi.spyOn(utilities, 'getExtensionUrl').mockReturnValue('http://www.mock.com/extension/url')
 
       const extensionId = '123abc'
-      const options = {
+      const options = getOptions({
         devOptions: {
           url: 'http://mock.url',
           extensions: [
@@ -325,8 +334,7 @@ describe('getExtensionPayloadMiddleware()', () => {
             }),
           ],
         },
-        payloadStore: {},
-      } as unknown as GetExtensionsMiddlewareOptions
+      })
 
       const response = getMockResponse()
 
@@ -360,7 +368,7 @@ describe('getExtensionPayloadMiddleware()', () => {
       vi.spyOn(utilities, 'getRedirectUrl').mockReturnValue('http://www.mock.com/redirect/url')
 
       const extensionId = '123abc'
-      const options = {
+      const options = getOptions({
         devOptions: {
           url: 'http://mock.url',
           storeFqdn: 'mock-store.myshopify.com',
@@ -375,8 +383,7 @@ describe('getExtensionPayloadMiddleware()', () => {
             }),
           ],
         },
-        payloadStore: {},
-      } as unknown as GetExtensionsMiddlewareOptions
+      })
 
       const response = getMockResponse()
 
@@ -406,7 +413,7 @@ describe('getExtensionPayloadMiddleware()', () => {
       } as unknown as UIExtensionPayload)
 
       const extensionId = '123abc'
-      const options = {
+      const options = getOptions({
         devOptions: {
           url: 'http://mock.url',
           storeFqdn: 'mock-store.myshopify.com',
@@ -419,10 +426,9 @@ describe('getExtensionPayloadMiddleware()', () => {
           manifestVersion: '3',
           appWatcher: {
             buildOutputPath: 'mock-build-output-path',
-          },
+          } as unknown as AppEventWatcher,
         },
-        payloadStore: {},
-      } as unknown as GetExtensionsMiddlewareOptions
+      })
 
       const response = getMockResponse()
 
@@ -470,7 +476,7 @@ describe('getExtensionPointMiddleware()', () => {
 
     const actualExtensionId = '123abc'
     const requestedExtensionId = '456dev'
-    const options = {
+    const options = getOptions({
       devOptions: {
         url: 'http://mock.url',
         extensions: [
@@ -479,8 +485,7 @@ describe('getExtensionPointMiddleware()', () => {
           }),
         ],
       },
-      payloadStore: {},
-    } as unknown as GetExtensionsMiddlewareOptions
+    })
 
     const response = getMockResponse()
 
@@ -507,7 +512,7 @@ describe('getExtensionPointMiddleware()', () => {
 
     const extensionId = '123abc'
     const requestedExtensionPointTarget = 'Admin::CheckoutEditor::RenderSettings'
-    const options = {
+    const options = getOptions({
       devOptions: {
         url: 'http://mock.url',
         extensions: [
@@ -526,8 +531,7 @@ describe('getExtensionPointMiddleware()', () => {
           }),
         ],
       },
-      payloadStore: {},
-    } as unknown as GetExtensionsMiddlewareOptions
+    })
 
     const response = getMockResponse()
 
@@ -555,7 +559,7 @@ describe('getExtensionPointMiddleware()', () => {
 
     const extensionId = '123abc'
     const extensionPointTarget = 'abc'
-    const options = {
+    const options = getOptions({
       devOptions: {
         url: 'http://mock.url',
         extensions: [
@@ -574,8 +578,7 @@ describe('getExtensionPointMiddleware()', () => {
           }),
         ],
       },
-      payloadStore: {},
-    } as unknown as GetExtensionsMiddlewareOptions
+    })
 
     const response = getMockResponse()
 
@@ -603,7 +606,7 @@ describe('getExtensionPointMiddleware()', () => {
 
     const extensionId = '123abc'
     const extensionPointTarget = 'Checkout::Dynamic::Render'
-    const options = {
+    const options = getOptions({
       devOptions: {
         url: 'http://mock.url',
         storeFqdn: 'mock-store.myshopify.com',
@@ -623,8 +626,7 @@ describe('getExtensionPointMiddleware()', () => {
           }),
         ],
       },
-      payloadStore: {},
-    } as unknown as GetExtensionsMiddlewareOptions
+    })
 
     const response = getMockResponse()
 

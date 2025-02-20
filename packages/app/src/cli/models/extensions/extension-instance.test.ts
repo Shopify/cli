@@ -1,5 +1,7 @@
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {ExtensionInstance} from './extension-instance.js'
+import {loadLocalExtensionsSpecifications} from './load-specifications.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -37,6 +39,44 @@ function functionConfiguration(): FunctionConfigType {
     },
   }
 }
+
+describe('constructor', async () => {
+  test("generates a devUUID and a uid if one isn't provided", async () => {
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+    const extension = new ExtensionInstance({
+      configuration: {
+        name: 'test-ui-extension',
+        type: 'ui_extension',
+        metafields: [],
+      },
+      configurationPath: '',
+      directory: '',
+      specification,
+    })
+    expect(extension.devUUID).toBeDefined()
+    expect(extension.uid).toBeDefined()
+  })
+
+  test('uses the provided devUUID and uid if provided', async () => {
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+    const extension = new ExtensionInstance({
+      configuration: {
+        name: 'test-ui-extension',
+        type: 'ui_extension',
+        metafields: [],
+        devUUID: 'test-dev-uuid',
+        uid: 'test-uid',
+      },
+      configurationPath: '',
+      directory: '',
+      specification,
+    })
+    expect(extension.devUUID).toBe('test-dev-uuid')
+    expect(extension.uid).toBe('test-uid')
+  })
+})
 
 describe('watchPaths', async () => {
   test('returns an array for a single path', async () => {

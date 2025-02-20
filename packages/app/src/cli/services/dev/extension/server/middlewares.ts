@@ -74,10 +74,10 @@ export async function fileServerMiddleware(
   response.end(fileContent)
 }
 
-export function getExtensionAssetMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
   return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
     const {extensionId, assetPath} = request.context.params
-    const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionId)
+    const extension = getExtensions().find((extension) => extension.devUUID === extensionId)
 
     if (!extension) {
       return sendError(response, {
@@ -157,10 +157,10 @@ export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   }
 }
 
-export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionPayloadMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
   return async (request: IncomingMessage, response: ServerResponse, _next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
-    const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
+    const extension = getExtensions().find((extension) => extension.devUUID === extensionID)
 
     if (!extension) {
       return sendError(response, {
@@ -211,11 +211,11 @@ export function getExtensionPayloadMiddleware({devOptions}: GetExtensionsMiddlew
   }
 }
 
-export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
   return async (request: IncomingMessage, response: ServerResponse, _next: (err?: Error) => unknown) => {
     const extensionID = request.context.params.extensionId
     const requestedTarget = request.context.params.extensionPointTarget
-    const extension = devOptions.extensions.find((extension) => extension.devUUID === extensionID)
+    const extension = getExtensions().find((extension) => extension.devUUID === extensionID)
 
     if (!extension) {
       return sendError(response, {
