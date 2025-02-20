@@ -14,7 +14,7 @@ export async function renderLogs({
   storeNameById: Map<string, string>
 }) {
   const resubscribeCallback = async () => {
-    return subscribeToAppLogs(developerPlatformClient, variables)
+    return subscribeToAppLogs(developerPlatformClient, variables, "1", "1", "1")
   }
 
   return render(

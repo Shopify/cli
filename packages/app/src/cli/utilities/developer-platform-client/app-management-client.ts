@@ -160,6 +160,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
+    console.log("AppManagementClient constructor")
+    console.log(session)
     this._session = session
   }
 
