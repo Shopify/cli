@@ -20,6 +20,7 @@ import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/availab
 import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {CreateApp} from '../../api/graphql/app-management/generated/create-app.js'
+import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -556,5 +557,200 @@ describe('sendSampleWebhook', () => {
     expect(result.sendSampleWebhook.headers).toEqual('{}')
     expect(result.sendSampleWebhook.success).toEqual(false)
     expect(result.sendSampleWebhook.userErrors).toEqual([{message: 'Invalid api_version', fields: []}])
+  })
+})
+
+describe('deploy', () => {
+  // Given
+  const client = new AppManagementClient()
+  client.token = () => Promise.resolve('token')
+
+  test('creates version with correct metadata and modules', async () => {
+    // Given
+    const versionTag = '1.0.0'
+    const message = 'Test deploy'
+    const commitReference = 'https://github.com/org/repo/commit/123'
+    const appModules = [
+      {
+        uid: 'branding',
+        config: JSON.stringify({name: 'Test App'}),
+        handle: 'test-app',
+        specificationIdentifier: BrandingSpecIdentifier,
+        context: 'unused-context',
+      },
+    ]
+
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {
+            versionTag,
+            message,
+            sourceControlUrl: commitReference,
+          },
+          appModules: [
+            {
+              uuid: 'some_uuid',
+            },
+          ],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      appModules,
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag,
+      message,
+      commitReference,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(appManagementRequestDoc).toHaveBeenCalledWith('gid://shopify/Organization/123', expect.anything(), 'token', {
+      appId: 'gid://shopify/App/123',
+      version: {
+        source: {
+          name: 'Test App',
+          modules: [
+            {
+              uid: 'branding',
+              type: BrandingSpecIdentifier,
+              handle: 'test-app',
+              config: {name: 'Test App'},
+            },
+          ],
+        },
+      },
+      metadata: {
+        versionTag,
+        message,
+        sourceControlUrl: commitReference,
+      },
+    })
+  })
+
+  test('uses bundleUrl when provided instead of modules', async () => {
+    // Given
+    const bundleUrl = 'https://storage.test/bundle.zip'
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {},
+          appModules: [],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/123',
+      bundleUrl,
+      versionTag: '1.0.0',
+      skipPublish: true,
+    })
+
+    // Then
+    expect(appManagementRequestDoc).toHaveBeenCalledWith('gid://shopify/Organization/123', expect.anything(), 'token', {
+      appId: 'gid://shopify/App/123',
+      version: {
+        sourceUrl: bundleUrl,
+      },
+      metadata: expect.any(Object),
+    })
+  })
+
+  test('updates name from branding module if present', async () => {
+    // Given
+    const appModules = [
+      {
+        uuid: 'branding',
+        config: JSON.stringify({name: 'Updated App Name'}),
+        handle: 'branding',
+        specificationIdentifier: BrandingSpecIdentifier,
+        context: 'unused-context',
+      },
+    ]
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {},
+          appModules: [],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Original Name',
+      appModules,
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag: '1.0.0',
+      skipPublish: true,
+    })
+
+    // Then
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      expect.objectContaining({
+        version: {
+          source: {
+            name: 'Updated App Name',
+            modules: expect.any(Array),
+          },
+        },
+      }),
+    )
+  })
+
+  test('handles version creation errors', async () => {
+    // Given
+    const mockResponse = {
+      appVersionCreate: {
+        version: null,
+        userErrors: [
+          {
+            field: ['version'],
+            message: 'Invalid version',
+            details: [],
+          },
+        ],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result = await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag: '1.0.0',
+      skipPublish: true,
+    })
+
+    // Then
+    expect(result.appDeploy.userErrors).toHaveLength(1)
+    expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
   })
 })

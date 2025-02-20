@@ -582,22 +582,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
-
+    const metadata = {versionTag, message, sourceControlUrl: commitReference}
+    const queryVersion: AppVersionSourceUrl | AppVersionSource = bundleUrl
+      ? {sourceUrl: bundleUrl}
+      : {
+          source: {
+            name: updatedName,
+            modules: (appModules ?? []).map((mod) => ({
+              uid: mod.uid ?? mod.uuid ?? mod.handle,
+              type: mod.specificationIdentifier,
+              handle: mod.handle,
+              config: JSON.parse(mod.config),
+            })),
+          },
+        }
     const variables = {
       appId,
-      name: updatedName,
-      appSource: {
-        assetsUrl: bundleUrl,
-        appModules: (appModules ?? []).map((mod) => {
-          return {
-            uid: mod.uid ?? mod.uuid ?? mod.handle,
-            specificationIdentifier: mod.specificationIdentifier,
-            handle: mod.handle,
-            config: JSON.parse(mod.config),
-          }
-        }),
-      },
-      metadata: {versionTag, message, sourceControlUrl: commitReference},
+      version: queryVersion as unknown as JsonMapType,
+      metadata,
     }
 
     const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
@@ -912,6 +914,10 @@ interface AppVersionSource {
       config: {[key: string]: unknown}
     }[]
   }
+}
+
+interface AppVersionSourceUrl {
+  sourceUrl: string
 }
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
