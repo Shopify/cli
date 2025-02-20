@@ -7,7 +7,7 @@ import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
-import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
@@ -67,86 +67,84 @@ export async function deploy(options: DeployOptions) {
 
   outputNewline()
 
-  let uploadExtensionsBundleResult: UploadExtensionsBundleOutput
+  let uploadExtensionsBundleResult!: UploadExtensionsBundleOutput
 
-  await inTemporaryDirectory(async (tmpDir) => {
-    try {
-      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
-      let bundlePath: string | undefined
+  try {
+    const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
+    let bundlePath: string | undefined
 
-      if (bundle) {
-        bundlePath = joinPath(tmpDir, `bundle.zip`)
-        await mkdir(dirname(bundlePath))
-      }
-      await bundleAndBuildExtensions({app, bundlePath, identifiers})
-
-      let uploadTaskTitle
-
-      if (release) {
-        uploadTaskTitle = 'Releasing an app version'
-      } else {
-        uploadTaskTitle = 'Creating an app version'
-      }
-
-      const tasks: Task<TasksContext>[] = [
-        {
-          title: 'Running validation',
-          task: async () => {
-            await app.preDeployValidation()
-          },
-        },
-        {
-          title: uploadTaskTitle,
-          task: async () => {
-            const appModules = await Promise.all(
-              app.allExtensions.flatMap((ext) =>
-                ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
-              ),
-            )
-
-            uploadExtensionsBundleResult = await uploadExtensionsBundle({
-              appId: remoteApp.id,
-              apiKey,
-              name: app.name,
-              organizationId: remoteApp.organizationId,
-              bundlePath,
-              appModules: getArrayRejectingUndefined(appModules),
-              release,
-              developerPlatformClient,
-              extensionIds: identifiers.extensionIds,
-              message: options.message,
-              version: options.version,
-              commitReference: options.commitReference,
-            })
-
-            if (!useThemebundling()) {
-              const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
-              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
-            }
-
-            await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
-          },
-        },
-      ]
-
-      await renderTasks(tasks)
-
-      await outputCompletionMessage({
-        app,
-        release,
-        uploadExtensionsBundleResult,
-      })
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      /**
-       * If deployment fails when uploading we want the identifiers to be persisted
-       * for the next run.
-       */
-      await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
-      throw error
+    if (bundle) {
+      bundlePath = joinPath(options.app.directory, '.shopify', 'deploy-bundle.zip')
+      await mkdir(dirname(bundlePath))
     }
-  })
+    await bundleAndBuildExtensions({app, bundlePath, identifiers})
+
+    let uploadTaskTitle
+
+    if (release) {
+      uploadTaskTitle = 'Releasing an app version'
+    } else {
+      uploadTaskTitle = 'Creating an app version'
+    }
+
+    const tasks: Task<TasksContext>[] = [
+      {
+        title: 'Running validation',
+        task: async () => {
+          await app.preDeployValidation()
+        },
+      },
+      {
+        title: uploadTaskTitle,
+        task: async () => {
+          const appModules = await Promise.all(
+            app.allExtensions.flatMap((ext) =>
+              ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
+            ),
+          )
+
+          uploadExtensionsBundleResult = await uploadExtensionsBundle({
+            appId: remoteApp.id,
+            apiKey,
+            name: app.name,
+            organizationId: remoteApp.organizationId,
+            bundlePath,
+            appModules: getArrayRejectingUndefined(appModules),
+            release,
+            developerPlatformClient,
+            extensionIds: identifiers.extensionIds,
+            message: options.message,
+            version: options.version,
+            commitReference: options.commitReference,
+          })
+
+          if (!useThemebundling()) {
+            const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
+            await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
+          }
+
+          await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+        },
+      },
+    ]
+
+    await renderTasks(tasks)
+
+    await outputCompletionMessage({
+      app,
+      release,
+      uploadExtensionsBundleResult,
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    /**
+     * If deployment fails when uploading we want the identifiers to be persisted
+     * for the next run.
+     */
+    await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
+    throw error
+  }
 
   return {app}
 }

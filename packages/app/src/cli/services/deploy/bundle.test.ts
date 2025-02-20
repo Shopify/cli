@@ -82,7 +82,7 @@ describe('bundleAndBuildExtensions', () => {
         file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
       })
       functionExtension.buildForBundle = extensionBundleMock
-      const app = testApp({allExtensions: [functionExtension]})
+      const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
 
       const extensions: {[key: string]: string} = {}
       for (const extension of app.allExtensions) {
