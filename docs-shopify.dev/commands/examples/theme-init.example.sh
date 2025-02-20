@@ -1,1 +1,1 @@
-theme init [name] [flags]
+theme init [name]
