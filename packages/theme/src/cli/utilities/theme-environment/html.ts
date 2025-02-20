@@ -78,21 +78,31 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
          * session, and redirect to the same page.
          */
         if (error instanceof ThemeIdMismatchError) {
-          outputDebug(error.message)
+          outputDebug(
+            `Theme ID mismatch: expected ${error.getExpectedThemeId()} but got ${error.getActualThemeId()}; refreshing session...`,
+          )
 
           if (ctx.session.refresh) {
             themeIdMismatchRedirects++
             if (themeIdMismatchRedirects > MAX_THEME_ID_MISMATCH_REDIRECTS) {
-              renderFatalError(new AbortError(error.message))
+              renderFatalError(new AbortError(error.getMessage()))
               process.exit(1)
             }
 
             await ctx.session.refresh()
 
+            /**
+             * Filtering out __sfr params to avoid infinite redirects, when in
+             * development mode.
+             */
+            const searchParams = new URLSearchParams(browserSearch)
+            const filteredParams = new URLSearchParams([...searchParams].filter(([key]) => !key.startsWith('__sfr')))
+            const location = browserPathname + (filteredParams.toString() ? `?${filteredParams}` : '')
+
             return new Response(null, {
               status: 302,
               headers: {
-                Location: browserPathname,
+                Location: location,
               },
             })
           }
@@ -172,15 +182,44 @@ function assertThemeId(response: Response, html: string, expectedThemeId: string
   const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
 
   if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
-    throw new ThemeIdMismatchError(
-      `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.` +
-        `\nRequest ID: ${response.headers.get('x-request-id')}` +
-        `\nURL: ${response.url}` +
-        `This is likely related to an issue in upstream Shopify APIs.` +
-        `\nPlease try again in a few minutes and report this issue:` +
-        `\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
-    )
+    throw new ThemeIdMismatchError(expectedThemeId, obtainedThemeId, response)
   }
 }
 
-class ThemeIdMismatchError extends Error {}
+class ThemeIdMismatchError extends Error {
+  private readonly response: Response
+  private readonly expectedThemeId: string
+  private readonly actualThemeId: string
+
+  constructor(expectedThemeId: string, actualThemeId: string, response: Response) {
+    super(
+      [
+        `Theme ID mismatch: expected ${expectedThemeId} but got ${actualThemeId}.`,
+        `Request ID: ${response.headers.get('x-request-id')}`,
+        `URL: ${response.url}`,
+        'This is likely related to an issue in upstream Shopify APIs.',
+        'Please try again in a few minutes and report this issue:',
+        'https://github.com/Shopify/cli/issues/new?template=bug-report.yml',
+      ].join('\n'),
+    )
+    this.response = response
+    this.expectedThemeId = expectedThemeId
+    this.actualThemeId = actualThemeId
+  }
+
+  getMessage(): string {
+    return this.message
+  }
+
+  getResponse(): Response {
+    return this.response
+  }
+
+  getExpectedThemeId(): string {
+    return this.expectedThemeId
+  }
+
+  getActualThemeId(): string {
+    return this.actualThemeId
+  }
+}
