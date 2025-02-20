@@ -20,8 +20,6 @@ if [ -n "$SPIN" ]; then
   if [ -n "$SPIN_SHOPIFY_DEV_SERVICE_FQDN" ]; then
     cp ./docs-shopify.dev/static/generated/* ~/src/github.com/Shopify/shopify-dev/db/data/docs/templated_apis/shopify-cli/v3/
     cp ./docs-shopify.dev/static/screenshots/* ~/src/github.com/Shopify/shopify-dev/app/assets/images/templated-apis-screenshots/shopify-cli/v3/
-    # cd ~/src/github.com/Shopify/shopify-dev
-    # restart
   else
     echo "If you include shopify-dev in your Spin constellation, this will automatically copy ./docs-shopify.dev/generated to shopify-dev"
   fi

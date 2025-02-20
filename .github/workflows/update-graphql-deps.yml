@@ -32,6 +32,7 @@ jobs:
       - name: Get schemas for codegen
         env:
           GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+          GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
         run: pnpm graphql-codegen:get-graphql-schemas
       - name: Run graphql-codegen
         run: pnpm graphql-codegen

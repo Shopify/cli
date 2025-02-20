@@ -21,8 +21,8 @@ vi.mock('./context.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./app/add-uid-to-extension-toml.js')
 
-async function writeAppConfig(tmp: string, content: string) {
-  const appConfigPath = joinPath(tmp, 'shopify.app.toml')
+async function writeAppConfig(tmp: string, content: string, configName?: string) {
+  const appConfigPath = joinPath(tmp, configName ?? 'shopify.app.toml')
   const packageJsonPath = joinPath(tmp, 'package.json')
   await writeFile(appConfigPath, content)
   await writeFile(packageJsonPath, '{}')
@@ -75,10 +75,17 @@ describe('linkedAppContext', () => {
     })
   })
 
-  test('links app when it is not linked', async () => {
+  test('links app when it is not linked, and config file is cached', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const content = ''
-      await writeAppConfig(tmp, content)
+      await writeAppConfig(tmp, content, 'shopify.app.stg.toml')
+      localStorage.setCachedAppInfo({
+        appId: 'test-api-key',
+        title: 'Test App',
+        directory: tmp,
+        orgId: 'test-org-id',
+        configFile: 'shopify.app.stg.toml',
+      })
 
       // Given
       vi.mocked(link).mockResolvedValue({
@@ -86,16 +93,16 @@ describe('linkedAppContext', () => {
         state: {
           state: 'connected-app',
           appDirectory: tmp,
-          configurationPath: `${tmp}/shopify.app.toml`,
+          configurationPath: `${tmp}/shopify.app.stg.toml`,
           configSource: 'cached',
-          configurationFileName: 'shopify.app.toml',
-          basicConfiguration: {client_id: 'test-api-key', path: joinPath(tmp, 'shopify.app.toml')},
+          configurationFileName: 'shopify.app.stg.toml',
+          basicConfiguration: {client_id: 'test-api-key', path: joinPath(tmp, 'shopify.app.stg.toml')},
         },
         configuration: {
           client_id: 'test-api-key',
           name: 'test-app',
           application_url: 'https://test-app.com',
-          path: joinPath(tmp, 'shopify.app.toml'),
+          path: joinPath(tmp, 'shopify.app.stg.toml'),
           embedded: false,
         },
       })
@@ -116,7 +123,7 @@ describe('linkedAppContext', () => {
         specifications: [],
         organization: mockOrganization,
       })
-      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
+      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: 'shopify.app.stg.toml'})
     })
   })
 
@@ -213,7 +220,7 @@ describe('linkedAppContext', () => {
       })
 
       // Then
-      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
+      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: 'shopify.app.toml'})
     })
   })
 

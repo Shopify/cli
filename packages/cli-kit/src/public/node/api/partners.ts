@@ -1,4 +1,4 @@
-import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc} from './graphql.js'
+import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc, CacheOptions} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -36,15 +36,22 @@ async function setupRequest(token: string) {
  * @param query - GraphQL query to execute.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param cacheOptions - Cache options.
  * @returns The response of the query of generic type <T>.
  */
-export async function partnersRequest<T>(query: string, token: string, variables?: GraphQLVariables): Promise<T> {
+export async function partnersRequest<T>(
+  query: string,
+  token: string,
+  variables?: GraphQLVariables,
+  cacheOptions?: CacheOptions,
+): Promise<T> {
   const opts = await setupRequest(token)
   const result = limiter.schedule(() =>
     graphqlRequest<T>({
       ...opts,
       query,
       variables,
+      cacheOptions,
     }),
   )
 

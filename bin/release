@@ -4,7 +4,7 @@ tag=$1
 
 ## If no tag is provided, default to latest
 if [ -z "$tag" ]; then
-  tag="latest"
+  tag="nightly"
 fi
 
 if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimental" ]; then
@@ -36,8 +36,10 @@ node bin/create-cli-duplicate-package.js
 # Publish the packages
 pnpm changeset publish --tag $tag
 
+# if [ "$tag" = "latest" ]; then
 # Create a PR to update homebrew
 ./bin/package.js
 
 # Create a PR to update the docs
 ./bin/create-doc-pr.js
+# fi

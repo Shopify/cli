@@ -5,11 +5,11 @@ on:
     inputs:
       tag:
         description: 'Tag'
-        default: 'latest'
+        default: 'nightly'
         type: choice
         options:
-          - latest
           - nightly
+          - latest
           - experimental
 
 concurrency:
@@ -25,6 +25,8 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     permissions:
+      contents: write
+      pull-requests: write
       id-token: write
 
     steps:
