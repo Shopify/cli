@@ -189,8 +189,10 @@ describe('selectStore', () => {
         {label: 'store2', value: '2'},
       ],
       hasMorePages: false,
-      search: expect.any(Function),
     })
+    // We are not enabling backend search because we are not passing a search function
+    const lastCall = vi.mocked(renderAutocompletePrompt).mock.calls[0]!
+    expect(lastCall[0]).not.toHaveProperty('search')
   })
 
   test('renders stores list with domain if showDomainOnPrompt is true ', async () => {
@@ -210,8 +212,10 @@ describe('selectStore', () => {
         {label: 'store2 (domain2)', value: '2'},
       ],
       hasMorePages: false,
-      search: expect.any(Function),
     })
+    // We are not enabling backend search because we are not passing a search function
+    const lastCall = vi.mocked(renderAutocompletePrompt).mock.calls[0]!
+    expect(lastCall[0]).not.toHaveProperty('search')
   })
 
   test('returns correct store if user selects one after searching', async () => {

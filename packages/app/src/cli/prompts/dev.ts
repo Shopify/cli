@@ -72,10 +72,14 @@ interface SelectStorePromptOptions {
   showDomainOnPrompt: boolean
 }
 
+interface ExtraAutoCompletePropsForStoreSelect {
+  search?: RenderAutocompleteOptions<string>['search']
+}
+
 export async function selectStorePrompt({
   stores,
   hasMorePages = false,
-  onSearchForStoresByName = (_term: string) => Promise.resolve({stores, hasMorePages}),
+  onSearchForStoresByName,
   showDomainOnPrompt = true,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
@@ -94,11 +98,9 @@ export async function selectStorePrompt({
 
   let currentStores = stores
 
-  const id = await renderAutocompletePrompt({
-    message: 'Which store would you like to use to view your project?',
-    choices: currentStores.map(storeToChoice),
-    hasMorePages,
-    search: async (term) => {
+  const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
+  if (onSearchForStoresByName) {
+    extraAutocompletePromptProps.search = async (term) => {
       const result = await onSearchForStoresByName(term)
       currentStores = result.stores
 
@@ -108,7 +110,14 @@ export async function selectStorePrompt({
           hasNextPage: result.hasMorePages,
         },
       }
-    },
+    }
+  }
+
+  const id = await renderAutocompletePrompt({
+    message: 'Which store would you like to use to view your project?',
+    choices: currentStores.map(storeToChoice),
+    hasMorePages,
+    ...extraAutocompletePromptProps,
   })
   return currentStores.find((store) => store.shopId === id)
 }
