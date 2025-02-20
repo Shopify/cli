@@ -53,7 +53,7 @@ export async function logs(commandOptions: LogsOptions) {
     token: '',
   }
 
-  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables)
+  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables, remoteApp.apiKey, remoteApp.organizationId, remoteApp.id)
 
   const filters = {
     status: commandOptions.status,

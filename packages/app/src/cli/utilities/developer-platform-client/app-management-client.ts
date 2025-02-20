@@ -135,8 +135,9 @@ import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
-import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
+import {functionsRequestDoc, functionsAppLogsSubscribe} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -162,8 +163,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     this._session = session
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+  async subscribeToAppLogs(input: AppLogsSubscribeVariables, apiKey: string, orgId: string, appId: string): Promise<AppLogsSubscribeResponse> {
+    const token = await this.token()
+
+    return functionsAppLogsSubscribe(
+      orgId,
+      token,
+      appId,
+      input.shopIds,
+      input.apiKey
+    )
   }
 
   async session(): Promise<PartnersSession> {
