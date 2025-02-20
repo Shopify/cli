@@ -7,10 +7,16 @@ import {logRequestLine} from '../log-request-line.js'
 import {extractFetchErrorInfo} from '../errors.js'
 import {defineEventHandler, getCookie, type H3Event} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
+
+/** Tracks the number of consecutive theme ID mismatch redirects */
+let themeIdMismatchRedirects = 0
+
+/** The maximum number of consecutive theme ID mismatch redirects before aborting */
+const MAX_THEME_ID_MISMATCH_REDIRECTS = 5
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
   return defineEventHandler((event) => {
@@ -61,10 +67,37 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
 
         return patchRenderingResponse(ctx, response, (body) => {
           assertThemeId(response, body, String(theme.id))
+          themeIdMismatchRedirects = 0
           return ctx.options.liveReload === 'off' ? body : injectHotReloadScript(body)
         })
       })
       .catch(async (error) => {
+        /**
+         * Mismatch errors occur when the renderer regions change. In such rare
+         * cases, the theme ID mismatch error happens, we gracefully refresh the
+         * session, and redirect to the same page.
+         */
+        if (error instanceof ThemeIdMismatchError) {
+          outputDebug(error.message)
+
+          if (ctx.session.refresh) {
+            themeIdMismatchRedirects++
+            if (themeIdMismatchRedirects > MAX_THEME_ID_MISMATCH_REDIRECTS) {
+              renderFatalError(new AbortError(error.message))
+              process.exit(1)
+            }
+
+            await ctx.session.refresh()
+
+            return new Response(null, {
+              status: 302,
+              headers: {
+                Location: browserPathname,
+              },
+            })
+          }
+        }
+
         const {status, statusText, cause, ...errorInfo} = extractFetchErrorInfo(error, 'Failed to render storefront')
         const [title, ...rest] = errorInfo.headline.split('\n') as [string, ...string[]]
 
@@ -139,17 +172,15 @@ function assertThemeId(response: Response, html: string, expectedThemeId: string
   const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
 
   if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
-    renderFatalError(
-      new AbortError(
-        `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.` +
-          `\nRequest ID: ${response.headers.get('x-request-id')}` +
-          `\nURL: ${response.url}`,
+    throw new ThemeIdMismatchError(
+      `Theme ID mismatch: expected ${expectedThemeId} but got ${obtainedThemeId}.` +
+        `\nRequest ID: ${response.headers.get('x-request-id')}` +
+        `\nURL: ${response.url}` +
         `This is likely related to an issue in upstream Shopify APIs.` +
-          `\nPlease try again in a few minutes and report this issue:` +
-          `\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
-      ),
+        `\nPlease try again in a few minutes and report this issue:` +
+        `\nhttps://github.com/Shopify/cli/issues/new?template=bug-report.yml`,
     )
-
-    process.exit(1)
   }
 }
+
+class ThemeIdMismatchError extends Error {}
