@@ -12,7 +12,7 @@ import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs
 import {AppInterface} from '../../models/app/app.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn, partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
@@ -117,6 +117,30 @@ const generateFetchAppLogUrl = async (
   return url
 }
 
+const generateFetchAppLogUrlDevDashboard = async (
+  orgId: string,
+  appId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
+  const fqdn = await appManagementFqdn()
+  let url = `https://${fqdn}/functions/unstable/organizations/${orgId}/${appId}/app_logs/poll`
+
+  if (!cursor && !filters) {
+    return url
+  }
+
+  const params = new URLSearchParams()
+  if (cursor) params.set('cursor', cursor)
+  if (filters?.status) params.set('status', filters.status)
+  if (filters?.source) params.set('source', filters.source)
+
+  return `${url}?${params.toString()}`
+}
+
 export const fetchAppLogs = async (
   jwtToken: string,
   cursor?: string,
@@ -126,6 +150,28 @@ export const fetchAppLogs = async (
   },
 ): Promise<Response> => {
   const url = await generateFetchAppLogUrl(cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
+  return fetch(url, {
+    method: 'GET',
+    headers,
+  })
+}
+
+export const fetchAppLogsDevDashboard = async (
+  jwtToken: string,
+  organizationId: string,
+  appId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): Promise<Response> => {
+  const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
   const headers = {
     Authorization: `Bearer ${jwtToken}`,
