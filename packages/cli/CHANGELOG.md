@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.75.4
+
+### Patch Changes
+
+- 96368a5: Upgrade cli-hydrogen 9.0.8 for 2025.1.2
+
 ## 3.75.3
 
 ### Patch Changes
