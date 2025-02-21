@@ -4,6 +4,7 @@ import {translate} from '../../services/translate.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {getAppConfigurationState} from '../../models/app/loader.js'
+
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -59,7 +60,7 @@ export default class Translate extends AppCommand {
     }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
+    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
@@ -70,6 +71,7 @@ export default class Translate extends AppCommand {
       app,
       remoteApp,
       developerPlatformClient,
+      organization,
       //   force: flags.force,
       //   version: flags.version,
     })
