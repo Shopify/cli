@@ -243,7 +243,7 @@ describe('deploy', () => {
         {
           handle: 'purchase.discount.cart_run',
           export: 'run',
-          operations: '["addProductDiscounts", "addOrderDiscounts"]',
+          features: '["addProductDiscounts", "addOrderDiscounts"]',
         },
       ],
     }
