@@ -8,6 +8,8 @@ export default class HelpCommand extends Command {
 
   static description = 'Display help for Shopify CLI'
 
+  static usage = `help [command] [flags]`
+
   static flags = {
     'nested-commands': Flags.boolean({
       char: 'n',
