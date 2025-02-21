@@ -688,23 +688,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async translate({app: {id: appId, organizationId}}: {app: MinimalOrganizationApp}): Promise<AppTranslateSchema> {
-    console.log({appId, organizationId, location: 'app-management-client#translate'})
-    // const AppTranslationVariables = {appId}
-    // const releaseResult = await appManagementRequestDoc(
-    //   organizationId,
-    //   ReleaseVersion,
-    //   await this.token(),
-    //   AppTranslationVariables,
-    // )
+    // console.log({appId, organizationId, location: 'app-management-client#translate'})
+    const AppTranslationVariables = {appId, versionId: 'bla-hacky-stuff-make-the-request'}
+    const releaseResult = await appManagementRequestDoc(organizationId, FetchSpecifications, await this.token())
     // if (!releaseResult.appReleaseCreate?.release) {
     //   throw new AbortError('Failed to start translation request')
     // }
-    // errors = releaseResult.appReleaseCreate.userErrors?.map((err) => ({
+    // const errors = releaseResult.appReleaseCreate.userErrors?.map((err) => ({
     //   field: err.field,
     //   message: err.message,
     //   category: '',
     //   details: [],
     // }))
+
     return {
       appTranslate: {
         translationRequest: {

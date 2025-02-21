@@ -1,17 +1,28 @@
+/* eslint-disable @shopify/cli/no-inline-graphql */
 import {gql} from 'graphql-request'
 
+// export const AppTranslate = gql`
+//   mutation AppTranslate($apiKey: String!, $appVersionId: ID, $versionTag: String) {
+//     appTranslate(input: {apiKey: $apiKey}) {
+//       translationRequest {
+//         id
+//       }
+//       userErrors {
+//         message
+//         field
+//         category
+//         details
+//       }
+//     }
+//   }
+// `
+
 export const AppTranslate = gql`
-  mutation AppTranslate($apiKey: String!, $appVersionId: ID, $versionTag: String) {
-    appTranslate(input: {apiKey: $apiKey}) {
-      translationRequest {
-        id
-      }
-      userErrors {
-        message
-        field
-        category
-        details
-      }
+  query AppTranslate($apiKey: String!) {
+    app(apiKey: $apiKey) {
+      id
+      organizationId
+      title
     }
   }
 `
