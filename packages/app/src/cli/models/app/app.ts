@@ -15,6 +15,7 @@ import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import appHomeSpec from '../extensions/specifications/app_config_app_home.js'
 import appProxySpec from '../extensions/specifications/app_config_app_proxy.js'
+import {replaceScopesWithRequiredScopesInToml} from '../../services/app/patch-app-configuration-file.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -280,6 +281,7 @@ export interface AppInterface<
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  migratePendingSchemaChanges: () => Promise<void>
   /**
    * Checks if the app has any elements that means it can be "launched" -- can host its own app home section.
    *
@@ -317,8 +319,7 @@ type AppConstructor<
 export class App<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
-> implements AppInterface<TConfig, TModuleSpec>
-{
+> implements AppInterface<TConfig, TModuleSpec> {
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
@@ -420,6 +421,26 @@ export class App<
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
     this.hiddenConfig = {...this.hiddenConfig, ...values}
     await writeFile(appHiddenConfigPath(this.directory), JSON.stringify(this.hiddenConfig, null, 2))
+  }
+
+  async migratePendingSchemaChanges() {
+    await this.migrateScopesToRequiredScopes()
+    await Promise.all([this.realExtensions.map((ext) => ext.migratePendingSchemaChanges())])
+  }
+
+  async migrateScopesToRequiredScopes() {
+    if (isCurrentAppSchema(this.configuration) && this.configuration.access_scopes?.scopes) {
+      const accessConfig = this.configuration as {
+        access_scopes: {scopes?: string; required_scopes?: string[]}
+      }
+      accessConfig.access_scopes = {
+        ...accessConfig.access_scopes,
+        required_scopes: accessConfig.access_scopes.scopes?.split(',').map((scope) => scope.trim()),
+      }
+      delete accessConfig.access_scopes.scopes
+
+      await replaceScopesWithRequiredScopesInToml(this.configuration.path)
+    }
   }
 
   async preDeployValidation() {

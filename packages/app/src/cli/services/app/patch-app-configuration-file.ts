@@ -43,3 +43,24 @@ export async function patchAppConfigurationFile({path, patch, schema}: PatchToml
 export function replaceArrayStrategy(_: unknown[], newArray: unknown[]): unknown[] {
   return newArray
 }
+
+export async function replaceScopesWithRequiredScopesInToml(path: string) {
+  const tomlContents = await readFile(path)
+  const configuration = decodeToml(tomlContents)
+  if (
+    configuration.access_scopes &&
+    typeof configuration.access_scopes === 'object' &&
+    'scopes' in configuration.access_scopes &&
+    configuration.access_scopes.scopes
+  ) {
+    const scopes = configuration.access_scopes.scopes
+    configuration.access_scopes = {
+      ...configuration.access_scopes,
+      required_scopes: typeof scopes === 'string' ? scopes.split(',').map((scope) => scope.trim()) : [],
+    }
+    delete configuration.access_scopes.scopes
+  }
+  let encodedString = encodeToml(configuration)
+  encodedString = addDefaultCommentsToToml(encodedString)
+  await writeFile(path, encodedString)
+}

@@ -1,5 +1,5 @@
 import metadata from '../metadata.js'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export async function showApiKeyDeprecationWarning() {
   await metadata.addPublicMetadata(() => ({

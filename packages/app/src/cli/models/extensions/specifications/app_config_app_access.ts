@@ -1,9 +1,11 @@
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const AppAccessSchema = zod.object({
   access: zod
@@ -51,6 +53,22 @@ const appAccessSpec = createConfigExtensionSpecification({
     const scopesURL = await buildAppURLForWeb(storeFqdn, appConfig.client_id)
     return outputContent`Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`.value
   },
+  migratePendingSchemaChanges: async (extension) => {
+    return migrateScopesToRequiredScopes(extension)
+  },
 })
+
+async function migrateScopesToRequiredScopes(extension: ExtensionInstance) {
+  const accessConfig = extension.configuration as {
+    access_scopes?: {scopes?: string; required_scopes?: string[]}
+  }
+
+  if (accessConfig.access_scopes?.scopes) {
+    accessConfig.access_scopes.required_scopes = accessConfig.access_scopes.scopes
+      .split(',')
+      .map((scope) => scope.trim())
+    delete accessConfig.access_scopes.scopes
+  }
+}
 
 export default appAccessSpec
