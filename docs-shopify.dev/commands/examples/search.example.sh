@@ -1,1 +1,1 @@
-shopify search
+search [query]

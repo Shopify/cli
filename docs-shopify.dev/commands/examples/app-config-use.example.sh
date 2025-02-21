@@ -1,1 +1,1 @@
-shopify app config use [flags]
+app config use [config] [flags]

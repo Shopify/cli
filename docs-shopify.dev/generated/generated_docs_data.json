@@ -203,7 +203,7 @@
         "tabs": [
           {
             "title": "app config use",
-            "code": "shopify app config use [flags]",
+            "code": "app config use [config] [flags]",
             "language": "bash"
           }
         ],
@@ -2509,7 +2509,7 @@
         "tabs": [
           {
             "title": "help",
-            "code": "shopify help [flags]",
+            "code": "help [command] [flags]",
             "language": "bash"
           }
         ],
@@ -4554,7 +4554,7 @@
         "tabs": [
           {
             "title": "search",
-            "code": "shopify search",
+            "code": "search [query]",
             "language": "bash"
           }
         ],
@@ -5252,7 +5252,7 @@
         "tabs": [
           {
             "title": "theme init",
-            "code": "theme init [name]",
+            "code": "theme init [name] [flags]",
             "language": "bash"
           }
         ],
