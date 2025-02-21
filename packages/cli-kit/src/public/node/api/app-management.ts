@@ -42,12 +42,16 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
   variables?: TVariables,
   cacheOptions?: CacheOptions,
 ): Promise<TResult> {
+  // For app management, we need to cache the response based on the orgId.
+  const cacheExtraKey = (cacheOptions?.cacheExtraKey ?? '') + orgId
+  const newCacheOptions = cacheOptions ? {...cacheOptions, cacheExtraKey} : undefined
+
   const result = limiter.schedule<TResult>(async () =>
     graphqlRequestDoc<TResult, TVariables>({
       ...(await setupRequest(orgId, token)),
       query,
       variables,
-      cacheOptions,
+      cacheOptions: newCacheOptions,
     }),
   )
 

@@ -4,7 +4,13 @@ import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
 import {nonRandomUUID} from '../crypto.js'
-import {cacheRetrieveOrRepopulate, ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
+import {
+  cacheRetrieveOrRepopulate,
+  ConfSchema,
+  GraphQLRequestKey,
+  TimeInterval,
+  timeIntervalToMilliseconds,
+} from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
 import {
   GraphQLClient,
@@ -28,11 +34,10 @@ export interface GraphQLVariables {
 export type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
 
 export interface CacheOptions {
-  cacheTTL: CacheTTL
+  cacheTTL: TimeInterval
   cacheExtraKey?: string
   cacheStore?: LocalStorage<ConfSchema>
 }
-export type CacheTTL = number
 
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
@@ -134,7 +139,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       const result = await executeWithTimer()
       return JSON.stringify(result)
     },
-    cacheTTL,
+    timeIntervalToMilliseconds(cacheTTL),
     cacheStore,
   )
 

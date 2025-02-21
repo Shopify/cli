@@ -267,7 +267,7 @@ describe('graphqlRequest with caching', () => {
         token: mockToken,
         variables: mockVariables,
         cacheOptions: {
-          cacheTTL: 1000 * 60 * 60,
+          cacheTTL: {hours: 1},
           cacheExtraKey: 'extra',
           cacheStore,
         },
@@ -303,7 +303,7 @@ describe('graphqlRequest with caching', () => {
         token: mockToken,
         variables: mockVariables,
         cacheOptions: {
-          cacheTTL: 1000 * 60 * 60 * 24,
+          cacheTTL: {days: 1},
           cacheStore,
         },
       })

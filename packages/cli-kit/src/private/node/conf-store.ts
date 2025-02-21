@@ -120,14 +120,14 @@ export function cacheClear(config = cliKitStore()): void {
   config.delete('cache')
 }
 
-interface TimeInterval {
+export interface TimeInterval {
   days?: number
   hours?: number
   minutes?: number
   seconds?: number
 }
 
-function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds = 0}: TimeInterval): number {
+export function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds = 0}: TimeInterval): number {
   return (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds) * 1000
 }
 
