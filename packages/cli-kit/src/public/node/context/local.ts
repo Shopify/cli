@@ -47,6 +47,16 @@ export function isVerbose(env = process.env): boolean {
 }
 
 /**
+ * It returns true if the App Management API is disabled.
+ *
+ * @returns True if the App Management API is disabled.
+ */
+export function isAppManagementDisabled(): boolean {
+  const disabledViaEnv = isTruthy(process.env[environmentVariables.neverUseAppManagementApi])
+  return disabledViaEnv
+}
+
+/**
  * Returns true if the environment in which the CLI is running is either
  * a local environment (where dev is present) or a cloud environment (spin).
  *
