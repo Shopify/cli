@@ -45,7 +45,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
       replaceTemplates: getInMemoryTemplates(ctx, browserPathname, getCookie(event, 'localization')?.toLowerCase()),
     })
       .then(async (response) => {
-        if (response.status >= 400 && response.status < 500) {
+        if (response.status >= 400 && response.status < 500 && !isKnownRenderingRequest(event)) {
           // We have tried to render a route that can't be handled by SFR.
           // Ideally, this should be caught by `canProxyRequest` in `proxy.ts`,
           // but we can't be certain for all cases (e.g. an arbitrary app's route).
@@ -103,6 +103,14 @@ function createErrorPageResponse(
     ...responseInit,
     headers: responseInit.headers ?? {'Content-Type': 'text/html; charset=utf-8'},
   })
+}
+
+/**
+ * Detects routes and params that indicate this request should be handled by SFR.
+ */
+function isKnownRenderingRequest(event: H3Event) {
+  const searchParams = new URLSearchParams(event.path.split('?')[1])
+  return ['section_id', 'sections', 'app_block_id'].some((key) => searchParams.has(key))
 }
 
 async function tryProxyRequest(event: H3Event, ctx: DevServerContext, response: Response) {
