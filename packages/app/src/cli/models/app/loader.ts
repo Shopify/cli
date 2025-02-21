@@ -485,12 +485,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     })
 
     const extensionInstance = new ExtensionInstance({
-      configuration: {...configuration, uid: previousExtension?.uid, devUUID: previousExtension?.devUUID},
+      configuration,
       configurationPath,
       entryPath,
       directory,
       specification,
     })
+
+    if (previousExtension) {
+      // If we are reloading, keep the existing devUUID for consistency with the dev-console
+      extensionInstance.devUUID = previousExtension.devUUID
+    }
 
     if (usedKnownSpecification) {
       const validateResult = await extensionInstance.validate()
