@@ -3,7 +3,6 @@ import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
-import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
@@ -423,17 +422,6 @@ export class App<
   }
 
   async preDeployValidation() {
-    const functionExtensionsWithUiHandle = this.allExtensions.filter(
-      (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
-    ) as ExtensionInstance<FunctionConfigType>[]
-
-    if (functionExtensionsWithUiHandle.length > 0) {
-      const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
-      if (errors) {
-        throw new AbortError('Invalid function configuration', errors.join('\n'))
-      }
-    }
-
     const extensionCollections = this.allExtensions.filter(
       (ext) => ext.isEditorExtensionCollection,
     ) as ExtensionInstance<EditorExtensionCollectionType>[]
@@ -445,7 +433,7 @@ export class App<
       }
     }
 
-    await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
+    await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation(this as unknown as AppLinkedInterface))])
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
@@ -522,28 +510,6 @@ export class App<
 
     return modules
   }
-}
-
-export function validateFunctionExtensionsWithUiHandle(
-  functionExtensionsWithUiHandle: ExtensionInstance<FunctionConfigType>[],
-  allExtensions: ExtensionInstance[],
-): string[] | undefined {
-  const errors: string[] = []
-
-  functionExtensionsWithUiHandle.forEach((extension) => {
-    const uiHandle = extension.configuration.ui!.handle!
-
-    const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
-    if (!matchingExtension) {
-      errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
-    } else if (matchingExtension.configuration.type !== 'ui_extension') {
-      errors.push(
-        `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
-      )
-    }
-  })
-
-  return errors.length > 0 ? errors : undefined
 }
 
 export type UIExtensionType = zod.infer<typeof UIExtensionSchema>

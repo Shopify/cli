@@ -4,7 +4,7 @@ import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
+import {AppConfigurationWithoutPath, AppLinkedInterface, CurrentAppConfiguration} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
@@ -68,7 +68,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     moduleId?: string,
   ) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
-  preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
+  preDeployValidation?: (extension: ExtensionInstance<TConfiguration>, app: AppLinkedInterface) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
