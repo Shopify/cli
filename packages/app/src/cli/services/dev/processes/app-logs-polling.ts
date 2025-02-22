@@ -53,7 +53,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
   {developerPlatformClient, appLogsSubscribeVariables, storeName},
 ) => {
   try {
-    const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
+    const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, "1", "1", "1")
 
     const apiKey = appLogsSubscribeVariables.apiKey
     await createLogsDir(apiKey)
@@ -63,7 +63,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       appLogsFetchInput: {jwtToken},
       apiKey,
       resubscribeCallback: () => {
-        return subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
+        return subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, "1", "1", "1")
       },
       storeName,
     })
