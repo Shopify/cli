@@ -2,7 +2,7 @@ import {graphqlRequestDoc} from './graphql.js'
 import {handleDeprecations} from './app-management.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
-import {Variables} from 'graphql-request'
+import {gql, Variables} from 'graphql-request'
 import Bottleneck from 'bottleneck'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
@@ -60,4 +60,58 @@ export async function functionsRequestDoc<TResult, TVariables extends Variables>
   })
 
   return result
+}
+
+// TODO: import these
+interface AppLogsSubscribeVariables {
+  shopIds: string[]
+  apiKey: string
+  token: string
+}
+
+interface AppLogsSubscribeResponse {
+  appLogsSubscribe: {
+    success: boolean
+    errors?: string[]
+    jwtToken: string
+  }
+}
+
+const AppLogsSubscribeMutation = gql`
+  mutation AppLogsSubscribe($apiKey: String!, $shopIds: [ID!]!) {
+    appLogsSubscribe(input: {apiKey: $apiKey, shopIds: $shopIds}) {
+      jwtToken
+      success
+      errors
+    }
+  }
+`
+
+/**
+ * Subscribes to app logs through the Functions API.
+ *
+ * @param orgId - Organization identifier.
+ * @param token - Authentication token.
+ * @param appId - App identifier.
+ * @param shopIds - Array of shop IDs to subscribe to.
+ * @param apiKey - API key for the app.
+ * @returns Promise resolving to the subscription response.
+ */
+export async function functionsAppLogsSubscribe(
+  orgId: string,
+  token: string,
+  appId: string,
+  shopIds: string[],
+  apiKey: string,
+): Promise<AppLogsSubscribeResponse> {
+  return functionsRequestDoc(
+    orgId,
+    AppLogsSubscribeMutation as any,
+    token,
+    appId,
+    {
+      shopIds,
+      apiKey,
+    }
+  )
 }
