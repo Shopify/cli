@@ -64,13 +64,14 @@ describe('retryAwareRequest', () => {
       {
         request: mockRequestFn,
         url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
       },
       undefined,
       undefined,
       {
         defaultDelayMs: 500,
         scheduleDelay: mockScheduleDelayFn,
-        enableNetworkLevelRetry: true,
       },
     )
     await vi.runAllTimersAsync()
@@ -113,13 +114,14 @@ describe('retryAwareRequest', () => {
       {
         request: mockRequestFn,
         url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
       },
       undefined,
       undefined,
       {
         limitRetriesTo: 7,
         scheduleDelay: mockScheduleDelayFn,
-        enableNetworkLevelRetry: true,
       },
     )
 
@@ -160,12 +162,13 @@ describe('retryAwareRequest', () => {
       {
         request: mockRequestFn,
         url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
       },
       undefined,
       mockUnauthorizedHandler,
       {
         scheduleDelay: vi.fn((fn) => fn()),
-        enableNetworkLevelRetry: true,
       },
     )
     await vi.runAllTimersAsync()
@@ -218,13 +221,14 @@ describe('retryAwareRequest', () => {
       {
         request: mockRequestFnEnabled,
         url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
       },
       undefined,
       undefined,
       {
         defaultDelayMs: 500,
         scheduleDelay: mockScheduleDelayFn,
-        enableNetworkLevelRetry: true,
       },
     )
 
@@ -238,13 +242,13 @@ describe('retryAwareRequest', () => {
       {
         request: mockRequestFnDisabled,
         url: 'https://example.com',
+        useNetworkLevelRetry: false,
       },
       undefined,
       undefined,
       {
         defaultDelayMs: 500,
         scheduleDelay: mockScheduleDelayFn,
-        enableNetworkLevelRetry: false,
       },
     )
 

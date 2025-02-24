@@ -173,6 +173,7 @@
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",
     "@vitest/coverage-istanbul": "^1.6.0",
+    "msw": "^2.7.1",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.27.6"

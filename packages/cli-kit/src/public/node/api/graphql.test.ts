@@ -1,40 +1,24 @@
 import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import * as api from '../../../private/node/api.js'
 import * as debugRequest from '../../../private/node/api/graphql.js'
-import {buildHeaders} from '../../../private/node/api/headers.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
 import * as metadata from '../metadata.js'
 import * as confStore from '../../../private/node/conf-store.js'
 import {inTemporaryDirectory} from '../fs.js'
 import {LocalStorage} from '../local-storage.js'
-import {ConfSchema} from '../../../private/node/conf-store.js'
-import {GraphQLClient} from 'graphql-request'
-import {test, vi, describe, expect, beforeEach} from 'vitest'
+import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
+import {nonRandomUUID} from '../crypto.js'
+import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {setupServer} from 'msw/node'
+import {graphql, HttpResponse} from 'msw'
 
 let mockedRequestId = 'request-id-123'
 
-vi.mock('graphql-request', async () => {
-  const actual = await vi.importActual('graphql-request')
-  const client = vi.fn()
-  client.prototype.rawRequest = () => {
-    return {
-      status: 200,
-      headers: new Headers({
-        'x-request-id': mockedRequestId,
-      }),
-    }
-  }
-
-  return {
-    ...(actual as object),
-    GraphQLClient: client,
-  }
-})
 vi.spyOn(debugRequest, 'debugLogRequestInfo').mockResolvedValue(undefined)
 
-const mockedAddress = 'http://localhost:3000'
+const mockedAddress = 'https://shopify.example/graphql'
 const mockVariables = {some: 'variables'}
 const mockToken = 'token'
 const mockedAddedHeaders = {some: 'header'}
@@ -43,27 +27,109 @@ beforeEach(async () => {
   requestIdsCollection.clear()
 })
 
+const mockApi = graphql.link('https://shopify.example/graphql')
+
+const handlers = [
+  mockApi.query('QueryName', ({query}) => {
+    return HttpResponse.json(
+      {
+        data: {
+          QueryName: {example: 'hello'},
+        },
+      },
+      {
+        headers: {
+          'x-request-id': mockedRequestId,
+        },
+      },
+    )
+  }),
+  mockApi.query('Fails', () => {
+    return HttpResponse.json(
+      {
+        errors: [
+          {
+            message: `Cannot do the thing`,
+          },
+        ],
+      },
+      {
+        headers: {
+          'x-request-id': 'failed-request-id',
+        },
+      },
+    )
+  }),
+  mockApi.mutation('MutationName', ({query, variables}) => {
+    return HttpResponse.json(
+      {
+        data: {
+          MutationName: {example: variables.some},
+        },
+      },
+      {
+        headers: {
+          'x-request-id': mockedRequestId,
+        },
+      },
+    )
+  }),
+]
+
+const server = setupServer(...handlers)
+beforeAll(() => server.listen({onUnhandledRequest: 'error'}))
+afterAll(() => server.close())
+afterEach(() => {
+  server.resetHandlers()
+  server.events.removeAllListeners()
+})
+
 describe('graphqlRequest', () => {
   test('calls debugLogRequestInfo once', async () => {
+    let headers: any
+    server.events.on('request:start', ({request}) => {
+      headers = {}
+      request.headers.forEach((value, key) => {
+        headers[key] = value
+      })
+    })
+
     // When
-    await graphqlRequest({
-      query: 'query',
+    const res = await graphqlRequest({
+      query: 'query QueryName { example }',
       api: 'mockApi',
       url: mockedAddress,
       token: mockToken,
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
     })
-
-    // Then
-    expect(GraphQLClient).toHaveBeenCalledWith(mockedAddress, {
-      agent: expect.any(Object),
-      headers: {
-        ...buildHeaders(mockToken),
-        some: 'header',
-      },
-    })
     expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledOnce()
+
+    // user agents varies a lot
+    const {'user-agent': userAgent, 'sec-ch-ua-platform': _platform, ...otherHeaders} = headers
+    expect(otherHeaders).toMatchInlineSnapshot(`
+      {
+        "accept": "*/*",
+        "accept-encoding": "gzip,deflate",
+        "authorization": "Bearer token",
+        "connection": "close",
+        "content-length": "100",
+        "content-type": "application/json",
+        "host": "shopify.example",
+        "keep-alive": "timeout=30",
+        "some": "header",
+        "x-shopify-access-token": "Bearer token",
+      }
+    `)
+    expect(res).toMatchInlineSnapshot(`
+      {
+        "QueryName": {
+          "example": "hello",
+        },
+      }
+    `)
+
+    expect(userAgent).toMatch(new RegExp(`Shopify CLI; v=${CLI_KIT_VERSION}`))
   })
 
   test('Logs the request ids to metadata and requestIdCollection', async () => {
@@ -72,7 +138,7 @@ describe('graphqlRequest', () => {
 
     // When
     await graphqlRequest({
-      query: 'query',
+      query: 'query QueryName { example }',
       api: 'mockApi',
       url: mockedAddress,
       token: mockToken,
@@ -83,7 +149,7 @@ describe('graphqlRequest', () => {
     mockedRequestId = 'request-id-456'
 
     await graphqlRequest({
-      query: 'query',
+      query: 'query QueryName { example }',
       api: 'mockApi',
       url: mockedAddress,
       token: mockToken,
@@ -96,6 +162,51 @@ describe('graphqlRequest', () => {
     expect(metadataSpyOn).toHaveBeenCalledTimes(2)
     expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({cmd_all_last_graphql_request_id: 'request-id-123'})
     expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_all_last_graphql_request_id: 'request-id-456'})
+  })
+
+  test('calls onResponseHandler', async () => {
+    // When
+    let data
+    const onResponseHandler = vi.fn().mockImplementation((res) => {
+      data = res.data
+    })
+    await graphqlRequest({
+      query: 'query QueryName { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      addedHeaders: mockedAddedHeaders,
+      variables: mockVariables,
+      responseOptions: {
+        onResponse: onResponseHandler,
+      },
+    })
+    expect(data).toMatchInlineSnapshot(`
+      {
+        "QueryName": {
+          "example": "hello",
+        },
+      }
+    `)
+  })
+
+  test('logs the last request id from a failed request', async () => {
+    const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+    const res = graphqlRequest({
+      query: 'query Fails { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+    })
+
+    await expect(res).rejects.toThrow('Cannot do the thing')
+
+    expect(metadataSpyOn).toHaveBeenCalledTimes(1)
+    expect(metadataSpyOn.mock.calls[0]![0]()).toMatchInlineSnapshot(`
+      {
+        "cmd_all_last_graphql_request_id": "failed-request-id",
+      }
+    `)
   })
 })
 
@@ -122,10 +233,8 @@ describe('graphqlRequestDoc', () => {
       ],
     } as unknown as TypedDocumentNode<unknown, unknown>
 
-    const retryAwareSpy = vi.spyOn(api, 'retryAwareRequest')
-
     // When
-    await graphqlRequestDoc({
+    const res = await graphqlRequestDoc({
       query: document,
       api: 'mockApi',
       url: mockedAddress,
@@ -133,22 +242,20 @@ describe('graphqlRequestDoc', () => {
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
     })
-
-    // Then
-    expect(retryAwareSpy).toHaveBeenCalledWith(
+    expect(res).toMatchInlineSnapshot(`
       {
-        request: expect.any(Function),
-        url: mockedAddress,
-      },
-      expect.any(Function),
-      undefined,
-    )
+        "QueryName": {
+          "example": "hello",
+        },
+      }
+    `)
+
     expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledWith(
       'mockApi',
       `query QueryName {
   example
 }`,
-      'http://localhost:3000',
+      'https://shopify.example/graphql',
       mockVariables,
       expect.anything(),
     )
@@ -249,19 +356,21 @@ describe('sanitizeVariables', () => {
 
 describe('graphqlRequest with caching', () => {
   test('uses cache when TTL is provided', async () => {
+    vi.useFakeTimers()
     await inTemporaryDirectory(async (dir) => {
-      // Given
-      const mockQueryHash = '84f38895-31ed-05b5-0d7b-dbf2f1eecd46e2580db0'
-      const mockVariablesHash = 'e6959ad8-4a7c-c23d-e7b8-be1ae774e05751514949'
+      let requestCount = 0
+      server.events.on('request:start', () => {
+        requestCount++
+      })
+
       const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
+      const mutationHash = nonRandomUUID('mutation MutationName($some: String!) { example }')
+      const firstVariablesHash = nonRandomUUID(JSON.stringify(mockVariables))
+      const otherVariablesHash = nonRandomUUID(JSON.stringify({...mockVariables, some: 'new-value'}))
 
-      const cacheRetrieveSpy = vi
-        .spyOn(confStore, 'cacheRetrieveOrRepopulate')
-        .mockResolvedValue(JSON.stringify({data: 'cached-response'}))
-
-      // When
-      await graphqlRequest({
-        query: 'query',
+      // make first request
+      const firstRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
         api: 'mockApi',
         url: mockedAddress,
         token: mockToken,
@@ -272,50 +381,132 @@ describe('graphqlRequest with caching', () => {
           cacheStore,
         },
       })
+      await vi.runAllTimersAsync()
+      await expect(firstRes).resolves.toEqual({MutationName: {example: 'variables'}})
+      expect(requestCount).toBe(1)
 
-      // Then
-      expect(cacheRetrieveSpy).toHaveBeenCalledWith(
-        `q-${mockQueryHash}-${mockVariablesHash}-${CLI_KIT_VERSION}-extra`,
-        expect.any(Function),
-        1000 * 60 * 60,
-        cacheStore,
-      )
-    })
-  })
-
-  test('uses cache key when no extra key provided', async () => {
-    await inTemporaryDirectory(async (dir) => {
-      // Given
-      const mockQueryHash = '84f38895-31ed-05b5-0d7b-dbf2f1eecd46e2580db0'
-      const mockVariablesHash = 'e6959ad8-4a7c-c23d-e7b8-be1ae774e05751514949'
-
-      const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
-
-      const cacheRetrieveSpy = vi
-        .spyOn(confStore, 'cacheRetrieveOrRepopulate')
-        .mockResolvedValue(JSON.stringify({data: 'cached-response'}))
-
-      // When
-      await graphqlRequest({
-        query: 'query',
+      // repeated request uses cache
+      const secondRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
         api: 'mockApi',
         url: mockedAddress,
         token: mockToken,
         variables: mockVariables,
         cacheOptions: {
-          cacheTTL: {days: 1},
+          cacheTTL: {hours: 1},
+          cacheExtraKey: 'extra',
           cacheStore,
         },
       })
+      await vi.runAllTimersAsync()
+      await expect(secondRes).resolves.toEqual({MutationName: {example: 'variables'}})
+      expect(requestCount).toBe(1)
 
-      // Then
-      expect(cacheRetrieveSpy).toHaveBeenCalledWith(
-        `q-${mockQueryHash}-${mockVariablesHash}-${CLI_KIT_VERSION}-`,
-        expect.any(Function),
-        1000 * 60 * 60 * 24,
-        cacheStore,
-      )
+      // variable changes break the cache
+      const thirdRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: {...mockVariables, some: 'new-value'},
+        cacheOptions: {
+          cacheTTL: {hours: 1},
+          cacheExtraKey: 'extra',
+          cacheStore,
+        },
+      })
+      await vi.runAllTimersAsync()
+      await expect(thirdRes).resolves.toEqual({MutationName: {example: 'new-value'}})
+      expect(requestCount).toBe(2)
+
+      // extra key breaks the cache
+      const fourthRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: {...mockVariables, some: 'new-value'},
+        cacheOptions: {
+          cacheTTL: {hours: 1},
+          cacheExtraKey: 'other-extra',
+          cacheStore,
+        },
+      })
+      await vi.runAllTimersAsync()
+      await expect(fourthRes).resolves.toEqual({MutationName: {example: 'new-value'}})
+      expect(requestCount).toBe(3)
+
+      // fast-forward by an hour
+      await vi.advanceTimersByTimeAsync(1000 * 60 * 60)
+      const fifthRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: {...mockVariables, some: 'new-value'},
+        cacheOptions: {
+          cacheTTL: {hours: 1},
+          cacheExtraKey: 'other-extra',
+          cacheStore,
+        },
+      })
+      await vi.runAllTimersAsync()
+      await expect(fifthRes).resolves.toEqual({MutationName: {example: 'new-value'}})
+      expect(requestCount).toBe(4)
+
+      // no extra breaks the cache
+      const sixthRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: {...mockVariables, some: 'new-value'},
+        cacheOptions: {
+          cacheTTL: {hours: 1},
+          cacheStore,
+        },
+      })
+      await vi.runAllTimersAsync()
+      await expect(sixthRes).resolves.toEqual({MutationName: {example: 'new-value'}})
+      expect(requestCount).toBe(5)
+
+      // finally, no cache options means no cache
+      const seventhRes = graphqlRequest({
+        query: 'mutation MutationName($some: String!) { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables: {...mockVariables, some: 'new-value'},
+      })
+      await vi.runAllTimersAsync()
+      await expect(seventhRes).resolves.toEqual({MutationName: {example: 'new-value'}})
+      expect(requestCount).toBe(6)
+
+      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${CLI_KIT_VERSION}-extra`
+      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-extra`
+      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-other-extra`
+      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-`
+
+      expect(cacheStore.get('cache')![firstKey]).toEqual({
+        value: '{"MutationName":{"example":"variables"}}',
+        timestamp: expect.any(Number),
+      })
+      expect(cacheStore.get('cache')![withOtherVariablesKey]).toEqual({
+        value: '{"MutationName":{"example":"new-value"}}',
+        timestamp: expect.any(Number),
+      })
+      expect(cacheStore.get('cache')![withOtherExtraKey]).toEqual({
+        value: '{"MutationName":{"example":"new-value"}}',
+        timestamp: expect.any(Number),
+      })
+      expect(cacheStore.get('cache')![noExtraKey]).toEqual({
+        value: '{"MutationName":{"example":"new-value"}}',
+        timestamp: expect.any(Number),
+      })
+
+      expect(Object.keys(cacheStore.get('cache')!).length).toBe(4)
     })
+    vi.useRealTimers()
   })
 
   test('skips cache when no TTL is provided', async () => {
@@ -327,7 +518,7 @@ describe('graphqlRequest with caching', () => {
 
     // When
     await graphqlRequest({
-      query: 'query',
+      query: 'query QueryName { example }',
       api: 'mockApi',
       url: mockedAddress,
       token: mockToken,
