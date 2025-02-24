@@ -69,6 +69,14 @@ export type AppSourceInput = {
   assetsUrl?: InputMaybe<Scalars['URL']['input']>
 }
 
+/** The input fields used to create a new app version. */
+export type AppVersionInput = {
+  /** The manifest from which to create the app version. */
+  source?: InputMaybe<Scalars['JSON']['input']>
+  /** URL referencing the source from which to create the app version. */
+  sourceUrl?: InputMaybe<Scalars['URL']['input']>
+}
+
 /** Possible error codes that can be returned by AppManagement. */
 export type Code =
   /** Access denied. */

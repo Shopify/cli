@@ -1,5 +1,5 @@
-mutation CreateApp($appSource: AppSourceInput!, $name: String!) {
-  appCreate(appSource: $appSource, name: $name) {
+mutation CreateApp($initialVersion: AppVersionInput!) {
+  appCreate(initialVersion: $initialVersion) {
     app {
       id
       key
