@@ -1,6 +1,8 @@
-name: Release - Manual
+name: Release - Manual & Cron
 
 on:
+  schedule:
+    - cron: '0 6 * * *' # 6:00 AM UTC every day
   workflow_dispatch:
     inputs:
       tag:
