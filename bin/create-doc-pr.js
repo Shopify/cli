@@ -1,20 +1,15 @@
 #!/usr/bin/env node
 
-import { Octokit } from "@octokit/core";
 import * as path from "pathe"
 import {fileURLToPath} from "node:url"
-import { createPullRequest } from "octokit-plugin-create-pull-request";
 import {createRequire} from 'node:module'
 import {findUp} from "find-up"
+import {withOctokit} from './github-utils.js'
 
 const require = createRequire(import.meta.url)
 const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-extra')
 
 async function createPR() {
-  const OctokitWithPlugin = Octokit.plugin(createPullRequest)
-  const octokit = new OctokitWithPlugin({
-    auth: process.env.GITHUB_TOKEN,
-  });
 
   const version = await versionToRelease()
 
@@ -27,25 +22,27 @@ async function createPR() {
     files[`db/data/docs/templated_apis/shopify_cli/${fileName}`] = (await readFile(path.join(generatedDirectory, fileName))).toString()
   }
 
-  const response = await octokit
-    .createPullRequest({
-      owner: "shopify",
-      repo: "shopify-dev",
-      title: `[CLI] Update docs for version: ${version}`,
-      body: `We are updating the CLI documentation with the contents of the recently released version of the Shopify CLI [${version}](https://www.npmjs.com/package/@shopify/cli/v/${version})`,
-      head: `shopify-cli-${version}`,
-      base: "main",
-      update: true,
-      forceFork: false,
-      changes: [
-        {
-          files,
-          commit: `Update Shopify CLI documentation to version ${version}`,
-        },
-      ],
-    })
+  await withOctokit("shopify", async (octokit) => {
+    const response = await octokit
+      .createPullRequest({
+        owner: "shopify",
+        repo: "shopify-dev",
+        title: `[CLI] Update docs for version: ${version}`,
+        body: `We are updating the CLI documentation with the contents of the recently released version of the Shopify CLI [${version}](https://www.npmjs.com/package/@shopify/cli/v/${version})`,
+        head: `shopify-cli-${version}`,
+        base: "main",
+        update: true,
+        forceFork: false,
+        changes: [
+          {
+            files,
+            commit: `Update Shopify CLI documentation to version ${version}`,
+          },
+        ],
+      })
 
-  console.log(`PR URL: https://github.com/shopify/shopify-dev/pull/${response.data.number}`)
+    console.log(`PR URL: https://github.com/shopify/shopify-dev/pull/${response.data.number}`)
+  })
 }
 
 async function versionToRelease() {
