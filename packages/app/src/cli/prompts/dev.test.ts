@@ -11,6 +11,7 @@ import {Organization, OrganizationSource, OrganizationStore} from '../models/org
 import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
+import {ApplicationURLs} from '../services/dev/urls.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -302,23 +303,87 @@ describe('createAsNewAppPrompt', () => {
 })
 
 describe('updateURLsPrompt', () => {
-  test('asks about the URL update and shows 4 different options', async () => {
+  test('shows legacy prompt when dev sessions is disabled', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const currentAppUrl = 'http://current-url'
+    const currentRedirectUrls = ['http://current-redirect-url1', 'http://current-redirect-url2']
+    const newUrls = {
+      applicationUrl: 'http://new-url',
+      redirectUrlWhitelist: ['http://new-redirect-url'],
+    }
 
     // When
-    const got = await updateURLsPrompt('http://current-url', [
-      'http://current-redirect-url1',
-      'http://current-redirect-url2',
-    ])
+    const got = await updateURLsPrompt(false, currentAppUrl, currentRedirectUrls, newUrls)
 
     // Then
     expect(got).toEqual(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
-      message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+      message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
       infoTable: {
         'Current app URL': ['http://current-url'],
         'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
+      },
+      confirmationMessage: 'Yes, automatically update',
+      cancellationMessage: 'No, never',
+    })
+  })
+
+  test('shows dev sessions prompt when enabled without app proxy', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const currentAppUrl = 'http://current-url'
+    const currentRedirectUrls: string[] = []
+    const newUrls = {
+      applicationUrl: 'http://new-url',
+      redirectUrlWhitelist: ['http://new-redirect-url'],
+    }
+
+    // When
+    const got = await updateURLsPrompt(true, currentAppUrl, currentRedirectUrls, newUrls)
+
+    // Then
+    expect(got).toEqual(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message:
+        "Have Shopify override your app URLs with tunnel URLs when running `app dev` against your dev store? This won't affect your app on other stores",
+      infoTable: {
+        'Currently released app URL': ['http://current-url'],
+        '=> Dev URL': ['http://new-url'],
+        'Affected configurations': ['application_url', 'redirect_urls'],
+      },
+      confirmationMessage: 'Yes, automatically update',
+      cancellationMessage: 'No, never',
+    })
+  })
+
+  test('shows dev sessions prompt when enabled with app proxy', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const currentAppUrl = 'http://current-url'
+    const currentRedirectUrls: string[] = []
+    const newUrls: ApplicationURLs = {
+      applicationUrl: 'http://new-url',
+      redirectUrlWhitelist: ['http://new-redirect-url'],
+      appProxy: {
+        proxyUrl: 'http://proxy-url',
+        proxySubPath: '/subpath',
+        proxySubPathPrefix: 'prefix',
+      },
+    }
+
+    // When
+    const got = await updateURLsPrompt(true, currentAppUrl, currentRedirectUrls, newUrls)
+
+    // Then
+    expect(got).toEqual(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message:
+        "Have Shopify override your app URLs with tunnel URLs when running `app dev` against your dev store? This won't affect your app on other stores",
+      infoTable: {
+        'Currently released app URL': ['http://current-url'],
+        '=> Dev URL': ['http://new-url'],
+        'Affected configurations': ['application_url', 'redirect_urls', 'app_proxy'],
       },
       confirmationMessage: 'Yes, automatically update',
       cancellationMessage: 'No, never',
