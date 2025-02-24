@@ -263,11 +263,15 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
   const form = formData()
   const buffer = readFileSync(bundleZipPath)
   form.append('my_upload', buffer)
-  await fetch(signedURL, {
-    method: 'put',
-    body: buffer,
-    headers: form.getHeaders(),
-  })
+  await fetch(
+    signedURL,
+    {
+      method: 'put',
+      body: buffer,
+      headers: form.getHeaders(),
+    },
+    'slow-request',
+  )
 
   const payload: DevSessionPayload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
 

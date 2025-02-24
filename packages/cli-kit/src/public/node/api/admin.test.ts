@@ -99,7 +99,7 @@ describe('admin-rest-api', () => {
     const status = 200
     const headers = {'some-header': 123}
 
-    vi.spyOn(http, 'fetch').mockResolvedValue({
+    vi.spyOn(http, 'shopifyFetch').mockResolvedValue({
       json,
       status,
       headers: {raw: () => headers},
@@ -121,7 +121,7 @@ describe('admin-rest-api', () => {
     const headers = {'X-Shopify-Access-Token': `Bearer ${token}`, 'Content-Type': 'application/json'}
 
     vi.mocked(buildHeaders).mockReturnValue(headers)
-    const spyFetch = vi.spyOn(http, 'fetch').mockResolvedValue({
+    const spyFetch = vi.spyOn(http, 'shopifyFetch').mockResolvedValue({
       json,
       status,
       headers: {raw: () => ({})},
@@ -148,7 +148,7 @@ describe('admin-rest-api', () => {
     const headers = {'X-Shopify-Access-Token': `Bearer ${token}`, 'Content-Type': 'application/json'}
 
     vi.mocked(buildHeaders).mockReturnValue(headers)
-    const spyFetch = vi.spyOn(http, 'fetch').mockResolvedValue({
+    const spyFetch = vi.spyOn(http, 'shopifyFetch').mockResolvedValue({
       json: () => Promise.resolve({result: true}),
       status,
       headers: {raw: () => ({})},

@@ -2,7 +2,7 @@ import {sleep} from '@shopify/cli-kit/node/system'
 
 const DEFAULT_RETRY_DELAY_MS = 300
 // 10 seconds default
-const DEFAULT_MAX_TIME_MS = 10000
+export const DEFAULT_MAX_TIME_MS = 10000
 
 interface BackoffResult {
   remainingMs: number

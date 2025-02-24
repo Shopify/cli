@@ -5,7 +5,7 @@ import {
   ShopifyEssentialError,
 } from './storefront-session.js'
 import {describe, expect, test, vi} from 'vitest'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
@@ -36,7 +36,7 @@ describe('Storefront API', () => {
   describe('getStorefrontSessionCookies', () => {
     test('retrieves only _shopify_essential cookie when no password is provided', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 200,
           headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
@@ -52,7 +52,7 @@ describe('Storefront API', () => {
 
     test('retrieves _shopify_essential and storefront_digest cookies when a password is provided', async () => {
       // Given
-      vi.mocked(fetch)
+      vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
             status: 200,
@@ -75,7 +75,7 @@ describe('Storefront API', () => {
 
     test(`throws an ShopifyEssentialError when _shopify_essential can't be defined`, async () => {
       // Given
-      vi.mocked(fetch)
+      vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
             status: 200,
@@ -104,7 +104,7 @@ describe('Storefront API', () => {
 
     test('throws an error when the password is wrong', async () => {
       // Given
-      vi.mocked(fetch)
+      vi.mocked(shopifyFetch)
         .mockResolvedValueOnce(
           response({
             status: 200,
@@ -155,7 +155,7 @@ describe('Storefront API', () => {
   describe('isStorefrontPasswordCorrect', () => {
     test('returns true when the password is correct', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 302,
           headers: {
@@ -169,7 +169,7 @@ describe('Storefront API', () => {
 
       // Then
       expect(result).toBe(true)
-      expect(fetch).toBeCalledWith('https://store.myshopify.com/password', {
+      expect(shopifyFetch).toBeCalledWith('https://store.myshopify.com/password', {
         body: 'form_type=storefront_password&utf8=%E2%9C%93&password=correct-password-%26',
         headers: {
           'cache-control': 'no-cache',
@@ -182,7 +182,7 @@ describe('Storefront API', () => {
 
     test('returns true when the password is correct and the store redirects to a localized URL', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 302,
           headers: {
@@ -200,7 +200,7 @@ describe('Storefront API', () => {
 
     test('returns true when the password is correct and the store name is capitalized', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 302,
           headers: {
@@ -214,7 +214,7 @@ describe('Storefront API', () => {
 
       // Then
       expect(result).toBe(true)
-      expect(fetch).toBeCalledWith('https://Store.myshopify.com/password', {
+      expect(shopifyFetch).toBeCalledWith('https://Store.myshopify.com/password', {
         body: 'form_type=storefront_password&utf8=%E2%9C%93&password=correct-password-%26',
         headers: {
           'cache-control': 'no-cache',
@@ -227,7 +227,7 @@ describe('Storefront API', () => {
 
     test('returns false when the password is incorrect', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 401,
         }),
@@ -242,7 +242,7 @@ describe('Storefront API', () => {
 
     test('returns false when the redirect location is incorrect', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 302,
           headers: {
@@ -260,7 +260,7 @@ describe('Storefront API', () => {
 
     test('returns false when the redirect location has a different origin', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 302,
           headers: {
@@ -278,7 +278,7 @@ describe('Storefront API', () => {
 
     test('throws an error when the server responds with "Too Many Requests"', async () => {
       // Given
-      vi.mocked(fetch).mockResolvedValueOnce(
+      vi.mocked(shopifyFetch).mockResolvedValueOnce(
         response({
           status: 429,
           headers: {

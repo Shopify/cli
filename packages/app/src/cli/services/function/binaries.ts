@@ -183,7 +183,7 @@ export async function downloadBinary(bin: DownloadableBinary) {
   }
   await performActionWithRetryAfterRecovery(
     async () => {
-      const resp = await fetch(url)
+      const resp = await fetch(url, undefined, 'slow-request')
       if (resp.status !== 200) {
         throw new Error(`Downloading ${bin.name} failed with status code of ${resp.status}`)
       }
