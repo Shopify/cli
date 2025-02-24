@@ -197,13 +197,25 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
 /* eslint-disable no-console */
 export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string) {
   console.log('Theme root path:', themeRootPath)
+  console.log('Offense files:', Object.keys(offensesByFile))
+
+  // Normalize the theme root path to use forward slashes
+  const normalizedThemeRoot = themeRootPath.replace(/\\/g, '/')
+  console.log('Normalized theme root:', normalizedThemeRoot)
+
   const fileNames = Object.keys(offensesByFile).sort()
 
   fileNames.forEach((filePath) => {
     console.log('Processing file:', filePath)
-    // Format the file path to be relative to the theme root.
-    // Remove the leading slash agnostic of windows or unix.
-    const headlineFilePath = filePath.replace(themeRootPath, '').slice(1)
+    // Normalize the file path to use forward slashes
+    const normalizedFilePath = filePath.replace(/\\/g, '/')
+    console.log('Normalized file path:', normalizedFilePath)
+
+    // Ensure the theme root path ends with a forward slash for proper replacement
+    const rootWithSlash = normalizedThemeRoot.endsWith('/') ? normalizedThemeRoot : `${normalizedThemeRoot}/`
+
+    // Get relative path by removing the theme root
+    const headlineFilePath = normalizedFilePath.replace(rootWithSlash, '')
     console.log('Headline file path:', headlineFilePath)
 
     renderInfo({
