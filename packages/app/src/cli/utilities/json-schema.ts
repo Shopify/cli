@@ -56,7 +56,7 @@ export async function unifiedConfigurationParserFactory(
       errorSet.add(key)
       return true
     })
-    if (zodParse.state !== 'ok' || errors.length > 0) {
+    if (jsonSchemaParse.state !== 'ok') {
       return {
         state: 'error',
         data: undefined,
