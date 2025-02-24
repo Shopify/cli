@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
@@ -134,10 +135,15 @@ const offenseSeverityAscending = (offenseA: Offense, offenseB: Offense) => offen
  * then within each collection of offenses, they are sorted by severity.
  */
 export function sortOffenses(offenses: Offense[]): OffenseMap {
+  console.log('Sorting offenses, total count:', offenses.length)
+
   // Bucket offenses by filename
   const offensesByFile = offenses.reduce((acc: OffenseMap, offense: Offense) => {
     const {uri} = offense
+    console.log('Processing offense with URI:', uri)
     const filePath = pathUtils.fsPath(uri)
+    console.log('Converted to fs path:', filePath)
+
     if (!acc[filePath]) {
       acc[filePath] = []
     }
@@ -146,6 +152,8 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
     acc[filePath]!.push(offense)
     return acc
   }, {})
+
+  console.log('Grouped offenses by file:', Object.keys(offensesByFile))
 
   // Finally sort each collection of offenses by severity
   return Object.keys(offensesByFile).reduce((acc: OffenseMap, filePath) => {
@@ -158,7 +166,13 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
  * Returns the number of offenses for each severity type.
  */
 function countOffenseTypes(offenses: Offense[]) {
+  console.log('Counting offense types, total offenses:', offenses.length)
   return offenses.reduce((acc: SeverityCounts, offense: Offense) => {
+    console.log('Processing offense:', {
+      check: offense.check,
+      uri: offense.uri,
+      severity: offense.severity,
+    })
     const isSeverityUncounted = !Object.prototype.hasOwnProperty.call(acc, offense.severity)
     if (isSeverityUncounted) {
       acc[offense.severity] = 0
@@ -171,6 +185,10 @@ function countOffenseTypes(offenses: Offense[]) {
 }
 
 export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, theme: Theme): string[] {
+  console.log('Formatting summary, total files:', theme.length)
+  console.log('Total offenses:', offenses.length)
+  console.log('Files with offenses:', Object.keys(offensesByFile).length)
+
   const summary = [`${theme.length} files inspected`]
 
   if (offenses.length === 0) {
@@ -194,7 +212,6 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
   return summary
 }
 
-/* eslint-disable no-console */
 export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string) {
   console.log('Theme root path:', themeRootPath)
   console.log('Offense files:', Object.keys(offensesByFile))
@@ -224,7 +241,6 @@ export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: st
     })
   })
 }
-/* eslint-enable no-console */
 
 export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffenseMap[] {
   return Object.entries(offensesByFile).map(([path, offenses]) => {
