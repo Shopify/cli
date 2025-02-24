@@ -3426,7 +3426,7 @@ describe('loadHiddenConfig', () => {
     })
   })
 
-  test('returns empty object if hidden config has an old format with just a dev_store_url', async () => {
+  test('returns config if hidden config has an old format with just a dev_store_url', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configuration = {
