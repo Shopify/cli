@@ -5,46 +5,67 @@ import * as path from 'path'
 import {spawn} from 'child_process'
 
 const BRANCH = 'main'
-const OWNER = 'Shopify'
 
+/**
+ * @typedef {Object} Schema
+ * @property {string} owner
+ * @property {string} repo
+ * @property {string} pathToFile
+ * @property {string} localPath
+ * @property {string | undefined} [branch]
+ * @property {boolean} [usesLfs]
+ */
+
+/**
+ * @type {Schema[]}
+ */
 const schemas = [
   {
+    owner: 'Shopify',
     repo: 'partners',
     pathToFile: 'db/graphql/cli_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
   },
   {
+    owner: 'Shopify',
     repo: 'business-platform',
     pathToFile: 'db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
   {
+    owner: 'Shopify',
     repo: 'business-platform',
     pathToFile: 'db/graphql/organizations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
   {
-    repo: 'shopify',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/app_dev_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
   },
   {
-    repo: 'shopify',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
   },
   {
-    repo: 'shopify',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
     localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
+    usesLfs: true,
   },
   {
-    repo: 'shopify',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
   },
   {
-    repo: 'shopify',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
   },
@@ -77,6 +98,10 @@ function runCommand(command, args) {
   })
 }
 
+/**
+ * @param {string} output
+ * @returns {string}
+ */
 function extractPassword(output) {
   const passwordRegex = /Password: (\w+)/
   const match = output.match(passwordRegex)
@@ -86,20 +111,42 @@ function extractPassword(output) {
   throw new Error('Password not found in output')
 }
 
+/**
+ * @param {Schema} schema
+ * @param {import('@octokit/rest').Octokit} octokit
+ * @returns {Promise<boolean>}
+ */
 async function fetchFileForSchema(schema, octokit) {
   try {
     // Fetch the file content from the repository
     const branch = schema.branch ?? BRANCH
-    console.log(`\nFetching ${OWNER}/${schema.repo}#${branch}: ${schema.pathToFile} ...`)
-    const {data} = await octokit.repos.getContent({
-      mediaType: { format: "raw" },
-      owner: OWNER,
-      repo: schema.repo,
-      path: schema.pathToFile,
-      ref: branch,
-    })
+    const owner = schema.owner
+    const repoName = schema.repo
 
-    const content = Buffer.from(data).toString('utf-8')
+    let content = ''
+    if (schema.usesLfs) {
+      console.log(`\nFetching LFS file ${owner}/${repoName}#${branch}: ${schema.pathToFile} ...`)
+      const {data: {download_url}} = await octokit.repos.getContent({
+        mediaType: { format: "json" },
+        owner: owner,
+        repo: repoName,
+        path: schema.pathToFile,
+        ref: branch,
+      })
+      console.log(`LFS download via ${download_url}...`)
+      content = await fetch(download_url).then(res => res.text())
+    } else {
+      console.log(`\nFetching ${owner}/${repoName}#${branch}: ${schema.pathToFile} ...`)
+      const {data} = await octokit.repos.getContent({
+        mediaType: { format: "raw" },
+        owner: owner,
+        repo: repoName,
+        path: schema.pathToFile,
+        ref: branch,
+      })
+
+      content = Buffer.from(data).toString('utf-8')
+    }
 
     // Define the local path where the file will be saved
     const localFilePath = schema.localPath
@@ -118,6 +165,9 @@ async function fetchFileForSchema(schema, octokit) {
   }
 }
 
+/**
+ * @returns {Promise<string>}
+ */
 async function getGithubPasswordFromDev() {
   try {
     // Uses token from `dev`
@@ -130,25 +180,47 @@ async function getGithubPasswordFromDev() {
   }
 }
 
-async function withOctokit(func) {
+/**
+ * @param {string} owner
+ * @param {function(import('@octokit/rest').Octokit): Promise<boolean>} func
+ * @returns {Promise<boolean>}
+ */
+async function withOctokit(owner, func) {
   let password = undefined
-  let tokenFromEnv = process.env.GITHUB_TOKEN || process.env.GH_TOKEN
+
+  const tokenEnvSources = [
+    `GITHUB_TOKEN_${owner.toUpperCase()}`,
+    `GH_TOKEN_${owner.toUpperCase()}`,
+    'GITHUB_TOKEN',
+    'GH_TOKEN',
+  ]
+  let tokenFromEnv = undefined
+  for (const source of tokenEnvSources) {
+    if (process.env[source]) {
+      tokenFromEnv = process.env[source]
+      console.log(`Using token from ${source}: ${tokenFromEnv}`)
+      break
+    }
+  }
   if (!tokenFromEnv) {
     password = await getGithubPasswordFromDev()
+    console.log(`Using password from dev: ${password}`)
   }
   const authToken = password || tokenFromEnv
 
-  console.log(`Using token: ${authToken}`)
   const octokit = new Octokit({
     auth: authToken,
   })
   return func(octokit)
 }
 
+/**
+ * @returns {Promise<void>}
+ */
 async function fetchFiles() {
   let allSuccess = true
   for (const schema of schemas) {
-    allSuccess = allSuccess && await withOctokit(async (octokit) => {
+    allSuccess = allSuccess && await withOctokit(schema.owner, async (octokit) => {
       return fetchFileForSchema(schema, octokit)
     })
   }
@@ -159,9 +231,15 @@ async function fetchFiles() {
   }
 }
 
+/**
+ * @returns {Promise<void>}
+ */
 async function fetchFilesFromSpin() {
   for (const schema of schemas) {
-    const remotePath = `~/src/github.com/Shopify/${schema.repo}/${schema.pathToFile}`
+    const owner = schema.owner
+    const repoName = schema.repo
+
+    const remotePath = `~/src/github.com/${owner}/${repoName}/${schema.pathToFile}`
     const localPath = schema.localPath
     try {
       await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
@@ -169,7 +247,7 @@ async function fetchFilesFromSpin() {
       if (e.message.match(/scp.*No such file or directory/)) {
         // Assume we need to just fetch the file from GitHub
         console.log(`Cannot find file for ${schema.repo} in Spin, fetching from GitHub instead...`)
-        await withOctokit(async (octokit) => {
+        await withOctokit(schema.owner, async (octokit) => {
           await fetchFileForSchema(schema, octokit)
         })
       } else {

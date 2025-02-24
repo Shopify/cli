@@ -31,8 +31,14 @@ jobs:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
           custom_message_suffix: "
+            > [!TIP]
 
-            > After installing, validate the version by running just `shopify` in your terminal
+            > If you get an `ETARGET` error, install it with NPM and the flag `--@shopify:registry=https://registry.npmjs.org`
+
+
+            > [!CAUTION]
+
+            > After installing, validate the version by running just `shopify` in your terminal.
 
             > If the versions don't match, you might have multiple global instances installed.
 

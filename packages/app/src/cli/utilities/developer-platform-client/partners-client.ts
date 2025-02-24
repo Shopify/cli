@@ -159,7 +159,7 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
-import {GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
+import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -214,6 +214,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsAtomicDeployments = false
   public readonly requiresOrganization = false
   public readonly supportsDevSessions = false
+  public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
   private _session: PartnersSession | undefined
 
@@ -239,8 +240,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this._session
   }
 
-  async request<T>(query: string, variables: GraphQLVariables | undefined = undefined): Promise<T> {
-    return partnersRequest(query, await this.token(), variables)
+  async request<T>(
+    query: string,
+    variables: GraphQLVariables | undefined = undefined,
+    cacheOptions?: CacheOptions,
+  ): Promise<T> {
+    return partnersRequest(query, await this.token(), variables, cacheOptions)
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
@@ -300,7 +305,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const variables: FindOrganizationBasicVariables = {id: orgId}
-    const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables)
+    const result: FindOrganizationBasicQuerySchema = await this.request(FindOrganizationBasicQuery, variables, {
+      cacheTTL: {hours: 6},
+    })
     const org: Omit<Organization, 'source'> | undefined = result.organizations.nodes[0]
     return org ? {...org, source: this.organizationSource} : undefined
   }
@@ -324,7 +331,9 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
-    const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
+    const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables, {
+      cacheTTL: {hours: 6},
+    })
     // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
     return result.extensionSpecifications.map((spec) => ({
       ...spec,
@@ -337,7 +346,13 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
     const variables: RemoteTemplateSpecificationsVariables = {apiKey}
-    const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
+    const result: RemoteTemplateSpecificationsSchema = await this.request(
+      RemoteTemplateSpecificationsQuery,
+      variables,
+      {
+        cacheTTL: {hours: 6},
+      },
+    )
     return result.templateSpecifications.map((template) => {
       const {types, ...rest} = template
       return {

@@ -10,6 +10,7 @@ import {
   getAppConfigurationState,
   loadConfigForAppCreation,
   reloadApp,
+  loadHiddenConfig,
 } from './loader.js'
 import {AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -30,7 +31,7 @@ import {
   PackageJson,
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -3389,6 +3390,143 @@ dev = "echo 'Hello, world!'"
         directory: tmpDir,
         isEmbedded: false,
       })
+    })
+  })
+})
+
+describe('loadHiddenConfig', () => {
+  test('returns empty object if no client_id in configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        scopes: 'write_products',
+      }
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
+    })
+  })
+
+  test('returns empty object if hidden config file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: '12345',
+      }
+      await writeFile(joinPath(tmpDir, '.gitignore'), '')
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
+
+      // Verify empty config file was created
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      const fileContent = await readFile(hiddenConfigPath)
+      expect(JSON.parse(fileContent)).toEqual({})
+
+      // Verify .gitignore was updated
+      const gitIgnore = joinPath(tmpDir, '.gitignore')
+      const gitIgnoreContent = await readFile(gitIgnore)
+      expect(gitIgnoreContent).toContain('.shopify')
+    })
+  })
+
+  test('returns config for client_id if hidden config file exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: '12345',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(
+        hiddenConfigPath,
+        JSON.stringify({
+          '12345': {someKey: 'someValue'},
+          'other-id': {otherKey: 'otherValue'},
+        }),
+      )
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({someKey: 'someValue'})
+    })
+  })
+
+  test('returns empty object if client_id not found in existing hidden config', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: 'not-found',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(
+        hiddenConfigPath,
+        JSON.stringify({
+          'other-id': {someKey: 'someValue'},
+        }),
+      )
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
+    })
+  })
+
+  test('returns config if hidden config has an old format with just a dev_store_url', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: 'not-found',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(
+        hiddenConfigPath,
+        JSON.stringify({
+          dev_store_url: 'https://dev-store.myshopify.com',
+        }),
+      )
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({dev_store_url: 'https://dev-store.myshopify.com'})
+    })
+  })
+
+  test('returns empty object if hidden config file is invalid JSON', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: '12345',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(hiddenConfigPath, 'invalid json')
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
     })
   })
 })

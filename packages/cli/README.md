@@ -12,14 +12,14 @@
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
-* [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
+* [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
-* [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
+* [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
@@ -454,13 +454,13 @@ DESCRIPTION
   function written in JavaScript.
 ```
 
-## `shopify app generate extension [FILE]`
+## `shopify app generate extension`
 
 Generate a new app Extension.
 
 ```
 USAGE
-  $ shopify app generate extension [FILE] [--client-id <value> | -c <value>] [--flavor
+  $ shopify app generate extension [--client-id <value> | -c <value>] [--flavor
     vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
     <value>] [-t <value>] [--verbose]
 
@@ -651,13 +651,13 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
-## `shopify app versions list [FILE]`
+## `shopify app versions list`
 
 List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [FILE] [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+  $ shopify app versions list [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
     [--verbose]
 
 FLAGS

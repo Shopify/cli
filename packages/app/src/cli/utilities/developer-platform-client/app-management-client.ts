@@ -155,6 +155,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
+  public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
 
@@ -175,7 +176,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
-      const userInfoResult = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+      const userInfoResult = await businessPlatformRequestDoc(UserInfo, businessPlatformToken, undefined, {
+        cacheTTL: {hours: 6},
+        cacheExtraKey: userId,
+      })
 
       if (userInfoResult.currentUserAccount) {
         this._session = {
@@ -258,6 +262,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       FindOrganizations,
       await this.businessPlatformToken(),
       variables,
+      {cacheTTL: {hours: 6}},
     )
     const org = organizationResult.currentUserAccount?.organization
     if (!org) {
@@ -310,7 +315,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    const result = await appManagementRequestDoc(organizationId, query, await this.token(), undefined, {
+      cacheTTL: {hours: 6},
+    })
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,

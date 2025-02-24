@@ -31,10 +31,14 @@ export async function selectStore(
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> {
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
+  let onSearchForStoresByName
+  if (developerPlatformClient.supportsStoreSearch) {
+    onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
+  }
   // If no stores, guide the developer through creating one
   // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
   let store = await selectStorePrompt({
-    onSearchForStoresByName: async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term),
+    onSearchForStoresByName,
     ...storesSearch,
     showDomainOnPrompt,
   })

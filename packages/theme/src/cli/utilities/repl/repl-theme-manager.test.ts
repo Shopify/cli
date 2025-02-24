@@ -3,7 +3,7 @@ import {setREPLTheme, removeREPLTheme, getREPLTheme, getDevelopmentTheme} from '
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {bulkUploadThemeAssets, createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, themeCreate, fetchTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../../services/local-storage')
@@ -27,7 +27,7 @@ describe('REPLThemeManager', () => {
         processing: true,
         createdAtRuntime: true,
       }
-      vi.mocked(createTheme).mockResolvedValue(theme)
+      vi.mocked(themeCreate).mockResolvedValue(theme)
 
       // When
       await themeManager.create(DEVELOPMENT_THEME_ROLE, 'Liquid Console (3.60)')
@@ -40,7 +40,7 @@ describe('REPLThemeManager', () => {
   test('should set the REPL theme in local storage', async () => {
     // Given
     const themeName = 'Liquid Console (3.60)'
-    vi.mocked(createTheme).mockResolvedValue({
+    vi.mocked(themeCreate).mockResolvedValue({
       id: 123,
       name: themeName,
       role: DEVELOPMENT_THEME_ROLE,

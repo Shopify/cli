@@ -15,15 +15,17 @@ import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import appHomeSpec from '../extensions/specifications/app_config_app_home.js'
 import appProxySpec from '../extensions/specifications/app_config_app_proxy.js'
+import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath, findPathUp, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 // Schemas for loading app configuration
 
@@ -333,8 +335,8 @@ export class App<
   configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
-  hiddenConfig: AppHiddenConfig
   devApplicationURLs?: ApplicationURLs
+  private _hiddenConfig: AppHiddenConfig
 
   constructor({
     name,
@@ -366,7 +368,7 @@ export class App<
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
-    this.hiddenConfig = hiddenConfig
+    this._hiddenConfig = hiddenConfig
     this.devApplicationURLs = devApplicationURLs
   }
 
@@ -417,9 +419,15 @@ export class App<
     this.nodeDependencies = nodeDependencies
   }
 
+  get hiddenConfig() {
+    return this._hiddenConfig
+  }
+
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
-    this.hiddenConfig = {...this.hiddenConfig, ...values}
-    await writeFile(appHiddenConfigPath(this.directory), JSON.stringify(this.hiddenConfig, null, 2))
+    if (!this.configuration.client_id) return
+    this._hiddenConfig = deepMergeObjects(this.hiddenConfig, values)
+    const path = appHiddenConfigPath(this.directory)
+    await patchAppHiddenConfigFile(path, String(this.configuration.client_id), this.hiddenConfig)
   }
 
   async preDeployValidation() {

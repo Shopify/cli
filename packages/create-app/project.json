@@ -52,7 +52,6 @@
     },
     "test:watch": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
       "options": {
         "command": "pnpm vitest watch",
         "cwd": "packages/create-app"

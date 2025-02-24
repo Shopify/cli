@@ -9,7 +9,7 @@ import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {createTheme, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
@@ -306,7 +306,7 @@ export async function createOrSelectTheme(adminSession: AdminSession, flags: Pus
     return themeManager.findOrCreate()
   } else if (unpublished) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
-    return createTheme(
+    return themeCreate(
       {
         name: themeName,
         role: UNPUBLISHED_THEME_ROLE,

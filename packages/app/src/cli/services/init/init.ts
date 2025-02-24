@@ -193,6 +193,8 @@ async function init(options: InitOptions) {
 
     await renderTasks(tasks)
 
+    // Ensure the app directory is available before moving the template scaffold
+    await ensureAppDirectoryIsAvailable(outputDirectory, hyphenizedName)
     await moveFile(templateScaffoldDir, outputDirectory)
   })
 

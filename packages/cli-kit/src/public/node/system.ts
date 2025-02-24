@@ -4,6 +4,7 @@ import {cwd, dirname} from './path.js'
 import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
+import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import which from 'which'
@@ -21,16 +22,25 @@ export interface ExecOptions {
   signal?: AbortSignal
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
+  // Ignored on Windows
+  background?: boolean
 }
 
 /**
  * Opens a URL in the user's default browser.
  *
  * @param url - URL to open.
+ * @returns A promise that resolves true if the URL was opened successfully, false otherwise.
  */
-export async function openURL(url: string): Promise<void> {
+export async function openURL(url: string): Promise<boolean> {
   const externalOpen = await import('open')
-  await externalOpen.default(url)
+  try {
+    await externalOpen.default(url)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return false
+  }
 }
 
 /**
@@ -54,7 +64,18 @@ export async function captureOutput(command: string, args: string[], options?: E
  * @param options - Optional settings for how to run the command.
  */
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
+  if (options) {
+    // Windows opens a new console window when running a command in the background, so we disable it.
+    const runningOnWindows = platformAndArch().platform === 'windows'
+    options.background = runningOnWindows ? false : options.background
+  }
+
   const commandProcess = buildExec(command, args, options)
+
+  if (options?.background) {
+    commandProcess.unref()
+  }
+
   if (options?.stderr && options.stderr !== 'inherit') {
     commandProcess.stderr?.pipe(options.stderr, {end: false})
   }
@@ -106,16 +127,18 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     env,
     cwd: executionCwd,
     input: options?.input,
-    stdio: options?.stdio,
+    stdio: options?.background ? 'ignore' : options?.stdio,
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
     stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
     // Setting this to false makes it possible to kill the main process
     // and all its sub-processes with Ctrl+C on Windows
     windowsHide: false,
+    detached: options?.background,
+    cleanup: !options?.background,
   })
   outputDebug(`
-Running system process:
+Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
   · Working directory: ${executionCwd}
 `)
