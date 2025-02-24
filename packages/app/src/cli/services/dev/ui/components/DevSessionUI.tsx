@@ -1,5 +1,10 @@
+import {Spinner} from './Spinner.js'
 import metadata from '../../../../metadata.js'
-import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session-status-manager.js'
+import {
+  DevSessionStatus,
+  DevSessionStatusManager,
+  DevSessionStatusMessageType,
+} from '../../processes/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
@@ -106,6 +111,17 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
     {isActive: Boolean(canUseShortcuts)},
   )
 
+  const getStatusIndicator = (type: DevSessionStatusMessageType) => {
+    switch (type) {
+      case 'loading':
+        return <Spinner />
+      case 'success':
+        return '✅'
+      case 'error':
+        return '❌'
+    }
+  }
+
   return (
     <>
       <ConcurrentOutput
@@ -119,7 +135,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       {!isAborted ? (
         <Box
           marginY={1}
-          paddingTop={1}
+          paddingTop={0}
           flexDirection="column"
           flexGrow={1}
           borderStyle="single"
@@ -128,8 +144,13 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           borderRight={false}
           borderTop
         >
+          {status.statusMessage ? (
+            <Text>
+              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
+            </Text>
+          ) : null}
           {canUseShortcuts ? (
-            <Box flexDirection="column">
+            <Box marginTop={1} flexDirection="column">
               {status.graphiqlURL && status.isReady ? (
                 <Text>
                   {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
