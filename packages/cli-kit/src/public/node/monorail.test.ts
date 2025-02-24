@@ -34,11 +34,15 @@ describe('monorail', () => {
   test('builds a request', async () => {
     const res = await publishMonorailEvent('fake_schema/0.0', {foo: 'bar'}, {baz: 'abc'})
     expect(res.type).toEqual('ok')
-    expect(http.fetch).toHaveBeenCalledWith(expectedURL, {
-      method: 'POST',
-      body: JSON.stringify({schema_id: 'fake_schema/0.0', payload: {foo: 'bar', baz: 'abc'}}),
-      headers: expectedHeaders,
-    })
+    expect(http.fetch).toHaveBeenCalledWith(
+      expectedURL,
+      {
+        method: 'POST',
+        body: JSON.stringify({schema_id: 'fake_schema/0.0', payload: {foo: 'bar', baz: 'abc'}}),
+        headers: expectedHeaders,
+      },
+      'non-blocking',
+    )
   })
 
   test('sanitizes the api_key from the debug log', async () => {
