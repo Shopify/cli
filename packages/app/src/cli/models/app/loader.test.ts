@@ -9,8 +9,9 @@ import {
   AppLoaderMode,
   getAppConfigurationState,
   loadConfigForAppCreation,
+  reloadApp,
 } from './loader.js'
-import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -2316,6 +2317,66 @@ wrong = "property"
 
     // When
     await expect(loadTestingApp()).rejects.toThrow()
+  })
+
+  test('preserves values from the previous app when reloading', async () => {
+    // Given
+    const appConfiguration = `
+      name = "my-app"
+      client_id = "12345"
+      application_url = "https://example.com"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [auth]
+      redirect_urls = ["https://example.com/auth"]
+    `
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+     api_version = "2022-07"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "handle-1"
+      name = "my_extension_1_flow"
+      description = "custom description"
+      runtime_url = "https://example.com"
+    `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // Create initial app
+    const app = (await loadApp({
+      directory: tmpDir,
+      specifications,
+      userProvidedConfigName: undefined,
+    })) as AppLinkedInterface
+
+    // Set some values that should be preserved
+    const customDevUUID = 'custom-dev-uuid'
+    const customAppURLs = {
+      applicationUrl: 'http://custom.dev',
+      redirectUrlWhitelist: ['http://custom.dev/auth'],
+    }
+    app.allExtensions[0]!.devUUID = customDevUUID
+    app.devApplicationURLs = customAppURLs
+
+    // When
+    const reloadedApp = await reloadApp(app)
+
+    // Then
+    expect(reloadedApp.allExtensions[0]?.devUUID).toBe(customDevUUID)
+    expect(reloadedApp.devApplicationURLs).toEqual(customAppURLs)
+    expect(reloadedApp.name).toBe(app.name)
+    expect(reloadedApp.packageManager).toBe(app.packageManager)
+    expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
+    expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
