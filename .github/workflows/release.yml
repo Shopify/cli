@@ -1,4 +1,4 @@
-name: changeset
+name: Changeset Release
 
 on:
   workflow_dispatch:
@@ -16,9 +16,9 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  release:
-    name: Release
-    runs-on: shopify-ubuntu-latest
+  changeset-release:
+    name: Changeset Release
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
