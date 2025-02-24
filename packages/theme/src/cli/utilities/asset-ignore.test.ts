@@ -1,6 +1,7 @@
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => {
   const originalFs: any = await vi.importActual('@shopify/cli-kit/node/fs')
@@ -11,6 +12,10 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
     fileExists: vi.fn(),
   }
 })
+
+vi.mock('@shopify/cli-kit/node/ui', () => ({
+  renderWarning: vi.fn(),
+}))
 
 vi.mock('@shopify/cli-kit/node/output')
 
@@ -282,6 +287,110 @@ describe('asset-ignore', () => {
         {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
         {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
       ])
+    })
+  })
+  describe('applyIgnoreFilters with only options', () => {
+    test(`should return single file when only option is a single file`, () => {
+      const options = {
+        only: ['assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([{key: 'assets/basic.css', checksum: '00000000000000000000000000000000'}])
+    })
+
+    test(`should return all files in a directory matching the pattern`, () => {
+      const options = {
+        only: ['assets/*.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
+        {key: 'assets/complex.css', checksum: '11111111111111111111111111111111'},
+      ])
+    })
+
+    test(`should return all files in a directory when using proper glob pattern`, () => {
+      const options = {
+        only: ['templates/*'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+      ])
+    })
+  })
+
+  describe('applyIgnoreFilters with ignore options', () => {
+    test(`should ignore single file when ignore option is a single file`, () => {
+      const options = {
+        ignore: ['assets/basic.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/complex.css', checksum: '11111111111111111111111111111111'},
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+      ])
+    })
+
+    test(`should ignore all files in a directory matching the pattern`, () => {
+      const options = {
+        ignore: ['assets/*.css'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+      ])
+    })
+
+    test(`should ignore all files in a directory when using proper glob pattern`, () => {
+      const options = {
+        ignore: ['assets/*'],
+      }
+
+      const actualChecksums = applyIgnoreFilters(checksums, options)
+
+      expect(actualChecksums).toEqual([
+        {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
+        {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
+        {key: 'sections/announcement-bar.liquid', checksum: '55555555555555555555555555555555'},
+        {key: 'templates/404.json', checksum: '6666666666666666666666666666666'},
+        {key: 'templates/customers/account.json', checksum: '7777777777777777777777777777777'},
+      ])
+    })
+  })
+  describe('pattern warnings', () => {
+    test('should warn when a pattern ends with a slash', () => {
+      const options = {
+        ignore: ['assets/'],
+      }
+
+      applyIgnoreFilters(checksums, options)
+
+      expect(renderWarning).toHaveBeenCalledWith({
+        headline: 'Directory pattern may be misleading.',
+        body: 'For more reliable matching, consider using "assets/*" or "assets/*.<file_extension>" instead.',
+      })
     })
   })
 })
