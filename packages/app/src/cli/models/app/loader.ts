@@ -482,6 +482,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       entryPath = await this.findEntryPath(directory, specification)
     }
 
+    const previousExtension = this.previousApp?.allExtensions.find((extension) => {
+      return extension.handle === configuration.handle
+    })
+
     const extensionInstance = new ExtensionInstance({
       configuration,
       configurationPath,
@@ -490,13 +494,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specification,
     })
 
+    if (previousExtension) {
+      // If we are reloading, keep the existing devUUID for consistency with the dev-console
+      extensionInstance.devUUID = previousExtension.devUUID
+    }
+
     if (usedKnownSpecification) {
       const validateResult = await extensionInstance.validate()
       if (validateResult.isErr()) {
         this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
       }
     }
-
     return extensionInstance
   }
 
