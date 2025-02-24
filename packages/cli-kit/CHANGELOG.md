@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.76.0
+
+### Minor Changes
+
+- 4a3895c: Use GraphQL for theme creation
+
+### Patch Changes
+
+- 38e8d7b: Hide serialized_script fields in verbose logs
+- b1ed29d: Fix binary files being corrupted on theme pull
+- 6449aa6: Fetch notifications in background
+
 ## 3.75.0
 
 ### Minor Changes
