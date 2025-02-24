@@ -103,3 +103,20 @@ export function blockPartnersAccess(): boolean {
 export function skipNetworkLevelRetry(): boolean {
   return isTruthy(getEnvironmentVariables()[environmentVariables.skipNetworkLevelRetry])
 }
+
+/**
+ * Returns the default maximum request time for network calls in milliseconds.
+ *
+ * After this long, API requests may be cancelled by an AbortSignal. The limit can be overridden by setting the
+ * SHOPIFY_CLI_MAX_REQUEST_TIME_FOR_NETWORK_CALLS environment variable.
+ *
+ * @returns The maximum request time in milliseconds.
+ */
+export function maxRequestTimeForNetworkCallsMs(): number {
+  const maxRequestTime = getEnvironmentVariables()[environmentVariables.maxRequestTimeForNetworkCalls]
+  if (maxRequestTime && !isNaN(Number(maxRequestTime))) {
+    return Number(maxRequestTime)
+  }
+  // 15 seconds is the default
+  return 15 * 1000
+}

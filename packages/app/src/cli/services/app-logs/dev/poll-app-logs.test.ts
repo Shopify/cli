@@ -254,21 +254,29 @@ describe('pollAppLogs', () => {
     await vi.advanceTimersToNextTimerAsync()
 
     // Then
-    expect(fetch).toHaveBeenCalledWith(firstUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${JWT_TOKEN}`,
-        'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+    expect(fetch).toHaveBeenCalledWith(
+      firstUrl,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${JWT_TOKEN}`,
+          'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+        },
       },
-    })
+      'non-blocking',
+    )
 
-    expect(fetch).toHaveBeenCalledWith(secondUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${JWT_TOKEN}`,
-        'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+    expect(fetch).toHaveBeenCalledWith(
+      secondUrl,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${JWT_TOKEN}`,
+          'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+        },
       },
-    })
+      'non-blocking',
+    )
 
     const appLogPayloadZero = new FunctionRunLog(
       camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[0]!.payload), {deep: true}),

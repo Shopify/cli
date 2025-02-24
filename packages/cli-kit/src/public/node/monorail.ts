@@ -200,7 +200,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const body = JSON.stringify({schema_id: schemaId, payload})
     const headers = buildHeaders(currentTime)
 
-    const response = await fetch(url, {method: 'POST', body, headers})
+    const response = await fetch(url, {method: 'POST', body, headers}, 'non-blocking')
 
     if (response.status === 200) {
       outputDebug(outputContent`Analytics event sent: ${outputToken.json(sanitizePayload(payload))}`)
