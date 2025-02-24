@@ -276,12 +276,17 @@ async function handleUpdatingOfPartnerUrls(
         localApp,
         apiKey,
       })
-      // When running dev app urls are pushed directly to API Client config instead of creating a new app version
-      // so current app version and API Client config will have diferent url values.
+
       if (shouldUpdateURLs) {
-        await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
-        // eslint-disable-next-line require-atomic-updates
-        localApp.devApplicationURLs = newURLs
+        if (developerPlatformClient.supportsDevSessions) {
+          // For dev sessions, store the new URLs in the local app so that the manifest can be patched with them
+          // The local toml is not updated.
+          localApp.setDevApplicationURLs(newURLs)
+        } else {
+          // When running dev app urls are pushed directly to API Client config instead of creating a new app version
+          // so current app version and API Client config will have diferent url values.
+          await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
+        }
       }
     }
   }
