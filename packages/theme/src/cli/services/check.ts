@@ -194,13 +194,17 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
   return summary
 }
 
+/* eslint-disable no-console */
 export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string) {
+  console.log('Theme root path:', themeRootPath)
   const fileNames = Object.keys(offensesByFile).sort()
 
   fileNames.forEach((filePath) => {
+    console.log('Processing file:', filePath)
     // Format the file path to be relative to the theme root.
     // Remove the leading slash agnostic of windows or unix.
     const headlineFilePath = filePath.replace(themeRootPath, '').slice(1)
+    console.log('Headline file path:', headlineFilePath)
 
     renderInfo({
       headline: headlineFilePath,
@@ -208,6 +212,7 @@ export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: st
     })
   })
 }
+/* eslint-enable no-console */
 
 export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffenseMap[] {
   return Object.entries(offensesByFile).map(([path, offenses]) => {
