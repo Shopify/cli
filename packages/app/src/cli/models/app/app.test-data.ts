@@ -562,6 +562,13 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     api_version: '2022-07',
     configuration_ui: true,
     metafields: [],
+    targeting: [
+      {
+        target: 'purchase.discount.cart_run',
+        export: 'run',
+        features: ['addProductDiscounts', 'addOrderDiscounts'],
+      },
+    ],
   }
 }
 
