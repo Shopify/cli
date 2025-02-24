@@ -20,12 +20,13 @@ fi
 # Only for nightly and experimental releases, set the snapshot version
 if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ]; then
   pnpm changeset version --snapshot $tag
-  pnpm changeset-build-no-docs
+  ./bin/update-cli-kit-version.js
 fi
 
 if [ "$tag" = "latest" ]; then
   pnpm changeset-manifests
 fi
+
 
 # Bundle the packages
 pnpm bundle-for-release
@@ -35,11 +36,3 @@ node bin/create-cli-duplicate-package.js
 
 # Publish the packages
 pnpm changeset publish --tag $tag
-
-# if [ "$tag" = "latest" ]; then
-# Create a PR to update homebrew
-./bin/package.js
-
-# Create a PR to update the docs
-./bin/create-doc-pr.js
-# fi

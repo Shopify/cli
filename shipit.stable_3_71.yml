@@ -20,5 +20,5 @@ deploy:
     #    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag stable-3.x"
     #    This will prevent publishes from being tagged as latest.
     # 2. Remove the following 2 lines, which update Homebrew and Shopify.dev docs
-    - bash -i -c "./bin/package.js"
+    - bash -i -c "./bin/create-homebrew-pr.js"
     - bash -i -c "./bin/create-doc-pr.js"

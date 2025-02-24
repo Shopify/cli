@@ -15,8 +15,6 @@ import {Liquid} from 'liquidjs'
 const require = createRequire(import.meta.url)
 const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-extra')
 const {program} = require('commander')
-const {Octokit} = require('@octokit/core')
-const { createPullRequest } = require("octokit-plugin-create-pull-request");
 const colors = require('ansi-colors')
 
 const packagingDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../packaging")
@@ -57,13 +55,9 @@ program
           throw new Error(`Unrecognized template version string ${templateVersion}`)
       }
 
-      const OctokitWithPlugin = Octokit.plugin(createPullRequest)
-      const octokit = new OctokitWithPlugin({
-        auth: process.env.GITHUB_TOKEN,
-      });
-
-      const response = await octokit
-        .createPullRequest({
+      await withOctokit("shopify", async (octokit) => {
+        const response = await octokit
+          .createPullRequest({
           owner: "shopify",
           repo: "homebrew-shopify",
           title: `Shopify CLI ${version}`,
@@ -79,17 +73,18 @@ program
             },
           ],
         })
-      if (["pre", "nightly"].includes(templateVersion)) {
-        // Merge the PR immediately if we're releasing a pre or nightly version
-        octokit.request("PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", {
-          owner: "Shopify",
-          repo: "homebrew-shopify",
-          pull_number: response.data.number,
-        })
-      } else {
-        // When releasing a minor version, mandate a manual review of the PR before merge
-        console.log(`${colors.green(colors.bold("PR opened:"))} ${response.data.html_url}`)
-      }
+        if (["pre", "nightly"].includes(templateVersion)) {
+          // Merge the PR immediately if we're releasing a pre or nightly version
+          octokit.request("PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", {
+            owner: "Shopify",
+            repo: "homebrew-shopify",
+            pull_number: response.data.number,
+          })
+        } else {
+          // When releasing a minor version, mandate a manual review of the PR before merge
+          console.log(`${colors.green(colors.bold("PR opened:"))} ${response.data.html_url}`)
+        }
+      })
     }
   })
 
