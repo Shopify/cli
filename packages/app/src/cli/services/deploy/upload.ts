@@ -7,7 +7,7 @@ import {AppDeployOptions, AssetUrlSchema, DeveloperPlatformClient} from '../../u
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {readFileSync} from '@shopify/cli-kit/node/fs'
-import {fetch, formData} from '@shopify/cli-kit/node/http'
+import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
@@ -135,11 +135,15 @@ export async function uploadExtensionsBundle(
     const form = formData()
     const buffer = readFileSync(options.bundlePath)
     form.append('my_upload', buffer)
-    await fetch(signedURL, {
-      method: 'put',
-      body: buffer,
-      headers: form.getHeaders(),
-    })
+    await fetch(
+      signedURL,
+      {
+        method: 'put',
+        body: buffer,
+        headers: form.getHeaders(),
+      },
+      'slow-request',
+    )
   }
 
   const variables: AppDeployOptions = {
