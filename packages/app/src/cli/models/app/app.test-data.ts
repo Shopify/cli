@@ -1323,6 +1323,7 @@ const translateResponse: AppTranslateSchema = {
   appTranslate: {
     translationRequest: {
       id: 'bla',
+      fullfilled: true,
     },
     userErrors: [],
   },

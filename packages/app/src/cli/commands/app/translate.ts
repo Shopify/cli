@@ -5,39 +5,28 @@ import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {getAppConfigurationState} from '../../models/app/loader.js'
 
+import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Translate extends AppCommand {
   static summary = 'Translate an app.'
 
-  static usage = `app:translate --force-all --resume <value>`
+  static usage = `app:translate --force-all --re-translate-all <value>`
 
-  static descriptionWithMarkdown = `Translate an app. Resume a previous request with the \`--resume\` flag.`
+  static descriptionWithMarkdown = `Translate an app. Retranslate all strings with the \`--re-translate-all\` flag.`
 
   static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
-    // 'api-key': Flags.string({
-    //   hidden: true,
-    //   description: 'The API key of your app.',
-    //   env: 'SHOPIFY_FLAG_APP_API_KEY',
-    //   exclusive: ['config'],
-    // }),
-    // force: Flags.boolean({
-    //   hidden: false,
-    //   description: 'Release without asking for confirmation.',
-    //   env: 'SHOPIFY_FLAG_FORCE',
-    //   char: 'f',
-    // }),
-    // version: Flags.string({
-    //   hidden: false,
-    //   description: 'The name of the app version to release.',
-    //   env: 'SHOPIFY_FLAG_VERSION',
-    //   required: true,
-    // }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Update translations without asking for confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      char: 'f',
+    }),
   }
 
   async run(): Promise<AppCommandOutput> {
@@ -60,7 +49,7 @@ export default class Translate extends AppCommand {
     }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+    const {app, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
       clientId: apiKey,
       forceRelink: flags.reset,
@@ -71,9 +60,7 @@ export default class Translate extends AppCommand {
       app,
       remoteApp,
       developerPlatformClient,
-      organization,
-      //   force: flags.force,
-      //   version: flags.version,
+      force: flags.force,
     })
 
     return {app}

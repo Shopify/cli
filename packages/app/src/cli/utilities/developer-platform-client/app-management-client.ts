@@ -705,6 +705,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       appTranslate: {
         translationRequest: {
           id: 'bla',
+          fullfilled: true,
         },
         userErrors: [], // errors
       },

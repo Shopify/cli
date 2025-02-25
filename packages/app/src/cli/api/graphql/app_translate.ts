@@ -40,6 +40,7 @@ export interface AppTranslateSchema {
   appTranslate: {
     translationRequest: {
       id?: string | null
+      fullfilled: boolean
     }
     userErrors: {
       field?: string[] | null

@@ -467,13 +467,17 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async translate({app: {apiKey}}: {app: MinimalOrganizationApp}): Promise<AppTranslateSchema> {
     const input: AppTranslateVariables = {apiKey}
-    return this.request(AppTranslate, input)
+    const response: Promise<AppTranslateSchema> = this.request(AppTranslate, input)
     // return {
     //   appTranslate: {
-    //     translationRequest: {},
+    //     translationRequest: {
+    //       id: response.app.id,
+    //       fullfilled: false,
+    //     },
     //     userErrors: [],
     //   },
     // }
+    return response
   }
 
   async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
