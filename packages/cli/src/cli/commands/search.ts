@@ -5,6 +5,8 @@ import {Args} from '@oclif/core'
 export default class Search extends Command {
   static description = 'Starts a search on shopify.dev.'
 
+  static usage = `search [query]`
+
   static examples = [
     `# open the search modal on Shopify.dev
     shopify search
