@@ -182,6 +182,30 @@ describe('sortOffenses', () => {
       [pathUtils.fsPath(uri)]: [offenses[1], offenses[0]],
     })
   })
+
+  test('should handle Windows paths correctly in sortOffenses', () => {
+    const windowsUri = pathUtils.normalize('file:///C:/Users/test/theme/templates/gift_card.liquid')
+    const offenses: Offense[] = [
+      {
+        type: SourceCodeType.LiquidHtml,
+        check: 'ImgWidthAndHeight',
+        message: 'Missing width and height attributes on img tag',
+        uri: windowsUri,
+        severity: Severity.ERROR,
+        start: {index: 0, line: 1, character: 0},
+        end: {index: 10, line: 1, character: 10},
+      },
+    ]
+
+    const result = sortOffenses(offenses)
+
+    // Get the Windows-style path that would be produced by pathUtils.fsPath
+    const expectedPath = pathUtils.fsPath(windowsUri)
+
+    // Verify the offense was correctly mapped to the Windows path
+    expect(Object.keys(result)).toContain(expectedPath)
+    expect(result[expectedPath]).toHaveLength(1)
+  })
 })
 
 describe('formatSummary', () => {
