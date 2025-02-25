@@ -28,6 +28,11 @@ export interface AppConfigurationUsedByCli {
     redirect_urls: string[]
   }
   translations?: {
-    extra_app_context?: string
+    target_languages?: string[]
+    locale_directories?: string[]
+    prompt_context?: string
+    manual_translations_key_prefix?: string
+    non_translatable_key_prefix?: string
+    non_translatable_terms?: string[]
   }
 }
