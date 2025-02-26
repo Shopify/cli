@@ -1,3 +1,3 @@
-theme push
+shopify theme push
 
-theme push --unpublished --json
+shopify theme push --unpublished --json

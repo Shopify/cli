@@ -1,1 +1,1 @@
-help [command] [flags]
+shopify help [command] [flags]
