@@ -705,7 +705,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
       appTranslate: {
         translationRequest: {
           id: 'bla',
-          fullfilled: true,
+          fulfilled: true,
+          sourceTexts: [],
+          targetTexts: [
+            {
+              targetLanguage: 'fr',
+              key: 'links.home',
+              value: 'Home in french',
+            },
+            {
+              targetLanguage: 'fr',
+              key: 'links.more',
+              value: 'More in french',
+            },
+          ],
         },
         userErrors: [], // errors
       },
