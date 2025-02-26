@@ -6,7 +6,6 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
-import {formatSection} from '@shopify/cli-kit/node/output'
 
 interface ThemeInfo {
   theme: {
@@ -87,9 +86,18 @@ function tabularSection(title: string, data: InlineToken[][]): AlertCustomSectio
 }
 
 export async function formatThemeInfo(output: ThemeInfo, flags: {environment?: string}) {
-  const infoMessage = Object.entries(output.theme)
-    .map(([key, val]) => formatSection(key, `${val}`))
-    .join('\n\n')
+  const tabularData = Object.entries(output.theme).map(([key, val]) => {
+    if (key === 'editor_url' || key === 'preview_url') {
+      const url = String(val)
+      // Here, we create descriptive labels for the links
+      const label = key === 'editor_url' ? 'Open in Theme Editor' : 'Preview Theme'
+      return [formatKey(key), {link: {url, label}}]
+    } else if (key === 'id') {
+      return [formatKey(key), `#${val}`]
+    } else {
+      return [formatKey(key), `${val}`]
+    }
+  })
 
   return {
     customSections: [
@@ -102,9 +110,16 @@ export async function formatThemeInfo(output: ThemeInfo, flags: {environment?: s
           ]
         : []),
       {
-        title: '',
-        body: infoMessage,
+        title: 'Theme Details',
+        body: {tabularData, firstColumnSubdued: true},
       },
     ],
   }
+}
+
+function formatKey(key: string): string {
+  return key
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
