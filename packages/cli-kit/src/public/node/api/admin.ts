@@ -1,7 +1,7 @@
 import {graphqlRequest, graphqlRequestDoc, GraphQLResponseOptions, GraphQLVariables} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
-import {BugError, AbortError} from '../error.js'
+import {AbortError, BugError} from '../error.js'
 import {
   restRequestBody,
   restRequestHeaders,
@@ -131,9 +131,10 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
         )})`,
         outputContent`If you're not the owner, create a dev store staff account for yourself`,
       )
-    } else if (error instanceof ClientError) {
-      throw new BugError(
-        `Unknown client error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
+    }
+    if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {
+      throw new AbortError(
+        `Error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
       )
     } else {
       throw new BugError(
