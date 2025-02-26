@@ -48,6 +48,7 @@ export type Scalars = {
   ShopifyShopID: {input: any; output: any}
   /** The ID for a StoreAdditionRequest. */
   StoreAdditionRequestID: {input: any; output: any}
+  SupportedEntityId: {input: any; output: any}
   /** An RFC 3986 and RFC 3987 compliant URI string. */
   URL: {input: string; output: string}
 }
