@@ -1,5 +1,17 @@
 # @shopify/cli
 
+## 3.76.0
+
+### Minor Changes
+
+- fd32347: Add multi-environment infrastructure and allow multiple environment usage in theme list command
+
+### Patch Changes
+
+- c72ce71: Update to cli-hydrogen 9.0.6
+- 5ad63a4: Update to cli-hydrogen 9.0.7
+- e9b8582: Upgrade cli-hydrogen to 9.0.8 for 2025.1.2
+
 ## 3.75.0
 
 ### Patch Changes
