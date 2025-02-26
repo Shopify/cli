@@ -2072,7 +2072,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "app:release --version <version>"
+      "usage": "app release --version <version>"
     },
     "app:versions:list": {
       "aliases": [

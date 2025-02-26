@@ -1972,7 +1972,7 @@
         "tabs": [
           {
             "title": "app release",
-            "code": "shopify app:release --version &lt;version&gt;",
+            "code": "shopify app release --version &lt;version&gt;",
             "language": "bash"
           }
         ],

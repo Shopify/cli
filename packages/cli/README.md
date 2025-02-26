@@ -18,7 +18,7 @@
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
-* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
+* [`shopify app release --version <version>`](#shopify-app-release---version-version)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -627,7 +627,7 @@ DESCRIPTION
   only function extensions are supported as sources.
 ```
 
-## `shopify app:release --version <version>`
+## `shopify app release --version <version>`
 
 Release an app version.
 
