@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.76.0
+
+### Minor Changes
+
+- fca9c19: Render error overlay when `theme dev` encounters asset upload errors. A 500 status code is returned when the error overlay is rendered.
+
+### Patch Changes
+
+- 0b515f3: Fix 401 and 405 errors when rendering certain routes.
+- fa2fa08: Improve `shopify theme dev` to recover the session when theme ID mismatch errors happen
+- d361f3a: Fixed `shopify theme dev` to avoid emitting full page reload events when files are updated successfully, preventing conflicts with hot-reloading.
+- Updated dependencies [4a3895c]
+- Updated dependencies [38e8d7b]
+- Updated dependencies [b1ed29d]
+- Updated dependencies [6449aa6]
+  - @shopify/cli-kit@3.76.0
+
 ## 3.75.0
 
 ### Patch Changes
