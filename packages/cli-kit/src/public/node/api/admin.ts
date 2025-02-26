@@ -132,10 +132,9 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
         outputContent`If you're not the owner, create a dev store staff account for yourself`,
       )
     }
-    if (error instanceof ClientError) {
-      const ErrorClass = error.response.status === 401 || error.response.status === 404 ? AbortError : BugError
-      throw new ErrorClass(
-        `Unknown client error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
+    if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {
+      throw new AbortError(
+        `Error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
       )
     } else {
       throw new BugError(
