@@ -20,6 +20,7 @@ export async function unifiedConfigurationParserFactory(
   handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip',
 ) {
   const contractJsonSchema = merged.validationSchema?.jsonSchema
+
   if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
     return merged.parseConfigurationObject
   }
@@ -27,14 +28,7 @@ export async function unifiedConfigurationParserFactory(
   const extensionIdentifier = merged.identifier
 
   const parseConfigurationObject = (config: object): ParseConfigurationResult<BaseConfigType> => {
-    // First we parse with zod. This may also change the format of the data.
-    const zodParse = merged.parseConfigurationObject(config)
-
-    // Then, even if this failed, we try to validate against the contract.
-    const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
-    const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
-
-    const subjectForAjvWithoutFirstClassFields = configWithoutFirstClassFields(subjectForAjv)
+    const subjectForAjvWithoutFirstClassFields = configWithoutFirstClassFields(config as JsonMapType)
     const jsonSchemaParse = jsonSchemaValidate(
       subjectForAjvWithoutFirstClassFields,
       contract,
@@ -43,7 +37,7 @@ export async function unifiedConfigurationParserFactory(
     )
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
-    let errors = zodParse.errors || []
+    let errors = jsonSchemaParse.errors ?? []
     if (jsonSchemaParse.state === 'error') {
       errors = errors.concat(jsonSchemaParse.errors)
     }
