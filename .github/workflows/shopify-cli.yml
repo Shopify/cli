@@ -229,6 +229,8 @@ jobs:
         run: pnpm graphql-codegen:get-graphql-schemas
       - name: Run graphql-codegen
         run: pnpm graphql-codegen
+      - name: Run git diff
+        run: git diff
       - name: Fail if any changes were made
         run: 'test -z "$(git status --porcelain)" || { echo -e "Run pnpm graphql-codegen when queries are changed, committing any fixes and generated files" ; exit 1; }'
 
