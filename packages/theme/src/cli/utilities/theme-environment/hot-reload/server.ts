@@ -20,7 +20,7 @@ interface SectionGroup {
 }
 
 function saveSectionsFromJson(fileKey: string, content: string) {
-  const maybeJson = parseJSON(content, null)
+  const maybeJson = parseJSON(content, null, true)
   if (!maybeJson) return
 
   const sections: SectionGroup | undefined = maybeJson?.sections
@@ -278,7 +278,7 @@ function hotReloadSections(key: string, ctx: DevServerContext) {
     // Update section groups by reading the section names from the group JSON file.
     const content = ctx.localThemeFileSystem.files.get(key)?.value
     if (content) {
-      const sections: SectionGroup | undefined = parseJSON(content, null)?.sections
+      const sections: SectionGroup | undefined = parseJSON(content, null, true)?.sections
       for (const sectionName of Object.keys(sections ?? {})) {
         sectionsToUpdate.add(sectionName)
       }
