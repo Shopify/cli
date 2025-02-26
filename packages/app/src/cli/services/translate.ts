@@ -212,6 +212,10 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
   return requestData
 }
 
+function targetFileWithKey(targetFiles: TranslationTargetFile[], key: string): TranslationTargetFile | undefined {
+  return targetFiles.find((targetFile) => [...targetFile.keysToCreate, ...targetFile.keysToUpdate].includes(key))
+}
+
 export async function translate(options: TranslateOptions) {
   const {developerPlatformClient, app, remoteApp, force} = options
 
@@ -263,8 +267,8 @@ export async function translate(options: TranslateOptions) {
   }
 
   interface Context {
-    appTranslate: AppTranslateSchema
-    fullfiled: boolean
+    appTranslates: [AppTranslateSchema]
+    allFulfiled: boolean
   }
 
   const maxWaitTimeInSeconds = 4 * 60
@@ -279,12 +283,50 @@ export async function translate(options: TranslateOptions) {
       task: async (context: Context) => {
         const deltaMs = Date.now() - start
 
-        if (context.fullfiled) return
-        if (deltaMs / 1000 > maxWaitTimeInSeconds) return
+        // Make request
+        await sleep(1)
+        // update request with id that matches.  just write for now.
+        context.appTranslates = [
+          {
+            appTranslate: {
+              translationRequest: {
+                id: 'bla',
+                fulfilled: true,
+                sourceTexts: [],
+                targetTexts: [
+                  {
+                    targetLanguage: 'fr',
+                    key: 'links.home',
+                    value: 'Home in french',
+                  },
+                  {
+                    targetLanguage: 'fr',
+                    key: 'links.more',
+                    value: 'More in french',
+                  },
+                ],
+              },
+              userErrors: [],
+            },
+          },
+        ]
 
-        // if (!context.appTranslate.appTranslate.translationRequest.fullfilled) {
+        // TODO Check if reqeusts are fulfilled.
+        context.allFulfiled = context.appTranslates.every(
+          (translate) => translate.appTranslate.translationRequest.fulfilled,
+        )
+
+        if (context.allFulfiled) {
+          enqueueUpdateFiles()
+        }
+        if (deltaMs / 1000 > maxWaitTimeInSeconds) {
+          // Failure checked for and handled outside of tasks.
+          return
+        }
+
+        // if (!context.appTranslate.appTranslate.translationRequest.fulfilled) {
         if (deltaMs / 1000 > 10) {
-          context.fullfiled = true
+          context.allFulfiled = true
           enqueueUpdateFiles()
         } else {
           await sleep(sleepTimeInSeconds)
@@ -294,10 +336,25 @@ export async function translate(options: TranslateOptions) {
     })
   }
 
-  const enqueueUpdateFiles = () => {
+  const enqueueUpdateFiles = (context: Context) => {
     tasks.push({
       title: 'Updating target files',
       task: async () => {
+        const filesToSave: string[] = []
+        context.appTranslates.forEach((appTranslate) => {
+          // somethign like this.  im here
+          appTranslate.translationRequest.targetTexts.forEach((targetText) => {
+            const targetFile = targetFileWithKey(translationRequestData.targetFilesToUpdate, targetText.key)
+
+            if (targetFile && !filesToSave.includes(targetFile.fileName)) {
+              filesToSave.push(targetFile.fileName)
+            }
+
+            // update target file data
+          })
+        })
+
+        // save updated files.
         await sleep(1)
       },
     })
@@ -307,26 +364,31 @@ export async function translate(options: TranslateOptions) {
   tasks.push({
     title: 'Requesting translations',
     task: async (context: Context) => {
-      context.appTranslate = await developerPlatformClient.translate({
-        app: remoteApp,
-      })
+      context.appTranslates = [
+        // Make multiple requests w/o blocking
+        await developerPlatformClient.translate({
+          app: remoteApp,
+        }),
+      ]
     },
   })
 
   enqueueFullfillmentCheck()
 
   const renderResponse = await renderTasks<Context>(tasks)
+  const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
+    (translate.appTranslate.userErrors || []).map((error) => error.message),
+  )
 
-  if (renderResponse.fullfiled) {
+  if (renderResponse.allFulfiled) {
     renderSuccess({
       headline: 'Translation request successful.',
-      body: 'Updated 342 translations across 58 target languages in 348 minutes. Please review the changes and commit them to your preferred version control system if applicable.',
+      body: 'Updated translations. Please review the changes and commit them to your preferred version control system if applicable.',
     })
-  } else if (renderResponse.appTranslate.appTranslate.userErrors?.length > 0) {
-    const errors = renderResponse.appTranslate.appTranslate.userErrors || []
+  } else if (allErrors.length > 0) {
     renderError({
-      headline: 'Translation request failed.',
-      body: errors.map((error) => error.message),
+      headline: 'Translation request(s) failed.',
+      body: allErrors,
     })
   }
 }

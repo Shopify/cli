@@ -36,11 +36,19 @@ export interface AppTranslateVariables {
   apiKey: string
 }
 
+export interface TranslationText {
+  targetLanguage: string
+  key: string
+  value: string
+}
+
 export interface AppTranslateSchema {
   appTranslate: {
     translationRequest: {
-      id?: string | null
-      fullfilled: boolean
+      id: string
+      fulfilled: boolean
+      sourceTexts: TranslationText[]
+      targetTexts?: TranslationText[]
     }
     userErrors: {
       field?: string[] | null

@@ -1323,7 +1323,9 @@ const translateResponse: AppTranslateSchema = {
   appTranslate: {
     translationRequest: {
       id: 'bla',
-      fullfilled: true,
+      fulfilled: true,
+      sourceTexts: [],
+      targetTexts: [],
     },
     userErrors: [],
   },
