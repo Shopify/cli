@@ -246,7 +246,8 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Activate an app configuration."
+      "summary": "Activate an app configuration.",
+      "usage": "app config use [config] [flags]"
     },
     "app:deploy": {
       "aliases": [
@@ -2071,7 +2072,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "app:release --version <version>"
+      "usage": "app release --version <version>"
     },
     "app:versions:list": {
       "aliases": [
@@ -2660,7 +2661,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false
+      "strict": false,
+      "usage": "help [command] [flags]"
     },
     "hydrogen:build": {
       "aliases": [
@@ -4780,7 +4782,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true
+      "strict": true,
+      "usage": "search [query]"
     },
     "theme:check": {
       "aliases": [
@@ -5448,7 +5451,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Clones a Git repository to use as a starting point for building a new theme.",
-      "usage": "theme init [name]"
+      "usage": "theme init [name] [flags]"
     },
     "theme:language-server": {
       "aliases": [

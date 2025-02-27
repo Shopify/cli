@@ -10,8 +10,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 export default class Init extends ThemeCommand {
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
 
-  static usage = 'theme init [name]'
-
   static descriptionWithMarkdown = `Clones a Git repository to your local machine to use as the starting point for building a theme.
 
   If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.
@@ -20,6 +18,8 @@ export default class Init extends ThemeCommand {
   `
 
   static description = this.descriptionWithoutMarkdown()
+
+  static usage = 'theme init [name] [flags]'
 
   static args = {
     name: Args.string({

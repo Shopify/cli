@@ -17,6 +17,8 @@ export default class ConfigUse extends AppCommand {
 
   static description = this.descriptionWithoutMarkdown()
 
+  static usage = `app config use [config] [flags]`
+
   static flags = {
     ...globalFlags,
     ...appFlagsWithoutConfig,

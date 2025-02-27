@@ -2,7 +2,7 @@
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
 * [`shopify app config link`](#shopify-app-config-link)
-* [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
+* [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
 * [`shopify app env pull`](#shopify-app-env-pull)
@@ -18,7 +18,7 @@
 * [`shopify app init`](#shopify-app-init)
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
-* [`shopify app:release --version <version>`](#shopify-apprelease---version-version)
+* [`shopify app release --version <version>`](#shopify-app-release---version-version)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -26,7 +26,7 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
-* [`shopify help [COMMAND]`](#shopify-help-command)
+* [`shopify help [command] [flags]`](#shopify-help-command-flags)
 * [`shopify hydrogen build`](#shopify-hydrogen-build)
 * [`shopify hydrogen check RESOURCE`](#shopify-hydrogen-check-resource)
 * [`shopify hydrogen codegen`](#shopify-hydrogen-codegen)
@@ -61,13 +61,13 @@
 * [`shopify plugins uninstall [PLUGIN]`](#shopify-plugins-uninstall-plugin)
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
-* [`shopify search [QUERY]`](#shopify-search-query)
+* [`shopify search [query]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
-* [`shopify theme init [name]`](#shopify-theme-init-name)
+* [`shopify theme init [name] [flags]`](#shopify-theme-init-name-flags)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
@@ -138,13 +138,13 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
-## `shopify app config use [CONFIG]`
+## `shopify app config use [config] [flags]`
 
 Activate an app configuration.
 
 ```
 USAGE
-  $ shopify app config use [CONFIG] [--client-id <value> | ] [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config use [config] [flags]
 
 ARGUMENTS
   CONFIG  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
@@ -627,7 +627,7 @@ DESCRIPTION
   only function extensions are supported as sources.
 ```
 
-## `shopify app:release --version <version>`
+## `shopify app release --version <version>`
 
 Release an app version.
 
@@ -853,13 +853,13 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
-## `shopify help [COMMAND]`
+## `shopify help [command] [flags]`
 
 Display help for Shopify CLI
 
 ```
 USAGE
-  $ shopify help [COMMAND...] [-n]
+  $ shopify help [command] [flags]
 
 ARGUMENTS
   COMMAND...  Command to show help for.
@@ -1673,13 +1673,13 @@ DESCRIPTION
   Update installed plugins.
 ```
 
-## `shopify search [QUERY]`
+## `shopify search [query]`
 
 Starts a search on shopify.dev.
 
 ```
 USAGE
-  $ shopify search [QUERY]
+  $ shopify search [query]
 
 DESCRIPTION
   Starts a search on shopify.dev.
@@ -1927,13 +1927,13 @@ DESCRIPTION
   specific theme.
 ```
 
-## `shopify theme init [name]`
+## `shopify theme init [name] [flags]`
 
 Clones a Git repository to use as a starting point for building a new theme.
 
 ```
 USAGE
-  $ shopify theme init [name]
+  $ shopify theme init [name] [flags]
 
 ARGUMENTS
   NAME  Name of the new theme

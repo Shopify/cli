@@ -203,7 +203,7 @@
         "tabs": [
           {
             "title": "app config use",
-            "code": "shopify app config use [flags]",
+            "code": "shopify app config use [config] [flags]",
             "language": "bash"
           }
         ],
@@ -1972,7 +1972,7 @@
         "tabs": [
           {
             "title": "app release",
-            "code": "app:release --version &lt;version&gt;",
+            "code": "shopify app release --version &lt;version&gt;",
             "language": "bash"
           }
         ],
@@ -2509,7 +2509,7 @@
         "tabs": [
           {
             "title": "help",
-            "code": "shopify help [flags]",
+            "code": "shopify help [command] [flags]",
             "language": "bash"
           }
         ],
@@ -4554,7 +4554,7 @@
         "tabs": [
           {
             "title": "search",
-            "code": "shopify search",
+            "code": "shopify search [query]",
             "language": "bash"
           }
         ],
@@ -4722,7 +4722,7 @@
         "tabs": [
           {
             "title": "theme console",
-            "code": "theme console\n\ntheme console --url /products/classic-leather-jacket",
+            "code": "shopify theme console\n\nshopify theme console --url /products/classic-leather-jacket",
             "language": "bash"
           }
         ],
@@ -5252,7 +5252,7 @@
         "tabs": [
           {
             "title": "theme init",
-            "code": "theme init [name]",
+            "code": "shopify theme init [name] [flags]",
             "language": "bash"
           }
         ],
@@ -5786,7 +5786,7 @@
         "tabs": [
           {
             "title": "theme profile",
-            "code": "theme profile\n\ntheme profile --url /products/classic-leather-jacket",
+            "code": "shopify theme profile\n\nshopify theme profile --url /products/classic-leather-jacket",
             "language": "bash"
           }
         ],
@@ -6152,7 +6152,7 @@
         "tabs": [
           {
             "title": "theme push",
-            "code": "theme push\n\ntheme push --unpublished --json",
+            "code": "shopify theme push\n\nshopify theme push --unpublished --json",
             "language": "bash"
           }
         ],
