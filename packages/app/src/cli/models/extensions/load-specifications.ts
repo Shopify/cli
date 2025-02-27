@@ -17,7 +17,6 @@ import flowActionSpecification from './specifications/flow_action.js'
 import flowTemplateSpec from './specifications/flow_template.js'
 import flowTriggerSpecification from './specifications/flow_trigger.js'
 import functionSpec from './specifications/function.js'
-import paymentExtensionSpec from './specifications/payments_app_extension.js'
 import posUISpec from './specifications/pos_ui_extension.js'
 import productSubscriptionSpec from './specifications/product_subscription.js'
 import taxCalculationSpec from './specifications/tax_calculation.js'
@@ -25,6 +24,8 @@ import themeSpec from './specifications/theme.js'
 import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
+import paymentExtensionSpec from './specifications/payments_app_extension.js'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -65,7 +66,6 @@ function loadSpecifications() {
     flowTemplateSpec,
     flowTriggerSpecification,
     functionSpec,
-    paymentExtensionSpec,
     posUISpec,
     productSubscriptionSpec,
     taxCalculationSpec,
@@ -74,6 +74,11 @@ function loadSpecifications() {
     webPixelSpec,
     editorExtensionCollectionSpecification,
   ] as ExtensionSpecification[]
+
+  // By default, use the remote specification for payments
+  if (isTruthy(process.env.SHOPIFY_CLI_USE_LOCAL_PAYMENTS_SPEC)) {
+    moduleSpecs.push(paymentExtensionSpec as unknown as ExtensionSpecification)
+  }
 
   return [...configModuleSpecs, ...moduleSpecs]
 }
