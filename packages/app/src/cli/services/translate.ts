@@ -14,6 +14,8 @@ import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
 
 import {hashString} from '@shopify/cli-kit/node/crypto'
+import {pluralize} from '@shopify/cli-kit/common/string'
+import {getPathValue, setPathValue, isEmpty, compact} from '@shopify/cli-kit/common/object'
 import fs from 'fs'
 import path from 'path'
 
@@ -177,6 +179,10 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
     const sourceFilePath = targetFile.fileName.replace(`${targetFile.language}.json`, `${SOURCE_LANGUAGE}.json`)
     const sourceFile = requestData.updatedSourceFiles.find((sf) => sf.fileName === sourceFilePath)
 
+    if (!sourceFile) {
+      return
+    }
+
     const allCurrentTargetPaths = getPaths(targetFile.content)
     const allCurrentSourcePaths = getPaths(sourceFile?.content)
 
@@ -186,8 +192,12 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
 
     // Find modified keys
     allCurrentTargetPaths.forEach((targetPath) => {
-      // @ts-ignore TODO.. types. also take care of files to delete
-      const currentSourceValue = targetPath.split('.').reduce((acc, part) => acc?.[part], sourceFile.content)
+      // TODO also take care of files to delete
+      const currentSourceValue = getPathValue(sourceFile.content, targetPath) as string
+      if (!currentSourceValue) {
+        return
+      }
+
       const currentSourceHash = hashString(currentSourceValue)
       const manifestHash = manifestData?.strings[targetPath]
 
@@ -196,10 +206,10 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
       }
     })
 
-    // Find keys in source that are not in target
+    // Add keys in source that are not in target
     targetFile.keysToCreate = allCurrentSourcePaths.filter((path) => !allCurrentTargetPaths.includes(path))
 
-    // Find keys in target that are not in source
+    // Add keys in target that are not in source
     targetFile.keysToDelete = allCurrentTargetPaths.filter((path) => !allCurrentSourcePaths.includes(path))
   })
 
@@ -208,8 +218,35 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
     (file) => file.keysToDelete.length !== 0 || file.keysToUpdate.length !== 0 || file.keysToCreate.length !== 0,
   )
 
-  console.log({requestData})
   return requestData
+}
+
+/**
+ * Deletes empty objects from the given object. Also deletes objects which only have empty objects as children.
+ *
+ * @param obj - The object to delete empty objects from.
+ */
+function deleteEmptyObjects(obj: {[key: string]: unknown}): boolean {
+  let hasDeleted = false
+
+  Object.keys(obj).forEach((key) => {
+    if (typeof obj[key] === 'object') {
+      if (isEmpty(obj[key] as object)) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete obj[key]
+        hasDeleted = true
+      } else if (deleteEmptyObjects(obj[key] as {[key: string]: unknown})) {
+        // Check if parent became empty after cleaning children
+        if (isEmpty(obj[key] as object)) {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete obj[key]
+          hasDeleted = true
+        }
+      }
+    }
+  })
+
+  return hasDeleted
 }
 
 function targetFileWithKey(targetFiles: TranslationTargetFile[], key: string): TranslationTargetFile | undefined {
@@ -267,14 +304,24 @@ export async function translate(options: TranslateOptions) {
   }
 
   interface Context {
-    appTranslates: [AppTranslateSchema]
+    appTranslates: AppTranslateSchema[]
     allFulfiled: boolean
+    errors: string[]
   }
 
   const maxWaitTimeInSeconds = 4 * 60
   const sleepTimeInSeconds = 4
   const start = Date.now()
-  const tasks = []
+  const tasks = [
+    {
+      title: 'Initializing',
+      task: async (context: Context) => {
+        context.appTranslates = []
+        context.allFulfiled = false
+        context.errors = []
+      },
+    },
+  ]
 
   const enqueueFullfillmentCheck = () => {
     tasks.push({
@@ -292,7 +339,18 @@ export async function translate(options: TranslateOptions) {
               translationRequest: {
                 id: 'bla',
                 fulfilled: true,
-                sourceTexts: [],
+                sourceTexts: [
+                  {
+                    targetLanguage: 'en',
+                    key: 'links.home',
+                    value: 'Home in english',
+                  },
+                  {
+                    targetLanguage: 'en',
+                    key: 'links.more',
+                    value: 'More in english',
+                  },
+                ],
                 targetTexts: [
                   {
                     targetLanguage: 'fr',
@@ -318,6 +376,7 @@ export async function translate(options: TranslateOptions) {
 
         if (context.allFulfiled) {
           enqueueUpdateFiles()
+          return
         }
         if (deltaMs / 1000 > maxWaitTimeInSeconds) {
           // Failure checked for and handled outside of tasks.
@@ -336,26 +395,41 @@ export async function translate(options: TranslateOptions) {
     })
   }
 
-  const enqueueUpdateFiles = (context: Context) => {
+  const enqueueUpdateFiles = () => {
     tasks.push({
       title: 'Updating target files',
-      task: async () => {
-        const filesToSave: string[] = []
+      task: async (context: Context) => {
         context.appTranslates.forEach((appTranslate) => {
-          // somethign like this.  im here
-          appTranslate.translationRequest.targetTexts.forEach((targetText) => {
+          appTranslate.appTranslate.translationRequest.targetTexts?.forEach((targetText) => {
             const targetFile = targetFileWithKey(translationRequestData.targetFilesToUpdate, targetText.key)
-
-            if (targetFile && !filesToSave.includes(targetFile.fileName)) {
-              filesToSave.push(targetFile.fileName)
+            if (!targetFile) {
+              context.errors.push(`Target file not found for key: ${targetText.key}`)
+              return
             }
 
             // update target file data
+            setPathValue(targetFile.content, targetText.key, targetText.value)
           })
         })
 
-        // save updated files.
-        await sleep(1)
+        // Remove keys in target that are not in source
+        translationRequestData.targetFilesToUpdate.forEach((targetFile) => {
+          targetFile.keysToDelete.forEach((key) => {
+            setPathValue(targetFile.content, key, undefined)
+          })
+
+          // Remove empty keys and objects
+          compact(targetFile.content)
+          deleteEmptyObjects(targetFile.content)
+        })
+
+        // save files
+        translationRequestData.targetFilesToUpdate.forEach((fileToUpdate) => {
+          console.log('saving file', fileToUpdate.fileName)
+          const jsonContent = JSON.stringify(fileToUpdate?.content, null, 2)
+
+          fs.writeFileSync(fileToUpdate.fileName, jsonContent)
+        })
       },
     })
   }
@@ -369,26 +443,42 @@ export async function translate(options: TranslateOptions) {
         await developerPlatformClient.translate({
           app: remoteApp,
         }),
+
+        // todo, add errors
+        //   const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
+        // (translate.appTranslate.userErrors || []).map((error) => error.message),
+        // )
       ]
     },
   })
 
   enqueueFullfillmentCheck()
 
-  const renderResponse = await renderTasks<Context>(tasks)
-  const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
-    (translate.appTranslate.userErrors || []).map((error) => error.message),
-  )
+  const renderResponse = await renderTasks(tasks)
 
-  if (renderResponse.allFulfiled) {
-    renderSuccess({
-      headline: 'Translation request successful.',
-      body: 'Updated translations. Please review the changes and commit them to your preferred version control system if applicable.',
-    })
-  } else if (allErrors.length > 0) {
+  // use pluralize to handle the number of requests
+  if (renderResponse.errors.length > 0) {
+    const headline = pluralize(
+      renderResponse.errors,
+      () => ['Translation request failed.'],
+      () => ['Translation requests failed'],
+    ) as string
+
     renderError({
-      headline: 'Translation request(s) failed.',
-      body: allErrors,
+      headline,
+      body: [
+        {
+          list: {
+            title: 'Errors',
+            items: renderResponse.errors,
+          },
+        },
+      ],
+    })
+  } else if (renderResponse.allFulfiled) {
+    renderSuccess({
+      headline: 'Translation request(s) successful.',
+      body: 'Updated translations. Please review the changes and commit them to your preferred version control system if applicable.',
     })
   }
 }
