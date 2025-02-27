@@ -35,4 +35,4 @@ pnpm bundle-for-release
 node bin/create-cli-duplicate-package.js
 
 # Publish the packages
-pnpm changeset publish --tag $tag
+pnpm changeset publish --tag $tag --no-git-tag
