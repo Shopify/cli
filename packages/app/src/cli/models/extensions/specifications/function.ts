@@ -57,7 +57,6 @@ const FunctionExtensionSchema = BaseSchema.extend({
         target: zod.string(),
         input_query: zod.string().optional(),
         export: zod.string().optional(),
-        features: zod.array(zod.string()).optional(),
       }),
     )
     .optional(),
@@ -98,7 +97,7 @@ const functionSpec = createExtensionSpecification({
             inputQuery = await readInputQuery(joinPath(directory, config.input_query))
           }
 
-          return {handle: config.target, export: config.export, input_query: inputQuery, features: config.features}
+          return {handle: config.target, export: config.export, input_query: inputQuery}
         }),
       ))
 
