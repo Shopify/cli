@@ -1,5 +1,5 @@
 /* eslint-disable id-length */
-import {Text} from 'ink'
+import {Text, useStdout} from 'ink'
 import React, {memo, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import gradient from 'gradient-string'
 
@@ -33,17 +33,23 @@ const TextAnimation = memo(({text, maxWidth}: TextAnimationProps): JSX.Element =
   const frame = useRef(0)
   const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()
+  const {stdout} = useStdout()
+  const [width, setWidth] = useState(maxWidth ?? Math.floor(stdout.columns * 0.66))
+
+  stdout.on('resize', () => {
+    setWidth(Math.floor(stdout.columns * 0.66))
+  })
 
   const renderAnimation = useCallback(() => {
     const newFrame = frame.current + 1
     frame.current = newFrame
 
-    setRenderedFrame(rainbow(truncated(rotated(text, frame.current), maxWidth), frame.current))
+    setRenderedFrame(rainbow(truncated(rotated(text, frame.current), width), frame.current))
 
     timeout.current = setTimeout(() => {
       renderAnimation()
     }, 35)
-  }, [text, maxWidth])
+  }, [text, width])
 
   useLayoutEffect(() => {
     renderAnimation()
