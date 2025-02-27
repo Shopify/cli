@@ -49,7 +49,15 @@ interface TranslationTargetFile {
   keysToDelete: string[]
   keysToUpdate: string[]
   content: {[key: string]: unknown}
+  manifest?: ManifestEntry
 }
+
+interface ManifestEntry {
+  file: string
+  strings: {[key: string]: string}
+}
+
+type Manifest = ManifestEntry[]
 
 function generateTranslationFileSummary(file: TranslationTargetFile) {
   const changes = []
@@ -60,7 +68,7 @@ function generateTranslationFileSummary(file: TranslationTargetFile) {
   return `${file.fileName} (${changes.join(', ')})`
 }
 
-function getManifestData(app: AppLinkedInterface) {
+function getManifestData(app: AppLinkedInterface): Manifest {
   const filePath = `${app.directory}/.shopiofy_translation_manifest.json`
   if (!fs.existsSync(filePath)) {
     // Create the file with an empty object or any default content
@@ -69,7 +77,7 @@ function getManifestData(app: AppLinkedInterface) {
   const rawData = fs.readFileSync(filePath, 'utf8')
   const manifestDatas = JSON.parse(rawData)
 
-  return manifestDatas
+  return manifestDatas as Manifest
 }
 
 const DEFAULT_LOCALES_DIR = ['locales']
@@ -138,13 +146,7 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
     targetFilesToUpdate: [],
   }
 
-  interface ManifestEntry {
-    file: string
-    strings: {[key: string]: string}
-  }
-
-  type Manifest = ManifestEntry[]
-  const manifestDatas = getManifestData(app) as Manifest
+  const manifestDatas = getManifestData(app)
 
   // Gather source langauge files
   localeDirectories.forEach((dir) => {
@@ -186,20 +188,17 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
     const allCurrentTargetPaths = getPaths(targetFile.content)
     const allCurrentSourcePaths = getPaths(sourceFile?.content)
 
-    const manifestData: ManifestEntry | undefined = manifestDatas.find(
-      (mData: ManifestEntry) => mData?.file === targetFile.fileName,
-    )
+    targetFile.manifest = manifestDatas.find((mData: ManifestEntry) => mData?.file === targetFile.fileName)
 
     // Find modified keys
     allCurrentTargetPaths.forEach((targetPath) => {
-      // TODO also take care of files to delete
       const currentSourceValue = getPathValue(sourceFile.content, targetPath) as string
       if (!currentSourceValue) {
         return
       }
 
       const currentSourceHash = hashString(currentSourceValue)
-      const manifestHash = manifestData?.strings[targetPath]
+      const manifestHash = targetFile.manifest?.strings[targetPath]
 
       if (currentSourceHash !== manifestHash) {
         targetFile.keysToUpdate.push(targetPath)
@@ -409,6 +408,9 @@ export async function translate(options: TranslateOptions) {
 
             // update target file data
             setPathValue(targetFile.content, targetText.key, targetText.value)
+
+            // update manifest, todo, im here. brb
+            targetFile.manifest?.strings[targetText.key] = targetText.value
           })
         })
 
@@ -423,13 +425,15 @@ export async function translate(options: TranslateOptions) {
           deleteEmptyObjects(targetFile.content)
         })
 
+        // todo updateManifestData(translationRequestData.targetFilesToUpdate)
+
         // save files
         translationRequestData.targetFilesToUpdate.forEach((fileToUpdate) => {
-          console.log('saving file', fileToUpdate.fileName)
           const jsonContent = JSON.stringify(fileToUpdate?.content, null, 2)
-
           fs.writeFileSync(fileToUpdate.fileName, jsonContent)
         })
+
+        // update manifest
       },
     })
   }
