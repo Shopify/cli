@@ -1,5 +1,3 @@
-import {relativePath} from './path.js'
-import {glob} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
 import {createWriteStream} from 'fs'
@@ -30,13 +28,8 @@ interface ZipOptions {
  */
 export async function zip(options: ZipOptions): Promise<void> {
   const {inputDirectory, outputZipPath, matchFilePattern = '**/*'} = options
+  const globOptions = {cwd: inputDirectory, absolute: true, dot: true, follow: false}
   outputDebug(outputContent`Zipping ${outputToken.path(inputDirectory)} into ${outputToken.path(outputZipPath)}`)
-  const pathsToZip = await glob(matchFilePattern, {
-    cwd: inputDirectory,
-    absolute: true,
-    dot: true,
-    followSymbolicLinks: false,
-  })
 
   return new Promise((resolve, reject) => {
     const archive = archiver('zip')
@@ -50,10 +43,7 @@ export async function zip(options: ZipOptions): Promise<void> {
     })
     archive.pipe(output)
 
-    for (const filePath of pathsToZip) {
-      const fileRelativePath = relativePath(inputDirectory, filePath)
-      archive.file(filePath, {name: fileRelativePath})
-    }
+    archive.glob(matchFilePattern, globOptions)
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     archive.finalize()
