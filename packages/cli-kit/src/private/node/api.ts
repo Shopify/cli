@@ -1,5 +1,7 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
+import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
+import {skipNetworkLevelRetry} from '@shopify/cli-kit/node/environment'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
@@ -30,30 +32,90 @@ function responseHeaderIsInteresting(header: string): boolean {
   return interestingResponseHeaders.has(header)
 }
 
-type VerboseResponse<T> = {
+interface CommonResponse {
   duration: number
   sanitizedHeaders: string
   sanitizedUrl: string
   requestId?: string
-} & (
-  | {status: 'ok'; response: T}
-  | {status: 'client-error'; clientError: ClientError}
-  | {status: 'unknown-error'; error: unknown}
-  | {status: 'can-retry'; clientError: ClientError; delayMs: number | undefined}
-  | {status: 'unauthorized'; clientError: ClientError; delayMs: number | undefined}
-)
+}
+
+type OkResponse<T> = CommonResponse & {status: 'ok'; response: T}
+type ClientErrorResponse = CommonResponse & {status: 'client-error'; clientError: ClientError}
+type UnknownErrorResponse = CommonResponse & {status: 'unknown-error'; error: unknown}
+type CanRetryErrorResponse = CommonResponse & {
+  status: 'can-retry'
+  clientError: ClientError
+  delayMs: number | undefined
+}
+type UnauthorizedErrorResponse = CommonResponse & {
+  status: 'unauthorized'
+  clientError: ClientError
+  delayMs: number | undefined
+}
+
+type VerboseResponse<T> =
+  | OkResponse<T>
+  | ClientErrorResponse
+  | UnknownErrorResponse
+  | CanRetryErrorResponse
+  | UnauthorizedErrorResponse
+
+function isARetryableNetworkError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const networkErrorMessages = [
+      'socket hang up',
+      'ECONNRESET',
+      'ECONNABORTED',
+      'ENOTFOUND',
+      'ENETUNREACH',
+      'network socket disonnected',
+      'ETIMEDOUT',
+      'ECONNREFUSED',
+      'EAI_FAIL',
+    ]
+    const anyMatches = networkErrorMessages.some((issueMessage) => error.message.includes(issueMessage))
+    return anyMatches
+  }
+  return false
+}
+
+async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; status: number}>({
+  request,
+  url,
+  enableNetworkLevelRetry,
+}: RequestOptions<T> & {enableNetworkLevelRetry: boolean}): Promise<T> {
+  if (!enableNetworkLevelRetry) {
+    return request()
+  }
+
+  let lastSeenError: unknown
+
+  for await (const _delayMs of sleepWithBackoffUntil()) {
+    try {
+      return await request()
+    } catch (err) {
+      lastSeenError = err
+      if (!isARetryableNetworkError(err)) {
+        throw err
+      }
+      outputDebug(`Retrying request to ${url} due to network error ${err}`)
+    }
+  }
+  throw lastSeenError
+}
 
 async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
   request,
   url,
-}: RequestOptions<T>): Promise<VerboseResponse<T>> {
+  enableNetworkLevelRetry,
+}: RequestOptions<T> & {enableNetworkLevelRetry: boolean}): Promise<VerboseResponse<T>> {
   const t0 = performance.now()
   let duration = 0
   const responseHeaders: {[key: string]: string} = {}
   const sanitizedUrl = sanitizeURL(url)
   let response: T = {} as T
   try {
-    response = await request()
+    response = await runRequestWithNetworkLevelRetry({request, url, enableNetworkLevelRetry})
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response.headers.forEach((value: any, key: any) => {
       if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
@@ -148,7 +210,7 @@ export async function simpleRequestWithDebugLog<T extends {headers: Headers; sta
   {request, url}: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
-  const result = await makeVerboseRequest({request, url})
+  const result = await makeVerboseRequest({request, url, enableNetworkLevelRetry: !skipNetworkLevelRetry()})
 
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
 With response headers:
@@ -190,6 +252,23 @@ ${result.sanitizedHeaders}
   }
 }
 
+/**
+ * Makes a HTTP request to some API, retrying if response headers indicate a retryable error.
+ *
+ * If a request fails with a 429, the retry-after header determines a delay before an automatic retry is performed.
+ *
+ * If unauthorizedHandler is provided, then it will be called in the case of a 401 and a retry performed. This allows
+ * for a token refresh for instance.
+ *
+ * If there's a network error, e.g. DNS fails to resolve, then API calls are automatically retried.
+ *
+ * @param request - A function that returns a promise of the response
+ * @param url - The URL to request
+ * @param errorHandler - A function that handles errors
+ * @param unauthorizedHandler - A function that handles unauthorized errors
+ * @param retryOptions - Options for the retry
+ * @returns The response from the request
+ */
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   {request, url}: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
@@ -198,14 +277,16 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
     limitRetriesTo?: number
     defaultDelayMs?: number
     scheduleDelay: (fn: () => void, delay: number) => void
+    enableNetworkLevelRetry: boolean
   } = {
     scheduleDelay: setTimeout,
+    enableNetworkLevelRetry: !skipNetworkLevelRetry(),
   },
 ): Promise<T> {
   let retriesUsed = 0
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
 
-  let result = await makeVerboseRequest({request, url})
+  let result = await makeVerboseRequest({request, url, enableNetworkLevelRetry: retryOptions.enableNetworkLevelRetry})
 
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
 With response headers:
@@ -256,7 +337,7 @@ ${result.sanitizedHeaders}
     // eslint-disable-next-line no-await-in-loop
     result = await new Promise<VerboseResponse<T>>((resolve) => {
       retryOptions.scheduleDelay(() => {
-        resolve(makeVerboseRequest({request, url}))
+        resolve(makeVerboseRequest({request, url, enableNetworkLevelRetry: retryOptions.enableNetworkLevelRetry}))
       }, retryDelayMs)
     })
   }
