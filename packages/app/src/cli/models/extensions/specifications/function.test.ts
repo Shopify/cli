@@ -38,13 +38,6 @@ describe('functionConfiguration', () => {
         key: 'key',
       },
     },
-    targeting: [
-      {
-        target: 'purchase.discount.cart_run',
-        export: 'run',
-        features: ['PRODUCT', 'ORDER'],
-      },
-    ],
   }
 
   beforeEach(async () => {
@@ -89,14 +82,7 @@ describe('functionConfiguration', () => {
         },
         enable_creation_ui: true,
         localization: {},
-        targets: [
-          {
-            handle: 'purchase.discount.cart_run',
-            input_query: undefined,
-            export: 'run',
-            features: ['PRODUCT', 'ORDER'],
-          },
-        ],
+        targets: undefined,
         module_id: expect.any(String),
       })
     })
@@ -127,14 +113,7 @@ describe('functionConfiguration', () => {
         input_query_variables: undefined,
         ui: undefined,
         localization: {},
-        targets: [
-          {
-            handle: 'purchase.discount.cart_run',
-            input_query: undefined,
-            export: 'run',
-            features: ['PRODUCT', 'ORDER'],
-          },
-        ],
+        targets: undefined,
       })
     })
   })
