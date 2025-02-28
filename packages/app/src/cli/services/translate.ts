@@ -19,6 +19,12 @@ import {getPathValue, setPathValue, isEmpty, compact} from '@shopify/cli-kit/com
 import fs from 'fs'
 import path from 'path'
 
+interface TaskContext {
+  appTranslates: AppTranslateSchema[]
+  allFulfiled: boolean
+  errors: string[]
+}
+
 interface TranslateOptions {
   /** The app to be built and uploaded */
   app: AppLinkedInterface
@@ -49,7 +55,7 @@ interface TranslationTargetFile {
   keysToDelete: string[]
   keysToUpdate: string[]
   content: {[key: string]: unknown}
-  manifest?: ManifestEntry
+  manifestStrings: {[key: string]: string}
 }
 
 interface ManifestEntry {
@@ -61,15 +67,37 @@ type Manifest = ManifestEntry[]
 
 function generateTranslationFileSummary(file: TranslationTargetFile) {
   const changes = []
-  if (file.keysToCreate.length > 0) changes.push(`${file.keysToCreate.length} key(s) to create`)
-  if (file.keysToDelete.length > 0) changes.push(`${file.keysToDelete.length} key(s) to delete`)
-  if (file.keysToUpdate.length > 0) changes.push(`${file.keysToUpdate.length} key(s) to update`)
+  const createSummary = pluralize(
+    file.keysToCreate,
+    () => [`${file.keysToCreate.length} key to create`],
+    () => [`${file.keysToCreate.length} keys to create`],
+  ) as string
+
+  const deleteSummary = pluralize(
+    file.keysToDelete,
+    () => [`${file.keysToDelete.length} key to delete`],
+    () => [`${file.keysToDelete.length} keys to delete`],
+  ) as string
+
+  const updateSummary = pluralize(
+    file.keysToUpdate,
+    () => [`${file.keysToUpdate.length} key to update`],
+    () => [`${file.keysToUpdate.length} keys to update`],
+  ) as string
+
+  if (file.keysToCreate.length > 0) changes.push(createSummary)
+  if (file.keysToDelete.length > 0) changes.push(deleteSummary)
+  if (file.keysToUpdate.length > 0) changes.push(updateSummary)
 
   return `${file.fileName} (${changes.join(', ')})`
 }
 
+function manifestFileName(app: AppLinkedInterface): string {
+  return `${app.directory}/.shopiofy_translation_manifest.json`
+}
+
 function getManifestData(app: AppLinkedInterface): Manifest {
-  const filePath = `${app.directory}/.shopiofy_translation_manifest.json`
+  const filePath = manifestFileName(app)
   if (!fs.existsSync(filePath)) {
     // Create the file with an empty object or any default content
     fs.writeFileSync(filePath, JSON.stringify({}, null, 2))
@@ -106,6 +134,7 @@ function searchDirectory(
         keysToCreate: [],
         keysToDelete: [],
         keysToUpdate: [],
+        manifestStrings: {},
       })
     }
   })
@@ -172,6 +201,7 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
           keysToCreate: [],
           keysToDelete: [],
           keysToUpdate: [],
+          manifestStrings: manifestDatas.find((mData: ManifestEntry) => mData?.file === targetFilePath)?.strings ?? {},
         })
       })
     })
@@ -188,7 +218,8 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
     const allCurrentTargetPaths = getPaths(targetFile.content)
     const allCurrentSourcePaths = getPaths(sourceFile?.content)
 
-    targetFile.manifest = manifestDatas.find((mData: ManifestEntry) => mData?.file === targetFile.fileName)
+    targetFile.manifestStrings =
+      manifestDatas.find((mData: ManifestEntry) => mData?.file === targetFile.fileName)?.strings ?? {}
 
     // Find modified keys
     allCurrentTargetPaths.forEach((targetPath) => {
@@ -198,7 +229,7 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
       }
 
       const currentSourceHash = hashString(currentSourceValue)
-      const manifestHash = targetFile.manifest?.strings[targetPath]
+      const manifestHash = targetFile.manifestStrings[targetPath]
 
       if (currentSourceHash !== manifestHash) {
         targetFile.keysToUpdate.push(targetPath)
@@ -274,38 +305,21 @@ export async function translate(options: TranslateOptions) {
   const translationRequestData = collectRequestData(app)
 
   const targetFilesToUpdate = translationRequestData.targetFilesToUpdate.map(generateTranslationFileSummary)
-  const appContext = [`App name: ${app.name}`, `App title: ${remoteApp.title}`]
-  if (typeof promptContext === 'string') appContext.push(promptContext)
-
-  const confirmInfoTable = {
-    'Detected source files': translationRequestData.updatedSourceFiles.map((file) => file.fileName),
-    'Target files to update': targetFilesToUpdate,
-    ...(nonTranslatableTerms.length > 0 && {'Non translatable terms': nonTranslatableTerms}),
-    'Extra app context': appContext,
-  }
 
   if (!force) {
     if (targetFilesToUpdate.length > 0) {
-      const confirmationResponse = await renderConfirmationPrompt({
-        message: 'Translation update',
-        infoTable: confirmInfoTable,
-        confirmationMessage: `Yes, update translations`,
-        cancellationMessage: 'No, cancel',
-      })
+      const confirmationResponse = await renderChangesConfirmation(
+        app,
+        remoteApp,
+        translationRequestData,
+        promptContext,
+        nonTranslatableTerms,
+      )
       if (!confirmationResponse) throw new AbortSilentError()
     } else {
-      renderInfo({
-        headline: 'Translation Check Complete.',
-        body: 'All translation files are already up to date. No changes are required at this time.',
-      })
-      throw new AbortSilentError()
+      renderNoChanges()
+      process.exit(0)
     }
-  }
-
-  interface Context {
-    appTranslates: AppTranslateSchema[]
-    allFulfiled: boolean
-    errors: string[]
   }
 
   const maxWaitTimeInSeconds = 4 * 60
@@ -314,7 +328,7 @@ export async function translate(options: TranslateOptions) {
   const tasks = [
     {
       title: 'Initializing',
-      task: async (context: Context) => {
+      task: async (context: TaskContext) => {
         context.appTranslates = []
         context.allFulfiled = false
         context.errors = []
@@ -326,7 +340,7 @@ export async function translate(options: TranslateOptions) {
     tasks.push({
       title: 'Awaiting fullfilment. This may take some time.',
 
-      task: async (context: Context) => {
+      task: async (context: TaskContext) => {
         const deltaMs = Date.now() - start
 
         // Make request
@@ -342,12 +356,12 @@ export async function translate(options: TranslateOptions) {
                   {
                     targetLanguage: 'en',
                     key: 'links.home',
-                    value: 'Home in english',
+                    value: 'Home',
                   },
                   {
                     targetLanguage: 'en',
                     key: 'links.more',
-                    value: 'More in english',
+                    value: 'Additional pages',
                   },
                 ],
                 targetTexts: [
@@ -397,10 +411,13 @@ export async function translate(options: TranslateOptions) {
   const enqueueUpdateFiles = () => {
     tasks.push({
       title: 'Updating target files',
-      task: async (context: Context) => {
+      task: async (context: TaskContext) => {
+        let manifestData = getManifestData(app)
+
         context.appTranslates.forEach((appTranslate) => {
           appTranslate.appTranslate.translationRequest.targetTexts?.forEach((targetText) => {
             const targetFile = targetFileWithKey(translationRequestData.targetFilesToUpdate, targetText.key)
+            console.log('translationRequestData.targetFilesToUpdate', translationRequestData.targetFilesToUpdate)
             if (!targetFile) {
               context.errors.push(`Target file not found for key: ${targetText.key}`)
               return
@@ -409,8 +426,34 @@ export async function translate(options: TranslateOptions) {
             // update target file data
             setPathValue(targetFile.content, targetText.key, targetText.value)
 
-            // update manifest, todo, im here. brb
-            targetFile.manifest?.strings[targetText.key] = targetText.value
+            const sourceText = appTranslate.appTranslate.translationRequest.sourceTexts.find(
+              (sourceText) => sourceText.key === targetText.key,
+            )
+
+            if (!sourceText) {
+              context.errors.push(`Source text not found for key: ${targetText.key}`)
+              return
+            }
+
+            // update manifest for targetFile
+            targetFile.manifestStrings[targetText.key] = hashString(sourceText.value)
+
+            // update shared manifest
+            const existingManifestEntry = manifestData.find(
+              (mData: ManifestEntry) => mData?.file === targetFile.fileName,
+            ) ?? {
+              file: targetFile.fileName,
+              strings: {},
+            }
+
+            // Remove the existing entry if it exists
+            manifestData = manifestData.filter((mData: ManifestEntry) => mData?.file !== targetFile.fileName)
+
+            // Add the updated entry
+            manifestData.push({
+              file: targetFile.fileName,
+              strings: {...existingManifestEntry.strings, ...targetFile.manifestStrings},
+            })
           })
         })
 
@@ -425,15 +468,14 @@ export async function translate(options: TranslateOptions) {
           deleteEmptyObjects(targetFile.content)
         })
 
-        // todo updateManifestData(translationRequestData.targetFilesToUpdate)
-
         // save files
         translationRequestData.targetFilesToUpdate.forEach((fileToUpdate) => {
           const jsonContent = JSON.stringify(fileToUpdate?.content, null, 2)
           fs.writeFileSync(fileToUpdate.fileName, jsonContent)
         })
 
-        // update manifest
+        // save manifest
+        fs.writeFileSync(manifestFileName(app), JSON.stringify(manifestData, null, 2))
       },
     })
   }
@@ -441,7 +483,7 @@ export async function translate(options: TranslateOptions) {
   // enqueue translation request
   tasks.push({
     title: 'Requesting translations',
-    task: async (context: Context) => {
+    task: async (context: TaskContext) => {
       context.appTranslates = [
         // Make multiple requests w/o blocking
         await developerPlatformClient.translate({
@@ -460,29 +502,73 @@ export async function translate(options: TranslateOptions) {
 
   const renderResponse = await renderTasks(tasks)
 
-  // use pluralize to handle the number of requests
   if (renderResponse.errors.length > 0) {
-    const headline = pluralize(
-      renderResponse.errors,
-      () => ['Translation request failed.'],
-      () => ['Translation requests failed'],
-    ) as string
-
-    renderError({
-      headline,
-      body: [
-        {
-          list: {
-            title: 'Errors',
-            items: renderResponse.errors,
-          },
-        },
-      ],
-    })
+    renderErrorMessage(renderResponse)
   } else if (renderResponse.allFulfiled) {
-    renderSuccess({
-      headline: 'Translation request(s) successful.',
-      body: 'Updated translations. Please review the changes and commit them to your preferred version control system if applicable.',
-    })
+    renderSuccessMessage(renderResponse)
   }
+}
+
+// Prompts, todo, is there a better place for these?
+
+async function renderChangesConfirmation(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  translationRequestData: TranslationRequestData,
+  promptContext: string | undefined,
+  nonTranslatableTerms: string[],
+): Promise<boolean> {
+  const targetFilesToUpdate = translationRequestData.targetFilesToUpdate.map(generateTranslationFileSummary)
+
+  const appContext = [`App name: ${app.name}`, `App title: ${remoteApp.title}`]
+  if (typeof promptContext === 'string') appContext.push(promptContext)
+
+  const confirmInfoTable = {
+    'Detected source files': translationRequestData.updatedSourceFiles.map((file) => file.fileName),
+    'Target files to update': targetFilesToUpdate,
+    ...(nonTranslatableTerms.length > 0 && {'Non translatable terms': nonTranslatableTerms}),
+    'Extra app context': appContext,
+  }
+
+  const confirmationResponse = await renderConfirmationPrompt({
+    message: 'Translation update',
+    infoTable: confirmInfoTable,
+    confirmationMessage: `Yes, update translations`,
+    cancellationMessage: 'No, cancel',
+  })
+  return confirmationResponse
+}
+
+function renderNoChanges() {
+  renderInfo({
+    headline: 'Translation Check Complete.',
+    body: 'All translation files are already up to date. No changes are required at this time.',
+  })
+}
+
+function renderErrorMessage(renderResponse: TaskContext) {
+  const headline = pluralize(
+    renderResponse.errors,
+    () => ['Translation request failed.'],
+    () => ['Translation requests failed'],
+  ) as string
+
+  renderError({
+    headline,
+    body: [
+      {
+        list: {
+          title: 'Errors',
+          items: renderResponse.errors,
+        },
+      },
+    ],
+  })
+}
+
+function renderSuccessMessage(_response: TaskContext) {
+  renderSuccess({
+    headline: 'Translation request successful.',
+    body: 'Updated translations. Please review the changes and commit them to your preferred version control system if applicable.',
+  })
 }
