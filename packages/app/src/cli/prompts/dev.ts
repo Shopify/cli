@@ -213,7 +213,7 @@ function updateURLsPromptWithDevSessions(currentAppUrl: string, urls: Applicatio
 
 export function downloadMkcert() {
   return renderConfirmationPrompt({
-    message: '`mkcert` is required but not found. Download it now?',
+    message: "--use-localhost requires `mkcert`, but it's not found. Download it now?",
     confirmationMessage: 'Yes, download mkcert',
     cancellationMessage: "No, I'll provide it manually",
   })
