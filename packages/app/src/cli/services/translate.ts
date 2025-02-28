@@ -168,6 +168,9 @@ export async function translate(options: TranslateOptions) {
     {
       title: 'Requesting translations',
       task: async (context: TaskContext) => {
+        // TODO, make multiple requests w/o blocking
+        // Each target language should have a request
+        // reqeusts should not have more than X keys
         const translationRequest = await developerPlatformClient.createTranslationRequest(remoteApp.organizationId, {
           sourceLanguage: SOURCE_LANGUAGE,
           // @ts-expect-error // fix me
