@@ -64,12 +64,12 @@ interface ManifestEntry {
 
 type Manifest = ManifestEntry[]
 
-function manifestFileName(app: AppLinkedInterface): string {
+function manifestFilePath(app: AppLinkedInterface): string {
   return joinPath(app.directory, '.shopiofy_translation_manifest.json')
 }
 
 export function getManifestData(app: AppLinkedInterface): Manifest {
-  const filePath = manifestFileName(app)
+  const filePath = manifestFilePath(app)
   if (!fileExistsSync(filePath)) {
     // Create the file with an empty object or any default content
     writeFileSync(filePath, JSON.stringify({}, null, 2))
@@ -83,7 +83,7 @@ export function getManifestData(app: AppLinkedInterface): Manifest {
 export const DEFAULT_LOCALES_DIR = ['locales']
 export const SOURCE_LANGUAGE = 'en'
 
-export function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
+export async function collectRequestData(app: AppLinkedInterface): Promise<TranslationRequestData> {
   const {
     target_languages: targetLanguages = [],
     locale_directories: localeDirectories = DEFAULT_LOCALES_DIR,
@@ -98,35 +98,40 @@ export function collectRequestData(app: AppLinkedInterface): TranslationRequestD
 
   const manifestDatas = getManifestData(app)
 
-  // Gather source langauge files
-  localeDirectories.forEach((dir) => {
-    const baseDir = joinPath(app.directory, dir)
-    searchDirectory(baseDir, SOURCE_LANGUAGE, requestData.updatedSourceFiles)
+  // Gather source language files
+  await Promise.all(
+    localeDirectories.map(async (dir) => {
+      const baseDir = joinPath(app.directory, dir)
+      await searchDirectory(baseDir, SOURCE_LANGUAGE, requestData.updatedSourceFiles)
 
-    targetLanguages.forEach((language) => {
-      requestData.updatedSourceFiles.forEach((sourceFile) => {
-        // Create target files if they don't exist.  Load target files.
-        const targetFilePath = sourceFile.fileName.replace(`${SOURCE_LANGUAGE}.json`, `${language}.json`)
+      await Promise.all(
+        targetLanguages.map(async (language) => {
+          requestData.updatedSourceFiles.forEach((sourceFile) => {
+            // Create target files if they don't exist.  Load target files.
+            const targetFilePath = sourceFile.fileName.replace(`${SOURCE_LANGUAGE}.json`, `${language}.json`)
 
-        if (!fileExistsSync(targetFilePath)) {
-          // Create target file with an empty JSON object
-          writeFileSync(targetFilePath, JSON.stringify({}, null, 2))
-        }
+            if (!fileExistsSync(targetFilePath)) {
+              // Create target file with an empty JSON object
+              writeFileSync(targetFilePath, JSON.stringify({}, null, 2))
+            }
 
-        // Load the target file
-        const targetFileContent = readFileSync(targetFilePath).toString()
-        requestData.targetFilesToUpdate.push({
-          fileName: targetFilePath,
-          content: JSON.parse(targetFileContent),
-          language,
-          keysToCreate: [],
-          keysToDelete: [],
-          keysToUpdate: [],
-          manifestStrings: manifestDatas.find((mData: ManifestEntry) => mData?.file === targetFilePath)?.strings ?? {},
-        })
-      })
-    })
-  })
+            // Load the target file
+            const targetFileContent = readFileSync(targetFilePath).toString()
+            requestData.targetFilesToUpdate.push({
+              fileName: targetFilePath,
+              content: JSON.parse(targetFileContent),
+              language,
+              keysToCreate: [],
+              keysToDelete: [],
+              keysToUpdate: [],
+              manifestStrings:
+                manifestDatas.find((mData: ManifestEntry) => mData?.file === targetFilePath)?.strings ?? {},
+            })
+          })
+        }),
+      )
+    }),
+  )
 
   requestData.targetFilesToUpdate.forEach((targetFile) => {
     const sourceFilePath = targetFile.fileName.replace(`${targetFile.language}.json`, `${SOURCE_LANGUAGE}.json`)
@@ -186,7 +191,7 @@ export async function translate(options: TranslateOptions) {
     throw new AbortSilentError()
   }
 
-  const translationRequestData = collectRequestData(app)
+  const translationRequestData = await collectRequestData(app)
 
   if (!force) {
     if (translationRequestData.targetFilesToUpdate.length > 0) {
@@ -357,7 +362,7 @@ export async function translate(options: TranslateOptions) {
         })
 
         // save manifest
-        writeFileSync(manifestFileName(app), JSON.stringify(manifestData, null, 2))
+        writeFileSync(manifestFilePath(app), JSON.stringify(manifestData, null, 2))
       },
     })
   }
