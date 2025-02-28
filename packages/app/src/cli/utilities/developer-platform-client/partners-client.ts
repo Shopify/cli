@@ -75,7 +75,6 @@ import {
   AppVersionsDiffVariables,
 } from '../../api/graphql/app_versions_diff.js'
 import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../../api/graphql/app_release.js'
-import {AppTranslate, AppTranslateSchema, AppTranslateVariables} from '../../api/graphql/app_translate.js'
 import {
   AppVersionByTagQuery,
   AppVersionByTagSchema,
@@ -156,6 +155,13 @@ import {
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {
+  CreateTranslationRequestInput,
+  CreateTranslationRequestSchema,
+  GetTranslationRequestSchema,
+  CreateTranslationRequest,
+  GetTranslationRequest,
+} from '../../api/graphql/app_translate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -163,7 +169,6 @@ import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/par
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
@@ -465,19 +470,15 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppRelease, input)
   }
 
-  async translate({app: {apiKey}}: {app: MinimalOrganizationApp}): Promise<AppTranslateSchema> {
-    const input: AppTranslateVariables = {apiKey}
-    const response: Promise<AppTranslateSchema> = this.request(AppTranslate, input)
-    // return {
-    //   appTranslate: {
-    //     translationRequest: {
-    //       id: response.app.id,
-    //       fullfilled: false,
-    //     },
-    //     userErrors: [],
-    //   },
-    // }
-    return response
+  async createTranslationRequest(
+    _orgId: string,
+    input: CreateTranslationRequestInput,
+  ): Promise<CreateTranslationRequestSchema> {
+    return this.request(CreateTranslationRequest, input)
+  }
+
+  async getTranslationRequest(_orgId: string, input: {requestId: string}): Promise<GetTranslationRequestSchema> {
+    return this.request(GetTranslationRequest, input)
   }
 
   async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {

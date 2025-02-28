@@ -50,7 +50,11 @@ import {SendSampleWebhookSchema, SendSampleWebhookVariables} from '../../service
 import {PublicApiVersionsSchema} from '../../services/webhook/request-api-versions.js'
 import {WebhookTopicsSchema, WebhookTopicsVariables} from '../../services/webhook/request-topics.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppTranslateSchema} from '../../api/graphql/app_translate.js'
+import {
+  GetTranslationRequestSchema,
+  CreateTranslationRequestSchema,
+  CreateTranslationRequestInput,
+} from '../../api/graphql/app_translate.js'
 import {AppVersionsDiffSchema, AppVersionsDiffVariables} from '../../api/graphql/app_versions_diff.js'
 import {
   MigrateFlowExtensionSchema,
@@ -1319,15 +1323,23 @@ const releaseResponse: AppReleaseSchema = {
   },
 }
 
-const translateResponse: AppTranslateSchema = {
-  appTranslate: {
+const createTranslationRequestResponse: CreateTranslationRequestSchema = {
+  createTranslationRequest: {
+    id: 'translation-request-id',
+    fulfilled: true,
+    sourceTexts: [],
+  },
+  userErrors: [],
+}
+
+const getTranslationRequestResponse: GetTranslationRequestSchema = {
+  getTranslationRequest: {
     translationRequest: {
-      id: 'bla',
+      id: 'translation-request-id',
       fulfilled: true,
       sourceTexts: [],
       targetTexts: [],
     },
-    userErrors: [],
   },
 }
 
@@ -1451,7 +1463,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     updateExtension: (_input: ExtensionUpdateDraftMutationVariables) => Promise.resolve(extensionUpdateResponse),
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
-    translate: (_input: {app: MinimalAppIdentifiers}) => Promise.resolve(translateResponse),
+    createTranslationRequest: (_orgId: string, input: CreateTranslationRequestInput) =>
+      Promise.resolve(createTranslationRequestResponse),
+    getTranslationRequest: (_orgId: string, input: {requestId: string}) =>
+      Promise.resolve(getTranslationRequestResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
     convertToTransferDisabledStore: (_input: ConvertDevToTransferDisabledStoreVariables) =>
       Promise.resolve(convertedToTransferDisabledStoreResponse),

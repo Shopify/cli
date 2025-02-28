@@ -160,7 +160,7 @@ export async function translate(options: TranslateOptions) {
     {
       title: 'Initializing',
       task: async (context: TaskContext) => {
-        context.appTranslates = []
+        context.transationRequests = []
         context.allFulfiled = false
         context.errors = []
       },
@@ -168,12 +168,27 @@ export async function translate(options: TranslateOptions) {
     {
       title: 'Requesting translations',
       task: async (context: TaskContext) => {
-        context.appTranslates = [
-          // Make multiple requests w/o blocking
-          await developerPlatformClient.translate({
-            app: remoteApp,
-          }),
+        const translationRequest = await developerPlatformClient.createTranslationRequest(remoteApp.organizationId, {
+          sourceLanguage: SOURCE_LANGUAGE,
+          // @ts-expect-error // fix me
+          targetLanguage: targetLanguages[0],
+          // @ts-expect-error // fix me
+          sourceTexts: translationRequestData.updatedSourceFiles.map((file) => file.content),
+          nonTranslatableTerms,
+          promptContext,
+        })
 
+        console.log('translationRequest', translationRequest)
+
+        context.transationRequests = [
+          // TODO, Make multiple requests w/o blocking
+          // await developerPlatformClient.createTranslationRequest(remoteApp, {
+          //   sourceLanguage: SOURCE_LANGUAGE,
+          //   targetLanguage: targetLanguages[0],
+          //   sourceTexts: translationRequestData.updatedSourceFiles.map((file) => file.content),
+          //   nonTranslatableTerms,
+          //   promptContext,
+          // }),
           // todo, add errors
           //   const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
           // (translate.appTranslate.userErrors || []).map((error) => error.message),
@@ -193,46 +208,43 @@ export async function translate(options: TranslateOptions) {
         // Make request
         await sleep(1)
         // update request with id that matches.  just write for now.
-        context.appTranslates = [
-          {
-            appTranslate: {
-              translationRequest: {
-                id: 'bla',
-                fulfilled: true,
-                sourceTexts: [
-                  {
-                    targetLanguage: 'en',
-                    key: 'links.home',
-                    value: 'Home',
-                  },
-                  {
-                    targetLanguage: 'en',
-                    key: 'links.more',
-                    value: 'Additional pages',
-                  },
-                ],
-                targetTexts: [
-                  {
-                    targetLanguage: 'fr',
-                    key: 'links.home',
-                    value: 'Home in french',
-                  },
-                  {
-                    targetLanguage: 'fr',
-                    key: 'links.more',
-                    value: 'More in french',
-                  },
-                ],
-              },
-              userErrors: [],
-            },
-          },
-        ]
+        // context.appTranslates = [
+        //   {
+        //     appTranslate: {
+        //       translationRequest: {
+        //         id: 'bla',
+        //         fulfilled: true,
+        //         sourceTexts: [
+        //           {
+        //             targetLanguage: 'en',
+        //             key: 'links.home',
+        //             value: 'Home',
+        //           },
+        //           {
+        //             targetLanguage: 'en',
+        //             key: 'links.more',
+        //             value: 'Additional pages',
+        //           },
+        //         ],
+        //         targetTexts: [
+        //           {
+        //             targetLanguage: 'fr',
+        //             key: 'links.home',
+        //             value: 'Home in french',
+        //           },
+        //           {
+        //             targetLanguage: 'fr',
+        //             key: 'links.more',
+        //             value: 'More in french',
+        //           },
+        //         ],
+        //       },
+        //       userErrors: [],
+        //     },
+        //   },
+        // ]
 
-        // TODO Check if reqeusts are fulfilled.
-        context.allFulfiled = context.appTranslates.every(
-          (translate) => translate.appTranslate.translationRequest.fulfilled,
-        )
+        context.allFulfiled = context.transationRequests.every((translationRequest) => translationRequest.fulfilled)
 
         if (context.allFulfiled) {
           enqueueUpdateFiles()
@@ -261,8 +273,8 @@ export async function translate(options: TranslateOptions) {
       task: async (context: TaskContext) => {
         let manifestData = getManifestData(app)
 
-        context.appTranslates.forEach((appTranslate) => {
-          appTranslate.appTranslate.translationRequest.targetTexts?.forEach((targetText) => {
+        context.transationRequests.forEach((translationRequest) => {
+          translationRequest.targetTexts?.forEach((targetText) => {
             const targetFile = targetFileWithKey(translationRequestData.targetFilesToUpdate, targetText.key)
 
             if (!targetFile) {
@@ -273,9 +285,10 @@ export async function translate(options: TranslateOptions) {
             // update target file data
             setPathValue(targetFile.content, targetText.key, targetText.value)
 
-            const sourceText = appTranslate.appTranslate.translationRequest.sourceTexts.find(
-              (sourceText) => sourceText.key === targetText.key,
-            )
+            // @ts-ignore // fix me
+            const sourceText: string | undefined = translationRequestData.updatedSourceFiles.find(
+              (sourceText) => sourceText.content[targetText.key] === targetText.value,
+            )?.content[targetText.key]
 
             if (!sourceText) {
               context.errors.push(`Source text not found for key: ${targetText.key}`)
@@ -283,7 +296,7 @@ export async function translate(options: TranslateOptions) {
             }
 
             // update manifest for targetFile
-            targetFile.manifestStrings[targetText.key] = manifestHash(sourceText.value)
+            targetFile.manifestStrings[targetText.key] = manifestHash(sourceText)
 
             // update shared manifest
             const existingManifestEntry = manifestData.find(

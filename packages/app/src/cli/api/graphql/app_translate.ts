@@ -1,40 +1,55 @@
 /* eslint-disable @shopify/cli/no-inline-graphql */
 import {gql} from 'graphql-request'
 
-// export const AppTranslate = gql`
-//   mutation AppTranslate($apiKey: String!, $appVersionId: ID, $versionTag: String) {
-//     appTranslate(input: {apiKey: $apiKey}) {
-//       translationRequest {
-//         id
-//       }
-//       userErrors {
-//         message
-//         field
-//         category
-//         details
-//       }
-//     }
-//   }
-// `
-
-export const AppTranslate = gql`
-  query AppTranslate($apiKey: String!) {
-    app(apiKey: $apiKey) {
+export const CreateTranslationRequest = gql`
+  mutation CreateTranslationRequest(
+    $sourceLanguage: String!
+    $targetLanguage: String!
+    $sourceTexts: [TranslationText!]!
+    $nonTranslatableTerms: [String!]!
+    $promptContext: String
+  ) {
+    createTranslationRequest(
+      sourceLanguage: $sourceLanguage
+      targetLanguage: $targetLanguage
+      sourceTexts: $sourceTexts
+      nonTranslatableTerms: $nonTranslatableTerms
+      promptContext: $promptContext
+    ) {
       id
-      organizationId
-      title
+      fulfilled
+      sourceTexts {
+        targetLanguage
+        key
+        value
+      }
+      targetTexts {
+        targetLanguage
+        key
+        value
+      }
     }
   }
 `
 
-interface ErrorDetail {
-  extension_id: number
-  extension_title: string
-}
-
-export interface AppTranslateVariables {
-  apiKey: string
-}
+export const GetTranslationRequest = gql`
+  query GetTranslationRequest($id: String!) {
+    translationRequest(id: $id) {
+      id
+      fulfilled
+      sourceTexts {
+        targetLanguage
+        key
+        value
+      }
+      targetTexts {
+        targetLanguage
+        key
+        value
+      }
+    }
+  }
+`
 
 export interface TranslationText {
   targetLanguage: string
@@ -42,19 +57,31 @@ export interface TranslationText {
   value: string
 }
 
-export interface AppTranslateSchema {
-  appTranslate: {
-    translationRequest: {
-      id: string
-      fulfilled: boolean
-      sourceTexts: TranslationText[]
-      targetTexts?: TranslationText[]
-    }
-    userErrors: {
-      field?: string[] | null
-      message: string
-      category: string
-      details: ErrorDetail[]
-    }[]
+export interface TranslationRequest {
+  id: string
+  fulfilled: boolean
+  sourceTexts: TranslationText[]
+  targetTexts?: TranslationText[]
+}
+
+export interface CreateTranslationRequestSchema {
+  createTranslationRequest: TranslationRequest
+  userErrors: {
+    field?: string[] | null
+    message: string
+  }[]
+}
+
+export interface CreateTranslationRequestInput {
+  sourceLanguage: string
+  targetLanguage: string
+  sourceTexts: TranslationText[]
+  nonTranslatableTerms: string[]
+  promptContext?: string
+}
+
+export interface GetTranslationRequestSchema {
+  getTranslationRequest: {
+    translationRequest: TranslationRequest
   }
 }

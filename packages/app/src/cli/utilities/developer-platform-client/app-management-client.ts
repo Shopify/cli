@@ -48,7 +48,13 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../../api/graphql/development_preview.js'
 import {AppReleaseSchema} from '../../api/graphql/app_release.js'
-import {AppTranslateSchema} from '../../api/graphql/app_translate.js'
+import {
+  CreateTranslationRequestSchema,
+  GetTranslationRequestSchema,
+  CreateTranslationRequest,
+  GetTranslationRequest,
+  CreateTranslationRequestInput,
+} from '../../api/graphql/app_translate.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {
   SampleWebhook,
@@ -687,42 +693,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async translate({app: {id: appId, organizationId}}: {app: MinimalOrganizationApp}): Promise<AppTranslateSchema> {
-    // console.log({appId, organizationId, location: 'app-management-client#translate'})
-    const AppTranslationVariables = {appId, versionId: 'bla-hacky-stuff-make-the-request'}
-    const releaseResult = await appManagementRequestDoc(organizationId, FetchSpecifications, await this.token())
-    // if (!releaseResult.appReleaseCreate?.release) {
-    //   throw new AbortError('Failed to start translation request')
-    // }
-    // const errors = releaseResult.appReleaseCreate.userErrors?.map((err) => ({
-    //   field: err.field,
-    //   message: err.message,
-    //   category: '',
-    //   details: [],
-    // }))
+  async createTranslationRequest(
+    orgId: string,
+    input: CreateTranslationRequestInput,
+  ): Promise<CreateTranslationRequestSchema> {
+    // @ts-ignore // fix me
+    return appManagementRequestDoc(orgId, CreateTranslationRequest, await this.token(), input)
+  }
 
-    return {
-      appTranslate: {
-        translationRequest: {
-          id: 'bla',
-          fulfilled: true,
-          sourceTexts: [],
-          targetTexts: [
-            {
-              targetLanguage: 'fr',
-              key: 'links.home',
-              value: 'Home in french',
-            },
-            {
-              targetLanguage: 'fr',
-              key: 'links.more',
-              value: 'More in french',
-            },
-          ],
-        },
-        userErrors: [], // errors
-      },
-    }
+  async getTranslationRequest(orgId: string, input: {requestId: string}): Promise<GetTranslationRequestSchema> {
+    // @ts-ignore // fix me
+    return appManagementRequestDoc(orgId, GetTranslationRequest, await this.token(), input)
   }
 
   // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
