@@ -9,22 +9,19 @@ export const CreateTranslationRequest = gql`
     $nonTranslatableTerms: [String!]!
     $promptContext: String
   ) {
-    createTranslationRequest(
-      sourceLanguage: $sourceLanguage
-      targetLanguage: $targetLanguage
-      sourceTexts: $sourceTexts
-      nonTranslatableTerms: $nonTranslatableTerms
-      promptContext: $promptContext
+    translationRequestCreate(
+      input: {
+        sourceLanguage: $sourceLanguage
+        targetLanguage: $targetLanguage
+        sourceTexts: $sourceTexts
+        nonTranslatableTerms: $nonTranslatableTerms
+        promptContext: $promptContext
+      }
     ) {
       id
       fulfilled
+      targetLanguage
       sourceTexts {
-        targetLanguage
-        key
-        value
-      }
-      targetTexts {
-        targetLanguage
         key
         value
       }
@@ -52,7 +49,6 @@ export const GetTranslationRequest = gql`
 `
 
 export interface TranslationText {
-  targetLanguage: string
   key: string
   value: string
 }
