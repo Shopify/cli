@@ -11,6 +11,7 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class Dev extends AppCommand {
   static summary = 'Run the app.'
@@ -146,6 +147,20 @@ If you're using the Ruby app template, then you need to complete the following s
       tunnel = {
         mode: 'no-tunnel-use-localhost',
         provideCertificate: async (appDirectory) => {
+          renderInfo({
+            headline: 'localhost development is experimental.',
+            body: [
+              'The --use-localhost flag has limitations. ',
+              'It works for testing App Bridge, Admin UI, Checkout UI or Pixels.',
+              "It won't work for Webhooks, Flow Actions, App Proxy or POS features.",
+              'If you encounter any issues, please provide feedback:',
+            ],
+            link: {
+              label: 'Feedback',
+              url: 'https://community.shopify.dev/new-topic?title=[Feedback%20for%20--use-localhost]&category=shopify-cli-libraries&tags=app-dev-on-localhost',
+            },
+          })
+
           return generateCertificate({
             appDirectory,
             onRequiresDownloadConfirmation: downloadMkcert,
