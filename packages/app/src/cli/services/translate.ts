@@ -4,7 +4,8 @@ import {
   renderErrorMessage,
   renderSuccessMessage,
   noLanguagesConfiguredMessage,
-} from './translate-ui.js'
+} from './translate/ui.js'
+import {searchDirectory, getPaths, deleteEmptyObjects, targetFileWithKey} from './translate/utilities.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {AppTranslateSchema} from '../api/graphql/app_translate.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -14,16 +15,16 @@ import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
 
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {getPathValue, setPathValue, isEmpty, compact} from '@shopify/cli-kit/common/object'
-import fs from 'fs'
-import path from 'path'
+import {getPathValue, setPathValue, compact} from '@shopify/cli-kit/common/object'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileExistsSync, writeFileSync, readFileSync} from '@shopify/cli-kit/node/fs'
 
 export interface TaskContext {
   appTranslates: AppTranslateSchema[]
   allFulfiled: boolean
   errors: string[]
 }
-interface TranslateOptions {
+export interface TranslateOptions {
   /** The app to be built and uploaded */
   app: AppLinkedInterface
 
@@ -41,7 +42,7 @@ export interface TranslationRequestData {
   updatedSourceFiles: TranslationSourceFile[]
   targetFilesToUpdate: TranslationTargetFile[]
 }
-interface TranslationSourceFile {
+export interface TranslationSourceFile {
   fileName: string
   language: string
   content: {[key: string]: unknown}
@@ -64,76 +65,25 @@ interface ManifestEntry {
 type Manifest = ManifestEntry[]
 
 function manifestFileName(app: AppLinkedInterface): string {
-  return `${app.directory}/.shopiofy_translation_manifest.json`
+  return joinPath(app.directory, '.shopiofy_translation_manifest.json')
 }
 
-function getManifestData(app: AppLinkedInterface): Manifest {
+export function getManifestData(app: AppLinkedInterface): Manifest {
   const filePath = manifestFileName(app)
-  if (!fs.existsSync(filePath)) {
+  if (!fileExistsSync(filePath)) {
     // Create the file with an empty object or any default content
-    fs.writeFileSync(filePath, JSON.stringify({}, null, 2))
+    writeFileSync(filePath, JSON.stringify({}, null, 2))
   }
-  const rawData = fs.readFileSync(filePath, 'utf8')
-  const manifestDatas = JSON.parse(rawData)
+  const rawData = readFileSync(filePath)
+  const manifestDatas = JSON.parse(rawData.toString())
 
   return manifestDatas as Manifest
 }
 
-const DEFAULT_LOCALES_DIR = ['locales']
-const SOURCE_LANGUAGE = 'en'
+export const DEFAULT_LOCALES_DIR = ['locales']
+export const SOURCE_LANGUAGE = 'en'
 
-function searchDirectory(
-  directory: string,
-  language: string,
-  translationFiles: TranslationTargetFile[] | TranslationSourceFile[],
-) {
-  const files = fs.readdirSync(directory)
-
-  files.forEach((file) => {
-    const fullPath = path.join(directory, file)
-    const stat = fs.statSync(fullPath)
-
-    if (stat.isDirectory()) {
-      // Recursively search subdirectories
-      searchDirectory(fullPath, language, translationFiles)
-    } else if (stat.isFile() && file === `${language}.json`) {
-      const data = fs.readFileSync(fullPath, 'utf-8')
-      translationFiles.push({
-        fileName: fullPath,
-        language,
-        content: JSON.parse(data),
-        keysToCreate: [],
-        keysToDelete: [],
-        keysToUpdate: [],
-        manifestStrings: {},
-      })
-    }
-  })
-}
-
-function getPaths(obj: {[key: string]: unknown} | undefined, prefix = ''): string[] {
-  if (obj === undefined) {
-    return []
-  }
-
-  const paths = []
-
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const newPrefix = prefix ? `${prefix}.${key}` : key
-
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        paths.push(...getPaths(obj[key] as {[key: string]: unknown}, newPrefix))
-      } else {
-        paths.push(newPrefix)
-      }
-    }
-  }
-
-  return paths
-}
-
-function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
+export function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
   const {
     target_languages: targetLanguages = [],
     locale_directories: localeDirectories = DEFAULT_LOCALES_DIR,
@@ -150,7 +100,7 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
 
   // Gather source langauge files
   localeDirectories.forEach((dir) => {
-    const baseDir = path.join(app.directory, dir)
+    const baseDir = joinPath(app.directory, dir)
     searchDirectory(baseDir, SOURCE_LANGUAGE, requestData.updatedSourceFiles)
 
     targetLanguages.forEach((language) => {
@@ -158,13 +108,13 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
         // Create target files if they don't exist.  Load target files.
         const targetFilePath = sourceFile.fileName.replace(`${SOURCE_LANGUAGE}.json`, `${language}.json`)
 
-        if (!fs.existsSync(targetFilePath)) {
+        if (!fileExistsSync(targetFilePath)) {
           // Create target file with an empty JSON object
-          fs.writeFileSync(targetFilePath, JSON.stringify({}, null, 2))
+          writeFileSync(targetFilePath, JSON.stringify({}, null, 2))
         }
 
         // Load the target file
-        const targetFileContent = fs.readFileSync(targetFilePath, 'utf-8')
+        const targetFileContent = readFileSync(targetFilePath).toString()
         requestData.targetFilesToUpdate.push({
           fileName: targetFilePath,
           content: JSON.parse(targetFileContent),
@@ -220,38 +170,6 @@ function collectRequestData(app: AppLinkedInterface): TranslationRequestData {
   )
 
   return requestData
-}
-
-/**
- * Deletes empty objects from the given object. Also deletes objects which only have empty objects as children.
- *
- * @param obj - The object to delete empty objects from.
- */
-function deleteEmptyObjects(obj: {[key: string]: unknown}): boolean {
-  let hasDeleted = false
-
-  Object.keys(obj).forEach((key) => {
-    if (typeof obj[key] === 'object') {
-      if (isEmpty(obj[key] as object)) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete obj[key]
-        hasDeleted = true
-      } else if (deleteEmptyObjects(obj[key] as {[key: string]: unknown})) {
-        // Check if parent became empty after cleaning children
-        if (isEmpty(obj[key] as object)) {
-          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-          delete obj[key]
-          hasDeleted = true
-        }
-      }
-    }
-  })
-
-  return hasDeleted
-}
-
-function targetFileWithKey(targetFiles: TranslationTargetFile[], key: string): TranslationTargetFile | undefined {
-  return targetFiles.find((targetFile) => [...targetFile.keysToCreate, ...targetFile.keysToUpdate].includes(key))
 }
 
 export async function translate(options: TranslateOptions) {
@@ -381,7 +299,7 @@ export async function translate(options: TranslateOptions) {
         context.appTranslates.forEach((appTranslate) => {
           appTranslate.appTranslate.translationRequest.targetTexts?.forEach((targetText) => {
             const targetFile = targetFileWithKey(translationRequestData.targetFilesToUpdate, targetText.key)
-            console.log('translationRequestData.targetFilesToUpdate', translationRequestData.targetFilesToUpdate)
+
             if (!targetFile) {
               context.errors.push(`Target file not found for key: ${targetText.key}`)
               return
@@ -435,11 +353,11 @@ export async function translate(options: TranslateOptions) {
         // save files
         translationRequestData.targetFilesToUpdate.forEach((fileToUpdate) => {
           const jsonContent = JSON.stringify(fileToUpdate?.content, null, 2)
-          fs.writeFileSync(fileToUpdate.fileName, jsonContent)
+          writeFileSync(fileToUpdate.fileName, jsonContent)
         })
 
         // save manifest
-        fs.writeFileSync(manifestFileName(app), JSON.stringify(manifestData, null, 2))
+        writeFileSync(manifestFileName(app), JSON.stringify(manifestData, null, 2))
       },
     })
   }

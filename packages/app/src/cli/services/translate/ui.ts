@@ -1,6 +1,6 @@
-import {TranslationTargetFile, TranslationRequestData, TaskContext} from './translate.js'
-import {AppLinkedInterface} from '../models/app/app.js'
-import {OrganizationApp} from '../models/organization.js'
+import {TranslationTargetFile, TranslationRequestData, TaskContext} from '../translate.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {pluralize} from '@shopify/cli-kit/common/string'
 import {renderSuccess, renderError, renderInfo, renderConfirmationPrompt, TokenItem} from '@shopify/cli-kit/node/ui'
 
