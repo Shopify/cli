@@ -17,7 +17,7 @@ import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {emitHotReloadEvent} from '@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js'
+import {triggerBrowserFullReload} from '@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js'
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 
@@ -643,7 +643,7 @@ describe('theme-fs', () => {
     beforeEach(() => {
       unsyncedFileKeys = new Set([fileKey])
       uploadErrors = new Map()
-      vi.mocked(emitHotReloadEvent).mockClear()
+      vi.mocked(triggerBrowserFullReload).mockClear()
     })
 
     test('returns false if file is not in unsyncedFileKeys', async () => {
@@ -657,7 +657,7 @@ describe('theme-fs', () => {
       // Then
       expect(result).toBe(false)
       expect(bulkUploadThemeAssets).not.toHaveBeenCalled()
-      expect(emitHotReloadEvent).not.toHaveBeenCalled()
+      expect(triggerBrowserFullReload).not.toHaveBeenCalled()
     })
 
     test('uploads file and returns true on successful sync', async () => {
@@ -682,7 +682,7 @@ describe('theme-fs', () => {
         adminSession,
       )
       expect(unsyncedFileKeys.has(fileKey)).toBe(false)
-      expect(emitHotReloadEvent).not.toHaveBeenCalled()
+      expect(triggerBrowserFullReload).not.toHaveBeenCalled()
     })
 
     test('throws error and sets uploadErrors on failed sync', async () => {
@@ -702,7 +702,7 @@ describe('theme-fs', () => {
       await expect(handler('content')).rejects.toThrow('{{ broken liquid file')
       expect(uploadErrors.get(fileKey)).toEqual(errors)
       expect(unsyncedFileKeys.has(fileKey)).toBe(true)
-      expect(emitHotReloadEvent).toHaveBeenCalledWith({type: 'full', key: fileKey})
+      expect(triggerBrowserFullReload).toHaveBeenCalledWith(fileKey)
     })
 
     test('clears uploadErrors if sync succeeds after previous failure', async () => {
@@ -722,7 +722,7 @@ describe('theme-fs', () => {
 
       // Then
       expect(uploadErrors.has(fileKey)).toBe(false)
-      expect(emitHotReloadEvent).toHaveBeenCalledWith({type: 'full', key: fileKey})
+      expect(triggerBrowserFullReload).toHaveBeenCalledWith(fileKey)
     })
   })
 
