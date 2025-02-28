@@ -1,4 +1,4 @@
-import {TranslationTargetFile, TranslationRequestData, TaskContext} from '../translate.js'
+import {TranslationTargetFile, TranslationRequestData, TaskContext} from './types.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {pluralize} from '@shopify/cli-kit/common/string'
