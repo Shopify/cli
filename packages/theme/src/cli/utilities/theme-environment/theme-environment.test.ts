@@ -2,6 +2,7 @@ import {DevServerContext} from './types.js'
 import {setupDevServer} from './theme-environment.js'
 import {render} from './storefront-renderer.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
+import {hotReloadScriptId} from './hot-reload/server.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
@@ -455,7 +456,7 @@ describe('setupDevServer', () => {
       const {res, body} = await eventPromise
       expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
       expect(body).toMatch(/<title>Failed to render storefront with status 502/i)
-      expect(body).toMatch('hotReloadScript')
+      expect(body).toMatch(hotReloadScriptId)
     })
 
     test('renders error page on upload errors with hot reload script injected', async () => {
@@ -472,7 +473,7 @@ describe('setupDevServer', () => {
       expect(body).toMatch(/<title>Failed to Upload Theme Files/i)
       expect(body).toMatch(/Error 1/)
       expect(body).toMatch(/Error 2/)
-      expect(body).toMatch('hotReloadScript')
+      expect(body).toMatch(hotReloadScriptId)
     })
   })
 })
