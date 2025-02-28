@@ -1,9 +1,30 @@
-import {TranslationTargetFile, TranslationSourceFile} from '../translate.js'
+import {TranslationTargetFile, TranslationSourceFile, Manifest} from './types.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {readFileSync, glob} from '@shopify/cli-kit/node/fs'
+import {readFileSync, glob, fileExistsSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
-export async function searchDirectory(
+export function manifestFilePath(app: AppLinkedInterface): string {
+  return joinPath(app.directory, '.shopiofy_translation_manifest.json')
+}
+
+export function getManifestData(app: AppLinkedInterface): Manifest {
+  const filePath = manifestFilePath(app)
+  if (!fileExistsSync(filePath)) {
+    writeFileSync(filePath, JSON.stringify({}, null, 2))
+  }
+  const rawData = readFileSync(filePath)
+  const manifestDatas = JSON.parse(rawData.toString())
+
+  return manifestDatas as Manifest
+}
+
+export function manifestHash(value: string): string {
+  return hashString(value)
+}
+
+export async function addFilesToTranslationFiles(
   directory: string,
   language: string,
   translationFiles: TranslationTargetFile[] | TranslationSourceFile[],

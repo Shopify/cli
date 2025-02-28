@@ -5,80 +5,24 @@ import {
   renderSuccessMessage,
   noLanguagesConfiguredMessage,
 } from './translate/ui.js'
-import {searchDirectory, getPaths, deleteEmptyObjects, targetFileWithKey} from './translate/utilities.js'
+import {
+  addFilesToTranslationFiles,
+  getPaths,
+  deleteEmptyObjects,
+  targetFileWithKey,
+  manifestHash,
+  getManifestData,
+  manifestFilePath,
+} from './translate/utilities.js'
+import {ManifestEntry, TranslationRequestData, TranslateOptions, TaskContext} from './translate/types.js'
 import {AppLinkedInterface} from '../models/app/app.js'
-import {AppTranslateSchema} from '../api/graphql/app_translate.js'
-import {OrganizationApp} from '../models/organization.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
-
-import {hashString} from '@shopify/cli-kit/node/crypto'
 import {getPathValue, setPathValue, compact} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync, writeFileSync, readFileSync} from '@shopify/cli-kit/node/fs'
-
-export interface TaskContext {
-  appTranslates: AppTranslateSchema[]
-  allFulfiled: boolean
-  errors: string[]
-}
-export interface TranslateOptions {
-  /** The app to be built and uploaded */
-  app: AppLinkedInterface
-
-  /** The remote app to be translated */
-  remoteApp: OrganizationApp
-
-  /** The developer platform client */
-  developerPlatformClient: DeveloperPlatformClient
-
-  /** If true, do not prompt */
-  force: boolean
-}
-
-export interface TranslationRequestData {
-  updatedSourceFiles: TranslationSourceFile[]
-  targetFilesToUpdate: TranslationTargetFile[]
-}
-export interface TranslationSourceFile {
-  fileName: string
-  language: string
-  content: {[key: string]: unknown}
-}
-export interface TranslationTargetFile {
-  fileName: string
-  language: string
-  keysToCreate: string[]
-  keysToDelete: string[]
-  keysToUpdate: string[]
-  content: {[key: string]: unknown}
-  manifestStrings: {[key: string]: string}
-}
-
-interface ManifestEntry {
-  file: string
-  strings: {[key: string]: string}
-}
-
-type Manifest = ManifestEntry[]
-
-function manifestFilePath(app: AppLinkedInterface): string {
-  return joinPath(app.directory, '.shopiofy_translation_manifest.json')
-}
-
-export function getManifestData(app: AppLinkedInterface): Manifest {
-  const filePath = manifestFilePath(app)
-  if (!fileExistsSync(filePath)) {
-    // Create the file with an empty object or any default content
-    writeFileSync(filePath, JSON.stringify({}, null, 2))
-  }
-  const rawData = readFileSync(filePath)
-  const manifestDatas = JSON.parse(rawData.toString())
-
-  return manifestDatas as Manifest
-}
 
 export const DEFAULT_LOCALES_DIR = ['locales']
 export const SOURCE_LANGUAGE = 'en'
@@ -100,9 +44,9 @@ export async function collectRequestData(app: AppLinkedInterface): Promise<Trans
 
   // Gather source language files
   await Promise.all(
-    localeDirectories.map(async (dir) => {
-      const baseDir = joinPath(app.directory, dir)
-      await searchDirectory(baseDir, SOURCE_LANGUAGE, requestData.updatedSourceFiles)
+    localeDirectories.map(async (localeDirectory) => {
+      const baseDir = joinPath(app.directory, localeDirectory)
+      await addFilesToTranslationFiles(baseDir, SOURCE_LANGUAGE, requestData.updatedSourceFiles)
 
       await Promise.all(
         targetLanguages.map(async (language) => {
@@ -154,10 +98,10 @@ export async function collectRequestData(app: AppLinkedInterface): Promise<Trans
         return
       }
 
-      const currentSourceHash = hashString(currentSourceValue)
-      const manifestHash = targetFile.manifestStrings[targetPath]
+      const currentSourceHash = manifestHash(currentSourceValue)
+      const updatedSourceHash = targetFile.manifestStrings[targetPath]
 
-      if (currentSourceHash !== manifestHash) {
+      if (currentSourceHash !== updatedSourceHash) {
         targetFile.keysToUpdate.push(targetPath)
       }
     })
@@ -219,6 +163,22 @@ export async function translate(options: TranslateOptions) {
         context.appTranslates = []
         context.allFulfiled = false
         context.errors = []
+      },
+    },
+    {
+      title: 'Requesting translations',
+      task: async (context: TaskContext) => {
+        context.appTranslates = [
+          // Make multiple requests w/o blocking
+          await developerPlatformClient.translate({
+            app: remoteApp,
+          }),
+
+          // todo, add errors
+          //   const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
+          // (translate.appTranslate.userErrors || []).map((error) => error.message),
+          // )
+        ]
       },
     },
   ]
@@ -323,7 +283,7 @@ export async function translate(options: TranslateOptions) {
             }
 
             // update manifest for targetFile
-            targetFile.manifestStrings[targetText.key] = hashString(sourceText.value)
+            targetFile.manifestStrings[targetText.key] = manifestHash(sourceText.value)
 
             // update shared manifest
             const existingManifestEntry = manifestData.find(
@@ -367,24 +327,7 @@ export async function translate(options: TranslateOptions) {
     })
   }
 
-  // enqueue translation request
-  tasks.push({
-    title: 'Requesting translations',
-    task: async (context: TaskContext) => {
-      context.appTranslates = [
-        // Make multiple requests w/o blocking
-        await developerPlatformClient.translate({
-          app: remoteApp,
-        }),
-
-        // todo, add errors
-        //   const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
-        // (translate.appTranslate.userErrors || []).map((error) => error.message),
-        // )
-      ]
-    },
-  })
-
+  // Enqueue the first fullfillment check, which will continue to enqueue itself until the requests are fulfilled.
   enqueueFullfillmentCheck()
 
   const renderResponse = await renderTasks(tasks)
