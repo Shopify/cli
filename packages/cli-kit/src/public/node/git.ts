@@ -72,6 +72,8 @@ export function createGitIgnore(directory: string, template: GitIgnoreTemplate):
  *
  * @param root - The directory containing the .gitignore file.
  * @param entry - The entry to add to the .gitignore file.
+ *
+ * @deprecated We should not edit the user's existing gitignore.
  */
 export function addToGitIgnore(root: string, entry: string): void {
   const gitIgnorePath = joinPath(root, '.gitignore')
