@@ -1,10 +1,10 @@
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {AppTranslateSchema} from '../../api/graphql/app_translate.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {TranslationRequest} from '../../api/graphql/app_translate.js'
 
 export interface TaskContext {
-  appTranslates: AppTranslateSchema[]
+  transationRequests: TranslationRequest[]
   allFulfiled: boolean
   errors: string[]
 }
