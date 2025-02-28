@@ -7,7 +7,7 @@ export async function searchDirectory(
   directory: string,
   language: string,
   translationFiles: TranslationTargetFile[] | TranslationSourceFile[],
-) {
+): Promise<void> {
   const pattern = joinPath(directory, '**', `${language}.json`)
   const files = await glob(pattern)
 
