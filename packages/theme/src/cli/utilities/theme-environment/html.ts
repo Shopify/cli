@@ -5,7 +5,7 @@ import {getErrorPage} from './hot-reload/error-page.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {logRequestLine} from '../log-request-line.js'
 import {extractFetchErrorInfo} from '../errors.js'
-import {defineEventHandler, getCookie, type H3Event} from 'h3'
+import {defineEventHandler, getCookie, type H3Event, type EventHandler} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -18,7 +18,7 @@ let themeIdMismatchRedirects = 0
 /** The maximum number of consecutive theme ID mismatch redirects before aborting */
 const MAX_THEME_ID_MISMATCH_REDIRECTS = 5
 
-export function getHtmlHandler(theme: Theme, ctx: DevServerContext) {
+export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 

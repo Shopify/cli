@@ -3,7 +3,16 @@ import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-e
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
 import {inferLocalHotReloadScriptPath} from '../../theme-fs.js'
-import {createError, createEventStream, defineEventHandler, getProxyRequestHeaders, getQuery, send, sendError} from 'h3'
+import {
+  createError,
+  createEventStream,
+  defineEventHandler,
+  getProxyRequestHeaders,
+  getQuery,
+  send,
+  sendError,
+  type EventHandler,
+} from 'h3'
 import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
@@ -137,7 +146,7 @@ function emitHotReloadEvent(event: HotReloadEvent) {
 /**
  * Adds endpoints to handle HotReload subscriptions and related events.
  */
-export function getHotReloadHandler(theme: Theme, ctx: DevServerContext) {
+export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
     const isEventSourceConnection = event.headers.get('accept') === 'text/event-stream'
     const query = new URLSearchParams(Object.entries(getQuery(event)))
