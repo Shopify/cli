@@ -1,30 +1,28 @@
+import {
+  renderChangesConfirmation,
+  renderNoChanges,
+  renderErrorMessage,
+  renderSuccessMessage,
+  noLanguagesConfiguredMessage,
+} from './translate-ui.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {AppTranslateSchema} from '../api/graphql/app_translate.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {
-  renderSuccess,
-  renderError,
-  renderTasks,
-  renderInfo,
-  renderConfirmationPrompt,
-  TokenItem,
-} from '@shopify/cli-kit/node/ui'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
 
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {pluralize} from '@shopify/cli-kit/common/string'
 import {getPathValue, setPathValue, isEmpty, compact} from '@shopify/cli-kit/common/object'
 import fs from 'fs'
 import path from 'path'
 
-interface TaskContext {
+export interface TaskContext {
   appTranslates: AppTranslateSchema[]
   allFulfiled: boolean
   errors: string[]
 }
-
 interface TranslateOptions {
   /** The app to be built and uploaded */
   app: AppLinkedInterface
@@ -39,7 +37,7 @@ interface TranslateOptions {
   force: boolean
 }
 
-interface TranslationRequestData {
+export interface TranslationRequestData {
   updatedSourceFiles: TranslationSourceFile[]
   targetFilesToUpdate: TranslationTargetFile[]
 }
@@ -48,7 +46,7 @@ interface TranslationSourceFile {
   language: string
   content: {[key: string]: unknown}
 }
-interface TranslationTargetFile {
+export interface TranslationTargetFile {
   fileName: string
   language: string
   keysToCreate: string[]
@@ -64,33 +62,6 @@ interface ManifestEntry {
 }
 
 type Manifest = ManifestEntry[]
-
-function generateTranslationFileSummary(file: TranslationTargetFile) {
-  const changes = []
-  const createSummary = pluralize(
-    file.keysToCreate,
-    () => [`${file.keysToCreate.length} key to create`],
-    () => [`${file.keysToCreate.length} keys to create`],
-  ) as string
-
-  const deleteSummary = pluralize(
-    file.keysToDelete,
-    () => [`${file.keysToDelete.length} key to delete`],
-    () => [`${file.keysToDelete.length} keys to delete`],
-  ) as string
-
-  const updateSummary = pluralize(
-    file.keysToUpdate,
-    () => [`${file.keysToUpdate.length} key to update`],
-    () => [`${file.keysToUpdate.length} keys to update`],
-  ) as string
-
-  if (file.keysToCreate.length > 0) changes.push(createSummary)
-  if (file.keysToDelete.length > 0) changes.push(deleteSummary)
-  if (file.keysToUpdate.length > 0) changes.push(updateSummary)
-
-  return `${file.fileName} (${changes.join(', ')})`
-}
 
 function manifestFileName(app: AppLinkedInterface): string {
   return `${app.directory}/.shopiofy_translation_manifest.json`
@@ -292,22 +263,15 @@ export async function translate(options: TranslateOptions) {
     non_translatable_terms: nonTranslatableTerms = [],
   } = app.configuration.translations ?? {}
 
-  const helpLink: TokenItem = {link: {label: 'Learn more.', url: 'https://todo.com'}}
-
   if (targetLanguages.length === 0) {
-    renderError({
-      headline: 'No target languages configured.',
-      body: ['You must configure at least one target language to use this command.', helpLink],
-    })
+    noLanguagesConfiguredMessage()
     throw new AbortSilentError()
   }
 
   const translationRequestData = collectRequestData(app)
 
-  const targetFilesToUpdate = translationRequestData.targetFilesToUpdate.map(generateTranslationFileSummary)
-
   if (!force) {
-    if (targetFilesToUpdate.length > 0) {
+    if (translationRequestData.targetFilesToUpdate.length > 0) {
       const confirmationResponse = await renderChangesConfirmation(
         app,
         remoteApp,
@@ -507,68 +471,4 @@ export async function translate(options: TranslateOptions) {
   } else if (renderResponse.allFulfiled) {
     renderSuccessMessage(renderResponse)
   }
-}
-
-// Prompts, todo, is there a better place for these?
-
-async function renderChangesConfirmation(
-  app: AppLinkedInterface,
-  remoteApp: OrganizationApp,
-  translationRequestData: TranslationRequestData,
-  promptContext: string | undefined,
-  nonTranslatableTerms: string[],
-): Promise<boolean> {
-  const targetFilesToUpdate = translationRequestData.targetFilesToUpdate.map(generateTranslationFileSummary)
-
-  const appContext = [`App name: ${app.name}`, `App title: ${remoteApp.title}`]
-  if (typeof promptContext === 'string') appContext.push(promptContext)
-
-  const confirmInfoTable = {
-    'Detected source files': translationRequestData.updatedSourceFiles.map((file) => file.fileName),
-    'Target files to update': targetFilesToUpdate,
-    ...(nonTranslatableTerms.length > 0 && {'Non translatable terms': nonTranslatableTerms}),
-    'Extra app context': appContext,
-  }
-
-  const confirmationResponse = await renderConfirmationPrompt({
-    message: 'Translation update',
-    infoTable: confirmInfoTable,
-    confirmationMessage: `Yes, update translations`,
-    cancellationMessage: 'No, cancel',
-  })
-  return confirmationResponse
-}
-
-function renderNoChanges() {
-  renderInfo({
-    headline: 'Translation Check Complete.',
-    body: 'All translation files are already up to date. No changes are required at this time.',
-  })
-}
-
-function renderErrorMessage(renderResponse: TaskContext) {
-  const headline = pluralize(
-    renderResponse.errors,
-    () => ['Translation request failed.'],
-    () => ['Translation requests failed'],
-  ) as string
-
-  renderError({
-    headline,
-    body: [
-      {
-        list: {
-          title: 'Errors',
-          items: renderResponse.errors,
-        },
-      },
-    ],
-  })
-}
-
-function renderSuccessMessage(_response: TaskContext) {
-  renderSuccess({
-    headline: 'Translation request successful.',
-    body: 'Updated translations. Please review the changes and commit them to your preferred version control system if applicable.',
-  })
 }
