@@ -4,10 +4,10 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {writeFileSync} from 'fs'
+import {readFileSync, writeFileSync} from 'fs'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -197,11 +197,16 @@ Please check the module path for ${target}`.value,
     }
 
     if (!hasError && shouldGenerateTypes) {
-      const template = `import type {TargetApi} from '@shopify/ui-extensions/admin';\n
-declare global {
-  const shopify: TargetApi<'${target}'>
-}`
-      writeFileSync(joinPath(dirname(fullPath), 'types.d.ts'), template)
+      const typeRefRegex = /\/\/\/ <reference types="@shopify\/ui-extensions\/((?:[a-z]|\.|-)*)\.d\.ts" \/>/
+      const template = `/// <reference types="@shopify/ui-extensions/${target}" />`
+      let fileContent = readFileSync(fullPath).toString()
+      let match
+      if ((match = fileContent.match(typeRefRegex)) && match[1]) {
+        fileContent = fileContent.replace(match[0], template)
+      } else {
+        fileContent = `${template}\n`.concat(fileContent)
+      }
+      writeFileSync(fullPath, fileContent)
     }
   }
 
