@@ -62,6 +62,7 @@ export interface DevConfig {
   partnerUrlsUpdated: boolean
   graphiqlPort: number
   graphiqlKey?: string
+  previewableExtensionPort: number
 }
 
 export async function setupDevProcesses({
@@ -75,6 +76,7 @@ export async function setupDevProcesses({
   network,
   graphiqlPort,
   graphiqlKey,
+  previewableExtensionPort,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -138,6 +140,7 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: reloadedApp.directory,
       appWatcher,
+      port: previewableExtensionPort,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
@@ -224,9 +227,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
         }
         process.options.port = targetPort
       } else if (process.type === 'previewable-extension') {
-        const targetPort = await getAvailableTCPPort()
-        rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
-        process.options.port = targetPort
+        rules[process.options.pathPrefix] = `http://localhost:${process.options.port}`
       }
 
       return {process, rules}
