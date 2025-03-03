@@ -2080,8 +2080,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Translate an app. Resume a previous request with the `--resume` flag.",
-      "descriptionWithMarkdown": "Translate an app. Resume a previous request with the `--resume` flag.",
+      "description": "Translate an app. Retranslate all strings with the `--re-translate-all` flag.",
+      "descriptionWithMarkdown": "Translate an app. Retranslate all strings with the `--re-translate-all` flag.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -2104,6 +2104,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Update translations without asking for confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": false,
+          "name": "force",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -2150,8 +2159,8 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Translate an app.",
-      "usage": "app:translate --force-all --resume <value>"
+      "summary": "Update translations for the app.",
+      "usage": "app:translate --force-all"
     },
     "app:versions:list": {
       "aliases": [

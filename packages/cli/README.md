@@ -652,16 +652,17 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
-## `shopify app:translate --force-all --resume <value>`
+## `shopify app:translate --force-all`
 
-Translate an app.
+Update translations for the app.
 
 ```
 USAGE
-  $ shopify app translate --force-all --resume <value>
+  $ shopify app translate --force-all
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
+  -f, --force              Update translations without asking for confirmation.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.
@@ -669,9 +670,9 @@ FLAGS
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
-  Translate an app.
+  Update translations for the app.
 
-  Translate an app. Resume a previous request with the `--resume` flag.
+  Translate an app. Retranslate all strings with the `--re-translate-all` flag.
 ```
 
 ## `shopify app versions list`

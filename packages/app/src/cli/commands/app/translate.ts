@@ -10,9 +10,9 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Translate extends AppCommand {
-  static summary = 'Translate an app.'
+  static summary = 'Update translations for the app.'
 
-  static usage = `app:translate --force-all --re-translate-all <value>`
+  static usage = `app:translate --force-all`
 
   static descriptionWithMarkdown = `Translate an app. Retranslate all strings with the \`--re-translate-all\` flag.`
 
