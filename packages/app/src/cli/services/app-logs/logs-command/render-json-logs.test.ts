@@ -47,6 +47,7 @@ describe('renderJsonLogs', () => {
       options: {
         variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
         developerPlatformClient: testDeveloperPlatformClient(),
+        organizationId: '1',
       },
       storeNameById,
     })
@@ -92,6 +93,7 @@ describe('renderJsonLogs', () => {
       options: {
         variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
         developerPlatformClient: testDeveloperPlatformClient(),
+        organizationId: '1',
       },
       storeNameById,
     })
@@ -121,6 +123,7 @@ describe('renderJsonLogs', () => {
       options: {
         variables: {shopIds: [], apiKey: '', token: ''},
         developerPlatformClient: testDeveloperPlatformClient(),
+        organizationId: '1',
       },
       storeNameById,
     })

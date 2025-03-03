@@ -6,7 +6,7 @@ import {render} from '@shopify/cli-kit/node/ui'
 
 export async function renderLogs({
   pollOptions,
-  options: {variables, developerPlatformClient},
+  options: {variables, developerPlatformClient, organizationId},
   storeNameById,
 }: {
   pollOptions: PollOptions
@@ -14,7 +14,7 @@ export async function renderLogs({
   storeNameById: Map<string, string>
 }) {
   const resubscribeCallback = async () => {
-    return subscribeToAppLogs(developerPlatformClient, variables)
+    return subscribeToAppLogs(developerPlatformClient, variables, organizationId)
   }
 
   return render(

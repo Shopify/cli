@@ -53,7 +53,7 @@ export async function logs(commandOptions: LogsOptions) {
     token: '',
   }
 
-  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables)
+  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables, commandOptions.organization.id)
 
   const filters = {
     status: commandOptions.status,
@@ -72,6 +72,7 @@ export async function logs(commandOptions: LogsOptions) {
       options: {
         variables,
         developerPlatformClient,
+        organizationId: commandOptions.organization.id,
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
@@ -82,6 +83,7 @@ export async function logs(commandOptions: LogsOptions) {
       options: {
         variables,
         developerPlatformClient,
+        organizationId: commandOptions.organization.id,
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,

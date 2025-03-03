@@ -171,6 +171,7 @@ export interface SubscribeOptions {
     apiKey: string
     token: string
   }
+  organizationId: string
 }
 
 export interface PollOptions {

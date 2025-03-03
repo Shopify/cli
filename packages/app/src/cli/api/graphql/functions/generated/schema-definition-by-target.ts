@@ -82,3 +82,78 @@ export const SchemaDefinitionByTarget = {
     },
   ],
 } as unknown as DocumentNode<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>
+
+// Move to separat file OR import these types correctly
+export type AppLogsSubscribeQueryVariables = {
+  shopIds: string[]
+  apiKey: string
+}
+
+export type AppLogsSubscribeQuery = {
+  appLogsSubscribe: {
+    jwtToken: string
+    success: boolean
+    errors?: string[]
+  }
+}
+
+export const AppLogsSubscribe = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: {kind: 'Name', value: 'AppLogsSubscribe'},
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}},
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}
+              }
+            }
+          }
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}}
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'appLogsSubscribe'},
+            arguments: [
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'shopIds'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}}
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'apiKey'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}}
+              }
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'jwtToken'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'success'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'errors'}}
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+} as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>

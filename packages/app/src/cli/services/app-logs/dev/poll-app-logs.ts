@@ -12,12 +12,15 @@ import {
   REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON,
   REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
   handleFetchAppLogsError,
+  fetchAppLogsDevDashboard,
 } from '../utils.js'
 import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
+import { OrganizationSource } from '../../../models/organization.js'
+import {Response} from '@shopify/cli-kit/node/http'
 
 export const pollAppLogs = async ({
   stdout,
@@ -25,18 +28,32 @@ export const pollAppLogs = async ({
   apiKey,
   resubscribeCallback,
   storeName,
+  organizationSource,
+  orgId,
+  appId,
 }: {
   stdout: Writable
   appLogsFetchInput: {jwtToken: string; cursor?: string}
   apiKey: string
   resubscribeCallback: () => Promise<string>
   storeName: string
+  organizationSource?: OrganizationSource
+  orgId: string
+  appId: string
 }) => {
   try {
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    const httpResponse = await fetchAppLogs(jwtToken, cursor)
+    console.log("jwtToken", jwtToken)
+    console.log('organizationSource', organizationSource)
+
+    const isDevDashboard = organizationSource === OrganizationSource.BusinessPlatform;
+    console.log("isDevDashboard", isDevDashboard)
+
+    const httpResponse: Response = isDevDashboard
+      ? await fetchAppLogsDevDashboard(jwtToken, orgId, appId, cursor)
+      : await fetchAppLogs(jwtToken, cursor);
 
     const response = await httpResponse.json()
     const {errors} = response as {errors: string[]}
@@ -119,6 +136,9 @@ export const pollAppLogs = async ({
         apiKey,
         resubscribeCallback,
         storeName,
+        organizationSource,
+        orgId,
+        appId,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -139,6 +159,9 @@ export const pollAppLogs = async ({
         apiKey,
         resubscribeCallback,
         storeName,
+        organizationSource,
+        orgId,
+        appId,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
