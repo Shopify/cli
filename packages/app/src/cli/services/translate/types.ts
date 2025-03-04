@@ -7,6 +7,7 @@ export interface TaskContext {
   transationRequests: TranslationRequest[]
   allFulfiled: boolean
   errors: string[]
+  startTime: number
 }
 export interface TranslateOptions {
   /** The app to be built and uploaded */

@@ -159,8 +159,8 @@ import {
   CreateTranslationRequestInput,
   CreateTranslationRequestSchema,
   GetTranslationRequestSchema,
-  CreateTranslationRequest,
   GetTranslationRequest,
+  CreateTranslationRequest,
 } from '../../api/graphql/app_translate.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -474,11 +474,43 @@ export class PartnersClient implements DeveloperPlatformClient {
     _orgId: string,
     input: CreateTranslationRequestInput,
   ): Promise<CreateTranslationRequestSchema> {
-    return this.request(CreateTranslationRequest, input)
+    // eslint-disable-next-line no-constant-condition
+    if (false) return this.request(CreateTranslationRequest, input)
+
+    return {
+      createTranslationRequest: {
+        translationRequest: {
+          id: '1',
+          fulfilled: false,
+          targetTexts: null,
+        },
+      },
+      userErrors: [],
+    }
   }
 
   async getTranslationRequest(_orgId: string, input: {requestId: string}): Promise<GetTranslationRequestSchema> {
-    return this.request(GetTranslationRequest, input)
+    // eslint-disable-next-line no-constant-condition
+    if (false) return this.request(GetTranslationRequest, input)
+
+    return {
+      getTranslationRequest: {
+        translationRequest: {
+          id: input.requestId,
+          fulfilled: true,
+          targetTexts: [
+            {
+              key: 'links.home',
+              value: 'stubbed home',
+            },
+            {
+              key: 'links.more',
+              value: 'stubbed more',
+            },
+          ],
+        },
+      },
+    }
   }
 
   async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {

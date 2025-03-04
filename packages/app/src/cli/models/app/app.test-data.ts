@@ -1325,9 +1325,10 @@ const releaseResponse: AppReleaseSchema = {
 
 const createTranslationRequestResponse: CreateTranslationRequestSchema = {
   createTranslationRequest: {
-    id: 'translation-request-id',
-    fulfilled: true,
-    sourceTexts: [],
+    translationRequest: {
+      id: 'translation-request-id',
+      fulfilled: true,
+    },
   },
   userErrors: [],
 }
@@ -1337,7 +1338,6 @@ const getTranslationRequestResponse: GetTranslationRequestSchema = {
     translationRequest: {
       id: 'translation-request-id',
       fulfilled: true,
-      sourceTexts: [],
       targetTexts: [],
     },
   },

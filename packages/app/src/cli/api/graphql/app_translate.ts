@@ -18,12 +18,19 @@ export const CreateTranslationRequest = gql`
         promptContext: $promptContext
       }
     ) {
-      id
-      fulfilled
-      targetLanguage
-      sourceTexts {
-        key
-        value
+      throttleStatus
+      translationRequest {
+        id
+        fulfilled
+        targetLanguage
+        targetTexts {
+          key
+          value
+        }
+      }
+      errors {
+        field
+        message
       }
     }
   }
@@ -34,13 +41,8 @@ export const GetTranslationRequest = gql`
     translationRequest(id: $id) {
       id
       fulfilled
-      sourceTexts {
-        targetLanguage
-        key
-        value
-      }
+      targetLanguage
       targetTexts {
-        targetLanguage
         key
         value
       }
@@ -56,12 +58,13 @@ export interface TranslationText {
 export interface TranslationRequest {
   id: string
   fulfilled: boolean
-  sourceTexts: TranslationText[]
-  targetTexts?: TranslationText[]
+  targetTexts?: TranslationText[] | null
 }
 
 export interface CreateTranslationRequestSchema {
-  createTranslationRequest: TranslationRequest
+  createTranslationRequest: {
+    translationRequest: TranslationRequest
+  }
   userErrors: {
     field?: string[] | null
     message: string

@@ -1,6 +1,6 @@
 import {TranslationTargetFile, TranslationSourceFile, Manifest} from './types.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {isEmpty} from '@shopify/cli-kit/common/object'
+import {getPathValue, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFileSync, glob, fileExistsSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -100,4 +100,14 @@ export function targetFileWithKey(
   key: string,
 ): TranslationTargetFile | undefined {
   return targetFiles.find((targetFile) => [...targetFile.keysToCreate, ...targetFile.keysToUpdate].includes(key))
+}
+
+export function sourceTextForKey(sourceFiles: TranslationSourceFile[], key: string): string | undefined {
+  const sourceFileWithKey = sourceFiles.find((sourceText) => Boolean(getPathValue(sourceText.content, key)))
+
+  if (!sourceFileWithKey) {
+    return undefined
+  }
+
+  return getPathValue(sourceFileWithKey.content, key) as string
 }

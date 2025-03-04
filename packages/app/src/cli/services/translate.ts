@@ -13,10 +13,12 @@ import {
   manifestHash,
   getManifestData,
   manifestFilePath,
+  sourceTextForKey,
 } from './translate/utilities.js'
 import {ManifestEntry, TranslationRequestData, TranslateOptions, TaskContext} from './translate/types.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 
+import {CreateTranslationRequestInput, TranslationText} from '../api/graphql/app_translate.js'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -26,6 +28,9 @@ import {fileExistsSync, writeFileSync, readFileSync} from '@shopify/cli-kit/node
 
 export const DEFAULT_LOCALES_DIR = ['locales']
 export const SOURCE_LANGUAGE = 'en'
+const MAX_WAIT_TIME_IN_SECONDS = 4 * 60
+const SLEEP_TIME_IN_SECONDS = 4
+const MAX_KEYS_PER_REQUEST = 100
 
 export async function collectRequestData(app: AppLinkedInterface): Promise<TranslationRequestData> {
   const {
@@ -153,50 +158,85 @@ export async function translate(options: TranslateOptions) {
     }
   }
 
-  const maxWaitTimeInSeconds = 4 * 60
-  const sleepTimeInSeconds = 4
-  const start = Date.now()
   const tasks = [
     {
       title: 'Initializing',
       task: async (context: TaskContext) => {
-        context.transationRequests = []
-        context.allFulfiled = false
-        context.errors = []
+        // Update context state atomically
+        Object.assign(context, {
+          transationRequests: [],
+          allFulfiled: false,
+          errors: [],
+          startTime: Date.now(),
+        })
       },
     },
     {
       title: 'Requesting translations',
       task: async (context: TaskContext) => {
-        // TODO, make multiple requests w/o blocking
         // Each target language should have a request
-        // reqeusts should not have more than X keys
-        const translationRequest = await developerPlatformClient.createTranslationRequest(remoteApp.organizationId, {
+        let translationRequestsToCreate: CreateTranslationRequestInput[] = targetLanguages.map((targetLanguage) => ({
           sourceLanguage: SOURCE_LANGUAGE,
-          // @ts-expect-error // fix me
-          targetLanguage: targetLanguages[0],
-          // @ts-expect-error // fix me
-          sourceTexts: translationRequestData.updatedSourceFiles.map((file) => file.content),
+          targetLanguage,
+          sourceTexts: translationRequestData.updatedSourceFiles.flatMap((file) =>
+            Object.entries(file.content).map(([key, value]) => ({
+              key,
+              value: value as string,
+            })),
+          ),
           nonTranslatableTerms,
           promptContext,
+        }))
+
+        // Futher break up translation requests to create if they have more than maxKeysPerRequest keys
+        // Find translation requests that have more than maxKeysPerRequest keys
+        const translationRequestsToCreateWithMoreThanMaxKeys = translationRequestsToCreate.filter(
+          (request) => request.sourceTexts.length > MAX_KEYS_PER_REQUEST,
+        )
+
+        // Remove the translation requests that have more than maxKeysPerRequest keys
+        translationRequestsToCreate = translationRequestsToCreate.filter(
+          (request) => request.sourceTexts.length <= MAX_KEYS_PER_REQUEST,
+        )
+
+        // Break up the translation requests that have more than maxKeysPerRequest keys
+        translationRequestsToCreateWithMoreThanMaxKeys.forEach((request) => {
+          const keys = request.sourceTexts.map((text) => text.key)
+          const chunks = keys.reduce<string[][]>((acc, key, index) => {
+            const chunkIndex = Math.floor(index / MAX_KEYS_PER_REQUEST)
+            if (!acc[chunkIndex]) {
+              acc[chunkIndex] = []
+            }
+            acc[chunkIndex].push(key)
+            return acc
+          }, [])
+
+          chunks.forEach((chunk) => {
+            translationRequestsToCreate.push({
+              ...request,
+              sourceTexts: chunk
+                .map((key) => request.sourceTexts.find((text) => text.key === key))
+                .filter((text): text is TranslationText => text !== undefined),
+            })
+          })
         })
 
-        console.log('translationRequest', translationRequest)
+        // make the requests
+        const translationRequestCreateResponses = await Promise.all(
+          translationRequestsToCreate.map((input) =>
+            developerPlatformClient.createTranslationRequest(remoteApp.organizationId, input),
+          ),
+        )
 
-        context.transationRequests = [
-          // TODO, Make multiple requests w/o blocking
-          // await developerPlatformClient.createTranslationRequest(remoteApp, {
-          //   sourceLanguage: SOURCE_LANGUAGE,
-          //   targetLanguage: targetLanguages[0],
-          //   sourceTexts: translationRequestData.updatedSourceFiles.map((file) => file.content),
-          //   nonTranslatableTerms,
-          //   promptContext,
-          // }),
-          // todo, add errors
-          //   const allErrors = renderResponse.appTranslates?.flatMap((translate) =>
-          // (translate.appTranslate.userErrors || []).map((error) => error.message),
-          // )
-        ]
+        // update the context with the new requests
+        context.transationRequests = translationRequestCreateResponses.map(
+          (createResponse) => createResponse.createTranslationRequest.translationRequest,
+        )
+
+        // update the context with the errors
+        context.errors = translationRequestCreateResponses.flatMap((createResponse) =>
+          createResponse.userErrors.map((error) => error.message),
+        )
       },
     },
   ]
@@ -206,64 +246,36 @@ export async function translate(options: TranslateOptions) {
       title: 'Awaiting fullfilment. This may take some time.',
 
       task: async (context: TaskContext) => {
-        const deltaMs = Date.now() - start
+        const timeSinceStart = Date.now() - context.startTime
 
-        // Make request
-        await sleep(1)
-        // update request with id that matches.  just write for now.
-        // context.appTranslates = [
-        //   {
-        //     appTranslate: {
-        //       translationRequest: {
-        //         id: 'bla',
-        //         fulfilled: true,
-        //         sourceTexts: [
-        //           {
-        //             targetLanguage: 'en',
-        //             key: 'links.home',
-        //             value: 'Home',
-        //           },
-        //           {
-        //             targetLanguage: 'en',
-        //             key: 'links.more',
-        //             value: 'Additional pages',
-        //           },
-        //         ],
-        //         targetTexts: [
-        //           {
-        //             targetLanguage: 'fr',
-        //             key: 'links.home',
-        //             value: 'Home in french',
-        //           },
-        //           {
-        //             targetLanguage: 'fr',
-        //             key: 'links.more',
-        //             value: 'More in french',
-        //           },
-        //         ],
-        //       },
-        //       userErrors: [],
-        //     },
-        //   },
-        // ]
+        // get the current status of the requests
+        const updatedRequests = await Promise.all(
+          context.transationRequests.map((request) =>
+            developerPlatformClient
+              .getTranslationRequest(remoteApp.organizationId, {requestId: request.id})
+              .then((response) => response.getTranslationRequest.translationRequest),
+          ),
+        )
 
-        context.allFulfiled = context.transationRequests.every((translationRequest) => translationRequest.fulfilled)
+        Object.assign(context, {
+          transationRequests: updatedRequests,
+          allFulfiled: updatedRequests.every((request) => request.fulfilled),
+        })
 
         if (context.allFulfiled) {
           enqueueUpdateFiles()
           return
         }
-        if (deltaMs / 1000 > maxWaitTimeInSeconds) {
-          // Failure checked for and handled outside of tasks.
+        if (timeSinceStart / 1000 > MAX_WAIT_TIME_IN_SECONDS) {
+          context.errors.push(`Request timed out after ${MAX_WAIT_TIME_IN_SECONDS} seconds`)
           return
         }
 
-        // if (!context.appTranslate.appTranslate.translationRequest.fulfilled) {
-        if (deltaMs / 1000 > 10) {
-          context.allFulfiled = true
+        if (context.transationRequests.every((request) => request.fulfilled)) {
           enqueueUpdateFiles()
         } else {
-          await sleep(sleepTimeInSeconds)
+          // Sleep so we don't hammer the API
+          await sleep(SLEEP_TIME_IN_SECONDS)
           enqueueFullfillmentCheck()
         }
       },
@@ -288,10 +300,7 @@ export async function translate(options: TranslateOptions) {
             // update target file data
             setPathValue(targetFile.content, targetText.key, targetText.value)
 
-            // @ts-ignore // fix me
-            const sourceText: string | undefined = translationRequestData.updatedSourceFiles.find(
-              (sourceText) => sourceText.content[targetText.key] === targetText.value,
-            )?.content[targetText.key]
+            const sourceText = sourceTextForKey(translationRequestData.updatedSourceFiles, targetText.key)
 
             if (!sourceText) {
               context.errors.push(`Source text not found for key: ${targetText.key}`)
