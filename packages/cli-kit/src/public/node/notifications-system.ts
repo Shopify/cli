@@ -13,7 +13,14 @@ import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
-const COMMANDS_TO_SKIP = ['notifications:list', 'notifications:generate', 'app:init', 'theme:init', 'cache:clear']
+const COMMANDS_TO_SKIP = [
+  'notifications:list',
+  'notifications:generate',
+  'init',
+  'app:init',
+  'theme:init',
+  'cache:clear',
+]
 
 function url(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
