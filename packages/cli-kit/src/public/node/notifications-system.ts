@@ -19,6 +19,7 @@ const COMMANDS_TO_SKIP = [
   'init',
   'app:init',
   'theme:init',
+  'hydrogen:init',
   'cache:clear',
 ]
 
