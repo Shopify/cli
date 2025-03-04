@@ -38,3 +38,6 @@ jobs:
             version: pnpm changeset-manifests
             title: Version Packages - ${{ github.ref_name }}
             publish: pnpm release latest
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
