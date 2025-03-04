@@ -424,31 +424,57 @@ describe('showNotificationsIfNeeded', () => {
 })
 
 describe('fetchNotificationsInBackground', () => {
-  test('calls the expected Shopify binary for global installation', async () => {
+  test('does nothing for the init command', async () => {
     // Given / When
-    fetchNotificationsInBackground('theme:init', ['shopify', 'theme', 'init'], {SHOPIFY_UNIT_TEST: 'false'})
+    fetchNotificationsInBackground('init', ['shopify', 'create-app'], {SHOPIFY_UNIT_TEST: 'false'})
 
     // Then
-    expect(exec).toHaveBeenCalledWith('shopify', ['notifications', 'list'], expect.anything())
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('does nothing for the notifications list command', async () => {
+    // Given / When
+    fetchNotificationsInBackground('notifications:list', ['shopify', 'notifications', 'list'], {
+      SHOPIFY_UNIT_TEST: 'false',
+    })
+
+    // Then
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('calls the expected Shopify binary for global installation', async () => {
+    // Given / When
+    fetchNotificationsInBackground('theme:list', ['shopify', 'theme', 'list'], {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(exec).toHaveBeenCalledWith('shopify', ['notifications', 'list', '--ignore-errors'], expect.anything())
   })
 
   test('calls the expected Shopify binary for local installation', async () => {
     // Given / When
-    fetchNotificationsInBackground('theme:init', ['npm', 'run', 'shopify', 'theme', 'init'], {
+    fetchNotificationsInBackground('theme:list', ['npm', 'run', 'shopify', 'theme', 'list'], {
       SHOPIFY_UNIT_TEST: 'false',
     })
 
     // Then
-    expect(exec).toHaveBeenCalledWith('npm', ['run', 'shopify', 'notifications', 'list'], expect.anything())
+    expect(exec).toHaveBeenCalledWith(
+      'npm',
+      ['run', 'shopify', 'notifications', 'list', '--ignore-errors'],
+      expect.anything(),
+    )
   })
 
   test('calls the expected Shopify binary for dev environment', async () => {
     // Given / When
-    fetchNotificationsInBackground('theme:init', ['node', 'packages/cli/bin/dev.js', 'theme', 'init'], {
+    fetchNotificationsInBackground('theme:list', ['node', 'packages/cli/bin/dev.js', 'theme', 'list'], {
       SHOPIFY_UNIT_TEST: 'false',
     })
 
     // Then
-    expect(exec).toHaveBeenCalledWith('node', ['packages/cli/bin/dev.js', 'notifications', 'list'], expect.anything())
+    expect(exec).toHaveBeenCalledWith(
+      'node',
+      ['packages/cli/bin/dev.js', 'notifications', 'list', '--ignore-errors'],
+      expect.anything(),
+    )
   })
 })
