@@ -4423,6 +4423,14 @@
       "description": "List current notifications configured for the CLI.",
       "enableJsonFlag": false,
       "flags": {
+        "ignore-errors": {
+          "allowNo": false,
+          "description": "Don't fail if an error occurs.",
+          "env": "SHOPIFY_FLAG_IGNORE_ERRORS",
+          "hidden": false,
+          "name": "ignore-errors",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
