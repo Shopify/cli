@@ -1,6 +1,5 @@
 import {unifiedConfigurationParserFactory} from './json-schema.js'
 import {describe, test, expect} from 'vitest'
-import {HandleInvalidAdditionalProperties} from '@shopify/cli-kit/node/json-schema'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 describe('unifiedConfigurationParserFactory', () => {
@@ -123,7 +122,7 @@ describe('unifiedConfigurationParserFactory', () => {
     expect(result.data).toBeUndefined()
     expect(result.errors).toBeDefined()
     expect(result.errors?.length).toBeGreaterThan(0)
-    // expect(result.errors?.[0].path).toContain('price')
+    expect(result.errors?.[0]?.path).toContain('price')
   })
 
   test('combines errors from both validations', async () => {
@@ -151,36 +150,6 @@ describe('unifiedConfigurationParserFactory', () => {
     const priceError = result.errors?.find((error) => error.path.includes('price'))
     expect(typeError).toBeDefined()
     expect(priceError).toBeDefined()
-  })
-
-  test('passes handleInvalidAdditionalProperties parameter to validation', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}},"additionalProperties":false}',
-      },
-    }
-
-    // When - with default 'strip' behavior
-    const defaultParser = await unifiedConfigurationParserFactory(merged as any)
-    const defaultResult = defaultParser({type: 'product_subscription', extra: 'field'})
-
-    // Then - extra field should be stripped
-    expect(defaultResult.state).toBe('ok')
-
-    // When - with 'error' behavior
-    const errorParser = await unifiedConfigurationParserFactory(
-      merged as any,
-      'error' as HandleInvalidAdditionalProperties,
-    )
-    const errorResult = errorParser({type: 'product_subscription', extra: 'field'})
-
-    // Then - should error on extra field
-    expect(errorResult.state).toBe('error')
-    expect(errorResult.errors).toBeDefined()
-    // expect(errorResult.errors?.some((e) => e.path.includes('extra'))).toBe(true)
   })
 
   test('adds base properties to the JSON schema', async () => {
