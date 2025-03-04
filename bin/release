@@ -23,11 +23,6 @@ if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ]; then
   ./bin/update-cli-kit-version.js
 fi
 
-if [ "$tag" = "latest" ]; then
-  pnpm changeset-manifests
-fi
-
-
 # Bundle the packages
 pnpm bundle-for-release
 
