@@ -8,7 +8,7 @@ import {
   restRequestUrl,
   isThemeAccessSession,
 } from '../../../private/node/api/rest.js'
-import {fetch} from '../http.js'
+import {shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {normalizeStoreFqdn} from '../context/fqdn.js'
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
@@ -192,7 +192,7 @@ export async function restRequest<T>(
   const body = restRequestBody<T>(requestBody)
 
   const headers = restRequestHeaders(session)
-  const response = await fetch(url, {
+  const response = await shopifyFetch(url, {
     headers,
     method,
     body,

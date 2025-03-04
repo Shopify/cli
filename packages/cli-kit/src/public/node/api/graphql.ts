@@ -12,6 +12,7 @@ import {
   timeIntervalToMilliseconds,
 } from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
+import {abortSignalFromRequestBehaviour, requestMode} from '../http.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -85,6 +86,9 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   }
 
   debugLogRequestInfo(api, queryAsString, url, variables, headers)
+
+  const requestBehaviour = requestMode('default')
+
   const clientOptions = {agent: await httpsAgent(), headers}
   const client = new GraphQLClient(url, clientOptions)
 
@@ -93,6 +97,9 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     // there is a errorPolicy option which returns rather than throwing on errors, but we _do_ ultimately want to
     // throw.
     try {
+      // mapping signal to any due to polyfill meaning types don't exactly match (but are functionally equivalent)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      client.requestConfig.signal = abortSignalFromRequestBehaviour(requestBehaviour) as any
       fullResponse = await client.rawRequest<TResult>(queryAsString, variables)
       await logLastRequestIdFromResponse(fullResponse)
       return fullResponse
@@ -109,7 +116,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   const executeWithTimer = () =>
     runWithTimer('cmd_all_timing_network_ms')(async () => {
       const response = await retryAwareRequest(
-        {request: performRequest, url},
+        {request: performRequest, url, ...requestBehaviour},
         responseOptions?.handleErrors === false ? undefined : errorHandler(api),
         unauthorizedHandler,
       )
@@ -117,7 +124,6 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
       if (responseOptions?.onResponse) {
         responseOptions.onResponse(response)
       }
-
       return response.data
     })
 
