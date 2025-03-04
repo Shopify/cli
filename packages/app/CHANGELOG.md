@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.76.1
+
+### Patch Changes
+
+- ac2cc57: Fix bug with some extensions not being loaded correctly
+  - @shopify/cli-kit@3.76.1
+  - @shopify/theme@3.76.1
+  - @shopify/plugin-cloudflare@3.76.1
+
 ## 3.76.0
 
 ### Patch Changes
