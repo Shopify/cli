@@ -323,24 +323,21 @@ describe('createApp', () => {
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
-      org.id,
-      CreateApp,
-      'token',
-      expect.objectContaining({
-        appSource: {
-          appModules: expect.arrayContaining([
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
+      initialVersion: {
+        source: {
+          name: 'app-name',
+          modules: expect.arrayContaining([
             {
               config: {
                 api_version: '2025-01',
               },
-              specificationIdentifier: 'webhooks',
-              uid: 'webhooks',
+              type: 'webhooks',
             },
           ]),
         },
-      }),
-    )
+      },
+    })
   })
 
   test('creates app successfully and returns expected app structure', async () => {
