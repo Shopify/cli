@@ -173,7 +173,7 @@ export function fetchNotificationsInBackground(
   if (skipNotifications(currentCommand, environment)) return
 
   let command = 'shopify'
-  const args = ['notifications', 'list']
+  const args = ['notifications', 'list', '--ignore-errors']
   // Run the Shopify command the same way as the current execution when it's not the global installation
   if (argv[0] && argv[0] !== 'shopify') {
     command = argv[0]
