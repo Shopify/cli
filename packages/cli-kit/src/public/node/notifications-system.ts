@@ -13,6 +13,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
+const COMMANDS_TO_SKIP = ['notifications:list', 'notifications:generate', 'app:init', 'theme:init', 'cache:clear']
 
 function url(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
@@ -55,27 +56,32 @@ export async function showNotificationsIfNeeded(
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
   try {
-    if (skipNotifications(environment) || jsonOutputEnabled(environment)) return
+    const commandId = getCurrentCommandId()
+    if (skipNotifications(commandId, environment) || jsonOutputEnabled(environment)) return
 
     const notifications = await getNotifications()
-    const commandId = getCurrentCommandId()
     const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
     outputDebug(`Notifications to show: ${notificationsToShow.length}`)
     await renderNotifications(notificationsToShow)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    if (error.message === EMPTY_CACHE_MESSAGE) {
+      outputDebug('Notifications to show: 0 (Cache is empty)')
+      return
+    }
     if (error.message === 'abort') throw new AbortSilentError()
-    const errorMessage = `Error retrieving notifications: ${error.message}`
+    const errorMessage = `Error showing notifications: ${error.message}`
     outputDebug(errorMessage)
-    if (error.message === EMPTY_CACHE_MESSAGE) return
     // This is very prone to becoming a circular dependency, so we import it dynamically
     const {sendErrorToBugsnag} = await import('./error-handler.js')
     await sendErrorToBugsnag(errorMessage, 'unexpected_error')
   }
 }
 
-function skipNotifications(environment: NodeJS.ProcessEnv = process.env): boolean {
-  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST)
+function skipNotifications(currentCommand: string, environment: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || COMMANDS_TO_SKIP.includes(currentCommand)
+  )
 }
 
 /**
@@ -160,7 +166,7 @@ export function fetchNotificationsInBackground(
   argv = process.argv,
   environment: NodeJS.ProcessEnv = process.env,
 ): void {
-  if (skipNotifications(environment)) return
+  if (skipNotifications(currentCommand, environment)) return
 
   let command = 'shopify'
   const args = ['notifications', 'list']
