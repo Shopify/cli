@@ -42,7 +42,7 @@ describe('functionConfiguration', () => {
       {
         target: 'purchase.discount.cart_run',
         export: 'run',
-        features: ['addProductDiscounts', 'addOrderDiscounts'],
+        operations: ['addProductDiscounts', 'addOrderDiscounts'],
       },
     ],
   }
@@ -94,7 +94,7 @@ describe('functionConfiguration', () => {
             export: 'run',
             handle: 'purchase.discount.cart_run',
             input_query: undefined,
-            features: '["addProductDiscounts", "addOrderDiscounts"]',
+            operations: '["addProductDiscounts", "addOrderDiscounts"]',
           },
         ],
         module_id: expect.any(String),

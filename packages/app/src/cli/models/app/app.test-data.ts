@@ -566,7 +566,7 @@ function defaultFunctionConfiguration(): FunctionConfigType {
       {
         target: 'purchase.discount.cart_run',
         export: 'run',
-        features: ['addProductDiscounts', 'addOrderDiscounts'],
+        operations: ['addProductDiscounts', 'addOrderDiscounts'],
       },
     ],
   }
