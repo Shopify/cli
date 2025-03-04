@@ -16,6 +16,7 @@ const require = createRequire(import.meta.url)
 const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-extra')
 const {program} = require('commander')
 const colors = require('ansi-colors')
+import {withOctokit} from './github-utils.js'
 
 const packagingDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../packaging")
 
