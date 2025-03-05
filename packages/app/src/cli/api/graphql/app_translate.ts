@@ -5,7 +5,7 @@ export const CreateTranslationRequest = gql`
   mutation CreateTranslationRequest(
     $sourceLanguage: String!
     $targetLanguage: String!
-    $sourceTexts: [TranslationText!]!
+    $sourceTexts: [TranslationStringInput!]!
     $nonTranslatableTerms: [String!]!
     $promptContext: String
   ) {
@@ -28,7 +28,7 @@ export const CreateTranslationRequest = gql`
           value
         }
       }
-      errors {
+      userErrors {
         field
         message
       }
@@ -37,8 +37,8 @@ export const CreateTranslationRequest = gql`
 `
 
 export const GetTranslationRequest = gql`
-  query GetTranslationRequest($id: String!) {
-    translationRequest(id: $id) {
+  query GetTranslationRequest($requestId: String!) {
+    translationRequest(id: $requestId) {
       id
       fulfilled
       targetLanguage
@@ -62,13 +62,13 @@ export interface TranslationRequest {
 }
 
 export interface CreateTranslationRequestSchema {
-  createTranslationRequest: {
+  translationRequestCreate: {
     translationRequest: TranslationRequest
+    userErrors: {
+      field?: string[] | null
+      message: string
+    }[]
   }
-  userErrors: {
-    field?: string[] | null
-    message: string
-  }[]
 }
 
 export interface CreateTranslationRequestInput {
@@ -80,7 +80,5 @@ export interface CreateTranslationRequestInput {
 }
 
 export interface GetTranslationRequestSchema {
-  getTranslationRequest: {
-    translationRequest: TranslationRequest
-  }
+  translationRequest: TranslationRequest
 }

@@ -6,6 +6,7 @@ import {
   getManifestData,
   manifestFilePath,
   sourceTextForKey,
+  flatObject,
 } from './translate/utilities.js'
 import {collectRequestData, breakUpTranslationRequests} from './translate/translation-request-utilities.js'
 import {ManifestEntry, TranslateOptions, TaskContext} from './translate/types.js'
@@ -43,6 +44,8 @@ export async function translate(options: TranslateOptions) {
     await confirmChanges(app, remoteApp, translationRequestData, promptContext, nonTranslatableTerms)
   }
 
+  // TODO, clean up files that should be deleted somewhere.  Not right here though.
+
   const tasks = [
     {
       title: 'Initializing',
@@ -63,12 +66,13 @@ export async function translate(options: TranslateOptions) {
         let translationRequestsToCreate: CreateTranslationRequestInput[] = targetLanguages.map((targetLanguage) => ({
           sourceLanguage: SOURCE_LANGUAGE,
           targetLanguage,
-          sourceTexts: translationRequestData.updatedSourceFiles.flatMap((file) =>
-            Object.entries(file.content).map(([key, value]) => ({
+          sourceTexts: translationRequestData.updatedSourceFiles.flatMap((file) => {
+            const flat = flatObject(file.content)
+            return Object.entries(flat).map(([key, value]) => ({
               key,
-              value: value as string,
-            })),
-          ),
+              value,
+            }))
+          }),
           nonTranslatableTerms,
           promptContext,
         }))
@@ -84,12 +88,12 @@ export async function translate(options: TranslateOptions) {
 
         // update the context with the new requests
         context.transationRequests = translationRequestCreateResponses.map(
-          (createResponse) => createResponse.createTranslationRequest.translationRequest,
+          (createResponse) => createResponse.translationRequestCreate.translationRequest,
         )
 
         // update the context with the errors
         context.errors = translationRequestCreateResponses.flatMap((createResponse) =>
-          createResponse.userErrors.map((error) => error.message),
+          createResponse.translationRequestCreate.userErrors.map((error) => error.message),
         )
       },
     },
@@ -107,7 +111,7 @@ export async function translate(options: TranslateOptions) {
           context.transationRequests.map((request) =>
             developerPlatformClient
               .getTranslationRequest(remoteApp.organizationId, {requestId: request.id})
-              .then((response) => response.getTranslationRequest.translationRequest),
+              .then((response) => response.translationRequest),
           ),
         )
 

@@ -67,6 +67,23 @@ export function getPaths(obj: {[key: string]: unknown} | undefined, prefix = '')
 
   return paths
 }
+
+/**
+ * Returns a flat object with the keys as the path to the value.
+ */
+export function flatObject(obj: {[key: string]: unknown}): {[key: string]: string} {
+  const paths = getPaths(obj)
+  const flat: {[key: string]: string} = {}
+  for (const path of paths) {
+    const value = getPathValue(obj, path)
+    if (typeof value !== 'string') {
+      continue
+    }
+    flat[path] = value
+  }
+  return flat
+}
+
 /**
  * Deletes empty objects from the given object. Also deletes objects which only have empty objects as children.
  *

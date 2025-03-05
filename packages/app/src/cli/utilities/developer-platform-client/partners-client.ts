@@ -474,43 +474,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     _orgId: string,
     input: CreateTranslationRequestInput,
   ): Promise<CreateTranslationRequestSchema> {
-    // eslint-disable-next-line no-constant-condition
-    if (false) return this.request(CreateTranslationRequest, input)
-
-    return {
-      createTranslationRequest: {
-        translationRequest: {
-          id: '1',
-          fulfilled: false,
-          targetTexts: null,
-        },
-      },
-      userErrors: [],
-    }
+    const response = await this.request(CreateTranslationRequest, input)
+    return response as CreateTranslationRequestSchema
   }
 
   async getTranslationRequest(_orgId: string, input: {requestId: string}): Promise<GetTranslationRequestSchema> {
-    // eslint-disable-next-line no-constant-condition
-    if (false) return this.request(GetTranslationRequest, input)
-
-    return {
-      getTranslationRequest: {
-        translationRequest: {
-          id: input.requestId,
-          fulfilled: true,
-          targetTexts: [
-            {
-              key: 'links.home',
-              value: 'stubbed home',
-            },
-            {
-              key: 'links.more',
-              value: 'stubbed more',
-            },
-          ],
-        },
-      },
-    }
+    return this.request(GetTranslationRequest, input)
   }
 
   async generateSignedUploadUrl(app: MinimalAppIdentifiers): Promise<AssetUrlSchema> {

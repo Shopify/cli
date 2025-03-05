@@ -1324,22 +1324,20 @@ const releaseResponse: AppReleaseSchema = {
 }
 
 const createTranslationRequestResponse: CreateTranslationRequestSchema = {
-  createTranslationRequest: {
+  translationRequestCreate: {
     translationRequest: {
       id: 'translation-request-id',
       fulfilled: true,
     },
+    userErrors: [],
   },
-  userErrors: [],
 }
 
 const getTranslationRequestResponse: GetTranslationRequestSchema = {
-  getTranslationRequest: {
-    translationRequest: {
-      id: 'translation-request-id',
-      fulfilled: true,
-      targetTexts: [],
-    },
+  translationRequest: {
+    id: 'translation-request-id',
+    fulfilled: true,
+    targetTexts: [],
   },
 }
 
