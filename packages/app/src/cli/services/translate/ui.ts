@@ -3,6 +3,7 @@ import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {pluralize} from '@shopify/cli-kit/common/string'
 import {renderSuccess, renderError, renderInfo, renderConfirmationPrompt, TokenItem} from '@shopify/cli-kit/node/ui'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 function generateTranslationFileSummary(file: TranslationTargetFile) {
   const changes = []
@@ -31,7 +32,29 @@ function generateTranslationFileSummary(file: TranslationTargetFile) {
   return `${file.fileName} (${changes.join(', ')})`
 }
 
-export async function renderChangesConfirmation(
+export async function confirmChanges(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  translationRequestData: TranslationRequestData,
+  promptContext: string | undefined,
+  nonTranslatableTerms: string[],
+) {
+  if (translationRequestData.targetFilesToUpdate.length > 0) {
+    const confirmationResponse = await renderChangesConfirmation(
+      app,
+      remoteApp,
+      translationRequestData,
+      promptContext,
+      nonTranslatableTerms,
+    )
+    if (!confirmationResponse) throw new AbortSilentError()
+  } else {
+    renderNoChanges()
+    process.exit(0)
+  }
+}
+
+async function renderChangesConfirmation(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
   translationRequestData: TranslationRequestData,
@@ -59,7 +82,7 @@ export async function renderChangesConfirmation(
   return confirmationResponse
 }
 
-export function renderNoChanges() {
+function renderNoChanges() {
   renderInfo({
     headline: 'Translation Check Complete.',
     body: 'All translation files are already up to date. No changes are required at this time.',
