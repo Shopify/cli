@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 3.77.0
+
+### Patch Changes
+
+- 4f7dcf7: Bump Shopify/theme-tools packages
+- Updated dependencies [73c78ac]
+- Updated dependencies [36dccd6]
+  - @shopify/cli-kit@3.77.0
+
 ## 3.76.0
 
 ### Minor Changes

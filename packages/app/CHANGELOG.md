@@ -1,5 +1,21 @@
 # @shopify/app
 
+## 3.77.0
+
+### Minor Changes
+
+- 36dccd6: Automatic cancellation of slow network requests
+
+### Patch Changes
+
+- 4f7dcf7: Bump Shopify/theme-tools packages
+- Updated dependencies [73c78ac]
+- Updated dependencies [4f7dcf7]
+- Updated dependencies [36dccd6]
+  - @shopify/cli-kit@3.77.0
+  - @shopify/theme@3.77.0
+  - @shopify/plugin-cloudflare@3.77.0
+
 ## 3.76.0
 
 ### Patch Changes
