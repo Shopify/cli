@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.76.2
+
+### Patch Changes
+
+- 7fe2ae0: Skip notifications on init commands to fix create-app package
+
 ## 3.76.1
 
 ## 3.76.0
