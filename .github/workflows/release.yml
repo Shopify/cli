@@ -20,6 +20,8 @@ jobs:
     name: Changeset Release
     runs-on: ubuntu-latest
     permissions:
+      contents: write
+      pull-requests: write
       id-token: write
     steps:
       - uses: actions/checkout@v3
