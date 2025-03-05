@@ -72,6 +72,7 @@
     "proper-lockfile": "4.1.2",
     "react": "^18.2.0",
     "react-dom": "18.3.1",
+    "which": "4.0.0",
     "ws": "8.18.0"
   },
   "devDependencies": {
@@ -82,6 +83,7 @@
     "@types/proper-lockfile": "4.1.4",
     "@types/react": "18.2.0",
     "@types/react-dom": "18.2.0",
+    "@types/which": "3.0.4",
     "@types/ws": "^8.5.13",
     "@vitest/coverage-istanbul": "^1.6.0"
   },
