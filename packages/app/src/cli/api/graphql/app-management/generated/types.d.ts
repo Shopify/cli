@@ -47,28 +47,6 @@ export type Scalars = {
   URL: {input: string; output: string}
 }
 
-/** The input fields for an app module. */
-export type AppModuleInput = {
-  /** Configuration for the module. */
-  config: Scalars['JSON']['input']
-  /** Human-readable identifier for the module. */
-  handle?: InputMaybe<Scalars['String']['input']>
-  /** Identifier for the module's specification. */
-  specificationIdentifier: Scalars['String']['input']
-  /** The location where the module will be surfaced. */
-  target?: InputMaybe<Scalars['String']['input']>
-  /** User-specified identifier for the module, unique to the app. */
-  uid?: InputMaybe<Scalars['String']['input']>
-}
-
-/** The input fields for data and configuration that represent an app. */
-export type AppSourceInput = {
-  /** Modules that make up the app. */
-  appModules: AppModuleInput[]
-  /** URL for app assets. */
-  assetsUrl?: InputMaybe<Scalars['URL']['input']>
-}
-
 /** The input fields used to create a new app version. */
 export type AppVersionInput = {
   /** The manifest from which to create the app version. */

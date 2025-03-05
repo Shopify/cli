@@ -6,8 +6,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type CreateAppVersionMutationVariables = Types.Exact<{
   appId: Types.Scalars['ID']['input']
-  appSource: Types.AppSourceInput
-  name: Types.Scalars['String']['input']
+  version: Types.AppVersionInput
   metadata?: Types.InputMaybe<Types.VersionMetadataInput>
 }>
 
@@ -49,13 +48,8 @@ export const CreateAppVersion = {
         },
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appSource'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'AppSourceInput'}}},
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'name'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'version'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'AppVersionInput'}}},
         },
         {
           kind: 'VariableDefinition',
@@ -77,13 +71,8 @@ export const CreateAppVersion = {
               },
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'appSource'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appSource'}},
-              },
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'name'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'name'}},
+                name: {kind: 'Name', value: 'version'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'version'}},
               },
               {
                 kind: 'Argument',
