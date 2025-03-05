@@ -2,14 +2,18 @@ import {renderErrorMessage, renderSuccessMessage, noLanguagesConfiguredMessage, 
 import {
   deleteEmptyObjects,
   targetFileWithKey,
-  manifestHash,
   getManifestData,
   manifestFilePath,
   sourceTextForKey,
   flatObject,
+  pathHasPrefix,
 } from './translate/utilities.js'
-import {collectRequestData, breakUpTranslationRequests} from './translate/translation-request-utilities.js'
-import {ManifestEntry, TranslateOptions, TaskContext} from './translate/types.js'
+import {
+  collectRequestData,
+  breakUpTranslationRequests,
+  updateManifest,
+} from './translate/translation-request-utilities.js'
+import {TranslateOptions, TaskContext} from './translate/types.js'
 
 import {CreateTranslationRequestInput} from '../api/graphql/app_translate.js'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -31,6 +35,8 @@ export async function translate(options: TranslateOptions) {
     target_languages: targetLanguages = [],
     prompt_context: promptContext,
     non_translatable_terms: nonTranslatableTerms = [],
+    manual_translations_key_prefix: manualTranslationKeyPrefix,
+    non_translatable_key_prefix: nonTranslatableKeyPrefix,
   } = app.configuration.translations ?? {}
 
   if (targetLanguages.length === 0) {
@@ -43,8 +49,6 @@ export async function translate(options: TranslateOptions) {
   if (!force) {
     await confirmChanges(app, remoteApp, translationRequestData, promptContext, nonTranslatableTerms)
   }
-
-  // TODO, clean up files that should be deleted somewhere.  Not right here though.
 
   const tasks = [
     {
@@ -63,20 +67,45 @@ export async function translate(options: TranslateOptions) {
       title: 'Requesting translations',
       task: async (context: TaskContext) => {
         // Each target language should have a request
-        let translationRequestsToCreate: CreateTranslationRequestInput[] = targetLanguages.map((targetLanguage) => ({
-          sourceLanguage: SOURCE_LANGUAGE,
-          targetLanguage,
-          sourceTexts: translationRequestData.updatedSourceFiles.flatMap((file) => {
+        let translationRequestsToCreate: CreateTranslationRequestInput[] = targetLanguages.map((targetLanguage) => {
+          const sourceTextsRequireingTranslations = translationRequestData.updatedSourceFiles.flatMap((file) => {
             const flat = flatObject(file.content)
-            return Object.entries(flat).map(([key, value]) => ({
+            const keysToTranslate = Object.entries(flat).filter(([key, _value]) => {
+              if (pathHasPrefix(key, manualTranslationKeyPrefix) || pathHasPrefix(key, nonTranslatableKeyPrefix)) {
+                return false
+              }
+
+              // if key is not in any target files, then it should not be translated
+              if (
+                !translationRequestData.targetFilesToUpdate.some(
+                  (targetFile) => targetFile.keysToUpdate.includes(key) || targetFile.keysToCreate.includes(key),
+                )
+              ) {
+                return false
+              }
+
+              return true
+            })
+
+            return keysToTranslate.map(([key, value]) => ({
               key,
               value,
             }))
-          }),
-          nonTranslatableTerms,
-          promptContext,
-        }))
+          })
 
+          return {
+            sourceLanguage: SOURCE_LANGUAGE,
+            targetLanguage,
+            sourceTexts: sourceTextsRequireingTranslations,
+            nonTranslatableTerms,
+            promptContext,
+          }
+        })
+
+        // TODO, should we filter out any requests that have no source texts? If so updating files needs to be updated to handle dnt/manual keys
+        // translationRequestsToCreate = translationRequestsToCreate.filter((request) => request.sourceTexts.length > 0)
+
+        // TODO, dose this cause a bug when we save the files?  We might need to reload the target files after we save them or change the strcture of how we save the files
         translationRequestsToCreate = breakUpTranslationRequests(translationRequestsToCreate, MAX_KEYS_PER_REQUEST)
 
         // make the requests
@@ -165,25 +194,26 @@ export async function translate(options: TranslateOptions) {
               return
             }
 
-            // update manifest for targetFile
-            targetFile.manifestStrings[targetText.key] = manifestHash(sourceText)
+            manifestData = updateManifest(targetFile, manifestData, targetText.key, sourceText)
+          })
+        })
 
-            // update shared manifest
-            const existingManifestEntry = manifestData.find(
-              (mData: ManifestEntry) => mData?.file === targetFile.fileName,
-            ) ?? {
-              file: targetFile.fileName,
-              strings: {},
+        // Create or update keys that are "do not translate"
+        translationRequestData.targetFilesToUpdate.forEach((targetFile) => {
+          const keys = [...targetFile.keysToCreate, ...targetFile.keysToUpdate]
+          keys.forEach((key) => {
+            if (pathHasPrefix(key, nonTranslatableKeyPrefix)) {
+              // Update the target file
+              const sourceText = sourceTextForKey(translationRequestData.updatedSourceFiles, key)
+              if (!sourceText) {
+                context.errors.push(`Source text not found for key: ${key}`)
+                return
+              }
+
+              setPathValue(targetFile.content, key, sourceText)
+
+              manifestData = updateManifest(targetFile, manifestData, key, sourceText)
             }
-
-            // Remove the existing entry if it exists
-            manifestData = manifestData.filter((mData: ManifestEntry) => mData?.file !== targetFile.fileName)
-
-            // Add the updated entry
-            manifestData.push({
-              file: targetFile.fileName,
-              strings: {...existingManifestEntry.strings, ...targetFile.manifestStrings},
-            })
           })
         })
 

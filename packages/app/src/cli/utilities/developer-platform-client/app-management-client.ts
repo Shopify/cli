@@ -697,8 +697,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     orgId: string,
     input: CreateTranslationRequestInput,
   ): Promise<CreateTranslationRequestSchema> {
-    // try/catch thing is a hack while we wait for api sub to be merged.
-
     // @ts-ignore // fix me
     return appManagementRequestDoc(orgId, CreateTranslationRequest, await this.token(), input)
   }

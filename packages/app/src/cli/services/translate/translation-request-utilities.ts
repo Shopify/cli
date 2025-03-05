@@ -1,5 +1,5 @@
-import {TranslationRequestData, ManifestEntry} from './types.js'
-import {getManifestData, addFilesToTranslationFiles, getPaths, manifestHash} from './utilities.js'
+import {TranslationRequestData, ManifestEntry, TranslationTargetFile} from './types.js'
+import {getManifestData, addFilesToTranslationFiles, getPaths, manifestHash, pathHasPrefix} from './utilities.js'
 import {SOURCE_LANGUAGE, DEFAULT_LOCALES_DIR} from '../translate.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {CreateTranslationRequestInput, TranslationText} from '../../api/graphql/app_translate.js'
@@ -73,6 +73,10 @@ export async function collectRequestData(app: AppLinkedInterface): Promise<Trans
 
     // Find modified keys
     allCurrentTargetPaths.forEach((targetPath) => {
+      if (pathHasPrefix(targetPath, manualTranslationKeyPrefix)) {
+        return
+      }
+
       const currentSourceValue = getPathValue(sourceFile.content, targetPath) as string
       if (!currentSourceValue) {
         return
@@ -87,11 +91,17 @@ export async function collectRequestData(app: AppLinkedInterface): Promise<Trans
     })
 
     // Add keys in source that are not in target
-    targetFile.keysToCreate = allCurrentSourcePaths.filter((path) => !allCurrentTargetPaths.includes(path))
+    targetFile.keysToCreate = allCurrentSourcePaths.filter(
+      (path) => !allCurrentTargetPaths.includes(path) && !pathHasPrefix(path, manualTranslationKeyPrefix),
+    )
 
     // Add keys in target that are not in source
-    targetFile.keysToDelete = allCurrentTargetPaths.filter((path) => !allCurrentSourcePaths.includes(path))
+    targetFile.keysToDelete = allCurrentTargetPaths.filter(
+      (path) => !allCurrentSourcePaths.includes(path) && !pathHasPrefix(path, manualTranslationKeyPrefix),
+    )
   })
+
+  // TODO, Delete target files with no corasponding source files
 
   // Remove files with no changes
   requestData.targetFilesToUpdate = requestData.targetFilesToUpdate.filter(
@@ -140,4 +150,31 @@ export function breakUpTranslationRequests(
   })
 
   return translationRequests
+}
+
+export function updateManifest(
+  targetFile: TranslationTargetFile,
+  manifestData: ManifestEntry[],
+  key: string,
+  sourceText: string,
+): ManifestEntry[] {
+  // update manifest for targetFile
+  targetFile.manifestStrings[key] = manifestHash(sourceText)
+
+  // update shared manifest
+  const existingManifestEntry = manifestData.find((mData: ManifestEntry) => mData?.file === targetFile.fileName) ?? {
+    file: targetFile.fileName,
+    strings: {},
+  }
+
+  // Remove the existing entry if it exists
+  const updatedManifestData = manifestData.filter((mData: ManifestEntry) => mData?.file !== targetFile.fileName)
+
+  // Add the updated entry
+  updatedManifestData.push({
+    file: targetFile.fileName,
+    strings: {...existingManifestEntry.strings, ...targetFile.manifestStrings},
+  })
+
+  return updatedManifestData
 }

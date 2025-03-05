@@ -46,7 +46,11 @@ export async function addFilesToTranslationFiles(
   }
 }
 
-export function getPaths(obj: {[key: string]: unknown} | undefined, prefix = ''): string[] {
+export function getPaths(
+  obj: {[key: string]: unknown} | undefined,
+  ignoredPrefixes: string[] = [],
+  prefix = '',
+): string[] {
   if (obj === undefined) {
     return []
   }
@@ -57,8 +61,12 @@ export function getPaths(obj: {[key: string]: unknown} | undefined, prefix = '')
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const newPrefix = prefix ? `${prefix}.${key}` : key
 
+      if (ignoredPrefixes.some((prefix) => key.startsWith(prefix))) {
+        continue
+      }
+
       if (typeof obj[key] === 'object' && obj[key] !== null) {
-        paths.push(...getPaths(obj[key] as {[key: string]: unknown}, newPrefix))
+        paths.push(...getPaths(obj[key] as {[key: string]: unknown}, ignoredPrefixes, newPrefix))
       } else {
         paths.push(newPrefix)
       }
@@ -66,6 +74,15 @@ export function getPaths(obj: {[key: string]: unknown} | undefined, prefix = '')
   }
 
   return paths
+}
+
+// Returns true if the path starts with the prefix or includes the prefix as a dot-separated segment
+export function pathHasPrefix(path: string | undefined, prefix: string | undefined): boolean {
+  if (!path || !prefix) {
+    return false
+  }
+
+  return path.startsWith(prefix) || path.includes(`.${prefix}`)
 }
 
 /**
