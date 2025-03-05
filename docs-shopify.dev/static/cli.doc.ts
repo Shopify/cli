@@ -43,7 +43,7 @@ const data: LandingTemplateSchema = {
             language: 'bash',
           },
           {
-            title: 'homebrew',
+            title: 'homebrew (macOS)',
             code: 'examples/install.brew.example.sh',
             language: 'bash',
           },
