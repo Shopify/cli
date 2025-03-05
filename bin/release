@@ -23,10 +23,6 @@ if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ]; then
   ./bin/update-cli-kit-version.js
 fi
 
-if [ "$tag" = "latest" ]; then
-  pnpm changeset-manifests
-fi
-
 
 # Bundle the packages
 pnpm bundle-for-release
@@ -35,4 +31,4 @@ pnpm bundle-for-release
 node bin/create-cli-duplicate-package.js
 
 # Publish the packages
-pnpm changeset publish --tag $tag
+pnpm changeset publish --tag $tag --no-git-tag
