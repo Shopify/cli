@@ -10,11 +10,12 @@ import {
   testOrganizationStore,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {appHiddenConfigPath, AppLinkedInterface} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import {vi, describe, test, expect} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {withHiddenConfigPathIn} from '@shopify/cli-kit/node/hiddenFolder'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')
@@ -180,15 +181,15 @@ describe('storeContext', () => {
     })
   })
 
-  test('adds hidden config to gitignore if needed', async () => {
+  test('gitignores .shopify directory', async () => {
     await inTemporaryDirectory(async (dir) => {
       await prepareAppFolder(mockApp, dir)
       vi.mocked(fetchStore).mockResolvedValue(mockStore)
 
       await storeContext({appContextResult, forceReselectStore: false})
 
-      const gitIgnoreContent = await readFile(joinPath(dir, '.gitignore'))
-      expect(gitIgnoreContent).toContain('.shopify')
+      const gitIgnoreContent = await readFile(joinPath(dir, '.shopify', '.gitignore'))
+      expect(gitIgnoreContent).toEqual('# Ignore the entire .shopify directory\n*')
     })
   })
 
@@ -199,8 +200,13 @@ describe('storeContext', () => {
 
       await storeContext({appContextResult, forceReselectStore: false})
 
-      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
-      expect(hiddenConfig).toEqual('{\n  "client_id": {\n    "dev_store_url": "test-store.myshopify.com"\n  }\n}')
+      const callback = vi.fn(async (configPath: string) => {
+        const hiddenConfig = await readFile(configPath)
+        expect(hiddenConfig).toEqual('{\n  "client_id": {\n    "dev_store_url": "test-store.myshopify.com"\n  }\n}')
+      })
+
+      await withHiddenConfigPathIn(dir, callback)
+      expect(callback).toHaveBeenCalled()
     })
   })
 })
@@ -209,5 +215,4 @@ async function prepareAppFolder(app: AppLinkedInterface, directory: string) {
   app.directory = directory
   await mkdir(joinPath(directory, '.shopify'))
   await writeFile(joinPath(directory, '.shopify', 'project.json'), '')
-  await writeFile(joinPath(directory, '.gitignore'), '')
 }
