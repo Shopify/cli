@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.76.2
+
+### Patch Changes
+
+- 7fe2ae0: Skip notifications on init commands to fix create-app package
+- Updated dependencies [7fe2ae0]
+  - @shopify/cli-kit@3.76.2
+  - @shopify/plugin-cloudflare@3.76.2
+  - @shopify/theme@3.76.2
+
 ## 3.76.1
 
 ### Patch Changes
