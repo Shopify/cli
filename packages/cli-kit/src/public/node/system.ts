@@ -137,8 +137,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     detached: options?.background,
     cleanup: !options?.background,
   })
-  outputDebug(`
-Running system process${options?.background ? ' in background' : ''}:
+  outputDebug(`Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
   · Working directory: ${executionCwd}
 `)
