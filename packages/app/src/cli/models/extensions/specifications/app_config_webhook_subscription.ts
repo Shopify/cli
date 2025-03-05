@@ -13,6 +13,10 @@ interface TransformedWebhookSubscription {
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
+  metafields?: {
+    namespace: string
+    key: string
+  }[]
 }
 
 export const SingleWebhookSubscriptionSchema = zod.object({
@@ -23,6 +27,15 @@ export const SingleWebhookSubscriptionSchema = zod.object({
   }),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  metafields: zod
+    .array(
+      zod.object({
+        namespace: zod.string({invalid_type_error: 'Metafield namespace must be a string'}),
+        key: zod.string({invalid_type_error: 'Metafield key must be a string'}),
+      }),
+      {invalid_type_error: 'Metafields must be an array of objects with namespace and key'},
+    )
+    .optional(),
 })
 
 /* this transforms webhooks remotely to be accepted by the TOML
