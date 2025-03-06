@@ -1,4 +1,4 @@
-import {writeAppLogsToFile} from './write-app-logs.js'
+import { writeAppLogsToFile } from './write-app-logs.js'
 import {
   POLLING_INTERVAL_MS,
   POLLING_ERROR_RETRY_INTERVAL_MS,
@@ -14,17 +14,17 @@ import {
   handleFetchAppLogsError,
   fetchAppLogsDevDashboard,
 } from '../utils.js'
-import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
-import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import { AppLogData, ErrorResponse, FunctionRunLog } from '../types.js'
+import { outputContent, outputDebug, outputToken, outputWarn } from '@shopify/cli-kit/node/output'
+import { useConcurrentOutputContext } from '@shopify/cli-kit/node/ui/components'
 import camelcaseKeys from 'camelcase-keys'
-import {Writable} from 'stream'
+import { Writable } from 'stream'
 import { OrganizationSource } from '../../../models/organization.js'
-import {Response} from '@shopify/cli-kit/node/http'
+import { Response } from '@shopify/cli-kit/node/http'
 
 export const pollAppLogs = async ({
   stdout,
-  appLogsFetchInput: {jwtToken, cursor},
+  appLogsFetchInput: { jwtToken, cursor },
   apiKey,
   resubscribeCallback,
   storeName,
@@ -33,11 +33,11 @@ export const pollAppLogs = async ({
   appId,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string}
+  appLogsFetchInput: { jwtToken: string; cursor?: string }
   apiKey: string
   resubscribeCallback: () => Promise<string>
   storeName: string
-  organizationSource?: OrganizationSource
+  organizationSource: OrganizationSource
   orgId: string
   appId: string
 }) => {
@@ -45,22 +45,18 @@ export const pollAppLogs = async ({
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    console.log("jwtToken", jwtToken)
-    console.log('organizationSource', organizationSource)
-
     const isDevDashboard = organizationSource === OrganizationSource.BusinessPlatform;
-    console.log("isDevDashboard", isDevDashboard)
 
     const httpResponse: Response = isDevDashboard
       ? await fetchAppLogsDevDashboard(jwtToken, orgId, appId, cursor)
       : await fetchAppLogs(jwtToken, cursor);
 
     const response = await httpResponse.json()
-    const {errors} = response as {errors: string[]}
+    const { errors } = response as { errors: string[] }
 
     if (errors) {
       const errorResponse = {
-        errors: errors.map((error) => ({message: error, status: httpResponse.status})),
+        errors: errors.map((error) => ({ message: error, status: httpResponse.status })),
       } as ErrorResponse
 
       const result = await handleFetchAppLogsError({
@@ -91,12 +87,12 @@ export const pollAppLogs = async ({
     }
 
     if (data.app_logs) {
-      const {app_logs: appLogs} = data
+      const { app_logs: appLogs } = data
 
       for (const log of appLogs) {
         let payload = JSON.parse(log.payload)
         // eslint-disable-next-line no-await-in-loop
-        await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
+        await useConcurrentOutputContext({ outputPrefix: log.source, stripAnsi: false }, async () => {
           if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
             handleFunctionRunLog(log, payload, stdout)
             payload = new FunctionRunLog(camelcaseKeys(payload))
@@ -169,7 +165,7 @@ export const pollAppLogs = async ({
   }
 }
 
-function handleFunctionRunLog(log: AppLogData, payload: {[key: string]: unknown}, stdout: Writable) {
+function handleFunctionRunLog(log: AppLogData, payload: { [key: string]: unknown }, stdout: Writable) {
   const fuel = ((payload.fuel_consumed as number) / ONE_MILLION).toFixed(4)
   if (log.status === 'success') {
     stdout.write(`Function export "${payload.export as string}" executed successfully using ${fuel}M instructions.`)
@@ -190,7 +186,7 @@ function handleFunctionRunLog(log: AppLogData, payload: {[key: string]: unknown}
   }
 }
 
-function handleFunctionNetworkAccessLog(log: AppLogData, payload: {[key: string]: unknown}, stdout: Writable) {
+function handleFunctionNetworkAccessLog(log: AppLogData, payload: { [key: string]: unknown }, stdout: Writable) {
   if (log.log_type === LOG_TYPE_RESPONSE_FROM_CACHE) {
     stdout.write('Function network access response retrieved from cache.')
   } else if (log.log_type === LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND) {

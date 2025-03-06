@@ -6,6 +6,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+import { OrganizationSource } from '../../../models/organization.js'
 
 vi.mock('@shopify/cli-kit/node/logs')
 vi.mock('@shopify/cli-kit/node/output')
@@ -28,6 +29,8 @@ describe('app-logs-polling', () => {
         developerPlatformClient,
         subscription: {shopIds: SHOP_IDS, apiKey: API_KEY},
         storeName: 'storeName',
+        organizationId: '1',
+        appId: '1',
       })
 
       // Then
@@ -52,6 +55,9 @@ describe('app-logs-polling', () => {
       shopIds: SHOP_IDS,
       apiKey: API_KEY,
       token: TOKEN,
+      organizationId: '1',
+      appId: '1',
+      organizationSource: OrganizationSource.Partners,
     }
 
     let subscribeToAppLogs: Mock
@@ -82,6 +88,8 @@ describe('app-logs-polling', () => {
           developerPlatformClient,
           appLogsSubscribeVariables,
           storeName: 'storeName',
+          organizationId: '1',
+          appId: '1',
         },
       )
 
@@ -93,6 +101,11 @@ describe('app-logs-polling', () => {
         stdout,
         appLogsFetchInput: {jwtToken: JWT_TOKEN},
         apiKey: API_KEY,
+        storeName: 'storeName',
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
+        resubscribeCallback: expect.any(Function),
       })
     })
 
@@ -109,6 +122,8 @@ describe('app-logs-polling', () => {
           developerPlatformClient,
           appLogsSubscribeVariables,
           storeName: 'storeName',
+          organizationId: '1',
+          appId: '1',
         },
       )
 

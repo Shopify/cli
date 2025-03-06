@@ -196,8 +196,6 @@ export const fetchAppLogsDevDashboard = async (
     'X-Client-ID': 'shopify-cli-development',
     'X-Identity-Context': JSON.stringify(identityContext),
     'X-Identity-Scope': 'https://api.shopify.com/auth/organization.apps.manage',
-    'X-Request-ID': crypto.randomUUID(),
-    'X-Shopify-Privacy-Level': 'default',
     'X-Shopify-Access-Token': `Bearer ${jwtToken}`,
   }
 

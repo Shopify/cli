@@ -1,13 +1,14 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {FunctionRunLog} from '../types.js'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {partnersFqdn, appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
 import camelcaseKeys from 'camelcase-keys'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {OrganizationSource} from '../../../models/organization.js'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -19,6 +20,8 @@ const FQDN = await partnersFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
 const FUNCTION_ERROR = 'function_error'
 const FUNCTION_RUN = 'function_run'
+const APP_ID = "180457"
+const ORG_ID = "1"
 
 const INPUT = {
   cart: {
@@ -250,6 +253,9 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
+      organizationSource: OrganizationSource.Partners,
+      orgId: ORG_ID,
+      appId: APP_ID,
     })
     await vi.advanceTimersToNextTimerAsync()
 
@@ -377,6 +383,9 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
+      organizationSource: OrganizationSource.Partners,
+      orgId: ORG_ID,
+      appId: APP_ID,
     })
 
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
@@ -397,6 +406,9 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
+      organizationSource: OrganizationSource.Partners,
+      orgId: ORG_ID,
+      appId: APP_ID,
     })
 
     expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
@@ -420,6 +432,9 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
+      organizationSource: OrganizationSource.Partners,
+      orgId: ORG_ID,
+      appId: APP_ID,
     })
 
     // Then
@@ -458,6 +473,9 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
+      organizationSource: OrganizationSource.Partners,
+      orgId: ORG_ID,
+      appId: APP_ID,
     })
 
     // When/Then
@@ -466,4 +484,40 @@ describe('pollAppLogs', () => {
     expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
     expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('JSON'))
   })
+
+  test('polls and re-polls the request to dev dashboard endpoint when using BusinessPlatform', async () => {
+    // Given
+    const expectedUrl = `https://app.shopify.com/functions/unstable/organizations/1/180457/app_logs/poll`
+
+    // When
+    const result =await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      apiKey: API_KEY,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
+      organizationSource: OrganizationSource.BusinessPlatform,
+      orgId: ORG_ID,
+      appId: APP_ID,
+    })
+
+    // When/Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expectedUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer jwtToken',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Shopify CLI; v=3.76.0',
+          'X-Client-ID': 'shopify-cli-development',
+          'X-Identity-Context': '{"client_id":"shopify-cli-development","scopes":["https://api.shopify.com/auth/organization.apps.manage"]}',
+          'X-Identity-Scope': 'https://api.shopify.com/auth/organization.apps.manage',
+          'X-Shopify-Access-Token': 'Bearer jwtToken',
+        }
+      },
+    )
+  })
+
 })
