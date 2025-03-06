@@ -1,7 +1,7 @@
 import {environmentVariableNames} from '../constants.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -94,7 +94,7 @@ export async function generateCertificate({
   env = process.env,
   platform = process.platform,
   arch = process.arch,
-}: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string}> {
+}: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string; certPath: string}> {
   const mkcertPath = await getMkcertPath(appDirectory, onRequiresDownloadConfirmation, env, platform, arch)
 
   outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
@@ -105,5 +105,9 @@ export async function generateCertificate({
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
   outputInfo(outputContent`${outputToken.successIcon()} ${mkcertSnippet} is installed`)
 
-  return {keyContent: await readFile(keyPath), certContent: await readFile(certPath)}
+  return {
+    keyContent: await readFile(keyPath),
+    certContent: await readFile(certPath),
+    certPath: relativePath(appDirectory, certPath),
+  }
 }
