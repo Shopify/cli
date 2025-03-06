@@ -1,4 +1,5 @@
 import {environmentVariableNames} from '../constants.js'
+import {generateCertificatePrompt} from '../prompts/dev.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -13,7 +14,6 @@ const mkcertSnippet = outputToken.genericShellCommand('mkcert')
 
 async function getMkcertPath(
   appDirectory: string,
-  onRequiresDownload: () => Promise<boolean>,
   env: NodeJS.ProcessEnv,
   platform: NodeJS.Platform,
   arch: NodeJS.Architecture,
@@ -29,18 +29,8 @@ async function getMkcertPath(
   // Check if mkcert is available on the system PATH
   const mkcertLocation = await which('mkcert', {nothrow: true})
   if (mkcertLocation) {
-    outputDebug(
-      outputContent`${outputToken.successIcon()} Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`,
-    )
+    outputDebug(outputContent`Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`)
     return mkcertLocation
-  }
-
-  const shouldDownload = await onRequiresDownload()
-
-  if (!shouldDownload) {
-    throw new AbortError(
-      'mkcert is required. Please provide its path using SHOPIFY_CLI_MKCERT_BINARY environment variable.',
-    )
   }
 
   await downloadMkcert(defaultPath, platform, arch)
@@ -66,12 +56,11 @@ async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arc
 
   await downloadGitHubRelease(MKCERT_REPO, MKCERT_VERSION, assetName, targetPath)
 
-  outputInfo(outputContent`${outputToken.successIcon()} ${mkcertSnippet} saved to ${outputToken.path(targetPath)}`)
+  outputDebug(outputContent`${mkcertSnippet} saved to ${outputToken.path(targetPath)}`)
 }
 
 interface GenerateCertificateOptions {
   appDirectory: string
-  onRequiresDownloadConfirmation: () => Promise<boolean>
   resetFirst?: boolean
   env?: NodeJS.ProcessEnv
   platform?: NodeJS.Platform
@@ -90,20 +79,34 @@ interface GenerateCertificateOptions {
  */
 export async function generateCertificate({
   appDirectory,
-  onRequiresDownloadConfirmation,
   env = process.env,
   platform = process.platform,
   arch = process.arch,
 }: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string; certPath: string}> {
-  const mkcertPath = await getMkcertPath(appDirectory, onRequiresDownloadConfirmation, env, platform, arch)
+  const relativeKeyPath = joinPath('.shopify', 'localhost-key.pem')
+  const relativeCertPath = joinPath('.shopify', 'localhost.pem')
+  const keyPath = joinPath(appDirectory, relativeKeyPath)
+  const certPath = joinPath(appDirectory, relativeCertPath)
 
+  if ((await fileExists(keyPath)) && (await fileExists(certPath))) {
+    return {
+      keyContent: await readFile(keyPath),
+      certContent: await readFile(certPath),
+      certPath: relativeCertPath,
+    }
+  }
+
+  const shouldGenerate = await generateCertificatePrompt()
+  if (!shouldGenerate) {
+    throw new AbortError(`Localhost certificate and key are required at ${relativeCertPath} and ${relativeKeyPath}`)
+  }
+
+  const mkcertPath = await getMkcertPath(appDirectory, env, platform, arch)
   outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
-  const keyPath = joinPath(appDirectory, '.shopify', 'localhost-key.pem')
-  const certPath = joinPath(appDirectory, '.shopify', 'localhost.pem')
 
-  outputInfo(outputContent`🔐 Checking ${mkcertSnippet} root certificate. You may be prompted for your password.`)
+  outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
-  outputInfo(outputContent`${outputToken.successIcon()} ${mkcertSnippet} is installed`)
+  outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}`)
 
   return {
     keyContent: await readFile(keyPath),
