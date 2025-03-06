@@ -1,9 +1,21 @@
+import {OrganizationSource} from '../../../models/organization.js'
 import {PollOptions, AppLogData, PollResponse, PollFilters} from '../types.js'
-import {fetchAppLogs} from '../utils.js'
+import {fetchAppLogs, fetchAppLogsDevDashboard} from '../utils.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {Response} from '@shopify/cli-kit/node/http'
 
-export const pollAppLogs = async ({jwtToken, cursor, filters}: PollOptions): Promise<PollResponse> => {
-  const response = await fetchAppLogs(jwtToken, cursor, filters)
+export const pollAppLogs = async ({
+  pollOptions: {jwtToken, cursor, filters},
+  options: {organizationSource, orgId, appId},
+}: {
+  pollOptions: PollOptions
+  options: {organizationSource: OrganizationSource; orgId: string; appId: string}
+}): Promise<PollResponse> => {
+  const isDevDashboard = organizationSource === OrganizationSource.BusinessPlatform
+
+  const response: Response = isDevDashboard
+    ? await fetchAppLogsDevDashboard(jwtToken, orgId, appId, cursor)
+    : await fetchAppLogs(jwtToken, cursor)
 
   const responseJson = await response.json()
   if (!response.ok) {

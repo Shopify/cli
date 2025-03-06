@@ -83,7 +83,8 @@ export const SchemaDefinitionByTarget = {
   ],
 } as unknown as DocumentNode<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>
 
-// Move to separat file OR import these types correctly
+// NOTE: These will be generated once CORE PR is merged
+// I have placed them here for the time being
 export type AppLogsSubscribeQueryVariables = {
   shopIds: string[]
   apiKey: string
@@ -114,15 +115,15 @@ export const AppLogsSubscribe = {
               kind: 'ListType',
               type: {
                 kind: 'NonNullType',
-                type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}
-              }
-            }
-          }
+                type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}},
+              },
+            },
+          },
         },
         {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}}
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
       ],
       selectionSet: {
@@ -135,25 +136,25 @@ export const AppLogsSubscribe = {
               {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'shopIds'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}}
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}},
               },
               {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'apiKey'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}}
-              }
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
+              },
             ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 {kind: 'Field', name: {kind: 'Name', value: 'jwtToken'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'success'}},
-                {kind: 'Field', name: {kind: 'Name', value: 'errors'}}
-              ]
-            }
-          }
-        ]
-      }
-    }
-  ]
+                {kind: 'Field', name: {kind: 'Name', value: 'errors'}},
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
 } as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>

@@ -145,7 +145,6 @@ const generateFetchAppLogUrlDevDashboard = async (
   return url
 }
 
-
 export const fetchAppLogs = async (
   jwtToken: string,
   cursor?: string,
@@ -185,13 +184,13 @@ export const fetchAppLogsDevDashboard = async (
 
   const identityContext = {
     client_id: 'shopify-cli-development',
-    scopes: ['https://api.shopify.com/auth/organization.apps.manage']
+    scopes: ['https://api.shopify.com/auth/organization.apps.manage'],
   }
 
   const headers = {
-    'Authorization': `Bearer ${jwtToken}`,
+    Authorization: `Bearer ${jwtToken}`,
     'User-Agent': userAgent,
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
     'X-Client-ID': 'shopify-cli-development',
     'X-Identity-Context': JSON.stringify(identityContext),
@@ -204,8 +203,6 @@ export const fetchAppLogsDevDashboard = async (
     headers,
   })
 }
-
-
 
 interface FetchAppLogsErrorOptions {
   response: ErrorResponse
@@ -304,6 +301,7 @@ export const subscribeToAppLogs = async (
   variables: AppLogsSubscribeVariables,
   organizationId: string,
 ): Promise<string> => {
+  console.log('vairalb', variables, organizationId)
   const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
   const {jwtToken, success, errors} = result.appLogsSubscribe
   outputDebug(`Token: ${jwtToken}\n`)

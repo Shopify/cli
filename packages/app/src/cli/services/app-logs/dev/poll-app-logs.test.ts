@@ -1,14 +1,14 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {FunctionRunLog} from '../types.js'
-import {partnersFqdn, appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {OrganizationSource} from '../../../models/organization.js'
+import {appManagementFqdn, partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
 import camelcaseKeys from 'camelcase-keys'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {OrganizationSource} from '../../../models/organization.js'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -20,8 +20,8 @@ const FQDN = await partnersFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
 const FUNCTION_ERROR = 'function_error'
 const FUNCTION_RUN = 'function_run'
-const APP_ID = "180457"
-const ORG_ID = "1"
+const APP_ID = '180457'
+const ORG_ID = '1'
 
 const INPUT = {
   cart: {
@@ -487,10 +487,11 @@ describe('pollAppLogs', () => {
 
   test('polls and re-polls the request to dev dashboard endpoint when using BusinessPlatform', async () => {
     // Given
-    const expectedUrl = `https://app.shopify.com/functions/unstable/organizations/1/180457/app_logs/poll`
+    const fdqn = await appManagementFqdn()
+    const expectedUrl = `https://${fdqn}/functions/unstable/organizations/1/180457/app_logs/poll`
 
     // When
-    const result =await pollAppLogs({
+    await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
@@ -502,22 +503,19 @@ describe('pollAppLogs', () => {
     })
 
     // When/Then
-    expect(shopifyFetch).toHaveBeenCalledWith(
-      expectedUrl,
-      {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer jwtToken',
-          'Content-Type': 'application/json',
-          'User-Agent': 'Shopify CLI; v=3.76.0',
-          'X-Client-ID': 'shopify-cli-development',
-          'X-Identity-Context': '{"client_id":"shopify-cli-development","scopes":["https://api.shopify.com/auth/organization.apps.manage"]}',
-          'X-Identity-Scope': 'https://api.shopify.com/auth/organization.apps.manage',
-          'X-Shopify-Access-Token': 'Bearer jwtToken',
-        }
+    expect(shopifyFetch).toHaveBeenCalledWith(expectedUrl, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer jwtToken',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Shopify CLI; v=3.76.0',
+        'X-Client-ID': 'shopify-cli-development',
+        'X-Identity-Context':
+          '{"client_id":"shopify-cli-development","scopes":["https://api.shopify.com/auth/organization.apps.manage"]}',
+        'X-Identity-Scope': 'https://api.shopify.com/auth/organization.apps.manage',
+        'X-Shopify-Access-Token': 'Bearer jwtToken',
       },
-    )
+    })
   })
-
 })

@@ -12,13 +12,16 @@ import {
 import {prettyPrintJsonIfPossible} from '../../../utils.js'
 
 import React, {FunctionComponent} from 'react'
-
+import {OrganizationSource} from '../../../../../models/organization.js'
 import {Box, Text} from '@shopify/cli-kit/node/ink'
 
 interface LogsProps {
   resubscribeCallback: () => Promise<string>
   pollOptions: PollOptions
   storeNameById: Map<string, string>
+  organizationSource: OrganizationSource
+  orgId: string
+  appId: string
 }
 
 const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason): string => {
@@ -32,8 +35,23 @@ const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason):
   }
 }
 
-const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, resubscribeCallback, storeNameById}) => {
-  const {appLogOutputs, errors} = usePollAppLogs({filters, initialJwt: jwtToken, resubscribeCallback, storeNameById})
+const Logs: FunctionComponent<LogsProps> = ({
+  pollOptions: {jwtToken, filters},
+  resubscribeCallback,
+  storeNameById,
+  organizationSource,
+  orgId,
+  appId,
+}) => {
+  const {appLogOutputs, errors} = usePollAppLogs({
+    filters,
+    initialJwt: jwtToken,
+    resubscribeCallback,
+    storeNameById,
+    organizationSource,
+    orgId,
+    appId,
+  })
 
   return (
     <>

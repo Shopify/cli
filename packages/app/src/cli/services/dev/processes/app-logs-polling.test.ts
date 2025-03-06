@@ -2,11 +2,11 @@ import {setupAppLogsPollingProcess, subscribeAndStartPolling} from './app-logs-p
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
 import {outputWarn} from '@shopify/cli-kit/node/output'
-import { OrganizationSource } from '../../../models/organization.js'
 
 vi.mock('@shopify/cli-kit/node/logs')
 vi.mock('@shopify/cli-kit/node/output')
@@ -94,7 +94,7 @@ describe('app-logs-polling', () => {
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, '1')
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
       expect(pollAppLogs).toHaveBeenCalledOnce()
       expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
@@ -102,7 +102,7 @@ describe('app-logs-polling', () => {
         appLogsFetchInput: {jwtToken: JWT_TOKEN},
         apiKey: API_KEY,
         storeName: 'storeName',
-        organizationSource: OrganizationSource.Partners,
+        organizationSource: OrganizationSource.BusinessPlatform,
         orgId: '1',
         appId: '1',
         resubscribeCallback: expect.any(Function),
@@ -128,7 +128,7 @@ describe('app-logs-polling', () => {
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, '1')
       expect(outputWarn).toHaveBeenCalledWith(`Errors subscribing to app logs: uh oh, another error`)
       expect(outputWarn).toHaveBeenCalledWith(`App log streaming is not available in this session.`)
       expect(createLogsDir).not.toHaveBeenCalled()

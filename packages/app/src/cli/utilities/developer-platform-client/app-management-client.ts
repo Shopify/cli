@@ -112,8 +112,7 @@ import {
   SchemaDefinitionByTargetQueryVariables,
   AppLogsSubscribeQueryVariables,
   AppLogsSubscribeQuery,
-  AppLogsSubscribe
-
+  AppLogsSubscribe,
 } from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {
   SchemaDefinitionByApiType,
@@ -140,7 +139,7 @@ import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import { gql } from 'graphql-request'
+import {gql} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
@@ -177,7 +176,6 @@ interface AppLogsSubscribeVariables {
   apiKey: string
   token: string
 }
-
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public readonly clientName = ClientName.AppManagement
@@ -827,7 +825,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: currentAccountInfo')
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables, organizationId: string): Promise<AppLogsSubscribeResponse> {
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeVariables,
+    organizationId: string,
+  ): Promise<AppLogsSubscribeResponse> {
     const apiKey = input.apiKey
 
     const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
@@ -844,15 +845,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
           shopIds: input.shopIds,
           apiKey: input.apiKey,
         },
-      );
+      )
       return result
     } catch (error) {
       // TODO: handle error
       throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
     }
   }
-
-
 
   async targetSchemaDefinition(
     input: SchemaDefinitionByTargetQueryVariables,
@@ -863,9 +862,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
       const appIdNumber = String(numberFromGid(app.id))
       const token = await this.token()
-      console.log(organizationId)
-      console.log(appIdNumber)
-      console.log(token)
+
       const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
         organizationId,
         SchemaDefinitionByTarget,
@@ -1117,4 +1114,3 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
     },
   }
 }
-

@@ -158,14 +158,21 @@ describe('logs', () => {
     expectedStoreMap.set('2', 'other-fqdn')
     expect(consoleLog).toHaveBeenCalledWith('{"subscribedToStores":["store-fqdn","other-fqdn"]}')
     expect(consoleLog).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
-    expect(spy).toHaveBeenCalledWith({
-      options: {
-        developerPlatformClient: expect.anything(),
-        variables: {shopIds: ['1', '2'], apiKey: expect.anything(), token: expect.anything()},
-      },
-      pollOptions: expect.anything(),
-      storeNameById: expectedStoreMap,
-    })
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: {
+          developerPlatformClient: expect.anything(),
+          organizationId: '1',
+          variables: {
+            shopIds: ['1', '2'],
+            apiKey: expect.any(String),
+            token: expect.any(String),
+          },
+        },
+        pollOptions: expect.anything(),
+        storeNameById: expectedStoreMap,
+      }),
+    )
   })
 
   test('should load additional stores in TTY mode', async () => {
@@ -194,14 +201,30 @@ describe('logs', () => {
     expectedStoreMap.set('1', 'store-fqdn')
     expectedStoreMap.set('2', 'other-fqdn')
     expect(consoleLog).toHaveBeenCalledWith('Waiting for app logs...\n')
-    expect(spy).toHaveBeenCalledWith({
-      options: {
-        developerPlatformClient: expect.anything(),
-        variables: {shopIds: ['1', '2'], apiKey: expect.anything(), token: expect.anything()},
-      },
-      pollOptions: expect.anything(),
-      storeNameById: expectedStoreMap,
-    })
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: {
+          developerPlatformClient: expect.anything(),
+          organizationId: '1',
+          variables: {
+            shopIds: ['1', '2'],
+            apiKey: expect.any(String),
+            token: expect.any(String),
+          },
+        },
+        pollOptions: expect.objectContaining({
+          filters: {
+            sources: ['extensions.source'],
+            status: 'status',
+          },
+          jwtToken: expect.any(String),
+        }),
+        storeNameById: expectedStoreMap,
+        appId: expect.any(String),
+        orgId: expect.any(String),
+        organizationSource: expect.any(String),
+      }),
+    )
   })
 
   test('should render custom info box', async () => {

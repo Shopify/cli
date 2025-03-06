@@ -2,9 +2,11 @@ import {renderJsonLogs} from './render-json-logs.js'
 import {pollAppLogs} from './poll-app-logs.js'
 import {handleFetchAppLogsError} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
+
 
 vi.mock('./poll-app-logs')
 vi.mock('../utils', async (importOriginal) => {
@@ -50,6 +52,9 @@ describe('renderJsonLogs', () => {
         organizationId: '1',
       },
       storeNameById,
+      organizationSource: OrganizationSource.Partners,
+      orgId: '1',
+      appId: '1',
     })
 
     expect(outputInfo).toHaveBeenNthCalledWith(
@@ -96,6 +101,9 @@ describe('renderJsonLogs', () => {
         organizationId: '1',
       },
       storeNameById,
+      organizationSource: OrganizationSource.Partners,
+      orgId: '1',
+      appId: '1',
     })
 
     expect(outputInfo).not.toHaveBeenCalled()
@@ -126,6 +134,9 @@ describe('renderJsonLogs', () => {
         organizationId: '1',
       },
       storeNameById,
+      organizationSource: OrganizationSource.Partners,
+      orgId: '1',
+      appId: '1',
     })
 
     expect(outputInfo).toHaveBeenCalledWith(

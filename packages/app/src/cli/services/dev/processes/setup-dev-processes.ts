@@ -187,7 +187,7 @@ export async function setupDevProcesses({
           },
           storeName: storeFqdn,
           organizationId: remoteApp.organizationId,
-          appId: remoteApp.id,
+          appId: String(numberFromGid(remoteApp.id)),
         })
       : undefined,
     await setupAppWatcherProcess({
@@ -259,4 +259,8 @@ export const startProxyServer: DevProcessFunction<{port: number; rules: {[key: s
 ) => {
   const {server} = await getProxyingWebServer(rules, abortSignal)
   await server.listen(port)
+}
+
+function numberFromGid(gid: string): number {
+  return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }

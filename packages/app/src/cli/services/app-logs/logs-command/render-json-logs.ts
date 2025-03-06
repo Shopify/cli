@@ -7,18 +7,29 @@ import {
   toFormattedAppLogJson,
   parseAppLogPayload,
 } from '../utils.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+
 
 export async function renderJsonLogs({
   pollOptions: {cursor, filters, jwtToken},
   options: {variables, developerPlatformClient, organizationId},
   storeNameById,
+  organizationSource,
+  orgId,
+  appId,
 }: {
   pollOptions: PollOptions
   options: SubscribeOptions
   storeNameById: Map<string, string>
+  organizationSource: OrganizationSource
+  orgId: string
+  appId: string
 }): Promise<void> {
-  const response = await pollAppLogs({cursor, filters, jwtToken})
+  const response = await pollAppLogs({
+    pollOptions: {jwtToken, cursor, filters},
+    options: {organizationSource, orgId, appId},
+  })
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = jwtToken
 
@@ -73,6 +84,9 @@ export async function renderJsonLogs({
         filters,
       },
       storeNameById,
+      organizationSource,
+      orgId,
+      appId,
     }).catch((error) => {
       throw error
     })
