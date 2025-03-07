@@ -74,7 +74,6 @@ export async function metafieldsPull(flags: MetafieldsPullFlags): Promise<void> 
 const handleToOwnerType = {
   article: 'ARTICLE',
   blog: 'BLOG',
-  brand: 'BRAND',
   collection: 'COLLECTION',
   company: 'COMPANY',
   company_location: 'COMPANY_LOCATION',
