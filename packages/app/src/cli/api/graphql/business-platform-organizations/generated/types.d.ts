@@ -21,6 +21,8 @@ export type Scalars = {
   ActionAuditID: {input: any; output: any}
   /** The ID for a DocumentAttachment. */
   DocumentAttachmentID: {input: any; output: any}
+  /** The ID for a EntitySupportingDocument. */
+  EntitySupportingDocumentID: {input: any; output: any}
   GlobalID: {input: string; output: string}
   /** The ID for a GovernmentIdentifier. */
   GovernmentIdentifierID: {input: any; output: any}
@@ -38,6 +40,10 @@ export type Scalars = {
   OrganizationID: {input: any; output: any}
   /** The ID for a OrganizationUser. */
   OrganizationUserID: {input: any; output: any}
+  /** The ID for a Person. */
+  PersonID: {input: any; output: any}
+  /** The ID for a Principal. */
+  PrincipalID: {input: any; output: any}
   /** The ID for a Property. */
   PropertyID: {input: any; output: any}
   PropertyId: {input: string; output: string}
