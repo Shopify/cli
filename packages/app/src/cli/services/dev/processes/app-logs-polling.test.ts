@@ -2,6 +2,7 @@ import {setupAppLogsPollingProcess, subscribeAndStartPolling} from './app-logs-p
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
@@ -28,6 +29,8 @@ describe('app-logs-polling', () => {
         developerPlatformClient,
         subscription: {shopIds: SHOP_IDS, apiKey: API_KEY},
         storeName: 'storeName',
+        organizationId: '1',
+        appId: '1',
       })
 
       // Then
@@ -52,6 +55,9 @@ describe('app-logs-polling', () => {
       shopIds: SHOP_IDS,
       apiKey: API_KEY,
       token: TOKEN,
+      organizationId: '1',
+      appId: '1',
+      organizationSource: OrganizationSource.Partners,
     }
 
     let subscribeToAppLogs: Mock
@@ -82,17 +88,24 @@ describe('app-logs-polling', () => {
           developerPlatformClient,
           appLogsSubscribeVariables,
           storeName: 'storeName',
+          organizationId: '1',
+          appId: '1',
         },
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, '1')
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
       expect(pollAppLogs).toHaveBeenCalledOnce()
       expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
         stdout,
         appLogsFetchInput: {jwtToken: JWT_TOKEN},
         apiKey: API_KEY,
+        storeName: 'storeName',
+        organizationSource: OrganizationSource.BusinessPlatform,
+        orgId: '1',
+        appId: '1',
+        resubscribeCallback: expect.any(Function),
       })
     })
 
@@ -109,11 +122,13 @@ describe('app-logs-polling', () => {
           developerPlatformClient,
           appLogsSubscribeVariables,
           storeName: 'storeName',
+          organizationId: '1',
+          appId: '1',
         },
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, '1')
       expect(outputWarn).toHaveBeenCalledWith(`Errors subscribing to app logs: uh oh, another error`)
       expect(outputWarn).toHaveBeenCalledWith(`App log streaming is not available in this session.`)
       expect(createLogsDir).not.toHaveBeenCalled()

@@ -1,6 +1,8 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {fetchAppLogs} from '../utils.js'
+import {OrganizationSource} from '../../../models/organization.js'
 import {describe, test, vi, expect} from 'vitest'
+
 
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/context/fqdn')
@@ -58,9 +60,16 @@ describe('pollProcess', () => {
 
     // // When
     const result = await pollAppLogs({
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: MOCKED_CURSOR,
-      filters: EMPTY_FILTERS,
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: MOCKED_CURSOR,
+        filters: EMPTY_FILTERS,
+      },
+      options: {
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
+      },
     })
 
     expect(result).toEqual({
@@ -76,9 +85,16 @@ describe('pollProcess', () => {
 
     // // When
     const result = await pollAppLogs({
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: MOCKED_CURSOR,
-      filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: MOCKED_CURSOR,
+        filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
+      },
+      options: {
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
+      },
     })
 
     expect(result).toEqual({
@@ -100,9 +116,16 @@ describe('pollProcess', () => {
 
     // When
     const result = await pollAppLogs({
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: MOCKED_CURSOR,
-      filters: EMPTY_FILTERS,
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: MOCKED_CURSOR,
+        filters: EMPTY_FILTERS,
+      },
+      options: {
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
+      },
     })
 
     // Then
@@ -125,9 +148,16 @@ describe('pollProcess', () => {
     // When/Then
     await expect(() =>
       pollAppLogs({
-        jwtToken: MOCKED_JWT_TOKEN,
-        cursor: MOCKED_CURSOR,
-        filters: EMPTY_FILTERS,
+        pollOptions: {
+          jwtToken: MOCKED_JWT_TOKEN,
+          cursor: MOCKED_CURSOR,
+          filters: EMPTY_FILTERS,
+        },
+        options: {
+          organizationSource: OrganizationSource.Partners,
+          orgId: '1',
+          appId: '1',
+        },
       }),
     ).rejects.toThrowError()
   })

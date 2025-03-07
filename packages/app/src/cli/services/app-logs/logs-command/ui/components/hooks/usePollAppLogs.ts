@@ -14,14 +14,19 @@ import {
 } from '../../../../utils.js'
 import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
+import {OrganizationSource} from '../../../../../../models/organization.js'
 import {useState, Dispatch, SetStateAction, useRef, useCallback} from 'react'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
+
 
 interface UsePollAppLogsOptions {
   initialJwt: string
   filters: PollFilters
   resubscribeCallback: () => Promise<string>
   storeNameById: Map<string, string>
+  organizationSource: OrganizationSource
+  orgId: string
+  appId: string
 }
 
 async function performPoll({
@@ -32,6 +37,9 @@ async function performPoll({
   setErrors,
   setAppLogOutputs,
   resubscribeCallback,
+  organizationSource,
+  orgId,
+  appId,
 }: {
   jwtToken: string
   cursor?: string
@@ -40,11 +48,17 @@ async function performPoll({
   setErrors: Dispatch<SetStateAction<string[]>>
   setAppLogOutputs: Dispatch<SetStateAction<AppLogOutput[]>>
   resubscribeCallback: () => Promise<string>
+  organizationSource: OrganizationSource
+  orgId: string
+  appId: string
 }) {
   let nextJwtToken = jwtToken
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextCursor = cursor
-  const response = await pollAppLogs({jwtToken, cursor, filters})
+  const response = await pollAppLogs({
+    pollOptions: {jwtToken, cursor, filters},
+    options: {organizationSource, orgId, appId},
+  })
 
   const errorResponse = response as ErrorResponse
 
@@ -126,7 +140,15 @@ async function performPoll({
   return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor}
 }
 
-export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeNameById}: UsePollAppLogsOptions) {
+export function usePollAppLogs({
+  initialJwt,
+  filters,
+  resubscribeCallback,
+  storeNameById,
+  organizationSource,
+  orgId,
+  appId,
+}: UsePollAppLogsOptions) {
   const [errors, setErrors] = useState<string[]>([])
   const [appLogOutputs, setAppLogOutputs] = useState<AppLogOutput[]>([])
   const nextJwtToken = useRef(initialJwt)
@@ -142,6 +164,9 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeN
       setErrors,
       setAppLogOutputs,
       resubscribeCallback,
+      organizationSource,
+      orgId,
+      appId,
     })
 
     // ESLint is concerned about these updates being atomic, but the approach to useSelfAdjustingInterval ensures that is the case.

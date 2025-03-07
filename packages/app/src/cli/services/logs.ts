@@ -53,7 +53,8 @@ export async function logs(commandOptions: LogsOptions) {
     token: '',
   }
 
-  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables)
+  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables, commandOptions.organization.id)
+  const organizationSource = developerPlatformClient.organizationSource
 
   const filters = {
     status: commandOptions.status,
@@ -72,9 +73,13 @@ export async function logs(commandOptions: LogsOptions) {
       options: {
         variables,
         developerPlatformClient,
+        organizationId: commandOptions.organization.id,
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
+      organizationSource: organizationSource,
+      orgId: commandOptions.organization.id,
+      appId: remoteApp.id,
     })
   } else {
     consoleLog('Waiting for app logs...\n')
@@ -82,9 +87,13 @@ export async function logs(commandOptions: LogsOptions) {
       options: {
         variables,
         developerPlatformClient,
+        organizationId: commandOptions.organization.id,
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
+      organizationSource: organizationSource,
+      orgId: commandOptions.organization.id,
+      appId: String(numberFromGid(remoteApp.id)),
     })
   }
 }
@@ -140,4 +149,8 @@ function renderAppLogsConfigInfo(
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
     body,
   })
+}
+
+function numberFromGid(gid: string): number {
+  return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }

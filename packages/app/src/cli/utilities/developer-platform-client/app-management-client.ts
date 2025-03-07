@@ -68,7 +68,6 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -111,6 +110,9 @@ import {
   SchemaDefinitionByTarget,
   SchemaDefinitionByTargetQuery,
   SchemaDefinitionByTargetQueryVariables,
+  AppLogsSubscribeQueryVariables,
+  AppLogsSubscribeQuery,
+  AppLogsSubscribe,
 } from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {
   SchemaDefinitionByApiType,
@@ -137,6 +139,7 @@ import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {gql} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
@@ -148,6 +151,30 @@ type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
+}
+
+const AppLogsSubscribeMutation = gql`
+  mutation AppLogsSubscribe($apiKey: String!, $shopIds: [ID!]!) {
+    appLogsSubscribe(input: {apiKey: $apiKey, shopIds: $shopIds}) {
+      jwtToken
+      success
+      errors
+    }
+  }
+`
+
+interface AppLogsSubscribeResponse {
+  appLogsSubscribe: {
+    success: boolean
+    errors?: string[]
+    jwtToken: string
+  }
+}
+
+interface AppLogsSubscribeVariables {
+  shopIds: string[]
+  apiKey: string
+  token: string
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
@@ -162,10 +189,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   constructor(session?: PartnersSession) {
     this._session = session
-  }
-
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
   }
 
   async session(): Promise<PartnersSession> {
@@ -802,6 +825,34 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new BugError('Not implemented: currentAccountInfo')
   }
 
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeVariables,
+    organizationId: string,
+  ): Promise<AppLogsSubscribeResponse> {
+    const apiKey = input.apiKey
+
+    const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+    const appIdNumber = String(numberFromGid(app.id))
+    const token = await this.token()
+
+    try {
+      const result = await functionsRequestDoc<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>(
+        organizationId,
+        AppLogsSubscribe,
+        token,
+        appIdNumber,
+        {
+          shopIds: input.shopIds,
+          apiKey: input.apiKey,
+        },
+      )
+      return result
+    } catch (error) {
+      // TODO: handle error
+      throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+    }
+  }
+
   async targetSchemaDefinition(
     input: SchemaDefinitionByTargetQueryVariables,
     apiKey: string,
@@ -811,6 +862,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
       const appIdNumber = String(numberFromGid(app.id))
       const token = await this.token()
+
       const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
         organizationId,
         SchemaDefinitionByTarget,

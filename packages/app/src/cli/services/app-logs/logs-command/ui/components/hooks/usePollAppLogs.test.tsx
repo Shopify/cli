@@ -15,6 +15,7 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
 } from '../../../../types.js'
+import {OrganizationSource} from '../../../../../../models/organization.js'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
@@ -204,6 +205,9 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
       }),
     )
 
@@ -323,6 +327,9 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
       }),
     )
 
@@ -331,15 +338,33 @@ describe('usePollAppLogs', () => {
 
     // Initial invocation, 401 returned
     expect(mockedPollAppLogs).toHaveBeenNthCalledWith(1, {
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: '',
-      filters: EMPTY_FILTERS,
+      options: {
+        appId: '1',
+        orgId: '1',
+        organizationSource: OrganizationSource.Partners,
+      },
+      pollOptions: {
+        cursor: '',
+        filters: EMPTY_FILTERS,
+        jwtToken: MOCKED_JWT_TOKEN,
+      },
     })
     expect(resubscribeCallback).toHaveBeenCalledOnce()
 
     // Follow up invocation, which invokes resubscribeCallback
     await vi.advanceTimersToNextTimerAsync()
-    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS})
+    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {
+      options: {
+        appId: '1',
+        orgId: '1',
+        organizationSource: OrganizationSource.Partners,
+      },
+      pollOptions: {
+        cursor: '',
+        filters: EMPTY_FILTERS,
+        jwtToken: NEW_JWT_TOKEN,
+      },
+    })
 
     expect(vi.getTimerCount()).toEqual(1)
   })
@@ -361,6 +386,9 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
       }),
     )
 
@@ -400,6 +428,9 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
       }),
     )
 
@@ -437,6 +468,9 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback: vi.fn().mockResolvedValue(MOCKED_JWT_TOKEN),
         storeNameById: STORE_NAME_BY_ID,
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
       }),
     )
 
@@ -461,6 +495,9 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: new Map(),
+        organizationSource: OrganizationSource.Partners,
+        orgId: '1',
+        appId: '1',
       }),
     )
 
