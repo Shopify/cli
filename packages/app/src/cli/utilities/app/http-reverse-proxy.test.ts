@@ -180,4 +180,5 @@ const localhostCert = {
     'fbw6iqA335rMbN/+jBGZ2ixrrro7lc3RKI0oayLHT1QnszQdZy+SAfV3a++nwbkC\n' +
     'Sad3b/7iWHY=\n' +
     '-----END CERTIFICATE-----\n',
+  certPath: 'localhost.pem',
 }

@@ -6,7 +6,7 @@ import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {generateCertificate} from '../../utilities/mkcert.js'
-import {downloadMkcert} from '../../prompts/dev.js'
+import {generateCertificatePrompt} from '../../prompts/dev.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -150,20 +150,20 @@ If you're using the Ruby app template, then you need to complete the following s
           renderInfo({
             headline: 'localhost development is experimental.',
             body: [
-              'The --use-localhost flag has limitations. ',
+              'The --use-localhost flag has limitations.',
               'It works for testing App Bridge, Admin UI, Checkout UI or Pixels.',
               "It won't work for Webhooks, Flow Actions, App Proxy or POS features.",
-              'If you encounter any issues, please provide feedback:',
+              'Please report any issues and provide feedback on the dev community:',
             ],
             link: {
-              label: 'Feedback',
-              url: 'https://community.shopify.dev/new-topic?title=[Feedback%20for%20--use-localhost]&category=shopify-cli-libraries&tags=app-dev-on-localhost',
+              label: 'Create a feedback post',
+              url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
             },
           })
 
           return generateCertificate({
             appDirectory,
-            onRequiresDownloadConfirmation: downloadMkcert,
+            onRequiresConfirmation: generateCertificatePrompt,
           })
         },
       }

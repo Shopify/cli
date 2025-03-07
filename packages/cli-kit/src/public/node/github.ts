@@ -5,7 +5,7 @@ import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {AbortError} from './error.js'
-import {outputContent, outputDebug, outputInfo, outputToken} from '../../public/node/output.js'
+import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,7 +138,7 @@ export async function downloadGitHubRelease(
   const url = `https://github.com/${repo}/releases/download/${version}/${assetName}`
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    outputInfo(outputContent`🌍 Downloading ${outputToken.link(assetName, url)}`)
+    outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
     await inTemporaryDirectory(async (tmpDir) => {
       const tempPath = joinPath(tmpDir, assetName)
       let response: Response
