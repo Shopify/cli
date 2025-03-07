@@ -104,6 +104,7 @@ describe('setup-dev-processes', () => {
       reverseProxyCert: {
         cert: 'cert',
         key: 'key',
+        certPath: 'localhost.pem',
       },
       currentUrls: {
         applicationUrl: 'https://example.com/application',
