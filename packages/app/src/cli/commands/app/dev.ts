@@ -6,6 +6,7 @@ import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {generateCertificate} from '../../utilities/mkcert.js'
+import {generateCertificatePrompt} from '../../prompts/dev.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -160,7 +161,10 @@ If you're using the Ruby app template, then you need to complete the following s
             },
           })
 
-          return generateCertificate({appDirectory})
+          return generateCertificate({
+            appDirectory,
+            onRequiresConfirmation: generateCertificatePrompt,
+          })
         },
       }
     } else if (flags['tunnel-url']) {
