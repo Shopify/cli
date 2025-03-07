@@ -62,7 +62,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
 ) => {
   try {
     const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, organizationId)
-    const organizationSource = await developerPlatformClient.organizationSource
+    const organizationSource = developerPlatformClient.organizationSource
 
     const apiKey = appLogsSubscribeVariables.apiKey
     await createLogsDir(apiKey)

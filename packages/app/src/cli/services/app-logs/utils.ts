@@ -182,20 +182,9 @@ export const fetchAppLogsDevDashboard = async (
   const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
 
-  const identityContext = {
-    client_id: 'shopify-cli-development',
-    scopes: ['https://api.shopify.com/auth/organization.apps.manage'],
-  }
-
   const headers = {
     Authorization: `Bearer ${jwtToken}`,
     'User-Agent': userAgent,
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-    'X-Client-ID': 'shopify-cli-development',
-    'X-Identity-Context': JSON.stringify(identityContext),
-    'X-Identity-Scope': 'https://api.shopify.com/auth/organization.apps.manage',
-    'X-Shopify-Access-Token': `Bearer ${jwtToken}`,
   }
 
   return shopifyFetch(url, {
@@ -215,6 +204,8 @@ export const handleFetchAppLogsError = async (
   input: FetchAppLogsErrorOptions,
 ): Promise<{retryIntervalMs: number; nextJwtToken: string | null}> => {
   const {errors} = input.response
+
+  console.log("errors", errors)
 
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = null
@@ -301,9 +292,9 @@ export const subscribeToAppLogs = async (
   variables: AppLogsSubscribeVariables,
   organizationId: string,
 ): Promise<string> => {
-  console.log('vairalb', variables, organizationId)
   const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
   const {jwtToken, success, errors} = result.appLogsSubscribe
+  console.log("jwt subscribed?", jwtToken)
   outputDebug(`Token: ${jwtToken}\n`)
   outputDebug(`API Key: ${variables.apiKey}\n`)
   if (errors && errors.length > 0) {

@@ -506,15 +506,8 @@ describe('pollAppLogs', () => {
     expect(shopifyFetch).toHaveBeenCalledWith(expectedUrl, {
       method: 'GET',
       headers: {
-        Accept: 'application/json',
         Authorization: 'Bearer jwtToken',
-        'Content-Type': 'application/json',
         'User-Agent': 'Shopify CLI; v=3.76.0',
-        'X-Client-ID': 'shopify-cli-development',
-        'X-Identity-Context':
-          '{"client_id":"shopify-cli-development","scopes":["https://api.shopify.com/auth/organization.apps.manage"]}',
-        'X-Identity-Scope': 'https://api.shopify.com/auth/organization.apps.manage',
-        'X-Shopify-Access-Token': 'Bearer jwtToken',
       },
     })
   })
