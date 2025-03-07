@@ -64,6 +64,7 @@ export interface DevOptions {
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
+  previewableExtensionPort?: number
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
@@ -117,6 +118,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
     await installAppDependencies(app)
   }
+
+  const previewableExtensionPort = commandOptions.previewableExtensionPort ?? (await getAvailableTCPPort())
 
   const graphiqlPort = commandOptions.graphiqlPort ?? (await getAvailableTCPPort(ports.graphiql))
   const {graphiqlKey} = commandOptions
@@ -175,6 +178,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     partnerUrlsUpdated,
     graphiqlPort,
     graphiqlKey,
+    previewableExtensionPort
   }
 }
 
