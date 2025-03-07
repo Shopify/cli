@@ -106,7 +106,7 @@ export async function generateCertificate({
 
   outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
-  outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}`)
+  outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}\n`)
 
   return {
     keyContent: await readFile(keyPath),
