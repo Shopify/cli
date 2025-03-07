@@ -62,7 +62,6 @@ describe('metafields-pull', () => {
           {
             article: [],
             blog: [],
-            brand: [],
             collection: [],
             company: [],
             company_location: [],
@@ -126,7 +125,6 @@ describe('metafields-pull', () => {
           {
             article: [],
             blog: [],
-            brand: [],
             collection: [fakeMetafieldDefinition],
             company: [],
             company_location: [],
