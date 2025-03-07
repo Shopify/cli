@@ -150,14 +150,14 @@ If you're using the Ruby app template, then you need to complete the following s
           renderInfo({
             headline: 'localhost development is experimental.',
             body: [
-              'The --use-localhost flag has limitations. ',
+              'The --use-localhost flag has limitations.',
               'It works for testing App Bridge, Admin UI, Checkout UI or Pixels.',
               "It won't work for Webhooks, Flow Actions, App Proxy or POS features.",
-              'If you encounter any issues, please provide feedback:',
+              'Please report any issues and provide feedback on the dev community:',
             ],
             link: {
-              label: 'Feedback',
-              url: 'https://community.shopify.dev/new-topic?title=[Feedback%20for%20--use-localhost]&category=shopify-cli-libraries&tags=app-dev-on-localhost',
+              label: 'Create a feedback post',
+              url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
             },
           })
 
