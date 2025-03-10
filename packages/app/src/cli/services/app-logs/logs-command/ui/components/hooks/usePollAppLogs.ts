@@ -12,6 +12,7 @@ import {
   parseNetworkAccessRequestExecutedPayload,
   handleFetchAppLogsError,
 } from '../../../../utils.js'
+import {DeveloperPlatformClient} from '../../../../../../utilities/developer-platform-client.js'
 import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
 import {useState, Dispatch, SetStateAction, useRef, useCallback} from 'react'
@@ -22,6 +23,7 @@ interface UsePollAppLogsOptions {
   filters: PollFilters
   resubscribeCallback: () => Promise<string>
   storeNameById: Map<string, string>
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 async function performPoll({
@@ -32,6 +34,7 @@ async function performPoll({
   setErrors,
   setAppLogOutputs,
   resubscribeCallback,
+  developerPlatformClient,
 }: {
   jwtToken: string
   cursor?: string
@@ -40,11 +43,12 @@ async function performPoll({
   setErrors: Dispatch<SetStateAction<string[]>>
   setAppLogOutputs: Dispatch<SetStateAction<AppLogOutput[]>>
   resubscribeCallback: () => Promise<string>
+  developerPlatformClient: DeveloperPlatformClient
 }) {
   let nextJwtToken = jwtToken
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextCursor = cursor
-  const response = await pollAppLogs({jwtToken, cursor, filters})
+  const response = await pollAppLogs({pollOptions: {jwtToken, cursor, filters}, developerPlatformClient})
 
   const errorResponse = response as ErrorResponse
 
@@ -126,7 +130,7 @@ async function performPoll({
   return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor}
 }
 
-export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeNameById}: UsePollAppLogsOptions) {
+export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeNameById, developerPlatformClient}: UsePollAppLogsOptions) {
   const [errors, setErrors] = useState<string[]>([])
   const [appLogOutputs, setAppLogOutputs] = useState<AppLogOutput[]>([])
   const nextJwtToken = useRef(initialJwt)
@@ -142,6 +146,7 @@ export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeN
       setErrors,
       setAppLogOutputs,
       resubscribeCallback,
+      developerPlatformClient,
     })
 
     // ESLint is concerned about these updates being atomic, but the approach to useSelfAdjustingInterval ensures that is the case.

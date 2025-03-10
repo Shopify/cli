@@ -1,9 +1,18 @@
 import {PollOptions, AppLogData, PollResponse, PollFilters} from '../types.js'
 import {fetchAppLogs} from '../utils.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 
-export const pollAppLogs = async ({jwtToken, cursor, filters}: PollOptions): Promise<PollResponse> => {
-  const response = await fetchAppLogs({jwtToken, cursor, filters})
+interface PollAppLogsOptions {
+  pollOptions: PollOptions
+  developerPlatformClient: DeveloperPlatformClient
+}
+
+export const pollAppLogs = async ({
+  pollOptions: {jwtToken, cursor, filters},
+  developerPlatformClient,
+}: PollAppLogsOptions): Promise<PollResponse> => {
+  const response = await developerPlatformClient.appLogs({jwtToken, cursor})
 
   const responseJson = await response.json()
   if (!response.ok) {

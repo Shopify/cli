@@ -1,6 +1,7 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {fetchAppLogs} from '../utils.js'
 import {describe, test, vi, expect} from 'vitest'
+import { testDeveloperPlatformClient } from '../../../models/app/app.test-data.js'
 
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/context/fqdn')
@@ -53,14 +54,17 @@ const createMockResponse = (data: any, status = 200, statusText = 'OK') => {
 describe('pollProcess', () => {
   test('successful poll', async () => {
     // Given
-    const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS))
-    vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS))
+    })
 
     // // When
-    const result = await pollAppLogs({
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: MOCKED_CURSOR,
-      filters: EMPTY_FILTERS,
+    const result = await pollAppLogs({pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: MOCKED_CURSOR,
+        filters: EMPTY_FILTERS,
+      },
+      developerPlatformClient: mockedDeveloperPlatformClient
     })
 
     expect(result).toEqual({
@@ -71,14 +75,18 @@ describe('pollProcess', () => {
 
   test('successful poll with filters', async () => {
     // Given
-    const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS))
-    vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS))
+    })
 
     // // When
     const result = await pollAppLogs({
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: MOCKED_CURSOR,
-      filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: MOCKED_CURSOR,
+        filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
+      },
+      developerPlatformClient: mockedDeveloperPlatformClient
     })
 
     expect(result).toEqual({
@@ -93,16 +101,18 @@ describe('pollProcess', () => {
     [500, 'Server Eror'],
   ])('returns errors when response is %s', async (status, statusText) => {
     // Given
-    const mockedFetchAppLogs = vi
-      .fn()
-      .mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status, statusText))
-    vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status, statusText))
+    })
 
     // When
     const result = await pollAppLogs({
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: MOCKED_CURSOR,
-      filters: EMPTY_FILTERS,
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: MOCKED_CURSOR,
+        filters: EMPTY_FILTERS,
+      },
+      developerPlatformClient: mockedDeveloperPlatformClient
     })
 
     // Then
@@ -119,15 +129,19 @@ describe('pollProcess', () => {
       errors: [statusText],
     }
 
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
     const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(responseData, status, statusText))
     vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
 
     // When/Then
     await expect(() =>
       pollAppLogs({
-        jwtToken: MOCKED_JWT_TOKEN,
-        cursor: MOCKED_CURSOR,
-        filters: EMPTY_FILTERS,
+        pollOptions: {
+          jwtToken: MOCKED_JWT_TOKEN,
+          cursor: MOCKED_CURSOR,
+          filters: EMPTY_FILTERS,
+        },
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     ).rejects.toThrowError()
   })

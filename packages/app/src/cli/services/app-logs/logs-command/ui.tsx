@@ -18,6 +18,10 @@ export async function renderLogs({
   }
 
   return render(
-    <Logs pollOptions={pollOptions} resubscribeCallback={resubscribeCallback} storeNameById={storeNameById} />,
+    <Logs
+      pollOptions={pollOptions}
+      resubscribeCallback={resubscribeCallback}
+      storeNameById={storeNameById}
+      developerPlatformClient={developerPlatformClient}/>,
   )
 }
