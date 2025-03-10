@@ -58,7 +58,8 @@ import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-ses
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
+import { FetchAppLogsOptions } from '../services/app-logs/utils.js'
+import { Response } from '@shopify/cli-kit/node/http'
 export enum ClientName {
   AppManagement = 'app-management',
   Partners = 'partners',
@@ -275,6 +276,7 @@ export interface DeveloperPlatformClient {
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
+  appLogs: (options: FetchAppLogsOptions) => Promise<Response>
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>

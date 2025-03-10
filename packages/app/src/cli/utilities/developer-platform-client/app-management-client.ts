@@ -138,7 +138,8 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-
+import { FetchAppLogsOptions } from '../../services/app-logs/utils.js'
+import { Response } from '@shopify/cli-kit/node/http'
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
@@ -166,6 +167,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
     throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+  }
+
+  async appLogs(options: FetchAppLogsOptions): Promise<Response> {
+    throw new Error(`Not Implemented!`);
   }
 
   async session(): Promise<PartnersSession> {
