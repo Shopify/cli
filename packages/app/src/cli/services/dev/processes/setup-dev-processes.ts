@@ -23,6 +23,7 @@ import {reloadApp} from '../../../models/app/loader.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 interface ProxyServerProcess
   extends BaseProcess<{
@@ -268,8 +269,9 @@ export const startProxyServer: DevProcessFunction<{
   localhostCert?: LocalhostCert
 }> = async ({abortSignal, stdout}, {port, rules, localhostCert}) => {
   const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert)
-  stdout.write(
+  outputInfo(
     `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
+    stdout,
   )
   await server.listen(port)
 }
