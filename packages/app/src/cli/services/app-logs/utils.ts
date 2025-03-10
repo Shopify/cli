@@ -167,7 +167,6 @@ export interface FetchAppLogsDevDashboardOptions {
 }
 
 
-
 interface FetchAppLogsErrorOptions {
   response: ErrorResponse
   onThrottle: (retryIntervalMs: number) => void

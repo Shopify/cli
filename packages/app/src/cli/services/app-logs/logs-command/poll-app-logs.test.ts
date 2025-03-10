@@ -70,6 +70,8 @@ describe('pollProcess', () => {
         filters: EMPTY_FILTERS,
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: 'organizationId',
+      appId: 'appId',
     })
 
     expect(result).toEqual({
@@ -92,6 +94,8 @@ describe('pollProcess', () => {
         filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: 'organizationId',
+      appId: 'appId',
     })
 
     expect(result).toEqual({
@@ -118,6 +122,8 @@ describe('pollProcess', () => {
         filters: EMPTY_FILTERS,
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: 'organizationId',
+      appId: 'appId',
     })
 
     // Then
@@ -147,6 +153,8 @@ describe('pollProcess', () => {
           filters: EMPTY_FILTERS,
         },
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: 'organizationId',
+        appId: 'appId',
       }),
     ).rejects.toThrowError()
   })

@@ -54,7 +54,12 @@ async function performPoll({
   let nextJwtToken = jwtToken
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextCursor = cursor
-  const response = await pollAppLogs({pollOptions: {jwtToken, cursor, filters}, developerPlatformClient, organizationId, appId})
+  const response = await pollAppLogs({
+    pollOptions: {jwtToken, cursor, filters},
+    developerPlatformClient,
+    organizationId,
+    appId,
+  })
 
   const errorResponse = response as ErrorResponse
 

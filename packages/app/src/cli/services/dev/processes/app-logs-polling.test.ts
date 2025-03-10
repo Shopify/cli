@@ -29,6 +29,7 @@ describe('app-logs-polling', () => {
         subscription: {shopIds: SHOP_IDS, apiKey: API_KEY},
         storeName: 'storeName',
         organizationId: 'organizationId',
+        appId: 'appId',
       })
 
       // Then
@@ -84,11 +85,12 @@ describe('app-logs-polling', () => {
           appLogsSubscribeVariables,
           storeName: 'storeName',
           organizationId: 'organizationId',
+          appId: 'appId',
         },
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, "organizationId")
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, 'organizationId')
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
       expect(pollAppLogs).toHaveBeenCalledOnce()
       expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
@@ -112,6 +114,7 @@ describe('app-logs-polling', () => {
           appLogsSubscribeVariables,
           storeName: 'storeName',
           organizationId: 'organizationId',
+          appId: 'appId',
         },
       )
 

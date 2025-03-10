@@ -350,6 +350,8 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: MOCKED_ORGANIZATION_ID,
+      appId: MOCKED_APP_ID,
     })
     expect(resubscribeCallback).toHaveBeenCalledOnce()
 
@@ -358,6 +360,8 @@ describe('usePollAppLogs', () => {
     expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {
       pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS},
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: MOCKED_ORGANIZATION_ID,
+      appId: MOCKED_APP_ID,
     })
 
     expect(vi.getTimerCount()).toEqual(1)

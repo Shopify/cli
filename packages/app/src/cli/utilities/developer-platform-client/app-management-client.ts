@@ -140,10 +140,11 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 import { AppLogData } from '../../services/app-logs/types.js'
+
+const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
@@ -153,7 +154,6 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
 }
-
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public readonly clientName = ClientName.AppManagement
@@ -169,7 +169,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     this._session = session
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables, organizationId: string): Promise<AppLogsSubscribeResponse> {
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeVariables,
+    organizationId: string,
+  ): Promise<AppLogsSubscribeResponse> {
     const apiKey = input.apiKey
 
     const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
@@ -182,10 +185,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       token,
       appIdNumber,
       {
-          shopIds: input.shopIds,
-          apiKey: input.apiKey,
-        },
-      )
+        shopIds: input.shopIds,
+        apiKey: input.apiKey,
+      },
+    )
   }
 
   async appLogs(options: {
@@ -1135,12 +1138,13 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
   }
 }
 
-type AppLogsSubscribeQueryVariables = {
+interface AppLogsSubscribeQueryVariables {
   shopIds: string[]
   apiKey: string
+  [key: string]: unknown
 }
 
-export type AppLogsSubscribeQuery = {
+interface AppLogsSubscribeQuery {
   appLogsSubscribe: {
     jwtToken: string
     success: boolean
@@ -1148,7 +1152,7 @@ export type AppLogsSubscribeQuery = {
   }
 }
 
-export const AppLogsSubscribe = {
+const AppLogsSubscribe = {
   kind: 'Document',
   definitions: [
     {
