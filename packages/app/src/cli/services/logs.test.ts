@@ -165,6 +165,7 @@ describe('logs', () => {
       },
       pollOptions: expect.anything(),
       storeNameById: expectedStoreMap,
+      organizationId: organization.id,
     })
   })
 
@@ -201,6 +202,7 @@ describe('logs', () => {
       },
       pollOptions: expect.anything(),
       storeNameById: expectedStoreMap,
+      organizationId: organization.id,
     })
   })
 

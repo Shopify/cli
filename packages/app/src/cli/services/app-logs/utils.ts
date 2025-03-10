@@ -11,7 +11,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {AppInterface} from '../../models/app/app.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn, partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
@@ -27,6 +27,8 @@ export const LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND = 'function_network_access
 export const LOG_TYPE_REQUEST_EXECUTION = 'function_network_access.request_execution'
 export const REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON = 'no_cached_response'
 export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cached_response_about_to_expire'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import { shopifyFetch } from '@shopify/cli-kit/node/http'
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)
@@ -124,6 +126,60 @@ export interface FetchAppLogsOptions {
   }
 }
 
+const generateFetchAppLogUrlDevDashboard = async (
+  organizationId: string,
+  appId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
+  const fqdn = await appManagementFqdn()
+  let url = `https://${fqdn}/functions/unstable/organizations/${organizationId}/${appId}/app_logs/poll`
+
+  if (!cursor) {
+    return url
+  }
+
+  url += `?cursor=${cursor}`
+
+  if (filters?.status) {
+    url += `&status=${filters.status}`
+  }
+  if (filters?.source) {
+    url += `&source=${filters.source}`
+  }
+
+  return url
+}
+
+export const fetchAppLogsDevDashboard = async (
+  jwtToken: string,
+  organizationId: string,
+  appId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): Promise<Response> => {
+  const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
+
+  return shopifyFetch(url, {
+    method: 'GET',
+    headers,
+  })
+}
+
+
+
 interface FetchAppLogsErrorOptions {
   response: ErrorResponse
   onThrottle: (retryIntervalMs: number) => void
@@ -219,8 +275,9 @@ export const parseAppLogPayload = (payload: string, logType: string): any => {
 export const subscribeToAppLogs = async (
   developerPlatformClient: DeveloperPlatformClient,
   variables: AppLogsSubscribeVariables,
+  organizationId: string,
 ): Promise<string> => {
-  const result = await developerPlatformClient.subscribeToAppLogs(variables)
+  const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
   const {jwtToken, success, errors} = result.appLogsSubscribe
   outputDebug(`Token: ${jwtToken}\n`)
   outputDebug(`API Key: ${variables.apiKey}\n`)

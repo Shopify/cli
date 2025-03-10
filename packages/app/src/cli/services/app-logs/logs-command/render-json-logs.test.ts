@@ -49,6 +49,7 @@ describe('renderJsonLogs', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
       },
       storeNameById,
+      organizationId: 'organizationId',
     })
 
     expect(outputInfo).toHaveBeenNthCalledWith(
@@ -94,6 +95,7 @@ describe('renderJsonLogs', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
       },
       storeNameById,
+      organizationId: 'organizationId',
     })
 
     expect(outputInfo).not.toHaveBeenCalled()
@@ -123,6 +125,7 @@ describe('renderJsonLogs', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
       },
       storeNameById,
+      organizationId: 'organizationId',
     })
 
     expect(outputInfo).toHaveBeenCalledWith(

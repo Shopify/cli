@@ -13,10 +13,12 @@ export async function renderJsonLogs({
   pollOptions,
   options: {variables, developerPlatformClient},
   storeNameById,
+  organizationId,
 }: {
   pollOptions: PollOptions
   options: SubscribeOptions
   storeNameById: Map<string, string>
+  organizationId: string
 }): Promise<void> {
   const response = await pollAppLogs({pollOptions, developerPlatformClient})
   let retryIntervalMs = POLLING_INTERVAL_MS
@@ -34,7 +36,7 @@ export async function renderJsonLogs({
         outputInfo(JSON.stringify({message: 'Error while polling app logs.', retry_in_ms: retryIntervalMs}))
       },
       onResubscribe: () => {
-        return subscribeToAppLogs(developerPlatformClient, variables)
+        return subscribeToAppLogs(developerPlatformClient, variables, organizationId)
       },
     })
 
@@ -73,6 +75,7 @@ export async function renderJsonLogs({
         filters: pollOptions.filters,
       },
       storeNameById,
+      organizationId,
     }).catch((error) => {
       throw error
     })
