@@ -14,13 +14,15 @@ export async function renderJsonLogs({
   options: {variables, developerPlatformClient},
   storeNameById,
   organizationId,
+  appId,
 }: {
   pollOptions: PollOptions
   options: SubscribeOptions
   storeNameById: Map<string, string>
   organizationId: string
+  appId: string
 }): Promise<void> {
-  const response = await pollAppLogs({pollOptions, developerPlatformClient})
+  const response = await pollAppLogs({pollOptions, developerPlatformClient, organizationId, appId})
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = pollOptions.jwtToken
 
@@ -76,6 +78,7 @@ export async function renderJsonLogs({
       },
       storeNameById,
       organizationId,
+      appId,
     }).catch((error) => {
       throw error
     })

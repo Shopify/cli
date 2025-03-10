@@ -9,11 +9,13 @@ export async function renderLogs({
   options: {variables, developerPlatformClient},
   storeNameById,
   organizationId,
+  appId,
 }: {
   pollOptions: PollOptions
   options: SubscribeOptions
   storeNameById: Map<string, string>
   organizationId: string
+  appId: string
 }) {
   const resubscribeCallback = async () => {
     return subscribeToAppLogs(developerPlatformClient, variables, organizationId)
@@ -25,6 +27,8 @@ export async function renderLogs({
       resubscribeCallback={resubscribeCallback}
       storeNameById={storeNameById}
       developerPlatformClient={developerPlatformClient}
+      organizationId={organizationId}
+      appId={appId}
     />,
   )
 }

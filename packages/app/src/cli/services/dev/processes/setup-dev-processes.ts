@@ -187,6 +187,7 @@ export async function setupDevProcesses({
           },
           storeName: storeFqdn,
           organizationId: remoteApp.organizationId,
+          appId: remoteApp.id,
         })
       : undefined,
     await setupAppWatcherProcess({

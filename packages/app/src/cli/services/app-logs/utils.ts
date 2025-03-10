@@ -126,7 +126,7 @@ export interface FetchAppLogsOptions {
   }
 }
 
-const generateFetchAppLogUrlDevDashboard = async (
+export const generateFetchAppLogUrlDevDashboard = async (
   organizationId: string,
   appId: string,
   cursor?: string,
@@ -154,28 +154,16 @@ const generateFetchAppLogUrlDevDashboard = async (
   return url
 }
 
-export const fetchAppLogsDevDashboard = async (
-  jwtToken: string,
-  organizationId: string,
-  appId: string,
-  cursor?: string,
+
+export interface FetchAppLogsDevDashboardOptions {
+  organizationId: string
+  appId: string
+  jwtToken: string
+  cursor?: string
   filters?: {
     status?: string
     source?: string
-  },
-): Promise<Response> => {
-  const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
-  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
-
-  const headers = {
-    Authorization: `Bearer ${jwtToken}`,
-    'User-Agent': userAgent,
   }
-
-  return shopifyFetch(url, {
-    method: 'GET',
-    headers,
-  })
 }
 
 

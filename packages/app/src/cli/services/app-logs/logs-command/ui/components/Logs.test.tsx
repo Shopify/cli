@@ -31,6 +31,9 @@ const INPUT = {test: 'input'}
 const INPUT_BYTES = 10
 const OUTPUT_BYTES = 10
 
+const MOCKED_ORGANIZATION_ID = '123'
+const MOCKED_APP_ID = '456'
+
 const NETWORK_ACCESS_HTTP_REQUEST = {
   url: 'https://api.example.com/hello',
   method: 'GET',
@@ -113,6 +116,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -162,6 +167,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -212,6 +219,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -266,6 +275,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -327,6 +338,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -389,6 +402,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -438,6 +453,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -486,6 +503,8 @@ describe('Logs', () => {
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
+          organizationId={MOCKED_ORGANIZATION_ID}
+          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -522,6 +541,8 @@ describe('Logs', () => {
         resubscribeCallback={mockedResubscribeCallback}
         storeNameById={new Map()}
         developerPlatformClient={testDeveloperPlatformClient()}
+        organizationId={MOCKED_ORGANIZATION_ID}
+        appId={MOCKED_APP_ID}
       />,
     )
 

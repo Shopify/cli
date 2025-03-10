@@ -76,6 +76,7 @@ export async function logs(commandOptions: LogsOptions) {
       pollOptions,
       storeNameById: logsConfig.storeNameById,
       organizationId: commandOptions.organization.id,
+      appId: remoteApp.id,
     })
   } else {
     consoleLog('Waiting for app logs...\n')
@@ -87,6 +88,7 @@ export async function logs(commandOptions: LogsOptions) {
       pollOptions,
       storeNameById: logsConfig.storeNameById,
       organizationId: commandOptions.organization.id,
+      appId: remoteApp.id,
     })
   }
 }

@@ -19,7 +19,7 @@ import {
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
-  AppLogsResponse,
+  AppLogsResponse
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -120,11 +120,11 @@ import {
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
-import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
+import {generateFetchAppLogUrlDevDashboard} from '../../services/app-logs/utils.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch, Response} from '@shopify/cli-kit/node/http'
+import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
@@ -143,6 +143,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
+import { AppLogData } from '../../services/app-logs/types.js'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
@@ -187,8 +188,48 @@ export class AppManagementClient implements DeveloperPlatformClient {
       )
   }
 
-  async appLogs(options: FetchAppLogsOptions): Promise<AppLogsResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(options)}`)
+  async appLogs(options: {
+    jwtToken: string,
+    cursor?: string,
+    filters?: {
+      status?: string
+      source?: string
+    }
+  }, organizationId: string, appId: string): Promise<AppLogsResponse> {
+    const response = await fetchAppLogs({
+      jwtToken: options.jwtToken,
+      organizationId,
+      appId: String(numberFromGid(appId)),
+      cursor: options.cursor,
+      filters: options.filters,
+    })
+
+    try {
+      const data = (await response.json()) as {
+        app_logs?: AppLogData[]
+        cursor?: string
+        errors?: string[]
+      }
+
+      if (!response.ok) {
+        return {
+          errors: data.errors || [`Request failed with status ${response.status}`],
+          status: response.status,
+        }
+      }
+
+      return {
+        app_logs: data.app_logs || [],
+        cursor: data.cursor,
+        status: response.status,
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return {
+        errors: [`Failed to parse response: ${error}`],
+        status: response.status,
+      }
+    }
   }
 
   async session(): Promise<PartnersSession> {
@@ -1167,3 +1208,32 @@ export const AppLogsSubscribe = {
     },
   ],
 } as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>
+
+
+const fetchAppLogs = async (
+  {organizationId, appId, jwtToken, cursor, filters}: FetchAppLogsDevDashboardOptions,
+): Promise<Response> => {
+  const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
+
+  return shopifyFetch(url, {
+    method: 'GET',
+    headers,
+  })
+}
+
+interface FetchAppLogsDevDashboardOptions {
+  organizationId: string
+  appId: string
+  jwtToken: string
+  cursor?: string
+  filters?: {
+    status?: string
+    source?: string
+  }
+}

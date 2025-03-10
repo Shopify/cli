@@ -5,13 +5,17 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 interface PollAppLogsOptions {
   pollOptions: PollOptions
   developerPlatformClient: DeveloperPlatformClient
+  organizationId: string
+  appId: string
 }
 
 export const pollAppLogs = async ({
   pollOptions: {jwtToken, cursor, filters},
   developerPlatformClient,
+  organizationId,
+  appId,
 }: PollAppLogsOptions): Promise<PollResponse> => {
-  const response = await developerPlatformClient.appLogs({jwtToken, cursor})
+  const response = await developerPlatformClient.appLogs({jwtToken, cursor}, organizationId, appId)
   const {errors, status} = response as AppLogsError
 
   if (status !== 200) {

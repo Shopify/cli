@@ -287,7 +287,7 @@ export interface DeveloperPlatformClient {
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables, organizationId: string) => Promise<AppLogsSubscribeResponse>
-  appLogs: (options: FetchAppLogsOptions) => Promise<Response>
+  appLogs: (options: FetchAppLogsOptions, organizationId: string, appId: string) => Promise<AppLogsResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
