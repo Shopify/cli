@@ -15,6 +15,7 @@ import {
   FetchAppLogsOptions,
 } from '../utils.js'
 import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import camelcaseKeys from 'camelcase-keys'
@@ -27,12 +28,14 @@ export const pollAppLogs = async ({
     cursor,
   },
   apiKey,
+  developerPlatformClient,
   resubscribeCallback,
   storeName,
 }: {
   stdout: Writable
   appLogsFetchInput: FetchAppLogsOptions
   apiKey: string
+  developerPlatformClient: DeveloperPlatformClient
   resubscribeCallback: () => Promise<string>
   storeName: string
 }) => {
@@ -40,7 +43,7 @@ export const pollAppLogs = async ({
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    const httpResponse = await fetchAppLogs({jwtToken, cursor})
+    const httpResponse = await developerPlatformClient.appLogs({jwtToken, cursor})
 
     const response = await httpResponse.json()
     const {errors} = response as {errors: string[]}
@@ -121,6 +124,7 @@ export const pollAppLogs = async ({
           cursor: cursorFromResponse || cursor,
         },
         apiKey,
+        developerPlatformClient,
         resubscribeCallback,
         storeName,
       }).catch((error) => {
@@ -141,6 +145,7 @@ export const pollAppLogs = async ({
           cursor: undefined,
         },
         apiKey,
+        developerPlatformClient,
         resubscribeCallback,
         storeName,
       }).catch((error) => {

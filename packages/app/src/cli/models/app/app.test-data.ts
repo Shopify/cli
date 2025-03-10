@@ -1460,7 +1460,15 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
-    appLogs: (_options: FetchAppLogsOptions) => Promise.resolve(new Response(JSON.stringify({}))),
+    appLogs: (_options: FetchAppLogsOptions) => Promise.resolve(new Response(JSON.stringify({
+      app_logs: [
+        {
+          timestamp: '2024-01-01',
+          message: 'message',
+        },
+      ],
+      cursor: 'cursor',
+    }))),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
