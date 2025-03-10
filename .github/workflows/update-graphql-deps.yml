@@ -51,7 +51,7 @@ jobs:
           git commit -m "update generated graphql files"
           git push --set-upstream origin auto-update-graphql-deps --force
 
-          if ! gh pr view auto-update-graphql-deps &>/dev/null; then
+          if (gh pr ls -H auto-update-graphql-deps | wc -l | grep 0 &>/dev/null); then
             gh pr create --title "Update generated GraphQL files" \
               --body "This auto-generated PR updates the generated graphql files" \
               --head auto-update-graphql-deps
