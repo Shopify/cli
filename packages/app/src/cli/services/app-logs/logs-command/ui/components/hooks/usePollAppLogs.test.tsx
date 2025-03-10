@@ -15,10 +15,10 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
 } from '../../../../types.js'
+import {testDeveloperPlatformClient} from '../../../../../../models/app/app.test-data.js'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
-import { testDeveloperPlatformClient } from '../../../../../../models/app/app.test-data.js'
 
 vi.mock('../../../poll-app-logs.js')
 
@@ -336,19 +336,22 @@ describe('usePollAppLogs', () => {
     await vi.advanceTimersByTimeAsync(0)
 
     // Initial invocation, 401 returned
-    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(1, {pollOptions: {
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: '',
-      filters: EMPTY_FILTERS,
-    },
+    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(1, {
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: '',
+        filters: EMPTY_FILTERS,
+      },
       developerPlatformClient: mockedDeveloperPlatformClient,
     })
     expect(resubscribeCallback).toHaveBeenCalledOnce()
 
     // Follow up invocation, which invokes resubscribeCallback
     await vi.advanceTimersToNextTimerAsync()
-    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2,
-      { pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS}, developerPlatformClient: mockedDeveloperPlatformClient})
+    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {
+      pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS},
+      developerPlatformClient: mockedDeveloperPlatformClient,
+    })
 
     expect(vi.getTimerCount()).toEqual(1)
   })

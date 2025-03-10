@@ -55,11 +55,12 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
+import {FetchAppLogsOptions} from '../services/app-logs/utils.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import { FetchAppLogsOptions } from '../services/app-logs/utils.js'
-import { Response } from '@shopify/cli-kit/node/http'
+import {Response} from '@shopify/cli-kit/node/http'
+
 export enum ClientName {
   AppManagement = 'app-management',
   Partners = 'partners',

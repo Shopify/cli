@@ -119,10 +119,11 @@ import {
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
+import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
@@ -138,8 +139,7 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import { FetchAppLogsOptions } from '../../services/app-logs/utils.js'
-import { Response } from '@shopify/cli-kit/node/http'
+
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
@@ -170,7 +170,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appLogs(options: FetchAppLogsOptions): Promise<Response> {
-    throw new Error(`Not Implemented!`);
+    throw new Error(`Not Implemented: ${JSON.stringify(options)}`)
   }
 
   async session(): Promise<PartnersSession> {

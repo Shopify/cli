@@ -1,7 +1,7 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {fetchAppLogs} from '../utils.js'
+import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
-import { testDeveloperPlatformClient } from '../../../models/app/app.test-data.js'
 
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/context/fqdn')
@@ -55,16 +55,17 @@ describe('pollProcess', () => {
   test('successful poll', async () => {
     // Given
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS))
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS)),
     })
 
     // // When
-    const result = await pollAppLogs({pollOptions: {
+    const result = await pollAppLogs({
+      pollOptions: {
         jwtToken: MOCKED_JWT_TOKEN,
         cursor: MOCKED_CURSOR,
         filters: EMPTY_FILTERS,
       },
-      developerPlatformClient: mockedDeveloperPlatformClient
+      developerPlatformClient: mockedDeveloperPlatformClient,
     })
 
     expect(result).toEqual({
@@ -76,7 +77,7 @@ describe('pollProcess', () => {
   test('successful poll with filters', async () => {
     // Given
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS))
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS)),
     })
 
     // // When
@@ -86,7 +87,7 @@ describe('pollProcess', () => {
         cursor: MOCKED_CURSOR,
         filters: {status: 'failure', sources: ['extensions.my-function', 'extensions.my-other-function']},
       },
-      developerPlatformClient: mockedDeveloperPlatformClient
+      developerPlatformClient: mockedDeveloperPlatformClient,
     })
 
     expect(result).toEqual({
@@ -102,7 +103,7 @@ describe('pollProcess', () => {
   ])('returns errors when response is %s', async (status, statusText) => {
     // Given
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status, statusText))
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status, statusText)),
     })
 
     // When
@@ -112,7 +113,7 @@ describe('pollProcess', () => {
         cursor: MOCKED_CURSOR,
         filters: EMPTY_FILTERS,
       },
-      developerPlatformClient: mockedDeveloperPlatformClient
+      developerPlatformClient: mockedDeveloperPlatformClient,
     })
 
     // Then

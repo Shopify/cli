@@ -126,9 +126,7 @@ export interface FetchAppLogsOptions {
   }
 }
 
-export const fetchAppLogs = async (
-  {jwtToken, cursor, filters}: FetchAppLogsOptions,
-): Promise<Response> => {
+export const fetchAppLogs = async ({jwtToken, cursor, filters}: FetchAppLogsOptions): Promise<Response> => {
   const url = await generateFetchAppLogUrl(cursor, filters)
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
   const headers = {

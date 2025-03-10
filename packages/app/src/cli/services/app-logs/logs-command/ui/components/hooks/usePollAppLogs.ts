@@ -130,7 +130,13 @@ async function performPoll({
   return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor}
 }
 
-export function usePollAppLogs({initialJwt, filters, resubscribeCallback, storeNameById, developerPlatformClient}: UsePollAppLogsOptions) {
+export function usePollAppLogs({
+  initialJwt,
+  filters,
+  resubscribeCallback,
+  storeNameById,
+  developerPlatformClient,
+}: UsePollAppLogsOptions) {
   const [errors, setErrors] = useState<string[]>([])
   const [appLogOutputs, setAppLogOutputs] = useState<AppLogOutput[]>([])
   const nextJwtToken = useRef(initialJwt)

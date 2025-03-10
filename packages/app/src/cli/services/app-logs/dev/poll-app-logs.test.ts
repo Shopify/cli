@@ -1,13 +1,12 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {FunctionRunLog} from '../types.js'
-import { testDeveloperPlatformClient } from '../../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
 import camelcaseKeys from 'camelcase-keys'
-
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -241,13 +240,12 @@ describe('pollAppLogs', () => {
     vi.mocked(writeAppLogsToFile).mockResolvedValue({fullOutputPath: '/path', identifier: '000000'})
     vi.spyOn(components, 'useConcurrentOutputContext')
 
-
     // When
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
-      developerPlatformClient: developerPlatformClient,
+      developerPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
     })

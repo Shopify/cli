@@ -155,6 +155,7 @@ import {
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {fetchAppLogs, FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -162,8 +163,7 @@ import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/par
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import { fetchAppLogs, FetchAppLogsOptions } from '../../services/app-logs/utils.js'
-import { Response } from '@shopify/cli-kit/node/http'
+import {Response} from '@shopify/cli-kit/node/http'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406

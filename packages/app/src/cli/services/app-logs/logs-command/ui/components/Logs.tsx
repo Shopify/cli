@@ -34,8 +34,19 @@ const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason):
   }
 }
 
-const Logs: FunctionComponent<LogsProps> = ({pollOptions: {jwtToken, filters}, resubscribeCallback, storeNameById, developerPlatformClient}) => {
-  const {appLogOutputs, errors} = usePollAppLogs({filters, initialJwt: jwtToken, resubscribeCallback, storeNameById, developerPlatformClient})
+const Logs: FunctionComponent<LogsProps> = ({
+  pollOptions: {jwtToken, filters},
+  resubscribeCallback,
+  storeNameById,
+  developerPlatformClient,
+}) => {
+  const {appLogOutputs, errors} = usePollAppLogs({
+    filters,
+    initialJwt: jwtToken,
+    resubscribeCallback,
+    storeNameById,
+    developerPlatformClient,
+  })
 
   return (
     <>

@@ -74,10 +74,11 @@ import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functio
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
+import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import { FetchAppLogsOptions } from '../../services/app-logs/utils.js'
-import { Response } from '@shopify/cli-kit/node/http'
+import {Response} from '@shopify/cli-kit/node/http'
+
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
@@ -1460,15 +1461,20 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
-    appLogs: (_options: FetchAppLogsOptions) => Promise.resolve(new Response(JSON.stringify({
-      app_logs: [
-        {
-          timestamp: '2024-01-01',
-          message: 'message',
-        },
-      ],
-      cursor: 'cursor',
-    }))),
+    appLogs: (_options: FetchAppLogsOptions) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            app_logs: [
+              {
+                timestamp: '2024-01-01',
+                message: 'message',
+              },
+            ],
+            cursor: 'cursor',
+          }),
+        ),
+      ),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),

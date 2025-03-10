@@ -4,7 +4,6 @@ import {
   POLLING_ERROR_RETRY_INTERVAL_MS,
   ONE_MILLION,
   LOG_TYPE_FUNCTION_RUN,
-  fetchAppLogs,
   LOG_TYPE_FUNCTION_NETWORK_ACCESS,
   LOG_TYPE_RESPONSE_FROM_CACHE,
   LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND,
@@ -23,10 +22,7 @@ import {Writable} from 'stream'
 
 export const pollAppLogs = async ({
   stdout,
-  appLogsFetchInput: {
-    jwtToken,
-    cursor,
-  },
+  appLogsFetchInput: {jwtToken, cursor},
   apiKey,
   developerPlatformClient,
   resubscribeCallback,

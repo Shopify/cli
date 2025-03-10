@@ -9,11 +9,11 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
 } from '../../../types.js'
+import {testDeveloperPlatformClient} from '../../../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import React from 'react'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import { testDeveloperPlatformClient } from '../../../../../models/app/app.test-data.js'
 
 vi.mock('./hooks/usePollAppLogs.js')
 
