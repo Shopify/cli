@@ -60,7 +60,6 @@ import {AppLogData} from '../services/app-logs/types.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
 export enum ClientName {
   AppManagement = 'app-management',
   Partners = 'partners',

@@ -140,7 +140,7 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-
+import { Response } from '@shopify/cli-kit/node/http'
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
