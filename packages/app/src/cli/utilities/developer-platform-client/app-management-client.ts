@@ -142,6 +142,8 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
+import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
+
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
 type ShopEdge = NonNullable<AccessibleShops['edges'][number]>
@@ -150,6 +152,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
 }
+
 
 export class AppManagementClient implements DeveloperPlatformClient {
   public readonly clientName = ClientName.AppManagement
@@ -165,8 +168,23 @@ export class AppManagementClient implements DeveloperPlatformClient {
     this._session = session
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+  async subscribeToAppLogs(input: AppLogsSubscribeVariables, organizationId: string): Promise<AppLogsSubscribeResponse> {
+    const apiKey = input.apiKey
+
+    const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+    const appIdNumber = String(numberFromGid(app.id))
+    const token = await this.token()
+
+    return functionsRequestDoc<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>(
+      organizationId,
+      AppLogsSubscribe,
+      token,
+      appIdNumber,
+      {
+          shopIds: input.shopIds,
+          apiKey: input.apiKey,
+        },
+      )
   }
 
   async appLogs(options: FetchAppLogsOptions): Promise<AppLogsResponse> {
@@ -1075,3 +1093,77 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
     },
   }
 }
+
+type AppLogsSubscribeQueryVariables = {
+  shopIds: string[]
+  apiKey: string
+}
+
+export type AppLogsSubscribeQuery = {
+  appLogsSubscribe: {
+    jwtToken: string
+    success: boolean
+    errors?: string[]
+  }
+}
+
+export const AppLogsSubscribe = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: {kind: 'Name', value: 'AppLogsSubscribe'},
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}},
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}},
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'appLogsSubscribe'},
+            arguments: [
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'shopIds'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'apiKey'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'jwtToken'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'success'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'errors'}},
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>
