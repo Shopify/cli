@@ -3,7 +3,7 @@ import {fetchAppLogs} from '../utils.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const pollAppLogs = async ({jwtToken, cursor, filters}: PollOptions): Promise<PollResponse> => {
-  const response = await fetchAppLogs(jwtToken, cursor, filters)
+  const response = await fetchAppLogs({jwtToken, cursor, filters})
 
   const responseJson = await response.json()
   if (!response.ok) {

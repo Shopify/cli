@@ -12,6 +12,7 @@ import {
   REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON,
   REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
   handleFetchAppLogsError,
+  FetchAppLogsOptions,
 } from '../utils.js'
 import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
@@ -21,13 +22,16 @@ import {Writable} from 'stream'
 
 export const pollAppLogs = async ({
   stdout,
-  appLogsFetchInput: {jwtToken, cursor},
+  appLogsFetchInput: {
+    jwtToken,
+    cursor,
+  },
   apiKey,
   resubscribeCallback,
   storeName,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string}
+  appLogsFetchInput: FetchAppLogsOptions
   apiKey: string
   resubscribeCallback: () => Promise<string>
   storeName: string
@@ -36,7 +40,7 @@ export const pollAppLogs = async ({
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    const httpResponse = await fetchAppLogs(jwtToken, cursor)
+    const httpResponse = await fetchAppLogs({jwtToken, cursor})
 
     const response = await httpResponse.json()
     const {errors} = response as {errors: string[]}
