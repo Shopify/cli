@@ -1,14 +1,13 @@
 /* eslint-disable tsdoc/syntax */
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {uploadTheme} from '../utilities/theme-uploader.js'
 import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
-import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {uploadTheme4} from '../utilities/theme-uploader.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -33,6 +32,7 @@ interface PushOptions {
   publish?: boolean
   ignore?: string[]
   only?: string[]
+  environment?: string
 }
 
 interface JsonOutput {
@@ -99,6 +99,9 @@ export interface PushFlags {
 
   /** Require theme check to pass without errors before pushing. Warnings are allowed. */
   strict?: boolean
+
+  /** The environment to push the theme to. */
+  environment?: string
 }
 
 /**
@@ -106,7 +109,7 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags): Promise<void> {
+export async function push(flags: PushFlags, adminSession?: AdminSession) {
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -127,22 +130,20 @@ export async function push(flags: PushFlags): Promise<void> {
   })
 
   const force = flags.force ?? false
-  const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
   const workingDirectory = path ? resolvePath(path) : cwd()
   if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
     return
   }
 
-  const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
+  const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession as unknown as AdminSession, flags)
   if (!selectedTheme) {
     return
   }
 
   recordTiming('theme-service:push:setup')
 
-  await executePush(selectedTheme, adminSession, {
+  await executePush(selectedTheme, adminSession as unknown as AdminSession, {
     path: workingDirectory,
     nodelete: flags.nodelete ?? false,
     publish: flags.publish ?? false,
@@ -166,7 +167,7 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
   recordTiming('theme-service:push:file-system')
 
-  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
+  const {uploadResults, renderThemeSyncProgress} = await uploadTheme4(
     theme,
     session,
     themeChecksums,
