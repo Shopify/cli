@@ -6,6 +6,7 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -102,8 +103,17 @@ export async function generateCertificate({
     throw new AbortError(`Localhost certificate and key are required at ${relativeCertPath} and ${relativeKeyPath}`)
   }
 
-  const mkcertPath = await getMkcertPath(appDirectory, env, platform, arch)
-  outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
+  let mkcertPath = ''
+
+  const taskList = []
+  taskList.push({
+    title: 'Finding or downloading mkcert binary',
+    task: async () => {
+      mkcertPath = await getMkcertPath(appDirectory, env, platform, arch)
+      outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
+    },
+  })
+  await renderTasks(taskList)
 
   outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
