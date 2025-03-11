@@ -30,7 +30,12 @@ export async function partnersFqdn(): Promise<string> {
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
     case 'local':
-      return new DevServer('partners').host()
+      try {
+        return new DevServer('partners').host()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        return 'partners.shopify-cli.mock'
+      }
     case 'spin':
       return `partners.${await spinFqdn()}`
     default:
@@ -48,7 +53,12 @@ export async function appManagementFqdn(): Promise<string> {
   const productionFqdn = 'app.shopify.com'
   switch (environment) {
     case 'local':
-      return new DevServerCore().host('app')
+      try {
+        return new DevServerCore().host('app')
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        return 'app-management.shopify-cli.mock'
+      }
     case 'spin':
       return `app.shopify.${await spinFqdn()}`
     default:
@@ -84,7 +94,12 @@ export async function businessPlatformFqdn(): Promise<string> {
   const productionFqdn = 'destinations.shopifysvc.com'
   switch (environment) {
     case 'local':
-      return new DevServer('business-platform').host()
+      try {
+        return new DevServer('business-platform').host()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        return 'business-platform-destinations.shopify-cli.mock'
+      }
     case 'spin':
       return `business-platform.${await spinFqdn()}`
     default:
@@ -102,7 +117,12 @@ export async function identityFqdn(): Promise<string> {
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
-      return new DevServer('identity').host()
+      try {
+        return new DevServer('identity').host()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        return 'identity.shopify-cli.mock'
+      }
     case 'spin':
       return `identity.${await spinFqdn()}`
     default:

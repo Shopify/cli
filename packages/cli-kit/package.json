@@ -146,6 +146,7 @@
     "macaddress": "0.5.3",
     "minimatch": "9.0.5",
     "mrmime": "1.0.1",
+    "msw": "2.7.1",
     "network-interfaces": "1.1.0",
     "node-abort-controller": "3.1.1",
     "node-fetch": "3.3.2",
@@ -173,7 +174,6 @@
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",
     "@vitest/coverage-istanbul": "^1.6.0",
-    "msw": "^2.7.1",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.27.6"
