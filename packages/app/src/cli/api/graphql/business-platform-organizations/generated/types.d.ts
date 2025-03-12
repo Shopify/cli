@@ -63,4 +63,9 @@ export type Scalars = {
   URL: {input: string; output: string}
 }
 
+export type OrganizationUserProvisionShopAccessInput = {
+  /** The shop to provision the requester on. */
+  shopifyShopId: Scalars['PropertyPublicID']['input']
+}
+
 export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'DEVELOPMENT_SUPERSET' | 'PRODUCTION'

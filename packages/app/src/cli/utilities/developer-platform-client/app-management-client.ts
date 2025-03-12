@@ -90,6 +90,10 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
+  ProvisionShopAccess,
+  ProvisionShopAccessMutationVariables,
+} from '../../api/graphql/business-platform-organizations/generated/provision_shop_access.js'
+import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
@@ -257,7 +261,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    const base64Id = encodedGidFromId(orgId)
+    const base64Id = encodedGidFromOrganizationId(orgId)
     const variables = {organizationId: base64Id}
     const organizationResult = await businessPlatformRequestDoc(
       FindOrganizations,
@@ -410,7 +414,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
-    const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
+    const storesResult = await businessPlatformOrganizationsRequestDoc(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
@@ -725,6 +729,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
+  async ensureUserAccessToStore(orgId: string, shopId: string): Promise<void> {
+    const encodedShopId = encodedGidFromShopId(shopId)
+    const variables: ProvisionShopAccessMutationVariables = {
+      input: {shopifyShopId: encodedShopId},
+    }
+
+    const result = await businessPlatformOrganizationsRequestDoc(
+      ProvisionShopAccess,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
+
+    return
+  }
+
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
     throw new BugError('Not implemented: createExtension')
   }
@@ -896,7 +916,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     organizationId: string,
     allBetaFlags: string[],
   ): Promise<{[flag: (typeof allBetaFlags)[number]]: boolean}> {
-    const variables: OrganizationBetaFlagsQueryVariables = {organizationId: encodedGidFromId(organizationId)}
+    const variables: OrganizationBetaFlagsQueryVariables = {organizationId: encodedGidFromOrganizationId(organizationId)}
     const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>(
       organizationBetaFlagsQuery(allBetaFlags),
       await this.businessPlatformToken(),
@@ -971,8 +991,14 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
 // just the integer portion of that ID. These functions convert between the two.
 
 // 1234 => gid://organization/Organization/1234 => base64
-export function encodedGidFromId(id: string): string {
+export function encodedGidFromOrganizationId(id: string): string {
   const gid = `gid://organization/Organization/${id}`
+  return Buffer.from(gid).toString('base64')
+}
+
+// 1234 => gid://organization/ShopifyShop/1234 => base64
+export function encodedGidFromShopId(id: string): string {
+  const gid = `gid://organization/ShopifyShop/${id}`
   return Buffer.from(gid).toString('base64')
 }
 
