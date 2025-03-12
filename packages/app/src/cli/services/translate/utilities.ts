@@ -12,7 +12,7 @@ export function manifestFilePath(app: AppLinkedInterface): string {
 export function getManifestData(app: AppLinkedInterface): Manifest {
   const filePath = manifestFilePath(app)
   if (!fileExistsSync(filePath)) {
-    writeFileSync(filePath, JSON.stringify({}, null, 2))
+    writeFileSync(filePath, JSON.stringify([{}], null, 2))
   }
   const rawData = readFileSync(filePath)
   const manifestDatas = JSON.parse(rawData.toString())
