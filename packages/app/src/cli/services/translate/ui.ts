@@ -121,6 +121,6 @@ export function noLanguagesConfiguredMessage() {
 
   renderError({
     headline: 'No target languages configured.',
-    body: ['You must configure at least one target language to use this command.', helpLink],
+    body: ['You must configure at least one language in the `target_languages` array under `[translations]` on your `shopify.app.toml` to use this command.', helpLink],
   })
 }
