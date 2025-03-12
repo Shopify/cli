@@ -90,6 +90,10 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
+  OrganizationUserProvisionShopAccess,
+  OrganizationUserProvisionShopAccessMutationVariables,
+} from '../../api/graphql/business-platform-organizations/generated/organization_user_provision_shop_access.js'
+import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
@@ -723,6 +727,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
         ],
       },
     }
+  }
+
+  async provisionUserAccessToStore(orgId: string, shopId: string): Promise<void> {
+    const encodedShopId = encodedGidFromId(shopId)
+    const variables: OrganizationUserProvisionShopAccessMutationVariables = {
+      organizationUserProvisionShopAccessInput: {shopifyShopId: encodedShopId},
+    }
+
+    await businessPlatformOrganizationsRequestDoc(
+      OrganizationUserProvisionShopAccess,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
   }
 
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
