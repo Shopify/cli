@@ -32,6 +32,11 @@ export async function addFilesToTranslationFiles(
   const pattern = joinPath(directory, '**', `${language}.json`)
   const files = await glob(pattern)
 
+  if(files.length == 0){
+    // This would be ideal for UX reasons
+    console.log("FILES ARE", files, "with pattern", pattern, "but could not find one")
+  }
+
   for (const fullPath of files) {
     const data = readFileSync(fullPath).toString()
     translationFiles.push({
