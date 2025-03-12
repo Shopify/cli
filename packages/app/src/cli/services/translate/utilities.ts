@@ -6,7 +6,7 @@ import {readFileSync, glob, fileExistsSync, writeFileSync} from '@shopify/cli-ki
 import {hashString} from '@shopify/cli-kit/node/crypto'
 
 export function manifestFilePath(app: AppLinkedInterface): string {
-  return joinPath(app.directory, '.shopiofy_translation_manifest.json')
+  return joinPath(app.directory, '.shopify_translation_manifest.json')
 }
 
 export function getManifestData(app: AppLinkedInterface): Manifest {
