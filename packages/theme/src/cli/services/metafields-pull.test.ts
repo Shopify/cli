@@ -1,6 +1,7 @@
 import {setThemeStore} from './local-storage.js'
 import {metafieldsPull} from './metafields-pull.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
+import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -9,6 +10,7 @@ import {describe, test, vi, beforeEach, expect, afterEach} from 'vitest'
 import {fileExists, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-store.js')
+vi.mock('../utilities/theme-fs.js')
 vi.mock('../utilities/theme-ui.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -36,6 +38,7 @@ describe('metafields-pull', () => {
     })
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({token: '', storeFqdn: ''})
     vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
+    vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
   })
 
   afterEach(() => {
@@ -161,6 +164,33 @@ describe('metafields-pull', () => {
       await expect(fileExists(filePath)).resolves.toBe(false)
       expect(capturedOutput.info()).toBeFalsy()
       expect(capturedOutput.error()).toContain('Failed to fetch metafield definitions.')
+    })
+  })
+
+  describe('run from language server', () => {
+    beforeEach(() => {
+      process.env.SHOPIFY_LANGUAGE_SERVER = '1'
+      vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(false)
+    })
+
+    afterEach(() => {
+      process.env.SHOPIFY_LANGUAGE_SERVER = undefined
+    })
+
+    test('should not fetch metafields if the directory is not a theme', async () => {
+      vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(false)
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // When
+        await metafieldsPull({path: tmpDir})
+
+        // Then
+        const filePath = metafieldDefinitionPath(tmpDir)
+        await expect(fileExists(filePath)).resolves.toBe(false)
+      })
+
+      expect(capturedOutput.info()).toBeFalsy()
+      expect(capturedOutput.error()).toBeFalsy()
     })
   })
 })

@@ -95,8 +95,16 @@ const handleToOwnerType = {
 async function executeMetafieldsPull(session: AdminSession, options: MetafieldsPullOptions) {
   const {force, path, silent} = options
 
-  if (!(await hasRequiredThemeDirectories(path)) && !(await ensureDirectoryConfirmed(force))) {
-    return
+  if (!(await hasRequiredThemeDirectories(path))) {
+    // If this is not a theme, and the CLI is run by the language server, quick return
+    if (process.env.SHOPIFY_LANGUAGE_SERVER === '1') {
+      return
+    }
+
+    // Ensure the user is okay with running this command outside a theme
+    if (!(await ensureDirectoryConfirmed(force))) {
+      return
+    }
   }
 
   const promises = []
