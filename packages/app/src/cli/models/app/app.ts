@@ -533,7 +533,7 @@ export function validateFunctionExtensionsWithUiHandle(
     const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
     if (!matchingExtension) {
       errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
-    } else if (matchingExtension.configuration.type !== 'ui_extension') {
+    } else if (matchingExtension.type !== 'ui_extension') {
       errors.push(
         `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
       )

@@ -529,7 +529,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     allExtensions.forEach((extension) => {
       if (extension.handle && handles.has(extension.handle)) {
         const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
-        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
+        const result = joinWithAnd(matchingExtensions.map((ext) => ext.name))
         const handle = outputToken.cyan(extension.handle)
 
         this.abortOrReport(
