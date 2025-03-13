@@ -1,14 +1,18 @@
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchemaForConfig} from '../schemas.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const AppAccessSpecIdentifier = 'app_access'
 
-const AppAccessSchema = BaseSchemaForConfig.extend({
+// name & type are not required for app access
+// They are added just to conform to the BaseConfigType interface and have strongly typed functions.
+// They are ignored when deploying by the `transformConfig` function.
+const AppAccessSchema = zod.object({
+  name: zod.string().optional().default(AppAccessSpecIdentifier),
+  type: zod.string().optional().default(AppAccessSpecIdentifier),
   access: zod
     .object({
       admin: zod

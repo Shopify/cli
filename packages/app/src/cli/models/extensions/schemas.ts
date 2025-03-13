@@ -102,11 +102,6 @@ export const BaseSchema = zod.object({
   settings: SettingsSchema.optional(),
 })
 
-export const BaseSchemaForConfig = BaseSchema.pick({
-  name: true,
-  type: true,
-})
-
 export const BaseSchemaWithHandle = BaseSchema.extend({
   handle: HandleSchema,
 })

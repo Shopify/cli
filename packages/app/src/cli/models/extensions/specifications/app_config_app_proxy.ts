@@ -1,11 +1,13 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {ExtensionSpecification, TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchemaForConfig} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const AppProxySpecIdentifier = 'app_proxy'
 
-const AppProxySchema = BaseSchemaForConfig.extend({
+// name & type are not required for app proxy
+// They are added just to conform to the BaseConfigType interface and have strongly typed functions.
+// They are ignored when deploying by the `transformConfig` function.
+const AppProxySchema = zod.object({
   name: zod.string().optional().default(AppProxySpecIdentifier),
   type: zod.string().optional().default(AppProxySpecIdentifier),
   app_proxy: zod

@@ -5,8 +5,8 @@ import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
+import {BaseConfigType, ZodSchemaType} from '../schemas.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
   forward: transformToPrivacyComplianceWebhooksModule,
@@ -18,10 +18,7 @@ export const PrivacyComplianceWebhooksSpecIdentifier = 'privacy_compliance_webho
 // Uses the same schema as the webhooks specs because its content is nested under the same webhooks section
 const appPrivacyComplienceSpec = createConfigExtensionSpecification({
   identifier: PrivacyComplianceWebhooksSpecIdentifier,
-  schema: WebhooksSchema.extend({
-    name: zod.string().optional().default(PrivacyComplianceWebhooksSpecIdentifier),
-    type: zod.string().optional().default(PrivacyComplianceWebhooksSpecIdentifier),
-  }),
+  schema: WebhooksSchema as unknown as ZodSchemaType<BaseConfigType>,
   transformConfig: PrivacyComplianceWebhooksTransformConfig,
 })
 

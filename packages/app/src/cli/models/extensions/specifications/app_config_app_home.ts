@@ -1,11 +1,13 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchemaForConfig} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const AppHomeSpecIdentifier = 'app_home'
 
-const AppHomeSchema = BaseSchemaForConfig.extend({
+// name & type are not required for app home
+// They are added just to conform to the BaseConfigType interface and have strongly typed functions.
+// They are ignored when deploying by the `transformConfig` function.
+const AppHomeSchema = zod.object({
   name: zod.string().optional().default(AppHomeSpecIdentifier),
   type: zod.string().optional().default(AppHomeSpecIdentifier),
   application_url: validateUrl(zod.string({required_error: 'Valid URL is required'})),
