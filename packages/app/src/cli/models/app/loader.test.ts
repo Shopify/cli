@@ -1997,6 +1997,7 @@ wrong = "property"
         auth: {
           redirect_urls: ['https://example.com/api/auth'],
         },
+        name: 'for-testing-webhooks',
       },
       // this is the webhooks extension
       {
@@ -2007,10 +2008,12 @@ wrong = "property"
             {topics: ['orders/delete'], uri: 'https://example.com'},
           ],
         },
+        name: 'for-testing-webhooks',
       },
       {
         application_url: 'https://example.com/lala',
         embedded: true,
+        name: 'for-testing-webhooks',
       },
       // this is a webhook subscription extension
       {

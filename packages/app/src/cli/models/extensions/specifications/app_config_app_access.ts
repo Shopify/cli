@@ -1,11 +1,12 @@
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {BaseSchema} from '../schemas.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppAccessSchema = zod.object({
+const AppAccessSchema = BaseSchema.extend({
   access: zod
     .object({
       admin: zod
@@ -52,7 +53,7 @@ const appAccessSpec = createConfigExtensionSpecification({
     return outputContent`Scopes updated. ${outputToken.link('Open app to accept scopes.', scopesURL)}`.value
   },
   patchWithAppDevURLs: (config, urls) => {
-    if ('auth' in config && urls.redirectUrlWhitelist) {
+    if (urls.redirectUrlWhitelist) {
       config.auth = {redirect_urls: urls.redirectUrlWhitelist}
     }
   },
