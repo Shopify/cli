@@ -20,6 +20,8 @@ import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/availab
 import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
 import {CreateApp} from '../../api/graphql/app-management/generated/create-app.js'
+import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
+import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -752,5 +754,103 @@ describe('deploy', () => {
     // Then
     expect(result.appDeploy.userErrors).toHaveLength(1)
     expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
+  })
+
+  test('queries for versions list', async () => {
+    // Given
+    const appId = 'gid://shopify/App/123'
+    const client = new AppManagementClient()
+    client.token = () => Promise.resolve('token')
+    const mockResponse: AppVersionsQuery = {
+      app: {
+        id: appId,
+        versionsCount: 77,
+        activeRelease: {
+          id: 'gid://shopify/Release/1',
+          version: {
+            id: 'gid://shopify/Version/1',
+          },
+        },
+        versions: {
+          edges: [
+            {
+              node: {
+                id: 'gid://shopify/Version/1',
+                metadata: {
+                  versionTag: '1.0.0',
+                  message: 'Test deploy',
+                },
+                createdAt: '2021-01-01T00:00:00Z',
+                createdBy: 'user@example.com',
+              },
+            },
+            {
+              node: {
+                id: 'gid://shopify/Version/2',
+                metadata: {
+                  versionTag: '1.0.1',
+                  message: 'Test deploy 2',
+                },
+                createdAt: '2021-01-02T00:00:00Z',
+                createdBy: 'user2@example.com',
+              },
+            },
+          ],
+        },
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result: AppVersionsQuerySchema = await client.appVersions({
+      apiKey: 'api-key',
+      organizationId: 'gid://shopify/Organization/123',
+      id: appId,
+      title: 'Test App',
+    })
+
+    // Then
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      AppVersions,
+      'token',
+      expect.objectContaining({appId}),
+    )
+    expect(result).toEqual({
+      app: {
+        id: appId,
+        organizationId: 'gid://shopify/Organization/123',
+        title: 'Test App',
+        appVersions: {
+          nodes: [
+            {
+              createdAt: '2021-01-01T00:00:00Z',
+              createdBy: {
+                displayName: 'user@example.com',
+              },
+              versionTag: '1.0.0',
+              // Version 1 is active because it's the same as the active release
+              status: 'active',
+              versionId: 'gid://shopify/Version/1',
+              message: 'Test deploy',
+            },
+            {
+              createdAt: '2021-01-02T00:00:00Z',
+              createdBy: {
+                displayName: 'user2@example.com',
+              },
+              versionTag: '1.0.1',
+              // Version 2 is inactive because it's a different version
+              status: 'inactive',
+              versionId: 'gid://shopify/Version/2',
+              message: 'Test deploy 2',
+            },
+          ],
+          pageInfo: {
+            totalResults: 77,
+          },
+        },
+      },
+    })
   })
 })
