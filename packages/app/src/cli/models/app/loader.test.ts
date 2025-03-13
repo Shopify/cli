@@ -688,7 +688,7 @@ wrong = "property"
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions[0]!.name).toBe('my_extension')
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
     expect(app.allExtensions[0]!.localIdentifier).toBe('my-extension')
   })
@@ -714,7 +714,7 @@ wrong = "property"
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions[0]!.name).toBe('my_extension')
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
     expect(app.allExtensions[0]!.localIdentifier).toBe('my-extension')
   })
@@ -743,7 +743,7 @@ wrong = "property"
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions[0]!.name).toBe('custom_extension')
+    expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
     expect(app.allExtensions[0]!.localIdentifier).toBe('custom-extension')
   })
@@ -766,7 +766,7 @@ wrong = "property"
 
     // Then
     expect(app.name).toBe('my_app')
-    expect(app.allExtensions[0]!.name).toBe('my_extension')
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
@@ -800,9 +800,9 @@ wrong = "property"
     // Then
     expect(app.allExtensions).toHaveLength(2)
     const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
-    expect(extensions[0]!.name).toBe('my_extension_1')
+    expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
-    expect(extensions[1]!.name).toBe('my_extension_2')
+    expect(extensions[1]!.configuration.name).toBe('my_extension_2')
     expect(extensions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
@@ -846,13 +846,13 @@ wrong = "property"
     // Then
     expect(app.allExtensions).toHaveLength(2)
     const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
-    expect(extensions[0]!.name).toBe('my_extension_1')
-    expect(extensions[0]!.type).toBe('checkout_post_purchase')
+    expect(extensions[0]!.configuration.name).toBe('my_extension_1')
+    expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
     expect(extensions[0]!.configuration.description).toBe('custom description')
 
-    expect(extensions[1]!.name).toBe('my_extension_1_flow')
-    expect(extensions[1]!.type).toBe('flow_action')
+    expect(extensions[1]!.configuration.name).toBe('my_extension_1_flow')
+    expect(extensions[1]!.configuration.type).toBe('flow_action')
     expect(extensions[1]!.configuration.api_version).toBe('2022-07')
     expect(extensions[1]!.configuration.settings!.fields![0]!.key).toBe('my_field')
     expect(extensions[1]!.configuration.description).toBe('global description')
@@ -977,7 +977,7 @@ wrong = "property"
     const myFunction = app.allExtensions[0]!
 
     // Then
-    expect(myFunction.name).toBe('my-function')
+    expect(myFunction.configuration.name).toBe('my-function')
     expect(myFunction.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
     expect(myFunction.localIdentifier).toBe('my-function')
     expect(myFunction.entrySourceFilePath).toContain(joinPath(blockPath('my-function'), 'src', 'index.js'))
