@@ -459,7 +459,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
+  async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
