@@ -73,7 +73,7 @@ function loadSpecifications() {
     uiExtensionSpec,
     webPixelSpec,
     editorExtensionCollectionSpecification,
-  ] as ExtensionSpecification[]
+  ]
 
-  return [...configModuleSpecs, ...moduleSpecs]
+  return [...configModuleSpecs, ...moduleSpecs] as ExtensionSpecification[]
 }

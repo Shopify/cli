@@ -1,16 +1,14 @@
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchemaForConfig} from '../schemas.js'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const AppAccessSpecIdentifier = 'app_access'
 
-const AppAccessSchema = BaseSchema.extend({
-  name: zod.string().optional().default(AppAccessSpecIdentifier),
-  type: zod.string().optional().default(AppAccessSpecIdentifier),
+const AppAccessSchema = BaseSchemaForConfig.extend({
   access: zod
     .object({
       admin: zod

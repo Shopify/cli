@@ -98,8 +98,13 @@ export const BaseSchema = zod.object({
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
-  metafields: zod.array(MetafieldSchema).optional().default([]),
+  metafields: zod.array(MetafieldSchema).optional(),
   settings: SettingsSchema.optional(),
+})
+
+export const BaseSchemaForConfig = BaseSchema.pick({
+  name: true,
+  type: true,
 })
 
 export const BaseSchemaWithHandle = BaseSchema.extend({

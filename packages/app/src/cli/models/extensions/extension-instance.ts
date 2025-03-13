@@ -208,7 +208,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       | {[key: string]: unknown}
       | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
-    return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
+    const result = resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
+    console.log(this.specification.identifier)
+    console.log('result:', JSON.stringify(result, null, 2))
+    return result
   }
 
   validate() {

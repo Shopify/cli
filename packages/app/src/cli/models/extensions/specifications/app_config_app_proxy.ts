@@ -1,11 +1,11 @@
 import {validateUrl} from '../../app/validation/common.js'
-import {ExtensionSpecification, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {ExtensionSpecification, TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {BaseSchemaForConfig} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const AppProxySpecIdentifier = 'app_proxy'
 
-const AppProxySchema = BaseSchema.extend({
+const AppProxySchema = BaseSchemaForConfig.extend({
   name: zod.string().optional().default(AppProxySpecIdentifier),
   type: zod.string().optional().default(AppProxySpecIdentifier),
   app_proxy: zod
@@ -17,9 +17,16 @@ const AppProxySchema = BaseSchema.extend({
     .optional(),
 })
 
+const AppProxyTransformConfig: TransformationConfig = {
+  url: 'app_proxy.url',
+  subpath: 'app_proxy.subpath',
+  prefix: 'app_proxy.prefix',
+}
+
 const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
+  transformConfig: AppProxyTransformConfig,
   patchWithAppDevURLs: (config, urls) => {
     if (urls.appProxy) {
       config.app_proxy = {
