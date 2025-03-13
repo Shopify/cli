@@ -250,7 +250,6 @@ describe('pollAppLogs', () => {
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
-      appId: 'appId',
     })
     await vi.advanceTimersToNextTimerAsync()
 
@@ -356,7 +355,6 @@ describe('pollAppLogs', () => {
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
@@ -379,7 +377,6 @@ describe('pollAppLogs', () => {
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
@@ -406,7 +403,6 @@ describe('pollAppLogs', () => {
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     // Then
@@ -450,7 +446,6 @@ describe('pollAppLogs', () => {
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     // When/Then

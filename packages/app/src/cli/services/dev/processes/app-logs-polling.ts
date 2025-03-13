@@ -11,7 +11,6 @@ interface SubscribeAndStartPollingOptions {
   appLogsSubscribeVariables: AppLogsSubscribeVariables
   storeName: string
   organizationId: string
-  appId: string
 }
 
 export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPollingOptions> {
@@ -26,7 +25,6 @@ interface Props {
   }
   storeName: string
   organizationId: string
-  appId: string
 }
 
 export async function setupAppLogsPollingProcess({
@@ -34,7 +32,6 @@ export async function setupAppLogsPollingProcess({
   subscription: {shopIds, apiKey},
   storeName,
   organizationId,
-  appId,
 }: Props): Promise<AppLogsSubscribeProcess> {
   const {token} = await developerPlatformClient.session()
 
@@ -51,14 +48,13 @@ export async function setupAppLogsPollingProcess({
       },
       storeName,
       organizationId,
-      appId,
     },
   }
 }
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
   {stdout, stderr: _stderr, abortSignal: _abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, appId},
+  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId},
 ) => {
   try {
     const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, organizationId)
@@ -76,7 +72,6 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       developerPlatformClient,
       storeName,
       organizationId,
-      appId,
     })
     // eslint-disable-next-line no-catch-all/no-catch-all,no-empty
   } catch (error) {}

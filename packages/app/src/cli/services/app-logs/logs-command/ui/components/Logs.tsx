@@ -22,7 +22,6 @@ interface LogsProps {
   storeNameById: Map<string, string>
   developerPlatformClient: DeveloperPlatformClient
   organizationId: string
-  appId: string
 }
 
 const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason): string => {
@@ -42,7 +41,6 @@ const Logs: FunctionComponent<LogsProps> = ({
   storeNameById,
   developerPlatformClient,
   organizationId,
-  appId,
 }) => {
   const {appLogOutputs, errors} = usePollAppLogs({
     filters,
@@ -51,7 +49,6 @@ const Logs: FunctionComponent<LogsProps> = ({
     storeNameById,
     developerPlatformClient,
     organizationId,
-    appId,
   })
 
   return (

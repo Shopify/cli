@@ -60,6 +60,7 @@ import {AppLogData} from '../services/app-logs/types.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
+
 export enum ClientName {
   AppManagement = 'app-management',
   Partners = 'partners',
@@ -219,6 +220,7 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
 export interface AppLogsSuccess {
   app_logs: AppLogData[]
   cursor?: string
+  status: number
 }
 
 export interface AppLogsError {
@@ -287,7 +289,7 @@ export interface DeveloperPlatformClient {
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables, organizationId: string) => Promise<AppLogsSubscribeResponse>
-  appLogs: (options: FetchAppLogsOptions, organizationId: string, appId: string) => Promise<AppLogsResponse>
+  appLogs: (options: FetchAppLogsOptions, organizationId: string) => Promise<AppLogsResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>

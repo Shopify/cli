@@ -19,7 +19,7 @@ import {
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
-  AppLogsResponse
+  AppLogsResponse,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -120,7 +120,8 @@ import {
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
-import {generateFetchAppLogUrlDevDashboard} from '../../services/app-logs/utils.js'
+import {AppLogData} from '../../services/app-logs/types.js'
+import {addCursorAndFiltersToAppLogsUrl} from '../../services/app-logs/utils.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -135,14 +136,13 @@ import {
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn, developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
-import { AppLogData } from '../../services/app-logs/types.js'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -173,10 +173,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     input: AppLogsSubscribeVariables,
     organizationId: string,
   ): Promise<AppLogsSubscribeResponse> {
-    const apiKey = input.apiKey
-
-    const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
-    const appIdNumber = String(numberFromGid(app.id))
     const token = await this.token()
 
     return appManagementRequestDoc<AppLogsSubscribeQuery, AppLogsSubscribeDevDashQueryVariables>(
@@ -184,23 +180,25 @@ export class AppManagementClient implements DeveloperPlatformClient {
       AppLogsSubscribe,
       token,
       {
-        shopIds: input.shopIds.map(id => Number(id)),
+        shopIds: input.shopIds.map((id) => Number(id)),
         apiKey: input.apiKey,
       },
     )
   }
 
-  async appLogs(options: {
-    jwtToken: string,
-    cursor?: string,
-    filters?: {
-      status?: string
-      source?: string
-    }
-  }, organizationId: string, appId: string): Promise<AppLogsResponse> {
+  async appLogs(
+    options: {
+      jwtToken: string
+      cursor?: string
+      filters?: {
+        status?: string
+        source?: string
+      }
+    },
+    organizationId: string,
+  ): Promise<AppLogsResponse> {
     const response = await fetchAppLogs({
       organizationId,
-      appId,
       jwtToken: options.jwtToken,
       cursor: options.cursor,
       filters: options.filters,
@@ -1137,7 +1135,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
   }
 }
 
-export interface AppLogsSubscribeDevDashQueryVariables {
+interface AppLogsSubscribeDevDashQueryVariables {
   shopIds: number[]
   apiKey: string
   [key: string]: unknown
@@ -1212,11 +1210,13 @@ const AppLogsSubscribe = {
   ],
 } as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeDevDashQueryVariables>
 
-
-const fetchAppLogs = async (
-  {organizationId, appId, jwtToken, cursor, filters}: FetchAppLogsDevDashboardOptions,
-): Promise<Response> => {
-  const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
+const fetchAppLogs = async ({
+  organizationId,
+  jwtToken,
+  cursor,
+  filters,
+}: FetchAppLogsDevDashboardOptions): Promise<Response> => {
+  const url = await generateFetchAppLogUrlDevDashboard(organizationId, cursor, filters)
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
 
   const headers = {
@@ -1230,9 +1230,21 @@ const fetchAppLogs = async (
   })
 }
 
+const generateFetchAppLogUrlDevDashboard = async (
+  organizationId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
+  const fqdn = await appManagementFqdn()
+  const url = `https://${fqdn}/app_management/unstable/organizations/${organizationId}/app_logs/poll`
+  return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
+}
+
 interface FetchAppLogsDevDashboardOptions {
   organizationId: string
-  appId: string
   jwtToken: string
   cursor?: string
   filters?: {

@@ -35,6 +35,7 @@ const RESPONSE_DATA_SUCCESS = {
     },
   ],
   cursor: RETURNED_CURSOR,
+  status: 200,
 }
 
 const EMPTY_FILTERS = {status: undefined, sources: undefined}
@@ -62,7 +63,7 @@ describe('pollProcess', () => {
       appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS)),
     })
 
-    // // When
+    // When
     const result = await pollAppLogs({
       pollOptions: {
         jwtToken: MOCKED_JWT_TOKEN,
@@ -71,7 +72,6 @@ describe('pollProcess', () => {
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(result).toEqual({
@@ -86,7 +86,7 @@ describe('pollProcess', () => {
       appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(RESPONSE_DATA_SUCCESS)),
     })
 
-    // // When
+    // When
     const result = await pollAppLogs({
       pollOptions: {
         jwtToken: MOCKED_JWT_TOKEN,
@@ -95,7 +95,6 @@ describe('pollProcess', () => {
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(result).toEqual({
@@ -123,7 +122,6 @@ describe('pollProcess', () => {
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     // Then
@@ -154,7 +152,6 @@ describe('pollProcess', () => {
         },
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: 'organizationId',
-        appId: 'appId',
       }),
     ).rejects.toThrowError()
   })

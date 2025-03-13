@@ -75,11 +75,10 @@ import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functio
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 
+import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import { Response } from '@shopify/cli-kit/node/http'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',

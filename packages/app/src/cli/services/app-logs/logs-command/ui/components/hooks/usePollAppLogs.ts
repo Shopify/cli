@@ -25,7 +25,6 @@ interface UsePollAppLogsOptions {
   storeNameById: Map<string, string>
   developerPlatformClient: DeveloperPlatformClient
   organizationId: string
-  appId: string
 }
 
 async function performPoll({
@@ -34,7 +33,6 @@ async function performPoll({
   filters,
   storeNameById,
   organizationId,
-  appId,
   setErrors,
   setAppLogOutputs,
   resubscribeCallback,
@@ -45,7 +43,6 @@ async function performPoll({
   filters: PollFilters
   storeNameById: Map<string, string>
   organizationId: string
-  appId: string
   setErrors: Dispatch<SetStateAction<string[]>>
   setAppLogOutputs: Dispatch<SetStateAction<AppLogOutput[]>>
   resubscribeCallback: () => Promise<string>
@@ -58,7 +55,6 @@ async function performPoll({
     pollOptions: {jwtToken, cursor, filters},
     developerPlatformClient,
     organizationId,
-    appId,
   })
 
   const errorResponse = response as ErrorResponse
@@ -148,7 +144,6 @@ export function usePollAppLogs({
   storeNameById,
   developerPlatformClient,
   organizationId,
-  appId,
 }: UsePollAppLogsOptions) {
   const [errors, setErrors] = useState<string[]>([])
   const [appLogOutputs, setAppLogOutputs] = useState<AppLogOutput[]>([])
@@ -167,7 +162,6 @@ export function usePollAppLogs({
       resubscribeCallback,
       developerPlatformClient,
       organizationId,
-      appId,
     })
 
     // ESLint is concerned about these updates being atomic, but the approach to useSelfAdjustingInterval ensures that is the case.

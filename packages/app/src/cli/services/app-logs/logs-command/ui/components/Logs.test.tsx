@@ -117,7 +117,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -168,7 +167,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -220,7 +218,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -276,7 +273,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -339,7 +335,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -403,7 +398,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -454,7 +448,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -504,7 +497,6 @@ describe('Logs', () => {
           storeNameById={new Map()}
           developerPlatformClient={testDeveloperPlatformClient()}
           organizationId={MOCKED_ORGANIZATION_ID}
-          appId={MOCKED_APP_ID}
         />,
       )
 
@@ -542,7 +534,6 @@ describe('Logs', () => {
         storeNameById={new Map()}
         developerPlatformClient={testDeveloperPlatformClient()}
         organizationId={MOCKED_ORGANIZATION_ID}
-        appId={MOCKED_APP_ID}
       />,
     )
 

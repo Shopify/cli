@@ -29,7 +29,6 @@ describe('app-logs-polling', () => {
         subscription: {shopIds: SHOP_IDS, apiKey: API_KEY},
         storeName: 'storeName',
         organizationId: 'organizationId',
-        appId: 'appId',
       })
 
       // Then
@@ -85,7 +84,6 @@ describe('app-logs-polling', () => {
           appLogsSubscribeVariables,
           storeName: 'storeName',
           organizationId: 'organizationId',
-          appId: 'appId',
         },
       )
 
@@ -114,7 +112,6 @@ describe('app-logs-polling', () => {
           appLogsSubscribeVariables,
           storeName: 'storeName',
           organizationId: 'organizationId',
-          appId: 'appId',
         },
       )
 

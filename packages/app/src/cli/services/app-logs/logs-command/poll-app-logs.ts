@@ -6,16 +6,14 @@ interface PollAppLogsOptions {
   pollOptions: PollOptions
   developerPlatformClient: DeveloperPlatformClient
   organizationId: string
-  appId: string
 }
 
 export const pollAppLogs = async ({
   pollOptions: {jwtToken, cursor, filters},
   developerPlatformClient,
   organizationId,
-  appId,
 }: PollAppLogsOptions): Promise<PollResponse> => {
-  const response = await developerPlatformClient.appLogs({jwtToken, cursor}, organizationId, appId)
+  const response = await developerPlatformClient.appLogs({jwtToken, cursor}, organizationId)
   const {errors, status} = response as AppLogsError
 
   if (status !== 200) {

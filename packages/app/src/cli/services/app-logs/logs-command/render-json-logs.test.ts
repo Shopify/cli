@@ -50,7 +50,6 @@ describe('renderJsonLogs', () => {
       },
       storeNameById,
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(outputInfo).toHaveBeenNthCalledWith(
@@ -97,7 +96,6 @@ describe('renderJsonLogs', () => {
       },
       storeNameById,
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(outputInfo).not.toHaveBeenCalled()
@@ -128,7 +126,6 @@ describe('renderJsonLogs', () => {
       },
       storeNameById,
       organizationId: 'organizationId',
-      appId: 'appId',
     })
 
     expect(outputInfo).toHaveBeenCalledWith(

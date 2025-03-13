@@ -11,7 +11,6 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {AppInterface} from '../../models/app/app.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {appManagementFqdn, partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
@@ -27,8 +26,6 @@ export const LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND = 'function_network_access
 export const LOG_TYPE_REQUEST_EXECUTION = 'function_network_access.request_execution'
 export const REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON = 'no_cached_response'
 export const REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON = 'cached_response_about_to_expire'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import { shopifyFetch } from '@shopify/cli-kit/node/http'
 
 export function parseFunctionRunPayload(payload: string): FunctionRunLog {
   const parsedPayload = JSON.parse(payload)
@@ -91,30 +88,11 @@ export function parseNetworkAccessRequestExecutedPayload(payload: string): Netwo
   })
 }
 
-export const generateFetchAppLogUrl = async (
-  cursor?: string,
-  filters?: {
-    status?: string
-    source?: string
-  },
-) => {
-  const fqdn = await partnersFqdn()
-  let url = `https://${fqdn}/app_logs/poll`
-
-  if (!cursor) {
-    return url
-  }
-
-  url += `?cursor=${cursor}`
-
-  if (filters?.status) {
-    url += `&status=${filters.status}`
-  }
-  if (filters?.source) {
-    url += `&source=${filters.source}`
-  }
-
-  return url
+interface FetchAppLogsErrorOptions {
+  response: ErrorResponse
+  onThrottle: (retryIntervalMs: number) => void
+  onUnknownError: (retryIntervalMs: number) => void
+  onResubscribe: () => Promise<string>
 }
 
 export interface FetchAppLogsOptions {
@@ -124,54 +102,6 @@ export interface FetchAppLogsOptions {
     status?: string
     source?: string
   }
-}
-
-export const generateFetchAppLogUrlDevDashboard = async (
-  organizationId: string,
-  appId: string,
-  cursor?: string,
-  filters?: {
-    status?: string
-    source?: string
-  },
-) => {
-  const fqdn = await appManagementFqdn()
-  let url = `https://${fqdn}/app_management/unstable/organizations/${organizationId}/app_logs/poll`
-
-  if (!cursor) {
-    return url
-  }
-
-  url += `?cursor=${cursor}`
-
-  if (filters?.status) {
-    url += `&status=${filters.status}`
-  }
-  if (filters?.source) {
-    url += `&source=${filters.source}`
-  }
-
-  return url
-}
-
-
-export interface FetchAppLogsDevDashboardOptions {
-  organizationId: string
-  appId: string
-  jwtToken: string
-  cursor?: string
-  filters?: {
-    status?: string
-    source?: string
-  }
-}
-
-
-interface FetchAppLogsErrorOptions {
-  response: ErrorResponse
-  onThrottle: (retryIntervalMs: number) => void
-  onUnknownError: (retryIntervalMs: number) => void
-  onResubscribe: () => Promise<string>
 }
 
 export const handleFetchAppLogsError = async (
@@ -265,7 +195,6 @@ export const subscribeToAppLogs = async (
   organizationId: string,
 ): Promise<string> => {
   const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
-  console.log("jwt", result)
   const {jwtToken, success, errors} = result.appLogsSubscribe
   outputDebug(`Token: ${jwtToken}\n`)
   outputDebug(`API Key: ${variables.apiKey}\n`)
@@ -303,4 +232,29 @@ const parseJson = (json: string): object | string => {
   } catch (error) {
     return json
   }
+}
+
+export const addCursorAndFiltersToAppLogsUrl = (
+  baseUrl: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): string => {
+  const url = new URL(baseUrl)
+
+  if (cursor) {
+    url.searchParams.append('cursor', cursor)
+  }
+
+  if (filters?.status) {
+    url.searchParams.append('status', filters.status)
+  }
+
+  if (filters?.source) {
+    url.searchParams.append('source', filters.source)
+  }
+
+  return url.toString()
 }

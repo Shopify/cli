@@ -212,7 +212,6 @@ describe('usePollAppLogs', () => {
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: MOCKED_ORGANIZATION_ID,
-        appId: MOCKED_APP_ID,
       }),
     )
 
@@ -335,7 +334,6 @@ describe('usePollAppLogs', () => {
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: MOCKED_ORGANIZATION_ID,
-        appId: MOCKED_APP_ID,
       }),
     )
 
@@ -351,7 +349,6 @@ describe('usePollAppLogs', () => {
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
       organizationId: MOCKED_ORGANIZATION_ID,
-      appId: MOCKED_APP_ID,
     })
     expect(resubscribeCallback).toHaveBeenCalledOnce()
 
@@ -361,7 +358,6 @@ describe('usePollAppLogs', () => {
       pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS},
       developerPlatformClient: mockedDeveloperPlatformClient,
       organizationId: MOCKED_ORGANIZATION_ID,
-      appId: MOCKED_APP_ID,
     })
 
     expect(vi.getTimerCount()).toEqual(1)
@@ -388,7 +384,6 @@ describe('usePollAppLogs', () => {
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: MOCKED_ORGANIZATION_ID,
-        appId: MOCKED_APP_ID,
       }),
     )
 
@@ -432,7 +427,6 @@ describe('usePollAppLogs', () => {
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: MOCKED_ORGANIZATION_ID,
-        appId: MOCKED_APP_ID,
       }),
     )
 
@@ -474,7 +468,6 @@ describe('usePollAppLogs', () => {
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: MOCKED_ORGANIZATION_ID,
-        appId: MOCKED_APP_ID,
       }),
     )
 
@@ -503,7 +496,6 @@ describe('usePollAppLogs', () => {
         storeNameById: new Map(),
         developerPlatformClient: mockedDeveloperPlatformClient,
         organizationId: MOCKED_ORGANIZATION_ID,
-        appId: MOCKED_APP_ID,
       }),
     )
 
