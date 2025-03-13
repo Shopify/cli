@@ -27,7 +27,7 @@ const spec = createExtensionSpecification({
       production_api_base_url: config.production_api_base_url,
       benchmark_api_base_url: config.benchmark_api_base_url,
       calculate_taxes_api_endpoint: config.calculate_taxes_api_endpoint,
-      metafields: config.metafields ?? [],
+      metafields: config.metafields,
       api_version: config.api_version,
       metafield_identifiers: config.input?.metafield_identifiers,
     }

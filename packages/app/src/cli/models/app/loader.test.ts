@@ -444,7 +444,7 @@ wrong = "property"
 
     const blockConfiguration = `
       wrong = "my_extension"
-      type = "checkout_post_purchase"
+      type = "ui_extension"
       `
     await writeBlockConfig({
       blockConfiguration,
