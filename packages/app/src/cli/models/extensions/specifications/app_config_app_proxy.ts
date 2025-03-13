@@ -1,8 +1,13 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {ExtensionSpecification, createConfigExtensionSpecification} from '../specification.js'
+import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppProxySchema = zod.object({
+export const AppProxySpecIdentifier = 'app_proxy'
+
+const AppProxySchema = BaseSchema.extend({
+  name: zod.string().optional().default(AppProxySpecIdentifier),
+  type: zod.string().optional().default(AppProxySpecIdentifier),
   app_proxy: zod
     .object({
       url: validateUrl(zod.string({invalid_type_error: 'Value must be a valid URL'})),
@@ -12,13 +17,11 @@ const AppProxySchema = zod.object({
     .optional(),
 })
 
-export const AppProxySpecIdentifier = 'app_proxy'
-
 const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
   patchWithAppDevURLs: (config, urls) => {
-    if ('app_proxy' in config && urls.appProxy) {
+    if (urls.appProxy) {
       config.app_proxy = {
         url: urls.appProxy.proxyUrl,
         subpath: urls.appProxy.proxySubPath,

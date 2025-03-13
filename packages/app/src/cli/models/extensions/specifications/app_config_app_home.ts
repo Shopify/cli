@@ -1,8 +1,13 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppHomeSchema = zod.object({
+export const AppHomeSpecIdentifier = 'app_home'
+
+const AppHomeSchema = BaseSchema.extend({
+  name: zod.string().optional().default(AppHomeSpecIdentifier),
+  type: zod.string().optional().default(AppHomeSpecIdentifier),
   application_url: validateUrl(zod.string({required_error: 'Valid URL is required'})),
   embedded: zod.boolean({required_error: 'Boolean is required', invalid_type_error: 'Value must be Boolean'}),
   app_preferences: zod
@@ -18,16 +23,12 @@ const AppHomeTransformConfig: TransformationConfig = {
   preferences_url: 'app_preferences.url',
 }
 
-export const AppHomeSpecIdentifier = 'app_home'
-
 const appHomeSpec = createConfigExtensionSpecification({
   identifier: AppHomeSpecIdentifier,
   schema: AppHomeSchema,
   transformConfig: AppHomeTransformConfig,
   patchWithAppDevURLs: (config, urls) => {
-    if ('application_url' in config) {
-      config.application_url = urls.applicationUrl
-    }
+    config.application_url = urls.applicationUrl
   },
 })
 

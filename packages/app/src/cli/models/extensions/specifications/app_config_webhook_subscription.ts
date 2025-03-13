@@ -2,6 +2,7 @@ import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validatio
 import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
+import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
@@ -15,7 +16,9 @@ interface TransformedWebhookSubscription {
   filter?: string
 }
 
-export const SingleWebhookSubscriptionSchema = zod.object({
+export const SingleWebhookSubscriptionSchema = BaseSchema.extend({
+  name: zod.string().optional().default(WebhookSubscriptionSpecIdentifier),
+  type: zod.string().optional().default(WebhookSubscriptionSpecIdentifier),
   topic: zod.string(),
   api_version: zod.string(),
   uri: zod.preprocess(removeTrailingSlash as (arg: unknown) => unknown, WebhookSubscriptionUriValidation, {

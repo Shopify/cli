@@ -225,8 +225,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
  */
 export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: zod.ZodObject<any>
+  schema: ZodSchemaType<TConfiguration>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
@@ -242,7 +241,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     identifier: spec.identifier,
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
     // however, app config extensions config content is parsed from the `shopify.app.toml`
-    schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
+    schema: spec.schema,
     appModuleFeatures,
     transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
