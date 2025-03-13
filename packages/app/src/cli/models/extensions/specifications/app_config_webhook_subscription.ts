@@ -50,8 +50,6 @@ function transformToWebhookSubscriptionConfig(content: object) {
 
 const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
   forward: (content, appConfiguration) => {
-    if ('type' in content) delete content.type
-    if ('name' in content) delete content.name
     const webhookConfig = content as WebhookSubscription
     let appUrl: string | undefined
     if ('application_url' in appConfiguration) {

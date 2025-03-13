@@ -5,7 +5,7 @@ export const MAX_EXTENSION_HANDLE_LENGTH = 50
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZodSchemaType<T> = zod.ZodType<T, any, any>
 
-const MetafieldSchema = zod.object({
+export const MetafieldSchema = zod.object({
   namespace: zod.string(),
   key: zod.string(),
 })

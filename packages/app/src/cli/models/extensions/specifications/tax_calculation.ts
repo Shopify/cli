@@ -1,11 +1,12 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const TaxCalculationsSchema = BaseSchema.extend({
   production_api_base_url: zod.string(),
   benchmark_api_base_url: zod.string().optional(),
   calculate_taxes_api_endpoint: zod.string(),
+  metafields: zod.array(MetafieldSchema).optional().default([]),
   input: zod
     .object({
       metafield_identifiers: zod
