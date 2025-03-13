@@ -16,6 +16,7 @@ export const FlowTriggerSettingsSchema = FieldSchema.extend({
 
 const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_trigger'),
+  name: zod.string(),
   schema: zod.string().optional(),
   settings: zod
     .object({

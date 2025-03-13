@@ -2,13 +2,14 @@ import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/retail-ui-extensions'
 
 const posUISpec = createExtensionSpecification({
   identifier: 'pos_ui_extension',
   dependency,
-  schema: BaseSchema,
+  schema: BaseSchema.extend({name: zod.string()}),
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)
