@@ -212,6 +212,7 @@ const RESPONSE_DATA = {
     },
   ],
   cursor: RETURNED_CURSOR,
+  status: 200,
 }
 const MOCKED_RESUBSCRIBE_CALLBACK = vi.fn()
 
@@ -233,7 +234,7 @@ describe('pollAppLogs', () => {
     const secondUrl = `${firstUrl}?cursor=${RETURNED_CURSOR}`
 
     const developerPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValue(Response.json(RESPONSE_DATA)),
+      appLogs: vi.fn().mockResolvedValue(RESPONSE_DATA),
     })
 
     // Given
@@ -339,7 +340,7 @@ describe('pollAppLogs', () => {
 
   test('calls resubscribe callback if a 401 is received', async () => {
     // Given
-    const response = new Response(JSON.stringify({errors: ['Unauthorized']}), {status: 401})
+    const response = {errors: ['Unauthorized'], status: 401}
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
       appLogs: vi.fn().mockResolvedValue(response),
     })
@@ -360,8 +361,9 @@ describe('pollAppLogs', () => {
   test('displays throttle message, waits, and retries if status is 429', async () => {
     // Given
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const response = {errors: ['error for 429'], status: 429}
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValue(new Response(JSON.stringify({errors: ['error for 429']}), {status: 429})),
+      appLogs: vi.fn().mockResolvedValue(response),
     })
 
     // When/Then
@@ -384,7 +386,7 @@ describe('pollAppLogs', () => {
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
 
     // An unexpected error response
-    const response = new Response(JSON.stringify({errors: ['errorMessage']}), {status: 500})
+    const response = {errors: ['errorMessage'], status: 500}
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
       appLogs: vi.fn().mockResolvedValue(response),
     })
@@ -424,9 +426,11 @@ describe('pollAppLogs', () => {
           log_timestamp: '2024-05-23T19:17:00.240053Z',
         },
       ],
+      status: 200,
+      cursor: '2024-05-23T19:17:02.321773Z',
     }
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValue(Response.json(responseDataWithBadJson)),
+      appLogs: vi.fn().mockResolvedValue(responseDataWithBadJson),
     })
 
     // When

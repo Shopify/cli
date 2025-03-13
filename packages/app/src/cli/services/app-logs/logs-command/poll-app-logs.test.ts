@@ -1,5 +1,5 @@
 import {pollAppLogs} from './poll-app-logs.js'
-import {fetchAppLogs} from '../utils.js'
+import {fetchAppLogs} from '../../../utilities/developer-platform-client/partners-client.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 
@@ -103,7 +103,7 @@ describe('pollProcess', () => {
   ])('returns errors when response is %s', async (status, statusText) => {
     // Given
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
-      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status, statusText)),
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse({errors: [statusText]}, status)),
     })
 
     // When

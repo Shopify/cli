@@ -19,6 +19,7 @@ import {
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
+  AppLogsResponse,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -123,7 +124,7 @@ import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch, Response} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
@@ -169,7 +170,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
   }
 
-  async appLogs(options: FetchAppLogsOptions): Promise<Response> {
+  async appLogs(options: FetchAppLogsOptions): Promise<AppLogsResponse> {
     throw new Error(`Not Implemented: ${JSON.stringify(options)}`)
   }
 

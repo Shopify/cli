@@ -29,6 +29,7 @@ import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
+  AppLogsResponse,
   AppVersion,
   AppVersionIdentifiers,
   AppVersionWithContext,
@@ -77,7 +78,6 @@ import {ExtensionSpecification} from '../extensions/specification.js'
 import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {Response} from '@shopify/cli-kit/node/http'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -1461,20 +1461,24 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
     subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
-    appLogs: (_options: FetchAppLogsOptions) =>
-      Promise.resolve(
-        new Response(
-          JSON.stringify({
-            app_logs: [
-              {
-                timestamp: '2024-01-01',
-                message: 'message',
-              },
-            ],
-            cursor: 'cursor',
-          }),
-        ),
-      ),
+    appLogs: (_options: FetchAppLogsOptions): Promise<AppLogsResponse> =>
+      Promise.resolve({
+        app_logs: [
+          {
+            shop_id: 123,
+            api_client_id: 456,
+            payload: '{}',
+            log_type: 'log',
+            source: 'test',
+            source_namespace: 'test',
+            cursor: 'log-cursor',
+            status: 'success',
+            log_timestamp: '2024-01-01T00:00:00Z',
+          },
+        ],
+        cursor: 'cursor',
+        status: 200,
+      }),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),

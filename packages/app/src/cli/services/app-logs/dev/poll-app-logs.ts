@@ -13,8 +13,8 @@ import {
   handleFetchAppLogsError,
   FetchAppLogsOptions,
 } from '../utils.js'
-import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {AppLogData, FunctionRunLog} from '../types.js'
+import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import camelcaseKeys from 'camelcase-keys'
@@ -39,15 +39,13 @@ export const pollAppLogs = async ({
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    const httpResponse = await developerPlatformClient.appLogs({jwtToken, cursor})
+    const response = await developerPlatformClient.appLogs({jwtToken, cursor})
 
-    const response = await httpResponse.json()
-    const {errors} = response as {errors: string[]}
-
-    if (errors) {
+    const {errors, status} = response as AppLogsError
+    if (status !== 200) {
       const errorResponse = {
-        errors: errors.map((error) => ({message: error, status: httpResponse.status})),
-      } as ErrorResponse
+        errors: errors.map((error) => ({message: error, status})),
+      }
 
       const result = await handleFetchAppLogsError({
         response: errorResponse,
@@ -68,56 +66,50 @@ export const pollAppLogs = async ({
         nextJwtToken = result.nextJwtToken
       }
       retryIntervalMs = result.retryIntervalMs
-    }
+    } else {
+      const {app_logs: appLogs} = response as AppLogsSuccess
 
-    const data = response as {
-      app_logs?: AppLogData[]
-      cursor?: string
-      errors?: string[]
-    }
+      if (appLogs && appLogs.length > 0) {
+        for (const log of appLogs) {
+          let payload = JSON.parse(log.payload)
+          // eslint-disable-next-line no-await-in-loop
+          await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
+            if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
+              handleFunctionRunLog(log, payload, stdout)
+              payload = new FunctionRunLog(camelcaseKeys(payload))
+            } else if (log.log_type.startsWith(LOG_TYPE_FUNCTION_NETWORK_ACCESS)) {
+              handleFunctionNetworkAccessLog(log, payload, stdout)
+            } else {
+              stdout.write(JSON.stringify(payload))
+            }
 
-    if (data.app_logs) {
-      const {app_logs: appLogs} = data
-
-      for (const log of appLogs) {
-        let payload = JSON.parse(log.payload)
-        // eslint-disable-next-line no-await-in-loop
-        await useConcurrentOutputContext({outputPrefix: log.source, stripAnsi: false}, async () => {
-          if (log.log_type === LOG_TYPE_FUNCTION_RUN) {
-            handleFunctionRunLog(log, payload, stdout)
-            payload = new FunctionRunLog(camelcaseKeys(payload))
-          } else if (log.log_type.startsWith(LOG_TYPE_FUNCTION_NETWORK_ACCESS)) {
-            handleFunctionNetworkAccessLog(log, payload, stdout)
-          } else {
-            stdout.write(JSON.stringify(payload))
-          }
-
-          const logFile = await writeAppLogsToFile({
-            appLog: log,
-            appLogPayload: payload,
-            apiKey,
-            stdout,
-            storeName,
+            const logFile = await writeAppLogsToFile({
+              appLog: log,
+              appLogPayload: payload,
+              apiKey,
+              stdout,
+              storeName,
+            })
+            stdout.write(
+              outputContent`${outputToken.gray('└ ')}${outputToken.link(
+                'Open log file',
+                `file://${logFile.fullOutputPath}`,
+                `Log: ${logFile.fullOutputPath}`,
+              )} ${outputToken.gray(`(${logFile.identifier})`)}\n`.value,
+            )
           })
-          stdout.write(
-            outputContent`${outputToken.gray('└ ')}${outputToken.link(
-              'Open log file',
-              `file://${logFile.fullOutputPath}`,
-              `Log: ${logFile.fullOutputPath}`,
-            )} ${outputToken.gray(`(${logFile.identifier})`)}\n`.value,
-          )
-        })
+        }
       }
     }
 
-    const cursorFromResponse = data?.cursor
+    const {cursor: responseCursor} = response as AppLogsSuccess
 
     setTimeout(() => {
       pollAppLogs({
         stdout,
         appLogsFetchInput: {
           jwtToken: nextJwtToken,
-          cursor: cursorFromResponse || cursor,
+          cursor: responseCursor || cursor,
         },
         apiKey,
         developerPlatformClient,
