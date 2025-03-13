@@ -136,7 +136,7 @@ export const generateFetchAppLogUrlDevDashboard = async (
   },
 ) => {
   const fqdn = await appManagementFqdn()
-  let url = `https://${fqdn}/functions/unstable/organizations/${organizationId}/${appId}/app_logs/poll`
+  let url = `https://${fqdn}/app_management/unstable/organizations/${organizationId}/app_logs/poll`
 
   if (!cursor) {
     return url
@@ -265,6 +265,7 @@ export const subscribeToAppLogs = async (
   organizationId: string,
 ): Promise<string> => {
   const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
+  console.log("jwt", result)
   const {jwtToken, success, errors} = result.appLogsSubscribe
   outputDebug(`Token: ${jwtToken}\n`)
   outputDebug(`API Key: ${variables.apiKey}\n`)

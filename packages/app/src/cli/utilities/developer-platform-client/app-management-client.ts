@@ -69,7 +69,7 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
+import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -179,13 +179,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const appIdNumber = String(numberFromGid(app.id))
     const token = await this.token()
 
-    return functionsRequestDoc<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>(
+    return appManagementRequestDoc<AppLogsSubscribeQuery, AppLogsSubscribeDevDashQueryVariables>(
       organizationId,
       AppLogsSubscribe,
       token,
-      appIdNumber,
       {
-        shopIds: input.shopIds,
+        shopIds: input.shopIds.map(id => Number(id)),
         apiKey: input.apiKey,
       },
     )
@@ -200,9 +199,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }, organizationId: string, appId: string): Promise<AppLogsResponse> {
     const response = await fetchAppLogs({
-      jwtToken: options.jwtToken,
       organizationId,
-      appId: String(numberFromGid(appId)),
+      appId,
+      jwtToken: options.jwtToken,
       cursor: options.cursor,
       filters: options.filters,
     })
@@ -1138,8 +1137,8 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
   }
 }
 
-interface AppLogsSubscribeQueryVariables {
-  shopIds: string[]
+export interface AppLogsSubscribeDevDashQueryVariables {
+  shopIds: number[]
   apiKey: string
   [key: string]: unknown
 }
@@ -1169,7 +1168,7 @@ const AppLogsSubscribe = {
               kind: 'ListType',
               type: {
                 kind: 'NonNullType',
-                type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}},
+                type: {kind: 'NamedType', name: {kind: 'Name', value: 'Int'}},
               },
             },
           },
@@ -1211,7 +1210,7 @@ const AppLogsSubscribe = {
       },
     },
   ],
-} as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeQueryVariables>
+} as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeDevDashQueryVariables>
 
 
 const fetchAppLogs = async (
