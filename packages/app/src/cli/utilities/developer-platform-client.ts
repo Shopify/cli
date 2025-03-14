@@ -55,6 +55,8 @@ import {
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
+import {AppLogsOptions} from '../services/app-logs/utils.js'
+import {AppLogData} from '../services/app-logs/types.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -215,6 +217,18 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
   return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
 
+export interface AppLogsSuccess {
+  app_logs: AppLogData[]
+  cursor?: string
+}
+
+export interface AppLogsError {
+  errors: string[]
+  status: number
+}
+
+export type AppLogsResponse = AppLogsSuccess | AppLogsError
+
 export interface DeveloperPlatformClient {
   readonly clientName: string
   readonly webUiName: string
@@ -274,6 +288,7 @@ export interface DeveloperPlatformClient {
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
+  appLogs: (options: AppLogsOptions) => Promise<AppLogsResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>

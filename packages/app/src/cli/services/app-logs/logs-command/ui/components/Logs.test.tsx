@@ -9,6 +9,7 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
 } from '../../../types.js'
+import {testDeveloperPlatformClient} from '../../../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import React from 'react'
@@ -111,6 +112,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -159,6 +161,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -208,6 +211,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -261,6 +265,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -321,6 +326,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -382,6 +388,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -430,6 +437,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -477,6 +485,7 @@ describe('Logs', () => {
           pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
           resubscribeCallback={vi.fn().mockResolvedValueOnce(MOCKED_JWT_TOKEN)}
           storeNameById={new Map()}
+          developerPlatformClient={testDeveloperPlatformClient()}
         />,
       )
 
@@ -512,6 +521,7 @@ describe('Logs', () => {
         pollOptions={{jwtToken: MOCKED_JWT_TOKEN, filters: EMPTY_FILTERS, cursor: MOCKED_CURSOR}}
         resubscribeCallback={mockedResubscribeCallback}
         storeNameById={new Map()}
+        developerPlatformClient={testDeveloperPlatformClient()}
       />,
     )
 

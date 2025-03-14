@@ -65,6 +65,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       resubscribeCallback: () => {
         return subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables)
       },
+      developerPlatformClient,
       storeName,
     })
     // eslint-disable-next-line no-catch-all/no-catch-all,no-empty

@@ -10,13 +10,11 @@ import {
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {AppInterface} from '../../models/app/app.js'
-import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -91,7 +89,7 @@ export function parseNetworkAccessRequestExecutedPayload(payload: string): Netwo
   })
 }
 
-const generateFetchAppLogUrl = async (
+export const generateFetchAppLogUrl = async (
   cursor?: string,
   filters?: {
     status?: string
@@ -117,28 +115,13 @@ const generateFetchAppLogUrl = async (
   return url
 }
 
-export const fetchAppLogs = async (
-  jwtToken: string,
-  cursor?: string,
+export interface AppLogsOptions {
+  jwtToken: string
+  cursor?: string
   filters?: {
     status?: string
     source?: string
-  },
-): Promise<Response> => {
-  const url = await generateFetchAppLogUrl(cursor, filters)
-  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
-  const headers = {
-    Authorization: `Bearer ${jwtToken}`,
-    'User-Agent': userAgent,
   }
-  return shopifyFetch(
-    url,
-    {
-      method: 'GET',
-      headers,
-    },
-    'non-blocking',
-  )
 }
 
 interface FetchAppLogsErrorOptions {

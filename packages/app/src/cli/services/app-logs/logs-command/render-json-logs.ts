@@ -10,7 +10,7 @@ import {
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export async function renderJsonLogs({
-  pollOptions: {cursor, filters, jwtToken},
+  pollOptions,
   options: {variables, developerPlatformClient},
   storeNameById,
 }: {
@@ -18,9 +18,9 @@ export async function renderJsonLogs({
   options: SubscribeOptions
   storeNameById: Map<string, string>
 }): Promise<void> {
-  const response = await pollAppLogs({cursor, filters, jwtToken})
+  const response = await pollAppLogs({pollOptions, developerPlatformClient})
   let retryIntervalMs = POLLING_INTERVAL_MS
-  let nextJwtToken = jwtToken
+  let nextJwtToken = pollOptions.jwtToken
 
   const errorResponse = response as ErrorResponse
 
@@ -68,9 +68,9 @@ export async function renderJsonLogs({
     renderJsonLogs({
       options: {variables, developerPlatformClient},
       pollOptions: {
-        jwtToken: nextJwtToken || jwtToken,
-        cursor: nextCursor || cursor,
-        filters,
+        jwtToken: nextJwtToken || pollOptions.jwtToken,
+        cursor: nextCursor || pollOptions.cursor,
+        filters: pollOptions.filters,
       },
       storeNameById,
     }).catch((error) => {
