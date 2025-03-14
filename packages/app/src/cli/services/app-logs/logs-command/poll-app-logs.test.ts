@@ -42,12 +42,16 @@ const EMPTY_FILTERS = {status: undefined, sources: undefined}
 
 // Custom mock response with .json method to mock response from poll
 const createMockResponse = (data: any, status = 200, statusText = 'OK') => {
+  if (status !== 200 || data.errors) {
+    return {
+      errors: data.errors || [`Error with status ${status}`],
+      status,
+    }
+  }
+
   return {
-    ok: status >= 200 && status < 300,
-    status,
-    statusText,
-    json: async () => data,
-    text: async () => JSON.stringify(data),
+    app_logs: data.app_logs || [],
+    cursor: data.cursor,
   }
 }
 
