@@ -116,7 +116,7 @@ describe('dev', () => {
     const urls = {
       local: `http://${host}:${port}`,
       giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
-      themeEditor: `https://${store}/admin/themes/${themeId}/editor`,
+      themeEditor: `https://${store}/admin/themes/${themeId}/editor?hr=${port}`,
       preview: `https://${store}/?preview_theme_id=${themeId}`,
     }
 
@@ -155,7 +155,7 @@ describe('dev', () => {
           {
             link: {
               label: `Customize your theme at the theme editor (e)`,
-              url: `https://${store}/admin/themes/${themeId}/editor`,
+              url: `https://${store}/admin/themes/${themeId}/editor?hr=9292`,
             },
           },
         ],

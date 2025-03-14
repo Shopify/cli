@@ -86,6 +86,7 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
 
     emitEvent('unlink', {
       fileKey,
+      onSync: (fn) => fn(),
     })
   }
 
