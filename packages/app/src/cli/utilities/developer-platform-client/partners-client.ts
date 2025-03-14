@@ -12,6 +12,7 @@ import {
   ClientName,
   AppVersionWithContext,
   CreateAppOptions,
+  AppLogsResponse,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -155,6 +156,8 @@ import {
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
+import {AppLogsOptions, generateFetchAppLogUrl} from '../../services/app-logs/utils.js'
+import {AppLogData} from '../../services/app-logs/types.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -162,6 +165,8 @@ import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/par
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -566,6 +571,37 @@ export class PartnersClient implements DeveloperPlatformClient {
     return `https://${await partnersFqdn()}/${organizationId}/apps/${id}`
   }
 
+  async appLogs(options: AppLogsOptions): Promise<AppLogsResponse> {
+    const response = await fetchAppLogs(options)
+
+    try {
+      const data = (await response.json()) as {
+        app_logs?: AppLogData[]
+        cursor?: string
+        errors?: string[]
+      }
+
+      if (!response.ok) {
+        return {
+          errors: data.errors || [`Request failed with status ${response.status}`],
+          status: response.status,
+        }
+      }
+
+      return {
+        app_logs: data.app_logs || [],
+        cursor: data.cursor,
+        status: response.status,
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return {
+        errors: [`Failed to parse response: ${error}`],
+        status: response.status,
+      }
+    }
+  }
+
   async devSessionCreate(_input: DevSessionOptions): Promise<never> {
     // Dev Sessions are not supported in partners client.
     throw new Error('Unsupported operation')
@@ -603,4 +639,21 @@ export class PartnersClient implements DeveloperPlatformClient {
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
   }
+}
+
+const fetchAppLogs = async ({jwtToken, cursor, filters}: AppLogsOptions): Promise<Response> => {
+  const url = await generateFetchAppLogUrl(cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
+  return shopifyFetch(
+    url,
+    {
+      method: 'GET',
+      headers,
+    },
+    'non-blocking',
+  )
 }
