@@ -1,11 +1,5 @@
 import {gql} from 'graphql-request'
 
-export interface AppLogsSubscribeVariables {
-  shopIds: string[]
-  apiKey: string
-  token: string
-}
-
 export interface AppLogsSubscribeResponse {
   appLogsSubscribe: {
     success: boolean
@@ -14,6 +8,7 @@ export interface AppLogsSubscribeResponse {
   }
 }
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const AppLogsSubscribeMutation = gql`
   mutation AppLogsSubscribe($apiKey: String!, $shopIds: [ID!]!) {
     appLogsSubscribe(input: {apiKey: $apiKey, shopIds: $shopIds}) {

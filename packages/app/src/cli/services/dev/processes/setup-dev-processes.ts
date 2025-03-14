@@ -189,10 +189,11 @@ export async function setupDevProcesses({
       ? await setupAppLogsPollingProcess({
           developerPlatformClient,
           subscription: {
-            shopIds: [storeId],
+            shopIds: [Number(storeId)],
             apiKey,
           },
           storeName: storeFqdn,
+          organizationId: remoteApp.organizationId,
         })
       : undefined,
     await setupAppWatcherProcess({

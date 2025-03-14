@@ -69,7 +69,6 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -120,12 +119,21 @@ import {
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
-import {AppLogsOptions} from '../../services/app-logs/utils.js'
+import {AppLogData} from '../../services/app-logs/types.js'
+import {
+  AppLogsSubscribe,
+  AppLogsSubscribeMutation,
+  AppLogsSubscribeMutationVariables,
+} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
+import {
+  appManagementRequestDoc,
+  appManagementAppLogsUrl,
+  appManagementHeaders,
+} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
   businessPlatformOrganizationsRequest,
@@ -166,12 +174,67 @@ export class AppManagementClient implements DeveloperPlatformClient {
     this._session = session
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeMutationVariables,
+    organizationId: string,
+  ): Promise<AppLogsSubscribeMutation> {
+    const token = await this.token()
+
+    return appManagementRequestDoc<AppLogsSubscribeMutation, AppLogsSubscribeMutationVariables>(
+      organizationId,
+      AppLogsSubscribe,
+      token,
+      {
+        shopIds: input.shopIds,
+        apiKey: input.apiKey,
+      },
+    )
   }
 
-  async appLogs(options: AppLogsOptions): Promise<AppLogsResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(options)}`)
+  async appLogs(
+    options: {
+      jwtToken: string
+      cursor?: string
+      filters?: {
+        status?: string
+        source?: string
+      }
+    },
+    organizationId: string,
+  ): Promise<AppLogsResponse> {
+    const response = await fetchAppLogs({
+      organizationId,
+      jwtToken: options.jwtToken,
+      cursor: options.cursor,
+      filters: options.filters,
+    })
+
+    try {
+      const data = (await response.json()) as {
+        app_logs?: AppLogData[]
+        cursor?: string
+        errors?: string[]
+      }
+
+      if (!response.ok) {
+        return {
+          errors: data.errors ?? [`Request failed with status ${response.status}`],
+          status: response.status,
+        }
+      }
+
+      return {
+        app_logs: data.app_logs ?? [],
+        cursor: data.cursor,
+        status: response.status,
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return {
+        errors: [`Failed to parse response: ${error}`],
+        status: response.status,
+      }
+    }
   }
 
   async session(): Promise<PartnersSession> {
@@ -1078,5 +1141,30 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       options: {managementExperience: 'cli'},
       experience: experience(mod.specification.identifier),
     },
+  }
+}
+
+const fetchAppLogs = async ({
+  organizationId,
+  jwtToken,
+  cursor,
+  filters,
+}: FetchAppLogsDevDashboardOptions): Promise<Response> => {
+  const url = await appManagementAppLogsUrl(organizationId, cursor, filters)
+  const headers = appManagementHeaders(jwtToken)
+
+  return shopifyFetch(url, {
+    method: 'GET',
+    headers,
+  })
+}
+
+interface FetchAppLogsDevDashboardOptions {
+  organizationId: string
+  jwtToken: string
+  cursor?: string
+  filters?: {
+    status?: string
+    source?: string
   }
 }
