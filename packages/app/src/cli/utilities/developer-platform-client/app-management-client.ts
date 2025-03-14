@@ -316,7 +316,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), undefined)
+    const result = await appManagementRequestDoc(organizationId, query, await this.token())
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
