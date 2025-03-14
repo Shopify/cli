@@ -1,5 +1,4 @@
 import {pollAppLogs} from './poll-app-logs.js'
-import {fetchAppLogs} from '../../../utilities/developer-platform-client/partners-client.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 
