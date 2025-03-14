@@ -3,10 +3,16 @@ import {
   parseGitHubRepositoryURL,
   GithubRelease,
   parseGitHubRepositoryReference,
+  downloadGitHubRelease,
 } from './github.js'
 import {fetch} from './http.js'
-import {Response} from 'node-fetch'
+import {AbortError} from './error.js'
+import {testWithTempDir} from './testing/test-with-temp-dir.js'
+import {joinPath} from './path.js'
+import {readFile} from './fs.js'
+import {isExecutable} from 'is-executable'
 import {describe, expect, test, vi} from 'vitest'
+import {Response} from 'node-fetch'
 
 vi.mock('./http.js')
 
@@ -165,3 +171,48 @@ function createMockRelease(size = 1, mocks: Partial<GithubRelease> = {}): Github
     ...mocks,
   }))
 }
+
+describe('downloadGitHubRelease', () => {
+  const repo = 'testuser/testrepo'
+  const version = 'v1.0.0'
+  const asset = 'test-asset'
+
+  testWithTempDir('successfully downloads the release asset', async ({tempDir}) => {
+    const content = Buffer.from('hello')
+    const mockResponse = {
+      ok: true,
+      arrayBuffer: vi.fn().mockResolvedValue(content),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    const binary = process.platform === 'win32' ? 'test-asset.exe' : 'test-asset'
+    const targetPath = joinPath(tempDir, 'downloads', binary)
+
+    await downloadGitHubRelease(repo, version, asset, targetPath)
+
+    expect(fetch).toHaveBeenCalledWith(`https://github.com/${repo}/releases/download/${version}/${asset}`)
+
+    const downloadedContent = await readFile(targetPath)
+    expect(downloadedContent).toEqual('hello')
+
+    const downloadIsExecutable = await isExecutable(targetPath)
+    expect(downloadIsExecutable).toBeTruthy()
+  })
+
+  testWithTempDir('throws an AbortError when the network is down', async ({tempDir}) => {
+    vi.mocked(fetch).mockRejectedValue(new Error('Network error'))
+    const targetPath = joinPath(tempDir, 'downloads', 'example')
+    await expect(downloadGitHubRelease(repo, version, asset, targetPath)).rejects.toThrow(AbortError)
+  })
+
+  testWithTempDir('throws an AbortError when the response is not ok', async ({tempDir}) => {
+    const mockResponse = {
+      ok: false,
+      statusText: 'Not Found',
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    const targetPath = joinPath(tempDir, 'downloads', 'example')
+    await expect(downloadGitHubRelease(repo, version, asset, targetPath)).rejects.toThrow(AbortError)
+  })
+})

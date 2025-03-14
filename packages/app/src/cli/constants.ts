@@ -4,6 +4,7 @@ export const environmentVariableNames = {
   useDynamicConfigSpecifications: 'SHOPIFY_CLI_DYNAMIC_CONFIG',
   enableAppLogPolling: 'SHOPIFY_CLI_ENABLE_APP_LOG_POLLING',
   templatesJsonPath: 'SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH',
+  mkcertBinaryPath: 'SHOPIFY_CLI_MKCERT_BINARY',
 }
 
 export const configurationFileNames = {
