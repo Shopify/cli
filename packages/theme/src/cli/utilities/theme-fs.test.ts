@@ -702,7 +702,7 @@ describe('theme-fs', () => {
       await expect(handler('content')).rejects.toThrow('{{ broken liquid file')
       expect(uploadErrors.get(fileKey)).toEqual(errors)
       expect(unsyncedFileKeys.has(fileKey)).toBe(true)
-      expect(triggerBrowserFullReload).toHaveBeenCalledWith(fileKey)
+      expect(triggerBrowserFullReload).toHaveBeenCalledWith(themeId, fileKey)
     })
 
     test('clears uploadErrors if sync succeeds after previous failure', async () => {
@@ -722,7 +722,7 @@ describe('theme-fs', () => {
 
       // Then
       expect(uploadErrors.has(fileKey)).toBe(false)
-      expect(triggerBrowserFullReload).toHaveBeenCalledWith(fileKey)
+      expect(triggerBrowserFullReload).toHaveBeenCalledWith(themeId, fileKey)
     })
   })
 

@@ -99,7 +99,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD && filePath === inferLocalHotReloadScriptPath()) {
       // Trigger a full browser when the local hot reload logic changes.
       // This only happens during local Shopifolk development.
-      triggerBrowserFullReload(filePath)
+      triggerBrowserFullReload(themeId, filePath)
       return
     }
 
@@ -280,13 +280,13 @@ export function handleSyncUpdate(
       const errors = result?.errors?.asset ?? ['Response was not successful.']
 
       uploadErrors.set(fileKey, errors)
-      triggerBrowserFullReload(fileKey)
+      triggerBrowserFullReload(themeId, fileKey)
 
       throw new Error(errors.join('\n'))
     }
 
     if (uploadErrors.delete(fileKey)) {
-      triggerBrowserFullReload(fileKey)
+      triggerBrowserFullReload(themeId, fileKey)
     }
 
     unsyncedFileKeys.delete(fileKey)
