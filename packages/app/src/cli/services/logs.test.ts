@@ -161,10 +161,15 @@ describe('logs', () => {
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
-        variables: {shopIds: ['1', '2'], apiKey: expect.anything(), token: expect.anything()},
+        variables: {
+          apiKey: expect.anything(),
+          shopIds: ['1', '2'],
+          token: expect.anything(),
+        },
       },
       pollOptions: expect.anything(),
       storeNameById: expectedStoreMap,
+      organizationId: organization.id,
     })
   })
 
@@ -197,10 +202,15 @@ describe('logs', () => {
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
-        variables: {shopIds: ['1', '2'], apiKey: expect.anything(), token: expect.anything()},
+        variables: {
+          apiKey: expect.anything(),
+          shopIds: ['1', '2'],
+          token: expect.anything(),
+        },
       },
       pollOptions: expect.anything(),
       storeNameById: expectedStoreMap,
+      organizationId: organization.id,
     })
   })
 

@@ -11,7 +11,6 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {AppInterface} from '../../models/app/app.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
@@ -89,30 +88,11 @@ export function parseNetworkAccessRequestExecutedPayload(payload: string): Netwo
   })
 }
 
-export const generateFetchAppLogUrl = async (
-  cursor?: string,
-  filters?: {
-    status?: string
-    source?: string
-  },
-) => {
-  const fqdn = await partnersFqdn()
-  let url = `https://${fqdn}/app_logs/poll`
-
-  if (!cursor) {
-    return url
-  }
-
-  url += `?cursor=${cursor}`
-
-  if (filters?.status) {
-    url += `&status=${filters.status}`
-  }
-  if (filters?.source) {
-    url += `&source=${filters.source}`
-  }
-
-  return url
+interface FetchAppLogsErrorOptions {
+  response: ErrorResponse
+  onThrottle: (retryIntervalMs: number) => void
+  onUnknownError: (retryIntervalMs: number) => void
+  onResubscribe: () => Promise<string>
 }
 
 export interface FetchAppLogsOptions {
@@ -122,13 +102,6 @@ export interface FetchAppLogsOptions {
     status?: string
     source?: string
   }
-}
-
-interface FetchAppLogsErrorOptions {
-  response: ErrorResponse
-  onThrottle: (retryIntervalMs: number) => void
-  onUnknownError: (retryIntervalMs: number) => void
-  onResubscribe: () => Promise<string>
 }
 
 export const handleFetchAppLogsError = async (
@@ -219,8 +192,9 @@ export const parseAppLogPayload = (payload: string, logType: string): any => {
 export const subscribeToAppLogs = async (
   developerPlatformClient: DeveloperPlatformClient,
   variables: AppLogsSubscribeVariables,
+  organizationId: string,
 ): Promise<string> => {
-  const result = await developerPlatformClient.subscribeToAppLogs(variables)
+  const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
   const {jwtToken, success, errors} = result.appLogsSubscribe
   outputDebug(`Token: ${jwtToken}\n`)
   outputDebug(`API Key: ${variables.apiKey}\n`)
@@ -258,4 +232,29 @@ const parseJson = (json: string): object | string => {
   } catch (error) {
     return json
   }
+}
+
+export const addCursorAndFiltersToAppLogsUrl = (
+  baseUrl: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): string => {
+  const url = new URL(baseUrl)
+
+  if (cursor) {
+    url.searchParams.append('cursor', cursor)
+  }
+
+  if (filters?.status) {
+    url.searchParams.append('status', filters.status)
+  }
+
+  if (filters?.source) {
+    url.searchParams.append('source', filters.source)
+  }
+
+  return url.toString()
 }
