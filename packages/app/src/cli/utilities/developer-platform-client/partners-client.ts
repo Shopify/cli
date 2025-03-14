@@ -476,6 +476,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(FindStoreByDomainQuery, variables)
   }
 
+  async provisionUserAccessToStore(orgId: string, shopId: string): Promise<void> {
+    return // This is a no-op for partners
+  }
+
   async updateDeveloperPreview(
     input: DevelopmentStorePreviewUpdateInput,
   ): Promise<DevelopmentStorePreviewUpdateSchema> {
