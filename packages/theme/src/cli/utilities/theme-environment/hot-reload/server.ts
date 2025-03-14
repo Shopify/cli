@@ -18,7 +18,7 @@ import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'node:events'
-import type {HotReloadEventPayload, HotReloadEvent} from '@shopify/theme-hot-reload'
+import type {HotReloadEvent, HotReloadFileEvent} from '@shopify/theme-hot-reload'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
 
@@ -282,7 +282,7 @@ export const triggerBrowserFullReload = (key: string) => emitHotReloadEvent({typ
 export function triggerHotReload(
   ctx: DevServerContext,
   onSync: ThemeFSEventPayload['onSync'],
-  event: {type: 'update' | 'delete'; key: string; payload?: HotReloadEventPayload},
+  event: Omit<HotReloadFileEvent, 'sync'>,
 ) {
   const fullReload = () => triggerBrowserFullReload(event.key)
 
