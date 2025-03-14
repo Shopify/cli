@@ -18,7 +18,12 @@ import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import EventEmitter from 'node:events'
-import type {HotReloadEvent, HotReloadFileEvent} from '@shopify/theme-hot-reload'
+import type {
+  HotReloadEvent,
+  HotReloadFileEvent,
+  HotReloadOpenEvent,
+  HotReloadFullEvent,
+} from '@shopify/theme-hot-reload'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
 
@@ -94,7 +99,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
  * Watchs for file changes and updates in-memory templates, triggering
  * HotReload if needed.
  */
-export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
+export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     const extension = extname(fileKey)
 
@@ -103,7 +108,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
         saveSectionsFromJson(fileKey, content)
       }
 
-      triggerHotReload(ctx, onSync, {
+      triggerHotReload(theme, ctx, onSync, {
         type: 'update',
         key: fileKey,
         payload: collectReloadInfoForFile(fileKey, ctx),
@@ -113,7 +118,7 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 
   const handleFileDelete = ({fileKey, onSync}: ThemeFSEventPayload<'unlink'>) => {
     sectionNamesByFile.delete(fileKey)
-    triggerHotReload(ctx, onSync, {type: 'delete', key: fileKey})
+    triggerHotReload(theme, ctx, onSync, {type: 'delete', key: fileKey})
   }
 
   ctx.localThemeFileSystem.addEventListener('add', handleFileUpdate)
@@ -138,9 +143,18 @@ export function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
 }
 
 // --- SSE Hot Reload ---
+export const HOT_RELOAD_VERSION = '1'
 const eventEmitter = new EventEmitter()
-function emitHotReloadEvent(event: HotReloadEvent) {
-  eventEmitter.emit('hot-reload', event)
+function emitHotReloadEvent(
+  event:
+    | Omit<HotReloadOpenEvent, 'version'>
+    | Omit<HotReloadFullEvent, 'version'>
+    | Omit<HotReloadFileEvent, 'version'>,
+) {
+  eventEmitter.emit('hot-reload', {
+    ...event,
+    version: HOT_RELOAD_VERSION,
+  })
 }
 
 /**
@@ -160,9 +174,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
         })
       })
 
-      eventStream
-        .push(JSON.stringify({type: 'open', pid: String(process.pid)} satisfies HotReloadEvent))
-        .catch(() => {})
+      emitHotReloadEvent({type: 'open', pid: String(process.pid), themeId: String(theme.id)})
 
       return eventStream.send().then(() => eventStream.flush())
     }
@@ -277,14 +289,20 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
   })
 }
 
-export const triggerBrowserFullReload = (key: string) => emitHotReloadEvent({type: 'full', key})
+export const triggerBrowserFullReload = (themeId: number | string, key: string) =>
+  emitHotReloadEvent({
+    themeId: String(themeId),
+    type: 'full',
+    key,
+  })
 
 export function triggerHotReload(
+  theme: Theme,
   ctx: DevServerContext,
   onSync: ThemeFSEventPayload['onSync'],
-  event: Omit<HotReloadFileEvent, 'sync'>,
+  event: Pick<HotReloadFileEvent, 'key' | 'type' | 'payload'>,
 ) {
-  const fullReload = () => triggerBrowserFullReload(event.key)
+  const fullReload = () => triggerBrowserFullReload(theme.id, event.key)
 
   if (ctx.options.liveReload === 'off') return
   if (ctx.options.liveReload === 'full-page') {
@@ -292,8 +310,10 @@ export function triggerHotReload(
     return
   }
 
-  emitHotReloadEvent({sync: 'local', ...event})
-  onSync(() => emitHotReloadEvent({sync: 'remote', ...event}), fullReload)
+  const themeId = String(theme.id)
+
+  emitHotReloadEvent({sync: 'local', themeId, ...event})
+  onSync(() => emitHotReloadEvent({sync: 'remote', themeId, ...event}), fullReload)
 }
 
 function findSectionNamesToReload(key: string, ctx: DevServerContext) {

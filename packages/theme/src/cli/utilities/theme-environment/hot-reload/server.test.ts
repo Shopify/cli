@@ -2,6 +2,7 @@ import {
   getHotReloadHandler,
   getInMemoryTemplates,
   handleHotReloadScriptInjection,
+  HOT_RELOAD_VERSION,
   hotReloadScriptId,
   hotReloadScriptUrl,
   setupInMemoryTemplateWatcher,
@@ -17,6 +18,8 @@ import type {DevServerContext} from '../types.js'
 import type {Theme, ThemeFSEventName} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
+
+const THEME_ID = 'my-theme-id'
 
 describe('Hot Reload', () => {
   describe('handleHotReloadScriptInjection', () => {
@@ -69,7 +72,7 @@ describe('Hot Reload', () => {
         files: [[templateKey, JSON.stringify(templateValue)]],
       })
 
-      await setupInMemoryTemplateWatcher(ctx)
+      await setupInMemoryTemplateWatcher({id: THEME_ID} as unknown as Theme, ctx)
       const {event: subscribeEvent, data: hotReloadEvents} = createH3Event('/', {accept: 'text/event-stream'})
       const streamPromise = hotReloadHandler(subscribeEvent)
       await nextTick()
@@ -78,15 +81,17 @@ describe('Hot Reload', () => {
       expect(addEventListenerSpy).toHaveBeenCalledWith('add', expect.any(Function))
       expect(addEventListenerSpy).toHaveBeenCalledWith('change', expect.any(Function))
       expect(addEventListenerSpy).toHaveBeenCalledWith('unlink', expect.any(Function))
-      expect(hotReloadEvents[0]).toMatch(`data: {"type":"open","pid":"${process.pid}"}`)
+      expect(hotReloadEvents[0]).toMatch(
+        `data: {"type":"open","pid":"${process.pid}","themeId":"${THEME_ID}","version":"${HOT_RELOAD_VERSION}"}`,
+      )
 
       // Test section file update
       await triggerFileEvent('add', testSectionFileKey)
       expect(getInMemoryTemplates(ctx)).toEqual({[testSectionFileKey]: expect.any(String)})
 
-      const expectedSectionEvent = `data: {"sync":"local","type":"update","key":"${testSectionFileKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
+      const expectedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${testSectionFileKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}}}`
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionEvent)
@@ -131,9 +136,9 @@ describe('Hot Reload', () => {
       expect(getInMemoryTemplates(ctx)).toEqual({[templateKey]: newTemplateValue})
 
       // Since this is a template, sectionNames will be empty (no sections to reload)
-      const expectedTemplateEvent = `data: {"sync":"local","type":"update","key":"${templateKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
+      const expectedTemplateEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${templateKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}}}`
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event for JSON update
       expect(hotReloadEvents.at(-1)).toMatch(expectedTemplateEvent)
@@ -152,9 +157,9 @@ describe('Hot Reload', () => {
       expect(getInMemoryTemplates(ctx)).toEqual({[sectionGroupKey]: sectionGroupValue})
 
       // Since this is a section group, sectionNames will contain all the section names
-      const expectedSectionGroupEvent = `data: {"sync":"local","type":"update","key":"${sectionGroupKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
+      const expectedSectionGroupEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${sectionGroupKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}}}`
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event for JSON update
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionGroupEvent)
@@ -167,24 +172,28 @@ describe('Hot Reload', () => {
       await triggerFileEvent('change', anotherSectionKey)
       // Section is referenced by section group, so it includes the section names:
       expect(hotReloadEvents.at(-1)).toMatch(
-        `data: {"sync":"local","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
+        `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
           getInMemoryTemplates(ctx),
-        )}}}`,
+        )}},"version":"${HOT_RELOAD_VERSION}"}`,
       )
       // Wait for remote sync
       await nextTick()
 
       await triggerFileEvent('unlink', sectionGroupKey)
-      expect(hotReloadEvents.at(-1)).toMatch(`data: {"sync":"local","type":"delete","key":"${sectionGroupKey}"}`)
+      expect(hotReloadEvents.at(-1)).toMatch(
+        `data: {"sync":"local","themeId":"${THEME_ID}","type":"delete","key":"${sectionGroupKey}","version":"${HOT_RELOAD_VERSION}"}`,
+      )
       await nextTick()
-      expect(hotReloadEvents.at(-1)).toMatch(`data: {"sync":"remote","type":"delete","key":"${sectionGroupKey}"}`)
+      expect(hotReloadEvents.at(-1)).toMatch(
+        `data: {"sync":"remote","themeId":"${THEME_ID}","type":"delete","key":"${sectionGroupKey}","version":"${HOT_RELOAD_VERSION}"}`,
+      )
 
       // Since the section group JSON file was removed, the section file is not referenced anymore
       await triggerFileEvent('change', anotherSectionKey)
       expect(getInMemoryTemplates(ctx)).toEqual({[anotherSectionKey]: 'default-value'})
-      const expectedUnreferencedSectionEvent = `data: {"sync":"local","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
+      const expectedUnreferencedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}}}`
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent)
       await nextTick()
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent.replace('local', 'remote'))
@@ -194,7 +203,7 @@ describe('Hot Reload', () => {
       await triggerFileEvent('add', cssFileKey)
       // It does not add assets to the in-memory templates:
       expect(getInMemoryTemplates(ctx)).toEqual({})
-      const expectedCssEvent = `data: {"sync":"local","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}}}`
+      const expectedCssEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedCssEvent)
       // Wait for remote sync
       await nextTick()
@@ -205,7 +214,7 @@ describe('Hot Reload', () => {
       await triggerFileEvent('add', cssLiquidFileKey)
       // It does not add assets to the in-memory templates:
       expect(getInMemoryTemplates(ctx)).toEqual({})
-      const expectedCssLiquidEvent = `data: {"sync":"local","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}}}`
+      const expectedCssLiquidEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedCssLiquidEvent)
       // Wait for remote sync
       await nextTick()
@@ -214,7 +223,7 @@ describe('Hot Reload', () => {
       // -- Test other file types (e.g. JS) --
       const jsFileKey = 'assets/something.js'
       await triggerFileEvent('add', jsFileKey)
-      const expectedJsEvent = `data: {"sync":"local","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}}}`
+      const expectedJsEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedJsEvent)
       // Wait for remote sync
       await nextTick()
@@ -376,7 +385,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
   }
 
   /** Handles http events */
-  const hotReloadHandler = getHotReloadHandler({id: 'my-theme-id'} as unknown as Theme, ctx)
+  const hotReloadHandler = getHotReloadHandler({id: THEME_ID} as unknown as Theme, ctx)
 
   return {ctx, addEventListenerSpy, triggerFileEvent, nextTick, hotReloadHandler}
 }

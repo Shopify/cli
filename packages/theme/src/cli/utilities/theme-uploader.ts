@@ -383,17 +383,17 @@ async function uploadBatch(
   // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
     uploadResults.set(result.key, result)
-    updateUploadErrors(result, localThemeFileSystem)
+    updateUploadErrors(result, localThemeFileSystem, themeId)
   })
 }
 
-export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFileSystem) {
+export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFileSystem, themeId: number) {
   if (result.success) {
     localThemeFileSystem.uploadErrors.delete(result.key)
   } else {
     const errors = result.errors?.asset ?? ['Response was not successful.']
     localThemeFileSystem.uploadErrors.set(result.key, errors)
-    triggerBrowserFullReload(result.key)
+    triggerBrowserFullReload(themeId, result.key)
   }
 }
 

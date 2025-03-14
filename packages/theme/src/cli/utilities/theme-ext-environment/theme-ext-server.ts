@@ -25,7 +25,7 @@ export interface DevExtensionServerContext {
 export async function initializeDevelopmentExtensionServer(theme: Theme, devExt: DevExtensionServerContext) {
   const ctx = await contextDevServerContext(theme, devExt)
 
-  await setupInMemoryTemplateWatcher(ctx)
+  await setupInMemoryTemplateWatcher(theme, ctx)
 
   return createDevelopmentExtensionServer(theme, ctx)
 }
@@ -94,12 +94,12 @@ async function contextDevServerContext(
   }
 }
 
-export async function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
+export async function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
   const fileSystem = ctx.localThemeExtensionFileSystem
 
   const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     onContent(() => {
-      triggerHotReload(ctx, onSync, {type: 'update', key: fileKey, payload: {isThemeExtension: true}})
+      triggerHotReload(theme, ctx, onSync, {type: 'update', key: fileKey, payload: {isThemeExtension: true}})
     })
   }
 

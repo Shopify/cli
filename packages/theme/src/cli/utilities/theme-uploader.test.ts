@@ -621,7 +621,7 @@ describe('updateUploadErrors', () => {
     themeFileSystem.uploadErrors.set('file1.liquid', ['Old error'])
 
     // When
-    updateUploadErrors(result, themeFileSystem)
+    updateUploadErrors(result, themeFileSystem, 1)
 
     // Then
     expect(themeFileSystem.uploadErrors.has('file1.liquid')).toBe(false)
@@ -639,7 +639,7 @@ describe('updateUploadErrors', () => {
     }
 
     // When
-    updateUploadErrors(result, themeFileSystem)
+    updateUploadErrors(result, themeFileSystem, 1)
 
     // Then
     expect(themeFileSystem.uploadErrors.get('file1.liquid')).toEqual(['Upload failed'])
@@ -657,7 +657,7 @@ describe('updateUploadErrors', () => {
     }
 
     // When
-    updateUploadErrors(result, themeFileSystem)
+    updateUploadErrors(result, themeFileSystem, 1)
 
     // Then
     expect(themeFileSystem.uploadErrors.get('file1.liquid')).toEqual(['Response was not successful.'])
@@ -678,7 +678,7 @@ describe('updateUploadErrors', () => {
     themeFileSystem.uploadErrors.set('file1.liquid', ['Old error'])
 
     // When
-    updateUploadErrors(result, themeFileSystem)
+    updateUploadErrors(result, themeFileSystem, 1)
 
     // Then
     expect(themeFileSystem.uploadErrors.get('file1.liquid')).toEqual(['New error'])
