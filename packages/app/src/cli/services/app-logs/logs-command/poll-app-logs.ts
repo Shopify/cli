@@ -1,33 +1,34 @@
 import {PollOptions, AppLogData, PollResponse, PollFilters} from '../types.js'
-import {fetchAppLogs} from '../utils.js'
+import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export const pollAppLogs = async ({jwtToken, cursor, filters}: PollOptions): Promise<PollResponse> => {
-  const response = await fetchAppLogs(jwtToken, cursor, filters)
+interface PollAppLogsOptions {
+  pollOptions: PollOptions
+  developerPlatformClient: DeveloperPlatformClient
+}
 
-  const responseJson = await response.json()
-  if (!response.ok) {
-    const errorResponse = responseJson as {
-      errors: string[]
-    }
-    if (response.status === 401 || response.status === 429 || response.status >= 500) {
+export const pollAppLogs = async ({
+  pollOptions: {jwtToken, cursor, filters},
+  developerPlatformClient,
+}: PollAppLogsOptions): Promise<PollResponse> => {
+  const response = await developerPlatformClient.appLogs({jwtToken, cursor})
+  const {errors, status} = response as AppLogsError
+
+  if (status !== 200) {
+    if (status === 401 || status === 429 || status >= 500) {
       return {
-        errors: [{status: response.status, message: errorResponse.errors.join(', ')}],
+        errors: errors.map((error) => ({status, message: error})),
       }
     } else {
-      throw new AbortError(`${errorResponse.errors.join(', ')} while fetching app logs`)
+      throw new AbortError(`${errors.join(', ')} while fetching app logs`)
     }
   }
 
-  const data = responseJson as {
-    app_logs: AppLogData[]
-    cursor?: string
-  }
-
-  const filteredLogs = filterLogs(data.app_logs, filters)
+  const {cursor: responseCursor, app_logs: appLogs} = response as AppLogsSuccess
+  const filteredLogs = filterLogs(appLogs, filters)
 
   return {
-    cursor: data.cursor,
+    cursor: responseCursor,
     appLogs: filteredLogs,
   }
 }
