@@ -6,7 +6,7 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCloudEnvironment} from '../../../public/node/context/local.js'
-import {openURL} from '../../../public/node/system.js'
+import {isCI, openURL} from '../../../public/node/system.js'
 import {isTTY, keypress} from '../../../public/node/ui.js'
 
 export interface DeviceAuthorizationResponse {
@@ -50,7 +50,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
 
   outputInfo('\nTo run this command, log in to Shopify.')
 
-  if (!isTTY()) {
+  if (isCI()) {
     throw new AbortError(
       'Authorization is required to continue, but the current environment does not support interactive prompts.',
       'To resolve this, specify credentials in your environment, or run the command in an interactive environment such as your local terminal.',
@@ -64,7 +64,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
   }
 
-  if (isCloudEnvironment()) {
+  if (isCloudEnvironment() || !isTTY()) {
     cloudMessage()
   } else {
     outputInfo('👉 Press any key to open the login page on your browser')
