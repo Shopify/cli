@@ -45,10 +45,11 @@ describe('renderJsonLogs', () => {
     await renderJsonLogs({
       pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
-        variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
+        variables: {shopIds: [1], apiKey: 'key'},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
       storeNameById,
+      organizationId: 'organizationId',
     })
 
     expect(outputInfo).toHaveBeenNthCalledWith(
@@ -90,10 +91,11 @@ describe('renderJsonLogs', () => {
     await renderJsonLogs({
       pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
-        variables: {shopIds: ['1'], apiKey: 'key', token: 'token'},
+        variables: {shopIds: [1], apiKey: 'key'},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
       storeNameById,
+      organizationId: 'organizationId',
     })
 
     expect(outputInfo).not.toHaveBeenCalled()
@@ -119,10 +121,11 @@ describe('renderJsonLogs', () => {
     await renderJsonLogs({
       pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
       options: {
-        variables: {shopIds: [], apiKey: '', token: ''},
+        variables: {shopIds: [], apiKey: ''},
         developerPlatformClient: testDeveloperPlatformClient(),
       },
       storeNameById,
+      organizationId: 'organizationId',
     })
 
     expect(outputInfo).toHaveBeenCalledWith(

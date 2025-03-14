@@ -65,7 +65,7 @@ import {
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import appWebhookSubscriptionSpec from '../extensions/specifications/app_config_webhook_subscription.js'
 import appAccessSpec from '../extensions/specifications/app_config_app_access.js'
-import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
+import {AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -76,6 +76,7 @@ import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
+import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -1460,7 +1461,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,
-    subscribeToAppLogs: (_input: AppLogsSubscribeVariables) => Promise.resolve(appLogsSubscribeResponse),
+    subscribeToAppLogs: (_input: AppLogsSubscribeMutationVariables) => Promise.resolve(appLogsSubscribeResponse),
     appLogs: (_options: AppLogsOptions): Promise<AppLogsResponse> =>
       Promise.resolve({
         app_logs: [
