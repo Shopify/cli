@@ -156,8 +156,8 @@ import {
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
-import {FetchAppLogsOptions, generateFetchAppLogUrl} from '../../services/app-logs/utils.js'
 import {AppLogData} from '../../services/app-logs/types.js'
+import {addCursorAndFiltersToAppLogsUrl, FetchAppLogsOptions} from '../../services/app-logs/utils.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -571,7 +571,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     return input.toUpperCase()
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeVariables,
+    _organizationId: string,
+  ): Promise<AppLogsSubscribeResponse> {
     return this.request(AppLogsSubscribeMutation, input)
   }
 
@@ -579,7 +582,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return `https://${await partnersFqdn()}/${organizationId}/apps/${id}`
   }
 
-  async appLogs(options: FetchAppLogsOptions): Promise<AppLogsResponse> {
+  async appLogs(options: FetchAppLogsOptions, _organizationId: string): Promise<AppLogsResponse> {
     const response = await fetchAppLogs(options)
 
     try {
@@ -664,4 +667,16 @@ const fetchAppLogs = async ({jwtToken, cursor, filters}: FetchAppLogsOptions): P
     },
     'non-blocking',
   )
+}
+
+const generateFetchAppLogUrl = async (
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
+  const fqdn = await partnersFqdn()
+  const url = `https://${fqdn}/app_logs/poll`
+  return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }

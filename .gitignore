@@ -195,3 +195,12 @@ packages/ui-extensions-dev-console/.eslintrc.js
 packages/ui-extensions-dev-console/css-transform.js
 packages/ui-extensions-dev-console/dist
 packages/cli-kit/src/cli/api/graphql/*/*_schema.graphql
+
+amortizable-revenue-app
+consolidated-capital-app
+fruitful-shareholder-app
+my-spin-app/
+payments-app/
+prod-app-mar10-25/
+regional-upside-app/
+spin-dev-dash-app/

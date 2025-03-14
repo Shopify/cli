@@ -69,7 +69,7 @@ import {
   MigrateToUiExtensionSchema,
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
-import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
+import {AppLogsSubscribeResponse, AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -120,11 +120,12 @@ import {
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
-import {FetchAppLogsOptions} from '../../services/app-logs/utils.js'
+import {AppLogData} from '../../services/app-logs/types.js'
+import {addCursorAndFiltersToAppLogsUrl} from '../../services/app-logs/utils.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
 import {
@@ -135,11 +136,13 @@ import {
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn, developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
+import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -166,12 +169,67 @@ export class AppManagementClient implements DeveloperPlatformClient {
     this._session = session
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeVariables,
+    organizationId: string,
+  ): Promise<AppLogsSubscribeResponse> {
+    const token = await this.token()
+
+    return appManagementRequestDoc<AppLogsSubscribeQuery, AppLogsSubscribeDevDashQueryVariables>(
+      organizationId,
+      AppLogsSubscribe,
+      token,
+      {
+        shopIds: input.shopIds.map((id) => Number(id)),
+        apiKey: input.apiKey,
+      },
+    )
   }
 
-  async appLogs(options: FetchAppLogsOptions): Promise<AppLogsResponse> {
-    throw new Error(`Not Implemented: ${JSON.stringify(options)}`)
+  async appLogs(
+    options: {
+      jwtToken: string
+      cursor?: string
+      filters?: {
+        status?: string
+        source?: string
+      }
+    },
+    organizationId: string,
+  ): Promise<AppLogsResponse> {
+    const response = await fetchAppLogs({
+      organizationId,
+      jwtToken: options.jwtToken,
+      cursor: options.cursor,
+      filters: options.filters,
+    })
+
+    try {
+      const data = (await response.json()) as {
+        app_logs?: AppLogData[]
+        cursor?: string
+        errors?: string[]
+      }
+
+      if (!response.ok) {
+        return {
+          errors: data.errors || [`Request failed with status ${response.status}`],
+          status: response.status,
+        }
+      }
+
+      return {
+        app_logs: data.app_logs || [],
+        cursor: data.cursor,
+        status: response.status,
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return {
+        errors: [`Failed to parse response: ${error}`],
+        status: response.status,
+      }
+    }
   }
 
   async session(): Promise<PartnersSession> {
@@ -1074,5 +1132,123 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       options: {managementExperience: 'cli'},
       experience: experience(mod.specification.identifier),
     },
+  }
+}
+
+interface AppLogsSubscribeDevDashQueryVariables {
+  shopIds: number[]
+  apiKey: string
+  [key: string]: unknown
+}
+
+interface AppLogsSubscribeQuery {
+  appLogsSubscribe: {
+    jwtToken: string
+    success: boolean
+    errors?: string[]
+  }
+}
+
+const AppLogsSubscribe = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: {kind: 'Name', value: 'AppLogsSubscribe'},
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}},
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: {kind: 'NamedType', name: {kind: 'Name', value: 'Int'}},
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'appLogsSubscribe'},
+            arguments: [
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'shopIds'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'shopIds'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'apiKey'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'apiKey'}},
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'jwtToken'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'success'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'errors'}},
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AppLogsSubscribeQuery, AppLogsSubscribeDevDashQueryVariables>
+
+const fetchAppLogs = async ({
+  organizationId,
+  jwtToken,
+  cursor,
+  filters,
+}: FetchAppLogsDevDashboardOptions): Promise<Response> => {
+  const url = await generateFetchAppLogUrlDevDashboard(organizationId, cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
+
+  return shopifyFetch(url, {
+    method: 'GET',
+    headers,
+  })
+}
+
+const generateFetchAppLogUrlDevDashboard = async (
+  organizationId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
+  const fqdn = await appManagementFqdn()
+  const url = `https://${fqdn}/app_management/unstable/organizations/${organizationId}/app_logs/poll`
+  return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
+}
+
+interface FetchAppLogsDevDashboardOptions {
+  organizationId: string
+  jwtToken: string
+  cursor?: string
+  filters?: {
+    status?: string
+    source?: string
   }
 }
