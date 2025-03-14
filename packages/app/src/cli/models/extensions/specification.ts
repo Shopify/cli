@@ -73,6 +73,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  migratePendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   getDevSessionActionUpdateMessage?: (
     config: TConfiguration,
     appConfig: CurrentAppConfiguration,
@@ -235,6 +236,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     storeFqdn: string,
   ) => Promise<string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
+  migratePendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -249,6 +251,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
+    migratePendingSchemaChanges: spec.migratePendingSchemaChanges,
   })
 }
 
