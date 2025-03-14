@@ -4,7 +4,6 @@ import {
   POLLING_ERROR_RETRY_INTERVAL_MS,
   ONE_MILLION,
   LOG_TYPE_FUNCTION_RUN,
-  fetchAppLogs,
   LOG_TYPE_FUNCTION_NETWORK_ACCESS,
   LOG_TYPE_RESPONSE_FROM_CACHE,
   LOG_TYPE_REQUEST_EXECUTION_IN_BACKGROUND,
@@ -12,8 +11,10 @@ import {
   REQUEST_EXECUTION_IN_BACKGROUND_NO_CACHED_RESPONSE_REASON,
   REQUEST_EXECUTION_IN_BACKGROUND_CACHE_ABOUT_TO_EXPIRE_REASON,
   handleFetchAppLogsError,
+  AppLogsOptions,
 } from '../utils.js'
-import {AppLogData, ErrorResponse, FunctionRunLog} from '../types.js'
+import {AppLogData, FunctionRunLog} from '../types.js'
+import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import camelcaseKeys from 'camelcase-keys'
@@ -23,12 +24,14 @@ export const pollAppLogs = async ({
   stdout,
   appLogsFetchInput: {jwtToken, cursor},
   apiKey,
+  developerPlatformClient,
   resubscribeCallback,
   storeName,
 }: {
   stdout: Writable
-  appLogsFetchInput: {jwtToken: string; cursor?: string}
+  appLogsFetchInput: AppLogsOptions
   apiKey: string
+  developerPlatformClient: DeveloperPlatformClient
   resubscribeCallback: () => Promise<string>
   storeName: string
 }) => {
@@ -36,15 +39,13 @@ export const pollAppLogs = async ({
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    const httpResponse = await fetchAppLogs(jwtToken, cursor)
+    const response = await developerPlatformClient.appLogs({jwtToken, cursor})
 
-    const response = await httpResponse.json()
-    const {errors} = response as {errors: string[]}
-
-    if (errors) {
+    const {errors, status} = response as AppLogsError
+    if (status !== 200) {
       const errorResponse = {
-        errors: errors.map((error) => ({message: error, status: httpResponse.status})),
-      } as ErrorResponse
+        errors: errors.map((error) => ({message: error, status})),
+      }
 
       const result = await handleFetchAppLogsError({
         response: errorResponse,
@@ -65,16 +66,8 @@ export const pollAppLogs = async ({
         nextJwtToken = result.nextJwtToken
       }
       retryIntervalMs = result.retryIntervalMs
-    }
-
-    const data = response as {
-      app_logs?: AppLogData[]
-      cursor?: string
-      errors?: string[]
-    }
-
-    if (data.app_logs) {
-      const {app_logs: appLogs} = data
+    } else {
+      const {app_logs: appLogs} = response as AppLogsSuccess
 
       for (const log of appLogs) {
         let payload = JSON.parse(log.payload)
@@ -107,16 +100,17 @@ export const pollAppLogs = async ({
       }
     }
 
-    const cursorFromResponse = data?.cursor
+    const {cursor: responseCursor} = response as AppLogsSuccess
 
     setTimeout(() => {
       pollAppLogs({
         stdout,
         appLogsFetchInput: {
           jwtToken: nextJwtToken,
-          cursor: cursorFromResponse || cursor,
+          cursor: responseCursor || cursor,
         },
         apiKey,
+        developerPlatformClient,
         resubscribeCallback,
         storeName,
       }).catch((error) => {
@@ -137,6 +131,7 @@ export const pollAppLogs = async ({
           cursor: undefined,
         },
         apiKey,
+        developerPlatformClient,
         resubscribeCallback,
         storeName,
       }).catch((error) => {

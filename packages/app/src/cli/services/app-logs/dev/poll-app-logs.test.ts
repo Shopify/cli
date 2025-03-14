@@ -1,13 +1,12 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {FunctionRunLog} from '../types.js'
+import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
-import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
 import camelcaseKeys from 'camelcase-keys'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
@@ -213,6 +212,7 @@ const RESPONSE_DATA = {
     },
   ],
   cursor: RETURNED_CURSOR,
+  status: 200,
 }
 const MOCKED_RESUBSCRIBE_CALLBACK = vi.fn()
 
@@ -233,50 +233,24 @@ describe('pollAppLogs', () => {
     const firstUrl = `https://${FQDN}/app_logs/poll`
     const secondUrl = `${firstUrl}?cursor=${RETURNED_CURSOR}`
 
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(RESPONSE_DATA),
+    })
+
     // Given
     vi.mocked(writeAppLogsToFile).mockResolvedValue({fullOutputPath: '/path', identifier: '000000'})
     vi.spyOn(components, 'useConcurrentOutputContext')
-
-    const mockedshopifyFetch = vi
-      .fn()
-      .mockResolvedValueOnce(Response.json(RESPONSE_DATA))
-      .mockResolvedValueOnce(Response.json(RESPONSE_DATA))
-    vi.mocked(shopifyFetch).mockImplementation(mockedshopifyFetch)
 
     // When
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
+      developerPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
     })
     await vi.advanceTimersToNextTimerAsync()
-
-    // Then
-    expect(shopifyFetch).toHaveBeenCalledWith(
-      firstUrl,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${JWT_TOKEN}`,
-          'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
-        },
-      },
-      'non-blocking',
-    )
-
-    expect(shopifyFetch).toHaveBeenCalledWith(
-      secondUrl,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${JWT_TOKEN}`,
-          'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
-        },
-      },
-      'non-blocking',
-    )
 
     const appLogPayloadZero = new FunctionRunLog(
       camelcaseKeys(JSON.parse(RESPONSE_DATA.app_logs[0]!.payload), {deep: true}),
@@ -366,15 +340,17 @@ describe('pollAppLogs', () => {
 
   test('calls resubscribe callback if a 401 is received', async () => {
     // Given
-    const response = new Response(JSON.stringify({errors: ['Unauthorized']}), {status: 401})
-    const mockedshopifyFetch = vi.fn().mockResolvedValueOnce(response)
-    vi.mocked(shopifyFetch).mockImplementation(mockedshopifyFetch)
+    const response = {errors: ['Unauthorized'], status: 401}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
 
     // When/Then
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
+      developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
     })
@@ -385,16 +361,17 @@ describe('pollAppLogs', () => {
   test('displays throttle message, waits, and retries if status is 429', async () => {
     // Given
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
-    const mockedshopifyFetch = vi
-      .fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({errors: ['error for 429']}), {status: 429}))
-    vi.mocked(shopifyFetch).mockImplementation(mockedshopifyFetch)
+    const response = {errors: ['error for 429'], status: 429}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
 
     // When/Then
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
+      developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
     })
@@ -409,15 +386,17 @@ describe('pollAppLogs', () => {
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
 
     // An unexpected error response
-    const response = new Response(JSON.stringify({errors: ['errorMessage']}), {status: 500})
-    const mockedshopifyFetch = vi.fn().mockResolvedValueOnce(response)
-    vi.mocked(shopifyFetch).mockImplementation(mockedshopifyFetch)
+    const response = {errors: ['errorMessage'], status: 500}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
 
     // When
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
+      developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
     })
@@ -447,15 +426,19 @@ describe('pollAppLogs', () => {
           log_timestamp: '2024-05-23T19:17:00.240053Z',
         },
       ],
+      status: 200,
+      cursor: '2024-05-23T19:17:02.321773Z',
     }
-    const mockedshopifyFetch = vi.fn().mockResolvedValueOnce(Response.json(responseDataWithBadJson))
-    vi.mocked(shopifyFetch).mockImplementation(mockedshopifyFetch)
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(responseDataWithBadJson),
+    })
 
     // When
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
       apiKey: API_KEY,
+      developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
     })
