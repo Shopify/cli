@@ -170,7 +170,7 @@ export async function patchRenderingResponse(
   ctx: DevServerContext,
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
-) {
+): Promise<Response> {
   const response = patchProxiedResponseHeaders(ctx, rawResponse)
 
   // Ensure the content type indicates UTF-8 charset:
@@ -283,7 +283,6 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   return fetch(url, {
     method: event.method,
     body,
-    // @ts-expect-error Not included in official Node types
     duplex: body ? 'half' : undefined,
     // Important to return 3xx responses to the client
     redirect: 'manual',
@@ -294,7 +293,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
       // Update the cookie with the latest session
       cookie: buildCookies(ctx.session, {headers}),
     },
-  })
+  } as RequestInit & {duplex?: 'half'})
     .then((response) => patchProxiedResponseHeaders(ctx, response))
     .catch((error: Error) => {
       throw createFetchError(error, url)
