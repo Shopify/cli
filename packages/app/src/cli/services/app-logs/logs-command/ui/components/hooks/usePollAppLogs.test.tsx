@@ -166,6 +166,9 @@ const POLL_APP_LOGS_FOR_LOGS_RESPONSE = {
   ],
 }
 
+const MOCKED_ORGANIZATION_ID = '123'
+const MOCKED_APP_ID = '456'
+
 const POLL_APP_LOGS_FOR_LOGS_401_RESPONSE = {
   errors: [{status: 401, message: 'Unauthorized'}],
 }
@@ -208,6 +211,7 @@ describe('usePollAppLogs', () => {
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
       }),
     )
 
@@ -329,6 +333,7 @@ describe('usePollAppLogs', () => {
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
       }),
     )
 
@@ -343,6 +348,7 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
       },
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: MOCKED_ORGANIZATION_ID,
     })
     expect(resubscribeCallback).toHaveBeenCalledOnce()
 
@@ -351,6 +357,7 @@ describe('usePollAppLogs', () => {
     expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {
       pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS},
       developerPlatformClient: mockedDeveloperPlatformClient,
+      organizationId: MOCKED_ORGANIZATION_ID,
     })
 
     expect(vi.getTimerCount()).toEqual(1)
@@ -376,6 +383,7 @@ describe('usePollAppLogs', () => {
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
       }),
     )
 
@@ -418,6 +426,7 @@ describe('usePollAppLogs', () => {
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
       }),
     )
 
@@ -458,6 +467,7 @@ describe('usePollAppLogs', () => {
         resubscribeCallback: vi.fn().mockResolvedValue(MOCKED_JWT_TOKEN),
         storeNameById: STORE_NAME_BY_ID,
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
       }),
     )
 
@@ -485,6 +495,7 @@ describe('usePollAppLogs', () => {
         resubscribeCallback,
         storeNameById: new Map(),
         developerPlatformClient: mockedDeveloperPlatformClient,
+        organizationId: MOCKED_ORGANIZATION_ID,
       }),
     )
 

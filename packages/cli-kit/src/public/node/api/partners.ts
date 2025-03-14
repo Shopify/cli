@@ -1,4 +1,5 @@
 import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc, CacheOptions} from './graphql.js'
+import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -56,6 +57,18 @@ export async function partnersRequest<T>(
   )
 
   return result
+}
+
+export const generateFetchAppLogUrl = async (
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): Promise<string> => {
+  const fqdn = await partnersFqdn()
+  const url = `https://${fqdn}/app_logs/poll`
+  return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }
 
 /**

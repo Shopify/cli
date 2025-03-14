@@ -449,9 +449,8 @@ describe('setup-dev-processes', () => {
       options: {
         developerPlatformClient,
         appLogsSubscribeVariables: {
-          shopIds: ['123456789'],
+          shopIds: [123456789],
           apiKey: 'api-key',
-          token: 'token',
         },
       },
     })

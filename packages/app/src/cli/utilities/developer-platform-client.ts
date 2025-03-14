@@ -43,7 +43,6 @@ import {
   MigrateToUiExtensionSchema,
   MigrateToUiExtensionVariables,
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
-import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphql/subscribe_to_app_logs.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
 import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
@@ -57,6 +56,10 @@ import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-ses
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
 import {AppLogsOptions} from '../services/app-logs/utils.js'
 import {AppLogData} from '../services/app-logs/types.js'
+import {
+  AppLogsSubscribeMutation,
+  AppLogsSubscribeMutationVariables,
+} from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -220,6 +223,7 @@ export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
 export interface AppLogsSuccess {
   app_logs: AppLogData[]
   cursor?: string
+  status: number
 }
 
 export interface AppLogsError {
@@ -287,8 +291,11 @@ export interface DeveloperPlatformClient {
   ) => Promise<string | null>
   migrateToUiExtension: (input: MigrateToUiExtensionVariables) => Promise<MigrateToUiExtensionSchema>
   toExtensionGraphQLType: (input: string) => string
-  subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
-  appLogs: (options: AppLogsOptions) => Promise<AppLogsResponse>
+  subscribeToAppLogs: (
+    input: AppLogsSubscribeMutationVariables,
+    organizationId: string,
+  ) => Promise<AppLogsSubscribeMutation>
+  appLogs: (options: AppLogsOptions, organizationId: string) => Promise<AppLogsResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>

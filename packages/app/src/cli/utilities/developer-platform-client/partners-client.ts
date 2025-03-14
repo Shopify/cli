@@ -130,11 +130,7 @@ import {
   MigrateAppModuleSchema,
   MigrateAppModuleVariables,
 } from '../../api/graphql/extension_migrate_app_module.js'
-import {
-  AppLogsSubscribeVariables,
-  AppLogsSubscribeMutation,
-  AppLogsSubscribeResponse,
-} from '../../api/graphql/subscribe_to_app_logs.js'
+import {AppLogsSubscribeMutation, AppLogsSubscribeResponse} from '../../api/graphql/subscribe_to_app_logs.js'
 
 import {AllOrgs} from '../../api/graphql/partners/generated/all-orgs.js'
 import {
@@ -156,12 +152,13 @@ import {
 } from '../../api/graphql/partners/generated/dev-stores-by-org.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
-import {AppLogsOptions, generateFetchAppLogUrl} from '../../services/app-logs/utils.js'
 import {AppLogData} from '../../services/app-logs/types.js'
+import {AppLogsOptions} from '../../services/app-logs/utils.js'
+import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
+import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -563,7 +560,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     return input.toUpperCase()
   }
 
-  async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
+  async subscribeToAppLogs(
+    input: AppLogsSubscribeMutationVariables,
+    _organizationId: string,
+  ): Promise<AppLogsSubscribeResponse> {
     return this.request(AppLogsSubscribeMutation, input)
   }
 
@@ -571,7 +571,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return `https://${await partnersFqdn()}/${organizationId}/apps/${id}`
   }
 
-  async appLogs(options: AppLogsOptions): Promise<AppLogsResponse> {
+  async appLogs(options: AppLogsOptions, _organizationId: string): Promise<AppLogsResponse> {
     const response = await fetchAppLogs(options)
 
     try {
