@@ -52,6 +52,7 @@ const createMockResponse = (data: any, status = 200, statusText = 'OK') => {
   return {
     app_logs: data.app_logs || [],
     cursor: data.cursor,
+    status,
   }
 }
 
@@ -134,9 +135,9 @@ describe('pollProcess', () => {
       errors: [statusText],
     }
 
-    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
-    const mockedFetchAppLogs = vi.fn().mockResolvedValueOnce(createMockResponse(responseData, status, statusText))
-    vi.mocked(fetchAppLogs).mockImplementation(mockedFetchAppLogs)
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValueOnce(createMockResponse(responseData, status, statusText)),
+    })
 
     // When/Then
     await expect(() =>
