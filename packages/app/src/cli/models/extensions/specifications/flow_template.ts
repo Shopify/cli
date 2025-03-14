@@ -26,6 +26,7 @@ const FLOW_TEAM_CATEGORIES = ['capture_at_fulfillment']
 
 const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_template'),
+  name: zod.string(),
   description: zod.string().max(1024),
   template: zod.object({
     categories: zod.array(

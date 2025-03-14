@@ -51,7 +51,7 @@ export async function getUIExtensionPayload(
       },
       development: {
         ...options.currentDevelopmentPayload,
-        resource: getUIExtensionResourceURL(extension.configuration.type, options),
+        resource: getUIExtensionResourceURL(extension.type, options),
         root: {
           url,
         },
@@ -63,7 +63,7 @@ export async function getUIExtensionPayload(
       extensionPoints,
       localization: localization ?? null,
       metafields: extension.configuration.metafields?.length === 0 ? null : extension.configuration.metafields,
-      type: extension.configuration.type,
+      type: extension.type,
 
       externalType: extension.externalType,
       uuid: extension.devUUID,
@@ -73,9 +73,9 @@ export async function getUIExtensionPayload(
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       version: renderer?.version,
-      title: extension.configuration.name,
+      title: extension.name,
       handle: extension.handle,
-      name: extension.configuration.name,
+      name: extension.name,
       description: extension.configuration.description,
       apiVersion: extension.configuration.api_version,
       approvalScopes: options.grantedScopes,
