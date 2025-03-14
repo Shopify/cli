@@ -27,6 +27,7 @@ export const pollAppLogs = async ({
   developerPlatformClient,
   resubscribeCallback,
   storeName,
+  organizationId,
 }: {
   stdout: Writable
   appLogsFetchInput: AppLogsOptions
@@ -34,12 +35,13 @@ export const pollAppLogs = async ({
   developerPlatformClient: DeveloperPlatformClient
   resubscribeCallback: () => Promise<string>
   storeName: string
+  organizationId: string
 }) => {
   try {
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 
-    const response = await developerPlatformClient.appLogs({jwtToken, cursor})
+    const response = await developerPlatformClient.appLogs({jwtToken, cursor}, organizationId)
 
     const {errors, status} = response as AppLogsError
     if (status !== 200) {
@@ -113,6 +115,7 @@ export const pollAppLogs = async ({
         developerPlatformClient,
         resubscribeCallback,
         storeName,
+        organizationId,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -134,6 +137,7 @@ export const pollAppLogs = async ({
         developerPlatformClient,
         resubscribeCallback,
         storeName,
+        organizationId,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })

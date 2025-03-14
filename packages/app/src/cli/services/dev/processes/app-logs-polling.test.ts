@@ -28,6 +28,7 @@ describe('app-logs-polling', () => {
         developerPlatformClient,
         subscription: {shopIds: SHOP_IDS, apiKey: API_KEY},
         storeName: 'storeName',
+        organizationId: 'organizationId',
       })
 
       // Then
@@ -82,11 +83,12 @@ describe('app-logs-polling', () => {
           developerPlatformClient,
           appLogsSubscribeVariables,
           storeName: 'storeName',
+          organizationId: 'organizationId',
         },
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, 'organizationId')
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
       expect(pollAppLogs).toHaveBeenCalledOnce()
       expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
@@ -109,11 +111,12 @@ describe('app-logs-polling', () => {
           developerPlatformClient,
           appLogsSubscribeVariables,
           storeName: 'storeName',
+          organizationId: 'organizationId',
         },
       )
 
       // Then
-      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables)
+      expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, 'organizationId')
       expect(outputWarn).toHaveBeenCalledWith(`Errors subscribing to app logs: uh oh, another error`)
       expect(outputWarn).toHaveBeenCalledWith(`App log streaming is not available in this session.`)
       expect(createLogsDir).not.toHaveBeenCalled()
