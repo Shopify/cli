@@ -16,7 +16,10 @@ const limiter = new Bottleneck({
 async function setupRequest(orgId: string, token: string) {
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
-  const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
+  let url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
+  if (fqdn.endsWith('shopify-cli.mock')) {
+    url = `https://${fqdn}/app_management/unstable/organizations/xxxx/graphql.json`
+  }
   return {
     token,
     api,
