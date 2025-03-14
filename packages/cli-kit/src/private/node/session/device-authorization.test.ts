@@ -12,15 +12,18 @@ import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
+import {isCI} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
 vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/ui.js')
 vi.mock('./exchange.js')
+vi.mock('../../../public/node/system.js')
 
 beforeEach(() => {
   vi.mocked(isTTY).mockReturnValue(true)
+  vi.mocked(isCI).mockReturnValue(false)
 })
 
 describe('requestDeviceAuthorization', () => {

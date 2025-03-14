@@ -181,3 +181,12 @@ export function terminalSupportsPrompting(): boolean {
   }
   return Boolean(process.stdin.isTTY && process.stdout.isTTY)
 }
+
+/**
+ * Check if the current environment is a CI environment.
+ *
+ * @returns True if the current environment is a CI environment.
+ */
+export function isCI(): boolean {
+  return isTruthy(process.env.CI)
+}
