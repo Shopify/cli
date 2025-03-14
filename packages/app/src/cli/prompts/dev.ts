@@ -211,10 +211,10 @@ function updateURLsPromptWithDevSessions(currentAppUrl: string, urls: Applicatio
   })
 }
 
-export function downloadMkcert() {
+export function generateCertificatePrompt() {
   return renderConfirmationPrompt({
-    message: "--use-localhost requires `mkcert`, but it's not found. Download it now?",
-    confirmationMessage: 'Yes, download mkcert',
+    message: '--use-localhost requires a certificate for `localhost`. Generate it now?',
+    confirmationMessage: 'Yes, use mkcert to generate it',
     cancellationMessage: "No, I'll provide it manually",
   })
 }

@@ -48,7 +48,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface NoTunnel {
   mode: 'no-tunnel-use-localhost'
-  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string}>
+  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
 }
 
 interface AutoTunnel {
@@ -343,10 +343,11 @@ async function setupNetworkingOptions(
 
   let reverseProxyCert
   if (tunnelOptions.mode === 'no-tunnel-use-localhost') {
-    const {keyContent, certContent} = await tunnelOptions.provideCertificate(appDirectory)
+    const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
     reverseProxyCert = {
       key: keyContent,
       cert: certContent,
+      certPath,
     }
   }
 

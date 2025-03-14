@@ -1,11 +1,12 @@
 import {environmentVariableNames} from '../constants.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -13,7 +14,6 @@ const mkcertSnippet = outputToken.genericShellCommand('mkcert')
 
 async function getMkcertPath(
   appDirectory: string,
-  onRequiresDownload: () => Promise<boolean>,
   env: NodeJS.ProcessEnv,
   platform: NodeJS.Platform,
   arch: NodeJS.Architecture,
@@ -29,18 +29,8 @@ async function getMkcertPath(
   // Check if mkcert is available on the system PATH
   const mkcertLocation = await which('mkcert', {nothrow: true})
   if (mkcertLocation) {
-    outputDebug(
-      outputContent`${outputToken.successIcon()} Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`,
-    )
+    outputDebug(outputContent`Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`)
     return mkcertLocation
-  }
-
-  const shouldDownload = await onRequiresDownload()
-
-  if (!shouldDownload) {
-    throw new AbortError(
-      'mkcert is required. Please provide its path using SHOPIFY_CLI_MKCERT_BINARY environment variable.',
-    )
   }
 
   await downloadMkcert(defaultPath, platform, arch)
@@ -66,12 +56,12 @@ async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arc
 
   await downloadGitHubRelease(MKCERT_REPO, MKCERT_VERSION, assetName, targetPath)
 
-  outputInfo(outputContent`${outputToken.successIcon()} ${mkcertSnippet} saved to ${outputToken.path(targetPath)}`)
+  outputDebug(outputContent`${mkcertSnippet} saved to ${outputToken.path(targetPath)}`)
 }
 
 interface GenerateCertificateOptions {
   appDirectory: string
-  onRequiresDownloadConfirmation: () => Promise<boolean>
+  onRequiresConfirmation: () => Promise<boolean>
   resetFirst?: boolean
   env?: NodeJS.ProcessEnv
   platform?: NodeJS.Platform
@@ -90,20 +80,48 @@ interface GenerateCertificateOptions {
  */
 export async function generateCertificate({
   appDirectory,
-  onRequiresDownloadConfirmation,
+  onRequiresConfirmation,
   env = process.env,
   platform = process.platform,
   arch = process.arch,
-}: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string}> {
-  const mkcertPath = await getMkcertPath(appDirectory, onRequiresDownloadConfirmation, env, platform, arch)
+}: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string; certPath: string}> {
+  const relativeKeyPath = joinPath('.shopify', 'localhost-key.pem')
+  const relativeCertPath = joinPath('.shopify', 'localhost.pem')
+  const keyPath = joinPath(appDirectory, relativeKeyPath)
+  const certPath = joinPath(appDirectory, relativeCertPath)
 
-  outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
-  const keyPath = joinPath(appDirectory, '.shopify', 'localhost-key.pem')
-  const certPath = joinPath(appDirectory, '.shopify', 'localhost.pem')
+  if ((await fileExists(keyPath)) && (await fileExists(certPath))) {
+    return {
+      keyContent: await readFile(keyPath),
+      certContent: await readFile(certPath),
+      certPath: relativeCertPath,
+    }
+  }
 
-  outputInfo(outputContent`🔐 Checking ${mkcertSnippet} root certificate. You may be prompted for your password.`)
+  const shouldGenerate = await onRequiresConfirmation()
+  if (!shouldGenerate) {
+    throw new AbortError(`Localhost certificate and key are required at ${relativeCertPath} and ${relativeKeyPath}`)
+  }
+
+  let mkcertPath = ''
+
+  const taskList = []
+  taskList.push({
+    title: 'Finding or downloading mkcert binary',
+    task: async () => {
+      mkcertPath = await getMkcertPath(appDirectory, env, platform, arch)
+      outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
+    },
+  })
+  await renderTasks(taskList)
+
+  outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
-  outputInfo(outputContent`${outputToken.successIcon()} ${mkcertSnippet} is installed`)
+  outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}\n`)
 
-  return {keyContent: await readFile(keyPath), certContent: await readFile(certPath)}
+  return {
+    keyContent: await readFile(keyPath),
+    certContent: await readFile(certPath),
+    certPath: relativePath(appDirectory, certPath),
+  }
 }

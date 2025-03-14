@@ -7,6 +7,7 @@ import * as https from 'https'
 export interface LocalhostCert {
   key: string
   cert: string
+  certPath: string
 }
 
 export async function getProxyingWebServer(
