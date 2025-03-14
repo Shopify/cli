@@ -331,9 +331,7 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
-    const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables, {
-      cacheTTL: {hours: 6},
-    })
+    const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
     return result.extensionSpecifications.map((spec) => ({
       ...spec,
@@ -346,13 +344,7 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
     const variables: RemoteTemplateSpecificationsVariables = {apiKey}
-    const result: RemoteTemplateSpecificationsSchema = await this.request(
-      RemoteTemplateSpecificationsQuery,
-      variables,
-      {
-        cacheTTL: {hours: 6},
-      },
-    )
+    const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
     return result.templateSpecifications.map((template) => {
       const {types, ...rest} = template
       return {
