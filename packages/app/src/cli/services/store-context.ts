@@ -66,6 +66,9 @@ export async function storeContext({
     await addToGitIgnore(app.directory, configurationFileNames.hiddenFolder)
   }
 
+  // Ensure that the user is able to login to the store and install apps
+  await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore.shopId)
+
   return selectedStore
 }
 
