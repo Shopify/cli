@@ -90,6 +90,10 @@ import {
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
 import {
+  ProvisionShopAccess,
+  ProvisionShopAccessMutationVariables,
+} from '../../api/graphql/business-platform-organizations/generated/provision_shop_access.js'
+import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
 } from '../../api/graphql/app-management/generated/active-app-release.js'
@@ -800,6 +804,25 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
+  async ensureUserAccessToStore(orgId: string, shopId: string): Promise<void> {
+    const encodedShopId = encodedGidFromShopId(shopId)
+    const variables: ProvisionShopAccessMutationVariables = {
+      input: {shopifyShopId: encodedShopId},
+    }
+
+    const fullResult = await businessPlatformOrganizationsRequestDoc(
+      ProvisionShopAccess,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
+    const provisionResult = fullResult.organizationUserProvisionShopAccess
+    if (!provisionResult.success) {
+      const errorMessages = provisionResult.userErrors?.map((error) => error.message).join(', ') ?? ''
+      throw new AbortError(`Failed to provision user access to store: ${errorMessages}`)
+    }
+  }
+
   async createExtension(_input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
     throw new BugError('Not implemented: createExtension')
   }
@@ -1050,6 +1073,12 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
 // 1234 => gid://organization/Organization/1234 => base64
 export function encodedGidFromOrganizationId(id: string): string {
   const gid = `gid://organization/Organization/${id}`
+  return Buffer.from(gid).toString('base64')
+}
+
+// 1234 => gid://organization/ShopifyShop/1234 => base64
+export function encodedGidFromShopId(id: string): string {
+  const gid = `gid://organization/ShopifyShop/${id}`
   return Buffer.from(gid).toString('base64')
 }
 
