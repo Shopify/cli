@@ -12,7 +12,7 @@ import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs
 import {AppInterface} from '../../models/app/app.js'
 import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn, partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
@@ -117,6 +117,34 @@ const generateFetchAppLogUrl = async (
   return url
 }
 
+const generateFetchAppLogUrlDevDashboard = async (
+  orgId: string,
+  appId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+) => {
+  const fqdn = await appManagementFqdn()
+  let url = `https://${fqdn}/functions/unstable/organizations/${orgId}/${appId}/app_logs/poll`
+
+  if (!cursor) {
+    return url
+  }
+
+  url += `?cursor=${cursor}`
+
+  if (filters?.status) {
+    url += `&status=${filters.status}`
+  }
+  if (filters?.source) {
+    url += `&source=${filters.source}`
+  }
+
+  return url
+}
+
 export const fetchAppLogs = async (
   jwtToken: string,
   cursor?: string,
@@ -139,6 +167,28 @@ export const fetchAppLogs = async (
     },
     'non-blocking',
   )
+}
+
+export const fetchAppLogsDevDashboard = async (
+  jwtToken: string,
+  organizationId: string,
+  appId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): Promise<Response> => {
+  const url = await generateFetchAppLogUrlDevDashboard(organizationId, appId, cursor, filters)
+  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+  const headers = {
+    Authorization: `Bearer ${jwtToken}`,
+    'User-Agent': userAgent,
+  }
+  return fetch(url, {
+    method: 'GET',
+    headers,
+  })
 }
 
 interface FetchAppLogsErrorOptions {
@@ -236,8 +286,11 @@ export const parseAppLogPayload = (payload: string, logType: string): any => {
 export const subscribeToAppLogs = async (
   developerPlatformClient: DeveloperPlatformClient,
   variables: AppLogsSubscribeVariables,
+  apiKey: string,
+  organizationId: string,
+  appId: string,
 ): Promise<string> => {
-  const result = await developerPlatformClient.subscribeToAppLogs(variables)
+  const result = await developerPlatformClient.subscribeToAppLogs(variables, apiKey, organizationId, appId)
   const {jwtToken, success, errors} = result.appLogsSubscribe
   outputDebug(`Token: ${jwtToken}\n`)
   outputDebug(`API Key: ${variables.apiKey}\n`)

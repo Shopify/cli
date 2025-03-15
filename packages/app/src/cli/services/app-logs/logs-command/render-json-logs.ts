@@ -34,7 +34,7 @@ export async function renderJsonLogs({
         outputInfo(JSON.stringify({message: 'Error while polling app logs.', retry_in_ms: retryIntervalMs}))
       },
       onResubscribe: () => {
-        return subscribeToAppLogs(developerPlatformClient, variables)
+        return subscribeToAppLogs(developerPlatformClient, variables, "1", "1", "1")
       },
     })
 
