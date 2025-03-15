@@ -5385,6 +5385,10 @@
       "hiddenAliases": [
       ],
       "id": "theme:info",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
