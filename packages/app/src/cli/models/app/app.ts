@@ -11,7 +11,6 @@ import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
-import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
@@ -24,6 +23,7 @@ import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {withHiddenConfigPathIn} from '@shopify/cli-kit/node/hiddenFolder'
 
 // Schemas for loading app configuration
 
@@ -190,10 +190,6 @@ export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
   if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
   return false
-}
-
-export function appHiddenConfigPath(appDirectory: string) {
-  return joinPath(appDirectory, configurationFileNames.hiddenFolder, configurationFileNames.hiddenConfig)
 }
 
 /**
@@ -429,8 +425,9 @@ export class App<
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
     if (!this.configuration.client_id) return
     this._hiddenConfig = deepMergeObjects(this.hiddenConfig, values)
-    const path = appHiddenConfigPath(this.directory)
-    await patchAppHiddenConfigFile(path, String(this.configuration.client_id), this.hiddenConfig)
+    await withHiddenConfigPathIn(this.directory, (path) =>
+      patchAppHiddenConfigFile(path, String(this.configuration.client_id), this.hiddenConfig),
+    )
   }
 
   async preDeployValidation() {
