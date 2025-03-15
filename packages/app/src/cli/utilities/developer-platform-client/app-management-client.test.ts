@@ -3,7 +3,7 @@ import {
   GatedExtensionTemplate,
   allowedTemplates,
   diffAppModules,
-  encodedGidFromId,
+  encodedGidFromOrganizationId,
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -132,7 +132,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromId(orgApp.organizationId),
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
         flag_allowedFlag: true,
       },
     }
@@ -159,7 +159,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromId(orgApp.organizationId),
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
         flag_allowedFlag: true,
         flag_notAllowedFlag: false,
       },
@@ -184,7 +184,7 @@ describe('templateSpecifications', () => {
     }`,
       'business-platform-token',
       orgApp.organizationId,
-      {organizationId: encodedGidFromId(orgApp.organizationId)},
+      {organizationId: encodedGidFromOrganizationId(orgApp.organizationId)},
     )
     const expectedAllowedTemplates = [templateWithoutRules, allowedTemplate]
     expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
