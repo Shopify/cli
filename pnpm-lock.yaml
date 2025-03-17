@@ -167,8 +167,8 @@ importers:
         specifier: 3.76.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.11.0
-        version: 3.11.0
+        specifier: 3.11.1
+        version: 3.11.1
       body-parser:
         specifier: 1.20.3
         version: 1.20.3
@@ -208,6 +208,9 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.2.0)
+      which:
+        specifier: 4.0.0
+        version: 4.0.0
       ws:
         specifier: 8.18.0
         version: 8.18.0
@@ -233,6 +236,9 @@ importers:
       '@types/react-dom':
         specifier: 18.2.0
         version: 18.2.0
+      '@types/which':
+        specifier: 3.0.4
+        version: 3.0.4
       '@types/ws':
         specifier: ^8.5.13
         version: 8.5.13
@@ -402,6 +408,9 @@ importers:
       ink:
         specifier: 4.4.1
         version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
+      is-executable:
+        specifier: 2.0.1
+        version: 2.0.1
       is-interactive:
         specifier: 2.0.0
         version: 2.0.0
@@ -657,11 +666,11 @@ importers:
         specifier: 3.76.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 3.11.0
-        version: 3.11.0
+        specifier: 3.11.1
+        version: 3.11.1
       '@shopify/theme-language-server-node':
-        specifier: 2.10.0
-        version: 2.10.0
+        specifier: 2.10.1
+        version: 2.10.1
       chokidar:
         specifier: 3.6.0
         version: 3.6.0
@@ -4107,7 +4116,7 @@ packages:
       graphql: 16.10.0
       import-from: 4.0.0
       lodash: 4.17.21
-      tslib: 2.6.2
+      tslib: 2.6.3
     dev: true
 
   /@graphql-codegen/plugin-helpers@5.1.0(graphql@16.10.0):
@@ -4239,7 +4248,7 @@ packages:
       graphql: 16.10.0
       graphql-tag: 2.12.6(graphql@16.10.0)
       parse-filepath: 1.0.2
-      tslib: 2.6.2
+      tslib: 2.6.3
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -4528,7 +4537,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.10.0
-      tslib: 2.6.2
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/optimize@2.0.0(graphql@16.10.0):
@@ -4538,7 +4547,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       graphql: 16.10.0
-      tslib: 2.6.2
+      tslib: 2.8.1
     dev: true
 
   /@graphql-tools/prisma-loader@8.0.4(@types/node@18.19.70)(graphql@16.10.0):
@@ -4580,7 +4589,7 @@ packages:
       '@ardatan/relay-compiler': 12.0.0(graphql@16.10.0)
       '@graphql-tools/utils': 10.7.2(graphql@16.10.0)
       graphql: 16.10.0
-      tslib: 2.6.2
+      tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -4595,7 +4604,7 @@ packages:
       '@ardatan/relay-compiler': 12.0.0(graphql@16.10.0)
       '@graphql-tools/utils': 10.7.2(graphql@16.10.0)
       graphql: 16.10.0
-      tslib: 2.6.2
+      tslib: 2.8.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -6553,8 +6562,8 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@3.11.0:
-    resolution: {integrity: sha512-mpdOtChi1GRXXbrNkAu0WhODDDyQ4ditkodthgs1oEuT9A7QqgrPA4cXCyDB3eSZ6+5s4vH1MvlBOSSs3jL6og==}
+  /@shopify/theme-check-common@3.11.1:
+    resolution: {integrity: sha512-MTfJvA9wPY6uxZjeda39mv+gNZjtUvmmDigJDNam3jCSGX+KgAX5nbI5EVHB3sLKDN/d1itgjYNuRyjnGzh4nw==}
     dependencies:
       '@shopify/liquid-html-parser': 2.7.0
       cross-fetch: 4.0.0
@@ -6568,22 +6577,22 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@3.11.0:
-    resolution: {integrity: sha512-dO7NPP+ZLwYctqUf47kXmpYOJKqOByfRzV384d26z0S+91D2Q8cd6U0LwFgb3s3XvfqW+WL9at0RwQHJhvo2eg==}
+  /@shopify/theme-check-docs-updater@3.11.1:
+    resolution: {integrity: sha512-L+CTCzmga4MhnZy7vTB9vN8sZgHash/TKx4n1FH88a0yMG4IUkaj0ChgKK00if6YDGhMAsc88PDIxzEmpXZ8Ag==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 3.11.0
+      '@shopify/theme-check-common': 3.11.1
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@3.11.0:
-    resolution: {integrity: sha512-dmbJQ1UtzrgYtZFYl577G2PeGR55k3NXas2BtpZQlaPRpNvbIzv4G+NsH7qZj3cLvH8fk+slIVfv9BfG/xbZ2A==}
+  /@shopify/theme-check-node@3.11.1:
+    resolution: {integrity: sha512-lEM1zw0C1OiMM5DvxZgbvweVeuyBoSNRAaX55HyXBVtbltjnu2TIfj4PCLDkfglaqH4oBTMa2qld9aXZgs4o9A==}
     dependencies:
-      '@shopify/theme-check-common': 3.11.0
-      '@shopify/theme-check-docs-updater': 3.11.0
+      '@shopify/theme-check-common': 3.11.1
+      '@shopify/theme-check-docs-updater': 3.11.1
       glob: 8.1.0
       vscode-uri: 3.0.8
       yaml: 2.7.0
@@ -6591,11 +6600,11 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-common@2.10.0:
-    resolution: {integrity: sha512-1eL2stzw6gzM4m67gtsdTxjRcfU7yzNSyVFQEbEStC1SsbbHx7nFiwYGjB78LHWa5g0MCmnpVPupCgk/bK2Zig==}
+  /@shopify/theme-language-server-common@2.10.1:
+    resolution: {integrity: sha512-ET381mHbsc6ZSP66MQtkEruv5EP1tuxBenI8D2i4/aRCo0P0viKOTyDFCVqT3hASQWRegE5ukEsyRhHSNYQaeQ==}
     dependencies:
       '@shopify/liquid-html-parser': 2.7.0
-      '@shopify/theme-check-common': 3.11.0
+      '@shopify/theme-check-common': 3.11.1
       '@vscode/web-custom-data': 0.4.9
       vscode-json-languageservice: 5.3.11
       vscode-languageserver: 8.1.0
@@ -6605,12 +6614,12 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@2.10.0:
-    resolution: {integrity: sha512-crK4L36024mxlhozlb4GPdcUBL5p/yXh0xmX2IZPixE0AZ8e4DmtFfBxfesyDHHzdY22kl5Mf/cUjTTCqID5Ww==}
+  /@shopify/theme-language-server-node@2.10.1:
+    resolution: {integrity: sha512-VJ1zbrqMX00tZrv5EVXdXE0ztez9DlWZehV3T8M8n5K+pFcdG8U/j8B9j6ZbpMzou8lm8oMQeCeAP2n3CmpAEA==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.11.0
-      '@shopify/theme-check-node': 3.11.0
-      '@shopify/theme-language-server-common': 2.10.0
+      '@shopify/theme-check-docs-updater': 3.11.1
+      '@shopify/theme-check-node': 3.11.1
+      '@shopify/theme-language-server-common': 2.10.1
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -9637,7 +9646,6 @@ packages:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
-    dev: true
 
   /crossws@0.2.4:
     resolution: {integrity: sha512-DAxroI2uSOgUKLz00NX6A8U/8EE3SZHmIND+10jkVSaypvyt57J5JEOxAQOL6lQxyzi/wZbTIwssU1uy69h5Vg==}
@@ -11091,7 +11099,7 @@ packages:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
     engines: {node: '>=16.17'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       get-stream: 8.0.1
       human-signals: 5.0.0
       is-stream: 3.0.0
@@ -11888,7 +11896,7 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 16.10.0
-      tslib: 2.6.2
+      tslib: 2.8.1
 
   /graphql-ws@5.16.0(graphql@16.10.0):
     resolution: {integrity: sha512-Ju2RCU2dQMgSKtArPbEtsK5gNLnsQyTNIo/T7cZNp96niC1x0KdJNZV0TIoilceBPQwfb5itrGl8pkFeOUMl4A==}
@@ -12498,6 +12506,11 @@ packages:
     resolution: {integrity: sha512-F+i2BKsFrH66iaUFc0woD8sLy8getkwTwtOBjvs56Cx4CgJDeKQeqfz8wAYiSb8JOprWhHH5p77PbmYCvvUuXQ==}
     engines: {node: '>=8'}
     hasBin: true
+
+  /is-executable@2.0.1:
+    resolution: {integrity: sha512-0b7IBZndv6UF62ROvSL0lCmYwgLa2etNumsVdmNZQf/pJdYstJihfg/XDzG+p+5nBzT+1hDm2G5rKkhIDnXSCg==}
+    engines: {node: '>=14.16'}
+    dev: false
 
   /is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
@@ -13381,13 +13394,13 @@ packages:
   /lower-case-first@2.0.2:
     resolution: {integrity: sha512-EVm/rR94FJTZi3zefZ82fLWab+GX14LJN4HrWBcuo6Evmsl9hEfnqxgcHCKb9q+mNf6EVdsjx/qucYFIIB84pg==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
     dev: true
 
   /lower-case@2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
 
   /lowercase-keys@3.0.0:
     resolution: {integrity: sha512-ozCC6gdQ+glXOQsveKD0YsDy8DSQFjDTz4zyzEHNV5+JP5D62LmfDZ6o1cycFx9ouG940M5dE8C8CTewdj2YWQ==}
@@ -15927,7 +15940,7 @@ packages:
   /sponge-case@1.0.1:
     resolution: {integrity: sha512-dblb9Et4DAtiZ5YSUZHLl4XhH4uK80GhAZrVXdN4O2P4gQ40Wa5UIOPUHlA/nFd2PLblBZWUioLMMAVrgpoYcA==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
     dev: true
 
   /sprintf-js@1.0.3:
@@ -16223,7 +16236,7 @@ packages:
   /swap-case@2.0.2:
     resolution: {integrity: sha512-kc6S2YS/2yXbtkSMunBtKdah4VFETZ8Oh6ONSmSd9bRxhqTrtARUCBUiWXH3xVPpvR7tz2CSnkuXVE42EcGnMw==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
     dev: true
 
   /symbol-tree@3.2.4:
@@ -16398,7 +16411,7 @@ packages:
   /title-case@3.0.3:
     resolution: {integrity: sha512-e1zGYRvbffpcHIrnuqT0Dh+gEJtDaxDSoG4JAIpq4oDFyooziLBIiYQv0GBT4FUAnUop5uZ1hiIAj7oAF6sOCA==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
     dev: true
 
   /tmp@0.0.33:
@@ -16972,12 +16985,12 @@ packages:
   /upper-case-first@2.0.2:
     resolution: {integrity: sha512-514ppYHBaKwfJRK/pNC6c/OxfGa0obSnAl106u97Ed0I625Nin96KAjttZF6ZL3e1XLtphxnqrOi9iWgm+u+bg==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
 
   /upper-case@2.0.2:
     resolution: {integrity: sha512-KgdgDGJt2TpuwBUIjgG6lzw2GWFRCW9Qkfkiv0DxqHHLYJHmtmdUIKcZd8rHgFSjopVTlw6ggzCm1b8MFQwikg==}
     dependencies:
-      tslib: 2.6.2
+      tslib: 2.8.1
 
   /uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}

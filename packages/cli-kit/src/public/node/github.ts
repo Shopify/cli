@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {err, ok, Result} from './result.js'
-import {fetch} from './http.js'
-import {outputContent, outputDebug} from '../../public/node/output.js'
+import {fetch, Response} from './http.js'
+import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
+import {dirname, joinPath} from './path.js'
+import {runWithTimer} from './metadata.js'
+import {AbortError} from './error.js'
+import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,7 +90,7 @@ export function parseGitHubRepositoryURL(url: string): Result<ParseRepositoryURL
     return err(new Error(`Parsing the url ${url} failed. Supported formats are ${exampleFormats.join(', ')}.`))
   }
 
-  const site = match[1] || match[2] || match[3] || 'github.com'
+  const site = match[1] ?? match[2] ?? match[3] ?? 'github.com'
   const normalizedSite = site === 'github' ? 'github.com' : site
   const user = match[4]!
   const name = match[5]!.replace(/\.git$/, '')
@@ -123,4 +127,39 @@ export function parseGitHubRepositoryReference(reference: string): GithubReposit
     branch,
     filePath,
   }
+}
+
+export async function downloadGitHubRelease(
+  repo: string,
+  version: string,
+  assetName: string,
+  targetPath: string,
+): Promise<void> {
+  const url = `https://github.com/${repo}/releases/download/${version}/${assetName}`
+
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
+    await inTemporaryDirectory(async (tmpDir) => {
+      const tempPath = joinPath(tmpDir, assetName)
+      let response: Response
+      try {
+        response = await fetch(url)
+        if (!response.ok) {
+          throw new AbortError(`Failed to download ${assetName}: ${response.statusText}`)
+        }
+      } catch (error) {
+        throw new AbortError(
+          `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
+        )
+      }
+
+      const buffer = await response.arrayBuffer()
+      await writeFile(tempPath, Buffer.from(buffer))
+
+      await chmod(tempPath, 0o755)
+      await mkdir(dirname(targetPath))
+      await moveFile(tempPath, targetPath)
+    })
+    outputDebug(outputContent`${outputToken.successIcon()} Successfully downloaded ${outputToken.path(targetPath)}`)
+  })
 }

@@ -13,6 +13,7 @@ const IncludeSchema = zod.object({
 })
 
 const EditorExtensionCollectionSchema = BaseSchema.extend({
+  name: zod.string(),
   include: zod.array(IncludeSchema).optional(),
   includes: zod.array(zod.string()).optional(),
   type: zod.literal('editor_extension_collection'),

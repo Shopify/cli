@@ -444,7 +444,7 @@ wrong = "property"
 
     const blockConfiguration = `
       wrong = "my_extension"
-      type = "checkout_post_purchase"
+      type = "ui_extension"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -799,9 +799,7 @@ wrong = "property"
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1]!.configuration.name).toBe('my_extension_2')
@@ -847,9 +845,7 @@ wrong = "property"
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
@@ -2001,6 +1997,7 @@ wrong = "property"
         auth: {
           redirect_urls: ['https://example.com/api/auth'],
         },
+        name: 'for-testing-webhooks',
       },
       // this is the webhooks extension
       {
@@ -2011,10 +2008,12 @@ wrong = "property"
             {topics: ['orders/delete'], uri: 'https://example.com'},
           ],
         },
+        name: 'for-testing-webhooks',
       },
       {
         application_url: 'https://example.com/lala',
         embedded: true,
+        name: 'for-testing-webhooks',
       },
       // this is a webhook subscription extension
       {
@@ -2067,9 +2066,7 @@ wrong = "property"
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
-    const functions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    const functions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
     expect(functions[0]!.configuration.name).toBe('my-function-1')
     expect(functions[1]!.configuration.name).toBe('my-function-2')
     expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')

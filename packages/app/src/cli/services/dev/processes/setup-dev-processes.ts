@@ -14,7 +14,7 @@ import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
-import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
+import {LocalhostCert, getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
@@ -23,8 +23,14 @@ import {reloadApp} from '../../../models/app/loader.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
-interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
+interface ProxyServerProcess
+  extends BaseProcess<{
+    port: number
+    rules: {[key: string]: string}
+    localhostCert?: LocalhostCert
+  }> {
   type: 'proxy-server'
 }
 
@@ -48,6 +54,7 @@ interface DevNetworkOptions {
   frontendPort: number
   backendPort: number
   currentUrls: ApplicationURLs
+  reverseProxyCert?: LocalhostCert
 }
 
 export interface DevConfig {
@@ -194,7 +201,7 @@ export async function setupDevProcesses({
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
-  const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort)
+  const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort, network.reverseProxyCert)
 
   return {
     processes: processesWithProxy,
@@ -208,14 +215,18 @@ const stripUndefineds = <T>(process: T | undefined | false): process is T => {
   return process !== undefined && process !== false
 }
 
-async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: number): Promise<DevProcesses> {
+async function setPortsAndAddProxyProcess(
+  processes: DevProcesses,
+  proxyPort: number,
+  reverseProxyCert?: LocalhostCert,
+): Promise<DevProcesses> {
   // Convert processes that use proxying to have a port number and register their mapping rules
   const processesAndRules = await Promise.all(
     processes.map(async (process) => {
       const rules: {[key: string]: string} = {}
 
       if (process.type === 'web' && process.options.roles.includes(WebType.Frontend)) {
-        const targetPort = process.options.portFromConfig || process.options.port
+        const targetPort = process.options.portFromConfig ?? process.options.port
         rules.default = `http://localhost:${targetPort}`
         const hmrServer = process.options.hmrServerOptions
         if (hmrServer) {
@@ -244,6 +255,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
       options: {
         port: proxyPort,
         rules: allRules,
+        localhostCert: reverseProxyCert,
       },
     })
   }
@@ -251,10 +263,15 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
   return newProcesses
 }
 
-export const startProxyServer: DevProcessFunction<{port: number; rules: {[key: string]: string}}> = async (
-  {abortSignal},
-  {port, rules},
-) => {
-  const {server} = await getProxyingWebServer(rules, abortSignal)
+export const startProxyServer: DevProcessFunction<{
+  port: number
+  rules: {[key: string]: string}
+  localhostCert?: LocalhostCert
+}> = async ({abortSignal, stdout}, {port, rules, localhostCert}) => {
+  const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert)
+  outputInfo(
+    `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
+    stdout,
+  )
   await server.listen(port)
 }

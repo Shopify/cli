@@ -1,6 +1,5 @@
 import {
   ApplicationURLs,
-  FrontendURLOptions,
   generateApplicationURLs,
   generateFrontendURL,
   getURLs,
@@ -47,6 +46,22 @@ import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
+interface NoTunnel {
+  mode: 'no-tunnel-use-localhost'
+  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
+}
+
+interface AutoTunnel {
+  mode: 'auto'
+}
+
+interface TunnelProvided {
+  mode: 'provided'
+  url: string
+}
+
+export type TunnelMode = NoTunnel | AutoTunnel | TunnelProvided
+
 export interface DevOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
@@ -60,8 +75,7 @@ export interface DevOptions {
   skipDependenciesInstallation: boolean
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
-  tunnelUrl?: string
-  noTunnel: boolean
+  tunnel: TunnelMode
   theme?: string
   themeExtensionPort?: number
   notify?: string
@@ -83,7 +97,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
   let tunnelClient: TunnelClient | undefined
-  if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
+  if (commandOptions.tunnel.mode === 'auto') {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
@@ -137,12 +151,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const {webs, ...network} = await setupNetworkingOptions(
+    app.directory,
     app.webs,
     graphiqlPort,
-    {
-      noTunnel: commandOptions.noTunnel,
-      tunnelUrl: commandOptions.tunnelUrl,
-    },
+    commandOptions.tunnel,
     tunnelClient,
     remoteApp.configuration,
   )
@@ -296,9 +308,10 @@ async function handleUpdatingOfPartnerUrls(
 }
 
 async function setupNetworkingOptions(
+  appDirectory: string,
   webs: Web[],
   graphiqlPort: number,
-  frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl'>,
+  tunnelOptions: TunnelMode,
   tunnelClient?: TunnelClient,
   remoteAppConfig?: AppConfigurationUsedByCli,
 ) {
@@ -310,7 +323,8 @@ async function setupNetworkingOptions(
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
   const [{frontendUrl, frontendPort: proxyPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
     generateFrontendURL({
-      ...frontEndOptions,
+      noTunnelUseLocalhost: tunnelOptions.mode === 'no-tunnel-use-localhost',
+      tunnelUrl: tunnelOptions.mode === 'provided' ? tunnelOptions.url : undefined,
       tunnelClient,
     }),
     getBackendPort() ?? backendConfig?.configuration.port ?? getAvailableTCPPort(),
@@ -327,6 +341,16 @@ async function setupNetworkingOptions(
   }
   frontendPort = frontendPort ?? (await getAvailableTCPPort())
 
+  let reverseProxyCert
+  if (tunnelOptions.mode === 'no-tunnel-use-localhost') {
+    const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
+    reverseProxyCert = {
+      key: keyContent,
+      cert: certContent,
+      certPath,
+    }
+  }
+
   return {
     proxyUrl,
     proxyPort,
@@ -334,6 +358,7 @@ async function setupNetworkingOptions(
     backendPort,
     currentUrls,
     webs,
+    reverseProxyCert,
   }
 }
 

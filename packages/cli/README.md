@@ -208,7 +208,7 @@ Run the app.
 USAGE
   $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--no-color]
     [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>]
-    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> |  | ]
+    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
     [--verbose]
 
 FLAGS

@@ -94,13 +94,18 @@ describe('setup-dev-processes', () => {
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
-      noTunnel: false,
+      tunnel: {mode: 'auto'},
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
       proxyPort: 444,
       backendPort: 111,
       frontendPort: 222,
+      reverseProxyCert: {
+        cert: 'cert',
+        key: 'key',
+        certPath: 'localhost.pem',
+      },
       currentUrls: {
         applicationUrl: 'https://example.com/application',
         redirectUrlWhitelist: ['https://example.com/redirect'],
@@ -276,6 +281,10 @@ describe('setup-dev-processes', () => {
       function: startProxyServer,
       options: {
         port: 444,
+        localhostCert: {
+          cert: 'cert',
+          key: 'key',
+        },
         rules: {
           '/extensions': `http://localhost:${previewExtensionPort}`,
           '/ping': `http://localhost:${hmrPort}`,
@@ -298,7 +307,7 @@ describe('setup-dev-processes', () => {
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
-      noTunnel: false,
+      tunnel: {mode: 'auto'},
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -370,7 +379,7 @@ describe('setup-dev-processes', () => {
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
-      noTunnel: false,
+      tunnel: {mode: 'auto'},
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -465,7 +474,7 @@ describe('setup-dev-processes', () => {
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
-      noTunnel: false,
+      tunnel: {mode: 'auto'},
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -549,7 +558,7 @@ describe('setup-dev-processes', () => {
       update: false,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
-      noTunnel: false,
+      tunnel: {mode: 'auto'},
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',

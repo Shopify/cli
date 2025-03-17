@@ -426,6 +426,23 @@ describe('setupDevServer', () => {
       await expect(eventPromise).resolves.toHaveProperty('status', 401)
     })
 
+    test('skips proxy for known rendering requests like Section Rendering API', async () => {
+      const fetchStub = vi.fn()
+      vi.stubGlobal('fetch', fetchStub)
+      fetchStub.mockResolvedValueOnce(new Response(null, {status: 200}))
+      vi.mocked(render).mockResolvedValue(new Response(null, {status: 404}))
+
+      await expect(dispatchEvent('/non-renderable-path?sections=xyz')).resolves.toHaveProperty('status', 404)
+      await expect(dispatchEvent('/non-renderable-path?section_id=xyz')).resolves.toHaveProperty('status', 404)
+      await expect(dispatchEvent('/non-renderable-path?app_block_id=xyz')).resolves.toHaveProperty('status', 404)
+
+      expect(vi.mocked(render)).toHaveBeenCalledTimes(3)
+      expect(fetchStub).not.toHaveBeenCalled()
+
+      await expect(dispatchEvent('/non-renderable-path?unknown=xyz')).resolves.toHaveProperty('status', 200)
+      expect(fetchStub).toHaveBeenCalledOnce()
+    })
+
     test('renders error page on network errors with hot reload script injected', async () => {
       const fetchStub = vi.fn()
       vi.stubGlobal('fetch', fetchStub)

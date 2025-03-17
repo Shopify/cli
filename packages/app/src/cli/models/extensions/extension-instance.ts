@@ -74,16 +74,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
-  get type() {
-    return this.configuration.type
+  get type(): string {
+    return this.specification.identifier
   }
 
   get humanName() {
     return this.specification.externalName
   }
 
-  get name() {
-    return this.configuration.name
+  get name(): string {
+    return this.configuration.name ?? this.specification.externalName
   }
 
   get dependency() {
@@ -443,7 +443,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'single':
         return slugify(this.specification.identifier)
       case 'uuid':
-        return this.configuration.handle ?? slugify(this.configuration.name ?? '')
+        return this.configuration.handle ?? slugify(this.name ?? '')
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
