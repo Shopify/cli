@@ -148,12 +148,11 @@ If you're using the Ruby app template, then you need to complete the following s
         mode: 'no-tunnel-use-localhost',
         provideCertificate: async (appDirectory) => {
           renderInfo({
-            headline: 'localhost development is experimental.',
+            headline: 'Localhost-based development is in developer preview.',
             body: [
-              'The --use-localhost flag has limitations.',
-              'It works for testing App Bridge, Admin UI, Checkout UI or Pixels.',
-              "It won't work for Webhooks, Flow Actions, App Proxy or POS features.",
-              'Please report any issues and provide feedback on the dev community:',
+              '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
+              '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
+              'device (such as POS). Please report any issues and provide feedback on the dev community:',
             ],
             link: {
               label: 'Create a feedback post',
