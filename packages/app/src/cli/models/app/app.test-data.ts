@@ -1429,6 +1429,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createApp: (_organization: Organization, _options: CreateAppOptions) => Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve({stores: [], hasMorePages: false}),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
+    ensureUserAccessToStore: (_orgId: string, _shopId: string) => Promise.resolve(),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),
