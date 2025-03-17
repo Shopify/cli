@@ -7,7 +7,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
-import {outputDebug, outputResult} from '@shopify/cli-kit/node/output'
+import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
 
 export async function profile(
   adminSession: AdminSession,
