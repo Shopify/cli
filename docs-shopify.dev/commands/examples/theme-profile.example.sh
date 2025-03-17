@@ -1,3 +1,3 @@
-theme profile
+shopify theme profile
 
-theme profile --url /products/classic-leather-jacket
+shopify theme profile --url /products/classic-leather-jacket

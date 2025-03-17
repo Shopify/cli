@@ -50,6 +50,7 @@ describe('dev', () => {
     noDelete: false,
     ignore: [],
     only: [],
+    'error-overlay': 'default',
   }
 
   const session: DevServerSession = {
@@ -101,6 +102,7 @@ describe('dev', () => {
           ignore: [],
           noDelete: false,
           only: [],
+          errorOverlay: 'default',
         },
       })
     })

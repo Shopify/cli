@@ -148,7 +148,7 @@ export class AppEventWatcher extends EventEmitter {
       handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
-          if (!appEvent || appEvent.extensionEvents.length === 0) return
+          if (!appEvent) return
 
           this.app = appEvent.app
           if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)

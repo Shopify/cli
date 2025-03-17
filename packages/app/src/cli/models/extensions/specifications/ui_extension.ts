@@ -34,6 +34,8 @@ const missingExtensionPointsMessage = 'No extension targets defined, add a `targ
 export type UIExtensionSchemaType = zod.infer<typeof UIExtensionSchema>
 
 export const UIExtensionSchema = BaseSchema.extend({
+  name: zod.string(),
+  type: zod.literal('ui_extension'),
   extension_points: NewExtensionPointsSchema.optional(),
   targeting: NewExtensionPointsSchema.optional(),
 })
@@ -62,6 +64,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         module: targeting.module,
         metafields: targeting.metafields ?? config.metafields ?? [],
         default_placement_reference: targeting.default_placement,
+        urls: targeting.urls ?? {},
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
         build_manifest: buildManifest,

@@ -63,16 +63,6 @@
     },
     "test": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "test:js"
-      ],
-      "options": {
-        "commands": [],
-        "cwd": "packages/cli-kit"
-      }
-    },
-    "test:js": {
-      "executor": "nx:run-commands",
       "options": {
         "command": "pnpm vitest run",
         "cwd": "packages/cli-kit"
@@ -80,9 +70,6 @@
     },
     "test:coverage": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "build"
-      ],
       "options": {
         "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
         "cwd": "packages/cli-kit"

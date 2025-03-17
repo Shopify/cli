@@ -1,7 +1,7 @@
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
-import {DevServerContext, LiveReload} from '../utilities/theme-environment/types.js'
+import {DevServerContext, ErrorOverlayMode, LiveReload} from '../utilities/theme-environment/types.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
@@ -31,6 +31,7 @@ export interface DevOptions {
   force: boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
+  'error-overlay': ErrorOverlayMode
   noDelete: boolean
   ignore: string[]
   only: string[]
@@ -90,6 +91,7 @@ export async function dev(options: DevOptions) {
       noDelete: options.noDelete,
       ignore: options.ignore,
       only: options.only,
+      errorOverlay: options['error-overlay'],
     },
   }
 

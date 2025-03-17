@@ -6,7 +6,7 @@ import {createError, H3Error, ServerResponse, sendError as h3SendError} from 'h3
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 
 export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): string {
-  const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
+  const {url: resourceUrl} = getUIExtensionResourceURL(extension.type, options)
 
   if (extension.surface === 'checkout' && resourceUrl) {
     const rawUrl = new URL(`https://${options.storeFqdn}/`)

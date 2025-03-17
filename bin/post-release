@@ -1,0 +1,24 @@
+#! /usr/bin/env bash
+
+tag=$1
+
+# Check if current branch starts with "stable"
+current_branch=$(git branch --show-current)
+if [[ ! $current_branch =~ ^stable ]]; then
+    echo "Error: Must be on a stable branch (current: $current_branch)"
+    exit 1
+fi
+
+# Check if git working directory is clean
+if [[ -n $(git status -s) ]]; then
+    echo "Error: Git working directory is not clean"
+    git status
+    exit 1
+fi
+
+# Create a PR to update homebrew
+./bin/create-homebrew-pr.js
+
+# Create a PR to update the docs
+./bin/create-doc-pr.js
+

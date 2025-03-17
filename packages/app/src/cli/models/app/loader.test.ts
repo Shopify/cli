@@ -9,8 +9,10 @@ import {
   AppLoaderMode,
   getAppConfigurationState,
   loadConfigForAppCreation,
+  reloadApp,
+  loadHiddenConfig,
 } from './loader.js'
-import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -29,7 +31,7 @@ import {
   PackageJson,
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -442,7 +444,7 @@ wrong = "property"
 
     const blockConfiguration = `
       wrong = "my_extension"
-      type = "checkout_post_purchase"
+      type = "ui_extension"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -797,9 +799,7 @@ wrong = "property"
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1]!.configuration.name).toBe('my_extension_2')
@@ -845,9 +845,7 @@ wrong = "property"
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
@@ -1999,6 +1997,7 @@ wrong = "property"
         auth: {
           redirect_urls: ['https://example.com/api/auth'],
         },
+        name: 'for-testing-webhooks',
       },
       // this is the webhooks extension
       {
@@ -2009,10 +2008,12 @@ wrong = "property"
             {topics: ['orders/delete'], uri: 'https://example.com'},
           ],
         },
+        name: 'for-testing-webhooks',
       },
       {
         application_url: 'https://example.com/lala',
         embedded: true,
+        name: 'for-testing-webhooks',
       },
       // this is a webhook subscription extension
       {
@@ -2065,9 +2066,7 @@ wrong = "property"
 
     // Then
     expect(app.allExtensions).toHaveLength(2)
-    const functions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    const functions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
     expect(functions[0]!.configuration.name).toBe('my-function-1')
     expect(functions[1]!.configuration.name).toBe('my-function-2')
     expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
@@ -2316,6 +2315,66 @@ wrong = "property"
 
     // When
     await expect(loadTestingApp()).rejects.toThrow()
+  })
+
+  test('preserves values from the previous app when reloading', async () => {
+    // Given
+    const appConfiguration = `
+      name = "my-app"
+      client_id = "12345"
+      application_url = "https://example.com"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [auth]
+      redirect_urls = ["https://example.com/auth"]
+    `
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+     api_version = "2022-07"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "handle-1"
+      name = "my_extension_1_flow"
+      description = "custom description"
+      runtime_url = "https://example.com"
+    `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // Create initial app
+    const app = (await loadApp({
+      directory: tmpDir,
+      specifications,
+      userProvidedConfigName: undefined,
+    })) as AppLinkedInterface
+
+    // Set some values that should be preserved
+    const customDevUUID = 'custom-dev-uuid'
+    const customAppURLs = {
+      applicationUrl: 'http://custom.dev',
+      redirectUrlWhitelist: ['http://custom.dev/auth'],
+    }
+    app.allExtensions[0]!.devUUID = customDevUUID
+    app.setDevApplicationURLs(customAppURLs)
+
+    // When
+    const reloadedApp = await reloadApp(app)
+
+    // Then
+    expect(reloadedApp.allExtensions[0]?.devUUID).toBe(customDevUUID)
+    expect(reloadedApp.devApplicationURLs).toEqual(customAppURLs)
+    expect(reloadedApp.name).toBe(app.name)
+    expect(reloadedApp.packageManager).toBe(app.packageManager)
+    expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
+    expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
@@ -3328,6 +3387,143 @@ dev = "echo 'Hello, world!'"
         directory: tmpDir,
         isEmbedded: false,
       })
+    })
+  })
+})
+
+describe('loadHiddenConfig', () => {
+  test('returns empty object if no client_id in configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        scopes: 'write_products',
+      }
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
+    })
+  })
+
+  test('returns empty object if hidden config file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: '12345',
+      }
+      await writeFile(joinPath(tmpDir, '.gitignore'), '')
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
+
+      // Verify empty config file was created
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      const fileContent = await readFile(hiddenConfigPath)
+      expect(JSON.parse(fileContent)).toEqual({})
+
+      // Verify .gitignore was updated
+      const gitIgnore = joinPath(tmpDir, '.gitignore')
+      const gitIgnoreContent = await readFile(gitIgnore)
+      expect(gitIgnoreContent).toContain('.shopify')
+    })
+  })
+
+  test('returns config for client_id if hidden config file exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: '12345',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(
+        hiddenConfigPath,
+        JSON.stringify({
+          '12345': {someKey: 'someValue'},
+          'other-id': {otherKey: 'otherValue'},
+        }),
+      )
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({someKey: 'someValue'})
+    })
+  })
+
+  test('returns empty object if client_id not found in existing hidden config', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: 'not-found',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(
+        hiddenConfigPath,
+        JSON.stringify({
+          'other-id': {someKey: 'someValue'},
+        }),
+      )
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
+    })
+  })
+
+  test('returns config if hidden config has an old format with just a dev_store_url', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: 'not-found',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(
+        hiddenConfigPath,
+        JSON.stringify({
+          dev_store_url: 'https://dev-store.myshopify.com',
+        }),
+      )
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({dev_store_url: 'https://dev-store.myshopify.com'})
+    })
+  })
+
+  test('returns empty object if hidden config file is invalid JSON', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configuration = {
+        path: joinPath(tmpDir, 'shopify.app.toml'),
+        client_id: '12345',
+      }
+      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
+      await mkdir(dirname(hiddenConfigPath))
+      await writeFile(hiddenConfigPath, 'invalid json')
+
+      // When
+      const got = await loadHiddenConfig(tmpDir, configuration)
+
+      // Then
+      expect(got).toEqual({})
     })
   })
 })

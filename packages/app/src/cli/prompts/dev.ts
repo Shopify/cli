@@ -4,6 +4,7 @@ import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {Paginateable} from '../utilities/developer-platform-client.js'
 import {APP_NAME_MAX_LENGTH} from '../models/app/validation/common.js'
+import {ApplicationURLs} from '../services/dev/urls.js'
 import {
   RenderAutocompleteOptions,
   renderAutocompletePrompt,
@@ -72,10 +73,14 @@ interface SelectStorePromptOptions {
   showDomainOnPrompt: boolean
 }
 
+interface ExtraAutoCompletePropsForStoreSelect {
+  search?: RenderAutocompleteOptions<string>['search']
+}
+
 export async function selectStorePrompt({
   stores,
   hasMorePages = false,
-  onSearchForStoresByName = (_term: string) => Promise.resolve({stores, hasMorePages}),
+  onSearchForStoresByName,
   showDomainOnPrompt = true,
 }: SelectStorePromptOptions): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
@@ -94,11 +99,9 @@ export async function selectStorePrompt({
 
   let currentStores = stores
 
-  const id = await renderAutocompletePrompt({
-    message: 'Which store would you like to use to view your project?',
-    choices: currentStores.map(storeToChoice),
-    hasMorePages,
-    search: async (term) => {
+  const extraAutocompletePromptProps: ExtraAutoCompletePropsForStoreSelect = {}
+  if (onSearchForStoresByName) {
+    extraAutocompletePromptProps.search = async (term) => {
       const result = await onSearchForStoresByName(term)
       currentStores = result.stores
 
@@ -108,7 +111,14 @@ export async function selectStorePrompt({
           hasNextPage: result.hasMorePages,
         },
       }
-    },
+    }
+  }
+
+  const id = await renderAutocompletePrompt({
+    message: 'Which store would you like to use to view your project?',
+    choices: currentStores.map(storeToChoice),
+    hasMorePages,
+    ...extraAutocompletePromptProps,
   })
   return currentStores.find((store) => store.shopId === id)
 }
@@ -156,7 +166,19 @@ export async function createAsNewAppPrompt(): Promise<boolean> {
   })
 }
 
-export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
+export function updateURLsPrompt(
+  usingDevSessions: boolean,
+  currentAppUrl: string,
+  currentRedirectUrls: string[],
+  newURLs: ApplicationURLs,
+): Promise<boolean> {
+  if (usingDevSessions) {
+    return updateURLsPromptWithDevSessions(currentAppUrl, newURLs)
+  }
+  return legacyUpdateURLsPrompt(currentAppUrl, currentRedirectUrls)
+}
+
+function legacyUpdateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
   return renderConfirmationPrompt({
     message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
     confirmationMessage: 'Yes, automatically update',
@@ -165,5 +187,34 @@ export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: str
       'Current app URL': [currentAppUrl],
       'Current redirect URLs': currentRedirectUrls,
     },
+  })
+}
+
+function updateURLsPromptWithDevSessions(currentAppUrl: string, urls: ApplicationURLs): Promise<boolean> {
+  const affectedConfigs = ['application_url', 'redirect_urls']
+  if (urls.appProxy?.proxyUrl) {
+    affectedConfigs.push('app_proxy')
+  }
+
+  const infoTable: {[key: string]: string[]} = {
+    'Currently released app URL': [currentAppUrl],
+    '=> Dev URL': [urls.applicationUrl],
+    'Affected configurations': affectedConfigs,
+  }
+
+  return renderConfirmationPrompt({
+    message:
+      "Have Shopify override your app URLs with tunnel URLs when running `app dev` against your dev store? This won't affect your app on other stores",
+    confirmationMessage: 'Yes, automatically update',
+    cancellationMessage: 'No, never',
+    infoTable,
+  })
+}
+
+export function generateCertificatePrompt() {
+  return renderConfirmationPrompt({
+    message: '--use-localhost requires a certificate for `localhost`. Generate it now?',
+    confirmationMessage: 'Yes, use mkcert to generate it',
+    cancellationMessage: "No, I'll provide it manually",
   })
 }

@@ -1,16 +1,15 @@
 import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
 import {DevServerSession, DevServerRenderContext} from './types.js'
+import {createFetchError} from '../errors.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetch, type Response} from '@shopify/cli-kit/node/http'
-import {createError} from 'h3'
 import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
   const headers = await buildHeaders(session, context)
-  let response
+  let response: Response
 
   if (context.replaceTemplates) {
     const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
@@ -26,13 +25,8 @@ export async function render(session: DevServerSession, context: DevServerRender
         ...headers,
         ...defaultHeaders(),
       },
-    }).catch((error: Error) => {
-      throw createError({
-        status: 502,
-        statusText: 'Bad Gateway',
-        data: {url},
-        cause: error,
-      })
+    }).catch((error) => {
+      throw createFetchError(error, url)
     })
   } else {
     outputDebug(`→ Rendering ${url}...`)
@@ -43,6 +37,8 @@ export async function render(session: DevServerSession, context: DevServerRender
         ...headers,
         ...defaultHeaders(),
       },
+    }).catch((error) => {
+      throw createFetchError(error, url)
     })
   }
 
@@ -54,6 +50,7 @@ export async function render(session: DevServerSession, context: DevServerRender
    * However, patched renderings will never patch JSON requests; so we're
    * consistently discarding the content type.
    */
+  response = new Response(response.body, response)
   response.headers.delete('Content-Type')
 
   return response

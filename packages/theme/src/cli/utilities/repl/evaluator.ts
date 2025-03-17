@@ -2,7 +2,6 @@ import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
-import {Response} from '@shopify/cli-kit/node/http'
 
 export interface SessionItem {
   type: string

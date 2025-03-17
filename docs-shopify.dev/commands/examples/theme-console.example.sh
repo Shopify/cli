@@ -1,3 +1,3 @@
-theme console
+shopify theme console
 
-theme console --url /products/classic-leather-jacket
+shopify theme console --url /products/classic-leather-jacket

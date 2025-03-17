@@ -6,6 +6,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const dependency = '@shopify/checkout-ui-extensions'
 
 const CheckoutSchema = BaseSchema.extend({
+  name: zod.string(),
   extension_points: zod.array(zod.string()).optional(),
   settings: zod
     .object({
@@ -30,7 +31,7 @@ const checkoutSpec = createExtensionSpecification({
     return {
       extension_points: config.extension_points,
       capabilities: config.capabilities,
-      metafields: config.metafields,
+      metafields: config.metafields ?? [],
       name: config.name,
       settings: config.settings,
       localization: await loadLocalesConfig(directory, 'checkout_ui'),

@@ -26,10 +26,10 @@ async function detectStopCommand(commandClass: Command.Class | typeof BaseComman
     const stopCommand = (commandClass as typeof BaseCommand).analyticsStopCommand()
     if (stopCommand) {
       const {commandStartOptions} = metadata.getAllSensitiveMetadata()
+      if (!commandStartOptions) return
       await metadata.addSensitiveMetadata(() => ({
         commandStartOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          ...commandStartOptions!,
+          ...commandStartOptions,
           startTime: currentTime,
           startCommand: stopCommand,
         },

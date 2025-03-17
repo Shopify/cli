@@ -1,5 +1,28 @@
 # @shopify/cli-kit
 
+## 3.76.0
+
+### Minor Changes
+
+- 4a3895c: Use GraphQL for theme creation
+
+### Patch Changes
+
+- 38e8d7b: Hide serialized_script fields in verbose logs
+- b1ed29d: Fix binary files being corrupted on theme pull
+- 6449aa6: Fetch notifications in background
+
+## 3.75.0
+
+### Minor Changes
+
+- 4aee075: Improve display of loading bar in no-color mode
+
+### Patch Changes
+
+- da606a6: Improve mechanism that adds `.shopify` to `.gitignore` to avoid duplicate entries
+- ab407f3: Add `addToGitIgnore` to cli-kit to append entries to existing `.gitignore` files
+
 ## 3.74.0
 
 ### Minor Changes

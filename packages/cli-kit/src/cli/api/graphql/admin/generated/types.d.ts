@@ -128,8 +128,6 @@ export type MetafieldOwnerType =
   | 'ARTICLE'
   /** The Blog metafield owner type. */
   | 'BLOG'
-  /** The Brand metafield owner type. */
-  | 'BRAND'
   /** The Cart Transform metafield owner type. */
   | 'CARTTRANSFORM'
   /** The Collection metafield owner type. */

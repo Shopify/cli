@@ -1,1 +1,1 @@
-theme init [name]
+shopify theme init [name] [flags]

@@ -11,7 +11,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 export default class Release extends AppCommand {
   static summary = 'Release an app version.'
 
-  static usage = `app:release --version <version>`
+  static usage = `app release --version <version>`
 
   static descriptionWithMarkdown = `Releases an existing app version. Pass the name of the version that you want to release using the \`--version\` flag.`
 

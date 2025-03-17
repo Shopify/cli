@@ -5,19 +5,23 @@ import {outputDebug} from './output.js'
 import {zod} from './schema.js'
 import {AbortSilentError} from './error.js'
 import {isTruthy} from './context/utilities.js'
+import {exec} from './system.js'
 import {jsonOutputEnabled} from './environment.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
-import {
-  NotificationKey,
-  NotificationsKey,
-  cacheRetrieve,
-  cacheRetrieveOrRepopulate,
-  cacheStore,
-} from '../../private/node/conf-store.js'
+import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
-const CACHE_DURATION_IN_MS = 3600 * 1000
+const EMPTY_CACHE_MESSAGE = 'Cache is empty'
+const COMMANDS_TO_SKIP = [
+  'notifications:list',
+  'notifications:generate',
+  'init',
+  'app:init',
+  'theme:init',
+  'hydrogen:init',
+  'cache:clear',
+]
 
 function url(): string {
   return process.env.SHOPIFY_CLI_NOTIFICATIONS_URL ?? URL
@@ -60,17 +64,21 @@ export async function showNotificationsIfNeeded(
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
   try {
-    if (skipNotifications(environment)) return
+    const commandId = getCurrentCommandId()
+    if (skipNotifications(commandId, environment) || jsonOutputEnabled(environment)) return
 
     const notifications = await getNotifications()
-    const commandId = getCurrentCommandId()
     const notificationsToShow = filterNotifications(notifications.notifications, commandId, currentSurfaces)
     outputDebug(`Notifications to show: ${notificationsToShow.length}`)
     await renderNotifications(notificationsToShow)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    if (error.message === EMPTY_CACHE_MESSAGE) {
+      outputDebug('Notifications to show: 0 (Cache is empty)')
+      return
+    }
     if (error.message === 'abort') throw new AbortSilentError()
-    const errorMessage = `Error retrieving notifications: ${error.message}`
+    const errorMessage = `Error showing notifications: ${error.message}`
     outputDebug(errorMessage)
     // This is very prone to becoming a circular dependency, so we import it dynamically
     const {sendErrorToBugsnag} = await import('./error-handler.js')
@@ -78,8 +86,10 @@ export async function showNotificationsIfNeeded(
   }
 }
 
-function skipNotifications(environment: NodeJS.ProcessEnv): boolean {
-  return isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || jsonOutputEnabled(environment)
+function skipNotifications(currentCommand: string, environment: NodeJS.ProcessEnv = process.env): boolean {
+  return (
+    isTruthy(environment.CI) || isTruthy(environment.SHOPIFY_UNIT_TEST) || COMMANDS_TO_SKIP.includes(currentCommand)
+  )
 }
 
 /**
@@ -113,25 +123,74 @@ async function renderNotifications(notifications: Notification[]) {
 }
 
 /**
- * Get notifications list from cache (refreshed every hour) or fetch it if not present.
+ * Get notifications list from cache, that is updated in the background from bin/fetch-notifications.json.
  *
  * @returns A Notifications object.
  */
 export async function getNotifications(): Promise<Notifications> {
   const cacheKey: NotificationsKey = `notifications-${url()}`
-  const rawNotifications = await cacheRetrieveOrRepopulate(cacheKey, fetchNotifications, CACHE_DURATION_IN_MS)
+  const rawNotifications = cacheRetrieve(cacheKey)?.value as unknown as string
+  if (!rawNotifications) throw new Error(EMPTY_CACHE_MESSAGE)
   const notifications: object = JSON.parse(rawNotifications)
   return NotificationsSchema.parse(notifications)
 }
 
 /**
- * Fetch notifications from GitHub.
+ * Fetch notifications from the CDN and chache them.
+ *
+ * @returns A string with the notifications.
  */
-async function fetchNotifications(): Promise<string> {
-  outputDebug(`No cached notifications found. Fetching them...`)
-  const response = await fetch(url(), {signal: AbortSignal.timeout(3 * 1000)})
+export async function fetchNotifications(): Promise<Notifications> {
+  outputDebug(`Fetching notifications...`)
+  const response = await fetch(url(), undefined, {
+    useNetworkLevelRetry: false,
+    useAbortSignal: true,
+    timeoutMs: 3 * 1000,
+  })
   if (response.status !== 200) throw new Error(`Failed to fetch notifications: ${response.statusText}`)
-  return response.text() as unknown as string
+  const rawNotifications = await response.text()
+  const notifications: object = JSON.parse(rawNotifications)
+  const result = NotificationsSchema.parse(notifications)
+  await cacheNotifications(rawNotifications)
+  return result
+}
+
+/**
+ * Store the notifications in the cache.
+ *
+ * @param notifications - String with the notifications to cache.
+ * @returns A Notifications object.
+ */
+async function cacheNotifications(notifications: string): Promise<void> {
+  cacheStore(`notifications-${url()}`, notifications)
+  outputDebug(`Notifications from ${url()} stored in the cache`)
+}
+
+/**
+ * Fetch notifications in background as a detached process.
+ *
+ * @param currentCommand - The current Shopify command being run.
+ * @param argv - The arguments passed to the current process.
+ * @param environment - Process environment variables.
+ */
+export function fetchNotificationsInBackground(
+  currentCommand: string,
+  argv = process.argv,
+  environment: NodeJS.ProcessEnv = process.env,
+): void {
+  if (skipNotifications(currentCommand, environment)) return
+
+  let command = 'shopify'
+  const args = ['notifications', 'list', '--ignore-errors']
+  // Run the Shopify command the same way as the current execution when it's not the global installation
+  if (argv[0] && argv[0] !== 'shopify') {
+    command = argv[0]
+    const indexValue = currentCommand.split(':')[0] ?? ''
+    const index = argv.indexOf(indexValue)
+    if (index > 0) args.unshift(...argv.slice(1, index))
+  }
+  // eslint-disable-next-line no-void
+  void exec(command, args, {background: true, env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}})
 }
 
 /**

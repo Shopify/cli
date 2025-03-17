@@ -1,5 +1,34 @@
 # @shopify/theme
 
+## 3.76.0
+
+### Minor Changes
+
+- fca9c19: Render error overlay when `theme dev` encounters asset upload errors. A 500 status code is returned when the error overlay is rendered.
+
+### Patch Changes
+
+- 0b515f3: Fix 401 and 405 errors when rendering certain routes.
+- fa2fa08: Improve `shopify theme dev` to recover the session when theme ID mismatch errors happen
+- d361f3a: Fixed `shopify theme dev` to avoid emitting full page reload events when files are updated successfully, preventing conflicts with hot-reloading.
+- Updated dependencies [4a3895c]
+- Updated dependencies [38e8d7b]
+- Updated dependencies [b1ed29d]
+- Updated dependencies [6449aa6]
+  - @shopify/cli-kit@3.76.0
+
+## 3.75.0
+
+### Patch Changes
+
+- da606a6: Improve mechanism that adds `.shopify` to `.gitignore` to avoid duplicate entries
+- f3498c3: Fix the local dev proxy for `/checkouts` and `/accounts/logout` to avoid 401 and 403 errors.
+- 88ba848: Update `shopify theme push -x` documentation (it uploads, doesn't download)
+- Updated dependencies [da606a6]
+- Updated dependencies [4aee075]
+- Updated dependencies [ab407f3]
+  - @shopify/cli-kit@3.75.0
+
 ## 3.74.0
 
 ### Minor Changes

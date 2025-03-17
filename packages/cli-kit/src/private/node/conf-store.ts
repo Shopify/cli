@@ -7,21 +7,21 @@ interface CacheValue<T> {
   timestamp: number
 }
 
-export type IntrospectionUrlKey = `identity-introspection-url-${string}`
 export type PackageVersionKey = `npm-package-${string}`
 export type NotificationsKey = `notifications-${string}`
 export type NotificationKey = `notification-${string}`
+export type GraphQLRequestKey = `q-${string}-${string}-${string}`
 type MostRecentOccurrenceKey = `most-recent-occurrence-${string}`
 type RateLimitKey = `rate-limited-occurrences-${string}`
 
-type ExportedKey = IntrospectionUrlKey | PackageVersionKey | NotificationsKey | NotificationKey
+type ExportedKey = PackageVersionKey | NotificationsKey | NotificationKey | GraphQLRequestKey
 
 interface Cache {
-  [introspectionUrlKey: IntrospectionUrlKey]: CacheValue<string>
   [packageVersionKey: PackageVersionKey]: CacheValue<string>
   [notifications: NotificationsKey]: CacheValue<string>
   [notification: NotificationKey]: CacheValue<string>
-  [MostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
+  [graphQLRequestKey: GraphQLRequestKey]: CacheValue<string>
+  [mostRecentOccurrenceKey: MostRecentOccurrenceKey]: CacheValue<boolean>
   [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
@@ -120,14 +120,14 @@ export function cacheClear(config = cliKitStore()): void {
   config.delete('cache')
 }
 
-interface TimeInterval {
+export interface TimeInterval {
   days?: number
   hours?: number
   minutes?: number
   seconds?: number
 }
 
-function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds = 0}: TimeInterval): number {
+export function timeIntervalToMilliseconds({days = 0, hours = 0, minutes = 0, seconds = 0}: TimeInterval): number {
   return (days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds) * 1000
 }
 

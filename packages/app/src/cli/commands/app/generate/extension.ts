@@ -5,7 +5,7 @@ import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warning
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {Args, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -60,10 +60,6 @@ export default class AppGenerateExtension extends AppCommand {
       env: 'SHOPIFY_FLAG_APP_API_KEY',
       exclusive: ['config'],
     }),
-  }
-
-  static args = {
-    file: Args.string(),
   }
 
   public static analyticsNameOverride(): string | undefined {

@@ -23,6 +23,7 @@ describe('devUIExtensions()', () => {
     stderr: process.stderr,
     checkoutCartUrl: 'mock/path/from/extensions',
     appWatcher: new AppEventWatcher(app, 'url', 'path'),
+    extensions: [{type: 'ui_extension', devUUID: 'FOO', isPreviewable: true}],
   } as unknown as ExtensionDevOptions
 
   function spyOnEverything() {
@@ -67,7 +68,19 @@ describe('devUIExtensions()', () => {
     expect(server.setupHTTPServer).toHaveBeenCalledWith({
       devOptions: {...options, websocketURL: 'wss://mock.url/extensions'},
       payloadStore: {mock: 'payload-store'},
+      getExtensions: expect.any(Function),
     })
+  })
+
+  test('initializes the HTTP server with a getExtensions function that returns the extensions from the provided options', async () => {
+    // GIVEN
+    spyOnEverything()
+
+    // WHEN
+    await devUIExtensions(options)
+
+    const {getExtensions} = vi.mocked(server.setupHTTPServer).mock.calls[0]![0]
+    expect(getExtensions()).toStrictEqual(options.extensions)
   })
 
   test('initializes the websocket connection', async () => {
@@ -103,5 +116,26 @@ describe('devUIExtensions()', () => {
 
     expect(websocketCloseSpy).toHaveBeenCalledOnce()
     expect(serverCloseSpy).toHaveBeenCalledOnce()
+  })
+
+  test('updates the extensions returned by the getExtensions with new previewable extensions when the app is reloaded', async () => {
+    // GIVEN
+    spyOnEverything()
+
+    // WHEN
+    await devUIExtensions(options)
+
+    const {getExtensions} = vi.mocked(server.setupHTTPServer).mock.calls[0]![0]
+    expect(getExtensions()).toStrictEqual(options.extensions)
+
+    const newUIExtension = {type: 'ui_extension', devUUID: 'BAR', isPreviewable: true}
+    const newApp = {
+      ...app,
+      allExtensions: [newUIExtension, {type: 'function_extension', devUUID: 'FUNCTION', isPreviewable: false}],
+    }
+    options.appWatcher.emit('all', {app: newApp, appWasReloaded: true, extensionEvents: []})
+
+    // THEN
+    expect(getExtensions()).toStrictEqual([newUIExtension])
   })
 })

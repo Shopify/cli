@@ -1,5 +1,41 @@
 # @shopify/app
 
+## 3.76.0
+
+### Patch Changes
+
+- 80a53da: Fix issue with extension devUUID being lost when app is reloaded
+  Fix issue with the extension instances being out of date in the Dev Console when app is reloaded
+- 17d5150: Fix search for dev stores prompt
+- 8c28a89: Fix an issue when re-linking an invalid but cached config file
+- Updated dependencies [fca9c19]
+- Updated dependencies [4a3895c]
+- Updated dependencies [38e8d7b]
+- Updated dependencies [0b515f3]
+- Updated dependencies [b1ed29d]
+- Updated dependencies [fa2fa08]
+- Updated dependencies [6449aa6]
+- Updated dependencies [d361f3a]
+  - @shopify/theme@3.76.0
+  - @shopify/cli-kit@3.76.0
+  - @shopify/plugin-cloudflare@3.76.0
+
+## 3.75.0
+
+### Patch Changes
+
+- 61a1a10: Improve error message in function replay command when log directory doesnt exist
+- 63192ff: Enable include_config_on_deploy by default for new apps
+- f16483e: Bump `function-runner` version to v7.0.1
+- Updated dependencies [da606a6]
+- Updated dependencies [f3498c3]
+- Updated dependencies [88ba848]
+- Updated dependencies [4aee075]
+- Updated dependencies [ab407f3]
+  - @shopify/cli-kit@3.75.0
+  - @shopify/theme@3.75.0
+  - @shopify/plugin-cloudflare@3.75.0
+
 ## 3.74.0
 
 ### Minor Changes

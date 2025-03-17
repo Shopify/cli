@@ -5,8 +5,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type CreateAppMutationVariables = Types.Exact<{
-  appSource: Types.AppSourceInput
-  name: Types.Scalars['String']['input']
+  initialVersion: Types.AppVersionInput
 }>
 
 export type CreateAppMutation = {
@@ -26,13 +25,8 @@ export const CreateApp = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appSource'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'AppSourceInput'}}},
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'name'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'initialVersion'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'AppVersionInput'}}},
         },
       ],
       selectionSet: {
@@ -44,13 +38,8 @@ export const CreateApp = {
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'appSource'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appSource'}},
-              },
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'name'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'name'}},
+                name: {kind: 'Name', value: 'initialVersion'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'initialVersion'}},
               },
             ],
             selectionSet: {

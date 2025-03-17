@@ -26,11 +26,7 @@
       ]
     },
     "lint": {},
-    "lint:fix": {
-      "dependsOn": [
-        "build"
-      ]
-    },
+    "lint:fix": {},
     "type-check": {
       "dependsOn": [
         "^build"

@@ -126,15 +126,24 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const bundlePath = payloadOptions.appWatcher.buildOutputPath
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
+  let extensions = payloadOptions.extensions
+
+  const getExtensions = () => {
+    return extensions
+  }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore})
+  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
-  const eventHandler = async ({extensionEvents}: AppEvent) => {
+  const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
+    if (appWasReloaded) {
+      extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
+    }
+
     for (const event of extensionEvents) {
       if (!event.extension.isPreviewable) continue
       const status = event.buildResult?.status === 'ok' ? 'success' : 'error'

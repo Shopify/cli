@@ -10,7 +10,7 @@ import {
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeVariables} from '../../api/graphql/subscribe_to_app_logs.js'
 import {AppInterface} from '../../models/app/app.js'
-import {fetch, Response} from '@shopify/cli-kit/node/http'
+import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -131,10 +131,14 @@ export const fetchAppLogs = async (
     Authorization: `Bearer ${jwtToken}`,
     'User-Agent': userAgent,
   }
-  return fetch(url, {
-    method: 'GET',
-    headers,
-  })
+  return shopifyFetch(
+    url,
+    {
+      method: 'GET',
+      headers,
+    },
+    'non-blocking',
+  )
 }
 
 interface FetchAppLogsErrorOptions {

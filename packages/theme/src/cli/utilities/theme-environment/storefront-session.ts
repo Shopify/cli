@@ -1,6 +1,6 @@
 import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
@@ -24,7 +24,7 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
   params.append('utf8', '✓')
   params.append('password', password ?? '')
 
-  const response = await fetch(`${storeUrl}/password`, {
+  const response = await shopifyFetch(`${storeUrl}/password`, {
     headers: {
       'cache-control': 'no-cache',
       'content-type': 'application/x-www-form-urlencoded',
@@ -92,7 +92,7 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
 
   const url = `${storeUrl}?${params}`
 
-  const response = await fetch(url, {
+  const response = await shopifyFetch(url, {
     method: 'HEAD',
     redirect: 'manual',
     headers: {
@@ -130,7 +130,7 @@ async function enrichSessionWithStorefrontPassword(
 ) {
   const params = new URLSearchParams({password})
 
-  const response = await fetch(`${storeUrl}/password`, {
+  const response = await shopifyFetch(`${storeUrl}/password`, {
     method: 'POST',
     redirect: 'manual',
     body: params,

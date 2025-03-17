@@ -29,7 +29,7 @@ export interface ApplicationURLs {
 }
 
 export interface FrontendURLOptions {
-  noTunnel: boolean
+  noTunnelUseLocalhost: boolean
   tunnelUrl?: string
   tunnelClient: TunnelClient | undefined
 }
@@ -55,7 +55,7 @@ interface FrontendURLResult {
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
   let frontendPort = 4040
   let frontendUrl = ''
-  let usingLocalhost = false
+  const usingLocalhost = options.noTunnelUseLocalhost
 
   if (codespaceURL()) {
     frontendUrl = `https://${codespaceURL()}-${frontendPort}.${codespacePortForwardingDomain()}`
@@ -98,10 +98,9 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (options.noTunnel) {
+  if (options.noTunnelUseLocalhost) {
     frontendPort = await getAvailableTCPPort()
-    frontendUrl = 'http://localhost'
-    usingLocalhost = true
+    frontendUrl = 'https://localhost'
   } else if (options.tunnelClient) {
     const url = await pollTunnelURL(options.tunnelClient)
     frontendPort = options.tunnelClient.port
@@ -240,17 +239,21 @@ interface ShouldOrPromptUpdateURLsOptions {
   newApp?: boolean
   localApp?: AppLinkedInterface
   apiKey: string
+  newURLs: ApplicationURLs
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
   if (options.localApp && options.localApp.configuration.client_id !== options.apiKey) return true
-  if (options.newApp || !terminalSupportsPrompting()) return true
+  if (options.newApp ?? !terminalSupportsPrompting()) return true
   let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
 
   if (options.cachedUpdateURLs === undefined) {
     shouldUpdateURLs = await updateURLsPrompt(
+      options.developerPlatformClient.supportsDevSessions,
       options.currentURLs.applicationUrl,
       options.currentURLs.redirectUrlWhitelist,
+      options.newURLs,
     )
 
     if (options.localApp) {

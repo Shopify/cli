@@ -1,5 +1,6 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
+import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
@@ -12,10 +13,19 @@ export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'busi
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_RETRY_LIMIT = 10
 
-interface RequestOptions<T> {
+export type NetworkRetryBehaviour =
+  | {
+      useNetworkLevelRetry: true
+      maxRetryTimeMs: number
+    }
+  | {
+      useNetworkLevelRetry: false
+    }
+
+type RequestOptions<T> = {
   request: () => Promise<T>
   url: string
-}
+} & NetworkRetryBehaviour
 
 const interestingResponseHeaders = new Set([
   'cache-control',
@@ -30,30 +40,87 @@ function responseHeaderIsInteresting(header: string): boolean {
   return interestingResponseHeaders.has(header)
 }
 
-type VerboseResponse<T> = {
+interface CommonResponse {
   duration: number
   sanitizedHeaders: string
   sanitizedUrl: string
   requestId?: string
-} & (
-  | {status: 'ok'; response: T}
-  | {status: 'client-error'; clientError: ClientError}
-  | {status: 'unknown-error'; error: unknown}
-  | {status: 'can-retry'; clientError: ClientError; delayMs: number | undefined}
-  | {status: 'unauthorized'; clientError: ClientError; delayMs: number | undefined}
-)
+}
 
-async function makeVerboseRequest<T extends {headers: Headers; status: number}>({
-  request,
-  url,
-}: RequestOptions<T>): Promise<VerboseResponse<T>> {
+type OkResponse<T> = CommonResponse & {status: 'ok'; response: T}
+type ClientErrorResponse = CommonResponse & {status: 'client-error'; clientError: ClientError}
+type UnknownErrorResponse = CommonResponse & {status: 'unknown-error'; error: unknown}
+type CanRetryErrorResponse = CommonResponse & {
+  status: 'can-retry'
+  clientError: ClientError
+  delayMs: number | undefined
+}
+type UnauthorizedErrorResponse = CommonResponse & {
+  status: 'unauthorized'
+  clientError: ClientError
+  delayMs: number | undefined
+}
+
+type VerboseResponse<T> =
+  | OkResponse<T>
+  | ClientErrorResponse
+  | UnknownErrorResponse
+  | CanRetryErrorResponse
+  | UnauthorizedErrorResponse
+
+function isARetryableNetworkError(error: unknown): boolean {
+  if (error instanceof Error) {
+    const networkErrorMessages = [
+      'socket hang up',
+      'ECONNRESET',
+      'ECONNABORTED',
+      'ENOTFOUND',
+      'ENETUNREACH',
+      'network socket disonnected',
+      'ETIMEDOUT',
+      'ECONNREFUSED',
+      'EAI_FAIL',
+      'The operation was aborted.',
+    ]
+    const anyMatches = networkErrorMessages.some((issueMessage) => error.message.includes(issueMessage))
+    return anyMatches
+  }
+  return false
+}
+
+async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; status: number}>(
+  requestOptions: RequestOptions<T>,
+): Promise<T> {
+  if (!requestOptions.useNetworkLevelRetry) {
+    return requestOptions.request()
+  }
+
+  let lastSeenError: unknown
+
+  for await (const _delayMs of sleepWithBackoffUntil(requestOptions.maxRetryTimeMs)) {
+    try {
+      return await requestOptions.request()
+    } catch (err) {
+      lastSeenError = err
+      if (!isARetryableNetworkError(err)) {
+        throw err
+      }
+      outputDebug(`Retrying request to ${requestOptions.url} due to network error ${err}`)
+    }
+  }
+  throw lastSeenError
+}
+
+async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
+  requestOptions: RequestOptions<T>,
+): Promise<VerboseResponse<T>> {
   const t0 = performance.now()
   let duration = 0
   const responseHeaders: {[key: string]: string} = {}
-  const sanitizedUrl = sanitizeURL(url)
+  const sanitizedUrl = sanitizeURL(requestOptions.url)
   let response: T = {} as T
   try {
-    response = await request()
+    response = await runRequestWithNetworkLevelRetry(requestOptions)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response.headers.forEach((value: any, key: any) => {
       if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
@@ -145,10 +212,10 @@ function errorsIncludeStatus429(error: ClientError): boolean {
 }
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
-  {request, url}: RequestOptions<T>,
+  requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
-  const result = await makeVerboseRequest({request, url})
+  const result = await makeVerboseRequest(requestOptions)
 
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
 With response headers:
@@ -190,8 +257,25 @@ ${result.sanitizedHeaders}
   }
 }
 
+/**
+ * Makes a HTTP request to some API, retrying if response headers indicate a retryable error.
+ *
+ * If a request fails with a 429, the retry-after header determines a delay before an automatic retry is performed.
+ *
+ * If unauthorizedHandler is provided, then it will be called in the case of a 401 and a retry performed. This allows
+ * for a token refresh for instance.
+ *
+ * If there's a network error, e.g. DNS fails to resolve, then API calls are automatically retried.
+ *
+ * @param request - A function that returns a promise of the response
+ * @param url - The URL to request
+ * @param errorHandler - A function that handles errors
+ * @param unauthorizedHandler - A function that handles unauthorized errors
+ * @param retryOptions - Options for the retry
+ * @returns The response from the request
+ */
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
-  {request, url}: RequestOptions<T>,
+  requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
   unauthorizedHandler?: () => Promise<void>,
   retryOptions: {
@@ -205,7 +289,7 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
   let retriesUsed = 0
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
 
-  let result = await makeVerboseRequest({request, url})
+  let result = await makeVerboseRequest(requestOptions)
 
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
 With response headers:
@@ -256,7 +340,7 @@ ${result.sanitizedHeaders}
     // eslint-disable-next-line no-await-in-loop
     result = await new Promise<VerboseResponse<T>>((resolve) => {
       retryOptions.scheduleDelay(() => {
-        resolve(makeVerboseRequest({request, url}))
+        resolve(makeVerboseRequest(requestOptions))
       }, retryDelayMs)
     })
   }

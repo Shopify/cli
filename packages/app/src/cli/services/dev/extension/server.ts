@@ -11,12 +11,14 @@ import {
   redirectToDevConsoleMiddleware,
 } from './server/middlewares.js'
 import {ExtensionsPayloadStore, ExtensionsPayloadStoreOptions} from './payload/store.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {createApp, createRouter} from 'h3'
 import {createServer} from 'http'
 
 interface SetupHTTPServerOptions {
   devOptions: ExtensionsPayloadStoreOptions
   payloadStore: ExtensionsPayloadStore
+  getExtensions: () => ExtensionInstance[]
 }
 
 export function setupHTTPServer(options: SetupHTTPServerOptions) {

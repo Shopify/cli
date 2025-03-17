@@ -1,5 +1,4 @@
 import {validateSession} from './validate.js'
-import {validateIdentityToken} from './identity-token-validation.js'
 import {applicationId} from './identity.js'
 import {IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
 import {OAuthApplications} from '../session.js'
@@ -77,7 +76,6 @@ beforeEach(() => {
   vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.mocked(validateCachedIdentityTokenStructure).mockReturnValue(true)
   vi.setSystemTime(currentDate)
-  vi.mocked(validateIdentityToken).mockResolvedValue(true)
 })
 
 afterAll(() => {
@@ -126,21 +124,6 @@ describe('validateSession', () => {
     expect(got).toBe('needs_full_auth')
   })
 
-  test('returns needs_full_auth if identity token is invalid', async () => {
-    // Given
-    const session = {
-      identity: validIdentity,
-      applications: validApplications,
-    }
-    vi.mocked(validateIdentityToken).mockResolvedValueOnce(false)
-
-    // When
-    const got = await validateSession(requestedScopes, defaultApps, session)
-
-    // Then
-    expect(got).toBe('needs_full_auth')
-  })
-
   test('returns needs_full_auth if there is requested scopes are not included in token', async () => {
     // Given
     const session = {
@@ -167,7 +150,6 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
-    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if requesting partners and is expired', async () => {
@@ -185,7 +167,6 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
-    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if requesting storefront and is expired', async () => {
@@ -203,7 +184,6 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
-    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if requesting admin and is expired', async () => {
@@ -221,7 +201,6 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
-    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 
   test('returns needs_refresh if session does not include requested store', async () => {
@@ -239,6 +218,5 @@ describe('validateSession', () => {
 
     // Then
     expect(got).toBe('needs_refresh')
-    expect(validateIdentityToken).not.toHaveBeenCalled()
   })
 })

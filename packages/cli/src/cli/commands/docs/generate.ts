@@ -169,12 +169,16 @@ export async function writeCommandUsageExampleFile(command: CommandWithMarkdown,
   let usage = ''
   const hasFlags = command.flags && Object.keys(command.flags).length > 0
   if (typeof command.usage === 'string') {
-    usage = command.usage
+    usage = prependShopify(command.usage)
   } else if (Array.isArray(command.usage)) {
-    usage = command.usage.join('\n\n')
+    usage = command.usage.map((usage) => prependShopify(usage)).join('\n\n')
   } else {
-    usage = `shopify ${commandName}${hasFlags ? ' [flags]' : ''}`
+    usage = `${prependShopify(commandName)}${hasFlags ? ' [flags]' : ''}`
   }
   await mkdir(`${docsPath}/examples`)
   await writeFile(`${docsPath}/examples/${fileName}.example.sh`, usage)
+}
+
+function prependShopify(command: string) {
+  return command.startsWith('shopify ') ? command : `shopify ${command}`
 }

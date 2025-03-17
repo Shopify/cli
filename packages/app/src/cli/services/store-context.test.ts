@@ -22,10 +22,15 @@ vi.mock('./dev/select-store')
 describe('storeContext', () => {
   const mockApp = testAppLinked({
     configuration: {
+      client_id: 'client_id',
+      name: 'app-config-name',
       build: {
         dev_store_url: 'cached-store.myshopify.com',
       },
     } as any,
+    hiddenConfig: {
+      dev_store_url: 'cached-store.myshopify.com',
+    },
   })
 
   const mockOrganization = testOrganization()
@@ -195,7 +200,7 @@ describe('storeContext', () => {
       await storeContext({appContextResult, forceReselectStore: false})
 
       const hiddenConfig = await readFile(appHiddenConfigPath(dir))
-      expect(hiddenConfig).toEqual('{\n  "dev_store_url": "test-store.myshopify.com"\n}')
+      expect(hiddenConfig).toEqual('{\n  "client_id": {\n    "dev_store_url": "test-store.myshopify.com"\n  }\n}')
     })
   })
 })

@@ -12,6 +12,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_action'),
+  name: zod.string(),
   runtime_url: zod.string().url().refine(startsWithHttps),
   validation_url: zod.string().url().refine(startsWithHttps).optional(),
   config_page_url: zod.string().url().refine(startsWithHttps).optional(),

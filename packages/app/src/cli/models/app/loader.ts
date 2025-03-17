@@ -33,6 +33,7 @@ import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/ap
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
+import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -52,6 +53,7 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
+import {addToGitIgnore} from '@shopify/cli-kit/node/git'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -348,7 +350,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
     const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
 
-    const hiddenConfig = await loadHiddenConfig(directory)
+    const hiddenConfig = await loadHiddenConfig(directory, configuration)
 
     if (!this.previousApp) {
       await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
@@ -480,6 +482,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       entryPath = await this.findEntryPath(directory, specification)
     }
 
+    const previousExtension = this.previousApp?.allExtensions.find((extension) => {
+      return extension.handle === configuration.handle
+    })
+
     const extensionInstance = new ExtensionInstance({
       configuration,
       configurationPath,
@@ -488,13 +494,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       specification,
     })
 
+    if (previousExtension) {
+      // If we are reloading, keep the existing devUUID for consistency with the dev-console
+      extensionInstance.devUUID = previousExtension.devUUID
+    }
+
     if (usedKnownSpecification) {
       const validateResult = await extensionInstance.validate()
       if (validateResult.isErr()) {
         this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
       }
     }
-
     return extensionInstance
   }
 
@@ -519,7 +529,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     allExtensions.forEach((extension) => {
       if (extension.handle && handles.has(extension.handle)) {
         const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
-        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
+        const result = joinWithAnd(matchingExtensions.map((ext) => ext.name))
         const handle = outputToken.cyan(extension.handle)
 
         this.abortOrReport(
@@ -1069,14 +1079,36 @@ async function getAllLinkedConfigClientIds(
   return Object.fromEntries(entries)
 }
 
-async function loadHiddenConfig(appDirectory: string): Promise<AppHiddenConfig> {
+export async function loadHiddenConfig(
+  appDirectory: string,
+  configuration: AppConfiguration,
+): Promise<AppHiddenConfig> {
+  if (!configuration.client_id || typeof configuration.client_id !== 'string') return {}
+
   const hiddenConfigPath = appHiddenConfigPath(appDirectory)
   if (fileExistsSync(hiddenConfigPath)) {
-    return JSON.parse(await readFile(hiddenConfigPath, {encoding: 'utf8'}))
+    try {
+      const allConfigs: {[key: string]: AppHiddenConfig} = JSON.parse(await readFile(hiddenConfigPath))
+      const currentAppConfig = allConfigs[configuration.client_id]
+
+      if (currentAppConfig) return currentAppConfig
+
+      // Migration from legacy format, can be safely removed in version >=3.77
+      const oldConfig = allConfigs.dev_store_url
+      if (oldConfig !== undefined && typeof oldConfig === 'string') {
+        await patchAppHiddenConfigFile(hiddenConfigPath, configuration.client_id, {dev_store_url: oldConfig})
+        return {dev_store_url: oldConfig}
+      }
+      return {}
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return {}
+    }
   } else {
     // If the hidden config file doesn't exist, create an empty one.
     await mkdir(dirname(hiddenConfigPath))
     await writeFile(hiddenConfigPath, '{}')
+    await addToGitIgnore(appDirectory, configurationFileNames.hiddenFolder)
     return {}
   }
 }

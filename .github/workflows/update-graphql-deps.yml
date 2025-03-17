@@ -32,6 +32,7 @@ jobs:
       - name: Get schemas for codegen
         env:
           GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+          GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
         run: pnpm graphql-codegen:get-graphql-schemas
       - name: Run graphql-codegen
         run: pnpm graphql-codegen
@@ -50,7 +51,7 @@ jobs:
           git commit -m "update generated graphql files"
           git push --set-upstream origin auto-update-graphql-deps --force
 
-          if ! gh pr view auto-update-graphql-deps &>/dev/null; then
+          if (gh pr ls -H auto-update-graphql-deps | wc -l | grep 0 &>/dev/null); then
             gh pr create --title "Update generated GraphQL files" \
               --body "This auto-generated PR updates the generated graphql files" \
               --head auto-update-graphql-deps

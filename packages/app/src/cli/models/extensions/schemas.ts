@@ -46,6 +46,11 @@ const NewExtensionPointSchema = zod.object({
   should_render: ShouldRenderSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
+  urls: zod
+    .object({
+      edit: zod.string().optional(),
+    })
+    .optional(),
   capabilities: TargetCapabilitiesSchema.optional(),
   preloads: zod
     .object({
@@ -85,15 +90,15 @@ const HandleSchema = zod
   .refine((handle) => [...handle].some((char) => char !== '-'), "Handle can't be all hyphens")
 
 export const BaseSchema = zod.object({
-  name: zod.string(),
-  type: zod.string(),
+  name: zod.string().optional(),
+  type: zod.string().optional(),
   handle: HandleSchema.optional(),
   uid: zod.string().optional(),
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
-  metafields: zod.array(MetafieldSchema).optional().default([]),
+  metafields: zod.array(MetafieldSchema).optional(),
   settings: SettingsSchema.optional(),
 })
 

@@ -6,6 +6,7 @@ import {blocks} from '../../constants.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
+import {ApplicationURLs} from '../../services/dev/urls.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
@@ -77,6 +78,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     appConfig: CurrentAppConfiguration,
     storeFqdn: string,
   ) => Promise<string>
+  patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
    * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
@@ -223,29 +225,30 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
  */
 export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: zod.ZodObject<any>
+  schema: ZodSchemaType<TConfiguration>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
-  transformConfig?: TransformationConfig | CustomTransformationConfig
+  transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
   getDevSessionActionUpdateMessage?: (
     config: TConfiguration,
     appConfig: CurrentAppConfiguration,
     storeFqdn: string,
   ) => Promise<string>
+  patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
     identifier: spec.identifier,
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
     // however, app config extensions config content is parsed from the `shopify.app.toml`
-    schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
+    schema: spec.schema,
     appModuleFeatures,
     transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
+    patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
 }
 
@@ -268,9 +271,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
   })
 }
 
-function resolveAppConfigTransform(transformConfig?: TransformationConfig | CustomTransformationConfig) {
-  if (!transformConfig) return (content: object) => defaultAppConfigTransform(content as {[key: string]: unknown})
-
+function resolveAppConfigTransform(transformConfig: TransformationConfig | CustomTransformationConfig) {
   if (Object.keys(transformConfig).includes('forward')) {
     return (transformConfig as CustomTransformationConfig).forward!
   } else {
@@ -330,32 +331,6 @@ function appConfigTransform(
   }
 
   return transformedContent
-}
-
-/**
- * Flat the configuration object to a single level object. This is the schema expected by the server side.
- * ```json
- * {
- *   pos: {
- *    embedded = true
- *   }
- * }
- * ```
- * will be flattened to:
- * ```json
- * {
- *  embedded = true
- * }
- * ```
- * @param content - The objet to be flattened
- *
- * @returns A single level object
- */
-function defaultAppConfigTransform(content: {[key: string]: unknown}) {
-  return Object.keys(content).reduce((result, key) => {
-    const isObjectNotArray = content[key] !== null && typeof content[key] === 'object' && !Array.isArray(content[key])
-    return {...result, ...(isObjectNotArray ? {...(content[key] as object)} : {[key]: content[key]})}
-  }, {})
 }
 
 /**

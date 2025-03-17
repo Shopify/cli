@@ -1,4 +1,5 @@
 import {
+  handleSyncUpdate,
   hasRequiredThemeDirectories,
   isJson,
   isTextFile,
@@ -11,10 +12,12 @@ import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.j
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
-import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {emitHotReloadEvent} from '@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js'
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 
@@ -28,6 +31,7 @@ vi.mock('./asset-ignore.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js')
 
 beforeEach(async () => {
   vi.mocked(getPatternsFromShopifyIgnore).mockResolvedValue([])
@@ -626,6 +630,99 @@ describe('theme-fs', () => {
         headline: 'Failed to delete file "assets/base.css" from remote theme.',
         body: expect.any(String),
       })
+    })
+  })
+
+  describe('handleSyncUpdate', () => {
+    const fileKey = 'assets/test.css'
+    const themeId = '123'
+    const adminSession = {token: 'token'} as AdminSession
+    let unsyncedFileKeys: Set<string>
+    let uploadErrors: Map<string, string[]>
+
+    beforeEach(() => {
+      unsyncedFileKeys = new Set([fileKey])
+      uploadErrors = new Map()
+      vi.mocked(emitHotReloadEvent).mockClear()
+    })
+
+    test('returns false if file is not in unsyncedFileKeys', async () => {
+      // Given
+      unsyncedFileKeys = new Set()
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+
+      // When
+      const result = await handler('content')
+
+      // Then
+      expect(result).toBe(false)
+      expect(bulkUploadThemeAssets).not.toHaveBeenCalled()
+      expect(emitHotReloadEvent).not.toHaveBeenCalled()
+    })
+
+    test('uploads file and returns true on successful sync', async () => {
+      // Given
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+        {
+          key: fileKey,
+          success: true,
+          operation: Operation.Upload,
+        },
+      ])
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+
+      // When
+      const result = await handler('content')
+
+      // Then
+      expect(result).toBe(true)
+      expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
+        Number(themeId),
+        [{key: fileKey, value: 'content'}],
+        adminSession,
+      )
+      expect(unsyncedFileKeys.has(fileKey)).toBe(false)
+      expect(emitHotReloadEvent).not.toHaveBeenCalled()
+    })
+
+    test('throws error and sets uploadErrors on failed sync', async () => {
+      // Given
+      const errors = ['{{ broken liquid file']
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+        {
+          key: fileKey,
+          success: false,
+          operation: Operation.Upload,
+          errors: {asset: errors},
+        },
+      ])
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+
+      // When/Then
+      await expect(handler('content')).rejects.toThrow('{{ broken liquid file')
+      expect(uploadErrors.get(fileKey)).toEqual(errors)
+      expect(unsyncedFileKeys.has(fileKey)).toBe(true)
+      expect(emitHotReloadEvent).toHaveBeenCalledWith({type: 'full', key: fileKey})
+    })
+
+    test('clears uploadErrors if sync succeeds after previous failure', async () => {
+      // Given
+      uploadErrors.set(fileKey, ['Previous error'])
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+        {
+          key: fileKey,
+          success: true,
+          operation: Operation.Upload,
+        },
+      ])
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+
+      // When
+      await handler('content')
+
+      // Then
+      expect(uploadErrors.has(fileKey)).toBe(false)
+      expect(emitHotReloadEvent).toHaveBeenCalledWith({type: 'full', key: fileKey})
     })
   })
 

@@ -23,6 +23,7 @@ import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
+import {ApplicationURLs} from '../../services/dev/urls.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -73,16 +74,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
-  get type() {
-    return this.configuration.type
+  get type(): string {
+    return this.specification.identifier
   }
 
   get humanName() {
     return this.specification.externalName
   }
 
-  get name() {
-    return this.configuration.name
+  get name(): string {
+    return this.configuration.name ?? this.specification.externalName
   }
 
   get dependency() {
@@ -427,12 +428,22 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.getDevSessionActionUpdateMessage(this.configuration, appConfig, storeFqdn)
   }
 
+  /**
+   * Patches the configuration with the app dev URLs if applicable
+   * Only for modules that use the app URL in their configuration.
+   * @param urls - The app dev URLs
+   */
+  patchWithAppDevURLs(urls: ApplicationURLs) {
+    if (!this.specification.patchWithAppDevURLs) return
+    this.specification.patchWithAppDevURLs(this.configuration, urls)
+  }
+
   private buildHandle() {
     switch (this.specification.uidStrategy) {
       case 'single':
         return slugify(this.specification.identifier)
       case 'uuid':
-        return this.configuration.handle ?? slugify(this.configuration.name ?? '')
+        return this.configuration.handle ?? slugify(this.name ?? '')
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
         const subscription = this.configuration as unknown as SingleWebhookSubscriptionType

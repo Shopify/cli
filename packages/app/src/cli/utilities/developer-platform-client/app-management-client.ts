@@ -118,6 +118,7 @@ import {
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
+import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -136,6 +137,7 @@ import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -154,6 +156,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
+  public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   private _session: PartnersSession | undefined
 
@@ -174,7 +177,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
-      const userInfoResult = await businessPlatformRequestDoc(UserInfo, businessPlatformToken)
+      const userInfoResult = await businessPlatformRequestDoc(UserInfo, businessPlatformToken, undefined, {
+        cacheTTL: {hours: 6},
+        cacheExtraKey: userId,
+      })
 
       if (userInfoResult.currentUserAccount) {
         this._session = {
@@ -257,6 +263,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       FindOrganizations,
       await this.businessPlatformToken(),
       variables,
+      {cacheTTL: {hours: 6}},
     )
     const org = organizationResult.currentUserAccount?.organization
     if (!org) {
@@ -424,7 +431,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     appIdentifiers: MinimalAppIdentifiers,
     activeAppVersion?: AppVersion,
   ): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    const app = activeAppVersion || (await this.activeAppVersion(appIdentifiers))
+    const app = activeAppVersion ?? (await this.activeAppVersion(appIdentifiers))
 
     const configurationRegistrations: ExtensionRegistration[] = []
     const extensionRegistrations: ExtensionRegistration[] = []
@@ -450,7 +457,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async appVersions({id, organizationId, title}: OrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
+  async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
@@ -460,20 +467,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
         organizationId,
         title,
         appVersions: {
-          nodes: result.versions.map((version) => {
-            return {
-              createdAt: version.createdAt,
-              createdBy: {
-                displayName: version.createdBy,
-              },
-              versionTag: version.metadata.versionTag,
-              status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
-              versionId: version.id,
-              message: version.metadata.message,
-            }
-          }),
+          nodes:
+            result.app.versions?.edges.map((edge) => {
+              const version = edge.node
+              return {
+                createdAt: version.createdAt,
+                createdBy: {
+                  displayName: version.createdBy,
+                },
+                versionTag: version.metadata.versionTag,
+                status: version.id === result.app.activeRelease.version.id ? 'active' : 'inactive',
+                versionId: version.id,
+                message: version.metadata.message,
+              }
+            }) ?? [],
           pageInfo: {
-            totalResults: result.versions.length,
+            totalResults: result.app.versionsCount,
           },
         },
       },
@@ -481,32 +490,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async appVersionByTag(
-    {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
-    tag: string,
+    {id: appId, organizationId}: MinimalOrganizationApp,
+    versionTag: string,
   ): Promise<AppVersionWithContext> {
-    const query = AppVersions
-    const variables = {appId}
+    const query = AppVersionByTag
+    const variables = {versionTag}
     const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
-    if (!result.app) {
-      throw new AbortError(`App not found for API key: ${apiKey}`)
-    }
-    const version = result.versions.find((version) => version.metadata.versionTag === tag)
+    const version = result.versionByTag
     if (!version) {
-      throw new AbortError(`Version not found for tag: ${tag}`)
+      throw new AbortError(`Version not found for tag: ${versionTag}`)
     }
-
-    const query2 = AppVersionById
-    const variables2 = {versionId: version.id}
-    const result2 = await appManagementRequestDoc(organizationId, query2, await this.token(), variables2)
-    const versionInfo = result2.version
 
     return {
-      id: parseInt(versionInfo.id, 10),
-      uuid: versionInfo.id,
-      versionTag: versionInfo.metadata.versionTag,
-      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(versionInfo.id)].join('/'),
-      message: versionInfo.metadata.message ?? '',
-      appModuleVersions: versionInfo.appModules.map(appModuleVersion),
+      id: parseInt(version.id, 10),
+      uuid: version.id,
+      versionTag: version.metadata.versionTag,
+      location: [await appDeepLink({organizationId, id: appId}), 'versions', numberFromGid(version.id)].join('/'),
+      message: version.metadata.message ?? '',
+      appModuleVersions: version.appModules.map(appModuleVersion),
     }
   }
 
@@ -588,22 +589,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (brandingModule) {
       updatedName = JSON.parse(brandingModule.config).name
     }
-
+    const metadata = {versionTag, message, sourceControlUrl: commitReference}
+    const queryVersion: AppVersionSourceUrl | AppVersionSource = bundleUrl
+      ? {sourceUrl: bundleUrl}
+      : {
+          source: {
+            name: updatedName,
+            modules: (appModules ?? []).map((mod) => ({
+              uid: mod.uid ?? mod.uuid ?? mod.handle,
+              type: mod.specificationIdentifier,
+              handle: mod.handle,
+              config: JSON.parse(mod.config),
+            })),
+          },
+        }
     const variables = {
       appId,
-      name: updatedName,
-      appSource: {
-        assetsUrl: bundleUrl,
-        appModules: (appModules ?? []).map((mod) => {
-          return {
-            uid: mod.uid ?? mod.uuid ?? mod.handle,
-            specificationIdentifier: mod.specificationIdentifier,
-            handle: mod.handle,
-            config: JSON.parse(mod.config),
-          }
-        }),
-      },
-      metadata: {versionTag, message, sourceControlUrl: commitReference},
+      version: queryVersion as unknown as JsonMapType,
+      metadata,
     }
 
     const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
@@ -908,6 +911,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 }
 
+interface AppVersionSource {
+  source: {
+    name: string
+    modules: {
+      uid?: string
+      type: string
+      handle?: string
+      config: {[key: string]: unknown}
+    }[]
+  }
+}
+
+interface AppVersionSourceUrl {
+  sourceUrl: string
+}
+
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
@@ -915,34 +934,27 @@ const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
   const {isLaunchable, scopesArray, name, isEmbedded} = options
-  return {
-    appSource: {
-      appModules: [
+  const source: AppVersionSource = {
+    source: {
+      name,
+      modules: [
         {
-          // Change the uid to AppHomeSpecIdentifier
-          uid: 'app_home',
-          specificationIdentifier: AppHomeSpecIdentifier,
+          type: AppHomeSpecIdentifier,
           config: {
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
             embedded: isEmbedded,
           },
         },
         {
-          // Change the uid to BrandingSpecIdentifier
-          uid: 'branding',
-          specificationIdentifier: BrandingSpecIdentifier,
+          type: BrandingSpecIdentifier,
           config: {name},
         },
         {
-          // Change the uid to WebhooksSpecIdentifier
-          uid: 'webhooks',
-          specificationIdentifier: WebhooksSpecIdentifier,
+          type: WebhooksSpecIdentifier,
           config: {api_version: apiVersion},
         },
         {
-          // Change the uid to AppAccessSpecIdentifier
-          uid: 'app_access',
-          specificationIdentifier: AppAccessSpecIdentifier,
+          type: AppAccessSpecIdentifier,
           config: {
             redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
@@ -950,8 +962,9 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
         },
       ],
     },
-    name,
   }
+
+  return {initialVersion: {source: source.source as unknown as JsonMapType}}
 }
 
 // Business platform uses base64-encoded GIDs, while App Management uses

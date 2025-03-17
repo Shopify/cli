@@ -60,13 +60,21 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
   const linkToken = outputToken.link(jsonResult.verification_uri_complete)
 
-  if (isCloudEnvironment()) {
+  const cloudMessage = () => {
     outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
+  }
+
+  if (isCloudEnvironment()) {
+    cloudMessage()
   } else {
     outputInfo('👉 Press any key to open the login page on your browser')
     await keypress()
-    await openURL(jsonResult.verification_uri_complete)
-    outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
+    const opened = await openURL(jsonResult.verification_uri_complete)
+    if (opened) {
+      outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
+    } else {
+      cloudMessage()
+    }
   }
 
   return {

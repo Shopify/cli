@@ -73,6 +73,7 @@ import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/function
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -337,7 +338,7 @@ export async function testAppAccessConfigExtension(
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: directory ?? './',
-    specification: appAccessSpec,
+    specification: appAccessSpec as unknown as ExtensionSpecification,
   })
 
   return extension
@@ -495,7 +496,7 @@ export async function testSingleWebhookSubscriptionExtension({
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: './',
-    specification: appWebhookSubscriptionSpec,
+    specification: appWebhookSubscriptionSpec as unknown as ExtensionSpecification,
   })
 
   return webhooksExtension
@@ -1413,6 +1414,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     requiresOrganization: false,
     supportsAtomicDeployments: false,
     supportsDevSessions: stubs.supportsDevSessions ?? false,
+    supportsStoreSearch: false,
     organizationSource: OrganizationSource.BusinessPlatform,
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
@@ -1478,6 +1480,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
           | 'clientName'
           | 'webUiName'
           | 'supportsDevSessions'
+          | 'supportsStoreSearch'
           | 'organizationSource'
         >
       ] = vi.fn().mockImplementation(value)

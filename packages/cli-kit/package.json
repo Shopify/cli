@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.74.0",
+  "version": "3.76.0",
   "packageManager": "pnpm@8.15.7",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
@@ -53,7 +53,6 @@
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx test",
-    "test:js": "nx test:js",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
@@ -139,6 +138,7 @@
     "graphql-request": "6.1.0",
     "ignore": "6.0.2",
     "ink": "4.4.1",
+    "is-executable": "2.0.1",
     "is-interactive": "2.0.0",
     "jose": "5.9.6",
     "latest-version": "7.0.0",
@@ -174,6 +174,7 @@
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",
     "@vitest/coverage-istanbul": "^1.6.0",
+    "msw": "^2.7.1",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.27.6"

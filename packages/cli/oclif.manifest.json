@@ -246,7 +246,8 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Activate an app configuration."
+      "summary": "Activate an app configuration.",
+      "usage": "app config use [config] [flags]"
     },
     "app:deploy": {
       "aliases": [
@@ -460,18 +461,6 @@
           "name": "no-color",
           "type": "boolean"
         },
-        "no-tunnel": {
-          "allowNo": false,
-          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead",
-          "env": "SHOPIFY_FLAG_NO_TUNNEL",
-          "exclusive": [
-            "tunnel-url",
-            "tunnel"
-          ],
-          "hidden": true,
-          "name": "no-tunnel",
-          "type": "boolean"
-        },
         "no-update": {
           "allowNo": false,
           "description": "Skips the Partners Dashboard URL update step.",
@@ -558,7 +547,6 @@
           "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
           "env": "SHOPIFY_FLAG_TUNNEL_URL",
           "exclusive": [
-            "no-tunnel",
             "tunnel"
           ],
           "hasDynamicHelp": false,
@@ -566,6 +554,17 @@
           "multiple": false,
           "name": "tunnel-url",
           "type": "option"
+        },
+        "use-localhost": {
+          "allowNo": false,
+          "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not Webhooks, Flow Action, App Proxy or POS",
+          "env": "SHOPIFY_FLAG_USE_LOCALHOST",
+          "exclusive": [
+            "tunnel-url"
+          ],
+          "hidden": true,
+          "name": "use-localhost",
+          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -1237,9 +1236,6 @@
       "aliases": [
       ],
       "args": {
-        "file": {
-          "name": "file"
-        }
       },
       "customPluginName": "@shopify/app",
       "description": "Generates a new \"app extension\" (https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to \"Supported extensions\" (https://shopify.dev/docs/apps/structure/app-extensions/list).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to \"App structure\" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.\n  ",
@@ -2074,15 +2070,12 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Release an app version.",
-      "usage": "app:release --version <version>"
+      "usage": "app release --version <version>"
     },
     "app:versions:list": {
       "aliases": [
       ],
       "args": {
-        "file": {
-          "name": "file"
-        }
       },
       "customPluginName": "@shopify/app",
       "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
@@ -2666,7 +2659,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false
+      "strict": false,
+      "usage": "help [command] [flags]"
     },
     "hydrogen:build": {
       "aliases": [
@@ -4429,6 +4423,14 @@
       "description": "List current notifications configured for the CLI.",
       "enableJsonFlag": false,
       "flags": {
+        "ignore-errors": {
+          "allowNo": false,
+          "description": "Don't fail if an error occurs.",
+          "env": "SHOPIFY_FLAG_IGNORE_ERRORS",
+          "hidden": false,
+          "name": "ignore-errors",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -4786,7 +4788,8 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true
+      "strict": true,
+      "usage": "search [query]"
     },
     "theme:check": {
       "aliases": [
@@ -4821,7 +4824,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -4941,7 +4944,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5032,7 +5035,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5119,8 +5122,21 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
+          "type": "option"
+        },
+        "error-overlay": {
+          "default": "default",
+          "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      ",
+          "env": "SHOPIFY_FLAG_ERROR_OVERLAY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "error-overlay",
+          "options": [
+            "silent",
+            "default"
+          ],
           "type": "option"
         },
         "force": {
@@ -5309,7 +5325,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5441,7 +5457,7 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Clones a Git repository to use as a starting point for building a new theme.",
-      "usage": "theme init [name]"
+      "usage": "theme init [name] [flags]"
     },
     "theme:language-server": {
       "aliases": [
@@ -5492,7 +5508,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5572,6 +5588,10 @@
       "hiddenAliases": [
       ],
       "id": "theme:list",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -5591,7 +5611,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5687,7 +5707,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5811,7 +5831,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5912,7 +5932,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -5999,7 +6019,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6138,7 +6158,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6305,7 +6325,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6394,8 +6414,21 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
+          "type": "option"
+        },
+        "error-overlay": {
+          "default": "default",
+          "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      ",
+          "env": "SHOPIFY_FLAG_ERROR_OVERLAY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "error-overlay",
+          "options": [
+            "silent",
+            "default"
+          ],
           "type": "option"
         },
         "force": {
@@ -6580,7 +6613,7 @@
           "description": "The environment to apply to the current command.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
-          "multiple": false,
+          "multiple": true,
           "name": "environment",
           "type": "option"
         },
@@ -6821,5 +6854,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.74.0"
+  "version": "3.76.0"
 }

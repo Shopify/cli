@@ -1,11 +1,13 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import {list} from '../../services/list.js'
 import {ALLOWED_ROLES, Role} from '../../utilities/theme-selector/fetch.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {list} from '../../services/list.js'
 import {Flags} from '@oclif/core'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+
+type ListFlags = OutputFlags<typeof List.flags>
 
 export default class List extends ThemeCommand {
   static description = 'Lists the themes in your store, along with their IDs and statuses.'
@@ -31,11 +33,9 @@ export default class List extends ThemeCommand {
     environment: themeFlags.environment,
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(List)
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  static multiEnvironmentsFlags = ['store', 'password']
 
-    await list(adminSession, flags)
+  async command(flags: ListFlags, adminSession: AdminSession) {
+    await list(flags, adminSession)
   }
 }

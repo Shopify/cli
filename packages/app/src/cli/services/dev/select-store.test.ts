@@ -199,4 +199,26 @@ describe('selectStore', async () => {
     expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
     expect(developerPlatformClient.devStoresForOrg).toHaveBeenCalledTimes(10)
   })
+
+  test('enables backend search if the DeveloperPlatformClient supports it', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+
+    // When
+    const got = await selectStore(
+      {stores: [STORE1, STORE2], hasMorePages: false},
+      ORG1,
+      testDeveloperPlatformClient({supportsStoreSearch: true}),
+    )
+
+    // Then
+    expect(got).toEqual(STORE1)
+    expect(selectStorePrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stores: [STORE1, STORE2],
+        showDomainOnPrompt: defaultShowDomainOnPrompt,
+        onSearchForStoresByName: expect.any(Function),
+      }),
+    )
+  })
 })

@@ -2,6 +2,7 @@ import {calculateChecksum} from './asset-checksum.js'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
+import {emitHotReloadEvent} from './theme-environment/hot-reload/server.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -143,24 +144,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     })
 
     const syncPromise = contentPromise
-      .then(async (content) => {
-        if (!unsyncedFileKeys.has(fileKey)) return false
-
-        const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
-
-        if (result?.success) {
-          uploadErrors.delete(fileKey)
-        } else {
-          const errors = result?.errors?.asset ?? ['Response was not successful.']
-          uploadErrors.set(fileKey, errors)
-          throw new Error(errors.join('\n'))
-        }
-
-        unsyncedFileKeys.delete(fileKey)
-        outputSyncResult('update', fileKey)
-
-        return true
-      })
+      .then(handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession))
       .catch(createSyncingCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
@@ -261,6 +245,40 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         .on('change', handleFsEvent.bind(null, 'change', themeId, adminSession))
         .on('unlink', handleFsEvent.bind(null, 'unlink', themeId, adminSession))
     },
+  }
+}
+
+export function handleSyncUpdate(
+  unsyncedFileKeys: Set<string>,
+  uploadErrors: Map<string, string[]>,
+  fileKey: string,
+  themeId: string,
+  adminSession: AdminSession,
+): ((value: string) => boolean | PromiseLike<boolean>) | null | undefined {
+  return async (content) => {
+    if (!unsyncedFileKeys.has(fileKey)) {
+      return false
+    }
+
+    const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+
+    if (!result?.success) {
+      const errors = result?.errors?.asset ?? ['Response was not successful.']
+
+      uploadErrors.set(fileKey, errors)
+      emitHotReloadEvent({type: 'full', key: fileKey})
+
+      throw new Error(errors.join('\n'))
+    }
+
+    if (uploadErrors.delete(fileKey)) {
+      emitHotReloadEvent({type: 'full', key: fileKey})
+    }
+
+    unsyncedFileKeys.delete(fileKey)
+    outputSyncResult('update', fileKey)
+
+    return true
   }
 }
 

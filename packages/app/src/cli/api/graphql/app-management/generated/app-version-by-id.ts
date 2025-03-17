@@ -22,6 +22,79 @@ export type AppVersionByIdQuery = {
   }
 }
 
+export type VersionInfoFragment = {
+  id: string
+  metadata: {message?: string | null; versionTag?: string | null}
+  appModules: {
+    uuid: string
+    userIdentifier: string
+    handle: string
+    config: JsonMapType
+    specification: {identifier: string; externalIdentifier: string; name: string}
+  }[]
+}
+
+export const VersionInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: {kind: 'Name', value: 'VersionInfo'},
+      typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'Version'}},
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'metadata'},
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'message'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'appModules'},
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{kind: 'FragmentSpread', name: {kind: 'Name', value: 'ReleasedAppModule'}}],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: {kind: 'Name', value: 'ReleasedAppModule'},
+      typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'AppModule'}},
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'specification'},
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<VersionInfoFragment, unknown>
 export const AppVersionById = {
   kind: 'Document',
   definitions: [
@@ -52,30 +125,7 @@ export const AppVersionById = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                {kind: 'Field', name: {kind: 'Name', value: 'id'}},
-                {
-                  kind: 'Field',
-                  name: {kind: 'Name', value: 'metadata'},
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {kind: 'Field', name: {kind: 'Name', value: 'message'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
-                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: {kind: 'Name', value: 'appModules'},
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {kind: 'FragmentSpread', name: {kind: 'Name', value: 'ReleasedAppModule'}},
-                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                    ],
-                  },
-                },
+                {kind: 'FragmentSpread', name: {kind: 'Name', value: 'VersionInfo'}},
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
               ],
             },
@@ -104,6 +154,36 @@ export const AppVersionById = {
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
               ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: {kind: 'Name', value: 'VersionInfo'},
+      typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'Version'}},
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'metadata'},
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'message'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'versionTag'}},
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: {kind: 'Name', value: 'appModules'},
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{kind: 'FragmentSpread', name: {kind: 'Name', value: 'ReleasedAppModule'}}],
             },
           },
         ],

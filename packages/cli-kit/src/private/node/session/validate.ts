@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
-import {validateIdentityToken} from './identity-token-validation.js'
 import {sessionConstants} from '../constants.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
@@ -70,10 +69,6 @@ export async function validateSession(
   }
 
   if (tokensAreExpired) return 'needs_refresh'
-
-  const identityIsValid = await validateIdentityToken(session.identity.accessToken)
-  outputDebug(`- Token validation -> It's invalid in identity: ${!identityIsValid}`)
-  if (!identityIsValid) return 'needs_full_auth'
 
   return 'ok'
 }

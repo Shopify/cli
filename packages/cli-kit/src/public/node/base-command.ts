@@ -16,7 +16,7 @@ import {Command, Errors} from '@oclif/core'
 import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 interface EnvironmentFlags {
-  environment?: string
+  environment?: string[]
   path?: string
 }
 
@@ -47,7 +47,7 @@ abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected async init(): Promise<any> {
     this.exitWithTimestampWhenEnvVariablePresent()
-    setCurrentCommandId(this.id || '')
+    setCurrentCommandId(this.id ?? '')
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
@@ -137,10 +137,13 @@ This flag is required in non-interactive terminal environments, such as a CI env
     // If no environment is specified, don't modify the results
     const flags = originalResult.flags as EnvironmentFlags
     const environmentsFileName = this.environmentsFilename()
-    if (!flags.environment || !environmentsFileName) return originalResult
+    if (!flags.environment?.length || !environmentsFileName) return originalResult
+
+    // If users pass multiple environments, do not load them and let each command handle it
+    if (flags.environment.length > 1) return originalResult
 
     // If the specified environment isn't found, don't modify the results
-    const environment = await loadEnvironment(flags.environment, environmentsFileName, {from: flags.path})
+    const environment = await loadEnvironment(flags.environment[0] as string, environmentsFileName, {from: flags.path})
     if (!environment) return originalResult
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
@@ -152,7 +155,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
     // Replace the original result with this one.
     const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
       // Need to specify argv default because we're merging with argsFromEnvironment.
-      ...(argv || this.argv),
+      ...(argv ?? this.argv),
       ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult),
     ])
 
@@ -160,7 +163,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
     reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
       noDefaultsResult.flags,
       result.flags,
-      flags.environment,
+      flags.environment[0] as string,
       environment,
     )
 
