@@ -1,6 +1,6 @@
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 
 export async function versionService(): Promise<void> {
-  outputInfo(CLI_KIT_VERSION)
+  outputResult(CLI_KIT_VERSION)
 }

@@ -7,6 +7,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 
 export async function profile(
@@ -41,7 +42,7 @@ export async function profile(
 
   if (asJson) {
     // Print the JSON
-    outputInfo(profileJson)
+    outputResult(profileJson)
   } else {
     await openProfile(profileJson)
   }
