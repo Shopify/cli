@@ -26,11 +26,13 @@ import init from './hooks/clear_command_cache.js'
 import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
+import AdminGraphql from './commands/app/admin-graphql.js'
 
 /**
  * All app commands should extend AppCommand.
  */
 export const commands: {[key: string]: typeof AppCommand} = {
+  'app:admin-graphql': AdminGraphql,
   'app:build': Build,
   'app:deploy': Deploy,
   'app:dev': Dev,
