@@ -6,7 +6,7 @@ import {expect, describe, test, vi} from 'vitest'
 vi.mock('../context/spin.js')
 vi.mock('../../../private/node/context/service.js')
 
-vi.mock('../vendor/dev_server/DevServer.js', () => {
+vi.mock('../vendor/dev_server/index.js', () => {
   return {
     DevServerCore: class {
       host(serviceName: string) {
