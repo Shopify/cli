@@ -168,6 +168,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = true
   public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
+  public readonly bundleFormat = 'br'
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -627,13 +628,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const result = await appManagementRequestDoc(
-      organizationId,
-      CreateAssetUrl,
-      await this.token(),
-      {},
-      {cacheTTL: {minutes: 59}},
-    )
+    const variables = {
+      // fileFormat: 'br',
+    }
+    const result = await appManagementRequestDoc(organizationId, CreateAssetUrl, await this.token(), variables, {
+      cacheTTL: {minutes: 59},
+    })
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
