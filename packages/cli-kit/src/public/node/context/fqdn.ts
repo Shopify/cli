@@ -1,7 +1,7 @@
 import {spinFqdn} from './spin.js'
 import {AbortError, BugError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
-import {DevServer, DevServerCore} from '../vendor/dev_server/DevServer.js'
+import {DevServer, DevServerCore} from '../vendor/dev_server/index.js'
 import {blockPartnersAccess} from '../environment.js'
 
 export const CouldntObtainPartnersSpinFQDNError = new AbortError(
