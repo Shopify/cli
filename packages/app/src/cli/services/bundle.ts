@@ -3,7 +3,7 @@ import {AppInterface} from '../models/app/app.js'
 import {AssetUrlSchema, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../models/organization.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {zip} from '@shopify/cli-kit/node/archiver'
+import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -15,12 +15,13 @@ export async function writeManifestToBundle(app: AppInterface, bundlePath: strin
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 }
 
-export async function compressBundle(inputPath: string, outputPath: string) {
-  await zip({
-    inputDirectory: inputPath,
-    outputZipPath: outputPath,
-    matchFilePattern: ['**/*', '!**/*.js.map'],
-  })
+export async function compressBundle(inputDirectory: string, outputPath: string) {
+  const matchFilePattern = ['**/*', '!**/*.js.map']
+  if (outputPath.endsWith('.br')) {
+    await brotliCompress({inputDirectory, outputPath, matchFilePattern})
+  } else {
+    await zip({inputDirectory, outputZipPath: outputPath, matchFilePattern})
+  }
 }
 
 /**

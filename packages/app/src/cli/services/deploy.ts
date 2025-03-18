@@ -74,7 +74,7 @@ export async function deploy(options: DeployOptions) {
     let bundlePath: string | undefined
 
     if (bundle) {
-      bundlePath = joinPath(options.app.directory, '.shopify', 'deploy-bundle.zip')
+      bundlePath = joinPath(options.app.directory, '.shopify', `deploy-bundle.${developerPlatformClient.bundleFormat}`)
       await mkdir(dirname(bundlePath))
     }
     await bundleAndBuildExtensions({app, bundlePath, identifiers})

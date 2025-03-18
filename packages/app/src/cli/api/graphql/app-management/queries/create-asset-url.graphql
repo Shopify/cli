@@ -1,5 +1,5 @@
-mutation CreateAssetURL {
-  appRequestSourceUploadUrl {
+mutation CreateAssetURL($format: SourceFormat!) {
+  appRequestSourceUploadUrl(format: $format) {
     sourceUploadUrl
     userErrors {
       field

@@ -23,6 +23,9 @@ import {CreateApp} from '../../api/graphql/app-management/generated/create-app.j
 import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {SourceFormat} from '../../api/graphql/app-management/generated/types.js'
+import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -851,6 +854,57 @@ describe('deploy', () => {
           },
         },
       },
+    })
+  })
+})
+
+describe('AppManagementClient', () => {
+  describe('generateSignedUploadUrl', () => {
+    test('passes Brotli format for uploads', async () => {
+      // Given
+      const client = new AppManagementClient()
+      const mockResponse = {
+        appRequestSourceUploadUrl: {
+          sourceUploadUrl: 'https://example.com/upload-url',
+          userErrors: [],
+        },
+      }
+
+      // Mock the app management request
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+      const app: MinimalAppIdentifiers = {
+        apiKey: 'test-api-key',
+        organizationId: 'test-org-id',
+        id: 'test-app-id',
+      }
+
+      // When
+      client.token = () => Promise.resolve('token')
+      await client.generateSignedUploadUrl(app)
+
+      // Then
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        app.organizationId,
+        CreateAssetUrl,
+        'token',
+        {
+          format: 'BR' as SourceFormat,
+        },
+        expect.objectContaining({
+          cacheTTL: expect.anything(),
+        }),
+      )
+    })
+  })
+
+  describe('bundleFormat', () => {
+    test('returns br for Brotli compression format', () => {
+      // Given
+      const client = new AppManagementClient()
+
+      // Then
+      expect(client.bundleFormat).toBe('br')
     })
   })
 })

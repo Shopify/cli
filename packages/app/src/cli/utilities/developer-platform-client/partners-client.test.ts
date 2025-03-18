@@ -178,3 +178,15 @@ describe('fetchApp', async () => {
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined)
   })
 })
+
+describe('PartnersClient', () => {
+  describe('bundleFormat', () => {
+    test('uses zip format', () => {
+      // Given
+      const client = new PartnersClient()
+
+      // Then
+      expect(client.bundleFormat).toBe('zip')
+    })
+  })
+})
