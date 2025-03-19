@@ -34,7 +34,16 @@ import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_sc
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
-import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {
+  fileExists,
+  readFile,
+  glob,
+  findPathUp,
+  fileExistsSync,
+  writeFile,
+  writeFileSync,
+  mkdir,
+} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -546,6 +555,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     // Should be replaced by core validation.
     this.validatePrintActionExtensionsUniqueness(allExtensions)
 
+    await this.generateExtensionTypes(allExtensions)
+
     return allExtensions
   }
 
@@ -752,6 +763,15 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           }
         })
       })
+  }
+
+  private async generateExtensionTypes(allExtensions: ExtensionInstance[]) {
+    const typeFilePath = joinPath(this.loadedConfiguration.directory, 'shopify.d.ts')
+    const definitions = await Promise.all(
+      allExtensions.map((extension) => extension.contributeToSharedTypeFile(typeFilePath)),
+    )
+    const combinedDefinitions = new Set(definitions.flatMap((definition) => definition))
+    writeFileSync(typeFilePath, [`import '@shopify/ui-extensions';`, ...Array.from(combinedDefinitions)].join('\n'))
   }
 }
 

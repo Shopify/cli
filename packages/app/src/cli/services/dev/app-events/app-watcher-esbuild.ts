@@ -90,6 +90,7 @@ export class ESBuildContextManager {
 
   async updateContexts(appEvent: AppEvent) {
     this.dotEnvVariables = appEvent.app.dotenv?.variables ?? {}
+    // @todo see what the dev console is subscribed to and validate that it picks up new targets
     const createdEsBuild = appEvent.extensionEvents
       .filter((extEvent) => extEvent.type === EventType.Created && extEvent.extension.isESBuildExtension)
       .map((extEvent) => extEvent.extension)
