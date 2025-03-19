@@ -564,7 +564,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const result = await appManagementRequestDoc(organizationId, CreateAssetUrl, await this.token())
+    const result = await appManagementRequestDoc(
+      organizationId,
+      CreateAssetUrl,
+      await this.token(),
+      {},
+      {cacheTTL: {minutes: 59}},
+    )
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
