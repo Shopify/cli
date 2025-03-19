@@ -82,7 +82,9 @@ export async function generateExtensionTemplate(
     (flavor) => flavor.value === extensionFlavorValue,
   )
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
-  const url = options.cloneUrl || options.extensionTemplate.url
+  const url = process.env.REMOTE_DOM_EXPERIMENT
+    ? 'https://github.com/Shopify/extensions-templates#2025-07-rc'
+    : options.cloneUrl ?? options.extensionTemplate.url
   const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
   const initOptions: ExtensionInitOptions = {
     directory,
@@ -174,7 +176,7 @@ async function functionExtensionInit({
       })
 
       if (templateLanguage === 'javascript') {
-        const srcFileExtension = getSrcFileExtension(extensionFlavor?.value || 'rust')
+        const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'rust')
         await changeIndexFileExtension(directory, srcFileExtension, '!(*.graphql)')
       }
     },
@@ -246,8 +248,10 @@ async function uiExtensionInit({
 
         if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
+          if (!process.env.REMOTE_DOM_EXPERIMENT) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
+          }
         }
       },
     },
@@ -277,6 +281,15 @@ async function uiExtensionInit({
       },
     },
   ]
+
+  // @todo: How to get an instance for the newly generated extension?
+  // if (process.env.REMOTE_DOM_EXPERIMENT) {
+  //   tasks.push({
+  //     title: 'Update shared type definition',
+  //     task: async () => app.generateExtensionTypes(),
+  //   })
+  // }
+
   await renderTasks(tasks)
 }
 
@@ -318,6 +331,7 @@ async function changeIndexFileExtension(extensionDirectory: string, fileExtensio
   await Promise.all(srcFileExensionsToChange)
 }
 
+// @todo: get rid of this logic to remove the tsconfig for non-typescript projects
 async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavorValue) {
   // tsconfig.json file is only needed in extension folder to inform the IDE
   // About the `react-jsx` tsconfig option, so IDE don't complain about missing react import
