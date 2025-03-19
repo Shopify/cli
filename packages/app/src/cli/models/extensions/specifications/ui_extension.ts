@@ -3,8 +3,8 @@ import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from 
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {fileExists, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -137,6 +137,9 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   contributeToSharedTypeFile: async (extension, typeFilePath) => {
     const definition: string[] = []
+    // eslint-disable-next-line no-useless-escape
+    const typeRefRegex = /^\/\/\/ <reference types="(?:[.\/]*)shopify\.d\.ts" \/>\n$/
+
     for await (const {module, target} of extension.configuration.extension_points) {
       const fullPath = joinPath(extension.directory, module)
       const exists = await fileExists(fullPath)
@@ -145,30 +148,26 @@ const uiExtensionSpec = createExtensionSpecification({
         continue
       }
 
-      // eslint-disable-next-line no-useless-escape
-      const typeRefRegex = /\/\/\/ <reference types="([.\/]*)shopify\.d\.ts" \/>/
-      const template = `/// <reference types="${relativePath(fullPath, typeFilePath)}" />`
-
-      let fileContent = readFileSync(fullPath).toString()
+      const template = `/// <reference types="${relativePath(dirname(fullPath), typeFilePath)}" />\n`
+      const originalContent = readFileSync(fullPath).toString()
+      let fileContent = originalContent
       let match
-      if ((match = fileContent.match(typeRefRegex)) && match[1]) {
-        fileContent = fileContent.replace(match[0], template)
-      } else {
-        fileContent = `${template}\n`.concat(fileContent)
+      while ((match = typeRefRegex.exec(fileContent))) {
+        fileContent = fileContent.replace(match[0], '')
       }
-      writeFileSync(fullPath, fileContent)
 
-      const surface = target.split('.')?.[0]
-      // @todo: update to work for non-admin
-      const importName = `${surface?.slice(0, 1).toUpperCase().concat(surface.slice(1))}ExtensionTargets`
-      if (importName) {
-        definition.push(
-          `declare module './${relativePath(typeFilePath, fullPath)}' {
+      fileContent = template.concat(fileContent)
+
+      if (originalContent !== fileContent) {
+        writeFileSync(fullPath, fileContent)
+      }
+
+      definition.push(
+        `declare module './${relativizePath(fullPath, dirname(typeFilePath))}' {
   const globalThis: typeof import('@shopify/ui-extensions/${target}');
   const shopify: import('@shopify/ui-extensions/${target}').Api;
 }`,
-        )
-      }
+      )
     }
     return definition
   },
