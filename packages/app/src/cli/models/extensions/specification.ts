@@ -46,6 +46,12 @@ export interface Asset {
   outputFileName: string
   content: string
 }
+
+export interface SharedType {
+  libraryRoot: string
+  definition: string
+}
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -114,7 +120,10 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    */
   parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
 
-  contributeToSharedTypeFile?: (extension: ExtensionInstance<TConfiguration>, typeFilePath: string) => Promise<string[]>
+  contributeToSharedTypeFile?: (
+    extension: ExtensionInstance<TConfiguration>,
+    typeFilePath: string,
+  ) => Promise<SharedType[]>
 }
 
 /**
