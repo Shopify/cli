@@ -2,15 +2,16 @@ import * as loadLocales from '../../../utilities/extensions/locales-configuratio
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
-import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, touchFile, writeFile, readFile, mkdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
+    apiVersion?: string
     extensionPoints?: {
       target: string
       module: string
@@ -37,13 +38,13 @@ describe('ui_extension', async () => {
     }[]
   }
 
-  async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
+  async function getTestUIExtension({directory, extensionPoints, apiVersion}: GetUIExtensionProps) {
     const configurationPath = joinPath(directory, 'shopify.extension.toml')
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
     const configuration = {
       extension_points: extensionPoints,
-      api_version: '2023-01' as const,
+      api_version: apiVersion ?? ('2023-01' as const),
       name: 'UI Extension',
       description: 'This is an ordinary test extension.',
       type: 'ui_extension',
@@ -652,6 +653,10 @@ Please check the configuration in ${uiExtension.configurationPath}`),
   })
 
   describe('getBundleExtensionStdinContent()', async () => {
+    afterEach(() => {
+      delete process.env.REMOTE_DOM_EXPERIMENT
+    })
+
     test('maps every target to an import statement', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -691,6 +696,73 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Then
         expect(stdInContent).toContain(`import './src/ExtensionPointA.js';`)
         expect(stdInContent).toContain(`import './src/ExtensionPointB.js';`)
+      })
+    })
+
+    test('uses Remote DOM imports for supported API versions when REMOTE_DOM_EXPERIMENT is true', async () => {
+      process.env.REMOTE_DOM_EXPERIMENT = 'true'
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          // Remote DOM supported API version
+          apiVersion: '2025-07',
+          extensionPoints: [
+            {
+              target: 'admin.product-details.block.render',
+              module: './src/ExtensionPointA.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    module: './src/ExtensionPointA.js',
+                    filepath: '/test-ui-extension.js',
+                  },
+                },
+              },
+            },
+          ],
+        })
+
+        // When
+        const stdInContent = uiExtension.getBundleExtensionStdinContent().main
+
+        // Then
+        expect(stdInContent).toBe(
+          `import Target_0 from './src/ExtensionPointA.js'; shopify.extend('admin.product-details.block.render', () => Target_0());`,
+        )
+      })
+    })
+
+    test('uses regular imports for non-Remote DOM API versions when REMOTE_DOM_EXPERIMENT is true', async () => {
+      process.env.REMOTE_DOM_EXPERIMENT = 'true'
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          // Non-Remote DOM supported API version
+          apiVersion: '2025-01',
+          extensionPoints: [
+            {
+              target: 'admin.product-details.block.render',
+              module: './src/ExtensionPointA.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    module: './src/ExtensionPointA.js',
+                    filepath: '/test-ui-extension.js',
+                  },
+                },
+              },
+            },
+          ],
+        })
+
+        // When
+        const stdInContent = uiExtension.getBundleExtensionStdinContent().main
+
+        // Then
+        expect(stdInContent).toBe(`import './src/ExtensionPointA.js';`)
       })
     })
   })
@@ -767,6 +839,286 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then
         expect(uiExtension.hasExtensionPointTarget('NONEXISTANT::POINT')).toBe(false)
+      })
+    })
+  })
+
+  async function setupUIExtensionWithNodeModules({
+    tmpDir,
+    fileExtension,
+    fileContent,
+    remoteDom = false,
+  }: {
+    tmpDir: string
+    fileExtension: string
+    fileContent: string
+    remoteDom?: boolean
+  }) {
+    const target = 'admin.product-details.block.render'
+    // Create extension files
+    const srcDir = joinPath(tmpDir, 'src')
+    await mkdir(srcDir)
+    const filePath = joinPath(srcDir, `index.${fileExtension}`)
+
+    await writeFile(filePath, fileContent)
+
+    // Create shopify.d.ts type file
+    const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
+    await writeFile(typeFilePath, '// Type definitions')
+
+    // Create node_modules structure
+    const nodeModulesPath = joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions')
+    await mkdir(nodeModulesPath)
+
+    const targetPath = joinPath(nodeModulesPath, target)
+    await mkdir(targetPath)
+    const targetFilePath = joinPath(targetPath, 'index.js')
+    await writeFile(targetFilePath, '// Mock UI extension target')
+
+    const libraryPath = joinPath(nodeModulesPath, 'index.js')
+    await writeFile(libraryPath, '// Mock UI extension library')
+
+    // Get UI extension spec and create instance
+    const allSpecs = await loadLocalExtensionsSpecifications()
+    const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+
+    const extension = new ExtensionInstance({
+      configuration: {
+        // Remote DOM supported version
+        api_version: remoteDom ? '2025-07' : '2025-01',
+        extension_points: [
+          {
+            target,
+            module: `./src/index.${fileExtension}`,
+          },
+        ],
+        name: 'Test UI Extension',
+        type: 'ui_extension',
+        metafields: [],
+      },
+      configurationPath: joinPath(tmpDir, 'shopify.extension.toml'),
+      directory: tmpDir,
+      specification,
+      entryPath: filePath,
+    })
+
+    return {
+      srcDir,
+      typeFilePath,
+      filePath,
+      libraryPath,
+      extension,
+    }
+  }
+
+  describe('contributeToSharedTypeFile with Remote DOM API version', () => {
+    test('updates TS modules with type reference and returns shared types definition', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, libraryPath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'ts',
+          fileContent: '// TS code',
+          remoteDom: true,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toHaveLength(1)
+
+        const expectedDefinition = `declare module './src/index.ts' {
+  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js');
+  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js').Api;
+}\n`
+        expect(result[0]?.definition).toBe(expectedDefinition)
+        expect(result[0]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
+
+        // Check if the TS file was updated with reference
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toContain('/// <reference types="../shopify.d.ts" />')
+
+        // Should not create a .d.ts file
+        await expect(fileExists(joinPath(srcDir, 'index.ts.d.ts'))).resolves.toBe(false)
+      })
+    })
+
+    test('updates TSX modules with type reference and returns shared types definition', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, libraryPath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'tsx',
+          fileContent: '// TSX code',
+          remoteDom: true,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toHaveLength(1)
+
+        const expectedDefinition = `declare module './src/index.tsx' {
+  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js');
+  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js').Api;
+}\n`
+        expect(result[0]?.definition).toBe(expectedDefinition)
+        expect(result[0]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
+
+        // TSX file should have type reference
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toContain('/// <reference types="../shopify.d.ts" />')
+
+        // Should not create a .d.ts file
+        await expect(fileExists(joinPath(srcDir, 'index.tsx.d.ts'))).resolves.toBe(false)
+      })
+    })
+
+    test('updates JSX modules with a local .d.ts type reference instead of return shared types definition', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'jsx',
+          fileContent: '// JSX code',
+          remoteDom: true,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).not.toBeUndefined()
+        expect(result).toEqual([])
+
+        // JSX file should have type reference comment
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('/// <reference types="./index.d.ts" />\n// JSX code')
+
+        // Should create a .d.ts file next to the JSX file
+        await expect(fileExists(joinPath(srcDir, 'index.d.ts'))).resolves.toBe(true)
+      })
+    })
+
+    test('updates JS modules with a local .d.ts type reference instead of return shared types definition', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'js',
+          fileContent: '// JavaScript code',
+          remoteDom: true,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).not.toBeUndefined()
+        expect(Array.isArray(result)).toBe(true)
+        expect(result).toEqual([])
+
+        // JS file should have type reference comment
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('/// <reference types="./index.d.ts" />\n// JavaScript code')
+
+        // Should create a .d.ts file next to the JS file
+        await expect(fileExists(joinPath(srcDir, 'index.d.ts'))).resolves.toBe(true)
+      })
+    })
+  })
+
+  describe('contributeToSharedTypeFile with non-Remote DOM API version', () => {
+    test('returns empty shared types definition for TS modules and leaves file unchanged', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'ts',
+          fileContent: '// TypeScript code',
+          remoteDom: false,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toEqual([])
+
+        // TS file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// TypeScript code')
+
+        // Should not create a .d.ts file
+        await expect(fileExists(joinPath(srcDir, 'index.ts.d.ts'))).resolves.toBe(false)
+      })
+    })
+
+    test('returns empty shared types definition for TSX modules and leaves file unchanged', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'tsx',
+          fileContent: '// TypeScript React code',
+          remoteDom: false,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toEqual([])
+
+        // TSX file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// TypeScript React code')
+
+        // Should not create a .d.ts file
+        await expect(fileExists(joinPath(srcDir, 'index.tsx.d.ts'))).resolves.toBe(false)
+      })
+    })
+
+    test('does not create local .d.ts file for JSX modules and leaves file unchanged', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'jsx',
+          fileContent: '// JSX code',
+          remoteDom: false,
+        })
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toEqual([])
+
+        // JSX file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// JSX code')
+
+        // Should not create a .d.ts file next to the JSX file
+        await expect(fileExists(joinPath(srcDir, 'index.d.ts'))).resolves.toBe(false)
+      })
+    })
+
+    test('does not create local .d.ts file for JS modules and leaves file unchanged', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, srcDir} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileExtension: 'js',
+          fileContent: '// JavaScript code',
+          remoteDom: false,
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toEqual([])
+
+        // JS file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// JavaScript code')
+
+        // Should not create a .d.ts file next to the JS file
+        await expect(fileExists(joinPath(srcDir, 'index.d.ts'))).resolves.toBe(false)
       })
     })
   })

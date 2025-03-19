@@ -12,7 +12,7 @@ import {
   reloadApp,
   loadHiddenConfig,
 } from './loader.js'
-import {AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {App, AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -92,6 +92,7 @@ automatically_update_urls_on_dev = true
     if (tmpDir) {
       await rmdir(tmpDir, {force: true})
     }
+    delete process.env.REMOTE_DOM_EXPERIMENT
   })
 
   const writeConfig = async (
@@ -2375,6 +2376,31 @@ wrong = "property"
     expect(reloadedApp.packageManager).toBe(app.packageManager)
     expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
     expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
+  })
+
+  test('does not call app.generateExtensionTypes by default', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')
+    // When
+    await loadTestingApp()
+    // Then
+    expect(generateTypesSpy).not.toHaveBeenCalled()
+    generateTypesSpy.mockRestore()
+  })
+
+  test('call app.generateExtensionTypes when REMOTE_DOM_EXPERIMENT is true', async () => {
+    process.env.REMOTE_DOM_EXPERIMENT = 'true'
+    // Given
+    await writeConfig(appConfiguration)
+    const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')
+
+    // When
+    await loadTestingApp()
+
+    // Then
+    expect(generateTypesSpy).toHaveBeenCalled()
+    generateTypesSpy.mockRestore()
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'

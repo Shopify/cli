@@ -16,7 +16,7 @@ import {
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, afterEach} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {
   installNodeModules,
@@ -49,6 +49,10 @@ describe('initialize a extension', async () => {
     const templateFixturesDir = joinPath(locationOfThisFile, 'template-fixtures')
     return file.copyFile(templateFixturesDir, destination)
   }
+
+  afterEach(() => {
+    delete process.env.REMOTE_DOM_EXPERIMENT
+  })
 
   test('successfully generates the extension when no other extensions exist', async () => {
     await withTemporaryApp(async (tmpDir) => {
@@ -435,6 +439,64 @@ describe('initialize a extension', async () => {
       // Then
       await expect(got).rejects.toThrowErrorMatchingInlineSnapshot('[Error: No folder for selected flavor]')
       expect(file.fileExistsSync(joinPath(tmpDir, 'extensions', name))).toBeFalsy()
+    })
+  })
+
+  test('uses Remote DOM template URL for the git repository URL when REMOTE_DOM_EXPERIMENT is true', async () => {
+    await withTemporaryApp(async (tmpDir) => {
+      // Given
+      const originalEnv = process.env.REMOTE_DOM_EXPERIMENT
+      process.env.REMOTE_DOM_EXPERIMENT = 'true'
+      const downloadGitRepositorySpy = vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+
+      const name = 'my-ext-1'
+      const specification = allUITemplates.find((spec) => spec.identifier === 'checkout_ui')!
+      const extensionFlavor = 'vanilla-js'
+
+      // When
+      await createFromTemplate({
+        name,
+        extensionTemplate: specification,
+        extensionFlavor,
+        appDirectory: tmpDir,
+        specifications,
+      })
+
+      // Then
+      expect(downloadGitRepositorySpy).toHaveBeenCalledWith({
+        destination: expect.any(String),
+        repoUrl: 'https://github.com/Shopify/extensions-templates#2025-07-rc',
+        shallow: true,
+      })
+    })
+  })
+
+  test('uses specification.url for the git repository URL by default', async () => {
+    await withTemporaryApp(async (tmpDir) => {
+      const downloadGitRepositorySpy = vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+
+      const name = 'my-ext-1'
+      const specification = allUITemplates.find((spec) => spec.identifier === 'checkout_ui')!
+      specification.url = 'default/template/url'
+      const extensionFlavor = 'vanilla-js'
+
+      // When
+      await createFromTemplate({
+        name,
+        extensionTemplate: specification,
+        extensionFlavor,
+        appDirectory: tmpDir,
+        specifications,
+      })
+
+      // Then
+      expect(downloadGitRepositorySpy).toHaveBeenCalledWith({
+        destination: expect.any(String),
+        repoUrl: specification.url,
+        shallow: true,
+      })
     })
   })
 })
