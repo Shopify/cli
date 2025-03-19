@@ -113,6 +113,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * Parse some provided configuration into a valid configuration object for this extension.
    */
   parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
+
+  contributeToSharedTypeFile?: (extension: ExtensionInstance<TConfiguration>, typeFilePath: string) => Promise<string[]>
 }
 
 /**

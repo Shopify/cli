@@ -437,6 +437,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification.patchWithAppDevURLs(this.configuration, urls)
   }
 
+  contributeToSharedTypeFile(typeFilePath: string) {
+    return this.specification.contributeToSharedTypeFile?.(this, typeFilePath) ?? []
+  }
+
   private buildHandle() {
     switch (this.specification.uidStrategy) {
       case 'single':
