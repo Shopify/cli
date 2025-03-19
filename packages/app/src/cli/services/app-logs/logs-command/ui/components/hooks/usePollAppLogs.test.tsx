@@ -15,6 +15,7 @@ import {
   NetworkAccessRequestExecutionInBackgroundLog,
   NetworkAccessResponseFromCacheLog,
 } from '../../../../types.js'
+import {testDeveloperPlatformClient} from '../../../../../../models/app/app.test-data.js'
 import {render} from '@shopify/cli-kit/node/testing/ui'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
@@ -196,6 +197,8 @@ describe('usePollAppLogs', () => {
     const mockedPollAppLogs = vi.fn().mockResolvedValue(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
     vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
 
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
+
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
 
     const hook = renderHook(() =>
@@ -204,6 +207,7 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     )
 
@@ -316,6 +320,7 @@ describe('usePollAppLogs', () => {
     vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
 
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
 
     renderHook(() =>
       usePollAppLogs({
@@ -323,6 +328,7 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     )
 
@@ -331,15 +337,21 @@ describe('usePollAppLogs', () => {
 
     // Initial invocation, 401 returned
     expect(mockedPollAppLogs).toHaveBeenNthCalledWith(1, {
-      jwtToken: MOCKED_JWT_TOKEN,
-      cursor: '',
-      filters: EMPTY_FILTERS,
+      pollOptions: {
+        jwtToken: MOCKED_JWT_TOKEN,
+        cursor: '',
+        filters: EMPTY_FILTERS,
+      },
+      developerPlatformClient: mockedDeveloperPlatformClient,
     })
     expect(resubscribeCallback).toHaveBeenCalledOnce()
 
     // Follow up invocation, which invokes resubscribeCallback
     await vi.advanceTimersToNextTimerAsync()
-    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS})
+    expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {
+      pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS},
+      developerPlatformClient: mockedDeveloperPlatformClient,
+    })
 
     expect(vi.getTimerCount()).toEqual(1)
   })
@@ -351,6 +363,8 @@ describe('usePollAppLogs', () => {
       .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
     vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
 
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
+
     const timeoutSpy = vi.spyOn(global, 'setTimeout')
 
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
@@ -361,6 +375,7 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     )
 
@@ -390,6 +405,8 @@ describe('usePollAppLogs', () => {
       .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
     vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
 
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
+
     const timeoutSpy = vi.spyOn(global, 'setTimeout')
 
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
@@ -400,6 +417,7 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: STORE_NAME_BY_ID,
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     )
 
@@ -431,12 +449,15 @@ describe('usePollAppLogs', () => {
       .mockResolvedValueOnce(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
     vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
 
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
+
     const hook = renderHook(() =>
       usePollAppLogs({
         initialJwt: MOCKED_JWT_TOKEN,
         filters: EMPTY_FILTERS,
         resubscribeCallback: vi.fn().mockResolvedValue(MOCKED_JWT_TOKEN),
         storeNameById: STORE_NAME_BY_ID,
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     )
 
@@ -453,6 +474,8 @@ describe('usePollAppLogs', () => {
     const mockedPollAppLogs = vi.fn().mockResolvedValue(POLL_APP_LOGS_FOR_LOGS_RESPONSE)
     vi.mocked(pollAppLogs).mockImplementation(mockedPollAppLogs)
 
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient()
+
     const resubscribeCallback = vi.fn().mockResolvedValue(NEW_JWT_TOKEN)
 
     const hook = renderHook(() =>
@@ -461,6 +484,7 @@ describe('usePollAppLogs', () => {
         filters: EMPTY_FILTERS,
         resubscribeCallback,
         storeNameById: new Map(),
+        developerPlatformClient: mockedDeveloperPlatformClient,
       }),
     )
 

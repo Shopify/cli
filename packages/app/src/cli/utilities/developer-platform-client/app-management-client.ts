@@ -19,6 +19,7 @@ import {
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
+  AppLogsResponse,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -119,6 +120,7 @@ import {
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
 import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
+import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -166,6 +168,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async subscribeToAppLogs(input: AppLogsSubscribeVariables): Promise<AppLogsSubscribeResponse> {
     throw new Error(`Not Implemented: ${JSON.stringify(input)}`)
+  }
+
+  async appLogs(options: AppLogsOptions): Promise<AppLogsResponse> {
+    throw new Error(`Not Implemented: ${JSON.stringify(options)}`)
   }
 
   async session(): Promise<PartnersSession> {
