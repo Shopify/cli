@@ -53,7 +53,7 @@ export const LegacyAppSchema = zod
       })
       .optional(),
   })
-  .strict()
+  .strict({message: 'You may be missing client_id, or your TOML is malformed'})
 
 function removeTrailingPathSeparator(value: string[] | undefined) {
   // eslint-disable-next-line no-useless-escape
