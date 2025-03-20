@@ -246,12 +246,14 @@ function buildUploadJob(
   const uploadFileBatches = (fileType: ChecksumWithSize[]) => {
     if (fileType.length === 0) return Promise.resolve()
     return Promise.all(
-      createBatches(fileType).map((batch) =>
-        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+      createBatches(fileType).map((batch) => {
+        const filesInBatch = batch.map((file) => file.key)
+        console.log(filesInBatch)
+        return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
           progress.current += batch.length
           batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
-        }),
-      ),
+        })
+      }),
     ).then(() => {})
   }
 
@@ -306,6 +308,9 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
   dependentFiles: ChecksumWithSize[][]
 } {
   const fileSets = partitionThemeFiles(files)
+  const settingsSchemaFile = fileSets.configFiles.find((file) => file.key === 'config/settings_schema.json')
+  const settingsDataFile = fileSets.configFiles.find((file) => file.key === 'config/settings_data.json')
+
   return {
     // Most JSON files here are locales. Since we filter locales out in `replaceTemplates`,
     // and assets can be served locally, we can give priority to the unique Liquid files:
@@ -317,7 +322,8 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
       fileSets.sectionJsonFiles,
       fileSets.templateJsonFiles,
       fileSets.contextualizedJsonFiles,
-      fileSets.configFiles,
+      settingsDataFile ? [settingsDataFile] : [],
+      settingsSchemaFile ? [settingsSchemaFile] : [],
     ],
   }
 }
