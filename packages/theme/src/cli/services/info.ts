@@ -84,3 +84,42 @@ function tabularSection(title: string, data: InlineToken[][]): AlertCustomSectio
     body: {tabularData: data, firstColumnSubdued: true},
   }
 }
+
+export async function formatThemeInfo(output: ThemeInfo, flags: {environment?: string}) {
+  const tabularData = Object.entries(output.theme).map(([key, val]) => {
+    if (key === 'editor_url' || key === 'preview_url') {
+      const url = String(val)
+      // Here, we create descriptive labels for the links
+      const label = key === 'editor_url' ? 'Open in Theme Editor' : 'Preview Theme'
+      return [formatKey(key), {link: {url, label}}]
+    } else if (key === 'id') {
+      return [formatKey(key), `#${val}`]
+    } else {
+      return [formatKey(key), `${val}`]
+    }
+  })
+
+  return {
+    customSections: [
+      ...(flags.environment
+        ? [
+            {
+              title: `Theme information`,
+              body: [{subdued: `Environment name: ${flags.environment}`}],
+            },
+          ]
+        : []),
+      {
+        title: 'Theme Details',
+        body: {tabularData, firstColumnSubdued: true},
+      },
+    ],
+  }
+}
+
+function formatKey(key: string): string {
+  return key
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
