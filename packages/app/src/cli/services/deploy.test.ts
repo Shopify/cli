@@ -239,6 +239,13 @@ describe('deploy', () => {
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
       localization: {},
+      targets: [
+        {
+          handle: 'purchase.discount.cart_run',
+          export: 'run',
+          operations: '["addProductDiscounts", "addOrderDiscounts"]',
+        },
+      ],
     }
 
     // When
@@ -258,7 +265,7 @@ describe('deploy', () => {
         {
           uuid: functionExtension.localIdentifier,
           config: JSON.stringify(mockedFunctionConfiguration),
-          context: '',
+          context: 'purchase.discount.cart_run',
           handle: functionExtension.handle,
           specificationIdentifier: undefined,
           uid: functionExtension.uid,
