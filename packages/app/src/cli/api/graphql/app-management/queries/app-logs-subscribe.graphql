@@ -1,0 +1,7 @@
+mutation AppLogsSubscribe($shopIds: [Int!]!, $apiKey: String!) {
+  appLogsSubscribe(shopIds: $shopIds, apiKey: $apiKey) {
+    jwtToken
+    success
+    errors
+  }
+}

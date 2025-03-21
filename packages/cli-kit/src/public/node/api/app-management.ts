@@ -1,4 +1,5 @@
 import {CacheOptions, GraphQLResponse, graphqlRequestDoc} from './graphql.js'
+import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import Bottleneck from 'bottleneck'
@@ -23,6 +24,19 @@ async function setupRequest(orgId: string, token: string) {
     url,
     responseOptions: {onResponse: handleDeprecations},
   }
+}
+
+export const generateFetchAppLogUrlDevDashboard = async (
+  organizationId: string,
+  cursor?: string,
+  filters?: {
+    status?: string
+    source?: string
+  },
+): Promise<string> => {
+  const fqdn = await appManagementFqdn()
+  const url = `https://${fqdn}/app_management/unstable/organizations/${organizationId}/app_logs/poll`
+  return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }
 
 /**

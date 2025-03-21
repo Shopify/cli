@@ -1,3 +1,4 @@
+import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export interface SuccessResponse {
@@ -166,11 +167,7 @@ export type AppLogPayload =
 
 export interface SubscribeOptions {
   developerPlatformClient: DeveloperPlatformClient
-  variables: {
-    shopIds: string[]
-    apiKey: string
-    token: string
-  }
+  variables: AppLogsSubscribeMutationVariables
 }
 
 export interface PollOptions {
