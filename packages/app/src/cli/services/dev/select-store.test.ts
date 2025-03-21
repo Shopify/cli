@@ -212,7 +212,7 @@ describe('selectStore', async () => {
     await expect(got).rejects.toThrow()
     expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
     const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
-    expect(res).toContain('https://partners.shopify.com/organizations/1234/stores/new')
+    expect(res).toContain('https://partners.shopify.com/1234/stores/new')
   })
 
   test('prompts user to create with Developer Dashboard link', async () => {
@@ -222,7 +222,7 @@ describe('selectStore', async () => {
       clientName: ClientName.AppManagement,
       getCreateDevStoreLink: (_input: string) =>
         Promise.resolve(
-          `Looks like you don't have a dev store in the organization you selected. Keep going — create a dev store on the Developer Dashboard: https://dev.shopify.com/dashboard/dashboard/1234/stores`,
+          `Looks like you don't have a dev store in the organization you selected. Keep going — create a dev store on the Developer Dashboard: https://dev.shopify.com/dashboard/1234/stores`,
         ),
     })
 
@@ -233,7 +233,7 @@ describe('selectStore', async () => {
     await expect(got).rejects.toThrow()
     expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
     const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
-    expect(res).toContain('https://dev.shopify.com/dashboard/dashboard/1234/stores')
+    expect(res).toContain('https://dev.shopify.com/dashboard/1234/stores')
   })
 
   test('enables backend search if the DeveloperPlatformClient supports it', async () => {
