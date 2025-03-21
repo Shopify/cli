@@ -370,7 +370,10 @@ export function handleHotReloadScriptInjection(html: string, ctx: DevServerConte
     // When running locally, use the local script for easy development.
     return html
       .replace(hotReloadScriptRE, '')
-      .replace(/<\/head>/, `<script id="${hotReloadScriptId}" src="${localHotReloadScriptEndpoint}"></script></head>`)
+      .replace(
+        /<\/head>/,
+        `<script id="${hotReloadScriptId}" src="${localHotReloadScriptEndpoint}" defer></script></head>`,
+      )
   }
 
   if (html.includes(`<script id="${hotReloadScriptId}"`)) {
