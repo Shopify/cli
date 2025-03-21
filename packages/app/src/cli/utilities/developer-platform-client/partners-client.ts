@@ -619,7 +619,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async getCreateDevStoreLink(orgId: string): Promise<string> {
-    const url = `https://${await partnersFqdn()}/dashboard/${orgId}/stores`
+    const url = `https://${await partnersFqdn()}/${orgId}/stores`
     return (
       `Looks like you don't have a dev store in the Partners org you selected. ` +
       `Keep going — create a dev store on Shopify Partners:\n${url}\n`
