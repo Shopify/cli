@@ -62,82 +62,88 @@ export async function sendErrorToBugsnag(
   error: unknown,
   exitMode: Omit<CommandExitMode, 'ok'>,
 ): Promise<{reported: false; error: unknown; unhandled: unknown} | {error: Error; reported: true; unhandled: boolean}> {
-  if (settings.debug) {
-    outputDebug(`Skipping Bugsnag report`)
-    return {reported: false, error, unhandled: undefined}
-  }
+  try {
+    if (settings.debug) {
+      outputDebug(`Skipping Bugsnag report`)
+      return {reported: false, error, unhandled: undefined}
+    }
 
-  // If the error was unexpected, we flag it as "unhandled" in Bugsnag. This is a helpful distinction.
-  const unhandled = exitMode === 'unexpected_error'
+    // If the error was unexpected, we flag it as "unhandled" in Bugsnag. This is a helpful distinction.
+    const unhandled = exitMode === 'unexpected_error'
 
-  let reportableError: Error
-  let stacktrace: string | undefined
-  let report = false
+    let reportableError: Error
+    let stacktrace: string | undefined
+    let report = false
 
-  if (error instanceof Error) {
-    report = true
-    reportableError = new Error(error.message)
-    stacktrace = error.stack
+    if (error instanceof Error) {
+      report = true
+      reportableError = new Error(error.message)
+      stacktrace = error.stack
 
-    /**
-     * Some errors that reach this point have an empty string. For example:
-     * https://app.bugsnag.com/shopify/cli/errors/62cd5d31fd5040000814086c?filters[event.since]=30d&filters[error.status]=new&filters[release.seen_in]=3.1.0
-     *
-     * Because at this point we have neither the error message nor a stack trace reporting them
-     * to Bugsnag is pointless and adds noise.
-     */
-  } else if (typeof error === 'string' && error.trim().length !== 0) {
-    report = true
-    reportableError = new Error(error)
-    stacktrace = reportableError.stack
-  } else {
-    report = false
-    reportableError = new Error('Unknown error')
-  }
+      /**
+       * Some errors that reach this point have an empty string. For example:
+       * https://app.bugsnag.com/shopify/cli/errors/62cd5d31fd5040000814086c?filters[event.since]=30d&filters[error.status]=new&filters[release.seen_in]=3.1.0
+       *
+       * Because at this point we have neither the error message nor a stack trace reporting them
+       * to Bugsnag is pointless and adds noise.
+       */
+    } else if (typeof error === 'string' && error.trim().length !== 0) {
+      report = true
+      reportableError = new Error(error)
+      stacktrace = reportableError.stack
+    } else {
+      report = false
+      reportableError = new Error('Unknown error')
+    }
 
-  const formattedStacktrace = new StackTracey(stacktrace ?? '')
-    .clean()
-    .items.map((item) => {
-      const filePath = cleanSingleStackTracePath(item.file)
-      return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
+    const formattedStacktrace = new StackTracey(stacktrace ?? '')
+      .clean()
+      .items.map((item) => {
+        const filePath = cleanSingleStackTracePath(item.file)
+        return `    at ${item.callee} (${filePath}:${item.line}:${item.column})`
+      })
+      .join('\n')
+    reportableError.stack = `Error: ${reportableError.message}\n${formattedStacktrace}`
+
+    let withinRateLimit = false
+    await runWithRateLimit({
+      key: 'send-error-to-bugsnag',
+      ...reportingRateLimit,
+      task: async () => {
+        withinRateLimit = true
+      },
     })
-    .join('\n')
-  reportableError.stack = `Error: ${reportableError.message}\n${formattedStacktrace}`
+    if (!withinRateLimit) {
+      outputDebug(`Skipping Bugsnag report due to rate limiting`)
+      report = false
+    }
 
-  let withinRateLimit = false
-  await runWithRateLimit({
-    key: 'send-error-to-bugsnag',
-    ...reportingRateLimit,
-    task: async () => {
-      withinRateLimit = true
-    },
-  })
-  if (!withinRateLimit) {
-    outputDebug(`Skipping Bugsnag report due to rate limiting`)
-    report = false
-  }
-
-  if (report) {
-    initializeBugsnag()
-    await new Promise((resolve, reject) => {
-      outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
-      const eventHandler = (event: Event) => {
-        event.severity = 'error'
-        event.unhandled = unhandled
-      }
-      const errorHandler = (error: unknown) => {
-        if (error) {
-          reject(error)
-        } else {
-          resolve(reportableError)
+    if (report) {
+      initializeBugsnag()
+      await new Promise((resolve, reject) => {
+        outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
+        const eventHandler = (event: Event) => {
+          event.severity = 'error'
+          event.unhandled = unhandled
         }
-      }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      Bugsnag.notify(reportableError, eventHandler, errorHandler)
-    })
+        const errorHandler = (error: unknown) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve(reportableError)
+          }
+        }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        Bugsnag.notify(reportableError, eventHandler, errorHandler)
+      })
+    }
+    return {error: reportableError, reported: report, unhandled}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(`Error reporting to Bugsnag: ${error}`)
+    return {error, reported: false, unhandled: undefined}
   }
-  return {error: reportableError, reported: report, unhandled}
 }
 
 /**
