@@ -140,8 +140,8 @@ export async function sendErrorToBugsnag(
     }
     return {error: reportableError, reported: report, unhandled}
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    outputDebug(`Error reporting to Bugsnag: ${error}`)
+  } catch (err) {
+    outputDebug(`Error reporting to Bugsnag: ${err}`)
     return {error, reported: false, unhandled: undefined}
   }
 }
