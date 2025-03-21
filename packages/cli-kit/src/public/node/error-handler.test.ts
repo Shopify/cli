@@ -142,4 +142,21 @@ describe('send to Bugsnag', () => {
     expect(res.reported).toEqual(false)
     expect(onNotify).not.toHaveBeenCalled()
   })
+
+  test('do not throw an error if Bugsnag fails, but just log it', async () => {
+    // Given
+    onNotify.mockImplementationOnce(() => {
+      throw new Error('Bugsnag is down')
+    })
+    const toThrow = new Error('In test')
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(res.reported).toEqual(false)
+    expect(res.error).toEqual(toThrow)
+    expect(mockOutput.debug()).toMatch('Error reporting to Bugsnag: Error: Bugsnag is down')
+  })
 })
