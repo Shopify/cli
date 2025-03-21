@@ -122,8 +122,8 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 export function parseHumanReadableError(issues: Pick<zod.ZodIssueBase, 'path' | 'message'>[]) {
   let humanReadableError = ''
   issues.forEach((issue) => {
-    const path = issue.path ? issue?.path.join('.') : 'n/a'
-    humanReadableError += `• [${path}]: ${issue.message}\n`
+    const path = issue.path?.length ? `[${issue.path.join('.')}]: ` : ''
+    humanReadableError += `• ${path}${issue.message}\n`
   })
   return humanReadableError
 }
