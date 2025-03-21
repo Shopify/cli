@@ -3,12 +3,11 @@ import {DevServerContext} from '../theme-environment/types.js'
 import {getHtmlHandler} from '../theme-environment/html.js'
 import {getAssetsHandler} from '../theme-environment/local-assets.js'
 import {getProxyHandler} from '../theme-environment/proxy.js'
-import {emitHotReloadEvent, getHotReloadHandler} from '../theme-environment/hot-reload/server.js'
+import {getHotReloadHandler, triggerHotReload} from '../theme-environment/hot-reload/server.js'
 import {emptyThemeFileSystem} from '../theme-fs-empty.js'
 import {initializeDevServerSession} from '../theme-environment/dev-server-session.js'
 import {createApp, toNodeListener} from 'h3'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {extname} from '@shopify/cli-kit/node/path'
 import {createServer} from 'node:http'
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 
@@ -26,7 +25,7 @@ export interface DevExtensionServerContext {
 export async function initializeDevelopmentExtensionServer(theme: Theme, devExt: DevExtensionServerContext) {
   const ctx = await contextDevServerContext(theme, devExt)
 
-  await setupInMemoryTemplateWatcher(ctx)
+  await setupInMemoryTemplateWatcher(theme, ctx)
 
   return createDevelopmentExtensionServer(theme, ctx)
 }
@@ -95,23 +94,12 @@ async function contextDevServerContext(
   }
 }
 
-export async function setupInMemoryTemplateWatcher(ctx: DevServerContext) {
+export async function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext) {
   const fileSystem = ctx.localThemeExtensionFileSystem
 
-  const handleFileUpdate = ({fileKey, onContent, onSync: _}: ThemeFSEventPayload) => {
-    const extension = extname(fileKey)
-    const type = fileKey.split('/')[0]
-
+  const handleFileUpdate = ({fileKey, onContent, onSync}: ThemeFSEventPayload) => {
     onContent(() => {
-      if (type === 'assets' && extension === '.css') {
-        return emitHotReloadEvent({type: 'extCss', key: fileKey})
-      }
-
-      if (type === 'blocks') {
-        return emitHotReloadEvent({type: 'extAppBlock', key: fileKey})
-      }
-
-      emitHotReloadEvent({type: 'full', key: fileKey})
+      triggerHotReload(theme, ctx, onSync, {type: 'update', key: fileKey, payload: {isThemeExtension: true}})
     })
   }
 
