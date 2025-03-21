@@ -673,8 +673,8 @@ importers:
         version: 2.7.0
     devDependencies:
       '@shopify/theme-hot-reload':
-        specifier: ^0.0.10
-        version: 0.0.10
+        specifier: ^0.0.11
+        version: 0.0.11
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
@@ -6594,8 +6594,8 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-hot-reload@0.0.10:
-    resolution: {integrity: sha512-uEMczAFqUoTyyFiecJ/rJt5kELorwun1wNl8nlidA909c2pcKiIgbuIe6H467szK/43BioUkqJq2McLRUf8NJQ==}
+  /@shopify/theme-hot-reload@0.0.11:
+    resolution: {integrity: sha512-h4yJW1j+PIo1BzsElwIf2LPqI7iZE0XUUkucoXdKZZABcsS6/6+5KEAFSQEsn5VzIg1xS7I0ypOMQ7to2kvojQ==}
     dev: true
 
   /@shopify/theme-language-server-common@2.10.1:
