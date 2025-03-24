@@ -1,5 +1,5 @@
+import {UserError} from './dev-session.js'
 import {AppEvent} from '../../app-events/app-event-watcher.js'
-import {UserError} from '../dev-session.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {outputToken, outputContent} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
