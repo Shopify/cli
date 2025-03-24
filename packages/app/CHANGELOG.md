@@ -1,5 +1,35 @@
 # @shopify/app
 
+## 3.77.0
+
+### Minor Changes
+
+- af938f8: refactors fetching app logs to the developer platform client
+- 36dccd6: Automatic cancellation of slow network requests
+
+### Patch Changes
+
+- 9f3c958: Bump `theme-check` packages
+- 4f7dcf7: Bump Shopify/theme-tools packages
+- 6a2c0a1: Added a --use-localhost flag to shopify app dev (E.g: shopify app dev --use-localhost).
+
+  When the --use-localhost flag is present a tunnel won't be used. Instead, the app will be loaded using https localhost. A self-signed cert will be generated using mkcert. This flag works for testing App Bridge, Admin UI, Checkout UI or Pixel extensions. Do not use it for testing Webhooks, Flow Action, App Proxy or POS features.
+
+  We are releasing this as a hidden flag to gather feedback. If you encounter issues, please post here: https://community.shopify.dev/new-topic?title=[Feedback%20for%20--use-localhost]&category=shopify-cli-libraries&tags=app-dev-on-localhost
+
+- 7f4a223: Update codegen graphql API for business-platform
+- Updated dependencies [dbde56d]
+- Updated dependencies [73c78ac]
+- Updated dependencies [9f3c958]
+- Updated dependencies [0d1d9ce]
+- Updated dependencies [4f7dcf7]
+- Updated dependencies [1163bb1]
+- Updated dependencies [f3f66ef]
+- Updated dependencies [36dccd6]
+  - @shopify/theme@3.77.0
+  - @shopify/cli-kit@3.77.0
+  - @shopify/plugin-cloudflare@3.77.0
+
 ## 3.76.0
 
 ### Patch Changes

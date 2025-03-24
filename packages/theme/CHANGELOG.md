@@ -1,5 +1,20 @@
 # @shopify/theme
 
+## 3.77.0
+
+### Patch Changes
+
+- dbde56d: [BugFix] CLI can't force fetch metafields when run by language-server
+- 9f3c958: Bump `theme-check` packages
+- 0d1d9ce: Fix masking 404 errors as 200 when using Section Rendering API.
+- 4f7dcf7: Bump Shopify/theme-tools packages
+- 1163bb1: [internal] Remove unused metafield definition ownerType
+- f3f66ef: Update `theme info` command to support multiple environments
+  EX: `theme info -e env1 -e env2`
+- Updated dependencies [73c78ac]
+- Updated dependencies [36dccd6]
+  - @shopify/cli-kit@3.77.0
+
 ## 3.76.0
 
 ### Minor Changes
