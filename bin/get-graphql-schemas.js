@@ -31,13 +31,13 @@ const schemas = [
   {
     owner: 'Shopify',
     repo: 'business-platform',
-    pathToFile: 'db/graphql/destinations_schema.graphql',
+    pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
   {
     owner: 'Shopify',
     repo: 'business-platform',
-    pathToFile: 'db/graphql/organizations_schema.graphql',
+    pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
   {
