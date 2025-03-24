@@ -91,10 +91,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   const {appWatcher, devSessionStatusManager} = options
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
+  const statusManager = processOptions.devSessionStatusManager
   const logger = new DevSessionLogger(processOptions.stdout)
 
   await logger.info('Preparing dev session')
-  await setLoadingStatusMessage(processOptions)
+  statusManager.setMessage('LOADING')
 
   appWatcher
     .onEvent(async (event) => {
@@ -105,19 +106,16 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
 
       // If there are any build errors, don't update the dev session
       const anyError = event.extensionEvents.some((eve) => eve.buildResult?.status === 'error')
-      if (anyError) {
-        await setBuildErrorStatusMessage(processOptions)
-        return
-      }
+      if (anyError) return statusManager.setMessage('BUILD_ERROR')
 
       if (event.extensionEvents.length === 0) {
         // The app was probably reloaded, but no extensions were affected, we are ready for new changes.
         // But we shouldn't trigger a new dev session update in this case.
-        await setReadyStatusMessage(processOptions)
+        statusManager.setMessage('READY')
         return
       }
 
-      await setLoadingStatusMessage(processOptions)
+      statusManager.setMessage('CHANGE_DETECTED')
 
       await updatePreviewURL(processOptions, event)
 
@@ -167,15 +165,15 @@ async function handleDevSessionResult(
   } else if (result.status === 'created') {
     processOptions.devSessionStatusManager.updateStatus({isReady: true})
     await logger.success(`✅ Ready, watching for changes in your app `)
-    await setReadyStatusMessage(processOptions)
+    processOptions.devSessionStatusManager.setMessage('READY')
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
   } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
     await logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
     if (result.error instanceof Error && result.error.cause === 'validation-error') {
-      await setValidationErrorMessage(processOptions)
+      processOptions.devSessionStatusManager.setMessage('VALIDATION_ERROR')
     } else {
-      await setRemoteErrorStatusMessage(processOptions)
+      processOptions.devSessionStatusManager.setMessage('REMOTE_ERROR')
     }
   }
 
@@ -302,49 +300,14 @@ async function updatePreviewURL(options: DevSessionProcessOptions, event: AppEve
   options.devSessionStatusManager.updateStatus({previewURL: newPreviewURL})
 }
 
-async function setBuildErrorStatusMessage(options: DevSessionProcessOptions) {
-  options.devSessionStatusManager.updateStatus({
-    statusMessage: {message: 'Build error. Please review your code and try again', type: 'error'},
-  })
-}
-
-async function setReadyStatusMessage(options: DevSessionProcessOptions) {
-  options.devSessionStatusManager.updateStatus({
-    statusMessage: {message: 'Ready, watching for changes in your app', type: 'success'},
-  })
-}
-
-async function setLoadingStatusMessage(options: DevSessionProcessOptions) {
-  const message = options.devSessionStatusManager.status.isReady
-    ? 'Change detected, updating dev session'
-    : 'Preparing dev session'
-  options.devSessionStatusManager.updateStatus({
-    statusMessage: {message, type: 'loading'},
-  })
-}
-
-async function setRemoteErrorStatusMessage(options: DevSessionProcessOptions) {
-  options.devSessionStatusManager.updateStatus({
-    statusMessage: {message: 'Error updating dev session', type: 'error'},
-  })
-}
-
-async function setValidationErrorMessage(options: DevSessionProcessOptions) {
-  options.devSessionStatusManager.updateStatus({
-    statusMessage: {message: 'Validation error in your app configuration', type: 'error'},
-  })
-}
-
 async function setUpdatedStatusMessage(options: DevSessionProcessOptions) {
-  options.devSessionStatusManager.updateStatus({
-    statusMessage: {message: 'Updated', type: 'success'},
-  })
+  options.devSessionStatusManager.setMessage('UPDATED')
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   setTimeout(async () => {
     // Reset the status message after 2 seconds
     if (options.devSessionStatusManager.status.statusMessage?.message === 'Updated') {
-      await setReadyStatusMessage(options)
+      options.devSessionStatusManager.setMessage('READY')
     }
   }, 2000)
 }
