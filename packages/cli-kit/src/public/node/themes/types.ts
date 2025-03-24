@@ -7,17 +7,19 @@ export type Key = string
 
 export type ThemeFSEventName = 'add' | 'change' | 'unlink'
 
+type OnSync = (onSuccess: () => void, onError?: () => void) => void
+
 type ThemeFSEvent =
   | {
       type: 'unlink'
-      payload: {fileKey: Key; onSync?: (fn: () => void) => void}
+      payload: {fileKey: Key; onSync: OnSync}
     }
   | {
       type: 'add' | 'change'
       payload: {
         fileKey: Key
         onContent: (fn: (content: string) => void) => void
-        onSync: (fn: () => void) => void
+        onSync: OnSync
       }
     }
 

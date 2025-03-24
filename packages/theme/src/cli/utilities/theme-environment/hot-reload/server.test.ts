@@ -1,4 +1,12 @@
-import {getHotReloadHandler, getInMemoryTemplates, setupInMemoryTemplateWatcher} from './server.js'
+import {
+  getHotReloadHandler,
+  getInMemoryTemplates,
+  handleHotReloadScriptInjection,
+  HOT_RELOAD_VERSION,
+  hotReloadScriptId,
+  hotReloadScriptUrl,
+  setupInMemoryTemplateWatcher,
+} from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
@@ -11,236 +19,284 @@ import type {Theme, ThemeFSEventName} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
 
-describe('hot-reload server', () => {
-  test('emits hot-reload events with proper data', async () => {
-    const testSectionType = 'my-test'
-    const testSectionFileKey = `sections/${testSectionType}.liquid`
-    const assetJsonKey = 'templates/asset.json'
-    const liquidAssetKey = 'assets/style.css.liquid'
-    const assetJsonValue = {
-      sections: {first: {type: testSectionType}, second: {type: testSectionType}, third: {type: 'something-else'}},
-    }
-    const {ctx, addEventListenerSpy, triggerFileEvent, nextTick, hotReloadHandler} = createTestContext({
-      files: [
-        [assetJsonKey, JSON.stringify(assetJsonValue)],
-        [liquidAssetKey, ''],
-      ],
+const THEME_ID = 'my-theme-id'
+
+describe('Hot Reload', () => {
+  describe('handleHotReloadScriptInjection', () => {
+    const htmlWithHrScript = `<html><head><script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head><body></body></html>`
+    const htmlWithoutHrScript = '<html><head></head><body></body></html>'
+
+    test('keeps the SFR injected script when hot reload is enabled', () => {
+      const ctx = {
+        options: {liveReload: 'hot-reload'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithHrScript, ctx)).toEqual(htmlWithHrScript)
     })
 
-    await setupInMemoryTemplateWatcher(ctx)
-    const {event: subscribeEvent, data: hotReloadEvents} = createH3Event('/__hot-reload/subscribe')
-    const streamPromise = hotReloadHandler(subscribeEvent)
-    // Next tick to flush the connection:
-    await nextTick()
+    test('removes the SFR injected script when hot reload is disabled', () => {
+      const ctx = {
+        options: {liveReload: 'off'},
+      } as unknown as DevServerContext
 
-    // -- Initial state:
-    expect(addEventListenerSpy).toHaveBeenCalled()
-    expect(addEventListenerSpy).toHaveBeenCalledWith('add', expect.any(Function))
-    expect(addEventListenerSpy).toHaveBeenCalledWith('change', expect.any(Function))
-    expect(addEventListenerSpy).toHaveBeenCalledWith('unlink', expect.any(Function))
-    // Wait for syncing to finish:
-    await nextTick()
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-
-    // -- Subscribes to HotReload events:
-    expect(hotReloadEvents).toHaveLength(1)
-    // Opens the SSE with the server PID:
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"open","pid":"${process.pid}"}`)
-
-    // -- Updates section files:
-    const {contentSpy: addSectionContentSpy} = await triggerFileEvent('add', testSectionFileKey)
-    expect(addSectionContentSpy).toHaveBeenCalled()
-    expect(getInMemoryTemplates(ctx)).toEqual({[testSectionFileKey]: expect.any(String)})
-    // Finds section names based on the existing JSON file:
-    expect(hotReloadEvents.at(-1)).toMatch(
-      `data: {"type":"section","key":"${testSectionFileKey}","names":["first","second"]}`,
-    )
-
-    // -- Renders the section HTML:
-    vi.mocked(render).mockResolvedValue(
-      new Response('<div><link href="https://my-store.myshopify.com/cdn/path/assets/file.css"></link></div>'),
-    )
-    const renderResponse = await hotReloadHandler(
-      createH3Event(`/__hot-reload/render?section-id=123__first&section-template-name=${testSectionFileKey}`).event,
-    )
-    expect(render).toHaveBeenCalledOnce()
-    expect(render).toHaveBeenCalledWith(
-      ctx.session,
-      expect.objectContaining({
-        path: '/',
-        sectionId: '123__first',
-        replaceTemplates: {[testSectionFileKey]: 'default-value'},
-      }),
-    )
-    // Patches the rendering response:
-    expect(renderResponse).toBeInstanceOf(Response)
-    await expect((renderResponse as Response).text()).resolves.toEqual(
-      '<div><link href="/cdn/path/assets/file.css"></link></div>',
-    )
-
-    // -- Deletes in-memory section after syncing
-    await nextTick()
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-
-    // -- Updates the JSON file with all its side effects:
-    // Make the third type match the file:
-    assetJsonValue.sections.third.type = testSectionType
-    const newAssetJsonValue = JSON.stringify(assetJsonValue)
-    await triggerFileEvent('change', assetJsonKey, newAssetJsonValue)
-    expect(getInMemoryTemplates(ctx)).toEqual({[assetJsonKey]: newAssetJsonValue})
-    // Full refresh:
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${assetJsonKey}"}`)
-
-    // -- Renders the section HTML:
-    await hotReloadHandler(
-      createH3Event(`/__hot-reload/render?section-id=123__third&section-template-name=${testSectionFileKey}`).event,
-    )
-    // The section has already been removed from memory because it's synced in the cloud.
-    // However, the JSON file still needs to be sent to the cloud:
-    expect(render).toHaveBeenLastCalledWith(
-      ctx.session,
-      expect.objectContaining({
-        path: '/',
-        sectionId: '123__third',
-        replaceTemplates: {[assetJsonKey]: newAssetJsonValue},
-      }),
-    )
-
-    // Deletes in-memory after syncing
-    await nextTick()
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-    // Further updates to sections are affected:
-    await triggerFileEvent('change', testSectionFileKey)
-    expect(hotReloadEvents.at(-1)).toMatch(
-      `data: {"type":"section","key":"${testSectionFileKey}","names":["first","second","third"]}`,
-    )
-    await nextTick()
-
-    // -- Unlinks the JSON file properly with all its side effects:
-    await triggerFileEvent('unlink', assetJsonKey)
-    // We don't know if this file is referenced or not in code so it emits a full reload event:
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${assetJsonKey}"}`)
-    // Removes the JSON file from memory:
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-    await nextTick()
-
-    // -- Unlinks CSS Liquid files
-    const {syncSpy: unlinkSyncSpy} = await triggerFileEvent('unlink', liquidAssetKey)
-    // We wait for syncing to finish on liquid assets before emitting a full reload event:
-    await nextTick()
-    expect(unlinkSyncSpy).toHaveBeenCalled()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"css","key":"${liquidAssetKey.replace('.liquid', '')}"}`)
-    // Removes the CSS Liquid file from memory:
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-
-    // Since the JSON file was removed, the section file is not referenced anymore:
-    await triggerFileEvent('change', testSectionFileKey)
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${testSectionFileKey}"}`)
-    await nextTick()
-
-    // -- Updates section groups:
-    const sectionGroupFileKey = testSectionFileKey.replace('.liquid', '.json')
-    const sectionGroupContent = JSON.stringify({
-      sections: {first: {type: testSectionType}, second: {type: testSectionType}},
+      expect(handleHotReloadScriptInjection(htmlWithHrScript, ctx)).toEqual(htmlWithoutHrScript)
     })
-    const {contentSpy: addSectionGroupContentSpy} = await triggerFileEvent(
-      'add',
-      sectionGroupFileKey,
-      sectionGroupContent,
-    )
-    expect(addSectionGroupContentSpy).toHaveBeenCalled()
-    expect(getInMemoryTemplates(ctx)).toEqual({[sectionGroupFileKey]: sectionGroupContent})
-    // Finds section names based on the existing JSON file:
-    expect(hotReloadEvents.at(-1)).toMatch(
-      `data: {"type":"section","key":"${sectionGroupFileKey}","names":["first","second"]}`,
-    )
 
-    // -- Updates CSS files:
-    const cssFileKey = 'assets/style.css'
-    const {syncSpy: cssSyncSpy} = await triggerFileEvent('add', cssFileKey)
-    // It does not add assets to the in-memory templates:
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-    // Emits a CSS HotReload event immediately without waiting for syncing:
-    expect(cssSyncSpy).not.toHaveBeenCalled()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"css","key":"${cssFileKey}"}`)
+    test('injects the hot reload script if missing from SFR when hot reload is enabled', () => {
+      const ctx = {
+        options: {liveReload: 'hot-reload'},
+      } as unknown as DevServerContext
 
-    // -- Updates CSS Liquid files:
-    const cssLiquidFileKey = 'assets/style.css.liquid'
-    const {syncSpy: cssLiquidSyncSpy} = await triggerFileEvent('add', cssLiquidFileKey)
-    // It does not add assets to the in-memory templates:
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-    // Emits a CSS HotReload event after syncing:
-    expect(cssLiquidSyncSpy).toHaveBeenCalled()
-    await nextTick()
-    // Removes the `.liquid` extension before sending it to the browser:
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"css","key":"${cssLiquidFileKey.replace('.liquid', '')}"}`)
-
-    // -- Updates other files:
-    const jsFileKey = 'assets/something.js'
-    const {syncSpy: jsSyncSpy} = await triggerFileEvent('add', jsFileKey)
-    expect(jsSyncSpy).not.toHaveBeenCalled()
-    expect(hotReloadEvents.at(-1)).toMatch(`data: {"type":"full","key":"${jsFileKey}"}`)
-
-    // -- Filters templates by route:
-    const indexJson = 'templates/index.json'
-    const searchJson = 'templates/search.json'
-    const jsonContent = '{}'
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-    await Promise.all([
-      triggerFileEvent('add', indexJson, jsonContent),
-      triggerFileEvent('add', searchJson, jsonContent),
-    ])
-    // All templates:
-    expect(getInMemoryTemplates(ctx)).toEqual({[indexJson]: jsonContent, [searchJson]: jsonContent})
-    expect(getInMemoryTemplates(ctx, '/unknown')).toEqual({[indexJson]: jsonContent, [searchJson]: jsonContent})
-    // Only index:
-    expect(getInMemoryTemplates(ctx, '/')).toEqual({[indexJson]: jsonContent})
-    expect(getInMemoryTemplates(ctx, '/index.html')).toEqual({[indexJson]: jsonContent})
-    // Only search:
-    expect(getInMemoryTemplates(ctx, '/search')).toEqual({[searchJson]: jsonContent})
-    // Removed from memory after syncing:
-    await nextTick()
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-
-    // -- Filters templates by locale:
-    const enLocale = 'locales/en.default.json'
-    const enSchemaLocale = 'locales/en.default.schema.json'
-    const esLocale = 'locales/es.json'
-    const esSchemaLocale = 'locales/es.schema.json'
-    expect(getInMemoryTemplates(ctx)).toEqual({})
-    await Promise.all([
-      triggerFileEvent('add', enLocale, jsonContent),
-      triggerFileEvent('add', enSchemaLocale, jsonContent),
-      triggerFileEvent('add', esLocale, jsonContent),
-      triggerFileEvent('add', esSchemaLocale, jsonContent),
-    ])
-    // Unknown locale, uses default:
-    expect(getInMemoryTemplates(ctx)).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
-    expect(getInMemoryTemplates(ctx, undefined, 'unknown')).toEqual({
-      [enLocale]: jsonContent,
-      [enSchemaLocale]: jsonContent,
+      expect(handleHotReloadScriptInjection(htmlWithoutHrScript, ctx)).toEqual(htmlWithHrScript)
     })
-    // Known locale with schemas:
-    expect(getInMemoryTemplates(ctx, undefined, 'en')).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
-    expect(getInMemoryTemplates(ctx, undefined, 'es')).toEqual({[esLocale]: jsonContent, [esSchemaLocale]: jsonContent})
-    // Removed from memory after syncing:
-    await nextTick()
-    expect(getInMemoryTemplates(ctx)).toEqual({})
 
-    // -- Promise resolves when connection is stopped:
-    subscribeEvent.node.req.destroy()
-    await expect(streamPromise).resolves.not.toThrow()
+    test('does not inject the hot reload script if missing from SFR when hot reload is disabled', () => {
+      const ctx = {
+        options: {liveReload: 'off'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithoutHrScript, ctx)).toEqual(htmlWithoutHrScript)
+    })
+  })
+
+  describe('server events', () => {
+    test('handles hot reload events with proper data and syncing', async () => {
+      const testSectionType = 'my-test'
+      const testSectionFileKey = `sections/${testSectionType}.liquid`
+      const templateKey = 'templates/index.json'
+      const templateValue = {
+        sections: {first: {type: testSectionType}, second: {type: testSectionType}},
+      }
+
+      const {ctx, addEventListenerSpy, triggerFileEvent, nextTick, hotReloadHandler} = createTestContext({
+        files: [[templateKey, JSON.stringify(templateValue)]],
+      })
+
+      await setupInMemoryTemplateWatcher({id: THEME_ID} as unknown as Theme, ctx)
+      const {event: subscribeEvent, data: hotReloadEvents} = createH3Event('/', {accept: 'text/event-stream'})
+      const streamPromise = hotReloadHandler(subscribeEvent)
+      await nextTick()
+
+      // Initial connection setup
+      expect(addEventListenerSpy).toHaveBeenCalledWith('add', expect.any(Function))
+      expect(addEventListenerSpy).toHaveBeenCalledWith('change', expect.any(Function))
+      expect(addEventListenerSpy).toHaveBeenCalledWith('unlink', expect.any(Function))
+      expect(hotReloadEvents[0]).toMatch(
+        `data: {"type":"open","pid":"${process.pid}","themeId":"${THEME_ID}","version":"${HOT_RELOAD_VERSION}"}`,
+      )
+
+      // Test section file update
+      await triggerFileEvent('add', testSectionFileKey)
+      expect(getInMemoryTemplates(ctx)).toEqual({[testSectionFileKey]: expect.any(String)})
+
+      const expectedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${testSectionFileKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
+        getInMemoryTemplates(ctx),
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
+
+      // Verify local sync event
+      expect(hotReloadEvents.at(-1)).toMatch(expectedSectionEvent)
+
+      // Wait for remote sync
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedSectionEvent.replace('local', 'remote'))
+
+      // Test section rendering
+      vi.mocked(render).mockResolvedValue(
+        new Response('<div><link href="https://my-store.myshopify.com/cdn/path/assets/file.css"></link></div>'),
+      )
+      const renderResponse = await hotReloadHandler(
+        createH3Event(`/?section_id=123__first&section_key=${testSectionFileKey}&_fd=0&pb=0`).event,
+      )
+
+      expect(render).toHaveBeenCalledWith(
+        ctx.session,
+        expect.objectContaining({
+          path: '/',
+          sectionId: '123__first',
+          replaceTemplates: getInMemoryTemplates(ctx),
+        }),
+      )
+
+      // Patches the rendering response:
+      expect(renderResponse).toBeInstanceOf(Response)
+      await expect((renderResponse as Response).text()).resolves.toEqual(
+        '<div><link href="/cdn/path/assets/file.css"></link></div>',
+      )
+
+      // -- Deletes in-memory section after syncing
+      await nextTick()
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+
+      // -- Test template update --
+      const newTemplateValue = JSON.stringify({
+        sections: {first: {type: testSectionType}, second: {type: testSectionType}, third: {type: testSectionType}},
+      })
+      await triggerFileEvent('change', templateKey, newTemplateValue)
+
+      expect(getInMemoryTemplates(ctx)).toEqual({[templateKey]: newTemplateValue})
+
+      // Since this is a template, sectionNames will be empty (no sections to reload)
+      const expectedTemplateEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${templateKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
+        getInMemoryTemplates(ctx),
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
+
+      // Verify local sync event for JSON update
+      expect(hotReloadEvents.at(-1)).toMatch(expectedTemplateEvent)
+      // Wait for remote sync
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedTemplateEvent.replace('local', 'remote'))
+
+      // -- Test section group update --
+      const anotherSectionType = 'my-test-2'
+      const sectionGroupKey = 'sections/header-group.json'
+      const sectionGroupValue = JSON.stringify({
+        sections: {first: {type: anotherSectionType}, second: {type: anotherSectionType}},
+      })
+      await triggerFileEvent('change', sectionGroupKey, sectionGroupValue)
+
+      expect(getInMemoryTemplates(ctx)).toEqual({[sectionGroupKey]: sectionGroupValue})
+
+      // Since this is a section group, sectionNames will contain all the section names
+      const expectedSectionGroupEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${sectionGroupKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
+        getInMemoryTemplates(ctx),
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
+
+      // Verify local sync event for JSON update
+      expect(hotReloadEvents.at(-1)).toMatch(expectedSectionGroupEvent)
+      // Wait for remote sync
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedSectionGroupEvent.replace('local', 'remote'))
+
+      // -- Test section group file deletion and how it affects the section names --
+      const anotherSectionKey = `sections/${anotherSectionType}.liquid`
+      await triggerFileEvent('change', anotherSectionKey)
+      // Section is referenced by section group, so it includes the section names:
+      expect(hotReloadEvents.at(-1)).toMatch(
+        `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
+          getInMemoryTemplates(ctx),
+        )}},"version":"${HOT_RELOAD_VERSION}"}`,
+      )
+      // Wait for remote sync
+      await nextTick()
+
+      await triggerFileEvent('unlink', sectionGroupKey)
+      expect(hotReloadEvents.at(-1)).toMatch(
+        `data: {"sync":"local","themeId":"${THEME_ID}","type":"delete","key":"${sectionGroupKey}","version":"${HOT_RELOAD_VERSION}"}`,
+      )
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(
+        `data: {"sync":"remote","themeId":"${THEME_ID}","type":"delete","key":"${sectionGroupKey}","version":"${HOT_RELOAD_VERSION}"}`,
+      )
+
+      // Since the section group JSON file was removed, the section file is not referenced anymore
+      await triggerFileEvent('change', anotherSectionKey)
+      expect(getInMemoryTemplates(ctx)).toEqual({[anotherSectionKey]: 'default-value'})
+      const expectedUnreferencedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
+        getInMemoryTemplates(ctx),
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
+      expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent)
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent.replace('local', 'remote'))
+
+      // -- Test CSS file updates --
+      const cssFileKey = 'assets/style.css'
+      await triggerFileEvent('add', cssFileKey)
+      // It does not add assets to the in-memory templates:
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+      const expectedCssEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
+      expect(hotReloadEvents.at(-1)).toMatch(expectedCssEvent)
+      // Wait for remote sync
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedCssEvent.replace('local', 'remote'))
+
+      // -- Test CSS Liquid file updates --
+      const cssLiquidFileKey = 'assets/style.css.liquid'
+      await triggerFileEvent('add', cssLiquidFileKey)
+      // It does not add assets to the in-memory templates:
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+      const expectedCssLiquidEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
+      expect(hotReloadEvents.at(-1)).toMatch(expectedCssLiquidEvent)
+      // Wait for remote sync
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedCssLiquidEvent.replace('local', 'remote'))
+
+      // -- Test other file types (e.g. JS) --
+      const jsFileKey = 'assets/something.js'
+      await triggerFileEvent('add', jsFileKey)
+      const expectedJsEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
+      expect(hotReloadEvents.at(-1)).toMatch(expectedJsEvent)
+      // Wait for remote sync
+      await nextTick()
+      expect(hotReloadEvents.at(-1)).toMatch(expectedJsEvent.replace('local', 'remote'))
+
+      // -- Test template filtering by route --
+      const indexJson = 'templates/index.json'
+      const searchJson = 'templates/search.json'
+      const jsonContent = '{}'
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+      await Promise.all([
+        triggerFileEvent('add', indexJson, jsonContent),
+        triggerFileEvent('add', searchJson, jsonContent),
+      ])
+      // All templates:
+      expect(getInMemoryTemplates(ctx)).toEqual({[indexJson]: jsonContent, [searchJson]: jsonContent})
+      expect(getInMemoryTemplates(ctx, '/unknown')).toEqual({[indexJson]: jsonContent, [searchJson]: jsonContent})
+      // Only index:
+      expect(getInMemoryTemplates(ctx, '/')).toEqual({[indexJson]: jsonContent})
+      expect(getInMemoryTemplates(ctx, '/index.html')).toEqual({[indexJson]: jsonContent})
+      // Only search:
+      expect(getInMemoryTemplates(ctx, '/search')).toEqual({[searchJson]: jsonContent})
+      // Removed from memory after syncing:
+      await nextTick()
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+
+      // Test template filtering by locale
+      const enLocale = 'locales/en.default.json'
+      const enSchemaLocale = 'locales/en.default.schema.json'
+      const esLocale = 'locales/es.json'
+      const esSchemaLocale = 'locales/es.schema.json'
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+      await Promise.all([
+        triggerFileEvent('add', enLocale, jsonContent),
+        triggerFileEvent('add', enSchemaLocale, jsonContent),
+        triggerFileEvent('add', esLocale, jsonContent),
+        triggerFileEvent('add', esSchemaLocale, jsonContent),
+      ])
+      // Unknown locale, uses default:
+      expect(getInMemoryTemplates(ctx)).toEqual({[enLocale]: jsonContent, [enSchemaLocale]: jsonContent})
+      expect(getInMemoryTemplates(ctx, undefined, 'unknown')).toEqual({
+        [enLocale]: jsonContent,
+        [enSchemaLocale]: jsonContent,
+      })
+      // Known locale with schemas:
+      expect(getInMemoryTemplates(ctx, undefined, 'en')).toEqual({
+        [enLocale]: jsonContent,
+        [enSchemaLocale]: jsonContent,
+      })
+      expect(getInMemoryTemplates(ctx, undefined, 'es')).toEqual({
+        [esLocale]: jsonContent,
+        [esSchemaLocale]: jsonContent,
+      })
+      // Removed from memory after syncing:
+      await nextTick()
+      expect(getInMemoryTemplates(ctx)).toEqual({})
+
+      // Test connection close
+      subscribeEvent.node.req.destroy()
+      await expect(streamPromise).resolves.not.toThrow()
+    })
   })
 })
 
 // -- Test utilities --
 
-function createH3Event(url: string) {
+function createH3Event(url: string, headers?: {[key: string]: string}) {
   const data: string[] = []
   const decoder = new TextDecoder()
 
   const socket = new Socket()
   const req = new IncomingMessage(socket)
+  req.headers = {...req.headers, ...headers}
   const res = new ServerResponse(req)
   // H3 checks `res.socket` for streaming
   Object.defineProperty(res, 'socket', {value: socket, writable: false})
@@ -262,47 +318,47 @@ function createTestContext(options?: {files?: [string, string][]}) {
 
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = fakeThemeFileSystem('tmp', new Map())
-  const upsertFile = (key: string, value: string) => {
-    localThemeFileSystem.files.set(key, {checksum: '1', key, value})
-    localThemeFileSystem.unsyncedFileKeys.add(key)
-    // Sync the file after 2 ticks to simulate async operations:
-    nextTick()
-      .then(nextTick)
-      .then(() => localThemeFileSystem.unsyncedFileKeys.delete(key))
-      .catch(() => {})
-  }
 
-  options?.files?.forEach(([key, value]) => upsertFile(key, value))
+  // Initialize files without auto-sync for initial setup
+  options?.files?.forEach(([key, value]) => {
+    localThemeFileSystem.files.set(key, {checksum: '1', key, value})
+  })
 
   const addEventListenerSpy = vi.spyOn(localThemeFileSystem, 'addEventListener')
 
   /** Updates the fake file system and triggers events */
   const triggerFileEvent = async <T extends ThemeFSEventName>(event: T, fileKey: string, content = 'default-value') => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-    const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
-    const contentSpy = vi.fn((fn) => fn(content))
-    const syncSpy = vi.fn((fn) => {
-      // Waits 2 ticks to simulate async operations:
-      nextTick()
-        .then(nextTick)
-        .then(fn)
-        .catch(() => {})
-    })
-
-    const isUnlink = event === 'unlink'
-    if (isUnlink) {
+    if (event === 'unlink') {
       localThemeFileSystem.files.delete(fileKey)
     } else {
-      upsertFile(fileKey, content)
+      localThemeFileSystem.files.set(fileKey, {checksum: '1', key: fileKey, value: content})
+      localThemeFileSystem.unsyncedFileKeys.add(fileKey)
+      // Wait 1 tick for the event stream to be flushed,
+      // then another tick to simulate the remote sync
+      nextTick()
+        .then(nextTick)
+        .then(() => localThemeFileSystem.unsyncedFileKeys.delete(fileKey))
+        .catch(() => {})
     }
 
-    handler(isUnlink ? {fileKey, onSync: syncSpy} : {fileKey, onContent: contentSpy, onSync: syncSpy})
+    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+    const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
 
-    // Waits for the event to be processed. Since we are using a tick here,
-    // the previous async operations need to be deferred by at least 2 ticks.
+    handler({
+      fileKey,
+      onContent: (fn) => fn(content),
+      onSync: (fn) => {
+        // Wait 1 tick for the event stream to be flushed,
+        // then another tick to simulate the remote sync
+        nextTick()
+          .then(nextTick)
+          .then(fn)
+          .catch(() => {})
+      },
+    })
+
+    // Waits for the event to be processed and flushed
     await nextTick()
-
-    return isUnlink ? {syncSpy} : {contentSpy, syncSpy}
   }
 
   const ctx: DevServerContext = {
@@ -329,7 +385,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
   }
 
   /** Handles http events */
-  const hotReloadHandler = getHotReloadHandler({id: 'my-theme-id'} as unknown as Theme, ctx)
+  const hotReloadHandler = getHotReloadHandler({id: THEME_ID} as unknown as Theme, ctx)
 
   return {ctx, addEventListenerSpy, triggerFileEvent, nextTick, hotReloadHandler}
 }

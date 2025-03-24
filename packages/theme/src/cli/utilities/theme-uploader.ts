@@ -2,7 +2,7 @@ import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {renderTasksToStdErr} from './theme-ui.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
-import {emitHotReloadEvent} from './theme-environment/hot-reload/server.js'
+import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
@@ -383,17 +383,17 @@ async function uploadBatch(
   // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
     uploadResults.set(result.key, result)
-    updateUploadErrors(result, localThemeFileSystem)
+    updateUploadErrors(result, localThemeFileSystem, themeId)
   })
 }
 
-export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFileSystem) {
+export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFileSystem, themeId: number) {
   if (result.success) {
     localThemeFileSystem.uploadErrors.delete(result.key)
   } else {
     const errors = result.errors?.asset ?? ['Response was not successful.']
     localThemeFileSystem.uploadErrors.set(result.key, errors)
-    emitHotReloadEvent({type: 'full', key: result.key})
+    triggerBrowserFullReload(themeId, result.key)
   }
 }
 
