@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.77.0
+
+### Minor Changes
+
+- 73c78ac: Enable automatic retry for network errors (i.e. DNS or connectivity issues). Can be disabled with SHOPIFY_CLI_SKIP_NETWORK_LEVEL_RETRY
+- 36dccd6: Automatic cancellation of slow network requests
+
 ## 3.76.0
 
 ### Minor Changes
