@@ -826,7 +826,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       createUnauthorizedHandler(this),
     )
 
-    if (releaseResult.appReleaseCreate?.release) {
+    if (releaseResult.appReleaseCreate.release) {
       return {
         appRelease: {
           appVersion: {
