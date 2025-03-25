@@ -46,7 +46,7 @@ import {
 import {AppLogsSubscribeVariables, AppLogsSubscribeResponse} from '../api/graphql/subscribe_to_app_logs.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
-import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {AppConfiguration, AppManifest, isCurrentAppSchema} from '../models/app/app.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {
   ExtensionUpdateDraftMutation,
@@ -190,10 +190,20 @@ export type AppDeployOptions = AppDeployVariables & {
   name: string
 }
 
-export interface DevSessionOptions {
+export interface DevSessionSharedOptions {
   shopFqdn: string
   appId: string
+}
+
+export interface DevSessionCreateOptions extends DevSessionSharedOptions {
   assetsUrl: string
+  manifest: AppManifest
+}
+
+export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
+  assetsUrl: string
+  manifest: AppManifest
+  inheritedModuleUids: string[]
 }
 
 type WithUserErrors<T> = T & {
@@ -290,8 +300,8 @@ export interface DeveloperPlatformClient {
   subscribeToAppLogs: (input: AppLogsSubscribeVariables) => Promise<AppLogsSubscribeResponse>
   appLogs: (options: AppLogsOptions) => Promise<AppLogsResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
-  devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
-  devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
-  devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
+  devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
+  devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
+  devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (input: string) => Promise<string>
 }
