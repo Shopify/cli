@@ -21,6 +21,7 @@ import {
   CreateAppOptions,
   AppLogsResponse,
   createUnauthorizedHandler,
+  UserError,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -96,7 +97,10 @@ import {
 } from '../../api/graphql/app-management/generated/active-app-release.js'
 import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
-import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
+import {
+  CreateAppVersion,
+  CreateAppVersionMutation,
+} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
@@ -759,8 +763,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
       {requestMode: 'slow-request'},
       createUnauthorizedHandler(this),
     )
-    const {version, userErrors} = result.appVersionCreate
-    if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
+    const {version} = result.appVersionCreate
+    const userErrors = result.appVersionCreate.userErrors.map(toUserError) ?? []
+    if (!version) return {appDeploy: {userErrors}}
 
     const versionResult = {
       appDeploy: {
@@ -779,7 +784,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }),
           message: version.metadata.message,
         },
-        userErrors: userErrors?.map((err) => ({...err, details: []})),
+        userErrors,
       },
     }
     if (noRelease) return versionResult
@@ -794,9 +799,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
       undefined,
       createUnauthorizedHandler(this),
     )
-    if (releaseResult.appReleaseCreate?.userErrors) {
+    if (releaseResult.appReleaseCreate.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
-        releaseResult.appReleaseCreate.userErrors.map((err) => ({...err, details: []})),
+        releaseResult.appReleaseCreate.userErrors.map(toUserError),
       )
     }
 
@@ -1264,4 +1269,20 @@ interface FetchAppLogsDevDashboardOptions {
     status?: string
     source?: string
   }
+}
+
+function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErrors'][number]): UserError {
+  const details = []
+  const extensionId = (err.on[0] as {user_identifier: string})?.user_identifier
+  if (extensionId) {
+    details.push({
+      extension_id: extensionId,
+      // Adding the fields extension_title and specification_identifier to
+      // matchthe Partners interface for now, but this will be removed when
+      // PartnersClient is gone.
+      extension_title: 'not returned from API',
+      specification_identifier: 'not returned from API',
+    })
+  }
+  return {...err, details}
 }
