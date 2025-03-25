@@ -1,7 +1,7 @@
 import {DevSessionLogger} from './dev-session-logger.js'
+import {UserError} from './dev-session.js'
 import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {UserError} from '../dev-session.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {Writable} from 'stream'
