@@ -1,7 +1,7 @@
 import {renderDev} from './ui.js'
 import {Dev} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
-import {DevSessionStatusManager} from './processes/dev-session-status-manager.js'
+import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'

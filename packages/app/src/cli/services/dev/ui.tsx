@@ -1,6 +1,6 @@
 import {Dev, DevProps} from './ui/components/Dev.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
-import {DevSessionStatusManager} from './processes/dev-session-status-manager.js'
+import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
