@@ -3,7 +3,6 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {getExtensionUploadURL} from '../../../deploy/upload.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -45,7 +44,6 @@ export class DevSession {
   private readonly logger: DevSessionLogger
   private readonly options: DevSessionProcessOptions
   private readonly appWatcher: AppEventWatcher
-  private readonly stdout: Writable
   private readonly bundlePath: string
   private bundleControllers: AbortController[] = []
 
@@ -54,7 +52,6 @@ export class DevSession {
     this.logger = new DevSessionLogger(stdout)
     this.options = processOptions
     this.appWatcher = processOptions.appWatcher
-    this.stdout = stdout
     this.bundlePath = processOptions.appWatcher.buildOutputPath
   }
 
@@ -68,50 +65,33 @@ export class DevSession {
       .onError(async (error) => this.handleDevSessionResult({status: 'unknown-error', error}))
   }
 
+  /**
+   * Handle the app event, after validating the event it might trigger a dev session update.
+   * @param event - The app event
+   */
   private async onEvent(event: AppEvent) {
-    if (!this.statusManager.status.isReady) {
-      await this.logger.warning('Change detected, but dev session is not ready yet.')
-      return
-    }
-
-    // If there are any build errors, don't update the dev session
-    const anyError = event.extensionEvents.some((eve) => eve.buildResult?.status === 'error')
-    if (anyError) return this.statusManager.setMessage('BUILD_ERROR')
-
-    if (event.extensionEvents.length === 0) {
-      // The app was probably reloaded, but no extensions were affected, we are ready for new changes.
-      // But we shouldn't trigger a new dev session update in this case.
-      this.statusManager.setMessage('READY')
-      return
-    }
-
+    const eventIsValid = await this.validateAppEvent(event)
+    if (!eventIsValid) return
+    this.abortPreviousOngoingUpdates()
     this.statusManager.setMessage('CHANGE_DETECTED')
-
     await this.updatePreviewURL(event)
-
-    // Cancel any ongoing bundle and upload process
-    this.bundleControllers.forEach((controller) => controller.abort())
-    // Remove aborted controllers from array:
-    this.bundleControllers = this.bundleControllers.filter((controller) => !controller.signal.aborted)
-
     await this.logger.logExtensionEvents(event)
 
     const networkStartTime = startHRTime()
     const result = await this.bundleExtensionsAndUpload(event)
     await this.handleDevSessionResult(result, event)
-    outputDebug(
+    await this.logger.debug(
       `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
-      this.stdout,
     )
   }
 
+  /**
+   * Handle the start of the dev session. It will create the dev session if there are no errors in the extensions.
+   * @param event - The app event
+   */
   private async onStart(event: AppEvent) {
-    const buildErrors = event.extensionEvents.filter((eve) => eve.buildResult?.status === 'error')
-    if (buildErrors.length) {
-      const errors = buildErrors.map((error) => ({
-        error: 'Build error. Please review your code and try again.',
-        prefix: error.extension.handle,
-      }))
+    const errors = this.parseBuildErrors(event)
+    if (errors.length) {
       await this.logger.logMultipleErrors(errors)
       throw new AbortError('Dev session aborted, build errors detected in extensions.')
     }
@@ -119,6 +99,69 @@ export class DevSession {
     await this.handleDevSessionResult(result, event)
   }
 
+  /**
+   * Validate the app event: It checks if the event requires a new dev session update.
+   * If the dev session is not ready, it will return false.
+   * If there are build errors, it will return false.
+   * If there are no extension events, it will return false.
+   * Otherwise, it will return true.
+   *
+   * @param event - The app event
+   * @returns Whether the app event is valid
+   */
+  private async validateAppEvent(event: AppEvent): Promise<boolean> {
+    if (!this.statusManager.status.isReady) {
+      await this.logger.warning('Change detected, but dev session is not ready yet.')
+      return false
+    }
+
+    // If there are any build errors, don't update the dev session
+    const errors = this.parseBuildErrors(event)
+    if (errors.length) {
+      await this.logger.logMultipleErrors(errors)
+      this.statusManager.setMessage('BUILD_ERROR')
+      return false
+    }
+
+    if (event.extensionEvents.length === 0) {
+      // The app was probably reloaded, but no extensions were affected, we are ready for new changes.
+      // But we shouldn't trigger a new dev session update in this case.
+      this.statusManager.setMessage('READY')
+      return false
+    }
+
+    return true
+  }
+
+  /**
+   * Parse the build errors from the app event
+   * @param event - The app event
+   * @returns The build errors
+   */
+  private parseBuildErrors(event: AppEvent) {
+    const buildErrors = event.extensionEvents.filter((eve) => eve.buildResult?.status === 'error')
+    return buildErrors.map((error) => ({
+      error: 'Build error. Please review your code and try again.',
+      prefix: error.extension.handle,
+    }))
+  }
+
+  /**
+   * Abort any previous ongoing updates
+   * If multiple changes are detected very quickly, this will abort the previous bundle and upload process
+   * and only the last one will be completed.
+   */
+  private abortPreviousOngoingUpdates() {
+    this.bundleControllers.forEach((controller) => controller.abort())
+    this.bundleControllers = this.bundleControllers.filter((controller) => !controller.signal.aborted)
+  }
+
+  /**
+   * Handle the result of the dev session
+   * It basically logs the result and updates the status message.
+   * @param result - The result of the dev session
+   * @param event - The app event
+   */
   private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
     if (result.status === 'updated') {
       await this.logger.success(`✅ Updated`)
@@ -129,7 +172,7 @@ export class DevSession {
       await this.logger.success(`✅ Ready, watching for changes in your app `)
       this.statusManager.setMessage('READY')
     } else if (result.status === 'aborted') {
-      outputDebug('❌ Session update aborted (new change detected or error in Session Update)', this.stdout)
+      await this.logger.debug('❌ Session update aborted (new change detected or error in Session Update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
       if (result.error instanceof Error && result.error.cause === 'validation-error') {
@@ -146,12 +189,21 @@ export class DevSession {
     }
   }
 
+  /**
+   * Update the preview URL, it only changes if we move between a non-previewable state and a previewable state.
+   * (i.e. if we go from a state with no extensions to a state with ui-extensions or vice versa)
+   * @param event - The app event
+   */
   private async updatePreviewURL(event: AppEvent) {
     const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
     const newPreviewURL = hasPreview ? this.options.appLocalProxyURL : this.options.appPreviewURL
     this.statusManager.updateStatus({previewURL: newPreviewURL})
   }
 
+  /**
+   * Set the status message to 'UPDATED'
+   * Reset the status message to 'READY' after 2 seconds
+   */
   private async setUpdatedStatusMessage() {
     this.statusManager.setMessage('UPDATED')
 
@@ -179,20 +231,11 @@ export class DevSession {
     this.bundleControllers.push(currentBundleController)
 
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    outputDebug('Bundling and uploading extensions', this.stdout)
     const bundleZipPath = joinPath(dirname(this.bundlePath), `bundle.zip`)
-
-    // Generate app manifest in the bundle folder (overwriting the previous one)
-    const appManifest = await appEvent.app.manifest()
-    const manifestPath = joinPath(this.bundlePath, 'manifest.json')
-    await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 
     // Create zip file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await zip({
-      inputDirectory: this.bundlePath,
-      outputZipPath: bundleZipPath,
-    })
+    await this.createZipFile(appEvent, bundleZipPath)
 
     // Get a signed URL to upload the zip file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
@@ -200,38 +243,16 @@ export class DevSession {
 
     // Upload the zip file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const form = formData()
-    const buffer = readFileSync(bundleZipPath)
-    form.append('my_upload', buffer)
-    await fetch(
-      signedURL,
-      {
-        method: 'put',
-        body: buffer,
-        headers: form.getHeaders(),
-      },
-      'slow-request',
-    )
-
-    const payload: DevSessionPayload = {
-      shopFqdn: this.options.storeFqdn,
-      appId: this.options.appId,
-      assetsUrl: signedURL,
-    }
+    await this.uploadToGCS(signedURL, bundleZipPath)
 
     // Create or update the dev session
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     try {
+      const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
       if (this.statusManager.status.isReady) {
-        const result = await this.devSessionUpdateWithRetry(payload)
-        const errors = result.devSessionUpdate?.userErrors ?? []
-        if (errors.length) return {status: 'remote-error', error: errors}
-        return {status: 'updated'}
+        return this.devSessionUpdateWithRetry(payload)
       } else {
-        const result = await this.devSessionCreateWithRetry(payload)
-        const errors = result.devSessionCreate?.userErrors ?? []
-        if (errors.length) return {status: 'remote-error', error: errors}
-        return {status: 'created'}
+        return this.devSessionCreateWithRetry(payload)
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -241,7 +262,7 @@ export class DevSession {
         if (error.response.status === 401 || error.response.status === 403) {
           throw new AbortError('Auth session expired. Please run `shopify app dev` again.')
         } else {
-          outputDebug(JSON.stringify(error.response, null, 2), this.stdout)
+          await this.logger.debug(JSON.stringify(error.response, null, 2))
           throw new AbortError('Unknown error')
         }
       } else {
@@ -250,6 +271,26 @@ export class DevSession {
     }
   }
 
+  /**
+   * Create a zip file with the extensions and the manifest.json file
+   * @param appEvent - The app event
+   * @param bundleZipPath - The path to the zip file
+   */
+  private async createZipFile(appEvent: AppEvent, bundleZipPath: string) {
+    const appManifest = await appEvent.app.manifest()
+    const manifestPath = joinPath(this.bundlePath, 'manifest.json')
+    await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
+
+    await zip({
+      inputDirectory: this.bundlePath,
+      outputZipPath: bundleZipPath,
+    })
+  }
+
+  /**
+   * Get a signed URL to upload the zip file to GCS
+   * @returns The signed URL
+   */
   private async getSignedURLWithRetry() {
     return performActionWithRetryAfterRecovery(
       async () =>
@@ -262,19 +303,45 @@ export class DevSession {
     )
   }
 
-  private async devSessionUpdateWithRetry(payload: DevSessionPayload) {
-    return performActionWithRetryAfterRecovery(
+  /**
+   * Upload the zip file to GCS
+   * @param signedURL - The signed URL to upload the zip file to
+   * @param bundleZipPath - The path to the zip file
+   */
+  private async uploadToGCS(signedURL: string, bundleZipPath: string) {
+    const form = formData()
+    const buffer = readFileSync(bundleZipPath)
+    form.append('my_upload', buffer)
+    await fetch(signedURL, {method: 'put', body: buffer, headers: form.getHeaders()}, 'slow-request')
+  }
+
+  /**
+   * Update the dev session
+   * @param payload - The payload to update the dev session with
+   */
+  private async devSessionUpdateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+    const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionUpdate(payload),
       () => this.options.developerPlatformClient.refreshToken(),
     )
+    const errors = result.devSessionUpdate?.userErrors ?? []
+    if (errors.length) return {status: 'remote-error', error: errors}
+    return {status: 'updated'}
   }
 
-  // If the Dev Session Create fails, we try to refresh the token and retry the operation
-  // This only happens if an error is thrown. Won't be triggered if we receive an error inside the response.
-  private async devSessionCreateWithRetry(payload: DevSessionPayload) {
-    return performActionWithRetryAfterRecovery(
+  /**
+   * Create the dev session
+   * If the Dev Session Create fails, we try to refresh the token and retry the operation
+   * This only happens if an error is thrown. Won't be triggered if we receive an error inside the response.
+   * @param payload - The payload to create the dev session with
+   */
+  private async devSessionCreateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+    const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionCreate(payload),
       () => this.options.developerPlatformClient.refreshToken(),
     )
+    const errors = result.devSessionCreate?.userErrors ?? []
+    if (errors.length) return {status: 'remote-error', error: errors}
+    return {status: 'created'}
   }
 }

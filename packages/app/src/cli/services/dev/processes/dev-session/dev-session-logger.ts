@@ -1,7 +1,7 @@
 import {UserError} from './dev-session.js'
 import {AppEvent} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {outputToken, outputContent} from '@shopify/cli-kit/node/output'
+import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
@@ -23,6 +23,10 @@ export class DevSessionLogger {
 
   async success(message: string) {
     await this.log(outputContent`${outputToken.green(message)}`.value)
+  }
+
+  async debug(message: string) {
+    outputDebug(message, this.stdout)
   }
 
   async error(message: string, prefix?: string) {
