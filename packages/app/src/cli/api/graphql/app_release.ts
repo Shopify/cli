@@ -1,3 +1,4 @@
+import {UserError} from '../../utilities/developer-platform-client.js'
 import {gql} from 'graphql-request'
 // eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const AppRelease = gql`
@@ -18,11 +19,6 @@ export const AppRelease = gql`
   }
 `
 
-interface ErrorDetail {
-  extension_id: number
-  extension_title: string
-}
-
 export interface AppReleaseVariables {
   apiKey: string
   versionTag?: string
@@ -36,11 +32,6 @@ export interface AppReleaseSchema {
       message?: string | null
       location: string
     }
-    userErrors?: {
-      field?: string[] | null
-      message: string
-      category: string
-      details: ErrorDetail[]
-    }[]
+    userErrors?: UserError[]
   }
 }
