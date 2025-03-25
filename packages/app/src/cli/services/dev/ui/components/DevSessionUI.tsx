@@ -4,7 +4,7 @@ import {
   DevSessionStatus,
   DevSessionStatusManager,
   DevSessionStatusMessageType,
-} from '../../processes/dev-session-status-manager.js'
+} from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'

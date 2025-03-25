@@ -1,9 +1,9 @@
-import {BaseProcess, DevProcessFunction} from './types.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
-import {DevSession} from './dev-session/dev-session.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
-import {AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {DevSession} from './dev-session.js'
+import {BaseProcess, DevProcessFunction} from '../types.js'
+import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
+import {AppLinkedInterface} from '../../../../models/app/app.js'
+import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 
 export interface DevSessionProcessOptions {
   developerPlatformClient: DeveloperPlatformClient
