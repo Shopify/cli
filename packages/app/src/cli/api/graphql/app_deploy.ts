@@ -1,6 +1,7 @@
 import {UserError} from '../../utilities/developer-platform-client.js'
 import {gql} from 'graphql-request'
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const AppDeploy = gql`
   mutation AppDeploy(
     $apiKey: String!
@@ -68,7 +69,7 @@ export interface AppDeployVariables {
 
 export interface AppDeploySchema {
   appDeploy: {
-    appVersion: {
+    appVersion?: {
       uuid: string
       id: number
       versionTag?: string | null
