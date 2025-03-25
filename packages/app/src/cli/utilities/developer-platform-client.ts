@@ -60,6 +60,7 @@ import {AppLogData} from '../services/app-logs/types.js'
 import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -194,6 +195,8 @@ export interface DevSessionOptions {
   shopFqdn: string
   appId: string
   assetsUrl: string
+  manifest?: JsonMapType
+  inheritedModuleUids?: string[]
 }
 
 type WithUserErrors<T> = T & {

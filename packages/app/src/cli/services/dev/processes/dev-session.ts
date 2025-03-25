@@ -3,7 +3,7 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
-import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher, ExtensionEvent} from '../app-events/app-event-watcher.js'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -57,6 +57,8 @@ interface DevSessionPayload {
   shopFqdn: string
   appId: string
   assetsUrl: string
+  manifest: JsonMapType
+  inheritedModuleUids?: string[]
 }
 
 type DevSessionResult =
@@ -144,7 +146,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       })
 
       const networkStartTime = startHRTime()
-      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
+      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app}, event.extensionEvents)
       await handleDevSessionResult(result, {...processOptions, app: event.app}, event)
       outputDebug(
         `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
@@ -161,7 +163,7 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
         await printMultipleErrors(errors, processOptions.stdout)
         throw new AbortError('Dev session aborted, build errors detected in extensions.')
       }
-      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
+      const result = await bundleExtensionsAndUpload({...processOptions, app: event.app}, [])
       await handleDevSessionResult(result, {...processOptions, app: event.app})
     })
     .onError(async (error) => {
@@ -232,7 +234,10 @@ async function printActionRequiredMessages(processOptions: DevSessionProcessOpti
  * @param options - The options for the process
  * @param updating - Whether the dev session is being updated or created
  */
-async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Promise<DevSessionResult> {
+async function bundleExtensionsAndUpload(
+  options: DevSessionProcessOptions,
+  extensionEvents: ExtensionEvent[],
+): Promise<DevSessionResult> {
   // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
   // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
   const currentBundleController = new AbortController()
@@ -273,17 +278,37 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
     'slow-request',
   )
 
-  const payload: DevSessionPayload = {shopFqdn: options.storeFqdn, appId: options.appId, assetsUrl: signedURL}
-
   // Create or update the dev session
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   try {
     if (options.devSessionStatusManager.status.isReady) {
+      const updatedUids = extensionEvents.map((event) => event.extension.uid)
+      const nonUpdatedUids = options.app.allExtensions
+        .filter((ext) => !updatedUids.includes(ext.uid))
+        .map((ext) => ext.uid)
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      appManifest.modules = (appManifest as any).modules.filter((module: any) => updatedUids.includes(module.uid))
+
+      console.log(appManifest)
+      const payload: DevSessionPayload = {
+        shopFqdn: options.storeFqdn,
+        appId: options.appId,
+        assetsUrl: signedURL,
+        manifest: appManifest,
+        inheritedModuleUids: nonUpdatedUids,
+      }
       const result = await devSessionUpdateWithRetry(payload, options.developerPlatformClient)
       const errors = result.devSessionUpdate?.userErrors ?? []
       if (errors.length) return {status: 'remote-error', error: errors}
       return {status: 'updated'}
     } else {
+      const payload = {
+        shopFqdn: options.storeFqdn,
+        appId: options.appId,
+        assetsUrl: signedURL,
+        manifest: appManifest,
+      }
       const result = await devSessionCreateWithRetry(payload, options.developerPlatformClient)
       const errors = result.devSessionCreate?.userErrors ?? []
       if (errors.length) return {status: 'remote-error', error: errors}

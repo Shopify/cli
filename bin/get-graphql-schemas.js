@@ -152,7 +152,8 @@ async function fetchFilesFromSpin() {
     const owner = schema.owner
     const repoName = schema.repo
 
-    const remotePath = `~/src/github.com/${owner}/${repoName}/${schema.pathToFile}`
+    // /home/spin/world/trees/root/src/areas/core/shopify
+    const remotePath = `/home/spin/world/trees/root/src/areas/core/shopify/${schema.pathToFile}`
     const localPath = schema.localPath
     try {
       await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
