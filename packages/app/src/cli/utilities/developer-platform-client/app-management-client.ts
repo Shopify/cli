@@ -745,7 +745,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       releaseVariables,
     )
-    if (!releaseResult.appReleaseCreate?.release) {
+    if (!releaseResult.appReleaseCreate.release) {
       throw new AbortError('Failed to release version')
     }
     return {
