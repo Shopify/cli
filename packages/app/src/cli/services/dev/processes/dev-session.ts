@@ -4,11 +4,10 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
 import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {zip} from '@shopify/cli-kit/node/archiver'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -18,6 +17,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ClientError} from 'graphql-request'
+import {brotliCompress} from '@shopify/cli-kit/node/archiver'
 import {Writable} from 'stream'
 
 interface DevSessionOptions {
@@ -240,28 +240,28 @@ async function bundleExtensionsAndUpload(options: DevSessionProcessOptions): Pro
 
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   outputDebug('Bundling and uploading extensions', options.stdout)
-  const bundleZipPath = joinPath(dirname(options.bundlePath), `bundle.zip`)
+  const bundleBrPath = joinPath(dirname(options.bundlePath), `bundle.br`)
 
   // Generate app manifest in the bundle folder (overwriting the previous one)
   const appManifest = await options.app.manifest()
   const manifestPath = joinPath(options.bundlePath, 'manifest.json')
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 
-  // Create zip file with everything
+  // Create brotli file with everything
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
-  await zip({
+  await brotliCompress({
     inputDirectory: options.bundlePath,
-    outputZipPath: bundleZipPath,
+    outputPath: bundleBrPath,
   })
 
   // Get a signed URL to upload the zip file
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   const signedURL = await getSignedURLWithRetry(options)
 
-  // Upload the zip file
+  // Upload the br file
   if (currentBundleController.signal.aborted) return {status: 'aborted'}
   const form = formData()
-  const buffer = readFileSync(bundleZipPath)
+  const buffer = readFileSync(bundleBrPath)
   form.append('my_upload', buffer)
   await fetch(
     signedURL,
