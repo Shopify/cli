@@ -1,3 +1,4 @@
+import {UserError} from '../../utilities/developer-platform-client.js'
 import {gql} from 'graphql-request'
 
 export const AppDeploy = gql`
@@ -65,12 +66,6 @@ export interface AppDeployVariables {
   commitReference?: string
 }
 
-interface ErrorDetail {
-  extension_id: number
-  extension_title: string
-  specification_identifier: string
-}
-
 export interface AppDeploySchema {
   appDeploy: {
     appVersion: {
@@ -88,11 +83,6 @@ export interface AppDeploySchema {
         }[]
       }[]
     }
-    userErrors: {
-      field?: string[] | null
-      message: string
-      category: string
-      details: ErrorDetail[]
-    }[]
+    userErrors: UserError[]
   }
 }
