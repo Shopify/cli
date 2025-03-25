@@ -68,7 +68,7 @@ export interface AppDeployVariables {
 
 export interface AppDeploySchema {
   appDeploy: {
-    appVersion: {
+    appVersion?: {
       uuid: string
       id: number
       versionTag?: string | null
