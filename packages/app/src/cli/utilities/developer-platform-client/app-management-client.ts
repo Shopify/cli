@@ -773,7 +773,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       releaseVariables,
     )
 
-    if (releaseResult.appReleaseCreate?.release) {
+    if (releaseResult.appReleaseCreate.release) {
       return {
         appRelease: {
           appVersion: {
