@@ -9,7 +9,7 @@ import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js
 import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
 import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
-import appPrivacyComplienceSpec from './specifications/app_config_privacy_compliance_webhooks.js'
+import {PrivacyComplianceWebhooksSpecIdentifier} from './specifications/app_config_privacy_compliance_webhooks.js'
 import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
@@ -34,13 +34,13 @@ import {getPathValue} from '@shopify/cli-kit/common/object'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-export const CONFIG_EXTENSION_IDS = [
+export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
   AppHomeSpecIdentifier,
   AppProxySpecIdentifier,
   BrandingSpecIdentifier,
   PosSpecIdentifier,
-  appPrivacyComplienceSpec,
+  PrivacyComplianceWebhooksSpecIdentifier,
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
 ]
