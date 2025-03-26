@@ -20,7 +20,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {hashString} from '@shopify/cli-kit/node/crypto'
+import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -325,7 +325,7 @@ describe('bundleConfig', async () => {
         extensions: {},
         extensionIds: {},
         app: 'My app',
-        extensionsNonUuidManaged: {'point-of-sale': 'uuid'},
+        extensionsNonUuidManaged: {point_of_sale: 'uuid'},
       },
       developerPlatformClient,
       apiKey: 'apiKey',
@@ -443,11 +443,8 @@ describe('draftMessages', async () => {
       // Given
       const extensionInstance = await testAppConfigExtensions()
 
-      // When
-      const result = slugify(extensionInstance.specification.identifier)
-
       // Then
-      expect(extensionInstance.handle).toBe(result)
+      expect(extensionInstance.handle).toBe(extensionInstance.specification.identifier)
     })
 
     test('extensions handle is a hashString when specification uidStrategy is dynamic and it is a webhook subscription extension', async () => {
@@ -466,6 +463,44 @@ describe('draftMessages', async () => {
 
       // Then
       expect(extensionInstance.handle).toBe(result)
+    })
+  })
+
+  describe('buildUIDFromStrategy', async () => {
+    test('returns specification identifier when strategy is single', async () => {
+      // Given
+      const extensionInstance = await testAppConfigExtensions()
+
+      // Then
+      expect(extensionInstance.uid).toBe(extensionInstance.specification.identifier)
+    })
+
+    test('returns configuration uid when strategy is uuid and uid exists', async () => {
+      // Given
+      const extensionInstance = await testUIExtension({
+        name: 'test-extension',
+        type: 'ui_extension',
+        uid: 'test-uid',
+      })
+
+      // Then
+      expect(extensionInstance.uid).toBe('test-uid')
+    })
+
+    test('returns non-random UUID based on handle when strategy is uuid and no uid exists', async () => {
+      // Given
+      const extensionInstance = await testThemeExtensions()
+
+      // Then
+      expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
+    })
+
+    test('returns non-random UUID based on handle when strategy is dynamic', async () => {
+      // Given
+      const extensionInstance = await testSingleWebhookSubscriptionExtension()
+
+      // Then
+      expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
     })
   })
 })
