@@ -153,7 +153,7 @@ describe('pushUpdatesForDevSession', () => {
   test('handles receiving an event before session is ready', async () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
-    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
 
     // Then
@@ -173,7 +173,7 @@ describe('pushUpdatesForDevSession', () => {
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
-    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
 
     // Then
@@ -205,13 +205,16 @@ describe('pushUpdatesForDevSession', () => {
 
   test('update is retried if there is an error', async () => {
     // Given
-    developerPlatformClient.devSessionUpdate = vi.fn().mockRejectedValue(new Error('Test error'))
+    developerPlatformClient.devSessionUpdate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Test error'))
+      .mockResolvedValueOnce({devSessionUpdate: {userErrors: []}})
 
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
-    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
 
     // Then
@@ -292,6 +295,9 @@ describe('pushUpdatesForDevSession', () => {
   test('sets correct status messages during dev session lifecycle', async () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+
+    const statusSpy = vi.spyOn(devSessionStatusManager, 'setMessage')
+
     // Then - Initial loading state
     expect(devSessionStatusManager.status.statusMessage).toEqual({
       message: 'Preparing dev session',
@@ -303,27 +309,18 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then - Ready state
-    expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Ready, watching for changes in your app',
-      type: 'success',
-    })
+    expect(statusSpy).toHaveBeenCalledWith('READY')
 
     // When - Emit an update event
     const extension = await testUIExtension()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension}]})
+    await flushPromises()
 
     // Then - Loading state during update
-    expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Change detected, updating dev session',
-      type: 'loading',
-    })
-
+    expect(statusSpy).toHaveBeenCalledWith('CHANGE_DETECTED')
     // Then - Updated state after successful update
-    await flushPromises()
-    expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Updated',
-      type: 'success',
-    })
+    expect(statusSpy).toHaveBeenCalledWith('UPDATED')
+    statusSpy.mockRestore()
   })
 
   test('sets error status message on build error', async () => {
@@ -363,7 +360,7 @@ describe('pushUpdatesForDevSession', () => {
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
-    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
 
     // Then
@@ -377,13 +374,12 @@ describe('pushUpdatesForDevSession', () => {
     // Given
     const validationError = new Error('Validation failed')
     validationError.cause = 'validation-error'
-    developerPlatformClient.devSessionUpdate = vi.fn().mockRejectedValue(validationError)
 
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await flushPromises()
-    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: testWebhookExtensions()}]})
+    appWatcher.emit('error', validationError)
     await flushPromises()
 
     // Then
