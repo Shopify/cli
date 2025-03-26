@@ -14,6 +14,7 @@ export async function renderDev({
   abortController,
   graphiqlUrl,
   graphiqlPort,
+  graphiqlAdvertiseUrl,
   developerPreview,
   shopFqdn,
   devSessionStatusManager,
@@ -43,6 +44,7 @@ export async function renderDev({
         app={app}
         graphiqlUrl={graphiqlUrl}
         graphiqlPort={graphiqlPort}
+        graphiqlAdvertiseUrl={graphiqlAdvertiseUrl}
         developerPreview={developerPreview}
         isEditionWeek={isEditionWeek()}
         shopFqdn={shopFqdn}
