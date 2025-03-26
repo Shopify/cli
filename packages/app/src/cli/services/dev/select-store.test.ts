@@ -200,6 +200,42 @@ describe('selectStore', async () => {
     expect(developerPlatformClient.devStoresForOrg).toHaveBeenCalledTimes(10)
   })
 
+  test('prompts user to create with Partners link', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
+    const developerPlatformClient = testDeveloperPlatformClient()
+
+    // When
+    const got = selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient)
+
+    // Then
+    await expect(got).rejects.toThrow()
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
+    const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
+    expect(res).toContain('https://partners.shopify.com/1234/stores')
+  })
+
+  test('prompts user to create with Developer Dashboard link', async () => {
+    // Given
+    vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      clientName: ClientName.AppManagement,
+      getCreateDevStoreLink: (_input: string) =>
+        Promise.resolve(
+          `Looks like you don't have a dev store in the organization you selected. Keep going — create a dev store on the Developer Dashboard: https://dev.shopify.com/dashboard/1234/stores`,
+        ),
+    })
+
+    // When
+    const got = selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient)
+
+    // Then
+    await expect(got).rejects.toThrow()
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
+    const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
+    expect(res).toContain('https://dev.shopify.com/dashboard/1234/stores')
+  })
+
   test('enables backend search if the DeveloperPlatformClient supports it', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
