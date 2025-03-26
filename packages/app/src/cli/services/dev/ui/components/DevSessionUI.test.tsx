@@ -1,5 +1,5 @@
 import {DevSessionUI} from './DevSessionUI.js'
-import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session-status-manager.js'
+import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session/dev-session-status-manager.js'
 import {
   getLastFrameAfterUnmount,
   render,

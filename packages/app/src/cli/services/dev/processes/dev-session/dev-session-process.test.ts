@@ -1,9 +1,9 @@
-import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session.js'
+import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session-process.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
-import {AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
+import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
+import {AppLinkedInterface} from '../../../../models/app/app.js'
+import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
+import {buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {
   testAppAccessConfigExtension,
   testAppLinked,
@@ -11,7 +11,7 @@ import {
   testFlowActionExtension,
   testUIExtension,
   testWebhookExtensions,
-} from '../../../models/app/app.test-data.js'
+} from '../../../../models/app/app.test-data.js'
 import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
@@ -22,7 +22,7 @@ import * as outputContext from '@shopify/cli-kit/node/ui/components'
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
 vi.mock('@shopify/cli-kit/node/http')
-vi.mock('../../../utilities/app/app-url.js')
+vi.mock('../../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
 
 describe('setupDevSessionProcess', () => {

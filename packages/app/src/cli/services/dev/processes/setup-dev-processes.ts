@@ -5,10 +5,10 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {DevSessionProcess, setupDevSessionProcess} from './dev-session.js'
+import {DevSessionProcess, setupDevSessionProcess} from './dev-session/dev-session-process.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
-import {DevSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
