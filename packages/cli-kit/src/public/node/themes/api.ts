@@ -448,6 +448,7 @@ export async function parseThemeFileContent(
       return {attachment: body.contentBase64}
     case 'OnlineStoreThemeFileBodyUrl':
       try {
+        // eslint-disable-next-line no-restricted-globals
         const response = await fetch(body.url)
 
         const arrayBuffer = await response.arrayBuffer()

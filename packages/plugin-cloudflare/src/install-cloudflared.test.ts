@@ -1,14 +1,11 @@
 import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
 import * as fsActions from '@shopify/cli-kit/node/fs'
+import * as http from '@shopify/cli-kit/node/http'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import util from 'util'
 import {WriteStream} from 'fs'
 // eslint-disable-next-line no-restricted-imports
 import * as childProcess from 'child_process'
-
-global.fetch = vi.fn((aa, bb) => {
-  return Promise.resolve({ok: true} as Response)
-})
 
 vi.mock('child_process')
 vi.mock('stream')
@@ -16,7 +13,7 @@ vi.mock('stream')
 describe('install-cloudflare', () => {
   beforeEach(() => {
     vi.spyOn(util, 'promisify').mockReturnValue(vi.fn().mockReturnValue(Promise.resolve()))
-    vi.spyOn(global, 'fetch').mockReturnValue(Promise.resolve({ok: true, body: {pipe: vi.fn()}} as unknown as Response))
+    vi.spyOn(http, 'fetch').mockReturnValue(Promise.resolve({ok: true, body: {pipe: vi.fn()}} as any))
     vi.spyOn(fsActions, 'fileExistsSync').mockReturnValueOnce(false)
     vi.spyOn(fsActions, 'mkdirSync').mockImplementation(() => vi.fn())
     vi.spyOn(fsActions, 'unlinkFileSync').mockImplementation(() => vi.fn())
@@ -33,7 +30,7 @@ describe('install-cloudflare', () => {
     await install(env)
 
     // Then
-    expect(global.fetch).not.toHaveBeenCalled()
+    expect(http.fetch).not.toHaveBeenCalled()
   })
 
   test('install works when system is mac and x64', async () => {
@@ -44,8 +41,7 @@ describe('install-cloudflare', () => {
     await install(env, 'darwin', 'x64')
 
     // Then
-    // expect(global.fetch).not.toHaveBeenCalled()
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(http.fetch).toHaveBeenCalledWith(
       'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-amd64.tgz',
       expect.anything(),
     )
@@ -59,8 +55,7 @@ describe('install-cloudflare', () => {
     await install(env, 'darwin', 'arm64')
 
     // Then
-    // expect(global.fetch).not.toHaveBeenCalled()
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(http.fetch).toHaveBeenCalledWith(
       'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-darwin-arm64.tgz',
       expect.anything(),
     )
@@ -74,8 +69,7 @@ describe('install-cloudflare', () => {
     await install(env, 'linux', 'x64')
 
     // Then
-    // expect(global.fetch).not.toHaveBeenCalled()
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(http.fetch).toHaveBeenCalledWith(
       'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-linux-amd64',
       expect.anything(),
     )
@@ -89,7 +83,7 @@ describe('install-cloudflare', () => {
     await install(env, 'win32', 'x64')
 
     // Then
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(http.fetch).toHaveBeenCalledWith(
       'https://github.com/cloudflare/cloudflared/releases/download/2024.8.2/cloudflared-windows-amd64.exe',
       expect.anything(),
     )
@@ -107,7 +101,7 @@ describe('install-cloudflare', () => {
     await install(env, 'win32', 'x64')
 
     // Then
-    expect(global.fetch).not.toHaveBeenCalled()
+    expect(http.fetch).not.toHaveBeenCalled()
   })
 
   test('install works if bin exists and current version is not up to date', async () => {
@@ -120,7 +114,7 @@ describe('install-cloudflare', () => {
     await install(env, 'darwin', 'x64')
 
     // Then
-    expect(global.fetch).toHaveBeenCalled()
+    expect(http.fetch).toHaveBeenCalled()
   })
 
   test('install fails if unsupported platform', async () => {

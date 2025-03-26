@@ -183,6 +183,14 @@ module.exports = {
     '@babel/no-unused-expressions': 'off',
     'no-unused-expressions': 'off',
     '@typescript-eslint/no-unused-expressions': ['error', {allowTernary: true}],
+    'no-restricted-globals': [
+      'error',
+      {
+        name: 'fetch',
+        message:
+          'Please use our alternative fetch implementation in @shopify/cli-kit/node/http instead of Node.js built-in fetch. Built-in fetch does not support HTTP proxies.',
+      },
+    ],
   },
   overrides: [
     {
@@ -204,6 +212,7 @@ module.exports = {
         '@typescript-eslint/restrict-plus-operands': 'off',
         '@typescript-eslint/non-nullable-type-assertion-style': 'off',
         '@typescript-eslint/prefer-reduce-type-parameter': 'warn',
+        'no-restricted-globals': 'off',
       },
     },
   ],
