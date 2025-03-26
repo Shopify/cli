@@ -48,12 +48,11 @@ export async function logs(commandOptions: LogsOptions) {
   }
 
   const variables = {
-    shopIds: logsConfig.storeIds,
+    shopIds: logsConfig.storeIds.map(Number),
     apiKey: remoteApp.apiKey,
-    token: '',
   }
 
-  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables)
+  const jwtToken = await subscribeToAppLogs(developerPlatformClient, variables, commandOptions.organization.id)
 
   const filters = {
     status: commandOptions.status,
@@ -75,6 +74,7 @@ export async function logs(commandOptions: LogsOptions) {
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
+      organizationId: commandOptions.organization.id,
     })
   } else {
     consoleLog('Waiting for app logs...\n')
@@ -85,6 +85,7 @@ export async function logs(commandOptions: LogsOptions) {
       },
       pollOptions,
       storeNameById: logsConfig.storeNameById,
+      organizationId: commandOptions.organization.id,
     })
   }
 }
