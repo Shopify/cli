@@ -280,6 +280,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
+  // eslint-disable-next-line no-restricted-globals
   return fetch(url, {
     method: event.method,
     body,

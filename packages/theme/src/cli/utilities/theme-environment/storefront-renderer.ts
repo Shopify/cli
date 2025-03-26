@@ -18,6 +18,7 @@ export async function render(session: DevServerSession, context: DevServerRender
 
     const bodyParams = storefrontReplaceTemplatesParams(context)
 
+    // eslint-disable-next-line no-restricted-globals
     response = await fetch(url, {
       method: 'POST',
       body: bodyParams,
@@ -31,6 +32,7 @@ export async function render(session: DevServerSession, context: DevServerRender
   } else {
     outputDebug(`→ Rendering ${url}...`)
 
+    // eslint-disable-next-line no-restricted-globals
     response = await fetch(url, {
       method: context.method,
       headers: {

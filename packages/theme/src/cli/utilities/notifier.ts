@@ -40,6 +40,7 @@ export class Notifier {
   }
 
   private async notifyUrl(fileName: string): Promise<void> {
+    // eslint-disable-next-line no-restricted-globals
     const response = await fetch(this.notifyPath, {
       method: 'POST',
       body: JSON.stringify({files: [fileName]}),

@@ -2,6 +2,7 @@
 // Install script for cloudflared, derived from https://github.com/JacobLinCool/node-cloudflared
 import {basename, dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {
   chmod,
   fileExistsSync,
