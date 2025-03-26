@@ -1,0 +1,109 @@
+import {AppEvent} from '../../app-events/app-event-watcher.js'
+import {UserError} from '../dev-session.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {outputToken, outputContent} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {Writable} from 'stream'
+
+export class DevSessionLogger {
+  private readonly stdout: Writable
+
+  constructor(stdout: Writable) {
+    this.stdout = stdout
+  }
+
+  async info(message: string) {
+    await this.log(message)
+  }
+
+  async warning(message: string) {
+    await this.log(outputContent`${outputToken.yellow(message)}`.value)
+  }
+
+  async success(message: string) {
+    await this.log(outputContent`${outputToken.green(message)}`.value)
+  }
+
+  async error(message: string, prefix?: string) {
+    const header = outputToken.errorText(`❌ Error`)
+    const content = outputToken.errorText(`└  ${message}`)
+    await this.log(outputContent`${header}`.value, prefix)
+    await this.log(outputContent`${content}`.value, prefix)
+  }
+
+  async logUserErrors(errors: UserError[] | Error | string, extensions: ExtensionInstance[]) {
+    if (typeof errors === 'string') {
+      await this.error(errors)
+    } else if (errors instanceof Error) {
+      await this.error(errors.message)
+    } else {
+      const mappedErrors = errors.map((error) => {
+        const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
+        const extension = extensions.find((ext) => ext.uid === on?.user_identifier)
+        return {error: error.message, prefix: extension?.handle ?? 'dev-session'}
+      })
+      await this.logMultipleErrors(mappedErrors)
+    }
+  }
+
+  async logExtensionEvents(event: AppEvent) {
+    const appConfigEvents = event.extensionEvents.filter((eve) => eve.extension.isAppConfigExtension)
+    const nonAppConfigEvents = event.extensionEvents.filter((eve) => !eve.extension.isAppConfigExtension)
+
+    if (appConfigEvents.length) {
+      const outputPrefix = 'app-config'
+      const message = `App config updated`
+      await this.log(message, outputPrefix)
+    }
+
+    // For each (non app config) extension event, print a message to the terminal
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    nonAppConfigEvents.forEach(async (eve) => {
+      const outputPrefix = eve.extension.handle
+      const message = `Extension ${eve.type}`
+      await this.log(message, outputPrefix)
+    })
+  }
+
+  /**
+   * Some extensions may require the user to take some action after an update in the dev session.
+   * This function will print those action messages to the terminal.
+   */
+  async logActionRequiredMessages(storeFqdn: string, event?: AppEvent) {
+    if (!event) return
+    const extensionEvents = event.extensionEvents ?? []
+    const warningMessages = getArrayRejectingUndefined(
+      await Promise.all(
+        extensionEvents.map((eve) =>
+          eve.extension.getDevSessionActionUpdateMessage(event.app.configuration, storeFqdn),
+        ),
+      ),
+    )
+
+    if (warningMessages.length) {
+      await this.warning(`🔄 Action required`)
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      warningMessages.forEach(async (message) => {
+        await this.warning(outputContent`└ ${message}`.value)
+      })
+    }
+  }
+
+  async logMultipleErrors(errors: {error: string; prefix: string}[]) {
+    const header = outputToken.errorText(`❌ Error`)
+    await this.log(outputContent`${header}`.value, 'dev-session')
+    const messages = errors.map((error) => {
+      const content = outputToken.errorText(`└  ${error.error}`)
+      return this.log(outputContent`${content}`.value, error.prefix)
+    })
+    await Promise.all(messages)
+  }
+
+  // Helper function to print to terminal using output context with stripAnsi disabled.
+  private async log(message: string, prefix?: string) {
+    await useConcurrentOutputContext({outputPrefix: prefix ?? 'dev-session', stripAnsi: false}, () => {
+      this.stdout.write(message)
+    })
+  }
+}

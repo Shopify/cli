@@ -1,5 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionLogger} from './dev-session/dev-session-logger.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {getExtensionUploadURL} from '../../deploy/upload.js'
@@ -9,13 +10,11 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ClientError} from 'graphql-request'
 import {Writable} from 'stream'
@@ -46,7 +45,7 @@ export interface DevSessionProcess extends BaseProcess<DevSessionOptions> {
   type: 'dev-session'
 }
 
-interface UserError {
+export interface UserError {
   message: string
   on: JsonMapType
   field?: string[] | null
@@ -92,14 +91,15 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
   const {appWatcher, devSessionStatusManager} = options
 
   const processOptions = {...options, stderr, stdout, signal, bundlePath: appWatcher.buildOutputPath}
+  const logger = new DevSessionLogger(processOptions.stdout)
 
-  await printLogMessage('Preparing dev session', processOptions.stdout)
+  await logger.info('Preparing dev session')
   await setLoadingStatusMessage(processOptions)
 
   appWatcher
     .onEvent(async (event) => {
       if (!devSessionStatusManager.status.isReady) {
-        await printWarning('Change detected, but dev session is not ready yet.', processOptions.stdout)
+        await logger.warning('Change detected, but dev session is not ready yet.')
         return
       }
 
@@ -126,26 +126,11 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
       // Remove aborted controllers from array:
       bundleControllers = bundleControllers.filter((controller) => !controller.signal.aborted)
 
-      const appConfigEvents = event.extensionEvents.filter((eve) => eve.extension.isAppConfigExtension)
-      const nonAppConfigEvents = event.extensionEvents.filter((eve) => !eve.extension.isAppConfigExtension)
-
-      if (appConfigEvents.length) {
-        const outputPrefix = 'app-config'
-        const message = `App config updated`
-        await useConcurrentOutputContext({outputPrefix, stripAnsi: false}, () => processOptions.stdout.write(message))
-      }
-
-      // For each (non app config) extension event, print a message to the terminal
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      nonAppConfigEvents.forEach(async (eve) => {
-        const outputPrefix = eve.extension.handle
-        const message = `Extension ${eve.type}`
-        await useConcurrentOutputContext({outputPrefix, stripAnsi: false}, () => processOptions.stdout.write(message))
-      })
+      await logger.logExtensionEvents(event)
 
       const networkStartTime = startHRTime()
       const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
-      await handleDevSessionResult(result, {...processOptions, app: event.app}, event)
+      await handleDevSessionResult(result, {...processOptions, app: event.app}, logger, event)
       outputDebug(
         `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
         processOptions.stdout,
@@ -158,34 +143,35 @@ export const pushUpdatesForDevSession: DevProcessFunction<DevSessionOptions> = a
           error: 'Build error. Please review your code and try again.',
           prefix: error.extension.handle,
         }))
-        await printMultipleErrors(errors, processOptions.stdout)
+        await logger.logMultipleErrors(errors)
         throw new AbortError('Dev session aborted, build errors detected in extensions.')
       }
       const result = await bundleExtensionsAndUpload({...processOptions, app: event.app})
-      await handleDevSessionResult(result, {...processOptions, app: event.app})
+      await handleDevSessionResult(result, {...processOptions, app: event.app}, logger)
     })
     .onError(async (error) => {
-      await handleDevSessionResult({status: 'unknown-error', error}, processOptions)
+      await handleDevSessionResult({status: 'unknown-error', error}, processOptions, logger)
     })
 }
 
 async function handleDevSessionResult(
   result: DevSessionResult,
   processOptions: DevSessionProcessOptions,
+  logger: DevSessionLogger,
   event?: AppEvent,
 ) {
   if (result.status === 'updated') {
-    await printSuccess(`✅ Updated`, processOptions.stdout)
-    await printActionRequiredMessages(processOptions, event)
+    await logger.success(`✅ Updated`)
+    await logger.logActionRequiredMessages(processOptions.storeFqdn, event)
     await setUpdatedStatusMessage(processOptions)
   } else if (result.status === 'created') {
     processOptions.devSessionStatusManager.updateStatus({isReady: true})
-    await printSuccess(`✅ Ready, watching for changes in your app `, processOptions.stdout)
+    await logger.success(`✅ Ready, watching for changes in your app `)
     await setReadyStatusMessage(processOptions)
   } else if (result.status === 'aborted') {
     outputDebug('❌ Session update aborted (new change detected or error in Session Update)', processOptions.stdout)
   } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
-    await processUserErrors(result.error, processOptions, processOptions.stdout)
+    await logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
     if (result.error instanceof Error && result.error.cause === 'validation-error') {
       await setValidationErrorMessage(processOptions)
     } else {
@@ -197,30 +183,6 @@ async function handleDevSessionResult(
   // async nature of the process.
   if (!processOptions.devSessionStatusManager.status.isReady && !isUnitTest()) {
     throw new AbortError('Failed to start dev session.')
-  }
-}
-
-/**
- * Some extensions may require the user to take some action after an update in the dev session.
- * This function will print those action messages to the terminal.
- */
-async function printActionRequiredMessages(processOptions: DevSessionProcessOptions, event?: AppEvent) {
-  if (!event) return
-  const extensionEvents = event.extensionEvents ?? []
-  const warningMessages = getArrayRejectingUndefined(
-    await Promise.all(
-      extensionEvents.map((eve) =>
-        eve.extension.getDevSessionActionUpdateMessage(event.app.configuration, processOptions.storeFqdn),
-      ),
-    ),
-  )
-
-  if (warningMessages.length) {
-    await printWarning(`🔄 Action required`, processOptions.stdout)
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    warningMessages.forEach(async (message) => {
-      await printWarning(outputContent`└ ${message}`.value, processOptions.stdout)
-    })
   }
 }
 
@@ -332,57 +294,6 @@ async function devSessionCreateWithRetry(payload: DevSessionPayload, developerPl
     async () => developerPlatformClient.devSessionCreate(payload),
     () => developerPlatformClient.refreshToken(),
   )
-}
-
-async function processUserErrors(
-  errors: UserError[] | Error | string,
-  options: DevSessionProcessOptions,
-  stdout: Writable,
-) {
-  if (typeof errors === 'string') {
-    await printError(errors, stdout)
-  } else if (errors instanceof Error) {
-    await printError(errors.message, stdout)
-  } else {
-    const mappedErrors = errors.map((error) => {
-      const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
-      const extension = options.app.allExtensions.find((ext) => ext.uid === on?.user_identifier)
-      return {error: error.message, prefix: extension?.handle ?? 'dev-session'}
-    })
-    await printMultipleErrors(mappedErrors, stdout)
-  }
-}
-
-async function printWarning(message: string, stdout: Writable) {
-  await printLogMessage(outputContent`${outputToken.yellow(message)}`.value, stdout)
-}
-
-async function printError(message: string, stdout: Writable, prefix?: string) {
-  const header = outputToken.errorText(`❌ Error`)
-  const content = outputToken.errorText(`└  ${message}`)
-  await printLogMessage(outputContent`${header}`.value, stdout, prefix)
-  await printLogMessage(outputContent`${content}`.value, stdout, prefix)
-}
-
-async function printMultipleErrors(errors: {error: string; prefix: string}[], stdout: Writable) {
-  const header = outputToken.errorText(`❌ Error`)
-  await printLogMessage(outputContent`${header}`.value, stdout, 'dev-session')
-  const messages = errors.map((error) => {
-    const content = outputToken.errorText(`└  ${error.error}`)
-    return printLogMessage(outputContent`${content}`.value, stdout, error.prefix)
-  })
-  await Promise.all(messages)
-}
-
-async function printSuccess(message: string, stdout: Writable) {
-  await printLogMessage(outputContent`${outputToken.green(message)}`.value, stdout)
-}
-
-// Helper function to print to terminal using output context with stripAnsi disabled.
-async function printLogMessage(message: string, stdout: Writable, prefix?: string) {
-  await useConcurrentOutputContext({outputPrefix: prefix ?? 'dev-session', stripAnsi: false}, () => {
-    stdout.write(message)
-  })
 }
 
 async function updatePreviewURL(options: DevSessionProcessOptions, event: AppEvent) {
