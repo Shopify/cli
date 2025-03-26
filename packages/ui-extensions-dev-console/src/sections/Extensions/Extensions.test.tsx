@@ -1,6 +1,6 @@
 import {Extensions} from './Extensions.js'
 
-import {AppHomeRow, ExtensionRow, PostPurchaseRow} from './components'
+import {AppHomeRow, ExtensionRow} from './components'
 import React from 'react'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
@@ -41,17 +41,6 @@ describe('<Extensions/>', () => {
     })
 
     expect(container).toContainReactComponent(AppHomeRow)
-  })
-
-  test('renders a <PostPurchaseRow/> for the checkout_post_purchase extension', async () => {
-    const extension1 = {...mockExtension(), type: 'checkout_post_purchase'}
-
-    const container = render(<Extensions />, withProviders(DefaultProviders), {
-      state: {extensions: [extension1], store: 'shop1.myshopify.io'},
-    })
-
-    expect(container).toContainReactComponentTimes(PostPurchaseRow, 1)
-    expect(container).toContainReactComponent(PostPurchaseRow, {uuid: extension1.uuid})
   })
 
   test('renders an <ExtensionRow/> for each Extension', async () => {

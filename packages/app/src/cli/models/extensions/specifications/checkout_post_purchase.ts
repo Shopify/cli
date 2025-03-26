@@ -8,7 +8,7 @@ const checkoutPostPurchaseSpec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'post_purchase',
   schema: BaseSchema,
-  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields ?? []}
   },

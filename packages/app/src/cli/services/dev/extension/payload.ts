@@ -24,10 +24,10 @@ export async function getUIExtensionPayload(
     const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
-
     const renderer = await getUIExtensionRendererVersion(extension)
-
     const extensionPoints = await getExtensionPoints(extension, url)
+    const developmentRootUrl =
+      extension.configuration.type === 'checkout_post_purchase' ? `${url}/purchase.post.render` : url
 
     const defaultConfig = {
       assets: {
@@ -53,7 +53,7 @@ export async function getUIExtensionPayload(
         ...options.currentDevelopmentPayload,
         resource: getUIExtensionResourceURL(extension.type, options),
         root: {
-          url,
+          url: developmentRootUrl,
         },
         hidden: options.currentDevelopmentPayload?.hidden ?? false,
         localizationStatus,
@@ -87,6 +87,11 @@ export async function getUIExtensionPayload(
 
 async function getExtensionPoints(extension: ExtensionInstance, url: string) {
   const extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
+
+  if (extension.type === 'checkout_post_purchase') {
+    // Mock target for post-purchase in order to get the right extension point redirect url
+    return [{target: 'purchase.post.render'}] as DevNewExtensionPointSchema[]
+  }
 
   if (isNewExtensionPointsSchema(extensionPoints)) {
     return Promise.all(
