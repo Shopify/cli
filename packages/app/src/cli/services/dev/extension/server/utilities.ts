@@ -39,6 +39,30 @@ export function getExtensionPointRedirectUrl(
       rawUrl.pathname = options.checkoutCartUrl!
       rawUrl.searchParams.append('dev', `${options.url}/extensions`)
       break
+    case 'post_purchase':
+      // This can never be null because we always generate it
+      // whenever there is an extension point targeting Post Purchase
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      rawUrl.pathname = options.checkoutCartUrl!
+
+      rawUrl.searchParams.set(
+        'script_url',
+        `${options.url}/extensions/${extension.devUUID}/assets/${extension.localIdentifier}.js`,
+      )
+
+      rawUrl.searchParams.set('post_purchase_dev_api_key', options.apiKey)
+
+      // Live reload params
+      if (extension.devUUID && options.websocketURL) {
+        rawUrl.searchParams.set('uuid', extension.devUUID)
+        rawUrl.searchParams.set('socket_url', options.websocketURL)
+      }
+
+      if (extension.configuration.metafields) {
+        const config = {config: {metafields: extension.configuration.metafields}}
+        rawUrl.searchParams.set('config', JSON.stringify(config))
+      }
+      break
     case 'admin':
       rawUrl.pathname = 'admin/extensions-dev'
       rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
