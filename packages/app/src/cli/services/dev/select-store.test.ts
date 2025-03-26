@@ -212,7 +212,7 @@ describe('selectStore', async () => {
     await expect(got).rejects.toThrow()
     expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
     const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
-    expect(res).toContain('https://partners.shopify.com/1234/stores/new')
+    expect(res).toContain('https://partners.shopify.com/1234/stores')
   })
 
   test('prompts user to create with Developer Dashboard link', async () => {
