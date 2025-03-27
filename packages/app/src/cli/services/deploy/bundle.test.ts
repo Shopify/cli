@@ -102,4 +102,39 @@ describe('bundleAndBuildExtensions', () => {
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
   })
+
+  test('excludes .js.map files from the zip', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+
+      const uiExtension = await testUIExtension({type: 'ui_extension'})
+      const extensionBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
+        file.writeFileSync(joinPath(bundleDirectory, 'admin-action.js'), '')
+        file.writeFileSync(joinPath(bundleDirectory, 'admin-action.js.map'), '')
+      })
+      uiExtension.buildForBundle = extensionBundleMock
+      const app = testApp({allExtensions: [uiExtension]})
+
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+
+      // When
+      await bundleAndBuildExtensions({app, identifiers, bundlePath})
+
+      // Then
+      await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
+      const zipContent = await file.readFile(bundlePath)
+      // We are reading the zip as a binary because we don't have a library to unzip, but we can still check for the presence of the file name
+      expect(zipContent).not.toContain('admin-action.js.map')
+    })
+  })
 })

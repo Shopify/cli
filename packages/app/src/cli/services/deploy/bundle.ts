@@ -48,6 +48,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     await zip({
       inputDirectory: bundleDirectory,
       outputZipPath: options.bundlePath,
+      matchFilePattern: ['**/*', '!**/*.js.map'],
     })
   }
 }
