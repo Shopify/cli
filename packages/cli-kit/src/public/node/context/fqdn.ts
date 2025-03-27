@@ -57,6 +57,21 @@ export async function appManagementFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the App Dev API service we should interact with.
+ *
+ * @param storeFqdn - The store FQDN.
+ * @returns Fully-qualified domain of the App Dev service we should interact with.
+ */
+export async function appDevFqdn(storeFqdn: string): Promise<string> {
+  const environment = serviceEnvironment()
+  switch (environment) {
+    case 'local':
+      return new DevServerCore().host('app')
+    default:
+      return storeFqdn
+  }
+}
+/**
  * It returns the Developer Dashboard domain we should interact with.
  *
  * @returns Fully-qualified domain of the Developer Dashboard we should interact with.
