@@ -284,6 +284,7 @@ export class DevSession {
     await zip({
       inputDirectory: this.bundlePath,
       outputZipPath: bundleZipPath,
+      matchFilePattern: ['**/*', '!**/*.js.map'],
     })
   }
 

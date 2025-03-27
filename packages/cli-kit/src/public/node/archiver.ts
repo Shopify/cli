@@ -18,7 +18,7 @@ interface ZipOptions {
   /**
    * Pattern to match when adding files to zip, uses glob expressions.
    */
-  matchFilePattern?: string
+  matchFilePattern?: string | string[]
 }
 
 /**
