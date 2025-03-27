@@ -117,6 +117,28 @@ describe('app-watcher-esbuild', () => {
     expect(manager.contexts).not.toHaveProperty('uid2')
   })
 
+  test('updating contexts with an app event when the app was reloaded', async () => {
+    // Given
+    const manager = new ESBuildContextManager(options)
+    await manager.createContexts([extension1])
+    const originalContext = manager.contexts.uid1![0]!
+    const appEvent: AppEvent = {
+      app: testAppLinked(),
+      path: '',
+      startTime: [0, 0],
+      extensionEvents: [{type: EventType.Updated, extension: extension1}],
+      appWasReloaded: true,
+    }
+
+    // When
+    await manager.updateContexts(appEvent)
+
+    // Then
+    expect(manager.contexts).toHaveProperty('uid1')
+    expect(manager.contexts.uid1!.length).toBe(1)
+    expect(manager.contexts.uid1![0]).not.toBe(originalContext)
+  })
+
   test('rebuilding contexts', async () => {
     // Given
     const manager = new ESBuildContextManager(options)
