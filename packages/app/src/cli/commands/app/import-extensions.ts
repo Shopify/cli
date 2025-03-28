@@ -54,7 +54,7 @@ const getMigrationChoices = (): MigrationChoice[] => [
   {
     label: 'Subscription Link Extensions',
     value: 'subscription link',
-    extensionTypes: ['subscription_link'],
+    extensionTypes: ['subscription_link', 'subscription_link_extension'],
     buildTomlObject: buildSubscriptionLinkTomlObject,
   },
   {
