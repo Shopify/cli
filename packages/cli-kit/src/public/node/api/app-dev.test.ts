@@ -10,6 +10,22 @@ vi.mock('../../../private/node/context/service.js')
 const shopFqdn = 'test-shop.shop.dev'
 const mockedToken = 'token'
 
+vi.mock('../vendor/dev_server/index.js', () => {
+  return {
+    DevServerCore: class {
+      host(serviceName: string) {
+        return `${serviceName}.shop.dev`
+      }
+    },
+    DevServer: class {
+      constructor(private readonly serviceName: string) {}
+      host() {
+        return `${this.serviceName}.shop.dev`
+      }
+    },
+  }
+})
+
 describe('appDevRequest', () => {
   test('graphqlRequestDoc is called with correct parameters in production environment', async () => {
     // Given
