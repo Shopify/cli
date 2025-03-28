@@ -1,0 +1,81 @@
+{
+  "name": "@shopify/shop",
+  "version": "0.1.0",
+  "homepage": "",
+  "packageManager": "pnpm@8.15.7",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/shop"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./cli/commands/shop/copy": {
+      "types": "./dist/cli/commands/shop/copy.d.ts",
+      "default": "./dist/cli/commands/shop/copy.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "test": "nx run shop:test",
+    "test:coverage": "nx test:coverage",
+    "test:watch": "nx test:watch",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "dependencies": {
+    "@oclif/core": "3.26.5",
+    "@shopify/cli-kit": "3.77.1"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.2",
+    "@types/diff": "^5.0.3",
+    "@types/express": "^4.17.17",
+    "@types/http-proxy": "^1.17.11",
+    "@types/proper-lockfile": "4.1.4",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
+    "@types/which": "3.0.4",
+    "@types/ws": "^8.5.13",
+    "@vitest/coverage-istanbul": "^1.6.0"
+  },
+  "oclif": {
+    "commands": "dist/cli/commands",
+    "topics": {
+      "shop": {
+        "description": "Utility commands for interacting with shops"
+      }
+    }
+  },
+  "engines": {
+    "node": "^18.20.0 || >=20.10.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "engine-strict": true
+}

@@ -279,6 +279,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 3.77.0
         version: link:../plugin-did-you-mean
+      '@shopify/shop':
+        specifier: 0.1.0
+        version: link:../shop
       '@shopify/theme':
         specifier: 3.77.0
         version: link:../theme
@@ -653,6 +656,46 @@ importers:
         specifier: 2.0.2
         version: 2.0.2
     devDependencies:
+      '@vitest/coverage-istanbul':
+        specifier: ^1.6.0
+        version: 1.6.0(vitest@1.6.0)
+
+  packages/shop:
+    dependencies:
+      '@oclif/core':
+        specifier: 3.26.5
+        version: 3.26.5
+      '@shopify/cli-kit':
+        specifier: 3.77.1
+        version: 3.77.1(@types/react@17.0.2)
+    devDependencies:
+      '@types/body-parser':
+        specifier: ^1.19.2
+        version: 1.19.5
+      '@types/diff':
+        specifier: ^5.0.3
+        version: 5.2.3
+      '@types/express':
+        specifier: ^4.17.17
+        version: 4.17.21
+      '@types/http-proxy':
+        specifier: ^1.17.11
+        version: 1.17.14
+      '@types/proper-lockfile':
+        specifier: 4.1.4
+        version: 4.1.4
+      '@types/react':
+        specifier: 17.0.2
+        version: 17.0.2
+      '@types/react-dom':
+        specifier: 18.2.0
+        version: 18.2.0
+      '@types/which':
+        specifier: 3.0.4
+        version: 3.0.4
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.5.13
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
         version: 1.6.0(vitest@1.6.0)
@@ -2930,7 +2973,7 @@ packages:
       '@babel/parser': 7.26.7
       '@babel/template': 7.25.9
       '@babel/types': 7.26.7
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -6343,6 +6386,82 @@ packages:
       - react
       - react-dom
     dev: true
+
+  /@shopify/cli-kit@3.77.1(@types/react@17.0.2):
+    resolution: {integrity: sha512-zOwmYNbG4reUZkLj8KfjDfTYwE63iebNRXDDngWbTBt0oSYtTQWkxSMGv4+rpwyY1QoehIiUA54ogSl60Ftwcg==}
+    engines: {node: ^18.20.0 || >=20.10.0}
+    os: [darwin, linux, win32]
+    dependencies:
+      '@apidevtools/json-schema-ref-parser': 11.7.3
+      '@bugsnag/js': 7.25.0
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.10.0)
+      '@iarna/toml': 2.2.5
+      '@oclif/core': 3.26.5
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/core': 1.30.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/exporter-metrics-otlp-http': 0.57.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/resources': 1.30.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-metrics': 1.30.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/semantic-conventions': 1.28.0
+      '@types/archiver': 5.3.2
+      ajv: 8.17.1
+      ansi-escapes: 6.2.1
+      archiver: 5.3.2
+      bottleneck: 2.19.5
+      chalk: 5.4.1
+      change-case: 4.1.2
+      color-json: 3.0.5
+      commondir: 1.0.1
+      conf: 11.0.2
+      deepmerge: 4.3.1
+      del: 6.1.1
+      dotenv: 16.4.7
+      env-paths: 3.0.0
+      execa: 7.2.0
+      fast-glob: 3.3.3
+      figures: 5.0.0
+      find-up: 6.3.0
+      form-data: 4.0.1
+      fs-extra: 11.1.0
+      get-port-please: 3.1.2
+      gradient-string: 2.0.2
+      graphql: 16.10.0
+      graphql-request: 6.1.0(graphql@16.10.0)
+      ignore: 6.0.2
+      ink: 4.4.1(@types/react@17.0.2)(react@18.3.1)
+      is-executable: 2.0.1
+      is-interactive: 2.0.0
+      jose: 5.9.6
+      latest-version: 7.0.0
+      liquidjs: 10.20.1
+      lodash: 4.17.21
+      macaddress: 0.5.3
+      minimatch: 9.0.5
+      mrmime: 1.0.1
+      network-interfaces: 1.1.0
+      node-abort-controller: 3.1.1
+      node-fetch: 3.3.2
+      open: 8.4.2
+      pathe: 1.1.2
+      react: 18.3.1
+      semver: 7.6.3
+      simple-git: 3.27.0
+      stacktracey: 2.1.8
+      strip-ansi: 7.1.0
+      supports-hyperlinks: 3.1.0
+      tempy: 3.1.0
+      terminal-link: 3.0.0
+      ts-error: 1.0.6
+      which: 4.0.0
+      zod: 3.24.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - bufferutil
+      - encoding
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /@shopify/dates@1.1.5:
     resolution: {integrity: sha512-WpShtWjylq0iH4FQhpEz1g5tCZRw/GgZ00uYUxUinVyBqaUbRqiAq7EnwXzGO/aTpAUF6yXgDTxoji3aFOiC8A==}
@@ -12278,6 +12397,51 @@ packages:
       - utf-8-validate
     dev: false
 
+  /ink@4.4.1(@types/react@17.0.2)(react@18.3.1):
+    resolution: {integrity: sha512-rXckvqPBB0Krifk5rn/5LvQGmyXwCUpBfmTwbkQNBY9JY8RSl3b8OftBNEYxg4+SWUhEKcPifgope28uL9inlA==}
+    engines: {node: '>=14.16'}
+    peerDependencies:
+      '@types/react': 17.0.2
+      react: '>=18.0.0'
+      react-devtools-core: ^4.19.1
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react-devtools-core:
+        optional: true
+    dependencies:
+      '@alcalzone/ansi-tokenize': 0.1.3
+      '@types/react': 17.0.2
+      ansi-escapes: 6.2.1
+      auto-bind: 5.0.1
+      chalk: 5.4.1
+      cli-boxes: 3.0.0
+      cli-cursor: 4.0.0
+      cli-truncate: 3.1.0
+      code-excerpt: 4.0.0
+      indent-string: 5.0.0
+      is-ci: 3.0.1
+      is-lower-case: 2.0.2
+      is-upper-case: 2.0.2
+      lodash: 4.17.21
+      patch-console: 2.0.0
+      react: 18.3.1
+      react-reconciler: 0.29.2(react@18.3.1)
+      scheduler: 0.23.2
+      signal-exit: 3.0.7
+      slice-ansi: 6.0.0
+      stack-utils: 2.0.6
+      string-width: 5.1.2
+      type-fest: 0.12.0
+      widest-line: 4.0.1
+      wrap-ansi: 8.1.0
+      ws: 8.18.0
+      yoga-wasm-web: 0.3.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    dev: false
+
   /ink@5.0.1(@types/react@17.0.2)(react@18.3.1):
     resolution: {integrity: sha512-ae4AW/t8jlkj/6Ou21H2av0wxTk8vrGzXv+v2v7j4in+bl1M5XRMVbfNghzhBokV++FjF8RBDJvYo+ttR9YVRg==}
     engines: {node: '>=18'}
@@ -14982,7 +15146,6 @@ packages:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
-    dev: true
 
   /react-refresh@0.10.0:
     resolution: {integrity: sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==}
@@ -15070,7 +15233,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: true
 
   /read-pkg-up@7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
@@ -17121,7 +17283,7 @@ packages:
       cac: 6.7.14
       debug: 4.4.0(supports-color@8.1.1)
       pathe: 1.1.2
-      picocolors: 1.0.0
+      picocolors: 1.1.1
       vite: 5.4.12(@types/node@18.19.70)(sass@1.83.1)
     transitivePeerDependencies:
       - '@types/node'

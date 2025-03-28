@@ -167,6 +167,25 @@
           "configurations/vite.config.ts"
         ]
       },
+      "packages/shop": {
+        "entry": [
+          "**/{commands}/**/*.ts!",
+          "**/index.ts!"
+        ],
+        "project": "**/*.{ts,tsx}!",
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
+        ],
+        "ignoreDependencies": [
+          "@shopify/plugin-cloudflare",
+          "@shopify/function-runner"
+        ],
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
       "packages/app": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
