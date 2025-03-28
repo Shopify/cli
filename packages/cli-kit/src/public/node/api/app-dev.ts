@@ -1,5 +1,6 @@
 import {graphqlRequestDoc} from './graphql.js'
-import {normalizeStoreFqdn} from '../context/fqdn.js'
+import {appDevFqdn, normalizeStoreFqdn} from '../context/fqdn.js'
+import {serviceEnvironment} from '../../../private/node/context/service.js'
 import Bottleneck from 'bottleneck'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -30,13 +31,18 @@ export async function appDevRequest<TResult, TVariables extends Variables>(
 ): Promise<TResult> {
   const api = 'App Dev'
   const normalizedShopFqdn = await normalizeStoreFqdn(shopFqdn)
-  const url = `https://${normalizedShopFqdn}/app_dev/unstable/graphql.json`
+  const fqdn = await appDevFqdn(normalizedShopFqdn)
+  const url = `https://${fqdn}/app_dev/unstable/graphql.json`
+
+  const addedHeaders = serviceEnvironment() === 'local' ? {'x-forwarded-host': normalizedShopFqdn} : undefined
+
   const result = limiter.schedule<TResult>(() =>
     graphqlRequestDoc<TResult, TVariables>({
       query,
       api,
       url,
       token,
+      addedHeaders,
       variables,
     }),
   )
