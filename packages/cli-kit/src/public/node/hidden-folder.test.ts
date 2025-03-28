@@ -1,4 +1,4 @@
-import {withHiddenConfigPathIn, withHiddenShopifyFolderIn} from './hiddenFolder.js'
+import {withHiddenConfigPathIn, withHiddenShopifyFolderIn} from './hidden-folder.js'
 import {joinPath} from './path.js'
 import {fileExists, inTemporaryDirectory} from './fs.js'
 import {describe, test, expect, vi} from 'vitest'

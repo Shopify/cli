@@ -13,6 +13,7 @@ import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_a
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
+import {appHiddenConfigPath} from '../../utilities/app/config/hidden-config.js'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -23,7 +24,6 @@ import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
-import {withHiddenConfigPathIn} from '@shopify/cli-kit/node/hiddenFolder'
 
 // Schemas for loading app configuration
 
@@ -425,9 +425,8 @@ export class App<
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
     if (!this.configuration.client_id) return
     this._hiddenConfig = deepMergeObjects(this.hiddenConfig, values)
-    await withHiddenConfigPathIn(this.directory, (path) =>
-      patchAppHiddenConfigFile(path, String(this.configuration.client_id), this.hiddenConfig),
-    )
+    const hiddenConfigPath = await appHiddenConfigPath(this.directory)
+    await patchAppHiddenConfigFile(hiddenConfigPath, String(this.configuration.client_id), this.hiddenConfig)
   }
 
   async preDeployValidation() {

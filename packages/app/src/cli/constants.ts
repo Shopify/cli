@@ -12,6 +12,7 @@ export const configurationFileNames = {
   web: 'shopify.web.toml',
   appEnvironments: 'shopify.environments.toml',
   lockFile: '.shopify.lock',
+  hiddenConfig: 'project.json',
 } as const
 
 export const dotEnvFileNames = {

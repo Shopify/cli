@@ -8,7 +8,7 @@ import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {withHiddenShopifyFolderIn} from '@shopify/cli-kit/node/hiddenFolder'
+import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
 
 interface MetafieldsPullOptions {
   path: string
@@ -151,7 +151,7 @@ async function executeMetafieldsPull(session: AdminSession, options: MetafieldsP
     return
   }
 
-  writeMetafieldDefinitionsToFile(path, result)
+  await writeMetafieldDefinitionsToFile(path, result)
 
   if (failedFetchByOwnerType.length > 0) {
     outputDebug(
@@ -164,11 +164,10 @@ async function executeMetafieldsPull(session: AdminSession, options: MetafieldsP
   }
 }
 
-function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
-  withHiddenShopifyFolderIn(path, (shopifyDirectory) => {
-    const filePath = joinPath(shopifyDirectory, 'metafields.json')
-    const fileContent = JSON.stringify(content, null, 2)
+async function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
+  const hiddenShopifyFolder = await getOrCreateHiddenShopifyFolder(path)
+  const filePath = joinPath(hiddenShopifyFolder, 'metafields.json')
+  const fileContent = JSON.stringify(content, null, 2)
 
-    writeFileSync(filePath, fileContent)
-  })
+  writeFileSync(filePath, fileContent)
 }
