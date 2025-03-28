@@ -231,7 +231,7 @@ export class DevSession {
     this.bundleControllers.push(currentBundleController)
 
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const bundleZipPath = joinPath(dirname(this.bundlePath), `bundle.zip`)
+    const bundleZipPath = joinPath(dirname(this.bundlePath), `dev-bundle.zip`)
 
     // Create zip file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}

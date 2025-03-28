@@ -88,10 +88,17 @@ export class ESBuildContextManager {
     await copyFile(outputPath, copyPath)
   }
 
+  /**
+   * New contexts are created for new extensions that were added during a dev session.
+   * We also need to recreate contexts for UI extensions whose TOML files were updated.
+   * This is because some changes in the TOML invalidate the current context (changing targets or handle for example)
+   */
   async updateContexts(appEvent: AppEvent) {
     this.dotEnvVariables = appEvent.app.dotenv?.variables ?? {}
+
     const createdEsBuild = appEvent.extensionEvents
-      .filter((extEvent) => extEvent.type === EventType.Created && extEvent.extension.isESBuildExtension)
+      .filter((extEvent) => extEvent.extension.isESBuildExtension)
+      .filter((extEvent) => extEvent.type === 'created' || (extEvent.type === 'changed' && appEvent.appWasReloaded))
       .map((extEvent) => extEvent.extension)
     await this.createContexts(createdEsBuild)
 
