@@ -16,9 +16,9 @@ interface ZipOptions {
   outputZipPath: string
 
   /**
-   * Pattern to match when adding files to zip, uses glob expressions.
+   * Pattern(s) to match when adding files to zip, uses glob expressions.
    */
-  matchFilePattern?: string
+  matchFilePattern?: string | string[]
 }
 
 /**
