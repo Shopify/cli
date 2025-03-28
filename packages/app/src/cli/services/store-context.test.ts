@@ -10,7 +10,8 @@ import {
   testOrganizationStore,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {appHiddenConfigPath, AppLinkedInterface} from '../models/app/app.js'
+import {AppLinkedInterface} from '../models/app/app.js'
+import {appHiddenConfigPath} from '../utilities/app/config/hidden-config.js'
 import {vi, describe, test, expect} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -199,7 +200,8 @@ describe('storeContext', () => {
 
       await storeContext({appContextResult, forceReselectStore: false})
 
-      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
+      const hiddenConfigPath = await appHiddenConfigPath(dir)
+      const hiddenConfig = await readFile(hiddenConfigPath)
       expect(hiddenConfig).toEqual('{\n  "client_id": {\n    "dev_store_url": "test-store.myshopify.com"\n  }\n}')
     })
   })
