@@ -3429,9 +3429,9 @@ describe('loadHiddenConfig', () => {
       expect(JSON.parse(fileContent)).toEqual({})
 
       // Verify .gitignore was updated
-      const gitIgnore = joinPath(tmpDir, '.gitignore')
+      const gitIgnore = joinPath(tmpDir, '.shopify', '.gitignore')
       const gitIgnoreContent = await readFile(gitIgnore)
-      expect(gitIgnoreContent).toContain('.shopify')
+      expect(gitIgnoreContent).toEqual('# Ignore the entire .shopify directory\n*')
     })
   })
 
