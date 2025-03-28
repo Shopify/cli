@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.78.0
+
+### Patch Changes
+
+- daf44e8: Updated `@shopify/cli-hydrogen` dependency to `9.0.9`.
+
 ## 3.77.0
 
 ## 3.76.0
