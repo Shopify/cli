@@ -1,6 +1,7 @@
 import {bundleAndBuildExtensions} from './bundle.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
+import * as bundle from '../bundle.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -11,15 +12,16 @@ describe('bundleAndBuildExtensions', () => {
   test('generates a manifest.json', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
-      vi.spyOn(file, 'writeFileSync').mockResolvedValue(undefined)
-      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+      vi.spyOn(bundle, 'writeManifestToBundle').mockResolvedValue(undefined)
+      const bundleDirectory = joinPath(tmpDir, '.shopify', 'deploy-bundle')
+      const bundlePath = joinPath(bundleDirectory, 'bundle.zip')
 
       const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
       const extensionBundleMock = vi.fn()
       uiExtension.buildForBundle = extensionBundleMock
       const themeExtension = await testThemeExtensions()
       themeExtension.buildForBundle = extensionBundleMock
-      app = testApp({allExtensions: [uiExtension, themeExtension]})
+      app = testApp({allExtensions: [uiExtension, themeExtension], directory: tmpDir})
 
       const extensions: {[key: string]: string} = {}
       for (const extension of app.allExtensions) {
@@ -63,10 +65,7 @@ describe('bundleAndBuildExtensions', () => {
 
       // Then
       expect(extensionBundleMock).toHaveBeenCalledTimes(2)
-      expect(file.writeFileSync).toHaveBeenCalledWith(
-        expect.stringContaining('manifest.json'),
-        JSON.stringify(expectedManifest, null, 2),
-      )
+      expect(bundle.writeManifestToBundle).toHaveBeenCalledWith(app, bundleDirectory)
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })

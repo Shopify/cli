@@ -3,6 +3,7 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {getExtensionUploadURL} from '../../../deploy/upload.js'
+import {compressBundle, writeManifestToBundle} from '../../../bundle.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -10,8 +11,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
-import {zip} from '@shopify/cli-kit/node/archiver'
+import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
@@ -235,7 +235,8 @@ export class DevSession {
 
     // Create zip file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await this.createZipFile(appEvent, bundleZipPath)
+    await writeManifestToBundle(appEvent.app, this.bundlePath)
+    await compressBundle(this.bundlePath, bundleZipPath)
 
     // Get a signed URL to upload the zip file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
@@ -269,22 +270,6 @@ export class DevSession {
         return {status: 'unknown-error', error}
       }
     }
-  }
-
-  /**
-   * Create a zip file with the extensions and the manifest.json file
-   * @param appEvent - The app event
-   * @param bundleZipPath - The path to the zip file
-   */
-  private async createZipFile(appEvent: AppEvent, bundleZipPath: string) {
-    const appManifest = await appEvent.app.manifest()
-    const manifestPath = joinPath(this.bundlePath, 'manifest.json')
-    await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
-
-    await zip({
-      inputDirectory: this.bundlePath,
-      outputZipPath: bundleZipPath,
-    })
   }
 
   /**
