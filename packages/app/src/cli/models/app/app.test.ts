@@ -27,7 +27,7 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
@@ -618,7 +618,7 @@ describe('manifest', () => {
 })
 
 describe('generateExtensionTypes', () => {
-  test('combines type definitions from multiple extensions', async () => {
+  test('calls generateTypeFile for multiple extensions', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension1 = await testUIExtension({type: 'ui_extension', directory: tmpDir})
@@ -630,29 +630,15 @@ describe('generateExtensionTypes', () => {
       })
 
       // Mock the extension contributions
-      vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockResolvedValue([
-        {
-          libraryRoot: '@shopify/ui-extensions/base',
-          definition: `declare module './ext1' { // mocked definition }`,
-        },
-      ])
-      vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockResolvedValue([
-        {
-          libraryRoot: '@shopify/ui-extensions/base',
-          definition: `declare module './ext2' { // mocked definition }`,
-        },
-      ])
+      vi.spyOn(uiExtension1, 'generateTypeFile')
+      vi.spyOn(uiExtension2, 'generateTypeFile')
 
       // When
       await app.generateExtensionTypes()
 
       // Then
-      const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
-      const fileContent = await readFile(typeFilePath)
-      const normalizedContent = fileContent.toString().replace(/\\/g, '/')
-      expect(normalizedContent).toBe(`import '@shopify/ui-extensions/base';\n
-declare module './ext1' { // mocked definition }
-declare module './ext2' { // mocked definition }`)
+      expect(uiExtension1.generateTypeFile).toHaveBeenCalled()
+      expect(uiExtension2.generateTypeFile).toHaveBeenCalled()
     })
   })
 })

@@ -1,15 +1,12 @@
-import {Asset, AssetIdentifier, ExtensionFeature, SharedType, createExtensionSpecification} from '../specification.js'
+import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists, fileExistsSync, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -145,29 +142,22 @@ const uiExtensionSpec = createExtensionSpecification({
       }) !== undefined
     )
   },
-  contributeToSharedTypeFile: async (extension, typeFilePath) => {
-    const sharedTypes: SharedType[] = []
-
-    for await (const {module, target} of extension.configuration.extension_points) {
-      const fullPath = joinPath(extension.directory, module)
-      const fileParts = fullPath.split('.')
-      const fileExtension = fileParts.pop()
-      const exists = await fileExists(fullPath)
-      if (!fileExtension || !exists || !isRemoteDomExtension(extension.configuration.api_version)) {
+  generateTypeFile: async (extension) => {
+    for await (const extensionPoint of extension.configuration.extension_points) {
+      if (!isRemoteDomExtension(extension.configuration.api_version)) {
         continue
       }
 
-      if (fileExtension === 'ts' || fileExtension === 'tsx') {
-        const shared = getSharedTypeDefinition(fullPath, typeFilePath, target)
-        if (shared) {
-          sharedTypes.push(shared)
-        }
-      } else {
-        getLocalTypeDefinition(fullPath, target, fileExtension)
+      generateTypeFile(extension.directory, extensionPoint.module, extensionPoint.target)
+
+      if (extensionPoint.build_manifest.assets.should_render?.module) {
+        generateTypeFile(
+          extension.directory,
+          extensionPoint.build_manifest.assets.should_render?.module,
+          extensionPoint.target.replace(/\.render$/, '.should-render'),
+        )
       }
     }
-
-    return sharedTypes
   },
 })
 
@@ -260,43 +250,25 @@ function updateTypeReference(fullPath: string, template: string, matchRegex = TY
   }
 }
 
-function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target: string) {
-  const template = `/// <reference types="${relativePath(dirname(fullPath), typeFilePath)}" />\n`
-
-  updateTypeReference(fullPath, template)
-
-  try {
-    // We try to resolve from the module's path first with the app root as the fallback in case dependencies are hoisted to the shared workspace
-    const fullTypePath = require.resolve(`@shopify/ui-extensions/${target}`, {paths: [fullPath, typeFilePath]})
-    const libraryRoot = require.resolve('@shopify/ui-extensions', {paths: [fullPath, typeFilePath]})
-    const importPath = `./${relativizePath(fullTypePath, dirname(typeFilePath))}`
-
-    return {
-      libraryRoot,
-      definition: `declare module './${relativizePath(fullPath, dirname(typeFilePath))}' {
-  const globalThis: typeof import('${importPath}');
-  const shopify: import('${importPath}').Api;
-}\n`,
-    }
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    // noop
+function generateTypeFile(directory: string, modulePath: string, target: string) {
+  const moduleFullPath = joinPath(directory, modulePath)
+  if (!fileExistsSync(moduleFullPath)) {
+    return
   }
-}
 
-function getLocalTypeDefinition(fullPath: string, target: string, fileExtension: string) {
-  const typeFilePath = fullPath.replace(`.${fileExtension}`, '.d.ts')
-  const template = `/// <reference types="./${relativizePath(typeFilePath, dirname(fullPath))}" />\n`
-  const fileContent = `// @ts-ignore\ndeclare const globalThis: typeof import('@shopify/ui-extensions/${target}');\n
+  const fileParts = moduleFullPath.split('.')
+  const fileExtension = fileParts.pop()
+  const typeFilePath = moduleFullPath.replace(`.${fileExtension}`, '.d.ts')
+  const typeFileContent = `// @ts-ignore\ndeclare const globalThis: typeof import('@shopify/ui-extensions/${target}');\n
 // @ts-ignore\ndeclare const shopify: import('@shopify/ui-extensions/${target}').Api;\n`
-
-  updateTypeReference(fullPath, template, new RegExp(template.replaceAll('/', '\\/').replaceAll('.', '\\.')))
-
   const originalContent = fileExistsSync(typeFilePath) ? readFileSync(typeFilePath).toString() : ''
 
-  if (originalContent !== fileContent) {
-    writeFileSync(typeFilePath, fileContent)
+  if (originalContent !== typeFileContent) {
+    writeFileSync(typeFilePath, typeFileContent)
   }
+  const template = `/// <reference types="./${relativizePath(typeFilePath, dirname(moduleFullPath))}" />\n`
+
+  updateTypeReference(moduleFullPath, template, new RegExp(template.replaceAll('/', '\\/').replaceAll('.', '\\.')))
 }
 
 export default uiExtensionSpec
