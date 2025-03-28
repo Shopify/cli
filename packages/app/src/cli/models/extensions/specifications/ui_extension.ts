@@ -3,7 +3,7 @@ import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from 
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {fileExists, fileExistsSync, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -105,12 +105,11 @@ const uiExtensionSpec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
+    const shouldIncludeShopifyExtend = process.env.REMOTE_DOM_EXPERIMENT && isRemoteDomExtension(config.api_version)
     const main = config.extension_points
       .map(({target, module}, index) => {
-        if (process.env.REMOTE_DOM_EXPERIMENT) {
-          if (isRemoteDomExtension(config.api_version)) {
-            return `import Target_${index} from '${module}'; shopify.extend('${target}', () => Target_${index}());`
-          }
+        if (shouldIncludeShopifyExtend) {
+          return `import Target_${index} from '${module}';shopify.extend('${target}', () => Target_${index}());`
         }
         return `import '${module}';`
       })
@@ -127,7 +126,11 @@ const uiExtensionSpec = createExtensionSpecification({
         assets[identifier] = {
           identifier: identifier as AssetIdentifier,
           outputFileName: asset.filepath,
-          content: `import '${asset.module}'`,
+          content: shouldIncludeShopifyExtend
+            ? `import shouldRender from '${asset.module}';shopify.extend('${getShouldRenderTarget(
+                extensionPoint.target,
+              )}', () => shouldRender());`
+            : `import '${asset.module}'`,
         }
       })
     })
@@ -148,8 +151,8 @@ const uiExtensionSpec = createExtensionSpecification({
   contributeToSharedTypeFile: async (extension, typeFilePath) => {
     const sharedTypes: SharedType[] = []
 
-    for await (const {module, target} of extension.configuration.extension_points) {
-      const fullPath = joinPath(extension.directory, module)
+    for await (const extensionPoint of extension.configuration.extension_points) {
+      const fullPath = joinPath(extension.directory, extensionPoint.module)
       const fileParts = fullPath.split('.')
       const fileExtension = fileParts.pop()
       const exists = await fileExists(fullPath)
@@ -157,13 +160,20 @@ const uiExtensionSpec = createExtensionSpecification({
         continue
       }
 
-      if (fileExtension === 'ts' || fileExtension === 'tsx') {
-        const shared = getSharedTypeDefinition(fullPath, typeFilePath, target)
-        if (shared) {
-          sharedTypes.push(shared)
+      const mainTypes = getSharedTypeDefinition(fullPath, typeFilePath, extensionPoint.target)
+      if (mainTypes) {
+        sharedTypes.push(mainTypes)
+      }
+
+      if (extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]?.module) {
+        const shouldRenderTypes = getSharedTypeDefinition(
+          joinPath(extension.directory, extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module),
+          typeFilePath,
+          getShouldRenderTarget(extensionPoint.target),
+        )
+        if (shouldRenderTypes) {
+          sharedTypes.push(shouldRenderTypes)
         }
-      } else {
-        getLocalTypeDefinition(fullPath, target, fileExtension)
       }
     }
 
@@ -260,6 +270,10 @@ function updateTypeReference(fullPath: string, template: string, matchRegex = TY
   }
 }
 
+export function getShouldRenderTarget(target: string) {
+  return target.replace(/\.render$/, '.should-render')
+}
+
 function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target: string) {
   const template = `/// <reference types="${relativePath(dirname(fullPath), typeFilePath)}" />\n`
 
@@ -281,21 +295,6 @@ function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target:
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     // noop
-  }
-}
-
-function getLocalTypeDefinition(fullPath: string, target: string, fileExtension: string) {
-  const typeFilePath = fullPath.replace(`.${fileExtension}`, '.d.ts')
-  const template = `/// <reference types="./${relativizePath(typeFilePath, dirname(fullPath))}" />\n`
-  const fileContent = `// @ts-ignore\ndeclare const globalThis: typeof import('@shopify/ui-extensions/${target}');\n
-// @ts-ignore\ndeclare const shopify: import('@shopify/ui-extensions/${target}').Api;\n`
-
-  updateTypeReference(fullPath, template, new RegExp(template.replaceAll('/', '\\/').replaceAll('.', '\\.')))
-
-  const originalContent = fileExistsSync(typeFilePath) ? readFileSync(typeFilePath).toString() : ''
-
-  if (originalContent !== fileContent) {
-    writeFileSync(typeFilePath, fileContent)
   }
 }
 
