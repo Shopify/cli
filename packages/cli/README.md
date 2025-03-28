@@ -62,6 +62,7 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify shop copy`](#shopify-shop-copy)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -1691,6 +1692,26 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify shop copy`
+
+Copy data from one store to another
+
+```
+USAGE
+  $ shopify shop copy [--fromStore <value>] [--no-color] [--toStore <value>] [--verbose]
+
+FLAGS
+  --fromStore=<value>  The store to copy data from.
+  --no-color           Disable color output.
+  --toStore=<value>    The store to copy data to.
+  --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Copy data from one store to another
+
+  Copy data from one store to another
 ```
 
 ## `shopify theme check`

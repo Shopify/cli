@@ -4,6 +4,7 @@
     "references": [
       {"path": "./packages/cli"},
       {"path": "./packages/app"},
+      {"path": "./packages/shop"},
       {"path": "./packages/theme"},
       {"path": "./packages/cli-kit"},
       {"path": "./packages/create-app"},

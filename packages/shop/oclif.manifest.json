@@ -1,0 +1,66 @@
+{
+  "commands": {
+    "shop:copy": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Copy data from one store to another",
+      "enableJsonFlag": false,
+      "flags": {
+        "fromStore": {
+          "description": "The store to copy data from.",
+          "env": "SHOPIFY_FLAG_STORE_FROM",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "fromStore",
+          "required": false,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "toStore": {
+          "description": "The store to copy data to.",
+          "env": "SHOPIFY_FLAG_STORE_TO",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "toStore",
+          "required": false,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "shop:copy",
+      "isESM": true,
+      "pluginAlias": "@shopify/shop",
+      "pluginName": "@shopify/shop",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "shop",
+        "copy.js"
+      ],
+      "strict": true,
+      "summary": "Copy data from one store to another"
+    }
+  },
+  "version": "0.1.0"
+}

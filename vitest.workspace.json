@@ -1,5 +1,6 @@
 [
   "packages/app",
+  "packages/shop",
   "packages/cli",
   "packages/cli-kit",
   "packages/plugin-cloudflare",

@@ -16,6 +16,7 @@ import ClearCache from './cli/commands/cache/clear.js'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
+import {commands as ShopCommands} from '@shopify/shop'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
@@ -78,6 +79,12 @@ PluginPluginsCommands.plugins.hidden = true
 // Remove default description because it injects a path from the generating computer, making it fail on CI
 PluginPluginsCommands['plugins:install'].description = ''
 
+const shopCommands = Object.keys(ShopCommands) as (keyof typeof ShopCommands)[]
+shopCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(ShopCommands[command] as unknown as any).customPluginName = '@shopify/shop'
+})
+
 const appCommands = Object.keys(AppCommands) as (keyof typeof AppCommands)[]
 appCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -122,6 +129,7 @@ export const COMMANDS: any = {
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,
   ...HydrogenCommands,
+  ...ShopCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,
