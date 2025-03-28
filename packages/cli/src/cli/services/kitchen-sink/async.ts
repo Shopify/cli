@@ -1,52 +1,50 @@
-import {renderConcurrent, renderTasks} from '@shopify/cli-kit/node/ui'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {Writable} from 'stream'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
 
 export async function asyncTasks() {
   // renderConcurrent
-  let backendPromiseResolve: () => void
+  // let backendPromiseResolve: () => void
 
-  const backendPromise = new Promise<void>(function (resolve, _reject) {
-    backendPromiseResolve = resolve
-  })
+  // const backendPromise = new Promise<void>(function (resolve, _reject) {
+  //   backendPromiseResolve = resolve
+  // })
 
-  const backendProcess = {
-    prefix: 'backend',
-    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-      stdout.write('first backend message')
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      stdout.write('second backend message')
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      stdout.write('third backend message')
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+  // const backendProcess = {
+  //   prefix: 'backend',
+  //   action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+  //     stdout.write('first backend message')
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
+  //     stdout.write('second backend message')
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
+  //     stdout.write('third backend message')
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      backendPromiseResolve()
-    },
-  }
+  //     backendPromiseResolve()
+  //   },
+  // }
 
-  const frontendProcess = {
-    prefix: 'frontend',
-    action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-      await backendPromise
+  // const frontendProcess = {
+  //   prefix: 'frontend',
+  //   action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+  //     await backendPromise
 
-      stdout.write('first frontend message')
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      stdout.write('second frontend message')
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      stdout.write('third frontend message')
-    },
-  }
+  //     stdout.write('first frontend message')
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
+  //     stdout.write('second frontend message')
+  //     await new Promise((resolve) => setTimeout(resolve, 1000))
+  //     stdout.write('third frontend message')
+  //   },
+  // }
 
-  await renderConcurrent({
-    processes: [backendProcess, frontendProcess],
-  })
+  // await renderConcurrent({
+  //   processes: [backendProcess, frontendProcess],
+  // })
 
   // renderTasks
   const tasks = [
     {
       title: 'Installing dependencies',
       task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        await new Promise((resolve) => setTimeout(resolve, 200000))
       },
     },
     {
