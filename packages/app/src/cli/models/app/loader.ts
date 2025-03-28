@@ -389,6 +389,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       usedCustomLayoutForExtensions: configuration.extension_directories !== undefined,
     })
 
+    if (process.env.REMOTE_DOM_EXPERIMENT) {
+      await appClass.generateExtensionTypes()
+    }
+
     return appClass
   }
 

@@ -95,7 +95,6 @@ export class ESBuildContextManager {
    */
   async updateContexts(appEvent: AppEvent) {
     this.dotEnvVariables = appEvent.app.dotenv?.variables ?? {}
-
     const createdEsBuild = appEvent.extensionEvents
       .filter((extEvent) => extEvent.extension.isESBuildExtension)
       .filter((extEvent) => extEvent.type === 'created' || (extEvent.type === 'changed' && appEvent.appWasReloaded))
