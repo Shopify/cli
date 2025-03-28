@@ -16,7 +16,6 @@ import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
-import {writeFile} from '@shopify/cli-kit/node/fs'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
 
 vi.mock('@shopify/cli-kit/node/fs')
@@ -24,6 +23,7 @@ vi.mock('@shopify/cli-kit/node/archiver')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
+vi.mock('../../../bundle.js')
 
 describe('setupDevSessionProcess', () => {
   test('returns a dev session process with correct configuration', async () => {
@@ -79,7 +79,6 @@ describe('pushUpdatesForDevSession', () => {
 
   beforeEach(() => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
-    vi.mocked(writeFile).mockResolvedValue(undefined)
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
     developerPlatformClient = testDeveloperPlatformClient()
