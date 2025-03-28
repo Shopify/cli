@@ -4,6 +4,10 @@ export interface WebhookSubscription {
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
+  metafields?: {
+    namespace: string
+    key: string
+  }[]
 }
 
 interface PrivacyComplianceConfig {
