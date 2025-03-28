@@ -407,7 +407,7 @@ describe('allExtensions', () => {
 
     const webhookConfig = app.allExtensions.find((ext) => ext.handle === 'webhooks')!
       .configuration as unknown as WebhookTestConfig
-    const privacyConfig = app.allExtensions.find((ext) => ext.handle === 'privacy-compliance-webhooks')!
+    const privacyConfig = app.allExtensions.find((ext) => ext.handle === 'privacy_compliance_webhooks')!
       .configuration as unknown as WebhookTestConfig
 
     expect(webhookConfig.webhooks.subscriptions!.length).not.toStrictEqual(0)
@@ -497,7 +497,7 @@ describe('manifest', () => {
       modules: [
         {
           type: 'app_access_external',
-          handle: 'app-access',
+          handle: 'app_access',
           uid: appAccessModule.uid,
           assets: appAccessModule.uid,
           target: appAccessModule.contextValue,
@@ -545,7 +545,7 @@ describe('manifest', () => {
       modules: [
         {
           type: 'app_home_external',
-          handle: 'app-home',
+          handle: 'app_home',
           uid: appHome.uid,
           assets: appHome.uid,
           target: appHome.contextValue,
@@ -555,7 +555,7 @@ describe('manifest', () => {
         },
         {
           type: 'app_proxy_external',
-          handle: 'app-proxy',
+          handle: 'app_proxy',
           uid: appProxy.uid,
           assets: appProxy.uid,
           target: appProxy.contextValue,
@@ -567,7 +567,7 @@ describe('manifest', () => {
         },
         {
           type: 'app_access_external',
-          handle: 'app-access',
+          handle: 'app_access',
           uid: appAccess.uid,
           assets: appAccess.uid,
           target: appAccess.contextValue,
@@ -603,7 +603,7 @@ describe('manifest', () => {
       modules: [
         {
           type: 'app_home_external',
-          handle: 'app-home',
+          handle: 'app_home',
           uid: appHome.uid,
           assets: appHome.uid,
           target: appHome.contextValue,

@@ -12,12 +12,13 @@ import {
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
+import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
 
 vi.mock('../../../models/app/loader.js')
@@ -216,13 +217,13 @@ const testCases: TestCase[] = [
       {
         type: EventType.Updated,
         extension: posExtensionUpdated,
-        buildResult: {status: 'ok', uid: nonRandomUUID('point-of-sale')},
+        buildResult: {status: 'ok', uid: PosSpecIdentifier},
       },
       {type: EventType.Deleted, extension: webhookExtension},
       {
         type: EventType.Created,
         extension: appAccessExtension,
-        buildResult: {status: 'ok', uid: nonRandomUUID('app-access')},
+        buildResult: {status: 'ok', uid: AppAccessSpecIdentifier},
       },
     ],
     needsAppReload: true,

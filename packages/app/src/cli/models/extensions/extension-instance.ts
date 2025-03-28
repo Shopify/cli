@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable no-case-declarations */
+
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
@@ -151,12 +151,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.handle = this.buildHandle()
-    const uuidFromHandle = nonRandomUUID(this.handle)
-    this.devUUID = `dev-${uuidFromHandle}`
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
-    this.uid = this.configuration.uid ?? uuidFromHandle
+    this.uid = this.buildUIDFromStrategy()
+    this.devUUID = `dev-${this.uid}`
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
@@ -441,14 +440,29 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   private buildHandle() {
     switch (this.specification.uidStrategy) {
       case 'single':
-        return slugify(this.specification.identifier)
+        return this.specification.identifier
       case 'uuid':
         return this.configuration.handle ?? slugify(this.name ?? '')
       case 'dynamic':
         // Hardcoded temporal solution for webhooks
-        const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-        const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
-        return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
+        if ('topic' in this.configuration && 'uri' in this.configuration) {
+          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
+          const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
+          return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
+        } else {
+          return nonRandomUUID(JSON.stringify(this.configuration))
+        }
+    }
+  }
+
+  private buildUIDFromStrategy() {
+    switch (this.specification.uidStrategy) {
+      case 'single':
+        return this.specification.identifier
+      case 'uuid':
+        return this.configuration.uid ?? nonRandomUUID(this.handle)
+      case 'dynamic':
+        return nonRandomUUID(this.handle)
     }
   }
 }
