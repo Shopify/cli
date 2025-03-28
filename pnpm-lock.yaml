@@ -268,8 +268,8 @@ importers:
         specifier: 3.77.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 9.0.8
-        version: 9.0.8(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 9.0.9
+        version: 9.0.9(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.77.0
         version: link:../cli-kit
@@ -2911,6 +2911,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       regenerator-runtime: 0.14.1
+    dev: true
 
   /@babel/template@7.25.9:
     resolution: {integrity: sha512-9DGttpmPvIxBb/2uwpVo3dqJ+O6RooAFOS+lB+xDqoE2PVCE8nfoHMdZLpfCQRLwvohzXISPZcgxt80xLfsuwg==}
@@ -3009,17 +3010,6 @@ packages:
       pump: 3.0.0
       stack-generator: 2.0.10
     dev: false
-
-  /@bugsnag/node@8.1.1:
-    resolution: {integrity: sha512-Ckdgj4tQto3CH4wWo12BAG0lQuS9s5SUpZvwmYF3meW5Qxq7D8XHZzrfGQo9nb1VTvmwOB+uyMt8En6Cy86Jcg==}
-    dependencies:
-      '@bugsnag/core': 8.2.0
-      byline: 5.0.0
-      error-stack-parser: 2.1.4
-      iserror: 0.0.2
-      pump: 3.0.0
-      stack-generator: 2.0.10
-    dev: true
 
   /@bugsnag/node@8.2.0:
     resolution: {integrity: sha512-6XC/KgX61m6YFgsBQP/GaH1UzlJkJmpi3AwlZQLsXloRh3O9lM/0EIk6+2sZm+vlz+GwxCFavcuIDgVmH/qi7Q==}
@@ -6303,15 +6293,15 @@ packages:
     resolution: {integrity: sha512-fTIQwLF+Qhuws31iw7Ncl1R3HUDtGwIipiJ9iU+UsDUwMhegFcQKQHd51nZjb7CArq0MvON8rbgCGQYWHUKAdg==}
     dev: true
 
-  /@shopify/cli-hydrogen@9.0.8(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-vvEQINtgau6/C3irLKZ4yVCVcFojCAEKt2BJTtKVZfq75g0/Bg262OUJGGf45kY9j8tlVQqGVxckzslbPz8agA==}
+  /@shopify/cli-hydrogen@9.0.9(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-JZ0D74J1pBXd+wLVpi9zv9466GfrmcsABeAZsOC4Fa4om+5zc6PTNaF4gKfWh4hG8TflfMuvLZCXVF4pPwsxQA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
-      '@remix-run/dev': ^2.1.0
-      '@shopify/hydrogen-codegen': ^0.3.2
-      '@shopify/mini-oxygen': ^3.1.1
+      '@remix-run/dev': ^2.16.1
+      '@shopify/hydrogen-codegen': ^0.3.3
+      '@shopify/mini-oxygen': ^3.1.2
       graphql-config: ^5.0.3
       vite: 5.4.12
     peerDependenciesMeta:
@@ -6342,7 +6332,7 @@ packages:
       get-port: 7.1.0
       gunzip-maybe: 1.4.2
       prettier: 2.8.8
-      semver: 7.6.3
+      semver: 7.7.1
       source-map: 0.7.4
       source-map-support: 0.5.21
       tar-fs: 2.1.1
@@ -6452,7 +6442,7 @@ packages:
     dependencies:
       '@bugsnag/core': 8.2.0
       '@bugsnag/js': 8.2.0
-      '@bugsnag/node': 8.1.1
+      '@bugsnag/node': 8.2.0
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
@@ -15053,7 +15043,7 @@ packages:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
     dependencies:
-      '@babel/runtime': 7.26.7
+      '@babel/runtime': 7.24.5
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
@@ -15590,6 +15580,12 @@ packages:
     resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
     engines: {node: '>=10'}
     hasBin: true
+
+  /semver@7.7.1:
+    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: true
 
   /send@0.19.0:
     resolution: {integrity: sha512-dW41u5VfLXu8SJh5bwRmyYUbAoSB3c9uQh6L8h/KtsFREPWpbX1lrljJo186Jc4nmci/sGUZ9a0a0J2zgfq2hw==}
