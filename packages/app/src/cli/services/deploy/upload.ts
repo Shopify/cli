@@ -167,20 +167,19 @@ export async function uploadExtensionsBundle(
 
   const result: AppDeploySchema = await handlePartnersErrors(() => options.developerPlatformClient.deploy(variables))
 
-  if (result.appDeploy?.userErrors?.length > 0) {
+  if (!result.appDeploy.appVersion) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
-      result.appDeploy.userErrors,
+      result.appDeploy.userErrors ?? [],
       options.extensionIds,
       {
         version: options.version,
       },
     )
+    throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
+  }
 
-    if (result.appDeploy.appVersion) {
-      deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
-    } else {
-      throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
-    }
+  if (result.appDeploy.userErrors?.length > 0) {
+    deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
   }
 
   const validationErrors = result.appDeploy.appVersion.appModuleVersions
