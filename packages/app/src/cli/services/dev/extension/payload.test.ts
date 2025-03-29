@@ -265,6 +265,126 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('returns the right payload for post-purchase extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputPath = joinPath(tmpDir, 'test-post-purchase-extension.js')
+      await touchFile(outputPath)
+      const signal: any = vi.fn()
+      const stdout: any = vi.fn()
+      const stderr: any = vi.fn()
+      vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
+        name: 'extension-renderer',
+        version: '1.2.3',
+      })
+
+      const postPurchaseExtension = await testUIExtension({
+        outputPath,
+        directory: tmpDir,
+        configuration: {
+          name: 'test-post-purchase-extension',
+          type: 'checkout_post_purchase',
+          metafields: [],
+          capabilities: {
+            network_access: true,
+            api_access: true,
+            block_progress: false,
+            collect_buyer_consent: {
+              sms_marketing: false,
+              customer_privacy: false,
+            },
+            iframe: {
+              sources: ['https://my-iframe.com'],
+            },
+          },
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      const options: Omit<ExtensionDevOptions, 'appWatcher'> = {
+        signal,
+        stdout,
+        stderr,
+        apiKey: 'api-key',
+        appName: 'foobar',
+        appDirectory: '/tmp',
+        extensions: [postPurchaseExtension],
+        grantedScopes: ['scope-a'],
+        port: 123,
+        url: 'http://tunnel-url.com',
+        storeFqdn: 'my-domain.com',
+        storeId: '123456789',
+        buildDirectory: tmpDir,
+        checkoutCartUrl: 'https://my-domain.com/cart',
+        subscriptionProductUrl: 'https://my-domain.com/subscription',
+        manifestVersion: '3',
+      }
+      const development: Partial<UIExtensionPayload['development']> = {
+        hidden: true,
+        status: 'success',
+      }
+
+      // When
+      const got = await getUIExtensionPayload(postPurchaseExtension, 'mock-bundle-path', {
+        ...options,
+        currentDevelopmentPayload: development,
+      })
+
+      // Then
+      expect(got).toMatchObject({
+        assets: {
+          main: {
+            lastUpdated: expect.any(Number),
+            name: 'main',
+            url: 'http://tunnel-url.com/extensions/devUUID/assets/test-post-purchase-extension.js',
+          },
+        },
+        capabilities: {
+          blockProgress: false,
+          networkAccess: true,
+          apiAccess: true,
+          collectBuyerConsent: {
+            smsMarketing: false,
+          },
+          iframe: {
+            sources: ['https://my-iframe.com'],
+          },
+        },
+        development: {
+          hidden: true,
+          localizationStatus: '',
+          resource: {
+            url: 'https://my-domain.com/cart',
+          },
+          root: {
+            url: 'http://tunnel-url.com/extensions/devUUID/purchase.post.render',
+          },
+          status: 'success',
+        },
+        extensionPoints: [
+          {
+            target: 'purchase.post.render',
+          },
+        ],
+        externalType: 'checkout_post_purchase_external',
+        localization: null,
+        metafields: null,
+        // as surfaces come from remote specs, we dont' have real values here
+        surface: 'test-surface',
+        title: 'test-post-purchase-extension',
+        type: 'checkout_post_purchase',
+        uuid: 'devUUID',
+        version: '1.2.3',
+        approvalScopes: ['scope-a'],
+      })
+    })
+  })
+
   test('default values', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
