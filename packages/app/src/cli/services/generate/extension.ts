@@ -1,10 +1,11 @@
 import {configurationFileNames, versions} from '../../constants.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes, PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from '../extensions/common.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {reloadApp} from '../../models/app/loader.js'
 import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
@@ -19,9 +20,10 @@ import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} fro
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {isRemoteDomExperimentEnabled} from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
 export interface GenerateExtensionTemplateOptions {
-  app: AppInterface
+  app: AppLinkedInterface
   cloneUrl?: string
   extensionChoices: GenerateExtensionContentOutput
   extensionTemplate: ExtensionTemplate
@@ -33,6 +35,7 @@ export interface GenerateExtensionTemplateOptions {
 
 export type ExtensionFlavorValue =
   | 'vanilla-js'
+  | 'preact'
   | 'react'
   | 'typescript'
   | 'typescript-react'
@@ -45,6 +48,7 @@ export type TemplateLanguage = 'javascript' | 'rust' | 'wasm' | undefined
 function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): TemplateLanguage {
   switch (flavor) {
     case 'vanilla-js':
+    case 'preact':
     case 'react':
     case 'typescript':
     case 'typescript-react':
@@ -65,7 +69,7 @@ export interface GeneratedExtension {
 interface ExtensionInitOptions {
   directory: string
   url: string
-  app: AppInterface
+  app: AppLinkedInterface
   type: string
   name: string
   extensionFlavor: ExtensionFlavor | undefined
@@ -82,9 +86,10 @@ export async function generateExtensionTemplate(
     (flavor) => flavor.value === extensionFlavorValue,
   )
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
-  const url = process.env.REMOTE_DOM_EXPERIMENT
+  const url = isRemoteDomExperimentEnabled()
     ? 'https://github.com/Shopify/extensions-templates#2025-07-rc'
     : options.cloneUrl ?? options.extensionTemplate.url
+
   const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
   const initOptions: ExtensionInitOptions = {
     directory,
@@ -248,7 +253,7 @@ async function uiExtensionInit({
 
         if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
-          if (!process.env.REMOTE_DOM_EXPERIMENT) {
+          if (!isRemoteDomExperimentEnabled()) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
           }
@@ -282,13 +287,14 @@ async function uiExtensionInit({
     },
   ]
 
-  // @todo: How to get an instance for the newly generated extension?
-  // if (process.env.REMOTE_DOM_EXPERIMENT) {
-  //   tasks.push({
-  //     title: 'Update shared type definition',
-  //     task: async () => app.generateExtensionTypes(),
-  //   })
-  // }
+  if (isRemoteDomExperimentEnabled()) {
+    tasks.push({
+      title: 'Update shared type definition',
+      task: async () => {
+        await reloadApp(app)
+      },
+    })
+  }
 
   await renderTasks(tasks)
 }
@@ -297,6 +303,7 @@ type SrcFileExtension = 'ts' | 'tsx' | 'js' | 'jsx' | 'rs' | 'wasm' | 'liquid' |
 function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExtension {
   const flavorToSrcFileExtension: {[key in ExtensionFlavorValue]: SrcFileExtension} = {
     'vanilla-js': 'js',
+    preact: 'jsx',
     react: 'jsx',
     typescript: 'ts',
     'typescript-react': 'tsx',

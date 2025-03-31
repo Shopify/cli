@@ -38,6 +38,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
+import * as experimentModule from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
 import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -51,6 +52,9 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
   globalCLIVersion: vi.fn(),
 }))
 vi.mock('@shopify/cli-kit/node/version')
+vi.mock('@shopify/cli-kit/node/is-remote-dom-experiment-enabled', () => ({
+  isRemoteDomExperimentEnabled: vi.fn().mockReturnValue(false),
+}))
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -92,7 +96,6 @@ automatically_update_urls_on_dev = true
     if (tmpDir) {
       await rmdir(tmpDir, {force: true})
     }
-    delete process.env.REMOTE_DOM_EXPERIMENT
   })
 
   const writeConfig = async (
@@ -2390,7 +2393,8 @@ wrong = "property"
   })
 
   test('call app.generateExtensionTypes when REMOTE_DOM_EXPERIMENT is true', async () => {
-    process.env.REMOTE_DOM_EXPERIMENT = 'true'
+    vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
+
     // Given
     await writeConfig(appConfiguration)
     const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')

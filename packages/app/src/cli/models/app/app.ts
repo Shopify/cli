@@ -17,13 +17,15 @@ import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configurati
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileRealPath, findPathUp, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, fileRealPath, findPathUp, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 // Schemas for loading app configuration
 
@@ -499,6 +501,7 @@ export class App<
   }
 
   async generateExtensionTypes() {
+    const start = startHRTime()
     const typeFilePath = joinPath(this.directory, 'shopify.d.ts')
     let firstImport = ''
     const sharedTypes = await Promise.all(
@@ -518,8 +521,15 @@ export class App<
       return
     }
 
+    const originalContent = fileExistsSync(typeFilePath) ? readFileSync(typeFilePath).toString() : ''
+    const typeContent = [firstImport, ...Array.from(combinedDefinitions)].join('\n')
+    if (originalContent === typeContent) {
+      outputInfo(`App generate extension types [${endHRTimeInMs(start)}ms]`)
+      return
+    }
     // Adding a top-level import to the type file allows us to workaround the TS restriction of not allowing declaring modules with relative paths
     writeFileSync(typeFilePath, [firstImport, ...Array.from(combinedDefinitions)].join('\n'))
+    outputInfo(`App generate extension types [${endHRTimeInMs(start)}ms]`)
   }
 
   get includeConfigOnDeploy() {

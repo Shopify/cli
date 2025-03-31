@@ -54,6 +54,7 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
 import {addToGitIgnore} from '@shopify/cli-kit/node/git'
+import {isRemoteDomExperimentEnabled} from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -389,7 +390,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       usedCustomLayoutForExtensions: configuration.extension_directories !== undefined,
     })
 
-    if (process.env.REMOTE_DOM_EXPERIMENT) {
+    if (isRemoteDomExperimentEnabled()) {
       await appClass.generateExtensionTypes()
     }
 

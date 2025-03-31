@@ -8,8 +8,12 @@ import {inTemporaryDirectory, touchFile, writeFile, readFile, mkdir} from '@shop
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+import * as experimentModule from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
+vi.mock('@shopify/cli-kit/node/is-remote-dom-experiment-enabled', () => ({
+  isRemoteDomExperimentEnabled: vi.fn().mockReturnValue(false),
+}))
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
@@ -655,10 +659,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
   })
 
   describe('getBundleExtensionStdinContent()', async () => {
-    afterEach(() => {
-      delete process.env.REMOTE_DOM_EXPERIMENT
-    })
-
     test('maps every target to an import statement', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -702,7 +702,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     })
 
     test('includes shopify.extend calls for all targets including should-render for Remote DOM API versions when REMOTE_DOM_EXPERIMENT is true', async () => {
-      process.env.REMOTE_DOM_EXPERIMENT = 'true'
+      vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
 
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -735,17 +735,18 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then
         expect(stdInContent.main).toBe(
-          `import Target_0 from './src/ExtensionPointA.js';shopify.extend('admin.product-details.block.render', () => Target_0());`,
+          `import Target_0 from './src/ExtensionPointA.js';shopify.extend('admin.product-details.block.render', (...args) => Target_0(...args));`,
         )
 
         expect(stdInContent.assets!.find((asset) => asset.identifier === AssetIdentifier.ShouldRender)?.content).toBe(
-          `import shouldRender from './src/condition/should-render.js';shopify.extend('admin.product-details.block.should-render', () => shouldRender());`,
+          `import shouldRender from './src/condition/should-render.js';shopify.extend('admin.product-details.block.should-render', (...args) => shouldRender(...args));`,
         )
       })
     })
 
     test('uses regular imports for non-Remote DOM API versions when REMOTE_DOM_EXPERIMENT is true', async () => {
-      process.env.REMOTE_DOM_EXPERIMENT = 'true'
+      vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
+
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await getTestUIExtension({
@@ -858,13 +859,14 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     fileContent,
     shouldRenderFileContent,
     apiVersion,
+    target = 'admin.product-details.block.render',
   }: {
     tmpDir: string
     fileContent: string
     shouldRenderFileContent?: string
     apiVersion: string
+    target?: string
   }) {
-    const target = 'admin.product-details.block.render'
     // Create extension files
     const srcDir = joinPath(tmpDir, 'src')
     await mkdir(srcDir)
@@ -944,66 +946,114 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     }
   }
 
-  test('contributeToSharedTypeFile with Remote DOM API version updates both main and should-render modules with type reference and returns shared types definition', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const {extension, typeFilePath, filePath, libraryPath, shouldRenderFilePath} =
-        await setupUIExtensionWithNodeModules({
+  describe('contributeToSharedTypeFile', () => {
+    test('updates both main and should-render modules with type reference and returns shared types definition when api version supports Remote DOM and REMOTE_DOM_EXPERIMENT is true', async () => {
+      vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath, libraryPath, shouldRenderFilePath} =
+          await setupUIExtensionWithNodeModules({
+            tmpDir,
+            fileContent: '// JSX code',
+            shouldRenderFileContent: '// JS code',
+            // Remote DOM supported version
+            apiVersion: '2025-07',
+          })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toHaveLength(2)
+
+        // Main module types
+        const expectedDefinition = `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js');
+  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js').Api;
+}\n`
+        expect(result[0]?.definition).toBe(expectedDefinition)
+        expect(result[0]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
+
+        // Check if the TS file was updated with reference
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toContain('/// <reference types="../shopify.d.ts" />')
+
+        // Should-render module types
+        const expectedShouldRenderDefinition = `//@ts-ignore\ndeclare module './src/condition/should-render.js' {
+  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js');
+  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js').Api;
+}\n`
+        expect(result[1]?.definition).toBe(expectedShouldRenderDefinition)
+        expect(result[1]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
+
+        const shouldRenderFileContent = await readFile(shouldRenderFilePath!)
+        expect(shouldRenderFileContent.toString()).toContain('/// <reference types="../../shopify.d.ts" />')
+      })
+    })
+
+    test('returns empty shared types definition and remove type reference when api version supports Remote DOM and REMOTE_DOM_EXPERIMENT is true but type reference for target could not be found', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
+        const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
           tmpDir,
-          fileContent: '// JSX code',
-          shouldRenderFileContent: '// JS code',
+          fileContent: '/// <reference types="../shopify.d.ts" />\n// Preact code',
           // Remote DOM supported version
           apiVersion: '2025-07',
         })
 
-      // When
-      const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+        // Change target to a target that does not exist in the library
+        extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
 
-      // Then
-      expect(result).toHaveLength(2)
+        // Then
+        expect(result).toEqual([])
 
-      // Main module types
-      const expectedDefinition = `declare module './src/index.jsx' {
-  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js');
-  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js').Api;
-}\n`
-      expect(result[0]?.definition).toBe(expectedDefinition)
-      expect(result[0]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
-
-      // Check if the TS file was updated with reference
-      const moduleFileContent = await readFile(filePath)
-      expect(moduleFileContent.toString()).toContain('/// <reference types="../shopify.d.ts" />')
-
-      // Should-render module types
-      const expectedShouldRenderDefinition = `declare module './src/condition/should-render.js' {
-  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js');
-  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js').Api;
-}\n`
-      expect(result[1]?.definition).toBe(expectedShouldRenderDefinition)
-      expect(result[1]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
-
-      const shouldRenderFileContent = await readFile(shouldRenderFilePath!)
-      expect(shouldRenderFileContent.toString()).toContain('/// <reference types="../../shopify.d.ts" />')
-    })
-  })
-
-  test('contributeToSharedTypeFile with non-Remote DOM API version returns empty shared types definition and leaves file unchanged', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
-        tmpDir,
-        fileContent: '// TypeScript React code',
-        // Non-Remote DOM supported version
-        apiVersion: '2025-01',
+        // TSX file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// Preact code')
       })
+    })
 
-      // When
-      const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+    test('returns empty shared types definition and leaves file unchanged when api version does not support Remote DOM', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// TypeScript React code',
+          // Non-Remote DOM supported version
+          apiVersion: '2025-01',
+        })
 
-      // Then
-      expect(result).toEqual([])
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
 
-      // TSX file should remain unchanged
-      const moduleFileContent = await readFile(filePath)
-      expect(moduleFileContent.toString()).toBe('// TypeScript React code')
+        // Then
+        expect(result).toEqual([])
+
+        // TSX file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// TypeScript React code')
+      })
+    })
+
+    test('returns empty shared types definition and leaves file unchanged when REMOTE_DOM_EXPERIMENT is false', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Preact code',
+          // Remote DOM supported version
+          apiVersion: '2025-07',
+        })
+
+        // When
+        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+
+        // Then
+        expect(result).toEqual([])
+
+        // TSX file should remain unchanged
+        const moduleFileContent = await readFile(filePath)
+        expect(moduleFileContent.toString()).toBe('// Preact code')
+      })
     })
   })
 })
