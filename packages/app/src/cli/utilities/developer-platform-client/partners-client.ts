@@ -477,10 +477,17 @@ export class PartnersClient implements DeveloperPlatformClient {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
     const result: FindStoreByDomainSchema = await this.request(FindStoreByDomainQuery, variables)
 
-    return result.organizations.nodes[0]?.stores.nodes[0]
+    const node = result.organizations.nodes[0]?.stores.nodes[0]
+    if (!node) {
+      return undefined
+    }
+    return {
+      ...node,
+      provisionable: false,
+    }
   }
 
-  async ensureUserAccessToStore(_orgId: string, _shopId: string): Promise<void> {
+  async ensureUserAccessToStore(_orgId: string, _store: OrganizationStore): Promise<void> {
     // This is a no-op for partners
   }
 

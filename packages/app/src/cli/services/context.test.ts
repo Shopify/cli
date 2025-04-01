@@ -70,6 +70,7 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: true,
   convertableToPartnerTest: true,
+  provisionable: true,
 }
 
 const state: AppConfigurationStateLinked = {

@@ -30,6 +30,7 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: false,
   convertableToPartnerTest: false,
+  provisionable: true,
 }
 
 vi.mock('@shopify/cli-kit/node/api/partners')
