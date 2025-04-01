@@ -1,6 +1,5 @@
-import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   AccountInfo,
   fetchCurrentAccountInformation,
@@ -115,36 +114,6 @@ export async function fetchOrgFromId(
   return org
 }
 
-interface FetchStoreByDomainOutput {
-  organization: Organization
-  store?: OrganizationStore
-}
-/**
- * Returns the organization and the store based on passed domain
- * If a store with that domain doesn't exist the method returns undefined
- * @param orgId - Organization ID
- * @param shopDomain - shop domain fqdn
- * @param developerPlatformClient - The client to access the platform API
- */
-export async function fetchStoreByDomain(
-  orgId: string,
-  shopDomain: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<FetchStoreByDomainOutput | undefined> {
-  const result: FindStoreByDomainSchema = await developerPlatformClient.storeByDomain(orgId, shopDomain)
-  const org = result.organizations.nodes[0]
-  if (!org) {
-    return undefined
-  }
-  const source = developerPlatformClient.requiresOrganization
-    ? OrganizationSource.BusinessPlatform
-    : OrganizationSource.Partners
-  const parsedOrg = {id: org.id, businessName: org.businessName, source}
-  const store = org.stores.nodes[0]
-
-  return {organization: parsedOrg, store}
-}
-
 /**
  * Returns the store based on given domain.
  * Throws error if a store with that domain doesn't exist in the organization.
@@ -158,8 +127,7 @@ export async function fetchStore(
   storeFqdn: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<OrganizationStore> {
-  const result: FindStoreByDomainSchema = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
-  const store = result.organizations.nodes[0]?.stores.nodes[0]
+  const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
 
   if (!store) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
 
