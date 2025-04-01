@@ -493,8 +493,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
+    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
     return {
-      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray),
+      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
       hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
     }
   }
@@ -783,12 +784,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
+    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
+    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
     return storesArray[0]
   }
 
-  async ensureUserAccessToStore(orgId: string, shopId: string): Promise<void> {
-    const encodedShopId = encodedGidFromShopId(shopId)
+  async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
+    if (!store.provisionable) {
+      return
+    }
+    const encodedShopId = encodedGidFromShopId(store.shopId)
     const variables: ProvisionShopAccessMutationVariables = {
       input: {shopifyShopId: encodedShopId},
     }
@@ -1128,7 +1133,10 @@ function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
 }
 
-function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]): OrganizationStore[] {
+function mapBusinessPlatformStoresToOrganizationStores(
+  storesArray: ShopNode[],
+  provisionable: boolean,
+): OrganizationStore[] {
   return storesArray.map((store: ShopNode) => {
     const {externalId, primaryDomain, name} = store
     return {
@@ -1138,6 +1146,7 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
       shopName: name,
       transferDisabled: true,
       convertableToPartnerTest: true,
+      provisionable,
     } as OrganizationStore
   })
 }
@@ -1181,4 +1190,8 @@ interface FetchAppLogsDevDashboardOptions {
     status?: string
     source?: string
   }
+}
+
+function isStoreProvisionable(permissions: string[]) {
+  return permissions.includes('ondemand_access_to_stores')
 }
