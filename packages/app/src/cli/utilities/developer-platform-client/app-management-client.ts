@@ -36,7 +36,6 @@ import {
   ExtensionRegistration,
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
-import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
@@ -768,10 +767,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
-  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
-  // from the Partners FindByStoreDomainSchema, we will return this type for now
-  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
     const storesResult = await businessPlatformOrganizationsRequestDoc(
       FetchDevStoreByDomain,
@@ -788,20 +784,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
-
-    return {
-      organizations: {
-        nodes: [
-          {
-            id: organization.id,
-            businessName: organization.name,
-            stores: {
-              nodes: storesArray,
-            },
-          },
-        ],
-      },
-    }
+    return storesArray[0]
   }
 
   async ensureUserAccessToStore(orgId: string, shopId: string): Promise<void> {
