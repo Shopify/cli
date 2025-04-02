@@ -202,6 +202,30 @@ describe('applying environments', async () => {
     `)
   })
 
+  runTestInTmpDir(
+    'base Command does not apply environment specified via environment variable',
+    async (tmpDir: string) => {
+      // Given
+      const environmentName = 'validEnvironmentWithPassword'
+      const flagName = 'SHOPIFY_FLAG_ENVIRONMENT'
+      vi.stubEnv(flagName, environmentName)
+
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await MockCommand.run(['--path', tmpDir])
+
+      // Then
+      expect(testResult.environment).toEqual([])
+      expect(testResult.password).toBeUndefined()
+      expect(testResult.someString).toBeUndefined()
+      expect(testResult.path).toEqual(resolvePath(tmpDir))
+      expect(testResult.someStringWithDefault).toEqual('default stringy')
+      expect(outputMock.info()).toEqual('')
+    },
+  )
+
   runTestInTmpDir('searches up recursively from path by default', async (tmpDir: string) => {
     // Given
     const subdir = joinPath(tmpDir, 'somedir', '--environment', 'validEnvironment')
