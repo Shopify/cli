@@ -45,7 +45,7 @@ export class DevSessionLogger {
       const mappedErrors = errors.map((error) => {
         const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
         const extension = extensions.find((ext) => ext.uid === on?.user_identifier)
-        return {error: error.message, prefix: extension?.handle ?? 'dev-session'}
+        return {error: error.message, prefix: extension?.handle ?? 'app-preview'}
       })
       await this.logMultipleErrors(mappedErrors)
     }
@@ -96,7 +96,7 @@ export class DevSessionLogger {
 
   async logMultipleErrors(errors: {error: string; prefix: string}[]) {
     const header = outputToken.errorText(`❌ Error`)
-    await this.log(outputContent`${header}`.value, 'dev-session')
+    await this.log(outputContent`${header}`.value, 'app-preview')
     const messages = errors.map((error) => {
       const content = outputToken.errorText(`└  ${error.error}`)
       return this.log(outputContent`${content}`.value, error.prefix)
@@ -106,7 +106,7 @@ export class DevSessionLogger {
 
   // Helper function to print to terminal using output context with stripAnsi disabled.
   private async log(message: string, prefix?: string) {
-    await useConcurrentOutputContext({outputPrefix: prefix ?? 'dev-session', stripAnsi: false}, () => {
+    await useConcurrentOutputContext({outputPrefix: prefix ?? 'app-preview', stripAnsi: false}, () => {
       this.stdout.write(message)
     })
   }

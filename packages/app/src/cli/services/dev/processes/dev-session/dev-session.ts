@@ -56,7 +56,7 @@ export class DevSession {
   }
 
   private async start() {
-    await this.logger.info('Preparing dev session')
+    await this.logger.info('Preparing app preview')
     this.statusManager.setMessage('LOADING')
 
     this.appWatcher
@@ -93,7 +93,7 @@ export class DevSession {
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
       await this.logger.logMultipleErrors(errors)
-      throw new AbortError('Dev session aborted, build errors detected in extensions.')
+      throw new AbortError('App preview aborted, build errors detected in extensions.')
     }
     const result = await this.bundleExtensionsAndUpload(event)
     await this.handleDevSessionResult(result, event)
@@ -111,7 +111,7 @@ export class DevSession {
    */
   private async validateAppEvent(event: AppEvent): Promise<boolean> {
     if (!this.statusManager.status.isReady) {
-      await this.logger.warning('Change detected, but dev session is not ready yet.')
+      await this.logger.warning('Change detected, but app preview is not ready yet.')
       return false
     }
 
@@ -172,7 +172,7 @@ export class DevSession {
       await this.logger.success(`✅ Ready, watching for changes in your app `)
       this.statusManager.setMessage('READY')
     } else if (result.status === 'aborted') {
-      await this.logger.debug('❌ Session update aborted (new change detected or error in Session Update)')
+      await this.logger.debug('❌ App preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
       if (result.error instanceof Error && result.error.cause === 'validation-error') {
@@ -185,7 +185,7 @@ export class DevSession {
     // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
     // async nature of the process.
     if (!this.statusManager.status.isReady && !isUnitTest()) {
-      throw new AbortError('Failed to start dev session.')
+      throw new AbortError('Failed to start app preview.')
     }
   }
 

@@ -24,7 +24,7 @@ export interface AppWatcherProcess extends BaseProcess<AppWatcherProcessOptions>
 export async function setupAppWatcherProcess(options: AppWatcherProcessOptions): Promise<AppWatcherProcess> {
   return {
     type: 'app-watcher',
-    prefix: `dev-session`,
+    prefix: `app-preview`,
     options,
     function: launchAppWatcher,
   }

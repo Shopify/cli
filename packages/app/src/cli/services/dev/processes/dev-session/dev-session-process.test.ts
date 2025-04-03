@@ -48,7 +48,7 @@ describe('setupDevSessionProcess', () => {
     // Then
     expect(process).toEqual({
       type: 'dev-session',
-      prefix: 'dev-session',
+      prefix: 'app-preview',
       function: pushUpdatesForDevSession,
       options: {
         app: options.app,
@@ -158,7 +158,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(
-      expect.stringContaining('Change detected, but dev session is not ready yet.'),
+      expect.stringContaining('Change detected, but app preview is not ready yet.'),
     )
     expect(developerPlatformClient.devSessionCreate).not.toHaveBeenCalled()
     expect(developerPlatformClient.devSessionUpdate).not.toHaveBeenCalled()
@@ -199,7 +199,7 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
-    expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'dev-session', stripAnsi: false}, expect.anything())
+    expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'app-preview', stripAnsi: false}, expect.anything())
     contextSpy.mockRestore()
   })
 
@@ -300,7 +300,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then - Initial loading state
     expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Preparing dev session',
+      message: 'Preparing app preview',
       type: 'loading',
     })
 
@@ -365,7 +365,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Error updating dev session',
+      message: 'Error updating app preview',
       type: 'error',
     })
   })

@@ -35,7 +35,6 @@ describe('DevSessionLogger', () => {
 
     test('warning logs message', async () => {
       await logger.warning('test warning')
-      // expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'dev-session', stripAnsi: false}, expect.anything())
       expect(output).toMatchInlineSnapshot(`
         [
           "[33mtest warning[39m",
