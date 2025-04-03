@@ -125,6 +125,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -251,7 +252,25 @@ export class AppManagementClient implements DeveloperPlatformClient {
         cacheExtraKey: userId,
       })
 
-      if (userInfoResult.currentUserAccount) {
+      if (getPartnersToken() && userInfoResult.currentUserAccount) {
+        const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
+          name: org.name,
+        }))
+
+        if (organizations.length > 1) {
+          throw new BugError('Multiple organizations found for the CLI token')
+        }
+
+        this._session = {
+          token: appManagementToken,
+          businessPlatformToken,
+          accountInfo: {
+            type: 'ServiceAccount',
+            orgName: organizations[0]?.name ?? 'Unknown organization',
+          },
+          userId,
+        }
+      } else if (userInfoResult.currentUserAccount) {
         this._session = {
           token: appManagementToken,
           businessPlatformToken,
