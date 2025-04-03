@@ -452,7 +452,7 @@ describe('initialize a extension', async () => {
     })
   })
 
-  test.only('uses Remote DOM template URL for the git repository URL when REMOTE_DOM_EXPERIMENT is true and reloads the app after generating the extension', async () => {
+  test('uses Remote DOM template URL for the git repository URL when REMOTE_DOM_EXPERIMENT is true and reloads the app after generating the extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given
       vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockImplementation(() => true)
