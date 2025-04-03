@@ -1,6 +1,8 @@
 import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
+  exchangeCliTokenForAppManagementAccessToken,
+  exchangeCliTokenForBusinessPlatformAccessToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -9,7 +11,7 @@ import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import {getLastSeenUserIdAfterAuth} from '../session.js'
+import {getLastSeenUserIdAfterAuth, getLastSeenAuthMethod} from '../session.js'
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -197,30 +199,96 @@ describe('refresh access tokens', () => {
   })
 })
 
-describe('exchangeCustomPartnerToken', () => {
-  const token = 'customToken'
+const tokenExchangeMethods = [
+  {
+    tokenExchangeMethod: exchangeCustomPartnerToken,
+    expectedScopes: ['https://api.shopify.com/auth/partners.app.cli.access'],
+    expectedApi: 'partners',
+    expectedErrorName: 'Partners',
+  },
+  {
+    tokenExchangeMethod: exchangeCliTokenForAppManagementAccessToken,
+    expectedScopes: ['https://api.shopify.com/auth/organization.apps.manage'],
+    expectedApi: 'app-management',
+    expectedErrorName: 'App Management',
+  },
+  {
+    tokenExchangeMethod: exchangeCliTokenForBusinessPlatformAccessToken,
+    expectedScopes: [
+      'https://api.shopify.com/auth/destinations.readonly',
+      'https://api.shopify.com/auth/organization.store-management',
+    ],
+    expectedApi: 'business-platform',
+    expectedErrorName: 'Business Platform',
+  },
+]
 
-  // Generated from `customToken` using `nonRandomUUID()`
-  const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
+describe.each(tokenExchangeMethods)(
+  'Token exchange: %s',
+  ({tokenExchangeMethod, expectedScopes, expectedApi, expectedErrorName}) => {
+    const cliToken = 'customToken'
+    // Generated from `customToken` using `nonRandomUUID()`
+    const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
 
-  test('returns access token and user ID for a valid token', async () => {
-    // Given
-    const data = {
-      access_token: 'access_token',
-      expires_in: 300,
-      scope: 'scope,scope2',
-    }
-    // Given
-    const response = new Response(JSON.stringify(data))
+    const grantType = 'urn:ietf:params:oauth:grant-type:token-exchange'
+    const accessTokenType = 'urn:ietf:params:oauth:token-type:access_token'
 
-    // Need to do it 3 times because a Response can only be used once
-    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    test(`Executing ${tokenExchangeMethod.name} returns access token and user ID for a valid CLI token`, async () => {
+      // Given
+      let capturedUrl = ''
+      vi.mocked(shopifyFetch).mockImplementation(async (url, options) => {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        capturedUrl = url.toString()
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              access_token: 'expected_access_token',
+              expires_in: 300,
+              scope: 'scope,scope2',
+            }),
+          ),
+        )
+      })
 
-    // When
-    const result = await exchangeCustomPartnerToken(token)
+      // When
+      const result = await tokenExchangeMethod(cliToken)
 
-    // Then
-    expect(result).toEqual({accessToken: 'access_token', userId})
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(userId)
-  })
-})
+      // Then
+      expect(result).toEqual({accessToken: 'expected_access_token', userId})
+      await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(userId)
+      await expect(getLastSeenAuthMethod()).resolves.toBe('partners_token')
+
+      // Assert token exchange parameters are correct
+      const actualUrl = new URL(capturedUrl)
+      expect(actualUrl).toBeDefined()
+      expect(actualUrl.href).toContain('https://fqdn.com/oauth/token')
+
+      const params = actualUrl.searchParams
+      expect(params.get('grant_type')).toBe(grantType)
+      expect(params.get('requested_token_type')).toBe(accessTokenType)
+      expect(params.get('subject_token_type')).toBe(accessTokenType)
+      expect(params.get('client_id')).toBe('clientId')
+      expect(params.get('audience')).toBe(expectedApi)
+      expect(params.get('scope')).toBe(expectedScopes.join(' '))
+      expect(params.get('subject_token')).toBe(cliToken)
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} throws AbortError if an error is caught`, async () => {
+      const expectedErrorMessage = `The custom token provided can't be used for the ${expectedErrorName} API.`
+      vi.mocked(shopifyFetch).mockImplementation(async () => {
+        throw new Error('BAD ERROR')
+      })
+
+      try {
+        await tokenExchangeMethod(cliToken)
+      } catch (error) {
+        if (error instanceof Error) {
+          expect(error).toBeInstanceOf(AbortError)
+          expect(error.message).toBe(expectedErrorMessage)
+        } else {
+          throw error
+        }
+      }
+    })
+  },
+)
