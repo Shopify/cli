@@ -58,7 +58,6 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: false,
   convertableToPartnerTest: false,
-  provisionable: true,
 }
 
 const FETCH_ORG_RESPONSE_VALUE = {

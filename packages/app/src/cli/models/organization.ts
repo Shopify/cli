@@ -62,5 +62,13 @@ export interface OrganizationStore {
   shopName: string
   transferDisabled: boolean
   convertableToPartnerTest: boolean
-  provisionable: boolean
+}
+
+export interface OrganizationUser {
+  canEnsureStoreAccess: boolean
+}
+
+export interface OrganizationStoreAndUser {
+  store: OrganizationStore
+  user: OrganizationUser
 }

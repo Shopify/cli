@@ -23,6 +23,8 @@ import {
   OrganizationApp,
   OrganizationSource,
   OrganizationStore,
+  OrganizationUser,
+  OrganizationStoreAndUser,
 } from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
@@ -368,13 +370,18 @@ export class PartnersClient implements DeveloperPlatformClient {
     return {...result.appCreate.app, organizationId: org.id, newApp: true, flags, developerPlatformClient: this}
   }
 
-  async devStoresForOrg(orgId: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
+  async devStoresAndUserForOrg(orgId: string): Promise<[Paginateable<{stores: OrganizationStore[]}>, OrganizationUser]> {
     const variables: DevStoresByOrgQueryVariables = {id: orgId}
     const result: DevStoresByOrgQuery = await this.requestDoc(DevStoresByOrg, variables)
-    return {
-      stores: result.organizations.nodes![0]!.stores.nodes as OrganizationStore[],
-      hasMorePages: false,
-    }
+    return [
+      {
+        stores: result.organizations.nodes![0]!.stores.nodes as OrganizationStore[],
+        hasMorePages: false,
+      },
+      {
+        canEnsureStoreAccess: false,
+      }
+    ]
   }
 
   async appExtensionRegistrations(
@@ -473,7 +480,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
+  async storeAndUserByDomain(orgId: string, shopDomain: string): Promise<OrganizationStoreAndUser | undefined> {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
     const result: FindStoreByDomainSchema = await this.request(FindStoreByDomainQuery, variables)
 
@@ -481,10 +488,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     if (!node) {
       return undefined
     }
-    return {
-      ...node,
-      provisionable: false,
-    }
+    return {store: node, user: {canEnsureStoreAccess: false}}
   }
 
   async ensureUserAccessToStore(_orgId: string, _store: OrganizationStore): Promise<void> {

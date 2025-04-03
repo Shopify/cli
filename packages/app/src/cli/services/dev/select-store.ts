@@ -33,7 +33,7 @@ export async function selectStore(
   const showDomainOnPrompt = developerPlatformClient.clientName === ClientName.AppManagement
   let onSearchForStoresByName
   if (developerPlatformClient.supportsStoreSearch) {
-    onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresForOrg(org.id, term)
+    onSearchForStoresByName = async (term: string) => developerPlatformClient.devStoresAndUserForOrg(org.id, term)
   }
   // If no stores, guide the developer through creating one
   // Then, with a store selected, make sure its transfer-disabled, prompting to convert if needed
@@ -96,7 +96,7 @@ async function waitForCreatedStore(
       task: async () => {
         for (let i = 0; i < retries; i++) {
           // eslint-disable-next-line no-await-in-loop
-          const {stores} = await developerPlatformClient.devStoresForOrg(orgId)
+          const {stores} = (await developerPlatformClient.devStoresAndUserForOrg(orgId))[0]
           if (stores.length > 0) {
             data = stores
             return

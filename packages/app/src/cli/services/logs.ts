@@ -111,7 +111,7 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
     await Promise.all(
       commandOptions.storeFqdns?.slice(1).map(async (storeFqdn) => {
-        const store = await fetchStore(organization, storeFqdn, developerPlatformClient)
+        const {store} = await fetchStore(organization, storeFqdn, developerPlatformClient)
         storeNameById.set(store.shopId, storeFqdn)
       }),
     )

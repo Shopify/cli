@@ -30,7 +30,6 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: false,
   convertableToPartnerTest: false,
-  provisionable: true,
 }
 
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -88,7 +87,7 @@ describe('fetchStore', () => {
   test('returns fetched store', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(STORE1),
+      storeAndUserByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(STORE1),
     })
 
     // When
@@ -96,13 +95,13 @@ describe('fetchStore', () => {
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
+    expect(developerPlatformClient.storeAndUserByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
   })
 
   test('throws error if store not found', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(undefined),
+      storeAndUserByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(undefined),
     })
 
     // When

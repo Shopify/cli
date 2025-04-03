@@ -9,6 +9,8 @@ import {
   OrganizationApp,
   OrganizationSource,
   OrganizationStore,
+  OrganizationUser,
+  OrganizationStoreAndUser,
 } from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
@@ -251,8 +253,8 @@ export interface DeveloperPlatformClient {
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
   templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
-  devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
-  storeByDomain: (orgId: string, shopDomain: string) => Promise<OrganizationStore | undefined>
+  devStoresAndUserForOrg: (orgId: string, searchTerm?: string) => Promise<[Paginateable<{stores: OrganizationStore[]}>, OrganizationUser]>
+  storeAndUserByDomain: (orgId: string, shopDomain: string) => Promise<OrganizationStoreAndUser | undefined>
   ensureUserAccessToStore: (orgId: string, store: OrganizationStore) => Promise<void>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,

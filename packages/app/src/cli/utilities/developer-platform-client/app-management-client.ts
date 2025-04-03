@@ -30,6 +30,8 @@ import {
   OrganizationApp,
   OrganizationSource,
   OrganizationStore,
+  OrganizationStoreAndUser,
+  OrganizationUser,
 } from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
@@ -479,7 +481,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // we are returning OrganizationStore type here because we want to keep types consistent btwn
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
-  async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
+  async devStoresAndUserForOrg(orgId: string, searchTerm?: string): Promise<[Paginateable<{stores: OrganizationStore[]}>, OrganizationUser]> {
     const storesResult = await businessPlatformOrganizationsRequestDoc(
       ListAppDevStores,
       await this.businessPlatformToken(),
@@ -494,10 +496,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
-    return {
-      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
-      hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
-    }
+    return [
+      {
+        stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
+        hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
+      },
+      {
+        canEnsureStoreAccess: provisionable,
+      }
+    ]
   }
 
   async appExtensionRegistrations(
@@ -768,7 +775,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
+  async storeAndUserByDomain(orgId: string, shopDomain: string): Promise<OrganizationStoreAndUser | undefined> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
     const storesResult = await businessPlatformOrganizationsRequestDoc(
       FetchDevStoreByDomain,
@@ -786,13 +793,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
     const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
-    return storesArray[0]
+    if (!storesArray[0]) {
+      return undefined
+    }
+    return {
+      store: storesArray[0],
+      user: {canEnsureStoreAccess: provisionable},
+    }
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
-    if (!store.provisionable) {
-      return
-    }
     const encodedShopId = encodedGidFromShopId(store.shopId)
     const variables: ProvisionShopAccessMutationVariables = {
       input: {shopifyShopId: encodedShopId},
