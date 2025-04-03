@@ -89,6 +89,41 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
   }
 }
 
+export async function exchangeCliTokenForAppManagementAccessToken(token: string): Promise<{accessToken: string; userId: string}> {
+  const appId = applicationId('app-management')
+  try {
+    const newToken = await requestAppToken('app-management', token, [
+      'https://api.shopify.com/auth/organization.apps.manage',
+    ])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const accessToken = newToken[appId]!.accessToken
+    const userId = nonRandomUUID(token)
+    setLastSeenUserIdAfterAuth(userId)
+    setLastSeenAuthMethod('partners_token')
+    return {accessToken, userId}
+  } catch (error) {
+    throw new AbortError('The alksdjslkdjalsdkldf.', 'bad app management token')
+  }
+}
+
+export async function exchangeCliTokenForBusinessPlatformAccessToken(token: string): Promise<{accessToken: string; userId: string}> {
+  const appId = applicationId('business-platform')
+  try {
+    const newToken = await requestAppToken('business-platform', token, [
+      'https://api.shopify.com/auth/destinations.readonly',
+      'https://api.shopify.com/auth/organization.store-management',
+    ])
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const accessToken = newToken[appId]!.accessToken
+    const userId = nonRandomUUID(token)
+    setLastSeenUserIdAfterAuth(userId)
+    setLastSeenAuthMethod('partners_token')
+    return {accessToken, userId}
+  } catch (error) {
+    throw new AbortError('sdlkfjsdklfj bad', 'bad business platform token')
+  }
+}
+
 type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
 
 /**

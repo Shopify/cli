@@ -54,6 +54,7 @@ export function isVerbose(env = process.env): boolean {
  * @returns True if the App Management API is disabled.
  */
 export function isAppManagementDisabled(): boolean {
+  return false
   return Boolean(getPartnersToken())
 }
 
