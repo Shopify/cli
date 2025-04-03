@@ -59,6 +59,9 @@ export default abstract class ThemeCommand extends Command {
 
     // Synchronously authenticate all environments
     const sessions: {[storeFqdn: string]: AdminSession} = {}
+    // OCLIF parses flags.environment as an array when using the --environment & -e flag but
+    // as a string when using the direct environment variable SHOPIFY_FLAG_ENVIRONMENT
+    // This handles both cases
     const environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
 
     // Authenticate on all environments sequentially to avoid race conditions,
