@@ -6,11 +6,11 @@ export type DevSessionStatusMessageType = 'error' | 'success' | 'loading'
 const DevSessionStaticMessages = {
   BUILD_ERROR: {message: 'Build error. Please review your code and try again', type: 'error'},
   READY: {message: 'Ready, watching for changes in your app', type: 'success'},
-  LOADING: {message: 'Preparing dev session', type: 'loading'},
+  LOADING: {message: 'Preparing app preview', type: 'loading'},
   UPDATED: {message: 'Updated', type: 'success'},
   VALIDATION_ERROR: {message: 'Validation error in your app configuration', type: 'error'},
-  REMOTE_ERROR: {message: 'Error updating dev session', type: 'error'},
-  CHANGE_DETECTED: {message: 'Change detected, updating dev session', type: 'loading'},
+  REMOTE_ERROR: {message: 'Error updating app preview', type: 'error'},
+  CHANGE_DETECTED: {message: 'Change detected, updating app preview', type: 'loading'},
 } as const
 
 export interface DevSessionStatus {

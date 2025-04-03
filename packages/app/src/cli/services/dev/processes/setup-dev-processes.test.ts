@@ -263,7 +263,7 @@ describe('setup-dev-processes', () => {
 
     expect(res.processes[6]).toMatchObject({
       type: 'app-watcher',
-      prefix: 'dev-session',
+      prefix: 'app-preview',
       function: launchAppWatcher,
       options: {
         appWatcher: expect.any(AppEventWatcher),
@@ -348,7 +348,7 @@ describe('setup-dev-processes', () => {
 
     expect(res.processes[3]).toMatchObject({
       type: 'dev-session',
-      prefix: 'dev-session',
+      prefix: 'app-preview',
       function: pushUpdatesForDevSession,
       options: {
         app: localApp,

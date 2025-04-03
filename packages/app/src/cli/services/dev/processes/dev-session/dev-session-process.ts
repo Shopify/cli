@@ -31,7 +31,7 @@ export async function setupDevSessionProcess({
 }: Omit<DevSessionProcessOptions, 'extensions'>): Promise<DevSessionProcess | undefined> {
   return {
     type: 'dev-session',
-    prefix: 'dev-session',
+    prefix: 'app-preview',
     function: pushUpdatesForDevSession,
     options: {
       app,
