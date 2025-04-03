@@ -2392,7 +2392,7 @@ wrong = "property"
     generateTypesSpy.mockRestore()
   })
 
-  test('call app.generateExtensionTypes when REMOTE_DOM_EXPERIMENT is true', async () => {
+  test('call app.generateExtensionTypes when REMOTE_DOM_EXPERIMENT is enabled', async () => {
     vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
 
     // Given

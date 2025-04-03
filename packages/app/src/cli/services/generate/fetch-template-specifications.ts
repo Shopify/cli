@@ -9,18 +9,19 @@ export async function fetchExtensionTemplates(
   availableSpecifications: string[],
 ): Promise<ExtensionTemplate[]> {
   const remoteTemplates: ExtensionTemplate[] = await developerPlatformClient.templateSpecifications(app)
+  const remoteDomExperimentEnabled = isRemoteDomExperimentEnabled()
+
   return remoteTemplates
     .filter(
       (template) =>
         availableSpecifications.includes(template.identifier) || availableSpecifications.includes(template.type),
     )
     .map((template) => {
-      const isRemoteDomSpecification = isRemoteDomExperimentEnabled() && template.type === 'ui_extension'
-      if (isRemoteDomSpecification) {
+      if (template.type === 'ui_extension') {
         return {
           ...template,
-          supportedFlavors: template.supportedFlavors.filter(
-            (flavor) => flavor.value === 'preact' || flavor.value === 'react',
+          supportedFlavors: template.supportedFlavors.filter((flavor) =>
+            remoteDomExperimentEnabled ? flavor.value === 'preact' : flavor.value !== 'preact',
           ),
         }
       }

@@ -1,4 +1,5 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
+import {ExtensionFlavorValue} from './extension.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {ExtensionTemplate, ExtensionFlavor} from '../../models/app/template.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -32,49 +33,77 @@ describe('fetchTemplateSpecifications', () => {
     expect(identifiers).not.toContain('ui_extension')
   })
 
-  test('returns only the jsx flavor when REMOTE_DOM_EXPERIMENT is enabled', async () => {
-    // Given
-    const enabledSpecifications = ['ui_extension']
-    const jsxFlavor: ExtensionFlavor = {
-      name: 'React',
-      value: 'react',
+  describe('ui_extension', () => {
+    const preactFlavor: ExtensionFlavor = {
+      name: 'Preact',
+      value: 'preact' as ExtensionFlavorValue,
     }
-    vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
 
-    // When
-    const templates: ExtensionTemplate[] = await fetchExtensionTemplates(
-      testDeveloperPlatformClient({
-        templateSpecifications: () =>
-          Promise.resolve([
-            {
-              identifier: 'ui_extension',
-              name: 'UI Extension',
-              defaultName: 'ui-extension',
-              group: 'Merchant Admin',
-              supportLinks: [],
-              type: 'ui_extension',
-              url: 'https://github.com/Shopify/extensions-templates',
-              extensionPoints: [],
-              supportedFlavors: [
-                {
-                  name: 'JavaScript',
-                  value: 'vanilla-js',
-                },
-                {
-                  name: 'TypeScript',
-                  value: 'typescript',
-                },
-                jsxFlavor,
-              ],
-            },
-          ]),
-      }),
-      testOrganizationApp(),
-      enabledSpecifications,
-    )
+    const oldFlavors = [
+      {
+        name: 'JavaScript React',
+        value: 'react' as ExtensionFlavorValue,
+        path: 'admin-action',
+      },
+      {
+        name: 'JavaScript',
+        value: 'vanilla-js' as ExtensionFlavorValue,
+        path: 'admin-action',
+      },
+      {
+        name: 'TypeScript React',
+        value: 'typescript-react' as ExtensionFlavorValue,
+        path: 'admin-action',
+      },
+      {
+        name: 'TypeScript',
+        value: 'typescript' as ExtensionFlavorValue,
+        path: 'admin-action',
+      },
+    ]
+    const allFlavors = [...oldFlavors, preactFlavor]
 
-    // Then
-    expect(templates.length).toEqual(1)
-    expect(templates[0]!.supportedFlavors).toEqual([jsxFlavor])
+    async function getTemplates() {
+      const templates: ExtensionTemplate[] = await fetchExtensionTemplates(
+        testDeveloperPlatformClient({
+          templateSpecifications: () =>
+            Promise.resolve([
+              {
+                identifier: 'ui_extension',
+                name: 'UI Extension',
+                defaultName: 'ui-extension',
+                group: 'Merchant Admin',
+                supportLinks: [],
+                type: 'ui_extension',
+                url: 'https://github.com/Shopify/extensions-templates',
+                extensionPoints: [],
+                supportedFlavors: allFlavors,
+              },
+            ]),
+        }),
+        testOrganizationApp(),
+        ['ui_extension'],
+      )
+      return templates
+    }
+
+    test('returns only the preact flavor when REMOTE_DOM_EXPERIMENT is enabled', async () => {
+      // Given
+      vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
+
+      // When
+      const templates = await getTemplates()
+
+      // Then
+      expect(templates[0]!.supportedFlavors).toEqual([preactFlavor])
+    })
+
+    test('excludes the preact flavor by default', async () => {
+      // When
+      const templates = await getTemplates()
+
+      // Then
+      expect(templates[0]!.supportedFlavors).toEqual(oldFlavors)
+    })
   })
 })

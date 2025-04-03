@@ -701,7 +701,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       })
     })
 
-    test('includes shopify.extend calls for all targets including should-render for Remote DOM API versions when REMOTE_DOM_EXPERIMENT is true', async () => {
+    test('includes shopify.extend calls for all targets including should-render for Remote DOM API versions when REMOTE_DOM_EXPERIMENT is enabled', async () => {
       vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
 
       await inTemporaryDirectory(async (tmpDir) => {
@@ -744,7 +744,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       })
     })
 
-    test('uses regular imports for non-Remote DOM API versions when REMOTE_DOM_EXPERIMENT is true', async () => {
+    test('uses regular imports for non-Remote DOM API versions when REMOTE_DOM_EXPERIMENT is enabled', async () => {
       vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
 
       await inTemporaryDirectory(async (tmpDir) => {
@@ -947,7 +947,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
   }
 
   describe('contributeToSharedTypeFile', () => {
-    test('updates both main and should-render modules with type reference and returns shared types definition when api version supports Remote DOM and REMOTE_DOM_EXPERIMENT is true', async () => {
+    test('updates both main and should-render modules with type reference and returns shared types definition when api version supports Remote DOM and REMOTE_DOM_EXPERIMENT is enabled', async () => {
       vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
       await inTemporaryDirectory(async (tmpDir) => {
         const {extension, typeFilePath, filePath, libraryPath, shouldRenderFilePath} =
@@ -990,7 +990,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
       })
     })
 
-    test('returns empty shared types definition and remove type reference when api version supports Remote DOM and REMOTE_DOM_EXPERIMENT is true but type reference for target could not be found', async () => {
+    test('returns empty shared types definition and remove type reference when api version supports Remote DOM and REMOTE_DOM_EXPERIMENT is enabled but type reference for target could not be found', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
         const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
