@@ -253,10 +253,8 @@ async function uiExtensionInit({
 
         if (templateLanguage === 'javascript') {
           await changeIndexFileExtension(directory, srcFileExtension)
-          if (!isRemoteDomExperimentEnabled()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
-          }
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
         }
       },
     },
@@ -338,8 +336,12 @@ async function changeIndexFileExtension(extensionDirectory: string, fileExtensio
   await Promise.all(srcFileExensionsToChange)
 }
 
-// @todo: get rid of this logic to remove the tsconfig for non-typescript projects
 async function removeUnwantedTemplateFilesPerFlavor(extensionDirectory: string, extensionFlavor: ExtensionFlavorValue) {
+  // Preact needs the tsconfig.json to set the `"jsxImportSource": "preact"` so it can properly build
+  if (extensionFlavor === 'preact') {
+    return
+  }
+
   // tsconfig.json file is only needed in extension folder to inform the IDE
   // About the `react-jsx` tsconfig option, so IDE don't complain about missing react import
   if (extensionFlavor !== 'typescript-react') {
