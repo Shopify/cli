@@ -29,7 +29,6 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: true,
   convertableToPartnerTest: true,
-  provisionable: true,
 }
 
 const STORE2: OrganizationStore = {
@@ -39,7 +38,6 @@ const STORE2: OrganizationStore = {
   shopName: 'store2',
   transferDisabled: false,
   convertableToPartnerTest: true,
-  provisionable: true,
 }
 
 const STORE3: OrganizationStore = {
@@ -49,7 +47,6 @@ const STORE3: OrganizationStore = {
   shopName: 'store3',
   transferDisabled: false,
   convertableToPartnerTest: false,
-  provisionable: true,
 }
 
 const defaultShowDomainOnPrompt = false
@@ -200,7 +197,7 @@ describe('selectStore', async () => {
     // Then
     await expect(got).rejects.toThrow()
     expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
-    expect(developerPlatformClient.devStoresForOrg).toHaveBeenCalledTimes(10)
+    expect(developerPlatformClient.devStoresAndUserForOrg).toHaveBeenCalledTimes(10)
   })
 
   test('prompts user to create with Partners link', async () => {

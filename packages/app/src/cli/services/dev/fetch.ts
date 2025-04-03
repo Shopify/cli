@@ -1,4 +1,4 @@
-import {Organization, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationStoreAndUser} from '../../models/organization.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
 import {
   AccountInfo,
@@ -126,10 +126,10 @@ export async function fetchStore(
   org: Organization,
   storeFqdn: string,
   developerPlatformClient: DeveloperPlatformClient,
-): Promise<OrganizationStore> {
-  const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
+): Promise<OrganizationStoreAndUser> {
+  const result = await developerPlatformClient.storeAndUserByDomain(org.id, storeFqdn)
 
-  if (!store) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
+  if (!result) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
 
-  return store
+  return result
 }

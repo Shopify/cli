@@ -1,12 +1,13 @@
 import {fetchStore} from './dev/fetch.js'
 import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
-import {OrganizationStore} from '../models/organization.js'
+import {OrganizationStore, OrganizationUser} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {configurationFileNames} from '../constants.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {addToGitIgnore} from '@shopify/cli-kit/node/git'
+import { Paginateable } from '../utilities/developer-platform-client.js'
 
 /**
  * Input options for the `storeContext` function.
@@ -35,6 +36,7 @@ export async function storeContext({
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
+  let orgUser: OrganizationUser
 
   const devStoreUrlFromAppConfig = app.configuration.build?.dev_store_url
   const devStoreUrlFromHiddenConfig = app.hiddenConfig.dev_store_url
@@ -48,12 +50,13 @@ export async function storeContext({
   const storeFqdnToUse = storeFqdn ?? cachedStoreInToml
 
   if (storeFqdnToUse) {
-    selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
+    ({ store: selectedStore, user: orgUser } = await fetchStore(organization, storeFqdnToUse, developerPlatformClient))
     // never automatically convert a store provided via the command line
     await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
-    const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
+    let allStores: Paginateable<{stores: OrganizationStore[]}>
+    [allStores, orgUser] = await developerPlatformClient.devStoresAndUserForOrg(organization.id)
     selectedStore = await selectStore(allStores, organization, developerPlatformClient)
   }
 
@@ -67,6 +70,9 @@ export async function storeContext({
   }
 
   // Ensure that the user is able to login to the store and install apps
+  if (orgUser.canEnsureStoreAccess) {
+    await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
+  }
   await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
 
   return selectedStore
