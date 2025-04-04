@@ -20,7 +20,6 @@ import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} fro
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {isRemoteDomExperimentEnabled} from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface
@@ -283,14 +282,12 @@ async function uiExtensionInit({
     },
   ]
 
-  if (isRemoteDomExperimentEnabled()) {
-    tasks.push({
-      title: 'Update shared type definition',
-      task: async () => {
-        await reloadApp(app)
-      },
-    })
-  }
+  tasks.push({
+    title: 'Update shared type definition',
+    task: async () => {
+      await reloadApp(app)
+    },
+  })
 
   await renderTasks(tasks)
 }

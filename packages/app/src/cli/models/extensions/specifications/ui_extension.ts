@@ -2,12 +2,12 @@ import {Asset, AssetIdentifier, ExtensionFeature, SharedType, createExtensionSpe
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {isRemoteDomExperimentEnabled} from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -106,7 +106,7 @@ const uiExtensionSpec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
-    const shouldIncludeShopifyExtend = isRemoteDomExperimentEnabled() && isRemoteDomExtension(config.api_version)
+    const shouldIncludeShopifyExtend = isRemoteDomExtension(config)
     const main = config.extension_points
       .map(({target, module}, index) => {
         if (shouldIncludeShopifyExtend) {
@@ -150,14 +150,13 @@ const uiExtensionSpec = createExtensionSpecification({
     )
   },
   contributeToSharedTypeFile: async (extension, typeFilePath) => {
-    const shouldContribute = isRemoteDomExperimentEnabled() && isRemoteDomExtension(extension.configuration.api_version)
     const sharedTypes: SharedType[] = []
-
-    if (!shouldContribute) {
+    if (!isRemoteDomExtension(extension.configuration)) {
       return sharedTypes
     }
 
-    for await (const extensionPoint of extension.configuration.extension_points) {
+    const {configuration} = extension
+    for await (const extensionPoint of configuration.extension_points) {
       const fullPath = joinPath(extension.directory, extensionPoint.module)
       const fileParts = fullPath.split('.')
       const fileExtension = fileParts.pop()
@@ -166,7 +165,12 @@ const uiExtensionSpec = createExtensionSpecification({
         continue
       }
 
-      const mainTypes = getSharedTypeDefinition(fullPath, typeFilePath, extensionPoint.target)
+      const mainTypes = getSharedTypeDefinition(
+        fullPath,
+        typeFilePath,
+        extensionPoint.target,
+        configuration.api_version,
+      )
       if (mainTypes) {
         sharedTypes.push(mainTypes)
       }
@@ -176,6 +180,8 @@ const uiExtensionSpec = createExtensionSpecification({
           joinPath(extension.directory, extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module),
           typeFilePath,
           getShouldRenderTarget(extensionPoint.target),
+
+          configuration.api_version,
         )
         if (shouldRenderTypes) {
           sharedTypes.push(shouldRenderTypes)
@@ -249,7 +255,10 @@ Please check the module path for ${target}`.value,
   return ok({})
 }
 
-function isRemoteDomExtension(apiVersion?: string) {
+function isRemoteDomExtension(
+  config: ExtensionInstance['configuration'],
+): config is ExtensionInstance<{api_version: string}>['configuration'] {
+  const apiVersion = config.api_version
   const [year, month] = apiVersion?.split('-').map((part: string) => parseInt(part, 10)) ?? []
   if (!year || !month) {
     return false
@@ -261,7 +270,15 @@ function isRemoteDomExtension(apiVersion?: string) {
 // eslint-disable-next-line no-useless-escape
 const TYPE_REF_REGEX = /^\/\/\/ <reference types="(?:[.\/]*)shopify\.d\.ts" \/>\n/
 
-function updateTypeReference(fullPath: string, template: string, shouldAddTypeReference: boolean) {
+function updateTypeReference({
+  fullPath,
+  template,
+  shouldAddTypeReference,
+}: {
+  fullPath: string
+  template: string
+  shouldAddTypeReference: boolean
+}) {
   const originalContent = readFileSync(fullPath).toString()
   let fileContent = originalContent
   let match
@@ -282,10 +299,9 @@ export function getShouldRenderTarget(target: string) {
   return target.replace(/\.render$/, '.should-render')
 }
 
-function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target: string) {
+function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target: string, apiVersion: string) {
   const template = `/// <reference types="${relativePath(dirname(fullPath), typeFilePath)}" />\n`
   let types
-
   try {
     // We try to resolve from the module's path first with the app root as the fallback in case dependencies are hoisted to the shared workspace
     const fullTypePath = require.resolve(`@shopify/ui-extensions/${target}`, {paths: [fullPath, typeFilePath]})
@@ -299,12 +315,16 @@ function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target:
   const shopify: import('${importPath}').Api;
 }\n`,
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    // noop
+  } catch (_) {
+    // Remove the type reference from the source file
+    updateTypeReference({fullPath, template, shouldAddTypeReference: false})
+    throw new Error(
+      `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@${apiVersion} in your dependencies.`,
+    )
   }
 
-  updateTypeReference(fullPath, template, types !== undefined)
+  // Update the type reference
+  updateTypeReference({fullPath, template, shouldAddTypeReference: true})
   return types
 }
 

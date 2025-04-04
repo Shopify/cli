@@ -38,7 +38,6 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import colors from '@shopify/cli-kit/node/colors'
-import * as experimentModule from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
 import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -52,9 +51,6 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
   globalCLIVersion: vi.fn(),
 }))
 vi.mock('@shopify/cli-kit/node/version')
-vi.mock('@shopify/cli-kit/node/is-remote-dom-experiment-enabled', () => ({
-  isRemoteDomExperimentEnabled: vi.fn().mockReturnValue(false),
-}))
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -2381,20 +2377,7 @@ wrong = "property"
     expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
   })
 
-  test('does not call app.generateExtensionTypes by default', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')
-    // When
-    await loadTestingApp()
-    // Then
-    expect(generateTypesSpy).not.toHaveBeenCalled()
-    generateTypesSpy.mockRestore()
-  })
-
-  test('call app.generateExtensionTypes when REMOTE_DOM_EXPERIMENT is enabled', async () => {
-    vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockReturnValueOnce(true)
-
+  test('call app.generateExtensionTypes', async () => {
     // Given
     await writeConfig(appConfiguration)
     const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')

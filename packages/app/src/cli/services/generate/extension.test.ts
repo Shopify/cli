@@ -6,7 +6,7 @@ import {
 } from './extension.js'
 import * as extensionsCommon from '../extensions/common.js'
 import {blocks, configurationFileNames} from '../../constants.js'
-import {loadApp} from '../../models/app/loader.js'
+import {loadApp, reloadApp} from '../../models/app/loader.js'
 import * as functionBuild from '../function/build.js'
 import {
   checkoutUITemplate,
@@ -41,9 +41,6 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
     installNodeModules: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/is-remote-dom-experiment-enabled', () => ({
-  isRemoteDomExperimentEnabled: vi.fn().mockReturnValue(false),
-}))
 
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
@@ -448,6 +445,57 @@ describe('initialize a extension', async () => {
       // Then
       await expect(got).rejects.toThrowErrorMatchingInlineSnapshot('[Error: No folder for selected flavor]')
       expect(file.fileExistsSync(joinPath(tmpDir, 'extensions', name))).toBeFalsy()
+    })
+  })
+
+  test('reloads the app after generating the extension', async () => {
+    await withTemporaryApp(async (tmpDir) => {
+      const downloadGitRepositorySpy = vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+
+      const name = 'my-ext-1'
+
+      const specification = checkoutUITemplate
+      const extensionFlavor = 'react'
+      await createFromTemplate({
+        name,
+        extensionTemplate: specification,
+        extensionFlavor,
+        appDirectory: tmpDir,
+        specifications,
+        developerPlatformClient: testDeveloperPlatformClient({
+          templateSpecifications: () =>
+            Promise.resolve([
+              {
+                identifier: 'ui_extension',
+                name: 'UI Extension',
+                defaultName: 'ui-extension',
+                group: 'Merchant Admin',
+                supportLinks: [],
+                type: 'ui_extension',
+                url: 'https://github.com/Shopify/extensions-templates',
+                extensionPoints: [],
+                supportedFlavors: [
+                  {
+                    name: 'JavaScript',
+                    value: 'vanilla-js',
+                  },
+                  {
+                    name: 'TypeScript',
+                    value: 'typescript',
+                  },
+                  {
+                    name: 'React',
+                    value: 'react',
+                  },
+                ],
+              },
+            ]),
+        }),
+      })
+
+      // Then
+      expect(vi.mocked(reloadApp)).toHaveBeenCalledOnce()
     })
   })
 
