@@ -1,4 +1,4 @@
-import {linkedAppContext} from './app-context.js'
+import {linkedAppContext, refreshSchemaBank} from './app-context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import link from './app/config/link.js'
@@ -10,7 +10,7 @@ import {testOrganizationApp, testDeveloperPlatformClient, testOrganization} from
 import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile, readFile, fileExists, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
@@ -292,6 +292,166 @@ describe('linkedAppContext', () => {
       expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
       expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'strict'}))
       loadSpy.mockRestore()
+    })
+  })
+})
+
+describe('refreshSchemaBank', () => {
+  test('creates .shopify/schemas directory if it does not exist', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'test-extension',
+          validationSchema: {
+            jsonSchema: '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}',
+          },
+          loadedRemoteSpecs: true,
+        },
+      ]
+      const shopifyDir = joinPath(tmp, '.shopify')
+      const schemasDir = joinPath(shopifyDir, 'schemas')
+
+      // When
+      await refreshSchemaBank(specifications as any, tmp)
+
+      // Then
+      await expect(fileExists(shopifyDir)).resolves.toBe(true)
+      await expect(fileExists(schemasDir)).resolves.toBe(true)
+    })
+  })
+
+  test('writes JSON schemas to the .shopify/schemas directory', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const schema1 =
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"foo":{"type":"string"}}}'
+      const schema2 =
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"bar":{"type":"number"}}}'
+
+      const specifications = [
+        {
+          identifier: 'extension1',
+          validationSchema: {
+            jsonSchema: schema1,
+          },
+          loadedRemoteSpecs: true,
+        },
+        {
+          identifier: 'extension2',
+          validationSchema: {
+            jsonSchema: schema2,
+          },
+          loadedRemoteSpecs: true,
+        },
+      ]
+
+      // When
+      await refreshSchemaBank(specifications as any, tmp)
+
+      // Then
+      const extension1SchemaPath = joinPath(tmp, '.shopify', 'schemas', 'extension1.schema.json')
+      const extension2SchemaPath = joinPath(tmp, '.shopify', 'schemas', 'extension2.schema.json')
+
+      await expect(fileExists(extension1SchemaPath)).resolves.toBe(true)
+      await expect(fileExists(extension2SchemaPath)).resolves.toBe(true)
+
+      const extension1Schema = await readFile(extension1SchemaPath)
+      const extension2Schema = await readFile(extension2SchemaPath)
+
+      expect(extension1Schema).toBe(schema1)
+      expect(extension2Schema).toBe(schema2)
+    })
+  })
+
+  test('handles specifications without validation schemas', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'extension-with-schema',
+          validationSchema: {
+            jsonSchema: '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}',
+          },
+          loadedRemoteSpecs: true,
+        },
+        {
+          identifier: 'extension-without-schema',
+          loadedRemoteSpecs: true,
+        },
+        {
+          identifier: 'extension-with-empty-schema',
+          validationSchema: null,
+          loadedRemoteSpecs: true,
+        },
+      ]
+
+      // When
+      await refreshSchemaBank(specifications as any, tmp)
+
+      // Then
+      const withSchemaPath = joinPath(tmp, '.shopify', 'schemas', 'extension-with-schema.schema.json')
+      const withoutSchemaPath = joinPath(tmp, '.shopify', 'schemas', 'extension-without-schema.schema.json')
+      const withEmptySchemaPath = joinPath(tmp, '.shopify', 'schemas', 'extension-with-empty-schema.schema.json')
+
+      await expect(fileExists(withSchemaPath)).resolves.toBe(true)
+      await expect(fileExists(withoutSchemaPath)).resolves.toBe(false)
+      await expect(fileExists(withEmptySchemaPath)).resolves.toBe(false)
+    })
+  })
+
+  test('cleans up old schema files that are no longer in the specifications', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const schemasDir = joinPath(tmp, '.shopify', 'schemas')
+      await mkdir(schemasDir)
+
+      // Create some initial schema files
+      const oldSchema1 = '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}'
+      const oldSchema2 = '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}'
+      const oldSchema3 = '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}'
+
+      await writeFile(joinPath(schemasDir, 'old-extension1.schema.json'), oldSchema1)
+      await writeFile(joinPath(schemasDir, 'old-extension2.schema.json'), oldSchema2)
+      await writeFile(joinPath(schemasDir, 'keep-extension.schema.json'), oldSchema3)
+
+      // Create some non-schema files that should be preserved
+      await writeFile(joinPath(schemasDir, 'not-a-schema.json'), '{}')
+      await writeFile(joinPath(schemasDir, 'something-else.txt'), 'text file')
+
+      // New specifications only include one of the existing schemas
+      const specifications = [
+        {
+          identifier: 'keep-extension',
+          validationSchema: {
+            jsonSchema: oldSchema3,
+          },
+          loadedRemoteSpecs: true,
+        },
+        {
+          identifier: 'new-extension',
+          validationSchema: {
+            jsonSchema: '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object"}',
+          },
+          loadedRemoteSpecs: true,
+        },
+      ]
+
+      // When
+      await refreshSchemaBank(specifications as any, tmp)
+
+      // Then
+      // Old schema files should be removed
+      await expect(fileExists(joinPath(schemasDir, 'old-extension1.schema.json'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(schemasDir, 'old-extension2.schema.json'))).resolves.toBe(false)
+
+      // Kept and new schema files should exist
+      await expect(fileExists(joinPath(schemasDir, 'keep-extension.schema.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(schemasDir, 'new-extension.schema.json'))).resolves.toBe(true)
+
+      // Non-schema files should be preserved
+      await expect(fileExists(joinPath(schemasDir, 'not-a-schema.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(schemasDir, 'something-else.txt'))).resolves.toBe(true)
     })
   })
 })

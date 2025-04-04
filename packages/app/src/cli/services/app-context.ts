@@ -10,7 +10,10 @@ import {getAppConfigurationState, loadAppUsingConfigurationState} from '../model
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
+import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {mkdir, fileExists, writeFile, removeFile, readdir} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -36,6 +39,51 @@ interface LoadedAppContextOptions {
   clientId: string | undefined
   userProvidedConfigName: string | undefined
   unsafeReportMode?: boolean
+}
+
+/**
+ * Stores JSON schemas from extension specifications in the .shopify/schemas directory
+ *
+ * @param specifications - The list of extension specifications
+ * @param directory - The app directory where .shopify folder will be created
+ */
+export async function refreshSchemaBank(
+  specifications: RemoteAwareExtensionSpecification[],
+  directory: string,
+): Promise<void> {
+  const schemaDir = joinPath(directory, '.shopify', 'schemas')
+
+  // Create schemas subdirectory
+  if (!(await fileExists(schemaDir))) {
+    await mkdir(schemaDir)
+  }
+
+  // Get list of expected schema file names based on specifications
+  const expectedSchemaFiles = new Set(specifications.map((spec) => `${spec.identifier}.schema.json`))
+
+  // Prepare all the schema writing promises
+  const writePromises = specifications.map((spec) => {
+    // Cast to include FlattenedRemoteSpecification to access validationSchema
+    const flattenedSpec = spec as RemoteAwareExtensionSpecification & FlattenedRemoteSpecification
+    if (flattenedSpec.validationSchema?.jsonSchema) {
+      const schemaFilePath = joinPath(schemaDir, `${spec.identifier}.schema.json`)
+      return writeFile(schemaFilePath, flattenedSpec.validationSchema.jsonSchema)
+    }
+    return Promise.resolve()
+  })
+
+  // Execute all write operations in parallel
+  await Promise.all(writePromises)
+
+  // Clean up old schema files that are no longer in the specifications
+  const existingFiles = await readdir(schemaDir)
+  const cleanupPromises = existingFiles
+    .filter((filename: string) => filename.endsWith('.schema.json') && !expectedSchemaFiles.has(filename))
+    .map((filename: string) => removeFile(joinPath(schemaDir, filename)))
+
+  if (cleanupPromises.length > 0) {
+    await Promise.all(cleanupPromises)
+  }
 }
 
 /**
@@ -107,6 +155,9 @@ export async function linkedAppContext({
   if (!unsafeReportMode) {
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
+
+  // Store JSON schemas in the .shopify directory
+  await refreshSchemaBank(specifications, directory)
 
   return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
