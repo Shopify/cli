@@ -25,6 +25,7 @@ interface HostThemeSetupOptions {
   storeFqdn: string
   theme?: string
   themeExtensionPort?: number
+  themeExtensionAdvertiseUrl?: string
 }
 
 export interface PreviewThemeAppExtensionsProcess extends BaseProcess<ThemeAppExtensionServerOptions> {
@@ -83,8 +84,8 @@ export async function setupPreviewThemeAppExtensionsProcess(
         'Preview your theme app extension at',
         {
           link: {
-            label: `http://127.0.0.1:${themeExtensionPort}`,
-            url: `http://127.0.0.1:${themeExtensionPort}`,
+            label: options.themeExtensionAdvertiseUrl ?? `http://127.0.0.1:${themeExtensionPort}`,
+            url: options.themeExtensionAdvertiseUrl ?? `http://127.0.0.1:${themeExtensionPort}`,
           },
         },
       ],
