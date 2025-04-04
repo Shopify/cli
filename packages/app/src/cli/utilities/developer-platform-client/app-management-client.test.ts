@@ -13,6 +13,7 @@ import {
   testRemoteExtensionTemplates,
   testOrganizationApp,
   testOrganization,
+  testOrganizationStore,
 } from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
@@ -863,7 +864,7 @@ describe('ensureUserAccessToStore', () => {
   test('ensures user access to store', async () => {
     // Given
     const orgId = '123'
-    const shopId = '456'
+    const store = testOrganizationStore({shopId: '456'})
     const token = 'business-platform-token'
 
     const client = new AppManagementClient()
@@ -878,15 +879,29 @@ describe('ensureUserAccessToStore', () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
 
     // When
-    await client.ensureUserAccessToStore(orgId, shopId)
+    await client.ensureUserAccessToStore(orgId, store)
 
     // Then
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(expect.anything(), token, orgId, {
-      input: {shopifyShopId: encodedGidFromShopId(shopId)},
+      input: {shopifyShopId: encodedGidFromShopId(store.shopId)},
     })
   })
 
+  test('skips provisioniong when not available', async () => {
+    // Given
+    const store = testOrganizationStore({})
+    store.provisionable = false
+    const client = new AppManagementClient()
+
+    // When
+    await client.ensureUserAccessToStore('123', store)
+
+    // Then
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(0)
+  })
+
   test('handles failure', async () => {
+    const store = testOrganizationStore({})
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
 
@@ -898,7 +913,7 @@ describe('ensureUserAccessToStore', () => {
     }
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
 
-    await expect(client.ensureUserAccessToStore('123', '456')).rejects.toThrowError(
+    await expect(client.ensureUserAccessToStore('123', store)).rejects.toThrowError(
       'Failed to provision user access to store: error1, error2',
     )
   })
