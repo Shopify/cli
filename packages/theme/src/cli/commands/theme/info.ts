@@ -5,7 +5,7 @@ import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
 
@@ -43,7 +43,7 @@ export default class Info extends ThemeCommand {
       }
 
       if (flags.json) {
-        return outputInfo(JSON.stringify(output, null, 2))
+        return outputResult(JSON.stringify(output, null, 2))
       }
 
       const formattedInfo = await formatThemeInfo(output, flags)
