@@ -473,9 +473,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
-    return this.request(FindStoreByDomainQuery, variables)
+    const result: FindStoreByDomainSchema = await this.request(FindStoreByDomainQuery, variables)
+
+    return result.organizations.nodes[0]?.stores.nodes[0]
   }
 
   async ensureUserAccessToStore(_orgId: string, _shopId: string): Promise<void> {
