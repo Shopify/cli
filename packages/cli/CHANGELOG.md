@@ -1,5 +1,21 @@
 # @shopify/cli
 
+## 3.78.0
+
+### Minor Changes
+
+- 4c6acaa: Add HTTP proxy support with the environment variables `SHOPIFY_HTTP_PROXY` and `SHOPIFY_HTTPS_PROXY`
+
+  If your proxy uses basic authentication, provide the auth in the following format:
+
+  ```bash
+  SHOPIFY_HTTP_PROXY=http://user:pass@yourproxy.com:PORT
+  ```
+
+### Patch Changes
+
+- daf44e8: Updated `@shopify/cli-hydrogen` dependency to `9.0.9`.
+
 ## 3.77.0
 
 ## 3.76.0

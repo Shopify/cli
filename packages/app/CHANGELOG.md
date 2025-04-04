@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.78.0
+
+### Minor Changes
+
+- 5b71f87: integrates app management client with developer dashboard endpoints for app logs
+
+### Patch Changes
+
+- @shopify/cli-kit@3.78.0
+- @shopify/theme@3.78.0
+- @shopify/plugin-cloudflare@3.78.0
+
 ## 3.77.0
 
 ### Minor Changes
