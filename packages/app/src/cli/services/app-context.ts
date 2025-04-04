@@ -14,6 +14,7 @@ import {FlattenedRemoteSpecification} from '../api/graphql/extension_specificati
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {mkdir, fileExists, writeFile, removeFile, readdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -95,6 +96,18 @@ export async function refreshSchemaBank(
   if (cleanupPromises.length > 0) {
     await Promise.all(cleanupPromises)
   }
+
+  // make a copy with a name incl. the timestamp and output the path
+  const timestamp = new Date().toISOString().replace(/[-:Z]/g, '')
+  const combinedConfigSchemaPathWithTimestamp = joinPath(
+    directory,
+    '.shopify',
+    'schemas',
+    `app-${timestamp}.schema.json`,
+  )
+  await writeFile(combinedConfigSchemaPathWithTimestamp, JSON.stringify(combinedConfigSchema, null, 2))
+  // TODO drop this in real use
+  outputInfo(`Combined config schema written to: ${combinedConfigSchemaPathWithTimestamp}`)
 }
 
 function generateCombinedConfigSchema(specifications: RemoteAwareExtensionSpecification[]) {
