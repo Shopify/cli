@@ -13,6 +13,7 @@ import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
+import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
@@ -32,6 +33,13 @@ export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@sho
 export {push, pull, fetchStoreThemes} from '@shopify/theme'
 
 export const HydrogenInitHook = HydrogenHooks.init
+
+// Setup global support for environment variable based proxy configuration.
+createGlobalProxyAgent({
+  environmentVariableNamespace: 'SHOPIFY_',
+  forceGlobalAgent: true,
+  socketConnectionTimeout: 60000,
+})
 
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.

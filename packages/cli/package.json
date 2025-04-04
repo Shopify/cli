@@ -104,7 +104,8 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
-    "esbuild": "0.24.2"
+    "esbuild": "0.24.2",
+    "global-agent": "^3.0.0"
   },
   "devDependencies": {
     "@oclif/core": "3.26.5",
@@ -115,7 +116,8 @@
     "@shopify/plugin-cloudflare": "3.77.0",
     "@shopify/plugin-did-you-mean": "3.77.0",
     "@shopify/theme": "3.77.0",
-    "@shopify/cli-hydrogen": "9.0.9",
+    "@shopify/cli-hydrogen": "10.0.0",
+    "@types/global-agent": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^1.6.0",
     "esbuild-plugin-copy": "^2.1.1",
