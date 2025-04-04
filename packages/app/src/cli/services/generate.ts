@@ -106,7 +106,7 @@ async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutpu
 
 function buildGenerateOptions(
   promptAnswers: GenerateExtensionPromptOutput,
-  app: AppInterface,
+  app: AppLinkedInterface,
   options: GenerateOptions,
   developerPlatformClient: DeveloperPlatformClient,
 ): GenerateExtensionTemplateOptions {

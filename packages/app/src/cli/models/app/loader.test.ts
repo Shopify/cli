@@ -12,7 +12,7 @@ import {
   reloadApp,
   loadHiddenConfig,
 } from './loader.js'
-import {AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {App, AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -2375,6 +2375,19 @@ wrong = "property"
     expect(reloadedApp.packageManager).toBe(app.packageManager)
     expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
     expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
+  })
+
+  test('call app.generateExtensionTypes', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')
+
+    // When
+    await loadTestingApp()
+
+    // Then
+    expect(generateTypesSpy).toHaveBeenCalled()
+    generateTypesSpy.mockRestore()
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
