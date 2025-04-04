@@ -1,5 +1,11 @@
 import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
+import {
+  NewExtensionPointSchemaType,
+  NewExtensionPointsSchema,
+  BaseSchema,
+  NewExtensionPointsSchemaAsJson,
+  BaseSchemaWithHandleAsJson,
+} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
@@ -77,6 +83,17 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
+  hardcodedInputJsonSchema: JSON.stringify({
+    ...BaseSchemaWithHandleAsJson,
+    properties: {
+      ...BaseSchemaWithHandleAsJson.properties,
+      type: {const: 'ui_extension'},
+      targeting: {
+        type: 'array',
+        items: NewExtensionPointsSchemaAsJson,
+      },
+    },
+  }),
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild', 'generates_source_maps']
     const needsCart =
