@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchema, BaseSchemaWithHandleAsJson} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -80,6 +80,66 @@ const functionSpec = createExtensionSpecification({
     'pickup_point_delivery_option_generator',
   ],
   schema: FunctionExtensionSchema,
+  hardcodedInputJsonSchema: JSON.stringify({
+    ...BaseSchemaWithHandleAsJson,
+    properties: {
+      ...BaseSchemaWithHandleAsJson.properties,
+      type: {const: 'function'},
+      build: {
+        type: 'object',
+        properties: {
+          command: {type: 'string'},
+          path: {type: 'string'},
+          watch: {
+            type: 'string',
+          },
+          wasm_opt: {type: 'boolean'},
+        },
+      },
+      configuration_ui: {type: 'boolean'},
+      ui: {
+        type: 'object',
+        properties: {
+          enable_create: {type: 'boolean'},
+          paths: {
+            type: 'object',
+            properties: {
+              create: {type: 'string'},
+              details: {type: 'string'},
+            },
+            required: ['create', 'details'],
+          },
+          handle: {type: 'string'},
+        },
+      },
+      input: {
+        type: 'object',
+        properties: {
+          variables: {
+            type: 'object',
+            properties: {
+              namespace: {type: 'string'},
+              key: {type: 'string'},
+            },
+            required: ['namespace', 'key'],
+          },
+        },
+      },
+      targeting: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            target: {type: 'string'},
+            input_query: {type: 'string'},
+            export: {type: 'string'},
+          },
+          required: ['target'],
+        },
+      },
+    },
+    required: [...BaseSchemaWithHandleAsJson.required, 'build'],
+  }),
   appModuleFeatures: (_) => ['function', 'bundling'],
   deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined

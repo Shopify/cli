@@ -11,6 +11,7 @@ import {RemoteAwareExtensionSpecification} from '../models/extensions/specificat
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
+import {SettingsSchemaAsJson} from '../models/extensions/schemas.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {mkdir, fileExists, writeFile, removeFile, readdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -62,7 +63,7 @@ export async function refreshSchemaBank(
   // Get list of expected schema file names based on specifications
   const expectedSchemaFiles = new Set(specifications.map((spec) => `${spec.identifier}.schema.json`))
   expectedSchemaFiles.add('app.schema.json')
-
+  expectedSchemaFiles.add('extension.schema.json')
   // Prepare all the schema writing promises
   const writePromises = specifications.map((spec) => {
     // Cast to include FlattenedRemoteSpecification to access validationSchema
@@ -79,10 +80,13 @@ export async function refreshSchemaBank(
   })
 
   const combinedConfigSchema = generateCombinedConfigSchema(specifications)
-
+  const combinedExtensionSchema = generateCombinedExtensionSchema(specifications)
   // combined config schema should be written to the .shopify/schemas directory
   const combinedConfigSchemaPath = joinPath(directory, '.shopify', 'schemas', 'app.schema.json')
   await writeFile(combinedConfigSchemaPath, JSON.stringify(combinedConfigSchema, null, 2))
+
+  const combinedExtensionSchemaPath = joinPath(directory, '.shopify', 'schemas', 'extension.schema.json')
+  await writeFile(combinedExtensionSchemaPath, JSON.stringify(combinedExtensionSchema, null, 2))
 
   // Execute all write operations in parallel
   await Promise.all(writePromises)
@@ -108,6 +112,16 @@ export async function refreshSchemaBank(
   await writeFile(combinedConfigSchemaPathWithTimestamp, JSON.stringify(combinedConfigSchema, null, 2))
   // TODO drop this in real use
   outputInfo(`Combined config schema written to: ${combinedConfigSchemaPathWithTimestamp}`)
+
+  const combinedExtensionSchemaPathWithTimestamp = joinPath(
+    directory,
+    '.shopify',
+    'schemas',
+    `extension-${timestamp}.schema.json`,
+  )
+  await writeFile(combinedExtensionSchemaPathWithTimestamp, JSON.stringify(combinedExtensionSchema, null, 2))
+  // TODO drop this in real use
+  outputInfo(`Combined extension schema written to: ${combinedExtensionSchemaPathWithTimestamp}`)
 }
 
 function generateCombinedConfigSchema(specifications: RemoteAwareExtensionSpecification[]) {
@@ -136,6 +150,43 @@ function generateCombinedConfigSchema(specifications: RemoteAwareExtensionSpecif
     combinedConfigSchema.required = [...combinedConfigSchema.required, ...(jsonSchemaContent.required ?? [])]
   }
   return combinedConfigSchema
+}
+
+function generateCombinedExtensionSchema(specifications: RemoteAwareExtensionSpecification[]) {
+  const extensionModules = specifications.filter(
+    (spec) => spec.uidStrategy === 'uuid',
+  ) as (RemoteAwareExtensionSpecification & FlattenedRemoteSpecification)[]
+
+  const combinedExtensionSchema = {
+    type: 'object',
+    properties: {
+      api_version: {type: 'string'},
+      description: {type: 'string'},
+      settings: SettingsSchemaAsJson,
+      extensions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          discriminator: {propertyName: 'type'},
+          required: ['type'],
+          oneOf: [] as object[],
+        },
+      },
+    },
+    required: ['api_version', 'extensions'],
+    additionalProperties: false,
+  }
+
+  for (const spec of extensionModules) {
+    const schema = spec.hardcodedInputJsonSchema ?? spec.validationSchema?.jsonSchema
+    if (!schema) continue
+    const jsonSchemaContent = JSON.parse(schema)
+
+    // each schema is added to the oneOf array
+    combinedExtensionSchema.properties.extensions.items.oneOf.push(jsonSchemaContent)
+  }
+
+  return combinedExtensionSchema
 }
 
 /**

@@ -10,6 +10,15 @@ const MetafieldSchema = zod.object({
   key: zod.string(),
 })
 
+export const MetafieldSchemaAsJson = {
+  type: 'object',
+  properties: {
+    key: {type: 'string'},
+    namespace: {type: 'string'},
+  },
+  required: ['key', 'namespace'],
+}
+
 const CollectBuyerConsentCapabilitySchema = zod.object({
   sms_marketing: zod.boolean().optional(),
   customer_privacy: zod.boolean().optional(),
@@ -59,6 +68,45 @@ const NewExtensionPointSchema = zod.object({
     .optional(),
 })
 
+export const NewExtensionPointsSchemaAsJson = {
+  type: 'object',
+  properties: {
+    target: {type: 'string'},
+    module: {type: 'string'},
+    should_render: {
+      type: 'object',
+      properties: {
+        module: {type: 'string'},
+      },
+      required: ['module'],
+    },
+    metafields: {
+      type: 'array',
+      items: MetafieldSchemaAsJson,
+    },
+    default_placement: {type: 'string'},
+    urls: {
+      type: 'object',
+      properties: {
+        edit: {type: 'string'},
+      },
+    },
+    capabilities: {
+      type: 'object',
+      properties: {
+        allow_direct_linking: {type: 'boolean'},
+      },
+    },
+    preloads: {
+      type: 'object',
+      properties: {
+        chat: {type: 'string'},
+      },
+    },
+  },
+  required: ['target', 'module'],
+}
+
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)
 const ApiVersionSchema = zod.string()
 
@@ -79,6 +127,30 @@ export const FieldSchema = zod.object({
 const SettingsSchema = zod.object({
   fields: zod.array(FieldSchema).optional(),
 })
+
+export const SettingsSchemaAsJson = {
+  type: 'object',
+  properties: {
+    fields: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          key: {type: 'string'},
+          name: {type: 'string'},
+          description: {type: 'string'},
+          required: {type: 'boolean'},
+          type: {type: 'string'},
+          validations: {type: 'array', items: {type: 'object'}},
+          marketingActivityCreateUrl: {type: 'string'},
+          marketingActivityDeleteUrl: {type: 'string'},
+        },
+        required: ['type'],
+        additionalProperties: true,
+      },
+    },
+  },
+}
 
 const HandleSchema = zod
   .string()
@@ -105,6 +177,46 @@ export const BaseSchema = zod.object({
 export const BaseSchemaWithHandle = BaseSchema.extend({
   handle: HandleSchema,
 })
+
+export const BaseSchemaWithHandleAsJson = {
+  type: 'object',
+  properties: {
+    name: {type: 'string'},
+    extension_points: {type: 'array', items: NewExtensionPointsSchemaAsJson},
+    targeting: {
+      type: 'array',
+      items: NewExtensionPointsSchemaAsJson,
+    },
+    handle: {type: 'string'},
+    uid: {type: 'string'},
+    description: {type: 'string'},
+    capabilities: {
+      type: 'object',
+      properties: {
+        network_access: {type: 'boolean'},
+        block_progress: {type: 'boolean'},
+        api_access: {type: 'boolean'},
+        collect_buyer_consent: {
+          type: 'object',
+          properties: {
+            sms_marketing: {type: 'boolean'},
+            customer_privacy: {type: 'boolean'},
+          },
+        },
+        iframe: {
+          type: 'object',
+          properties: {
+            sources: {type: 'array', items: {type: 'string'}},
+          },
+        },
+      },
+    },
+    metafields: {type: 'array', items: MetafieldSchemaAsJson},
+    settings: SettingsSchemaAsJson,
+  },
+  required: ['name', 'type', 'handle'],
+  additionalProperties: false,
+}
 
 export const UnifiedSchema = zod.object({
   api_version: ApiVersionSchema.optional(),
