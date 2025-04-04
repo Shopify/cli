@@ -44,6 +44,8 @@ const AppAccessTransformConfig: TransformationConfig = {
   redirect_url_allowlist: 'auth.redirect_urls',
 }
 
+const allTheScopes = ['read_products', 'write_products', 'read_orders', 'write_orders', 'read_customers']
+
 const appAccessSpec = createConfigExtensionSpecification({
   identifier: AppAccessSpecIdentifier,
   schema: AppAccessSchema,
@@ -57,6 +59,27 @@ const appAccessSpec = createConfigExtensionSpecification({
       config.auth = {redirect_urls: urls.redirectUrlWhitelist}
     }
   },
+  hardcodedInputJsonSchema: JSON.stringify({
+    type: 'object',
+    properties: {
+      access_scopes: {
+        type: 'object',
+        properties: {
+          scopes: {type: 'string'},
+          required_scopes: {type: 'array', items: {type: 'string', enum: allTheScopes}},
+          optional_scopes: {type: 'array', items: {type: 'string', enum: allTheScopes}},
+          use_legacy_install_flow: {type: 'boolean'},
+        },
+      },
+      auth: {
+        type: 'object',
+        properties: {
+          redirect_urls: {type: 'array', items: {type: 'string', format: 'uri'}},
+        },
+      },
+    },
+    required: ['access_scopes', 'auth'],
+  }),
 })
 
 export default appAccessSpec

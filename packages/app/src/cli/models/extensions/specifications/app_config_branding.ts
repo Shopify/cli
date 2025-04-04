@@ -24,6 +24,21 @@ const appBrandingSpec = createConfigExtensionSpecification({
   identifier: BrandingSpecIdentifier,
   schema: BrandingSchema,
   transformConfig: BrandingTransformConfig,
+  hardcodedInputJsonSchema: JSON.stringify({
+    type: 'object',
+    properties: {
+      name: {
+        type: 'string',
+        maxLength: 30,
+      },
+      handle: {
+        type: 'string',
+        maxLength: 256,
+        pattern: '^[a-zA-Z0-9_-]+$',
+      },
+    },
+    required: ['name'],
+  }),
 })
 
 export default appBrandingSpec

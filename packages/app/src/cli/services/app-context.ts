@@ -123,7 +123,7 @@ function generateCombinedConfigSchema(specifications: RemoteAwareExtensionSpecif
       build: {type: 'object', additionalProperties: true},
     },
     required: ['client_id'],
-    additionalProperties: true,
+    additionalProperties: false,
   }
 
   for (const spec of configModules) {
