@@ -86,9 +86,7 @@ export async function generateExtensionTemplate(
     (flavor) => flavor.value === extensionFlavorValue,
   )
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
-  const url = isRemoteDomExperimentEnabled()
-    ? 'https://github.com/Shopify/extensions-templates#2025-07-rc'
-    : options.cloneUrl ?? options.extensionTemplate.url
+  const url = options.cloneUrl ?? options.extensionTemplate.url
 
   const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
   const initOptions: ExtensionInitOptions = {

@@ -6,7 +6,7 @@ import {
 } from './extension.js'
 import * as extensionsCommon from '../extensions/common.js'
 import {blocks, configurationFileNames} from '../../constants.js'
-import {loadApp, reloadApp} from '../../models/app/loader.js'
+import {loadApp} from '../../models/app/loader.js'
 import * as functionBuild from '../function/build.js'
 import {
   checkoutUITemplate,
@@ -30,7 +30,6 @@ import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import * as experimentModule from '@shopify/cli-kit/node/is-remote-dom-experiment-enabled'
 
 vi.mock('../../models/app/validation/multi-cli-warning.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
@@ -449,67 +448,6 @@ describe('initialize a extension', async () => {
       // Then
       await expect(got).rejects.toThrowErrorMatchingInlineSnapshot('[Error: No folder for selected flavor]')
       expect(file.fileExistsSync(joinPath(tmpDir, 'extensions', name))).toBeFalsy()
-    })
-  })
-
-  test('uses Remote DOM template URL for the git repository URL when REMOTE_DOM_EXPERIMENT is enabled and reloads the app after generating the extension', async () => {
-    await withTemporaryApp(async (tmpDir) => {
-      // Given
-      vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockImplementation(() => true)
-
-      const downloadGitRepositorySpy = vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
-      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
-
-      const name = 'my-ext-1'
-
-      const specification = checkoutUITemplate
-      const extensionFlavor = 'react'
-      await createFromTemplate({
-        name,
-        extensionTemplate: specification,
-        extensionFlavor,
-        appDirectory: tmpDir,
-        specifications,
-        developerPlatformClient: testDeveloperPlatformClient({
-          templateSpecifications: () =>
-            Promise.resolve([
-              {
-                identifier: 'ui_extension',
-                name: 'UI Extension',
-                defaultName: 'ui-extension',
-                group: 'Merchant Admin',
-                supportLinks: [],
-                type: 'ui_extension',
-                url: 'https://github.com/Shopify/extensions-templates',
-                extensionPoints: [],
-                supportedFlavors: [
-                  {
-                    name: 'JavaScript',
-                    value: 'vanilla-js',
-                  },
-                  {
-                    name: 'TypeScript',
-                    value: 'typescript',
-                  },
-                  {
-                    name: 'React',
-                    value: 'react',
-                  },
-                ],
-              },
-            ]),
-        }),
-      })
-
-      // Then
-      expect(downloadGitRepositorySpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          repoUrl: 'https://github.com/Shopify/extensions-templates#2025-07-rc',
-        }),
-      )
-      expect(vi.mocked(reloadApp)).toHaveBeenCalledOnce()
-
-      vi.spyOn(experimentModule, 'isRemoteDomExperimentEnabled').mockRestore()
     })
   })
 
