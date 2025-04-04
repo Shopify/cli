@@ -113,6 +113,11 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * Parse some provided configuration into a valid configuration object for this extension.
    */
   parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
+
+  /**
+   * The JSON schema for the extension, where no contract yet exists. Only used for in-editor validation.
+   */
+  hardcodedInputJsonSchema?: string
 }
 
 /**
@@ -235,6 +240,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     storeFqdn: string,
   ) => Promise<string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
+  hardcodedInputJsonSchema?: string
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -249,6 +255,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
+    hardcodedInputJsonSchema: spec.hardcodedInputJsonSchema,
   })
 }
 
