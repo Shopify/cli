@@ -158,7 +158,7 @@ function whatToTry() {
     'Run the command again or',
     {
       link: {
-        label: 'Read the documentation',
+        label: 'see Shopify CLI documentation',
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options',
       },
     },
