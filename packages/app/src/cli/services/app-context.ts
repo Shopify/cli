@@ -60,17 +60,28 @@ export async function refreshSchemaBank(
 
   // Get list of expected schema file names based on specifications
   const expectedSchemaFiles = new Set(specifications.map((spec) => `${spec.identifier}.schema.json`))
+  expectedSchemaFiles.add('app.schema.json')
 
   // Prepare all the schema writing promises
   const writePromises = specifications.map((spec) => {
     // Cast to include FlattenedRemoteSpecification to access validationSchema
     const flattenedSpec = spec as RemoteAwareExtensionSpecification & FlattenedRemoteSpecification
-    if (flattenedSpec.validationSchema?.jsonSchema) {
+    // First check if there's a hardcoded schema, then fall back to validationSchema
+    const schema = flattenedSpec.hardcodedInputJsonSchema ?? flattenedSpec.validationSchema?.jsonSchema
+    if (schema) {
       const schemaFilePath = joinPath(schemaDir, `${spec.identifier}.schema.json`)
-      return writeFile(schemaFilePath, flattenedSpec.validationSchema.jsonSchema)
+      // Parse and re-stringify to ensure pretty printing
+      const prettySchema = JSON.stringify(JSON.parse(schema), null, 2)
+      return writeFile(schemaFilePath, prettySchema)
     }
     return Promise.resolve()
   })
+
+  const combinedConfigSchema = generateCombinedConfigSchema(specifications)
+
+  // combined config schema should be written to the .shopify/schemas directory
+  const combinedConfigSchemaPath = joinPath(directory, '.shopify', 'schemas', 'app.schema.json')
+  await writeFile(combinedConfigSchemaPath, JSON.stringify(combinedConfigSchema, null, 2))
 
   // Execute all write operations in parallel
   await Promise.all(writePromises)
@@ -84,6 +95,34 @@ export async function refreshSchemaBank(
   if (cleanupPromises.length > 0) {
     await Promise.all(cleanupPromises)
   }
+}
+
+function generateCombinedConfigSchema(specifications: RemoteAwareExtensionSpecification[]) {
+  const configModules = specifications.filter(
+    (spec) => spec.uidStrategy !== 'uuid',
+  ) as (RemoteAwareExtensionSpecification & FlattenedRemoteSpecification)[]
+
+  const combinedConfigSchema = {
+    type: 'object',
+    properties: {
+      client_id: {type: 'string'},
+      organization_id: {type: 'string'},
+      build: {type: 'object', additionalProperties: true},
+    },
+    required: ['client_id'],
+    additionalProperties: true,
+  }
+
+  for (const spec of configModules) {
+    const schema = spec.hardcodedInputJsonSchema ?? spec.validationSchema?.jsonSchema
+    if (!schema) continue
+    const jsonSchemaContent = JSON.parse(schema)
+
+    // merge this schema's properties into the combinedConfigSchema
+    combinedConfigSchema.properties = {...combinedConfigSchema.properties, ...jsonSchemaContent.properties}
+    combinedConfigSchema.required = [...combinedConfigSchema.required, ...(jsonSchemaContent.required ?? [])]
+  }
+  return combinedConfigSchema
 }
 
 /**

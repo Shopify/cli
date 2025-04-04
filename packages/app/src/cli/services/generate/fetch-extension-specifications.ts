@@ -67,6 +67,8 @@ async function mergeLocalAndRemoteSpecs(
     let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
     if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
       const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
+      // eslint-disable-next-line require-atomic-updates
+      remoteSpec.validationSchema.jsonSchema = JSON.stringify(normalisedSchema)
       const hasLocalization = normalisedSchema.properties?.localization !== undefined
       localSpec = createContractBasedModuleSpecification(remoteSpec.identifier, hasLocalization ? ['localization'] : [])
       localSpec.uidStrategy = remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single'

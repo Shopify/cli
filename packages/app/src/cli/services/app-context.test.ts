@@ -324,10 +324,27 @@ describe('refreshSchemaBank', () => {
   test('writes JSON schemas to the .shopify/schemas directory', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const schema1 =
-        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"foo":{"type":"string"}}}'
-      const schema2 =
-        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"bar":{"type":"number"}}}'
+      const schema1Content = {
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        type: 'object',
+        properties: {
+          foo: {
+            type: 'string',
+          },
+        },
+      }
+      const schema2Content = {
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        type: 'object',
+        properties: {
+          bar: {
+            type: 'number',
+          },
+        },
+      }
+
+      const schema1 = JSON.stringify(schema1Content)
+      const schema2 = JSON.stringify(schema2Content)
 
       const specifications = [
         {
@@ -359,8 +376,13 @@ describe('refreshSchemaBank', () => {
       const extension1Schema = await readFile(extension1SchemaPath)
       const extension2Schema = await readFile(extension2SchemaPath)
 
-      expect(extension1Schema).toBe(schema1)
-      expect(extension2Schema).toBe(schema2)
+      // Verify that the schemas are properly pretty-printed
+      expect(JSON.parse(extension1Schema)).toEqual(schema1Content)
+      expect(JSON.parse(extension2Schema)).toEqual(schema2Content)
+
+      // Verify the formatting
+      expect(extension1Schema).toContain('{\n  "$schema"')
+      expect(extension2Schema).toContain('{\n  "$schema"')
     })
   })
 
@@ -452,6 +474,272 @@ describe('refreshSchemaBank', () => {
       // Non-schema files should be preserved
       await expect(fileExists(joinPath(schemasDir, 'not-a-schema.json'))).resolves.toBe(true)
       await expect(fileExists(joinPath(schemasDir, 'something-else.txt'))).resolves.toBe(true)
+    })
+  })
+
+  test('writes validation schemas to the schema bank', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'test-spec',
+          validationSchema: {
+            jsonSchema: JSON.stringify({
+              type: 'object',
+              properties: {
+                test: {type: 'string'},
+              },
+            }),
+          },
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      const schemaPath = joinPath(tmp, '.shopify', 'schemas', 'test-spec.schema.json')
+      await expect(fileExists(schemaPath)).resolves.toBe(true)
+      const schema = await readFile(schemaPath)
+      expect(JSON.parse(schema)).toEqual({
+        type: 'object',
+        properties: {
+          test: {type: 'string'},
+        },
+      })
+    })
+  })
+
+  test('writes hardcoded schemas to the schema bank', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'hardcoded-spec',
+          hardcodedInputJsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              hardcoded: {type: 'string'},
+            },
+          }),
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      const schemaPath = joinPath(tmp, '.shopify', 'schemas', 'hardcoded-spec.schema.json')
+      await expect(fileExists(schemaPath)).resolves.toBe(true)
+      const schema = await readFile(schemaPath)
+      expect(JSON.parse(schema)).toEqual({
+        type: 'object',
+        properties: {
+          hardcoded: {type: 'string'},
+        },
+      })
+    })
+  })
+
+  test('prioritizes hardcoded schemas over validation schemas', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'both-schemas',
+          hardcodedInputJsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              hardcoded: {type: 'string'},
+            },
+          }),
+          validationSchema: {
+            jsonSchema: JSON.stringify({
+              type: 'object',
+              properties: {
+                validation: {type: 'string'},
+              },
+            }),
+          },
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      const schemaPath = joinPath(tmp, '.shopify', 'schemas', 'both-schemas.schema.json')
+      await expect(fileExists(schemaPath)).resolves.toBe(true)
+      const schema = await readFile(schemaPath)
+      expect(JSON.parse(schema)).toEqual({
+        type: 'object',
+        properties: {
+          hardcoded: {type: 'string'},
+        },
+      })
+    })
+  })
+
+  test('creates a combined config schema from config modules', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'config-module-1',
+          uidStrategy: 'none',
+          hardcodedInputJsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              config1: {type: 'string'},
+            },
+            required: ['config1'],
+          }),
+        },
+        {
+          identifier: 'config-module-2',
+          uidStrategy: 'none',
+          validationSchema: {
+            jsonSchema: JSON.stringify({
+              type: 'object',
+              properties: {
+                config2: {type: 'boolean'},
+              },
+              required: ['config2'],
+            }),
+          },
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      const combinedSchemaPath = joinPath(tmp, '.shopify', 'schemas', 'app.schema.json')
+      await expect(fileExists(combinedSchemaPath)).resolves.toBe(true)
+      const schema = await readFile(combinedSchemaPath)
+      const parsedSchema = JSON.parse(schema)
+
+      expect(parsedSchema.properties).toMatchObject({
+        client_id: {type: 'string'},
+        organization_id: {type: 'string'},
+        build: {type: 'object', additionalProperties: true},
+        config1: {type: 'string'},
+        config2: {type: 'boolean'},
+      })
+
+      expect(parsedSchema.required).toEqual(expect.arrayContaining(['client_id', 'config1', 'config2']))
+    })
+  })
+
+  test('cleans up old schema files', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const schemasDir = joinPath(tmp, '.shopify', 'schemas')
+      await mkdir(schemasDir)
+
+      // Create some old schema files
+      await writeFile(joinPath(schemasDir, 'old-spec.schema.json'), '{}')
+      await writeFile(joinPath(schemasDir, 'current-spec.schema.json'), '{}')
+
+      const specifications = [
+        {
+          identifier: 'current-spec',
+          validationSchema: {
+            jsonSchema: JSON.stringify({
+              type: 'object',
+              properties: {
+                test: {type: 'string'},
+              },
+            }),
+          },
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      await expect(fileExists(joinPath(schemasDir, 'old-spec.schema.json'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(schemasDir, 'current-spec.schema.json'))).resolves.toBe(true)
+    })
+  })
+
+  test('writes validation schemas as pretty-printed JSON', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'test-spec',
+          validationSchema: {
+            jsonSchema: JSON.stringify({
+              type: 'object',
+              properties: {
+                test: {type: 'string'},
+                nested: {
+                  type: 'object',
+                  properties: {
+                    prop1: {type: 'string'},
+                    prop2: {type: 'number'},
+                  },
+                },
+              },
+            }),
+          },
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      const schemaPath = joinPath(tmp, '.shopify', 'schemas', 'test-spec.schema.json')
+      await expect(fileExists(schemaPath)).resolves.toBe(true)
+      const schema = await readFile(schemaPath)
+
+      // Verify schema is properly formatted with indentation
+      expect(schema).toContain('{\n  "type": "object",')
+      expect(schema).toContain('    "nested": {')
+      expect(schema).toMatch(/[\s]{6}"type": "object"/)
+    })
+  })
+
+  test('writes hardcoded schemas as pretty-printed JSON', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const specifications = [
+        {
+          identifier: 'hardcoded-spec',
+          hardcodedInputJsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              hardcoded: {type: 'string'},
+              complex: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: {type: 'string'},
+                    value: {type: 'number'},
+                  },
+                },
+              },
+            },
+          }),
+        },
+      ] as any
+
+      // When
+      await refreshSchemaBank(specifications, tmp)
+
+      // Then
+      const schemaPath = joinPath(tmp, '.shopify', 'schemas', 'hardcoded-spec.schema.json')
+      await expect(fileExists(schemaPath)).resolves.toBe(true)
+      const schema = await readFile(schemaPath)
+
+      // Verify schema is properly formatted with indentation
+      expect(schema).toContain('{\n  "type": "object",')
+      expect(schema).toContain('    "complex": {')
+      expect(schema).toMatch(/[\s]{6}"type": "array"/)
     })
   })
 })
