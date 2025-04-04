@@ -1,9 +1,9 @@
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
-import {zip} from '@shopify/cli-kit/node/archiver'
+import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {mkdir, rmdir, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
@@ -19,10 +19,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
   await rmdir(bundleDirectory, {force: true})
   await mkdir(bundleDirectory)
 
-  // Include manifest in bundle
-  const appManifest = await options.app.manifest()
-  const manifestPath = joinPath(bundleDirectory, 'manifest.json')
-  writeFileSync(manifestPath, JSON.stringify(appManifest, null, 2))
+  await writeManifestToBundle(options.app, bundleDirectory)
 
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
@@ -45,9 +42,6 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
   })
 
   if (options.bundlePath) {
-    await zip({
-      inputDirectory: bundleDirectory,
-      outputZipPath: options.bundlePath,
-    })
+    await compressBundle(bundleDirectory, options.bundlePath)
   }
 }

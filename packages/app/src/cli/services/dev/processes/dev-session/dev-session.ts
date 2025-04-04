@@ -2,7 +2,7 @@ import {DevSessionLogger} from './dev-session-logger.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
-import {getExtensionUploadURL} from '../../../deploy/upload.js'
+import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -10,9 +10,6 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
-import {zip} from '@shopify/cli-kit/node/archiver'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {Writable} from 'stream'
 
 interface DevSessionPayload {
@@ -235,7 +232,8 @@ export class DevSession {
 
     // Create zip file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await this.createZipFile(appEvent, bundleZipPath)
+    await writeManifestToBundle(appEvent.app, this.bundlePath)
+    await compressBundle(this.bundlePath, bundleZipPath)
 
     // Get a signed URL to upload the zip file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
@@ -243,7 +241,7 @@ export class DevSession {
 
     // Upload the zip file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await this.uploadToGCS(signedURL, bundleZipPath)
+    await uploadToGCS(signedURL, bundleZipPath)
 
     // Create or update the dev session
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
@@ -272,47 +270,19 @@ export class DevSession {
   }
 
   /**
-   * Create a zip file with the extensions and the manifest.json file
-   * @param appEvent - The app event
-   * @param bundleZipPath - The path to the zip file
-   */
-  private async createZipFile(appEvent: AppEvent, bundleZipPath: string) {
-    const appManifest = await appEvent.app.manifest()
-    const manifestPath = joinPath(this.bundlePath, 'manifest.json')
-    await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
-
-    await zip({
-      inputDirectory: this.bundlePath,
-      outputZipPath: bundleZipPath,
-    })
-  }
-
-  /**
-   * Get a signed URL to upload the zip file to GCS
+   * Get a signed URL to upload the zip file to GCS. If the request fails, we refresh the token and retry the operation.
    * @returns The signed URL
    */
   private async getSignedURLWithRetry() {
     return performActionWithRetryAfterRecovery(
       async () =>
-        getExtensionUploadURL(this.options.developerPlatformClient, {
+        getUploadURL(this.options.developerPlatformClient, {
           apiKey: this.options.appId,
           organizationId: this.options.organizationId,
           id: this.options.appId,
         }),
       () => this.options.developerPlatformClient.refreshToken(),
     )
-  }
-
-  /**
-   * Upload the zip file to GCS
-   * @param signedURL - The signed URL to upload the zip file to
-   * @param bundleZipPath - The path to the zip file
-   */
-  private async uploadToGCS(signedURL: string, bundleZipPath: string) {
-    const form = formData()
-    const buffer = readFileSync(bundleZipPath)
-    form.append('my_upload', buffer)
-    await fetch(signedURL, {method: 'put', body: buffer, headers: form.getHeaders()}, 'slow-request')
   }
 
   /**

@@ -2,9 +2,13 @@ import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc, Ca
 import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
-import {TypedDocumentNode} from '@graphql-typed-document-node/core'
-import {Variables} from 'graphql-request'
+import {getPackageManager} from '../node-package-manager.js'
+import {cwd} from '../path.js'
+import {AbortError} from '../error.js'
+import {formatPackageManagerCommand} from '../output.js'
 import Bottleneck from 'bottleneck'
+import {Variables} from 'graphql-request'
+import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
 // Jobs are launched every 150ms to add an extra 50ms margin per request.
@@ -84,16 +88,29 @@ export async function partnersRequestDoc<TResult, TVariables extends Variables>(
   token: string,
   variables?: TVariables,
 ): Promise<TResult> {
-  const opts = await setupRequest(token)
-  const result = limiter.schedule(() =>
-    graphqlRequestDoc<TResult, TVariables>({
-      ...opts,
-      query,
-      variables,
-    }),
-  )
+  try {
+    const opts = await setupRequest(token)
+    const result = limiter.schedule(() =>
+      graphqlRequestDoc<TResult, TVariables>({
+        ...opts,
+        query,
+        variables,
+      }),
+    )
 
-  return result
+    return result
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    if (error.errors?.[0]?.extensions?.type === 'unsupported_client_version') {
+      const packageManager = await getPackageManager(cwd())
+
+      throw new AbortError(['Upgrade your CLI version to run this command.'], null, [
+        ['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}],
+      ])
+    }
+
+    throw error
+  }
 }
 
 interface Deprecation {

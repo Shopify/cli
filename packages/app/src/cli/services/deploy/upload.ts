@@ -3,17 +3,12 @@ import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.j
 import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {AppDeployOptions, AssetUrlSchema, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {AppDeployOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
-import {readFileSync} from '@shopify/cli-kit/node/fs'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
+import {getUploadURL, uploadToGCS} from '../bundle.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
-import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {cwd} from '@shopify/cli-kit/node/path'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -126,24 +121,13 @@ export async function uploadExtensionsBundle(
   let deployError
 
   if (options.bundlePath) {
-    signedURL = await getExtensionUploadURL(options.developerPlatformClient, {
+    signedURL = await getUploadURL(options.developerPlatformClient, {
       id: options.apiKey,
       apiKey: options.apiKey,
       organizationId: options.organizationId,
     })
 
-    const form = formData()
-    const buffer = readFileSync(options.bundlePath)
-    form.append('my_upload', buffer)
-    await fetch(
-      signedURL,
-      {
-        method: 'put',
-        body: buffer,
-        headers: form.getHeaders(),
-      },
-      'slow-request',
-    )
+    await uploadToGCS(signedURL, options.bundlePath)
   }
 
   const variables: AppDeployOptions = {
@@ -165,7 +149,7 @@ export async function uploadExtensionsBundle(
     variables.appModules = options.appModules
   }
 
-  const result: AppDeploySchema = await handlePartnersErrors(() => options.developerPlatformClient.deploy(variables))
+  const result: AppDeploySchema = await options.developerPlatformClient.deploy(variables)
 
   if (result.appDeploy?.userErrors?.length > 0) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
@@ -376,40 +360,4 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
         section.errorCount > 1 ? 's' : ''
       } found in your extension. Fix these issues in the Partner Dashboard and try deploying again.`,
     })) as ErrorCustomSection[]
-}
-
-/**
- * It generates a URL to upload an app bundle.
- * @param apiKey - The application API key
- */
-export async function getExtensionUploadURL(
-  developerPlatformClient: DeveloperPlatformClient,
-  app: MinimalAppIdentifiers,
-) {
-  const result: AssetUrlSchema = await handlePartnersErrors(() => developerPlatformClient.generateSignedUploadUrl(app))
-
-  if (!result.assetUrl || result.userErrors?.length > 0) {
-    const errors = result.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(errors)
-  }
-
-  return result.assetUrl
-}
-
-async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {
-  try {
-    const result = await request()
-    return result
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    if (error.errors?.[0]?.extensions?.type === 'unsupported_client_version') {
-      const packageManager = await getPackageManager(cwd())
-
-      throw new AbortError(['Upgrade your CLI version to run the', {command: 'deploy'}, 'command.'], null, [
-        ['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}],
-      ])
-    }
-
-    throw error
-  }
 }
