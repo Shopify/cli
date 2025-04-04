@@ -28,6 +28,21 @@ const appHomeSpec = createConfigExtensionSpecification({
   patchWithAppDevURLs: (config, urls) => {
     config.application_url = urls.applicationUrl
   },
+  hardcodedInputJsonSchema: JSON.stringify({
+    type: 'object',
+    properties: {
+      application_url: {type: 'string'},
+      embedded: {type: 'boolean'},
+      app_preferences: {
+        type: 'object',
+        properties: {
+          url: {type: 'string'},
+        },
+        required: ['url'],
+      },
+    },
+    required: ['application_url', 'embedded'],
+  }),
 })
 
 export default appHomeSpec
