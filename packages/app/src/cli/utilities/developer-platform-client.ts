@@ -254,6 +254,7 @@ export interface DeveloperPlatformClient {
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
+  ensureUserAccessToStore: (orgId: string, shopId: string) => Promise<void>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
     activeAppVersion?: AppVersion,
