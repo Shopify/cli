@@ -1,0 +1,8 @@
+mutation ProvisionShopAccess($input: OrganizationUserProvisionShopAccessInput!) {
+  organizationUserProvisionShopAccess(organizationUserProvisionShopAccessInput: $input) {
+    success,
+    userErrors {
+      message
+    }
+  }
+}
