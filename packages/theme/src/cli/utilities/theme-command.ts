@@ -51,7 +51,7 @@ export default abstract class ThemeCommand extends Command {
     const {flags} = await this.parse(klass)
 
     // Single environment
-    if (!Array.isArray(flags.environment)) {
+    if (!flags.environment) {
       const session = await this.ensureAuthenticated(flags)
       await this.command(flags, session)
       return
@@ -59,7 +59,10 @@ export default abstract class ThemeCommand extends Command {
 
     // Synchronously authenticate all environments
     const sessions: {[storeFqdn: string]: AdminSession} = {}
-    const environments = flags.environment
+    // OCLIF parses flags.environment as an array when using the --environment & -e flag but
+    // as a string when using the direct environment variable SHOPIFY_FLAG_ENVIRONMENT
+    // This handles both cases
+    const environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
 
     // Authenticate on all environments sequentially to avoid race conditions,
     // with authentication happening in parallel.
