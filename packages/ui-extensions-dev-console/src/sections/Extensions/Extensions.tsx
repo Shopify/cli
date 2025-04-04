@@ -1,6 +1,6 @@
 import * as styles from './Extensions.module.scss'
 
-import {ExtensionRow, PostPurchaseRow, AppHomeRow, Row} from './components'
+import {ExtensionRow, AppHomeRow, Row} from './components'
 import en from './translations/en.json'
 import {useExtensions} from './hooks/useExtensions'
 import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
@@ -49,11 +49,7 @@ export function Extensions() {
         </thead>
         <tbody>
           <AppHomeRow />
-          {extensionIds.map(({uuid, type}) => {
-            if (type === 'checkout_post_purchase') {
-              return <PostPurchaseRow key={uuid} uuid={uuid} />
-            }
-
+          {extensionIds.map(({uuid}) => {
             return <ExtensionRow key={uuid} uuid={uuid} />
           })}
         </tbody>

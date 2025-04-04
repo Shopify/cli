@@ -90,6 +90,50 @@ describe('getExtensionPointRedirectUrl()', () => {
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
   })
 
+  test('returns post-purchase redirect to cart permalink and add required params if the extension point targets post_purchase', () => {
+    const extension = {
+      devUUID: '123abc',
+      localIdentifier: 'post-purchase-extension',
+      configuration: {},
+    } as ExtensionInstance
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+      checkoutCartUrl: 'mock/cart/url',
+      websocketURL: 'wss://mock.url/extensions',
+      apiKey: '123key',
+    } as unknown as ExtensionDevOptions
+
+    const result = getExtensionPointRedirectUrl('purchase.post.render', extension, options)
+
+    expect(result).toBe(
+      'https://example.myshopify.com/mock/cart/url?script_url=https%3A%2F%2Flocalhost%3A8081%2Fextensions%2F123abc%2Fassets%2Fpost-purchase-extension.js&post_purchase_dev_api_key=123key&uuid=123abc&socket_url=wss%3A%2F%2Fmock.url%2Fextensions',
+    )
+  })
+
+  test('returns post-purchase redirect to cart permalink and add metafields if included', () => {
+    const extension = {
+      devUUID: '123abc',
+      localIdentifier: 'post-purchase-extension',
+      configuration: {metafields: [{namespace: 'test', key: 'test'}]},
+    } as ExtensionInstance
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+      checkoutCartUrl: 'mock/cart/url',
+      websocketURL: 'wss://mock.url/extensions',
+      apiKey: '123key',
+    } as unknown as ExtensionDevOptions
+
+    const result = getExtensionPointRedirectUrl('purchase.post.render', extension, options)
+
+    expect(result).toBe(
+      'https://example.myshopify.com/mock/cart/url?script_url=https%3A%2F%2Flocalhost%3A8081%2Fextensions%2F123abc%2Fassets%2Fpost-purchase-extension.js&post_purchase_dev_api_key=123key&uuid=123abc&socket_url=wss%3A%2F%2Fmock.url%2Fextensions&config=%7B%22config%22%3A%7B%22metafields%22%3A%5B%7B%22namespace%22%3A%22test%22%2C%22key%22%3A%22test%22%7D%5D%7D%7D',
+    )
+  })
+
   test('returns customer account URL on shopify.com if the target is a customer account target and env is not spin', () => {
     vi.mocked(isSpinEnvironment).mockReturnValue(false)
     const extension = {
