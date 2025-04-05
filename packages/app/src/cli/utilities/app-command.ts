@@ -1,6 +1,8 @@
 import {configurationFileNames} from '../constants.js'
 import {AppLinkedInterface} from '../models/app/app.js'
+import {handlers} from '../api/mock-scenarios/default/mock.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
+import {setupServer} from 'msw/node'
 
 /**
  * By forcing all commands to return `AppCommandOutput` we can be sure that during the run of each command we:
@@ -18,4 +20,11 @@ export default abstract class AppCommand extends BaseCommand {
   }
 
   public abstract run(): Promise<AppCommandOutput>
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected async init(): Promise<any> {
+    const server = setupServer(...handlers)
+    server.listen({onUnhandledRequest: 'bypass'})
+    return super.init()
+  }
 }
