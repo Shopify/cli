@@ -44,6 +44,7 @@ import {
   access as fsAccess,
   rename as fsRename,
   unlink as fsUnlink,
+  readdir as fsReaddir,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
@@ -221,7 +222,7 @@ export function writeFileSync(path: string, data: string): void {
 }
 
 /**
- * Creates a directory at the given path.
+ * Creates a directory at the given path. Directories are created recursively if needed.
  *
  * @param path - Path to the directory to be created.
  */
@@ -231,7 +232,7 @@ export async function mkdir(path: string): Promise<void> {
 }
 
 /**
- * Synchronously creates a directory at the given path.
+ * Synchronously creates a directory at the given path. Directories are created recursively if needed.
  *
  * @param path - Path to the directory to be created.
  */
@@ -487,6 +488,17 @@ export async function generateRandomNameForSubdirectory(options: GenerateRandomD
   } else {
     return generated
   }
+}
+
+/**
+ * Read the contents of a directory.
+ *
+ * @param path - Path to the directory.
+ * @returns A promise that resolves to an array of the names of the files in the directory.
+ */
+export async function readdir(path: string): Promise<string[]> {
+  outputDebug(outputContent`Reading directory at ${outputToken.path(path)}...`)
+  return fsReaddir(path)
 }
 
 /**
