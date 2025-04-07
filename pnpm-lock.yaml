@@ -255,7 +255,7 @@ importers:
         specifier: 0.24.2
         version: 0.24.2
       global-agent:
-        specifier: ^3.0.0
+        specifier: 3.0.0
         version: 3.0.0
     devDependencies:
       '@oclif/core':
@@ -286,7 +286,7 @@ importers:
         specifier: 3.77.0
         version: link:../theme
       '@types/global-agent':
-        specifier: ^3.0.0
+        specifier: 3.0.0
         version: 3.0.0
       '@typescript-eslint/eslint-plugin':
         specifier: 7.13.1
