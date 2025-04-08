@@ -2,7 +2,7 @@
 
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {ExtensionFeature, ExtensionSpecification, SharedType} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
 import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
@@ -264,7 +264,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   hasExtensionPointTarget(target: string): boolean {
-    return this.specification.hasExtensionPointTarget?.(this.configuration, target) || false
+    return this.specification.hasExtensionPointTarget?.(this.configuration, target) ?? false
   }
 
   // Functions specific properties
@@ -435,6 +435,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   patchWithAppDevURLs(urls: ApplicationURLs) {
     if (!this.specification.patchWithAppDevURLs) return
     this.specification.patchWithAppDevURLs(this.configuration, urls)
+  }
+
+  async contributeToSharedTypeFile(typeFilePath: string): Promise<SharedType[]> {
+    return this.specification.contributeToSharedTypeFile?.(this, typeFilePath) ?? []
   }
 
   private buildHandle() {
