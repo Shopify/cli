@@ -8,7 +8,6 @@ import {
   createEventStream,
   defineEventHandler,
   getProxyRequestHeaders,
-  getQuery,
   send,
   sendError,
   type EventHandler,
@@ -163,7 +162,7 @@ function emitHotReloadEvent(
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
     const isEventSourceConnection = event.headers.get('accept') === 'text/event-stream'
-    const query = new URLSearchParams(Object.entries(getQuery(event)))
+    const query = new URL(event.path, 'http://e.c').searchParams
 
     if (isEventSourceConnection) {
       const eventStream = createEventStream(event)
@@ -215,6 +214,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
       const appBlockId = query.get('app_block_id') ?? ''
       const browserPathname = event.path.split('?')[0] ?? ''
       const browserSearch = new URLSearchParams(query)
+      browserSearch.delete('section_key')
       browserSearch.delete('section_id')
       browserSearch.delete('app_block_id')
       browserSearch.delete('_fd')
@@ -262,7 +262,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
       return render(ctx.session, {
         method: event.method,
         path: browserPathname ?? '/',
-        query: [...new URLSearchParams(browserSearch).entries()],
+        query: [...browserSearch.entries()],
         themeId: String(theme.id),
         sectionId,
         appBlockId,
