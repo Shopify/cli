@@ -8,7 +8,6 @@ import {
   createEventStream,
   defineEventHandler,
   getProxyRequestHeaders,
-  getQuery,
   send,
   sendError,
   type EventHandler,
@@ -163,7 +162,7 @@ function emitHotReloadEvent(
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
     const isEventSourceConnection = event.headers.get('accept') === 'text/event-stream'
-    const query = new URLSearchParams(Object.entries(getQuery(event)))
+    const query = new URL(event.path, 'http://e.c').searchParams
 
     if (isEventSourceConnection) {
       const eventStream = createEventStream(event)
