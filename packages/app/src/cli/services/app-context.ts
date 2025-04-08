@@ -11,6 +11,7 @@ import {RemoteAwareExtensionSpecification} from '../models/extensions/specificat
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -53,7 +54,8 @@ export async function linkedAppContext({
   userProvidedConfigName,
   unsafeReportMode = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
-  // Get current app configuration state
+  await getOrCreateHiddenShopifyFolder(directory)
+
   let configState = await getAppConfigurationState(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 

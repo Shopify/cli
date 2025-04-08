@@ -30,3 +30,16 @@ export async function getOrCreateHiddenShopifyFolder(directory: string): Promise
 
   return hiddenFolder
 }
+
+/**
+ * Gets the path to a file inside the hidden .shopify folder for a given project directory.
+ * Creates the folder if it doesn't exist.
+ *
+ * @param directory - The directory of the project.
+ * @param path - The path to the file inside the hidden .shopify folder.
+ * @returns The path to the file inside the hidden .shopify folder.
+ */
+export async function getPathInsideHiddenFolder(directory: string, path: string): Promise<string> {
+  const hiddenFolder = await getOrCreateHiddenShopifyFolder(directory)
+  return joinPath(hiddenFolder, path)
+}

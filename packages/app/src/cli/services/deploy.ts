@@ -8,10 +8,11 @@ import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {getPathInsideHiddenFolder} from '@shopify/cli-kit/node/hidden-folder'
 import type {Task} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
@@ -74,7 +75,7 @@ export async function deploy(options: DeployOptions) {
     let bundlePath: string | undefined
 
     if (bundle) {
-      bundlePath = joinPath(options.app.directory, '.shopify', 'deploy-bundle.zip')
+      bundlePath = await getPathInsideHiddenFolder(options.app.directory, 'deploy-bundle.zip')
       await mkdir(dirname(bundlePath))
     }
     await bundleAndBuildExtensions({app, bundlePath, identifiers})

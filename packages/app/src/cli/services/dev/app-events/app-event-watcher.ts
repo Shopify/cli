@@ -109,6 +109,7 @@ export class AppEventWatcher extends EventEmitter {
     super()
     this.app = app
     this.appURL = appURL
+    // eslint-disable-next-line @shopify/cli/no-manual-join-path-for-hidden-folder
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'dev-bundle')
     // Default options, to be overwritten by the start method
     this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}

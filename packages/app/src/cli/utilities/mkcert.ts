@@ -7,6 +7,7 @@ import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {getPathInsideHiddenFolder} from '@shopify/cli-kit/node/hidden-folder'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -23,7 +24,7 @@ async function getMkcertPath(
 
   const binaryName = platform === 'win32' ? 'mkcert.exe' : 'mkcert'
 
-  const defaultPath = joinPath(appDirectory, '.shopify', binaryName)
+  const defaultPath = await getPathInsideHiddenFolder(appDirectory, binaryName)
   if (await fileExists(defaultPath)) return defaultPath
 
   // Check if mkcert is available on the system PATH
@@ -85,8 +86,8 @@ export async function generateCertificate({
   platform = process.platform,
   arch = process.arch,
 }: GenerateCertificateOptions): Promise<{keyContent: string; certContent: string; certPath: string}> {
-  const relativeKeyPath = joinPath('.shopify', 'localhost-key.pem')
-  const relativeCertPath = joinPath('.shopify', 'localhost.pem')
+  const relativeKeyPath = await getPathInsideHiddenFolder(appDirectory, 'localhost-key.pem')
+  const relativeCertPath = await getPathInsideHiddenFolder(appDirectory, 'localhost.pem')
   const keyPath = joinPath(appDirectory, relativeKeyPath)
   const certPath = joinPath(appDirectory, relativeCertPath)
 

@@ -130,6 +130,7 @@ module.exports = {
     '@shopify/cli/banner-headline-format': 'warn',
     '@shopify/cli/required-fields-when-loading-app': 'error',
     '@shopify/cli/no-inline-graphql': 'error',
+    '@shopify/cli/no-manual-join-path-for-hidden-folder': 'error',
     'no-restricted-syntax': [
       'error',
       {

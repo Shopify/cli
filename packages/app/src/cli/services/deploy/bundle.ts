@@ -6,6 +6,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {mkdir, rmdir, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {getPathInsideHiddenFolder} from '@shopify/cli-kit/node/hidden-folder'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -15,7 +16,7 @@ interface BundleOptions {
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions) {
-  const bundleDirectory = joinPath(options.app.directory, '.shopify', 'deploy-bundle')
+  const bundleDirectory = await getPathInsideHiddenFolder(options.app.directory, 'deploy-bundle')
   await rmdir(bundleDirectory, {force: true})
   await mkdir(bundleDirectory)
 
