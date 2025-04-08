@@ -362,7 +362,7 @@ describe('getUIExtensionPayload', () => {
             url: 'https://my-domain.com/cart',
           },
           root: {
-            url: 'http://tunnel-url.com/extensions/devUUID/purchase.post.render',
+            url: 'http://tunnel-url.com/extensions/devUUID',
           },
           status: 'success',
         },

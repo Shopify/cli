@@ -21,7 +21,7 @@ export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
     return <NotApplicable />
   }
 
-  if (extension.type === 'ui_extension') {
+  if (extension.type === 'ui_extension' || extension.type === 'checkout_post_purchase') {
     const hasMultiple = extension.extensionPoints && extension.extensionPoints.length > 1
     const titleMarkup = hasMultiple ? (
       <span className={styles.PreviewLinksTitle}>{i18n.translate('previewLinksTitle')}:</span>
@@ -41,7 +41,7 @@ export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
             return (
               <PreviewLink
                 rootUrl={root.url}
-                title={target}
+                title={extension.type === 'checkout_post_purchase' ? 'checkout post-purchase' : target}
                 key={target}
                 resourceUrl={resource.url}
                 hasLink={!isUnifiedPOSUI}
