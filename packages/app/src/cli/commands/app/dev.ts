@@ -7,11 +7,13 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {generateCertificate} from '../../utilities/mkcert.js'
 import {generateCertificatePrompt} from '../../prompts/dev.js'
+import {ports} from '../../constants.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
 export default class Dev extends AppCommand {
   static summary = 'Run the app.'
@@ -91,10 +93,16 @@ If you're using the Ruby app template, then you need to complete the following s
     'use-localhost': Flags.boolean({
       hidden: true,
       description:
-        "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not Webhooks, Flow Action, App Proxy or POS",
+        "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
       env: 'SHOPIFY_FLAG_USE_LOCALHOST',
       default: false,
       exclusive: ['tunnel-url'],
+    }),
+    'localhost-port': Flags.integer({
+      hidden: true,
+      description: 'Port to use for localhost. Only applicable when --use-localhost is specified.',
+      env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
+      dependsOn: ['use-localhost'],
     }),
     theme: Flags.string({
       hidden: false,
@@ -144,8 +152,16 @@ If you're using the Ruby app template, then you need to complete the following s
 
     if (flags['use-localhost']) {
       tunnelType = 'use-localhost'
+
+      // Check if a port was specified with --localhost-port
+      const requestedPort = flags['localhost-port'] ?? ports.localhost
+      const actualPort = (await checkPortAvailability(requestedPort))
+        ? requestedPort
+        : await getAvailableTCPPort(ports.localhost)
+
       tunnel = {
         mode: 'no-tunnel-use-localhost',
+        port: actualPort,
         provideCertificate: async (appDirectory) => {
           renderInfo({
             headline: 'Localhost-based development is in developer preview.',
@@ -159,6 +175,21 @@ If you're using the Ruby app template, then you need to complete the following s
               url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
             },
           })
+
+          if (requestedPort && requestedPort !== actualPort) {
+            renderWarning({
+              headline: [
+                'A random port will be used for localhost because',
+                {command: `${requestedPort}`},
+                'is not available.',
+              ],
+              body: [
+                'If you want to use a specific port, choose a different one or free up the one you requested. Then re-run the command with the',
+                {command: '--localhost-port PORT'},
+                'flag.',
+              ],
+            })
+          }
 
           return generateCertificate({
             appDirectory,
@@ -190,7 +221,6 @@ If you're using the Ruby app template, then you need to complete the following s
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-
     const store = await storeContext({
       appContextResult,
       storeFqdn: flags.store,
