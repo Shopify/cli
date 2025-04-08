@@ -194,6 +194,10 @@ export const subscribeToAppLogs = async (
   variables: AppLogsSubscribeMutationVariables,
   organizationId: string,
 ): Promise<string> => {
+  // Refresh the token since it might have expired since the last subscribeToAppLogs request
+  await developerPlatformClient.refreshToken()
+
+  // Now try the subscription with the fresh token
   const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
 
   if (!result.appLogsSubscribe) {
