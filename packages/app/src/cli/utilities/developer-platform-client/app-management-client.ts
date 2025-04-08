@@ -339,7 +339,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (!organizationsResult.currentUserAccount) return []
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
-      businessName: org.name,
+      businessName: `${org.name} (Dev Dashboard)`,
       source: this.organizationSource,
     }))
   }
