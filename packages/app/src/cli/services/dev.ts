@@ -48,6 +48,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface NoTunnel {
   mode: 'no-tunnel-use-localhost'
+  port?: number
   provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
 }
 
@@ -326,6 +327,7 @@ async function setupNetworkingOptions(
       noTunnelUseLocalhost: tunnelOptions.mode === 'no-tunnel-use-localhost',
       tunnelUrl: tunnelOptions.mode === 'provided' ? tunnelOptions.url : undefined,
       tunnelClient,
+      port: tunnelOptions.mode === 'no-tunnel-use-localhost' ? tunnelOptions.port : undefined,
     }),
     getBackendPort() ?? backendConfig?.configuration.port ?? getAvailableTCPPort(),
     getURLs(remoteAppConfig),
@@ -348,6 +350,7 @@ async function setupNetworkingOptions(
       key: keyContent,
       cert: certContent,
       certPath,
+      port: tunnelOptions.port,
     }
   }
 
