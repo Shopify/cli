@@ -81,11 +81,9 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
   }>({
     // eslint-disable-next-line no-empty-pattern
     ports: async ({}, use) => {
-      const [proxyPort, targetPort1, targetPort2] = await Promise.all([
-        getAvailableTCPPort(),
-        getAvailableTCPPort(),
-        getAvailableTCPPort(),
-      ])
+      const proxyPort = await getAvailableTCPPort()
+      const targetPort1 = await getAvailableTCPPort()
+      const targetPort2 = await getAvailableTCPPort()
       await use({proxyPort, targetPort1, targetPort2})
     },
     servers: async ({ports}, use) => {
