@@ -214,6 +214,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
       const appBlockId = query.get('app_block_id') ?? ''
       const browserPathname = event.path.split('?')[0] ?? ''
       const browserSearch = new URLSearchParams(query)
+      browserSearch.delete('section_key')
       browserSearch.delete('section_id')
       browserSearch.delete('app_block_id')
       browserSearch.delete('_fd')

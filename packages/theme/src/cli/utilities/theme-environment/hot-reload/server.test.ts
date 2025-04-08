@@ -105,7 +105,7 @@ describe('Hot Reload', () => {
         new Response('<div><link href="https://my-store.myshopify.com/cdn/path/assets/file.css"></link></div>'),
       )
       const renderResponse = await hotReloadHandler(
-        createH3Event(`/?section_id=123__first&section_key=${testSectionFileKey}&_fd=0&pb=0`).event,
+        createH3Event(`/?section_id=123__first&section_key=${testSectionFileKey}&_fd=0&pb=0&custom=1&custom=2`).event,
       )
 
       expect(render).toHaveBeenCalledWith(
@@ -114,6 +114,10 @@ describe('Hot Reload', () => {
           path: '/',
           sectionId: '123__first',
           replaceTemplates: getInMemoryTemplates(ctx),
+          query: [
+            ['custom', '1'],
+            ['custom', '2'],
+          ],
         }),
       )
 
