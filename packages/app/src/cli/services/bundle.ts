@@ -19,6 +19,7 @@ export async function compressBundle(inputPath: string, outputPath: string) {
   await zip({
     inputDirectory: inputPath,
     outputZipPath: outputPath,
+    matchFilePattern: ['**/*', '!**/*.js.map'],
   })
 }
 

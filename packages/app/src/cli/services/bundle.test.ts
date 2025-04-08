@@ -44,4 +44,23 @@ describe('compressBundle', () => {
       expect(zipExists).toBe(true)
     })
   })
+
+  test('excludes .js.map files from the zip', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const inputDir = joinPath(tmpDir, 'input')
+      const outputZip = joinPath(tmpDir, 'output.zip')
+      await mkdir(inputDir)
+      await writeFile(joinPath(inputDir, 'test.txt'), 'test content')
+      await writeFile(joinPath(inputDir, 'test.js.map'), 'test content')
+
+      // When
+      await compressBundle(inputDir, outputZip)
+
+      // Then
+      const zipContent = await readFile(outputZip)
+      // We are reading the zip as a binary because we don't have a library to unzip, but we can still check for the presence of the file name
+      expect(zipContent).not.toContain('test.js.map')
+    })
+  })
 })
