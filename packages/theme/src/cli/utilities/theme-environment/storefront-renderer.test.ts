@@ -48,7 +48,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.objectContaining({
           Authorization: 'Bearer token_111222333',
           Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
@@ -76,7 +76,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.objectContaining({
           Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
           'X-Shopify-Shop': 'store.myshopify.com',
@@ -88,7 +88,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.not.objectContaining({
           'X-Special-Header': '200',
         }),
@@ -111,7 +111,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&section_id=sections--1__announcement-bar',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.objectContaining({
           Authorization: 'Bearer token_111222333',
           Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
@@ -137,7 +137,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&app_block_id=00001111222233334444',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.objectContaining({
           Authorization: 'Bearer token_111222333',
           Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
@@ -164,7 +164,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&section_id=sections--1__announcement-bar',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.objectContaining({
           Authorization: 'Bearer token_111222333',
           Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',
@@ -193,7 +193,7 @@ describe('render', () => {
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0&value=A&value=B',
       expect.objectContaining({
-        method: 'POST',
+        method: 'GET',
         headers: expect.objectContaining({
           Authorization: 'Bearer token_111222333',
           Cookie: 'theme_cookie=abc; storefront_digest=00001111222233334444; _shopify_essential=:00112233445566778899:',

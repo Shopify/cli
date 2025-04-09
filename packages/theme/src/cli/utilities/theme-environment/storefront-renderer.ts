@@ -11,9 +11,9 @@ export async function render(session: DevServerSession, context: DevServerRender
   const headers = await buildHeaders(session, context)
   let response: Response
 
-  if (context.replaceTemplates) {
-    const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
+  const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
 
+  if (replaceTemplates.length > 0) {
     outputDebug(`→ Rendering ${url} (with ${replaceTemplates})...`)
 
     const bodyParams = storefrontReplaceTemplatesParams(context)
