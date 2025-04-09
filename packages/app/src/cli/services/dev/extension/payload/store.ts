@@ -131,7 +131,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
 
   async updateExtension(
     extension: ExtensionInstance,
-    options: Omit<ExtensionDevOptions, 'appWatcher'>,
+    options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
     bundlePath: string,
     development?: Partial<UIExtensionPayload['development']>,
   ) {
