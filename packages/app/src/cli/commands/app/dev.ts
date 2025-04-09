@@ -1,19 +1,14 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions, TunnelMode} from '../../services/dev.js'
+import {dev, DevOptions, getTunnelMode} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
-import {generateCertificate} from '../../utilities/mkcert.js'
-import {generateCertificatePrompt} from '../../prompts/dev.js'
-import {ports} from '../../constants.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
-import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
 export default class Dev extends AppCommand {
   static summary = 'Run the app.'
@@ -147,69 +142,17 @@ If you're using the Ruby app template, then you need to complete the following s
       await showApiKeyDeprecationWarning()
     }
 
-    let tunnel: TunnelMode = {mode: 'auto'}
-    let tunnelType = 'cloudflare'
-
-    if (flags['use-localhost']) {
-      tunnelType = 'use-localhost'
-
-      // Check if a port was specified with --localhost-port
-      const requestedPort = flags['localhost-port'] ?? ports.localhost
-      const actualPort = (await checkPortAvailability(requestedPort))
-        ? requestedPort
-        : await getAvailableTCPPort(ports.localhost)
-
-      tunnel = {
-        mode: 'no-tunnel-use-localhost',
-        port: actualPort,
-        provideCertificate: async (appDirectory) => {
-          renderInfo({
-            headline: 'Localhost-based development is in developer preview.',
-            body: [
-              '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
-              '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
-              'device (such as POS). Please report any issues and provide feedback on the dev community:',
-            ],
-            link: {
-              label: 'Create a feedback post',
-              url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
-            },
-          })
-
-          if (requestedPort && requestedPort !== actualPort) {
-            renderWarning({
-              headline: [
-                'A random port will be used for localhost because',
-                {command: `${requestedPort}`},
-                'is not available.',
-              ],
-              body: [
-                'If you want to use a specific port, choose a different one or free up the one you requested. Then re-run the command with the',
-                {command: '--localhost-port PORT'},
-                'flag.',
-              ],
-            })
-          }
-
-          return generateCertificate({
-            appDirectory,
-            onRequiresConfirmation: generateCertificatePrompt,
-          })
-        },
-      }
-    } else if (flags['tunnel-url']) {
-      tunnelType = 'custom'
-      tunnel = {
-        mode: 'provided',
-        url: flags['tunnel-url'],
-      }
-    }
+    const tunnelMode = await getTunnelMode({
+      useLocalhost: flags['use-localhost'],
+      tunnelUrl: flags['tunnel-url'],
+      localhostPort: flags['localhost-port'],
+    })
 
     await addPublicMetadata(() => {
       return {
         cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
         cmd_app_reset_used: flags.reset,
-        cmd_dev_tunnel_type: tunnelType,
+        cmd_dev_tunnel_type: tunnelMode.mode,
       }
     })
 
@@ -241,7 +184,7 @@ If you're using the Ruby app template, then you need to complete the following s
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
-      tunnel,
+      tunnel: tunnelMode,
     }
 
     await dev(devOptions)
