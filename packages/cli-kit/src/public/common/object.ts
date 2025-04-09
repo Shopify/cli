@@ -9,6 +9,7 @@ import fromPairs from 'lodash/fromPairs.js'
 import toPairs from 'lodash/toPairs.js'
 import get from 'lodash/get.js'
 import set from 'lodash/set.js'
+import unset from 'lodash/unset.js'
 import lodashIsEmpty from 'lodash/isEmpty.js'
 
 /**
@@ -101,6 +102,17 @@ export function getPathValue<T = object>(object: object, path: string): T | unde
  */
 export function setPathValue(object: object, path: string, value?: unknown): object {
   return set(object, path, value)
+}
+
+/**
+ * Removes the property at path of object.
+ *
+ * @param object - The object to modify.
+ * @param path - The path of the property to unset.
+ * @returns - Returns true if the property is deleted or not found, else false.
+ */
+export function unsetPathValue(object: object, path: string): boolean {
+  return unset(object, path)
 }
 
 /**
