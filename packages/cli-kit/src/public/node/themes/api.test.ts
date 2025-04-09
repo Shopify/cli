@@ -181,16 +181,11 @@ describe('themeCreate', () => {
     const theme = await themeCreate(params, session)
 
     // Then
-    expect(adminRequestDoc).toHaveBeenCalledWith(
-      ThemeCreate,
-      session,
-      {
-        name: params.name,
-        source: 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip',
-        role: 'UNPUBLISHED',
-      },
-      '2025-04',
-    )
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeCreate, session, {
+      name: params.name,
+      source: 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip',
+      role: 'UNPUBLISHED',
+    })
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -215,16 +210,11 @@ describe('themeCreate', () => {
     const theme = await themeCreate({...params, src: 'https://example.com/theme.zip'}, session)
 
     // Then
-    expect(adminRequestDoc).toHaveBeenCalledWith(
-      ThemeCreate,
-      session,
-      {
-        name: params.name,
-        source: 'https://example.com/theme.zip',
-        role: 'UNPUBLISHED',
-      },
-      '2025-04',
-    )
+    expect(adminRequestDoc).toHaveBeenCalledWith(ThemeCreate, session, {
+      name: params.name,
+      source: 'https://example.com/theme.zip',
+      role: 'UNPUBLISHED',
+    })
   })
 })
 
