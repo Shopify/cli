@@ -9,7 +9,7 @@ export async function fetchExtensionTemplates(
   availableSpecifications: string[],
 ): Promise<ExtensionTemplate[]> {
   const remoteTemplates: ExtensionTemplate[] = await developerPlatformClient.templateSpecifications(app)
-  const remoteDomExperimentEnabled = isPolarisUnifiedEnabled()
+  const polarisUnifiedEnabled = isPolarisUnifiedEnabled()
 
   return remoteTemplates
     .filter(
@@ -21,7 +21,7 @@ export async function fetchExtensionTemplates(
         return {
           ...template,
           supportedFlavors: template.supportedFlavors.filter((flavor) =>
-            remoteDomExperimentEnabled ? flavor.value === 'preact' : flavor.value !== 'preact',
+            polarisUnifiedEnabled ? flavor.value === 'preact' : flavor.value !== 'preact',
           ),
         }
       }
