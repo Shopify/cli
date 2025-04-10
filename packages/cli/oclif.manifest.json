@@ -453,6 +453,18 @@
           "name": "graphiql-port",
           "type": "option"
         },
+        "localhost-port": {
+          "dependsOn": [
+            "use-localhost"
+          ],
+          "description": "Port to use for localhost. Only applicable when --use-localhost is specified.",
+          "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "localhost-port",
+          "type": "option"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -557,7 +569,7 @@
         },
         "use-localhost": {
           "allowNo": false,
-          "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not Webhooks, Flow Action, App Proxy or POS",
+          "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
           "env": "SHOPIFY_FLAG_USE_LOCALHOST",
           "exclusive": [
             "tunnel-url"
