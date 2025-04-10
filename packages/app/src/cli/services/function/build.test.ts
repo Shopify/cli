@@ -5,9 +5,9 @@ import {
   ExportJavyBuilder,
   jsExports,
   runWasmOpt,
-  PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION,
+  runTrampoline,
 } from './build.js'
-import {javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
+import {javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -243,6 +243,21 @@ describe('runWasmOpt', () => {
         cwd: dirname(wasmOptBinary().path),
       },
     )
+  })
+})
+
+describe('runTrampoline', () => {
+  test('runs trampoline on the module', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    const modulePath = ourFunction.outputPath
+
+    // When
+    const got = runTrampoline(modulePath)
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(trampolineBinary().path, ['-i', modulePath, '-o', modulePath])
   })
 })
 
