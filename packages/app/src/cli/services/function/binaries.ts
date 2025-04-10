@@ -18,6 +18,9 @@ const JAVY_PLUGIN_VERSION = 'v1'
 
 const BINARYEN_VERSION = '123.0.0'
 
+// TODO: Select the right version once a release is out
+const TRAMPOLINE_VERSION = 'v1.0.0'
+
 interface DownloadableBinary {
   path: string
   name: string
@@ -139,6 +142,7 @@ let _javy: DownloadableBinary
 let _javyPlugin: DownloadableBinary
 let _functionRunner: DownloadableBinary
 let _wasmOpt: DownloadableBinary
+let _trampoline: DownloadableBinary
 
 export function javyBinary() {
   if (!_javy) {
@@ -167,6 +171,18 @@ export function wasmOptBinary() {
   }
 
   return _wasmOpt
+}
+
+export function trampolineBinary() {
+  if (!_trampoline) {
+    // TODO: The repo arg (last one) doesn't matter for now, since I'm "stubbing out"/skipping the download by just placing the file in the bin directory
+    _trampoline = new Executable(
+      'shopify_function_wasm_api_trampoline',
+      TRAMPOLINE_VERSION,
+      'Shopify/shopify-function-wasm-api',
+    )
+  }
+  return _trampoline
 }
 
 export async function downloadBinary(bin: DownloadableBinary) {
