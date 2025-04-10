@@ -2,6 +2,7 @@ import { readFileSync } from "fs"
 
 const packagesWithUMDexports = [
   'jsonc-parser',
+  'vscode-css-languageservice',
   'vscode-json-languageservice',
   'vscode-languageserver-types',
   'vscode-languageserver-textdocument'
