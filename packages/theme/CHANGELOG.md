@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.78.0
+
+### Minor Changes
+
+- a50cc5e: Update 'shopify theme check'
+
+### Patch Changes
+
+- 5c18310: Fix requests to Section Rendering API that contain the same search param name multiple times (e.g. multiple filters for "size").
+- 3ec5649: Fixed an issue where CLI would not apply the SHOPIFY_FLAG_ENVIRONMENT flag
+  - @shopify/cli-kit@3.78.0
+
 ## 3.77.0
 
 ### Patch Changes
