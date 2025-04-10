@@ -311,8 +311,8 @@ function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target:
     types = {
       libraryRoot,
       definition: `//@ts-ignore\ndeclare module './${relativizePath(fullPath, dirname(typeFilePath))}' {
-  const globalThis: typeof import('${importPath}');
   const shopify: import('${importPath}').Api;
+  const globalThis: { shopify: typeof shopify };
 }\n`,
     }
   } catch (_) {
