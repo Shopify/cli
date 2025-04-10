@@ -1,5 +1,24 @@
 # @shopify/app
 
+## 3.78.0
+
+### Minor Changes
+
+- a50cc5e: Update 'shopify theme check'
+- 5b71f87: integrates app management client with developer dashboard endpoints for app logs
+- 04477ba: Enable support for Polaris Unified extensions using an experimental environment variable
+
+### Patch Changes
+
+- 57f1ba5: Fix the first import in shopify.d.ts to be a relative path
+  Fix the globalThis type
+- Updated dependencies [a50cc5e]
+- Updated dependencies [5c18310]
+- Updated dependencies [3ec5649]
+  - @shopify/theme@3.78.0
+  - @shopify/cli-kit@3.78.0
+  - @shopify/plugin-cloudflare@3.78.0
+
 ## 3.77.0
 
 ### Minor Changes
