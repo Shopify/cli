@@ -293,7 +293,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const result = await this.requestDoc(AllOrgs)
       return result.organizations.nodes!.map((org) => ({
         id: org!.id,
-        businessName: org!.businessName,
+        businessName: `${org!.businessName} (Partner Dashboard)`,
         source: this.organizationSource,
       }))
     } catch (error: unknown) {
