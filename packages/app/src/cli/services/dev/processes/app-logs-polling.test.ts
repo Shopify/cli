@@ -87,6 +87,7 @@ describe('app-logs-polling', () => {
       )
 
       // Then
+      expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
       expect(subscribeToAppLogs).toHaveBeenCalledWith(appLogsSubscribeVariables, 'organizationId')
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
       expect(pollAppLogs).toHaveBeenCalledOnce()
