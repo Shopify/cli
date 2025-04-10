@@ -618,7 +618,7 @@ describe('manifest', () => {
 })
 
 describe('generateExtensionTypes', () => {
-  test('combines type definitions from multiple extensions', async () => {
+  test('combines type definitions from multiple extensions with the first import being from the library root of the first extension', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension1 = await testUIExtension({type: 'ui_extension', directory: tmpDir})
@@ -632,13 +632,13 @@ describe('generateExtensionTypes', () => {
       // Mock the extension contributions
       vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockResolvedValue([
         {
-          libraryRoot: '@shopify/ui-extensions/base',
+          libraryRoot: `${tmpDir}/extensions/extension-1/node_modules/@shopify/ui-extensions/index.d.ts`,
           definition: `declare module './ext1' { // mocked definition }`,
         },
       ])
       vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockResolvedValue([
         {
-          libraryRoot: '@shopify/ui-extensions/base',
+          libraryRoot: `${tmpDir}/extensions/extension-2/node_modules/@shopify/ui-extensions/index.d.ts`,
           definition: `declare module './ext2' { // mocked definition }`,
         },
       ])
@@ -650,7 +650,8 @@ describe('generateExtensionTypes', () => {
       const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
       const fileContent = await readFile(typeFilePath)
       const normalizedContent = fileContent.toString().replace(/\\/g, '/')
-      expect(normalizedContent).toBe(`import '@shopify/ui-extensions/base';\n
+      expect(normalizedContent)
+        .toBe(`import './extensions/extension-1/node_modules/@shopify/ui-extensions/index.d.ts';\n
 declare module './ext1' { // mocked definition }
 declare module './ext2' { // mocked definition }`)
     })
