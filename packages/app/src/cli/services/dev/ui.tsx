@@ -26,6 +26,7 @@ export async function renderDev({
         processes={processes}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn={shopFqdn}
         onAbort={async () => {
           await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
         }}
