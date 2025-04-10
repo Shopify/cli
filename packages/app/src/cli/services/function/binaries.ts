@@ -16,7 +16,7 @@ const JAVY_VERSION = 'v4.0.0'
 // function-runner version specified above.
 const JAVY_PLUGIN_VERSION = 'v1'
 
-const BINARYEN_VERSION = '120.0.0'
+const BINARYEN_VERSION = '123.0.0'
 
 interface DownloadableBinary {
   path: string
