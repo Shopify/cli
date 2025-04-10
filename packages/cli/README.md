@@ -5,6 +5,7 @@
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
+* [`shopify app dev clean`](#shopify-app-dev-clean)
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
@@ -272,6 +273,32 @@ DESCRIPTION
   a "staff account" (https://help.shopify.com/manual/your-account/staff-accounts) on the store. Staff accounts are
   created automatically the first time you access a development store with your Partner staff account through the
   Partner Dashboard.
+```
+
+## `shopify app dev clean`
+
+Stop the app.
+
+```
+USAGE
+  $ shopify app dev clean [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [-s
+    <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Stop the app.
+
+  Stop the app preview that was started with `shopify app dev`.
+
+  It restores the app active version to the selected development store.
 ```
 
 ## `shopify app env pull`
