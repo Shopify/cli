@@ -1,5 +1,6 @@
 import {
   ApplicationURLs,
+  FrontendURLOptions,
   generateApplicationURLs,
   generateFrontendURL,
   getURLs,
@@ -48,7 +49,7 @@ import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-interface NoTunnel {
+export interface NoTunnel {
   mode: 'use-localhost'
   port: number
   provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
@@ -321,15 +322,22 @@ async function setupNetworkingOptions(
 
   await validateCustomPorts(webs, graphiqlPort)
 
+  const frontendUrlOptions: FrontendURLOptions =
+    tunnelOptions.mode === 'use-localhost'
+      ? {
+          noTunnelUseLocalhost: true,
+          port: tunnelOptions.port,
+        }
+      : {
+          noTunnelUseLocalhost: false,
+          tunnelUrl: tunnelOptions.mode === 'custom' ? tunnelOptions.url : undefined,
+          tunnelClient,
+        }
+
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
   const [{frontendUrl, frontendPort: proxyPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
-    generateFrontendURL({
-      noTunnelUseLocalhost: tunnelOptions.mode === 'use-localhost',
-      tunnelUrl: tunnelOptions.mode === 'custom' ? tunnelOptions.url : undefined,
-      tunnelClient,
-      port: tunnelOptions.mode === 'use-localhost' ? tunnelOptions.port : undefined,
-    }),
+    generateFrontendURL(frontendUrlOptions),
     getBackendPort() ?? backendConfig?.configuration.port ?? getAvailableTCPPort(),
     getURLs(remoteAppConfig),
   ])
