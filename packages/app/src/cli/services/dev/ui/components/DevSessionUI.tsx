@@ -12,7 +12,7 @@ import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
-import {handleCtrlC} from '@shopify/cli-kit/node/ui'
+import {handleCtrlC, renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -23,15 +23,10 @@ interface DevSesionUIProps {
   processes: OutputProcess[]
   abortController: AbortController
   devSessionStatusManager: DevSessionStatusManager
-  onAbort: () => Promise<void>
+  onAbort?: () => Promise<void>
 }
 
-const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
-  abortController,
-  processes,
-  devSessionStatusManager,
-  onAbort,
-}) => {
+const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({abortController, processes, devSessionStatusManager}) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
 
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
@@ -43,14 +38,14 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       setIsShuttingDownMessage('Shutting down dev because of an error ...')
     } else {
       setIsShuttingDownMessage('Shutting down dev ...')
-      setTimeout(() => {
-        if (isUnitTest()) return
-        treeKill(process.pid, 'SIGINT', false, () => {
-          process.exit(0)
-        })
-      }, 2000)
+      if (isUnitTest()) return
+      renderInfo({
+        body: ['Your app preview is still active in . You can close it by running `shopify app dev stop`.'],
+      })
+      treeKill(process.pid, 'SIGINT', false, () => {
+        process.exit(0)
+      })
     }
-    await onAbort()
   })
 
   const errorHandledProcesses = useMemo(() => {
