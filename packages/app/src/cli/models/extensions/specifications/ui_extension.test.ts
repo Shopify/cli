@@ -958,8 +958,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Main module types
         const expectedDefinition = `//@ts-ignore\ndeclare module './src/index.jsx' {
-  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js');
   const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js').Api;
+  const globalThis: { shopify: typeof shopify };
 }\n`
         expect(result[0]?.definition).toBe(expectedDefinition)
         expect(result[0]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
@@ -970,8 +970,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Should-render module types
         const expectedShouldRenderDefinition = `//@ts-ignore\ndeclare module './src/condition/should-render.js' {
-  const globalThis: typeof import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js');
   const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js').Api;
+  const globalThis: { shopify: typeof shopify };
 }\n`
         expect(result[1]?.definition).toBe(expectedShouldRenderDefinition)
         expect(result[1]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
