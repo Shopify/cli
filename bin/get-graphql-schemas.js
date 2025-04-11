@@ -2,9 +2,9 @@
 import {Octokit} from '@octokit/rest'
 import * as fs from 'fs'
 import * as path from 'path'
-import {spawn} from 'child_process'
 import {withOctokit} from './github-utils.js'
 import {runCommand} from './run-command.js'
+import {execSync} from "node:child_process";
 
 const BRANCH = 'main'
 
@@ -170,7 +170,22 @@ async function fetchFilesFromSpin() {
   }
 }
 
-if (process.env.SPIN_INSTANCE) {
+/**
+ * @returns {Promise<void>}
+ */
+async function fetchFilesFromLocal() {
+  for (const schema of schemas) {
+    const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${schema.repo}`).toString().split('/areas')[0].trim()
+    const sourcePath = path.join(localRepoDirectory, schema.pathToFile)
+    console.log('Copying', sourcePath, 'to', schema.localPath)
+    fs.copyFileSync(sourcePath, schema.localPath)
+  }
+  console.log('Done!')
+}
+
+if (process.env.SHOPIFY_SERVICE_ENV === 'local') {
+  fetchFilesFromLocal()
+} else if (process.env.SHOPIFY_SERVICE_ENV === 'spin') {
   fetchFilesFromSpin()
 } else {
   fetchFiles()
