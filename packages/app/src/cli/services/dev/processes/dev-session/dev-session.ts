@@ -228,20 +228,23 @@ export class DevSession {
     this.bundleControllers.push(currentBundleController)
 
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const bundleZipPath = joinPath(dirname(this.bundlePath), `dev-bundle.zip`)
+    const bundlePath = joinPath(
+      dirname(this.bundlePath),
+      `dev-bundle.${this.options.developerPlatformClient.bundleFormat}`,
+    )
 
-    // Create zip file with everything
+    // Create compressed br file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     await writeManifestToBundle(appEvent.app, this.bundlePath)
-    await compressBundle(this.bundlePath, bundleZipPath)
+    await compressBundle(this.bundlePath, bundlePath)
 
-    // Get a signed URL to upload the zip file
+    // Get a signed URL to upload the br file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     const signedURL = await this.getSignedURLWithRetry()
 
-    // Upload the zip file
+    // Upload the br file
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await uploadToGCS(signedURL, bundleZipPath)
+    await uploadToGCS(signedURL, bundlePath)
 
     // Create or update the dev session
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
