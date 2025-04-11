@@ -4,6 +4,7 @@
 // @ts-ignore
 import * as path from 'pathe'
 import {defineConfig} from 'vitest/config'
+import wasm from 'vite-plugin-wasm'
 
 const TIMEOUTS = {
   normal: 5000,
@@ -31,6 +32,7 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
   }
 
   return defineConfig({
+    plugins: [wasm()],
     resolve: {
       alias: aliases(packagePath),
     },

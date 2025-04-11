@@ -1,0 +1,31 @@
+# rustfmt.toml
+
+# Use the latest stable formatting rules (Rustfmt Edition 2021/2024)
+edition = "2024"
+style_edition = "2024"
+
+# Set indentation width to 2 spaces (default is 4)
+tab_spaces = 2
+
+# Set maximum line width to 100 characters (default is 100)
+max_width = 120
+
+# --- Optional but Recommended Modern Practices ---
+
+# Tries harder to fit code within max_width using heuristics like
+# merging struct fields or function arguments onto fewer lines.
+# "Max" is generally preferred for modern formatting.
+use_small_heuristics = "Max"
+
+# Group imports based on their origin (std, external crates, workspace crates)
+# for better organization.
+group_imports = "StdExternalCrate"
+
+# Ensure imports from the same crate are grouped together.
+imports_granularity = "Crate"
+
+# Reorder module declarations alphabetically.
+reorder_modules = true
+
+# Use trailing commas where possible for cleaner diffs when adding items.
+use_try_shorthand = true # Use '?' instead of try!() macro
