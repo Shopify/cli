@@ -15,7 +15,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
+import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -26,7 +26,11 @@ import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/nod
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
-vi.mock('../app/patch-app-configuration-file.js')
+vi.mock('../app/patch-app-configuration-file.js', () => {
+  return {
+    setManyAppConfigValues: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('@shopify/cli-kit/node/context/spin')
 vi.mock('@shopify/cli-kit/node/context/local')
@@ -92,21 +96,20 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: appWithConfig.configuration.path,
-        patch: {
-          application_url: 'https://example.com',
-          auth: {
-            redirect_urls: [
-              'https://example.com/auth/callback',
-              'https://example.com/auth/shopify/callback',
-              'https://example.com/api/auth/callback',
-            ],
-          },
+    expect(setManyAppConfigValues).toHaveBeenCalledWith(
+      appWithConfig.configuration.path,
+      [
+        {keyPath: 'application_url', value: 'https://example.com'},
+        {
+          keyPath: 'auth.redirect_urls',
+          value: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
         },
-        schema: expect.any(Object),
-      }),
+      ],
+      expect.any(Object),
     )
   })
 
@@ -180,26 +183,23 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: appWithConfig.configuration.path,
-        patch: {
-          application_url: 'https://example.com',
-          auth: {
-            redirect_urls: [
-              'https://example.com/auth/callback',
-              'https://example.com/auth/shopify/callback',
-              'https://example.com/api/auth/callback',
-            ],
-          },
-          app_proxy: {
-            url: 'https://example.com',
-            subpath: 'subpath',
-            prefix: 'prefix',
-          },
+    expect(setManyAppConfigValues).toHaveBeenCalledWith(
+      appWithConfig.configuration.path,
+      [
+        {keyPath: 'application_url', value: 'https://example.com'},
+        {
+          keyPath: 'auth.redirect_urls',
+          value: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
         },
-        schema: expect.any(Object),
-      }),
+        {keyPath: 'app_proxy.url', value: 'https://example.com'},
+        {keyPath: 'app_proxy.subpath', value: 'subpath'},
+        {keyPath: 'app_proxy.prefix', value: 'prefix'},
+      ],
+      expect.any(Object),
     )
   })
 })
@@ -360,7 +360,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchAppConfigurationFile).not.toHaveBeenCalled()
+    expect(setManyAppConfigValues).not.toHaveBeenCalled()
   })
 
   test('updates the config file if current config client matches remote', async () => {
@@ -385,14 +385,10 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(patchAppConfigurationFile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        path: localApp.configuration.path,
-        patch: {
-          build: {automatically_update_urls_on_dev: true},
-        },
-        schema: expect.any(Object),
-      }),
+    expect(setManyAppConfigValues).toHaveBeenCalledWith(
+      localApp.configuration.path,
+      [{keyPath: 'build.automatically_update_urls_on_dev', value: true}],
+      localApp.configSchema,
     )
   })
 })
