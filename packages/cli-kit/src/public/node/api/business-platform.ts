@@ -116,13 +116,13 @@ export async function businessPlatformOrganizationsRequest<T>(
  * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query of generic type <T>.
  */
-export async function businessPlatformOrganizationsRequestDoc<TResult>(
-  query: TypedDocumentNode<TResult, GraphQLVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>,
+export async function businessPlatformOrganizationsRequestDoc<TResult, TVariables extends Variables>(
+  query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>,
   token: string,
   organizationId: string,
-  variables?: GraphQLVariables,
+  variables?: TVariables,
 ): Promise<TResult> {
-  return graphqlRequestDoc({
+  return graphqlRequestDoc<TResult, TVariables>({
     query,
     ...(await setupOrganizationsRequest(token, organizationId)),
     variables,
