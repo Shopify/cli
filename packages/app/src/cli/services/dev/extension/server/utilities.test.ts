@@ -1,7 +1,7 @@
 import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
-import {ExtensionDevOptions} from '../../extension.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {ExtensionsPayloadStoreOptions} from '../payload/store.js'
 import {describe, expect, test, vi} from 'vitest'
 import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 
@@ -22,7 +22,7 @@ describe('getRedirectURL()', () => {
     const options = {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getRedirectUrl(extension, options)
 
@@ -43,7 +43,7 @@ describe('getRedirectURL()', () => {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
       checkoutCartUrl: 'mock/cart/url',
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getRedirectUrl(extension, options)
 
@@ -62,7 +62,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       const options = {
         storeFqdn: 'example.myshopify.com',
         url: 'https://localhost:8081',
-      } as unknown as ExtensionDevOptions
+      } as unknown as ExtensionsPayloadStoreOptions
 
       const result = getExtensionPointRedirectUrl(extensionPoint, extension, options)
 
@@ -83,7 +83,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
       checkoutCartUrl: 'mock/cart/url',
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getExtensionPointRedirectUrl('Checkout::Dynamic::Render', extension, options)
 
@@ -103,7 +103,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       checkoutCartUrl: 'mock/cart/url',
       websocketURL: 'wss://mock.url/extensions',
       apiKey: '123key',
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getExtensionPointRedirectUrl('purchase.post.render', extension, options)
 
@@ -125,7 +125,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       checkoutCartUrl: 'mock/cart/url',
       websocketURL: 'wss://mock.url/extensions',
       apiKey: '123key',
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getExtensionPointRedirectUrl('purchase.post.render', extension, options)
 
@@ -145,7 +145,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       storeId: '123456789',
       url: 'https://localhost:8081',
       id: 123,
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
 
@@ -165,7 +165,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       storeId: '123456789',
       url: 'https://localhost:8081',
       id: 123,
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
 
@@ -185,7 +185,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       storeId: '123456789',
       url: 'https://localhost:8081',
       id: 123,
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
 
@@ -203,7 +203,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
       checkoutCartUrl: 'mock/cart/url',
-    } as unknown as ExtensionDevOptions
+    } as unknown as ExtensionsPayloadStoreOptions
 
     expect(getExtensionPointRedirectUrl('ABC', extension, options)).toBeUndefined()
     expect(getExtensionPointRedirectUrl('SomeOtherArea::Test::Extension', extension, options)).toBeUndefined()

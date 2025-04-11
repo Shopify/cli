@@ -1,6 +1,6 @@
 import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
-import {ExtensionDevOptions} from '../extension.js'
+import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import * as appModel from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -45,7 +45,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: Omit<ExtensionDevOptions, 'appWatcher'> = {
+      const options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> = {
         signal,
         stdout,
         stderr,
@@ -62,6 +62,7 @@ describe('getUIExtensionPayload', () => {
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',
         manifestVersion: '3',
+        websocketURL: 'wss://mock.url/extensions',
       }
       const development: Partial<UIExtensionPayload['development']> = {
         hidden: true,
@@ -173,7 +174,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: Omit<ExtensionDevOptions, 'appWatcher'> = {
+      const options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> = {
         signal,
         stdout,
         stderr,
@@ -190,6 +191,7 @@ describe('getUIExtensionPayload', () => {
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',
         manifestVersion: '3',
+        websocketURL: 'wss://mock.url/extensions',
       }
       const development: Partial<UIExtensionPayload['development']> = {
         hidden: true,
@@ -306,7 +308,7 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: Omit<ExtensionDevOptions, 'appWatcher'> = {
+      const options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> = {
         signal,
         stdout,
         stderr,
@@ -323,6 +325,7 @@ describe('getUIExtensionPayload', () => {
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',
         manifestVersion: '3',
+        websocketURL: 'wss://mock.url/extensions',
       }
       const development: Partial<UIExtensionPayload['development']> = {
         hidden: true,
@@ -389,7 +392,7 @@ describe('getUIExtensionPayload', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uiExtension = await testUIExtension({directory: tmpDir})
-      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const options: ExtensionsPayloadStoreOptions = {} as ExtensionsPayloadStoreOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 
       // When
@@ -456,7 +459,7 @@ describe('getUIExtensionPayload', () => {
         },
       })
 
-      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const options: ExtensionsPayloadStoreOptions = {} as ExtensionsPayloadStoreOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 
       // When
@@ -537,7 +540,7 @@ describe('getUIExtensionPayload', () => {
         },
       })
 
-      const options: ExtensionDevOptions = {} as ExtensionDevOptions
+      const options: ExtensionsPayloadStoreOptions = {} as ExtensionsPayloadStoreOptions
       const development: Partial<UIExtensionPayload['development']> = {}
 
       // When
