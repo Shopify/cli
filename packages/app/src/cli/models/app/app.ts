@@ -14,11 +14,18 @@ import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
-import {relativePath, joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {fileExistsSync, fileRealPath, findPathUp, readFileSync, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {
+  fileExistsSync,
+  fileRealPath,
+  findPathUp,
+  readFileSync,
+  removeFileSync,
+  writeFileSync,
+} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
@@ -499,33 +506,29 @@ export class App<
   }
 
   async generateExtensionTypes() {
-    const typeFilePath = joinPath(this.directory, 'shopify.d.ts')
-    let firstImport = ''
-    const sharedTypes = await Promise.all(
-      this.allExtensions.map((extension) => extension.contributeToSharedTypeFile(typeFilePath)),
+    const typeDefinitionsByFile = new Map<string, Set<string>>()
+    await Promise.all(
+      this.allExtensions.map((extension) => extension.contributeToSharedTypeFile(typeDefinitionsByFile)),
     )
-    const combinedDefinitions = new Set()
-    sharedTypes.forEach((shared) => {
-      shared.forEach(({libraryRoot, definition}) => {
-        if (!firstImport) {
-          firstImport = `import './${relativePath(this.directory, libraryRoot)}';\n`
+    typeDefinitionsByFile.forEach((types, typeFilePath) => {
+      const exists = fileExistsSync(typeFilePath)
+      // No types to add, remove the file if it exists
+      if (types.size === 0) {
+        if (exists) {
+          removeFileSync(typeFilePath)
         }
-        combinedDefinitions.add(definition)
-      })
+        return
+      }
+
+      const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
+      // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
+      // This is needed to enable file-specific global type declarations.
+      const typeContent = [`import '@shopify/ui-extension';\n`, ...Array.from(types)].join('\n')
+      if (originalContent === typeContent) {
+        return
+      }
+      writeFileSync(typeFilePath, typeContent)
     })
-
-    if (combinedDefinitions.size === 0) {
-      return
-    }
-
-    const originalContent = fileExistsSync(typeFilePath) ? readFileSync(typeFilePath).toString() : ''
-    const typeContent = [firstImport, ...Array.from(combinedDefinitions)].join('\n')
-    if (originalContent === typeContent) {
-      return
-    }
-    // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
-    // This is needed to enable file-specific global type declarations.
-    writeFileSync(typeFilePath, typeContent)
   }
 
   get includeConfigOnDeploy() {
