@@ -2,9 +2,9 @@
 import {Octokit} from '@octokit/rest'
 import * as fs from 'fs'
 import * as path from 'path'
-import {spawn} from 'child_process'
 import {withOctokit} from './github-utils.js'
 import {runCommand} from './run-command.js'
+import {execSync} from "node:child_process";
 
 const BRANCH = 'main'
 
@@ -26,42 +26,36 @@ const schemas = [
     owner: 'Shopify',
     repo: 'partners',
     pathToFile: 'db/graphql/cli_schema.graphql',
-    localRepoDirectory: `${process.env.HOME}/src/github.com/Shopify/partners`,
     localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
   },
   {
     owner: 'Shopify',
     repo: 'business-platform',
     pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
-    localRepoDirectory: `${process.env.HOME}/src/github.com/Shopify/business-platform`,
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
   {
     owner: 'Shopify',
     repo: 'business-platform',
     pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
-    localRepoDirectory: `${process.env.HOME}/src/github.com/Shopify/business-platform`,
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/app_dev_schema_unstable_public.graphql',
-    localRepoDirectory: `${process.env.HOME}/world/trees/root/src`,
     localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
-    localRepoDirectory: `${process.env.HOME}/world/trees/root/src`,
     localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
-    localRepoDirectory: `${process.env.HOME}/world/trees/root/src`,
     localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
     usesLfs: true,
   },
@@ -69,14 +63,12 @@ const schemas = [
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
-    localRepoDirectory: `${process.env.HOME}/world/trees/root/src`,
     localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
-    localRepoDirectory: `${process.env.HOME}/world/trees/root/src`,
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
   },
 ]
@@ -183,9 +175,12 @@ async function fetchFilesFromSpin() {
  */
 async function fetchFilesFromLocal() {
   for (const schema of schemas) {
-    const sourcePath = path.join(schema.localRepoDirectory, schema.pathToFile)
+    const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${schema.repo}`).toString().split('/areas')[0].trim()
+    const sourcePath = path.join(localRepoDirectory, schema.pathToFile)
+    console.log('Copying', sourcePath, 'to', schema.localPath)
     fs.copyFileSync(sourcePath, schema.localPath)
   }
+  console.log('Done!')
 }
 
 if (process.env.SHOPIFY_SERVICE_ENV === 'local') {
