@@ -221,7 +221,16 @@ describe('runWasmOpt', () => {
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
       'node',
-      [wasmOptBinary().name, modulePath, '-Oz', '--enable-bulk-memory', '--strip-debug', '-o', modulePath],
+      [
+        wasmOptBinary().name,
+        modulePath,
+        '-Oz',
+        '--enable-bulk-memory',
+        '--enable-multimemory',
+        '--strip-debug',
+        '-o',
+        modulePath,
+      ],
       {
         cwd: dirname(wasmOptBinary().path),
       },
