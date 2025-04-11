@@ -618,11 +618,17 @@ describe('manifest', () => {
 })
 
 describe('generateExtensionTypes', () => {
-  test('combines type definitions from multiple extensions with the first import being from the library root of the first extension', async () => {
+  test('creates a shopify.d.ts for each key in the typeDefinitionsByFile map with combined types', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const uiExtension1 = await testUIExtension({type: 'ui_extension', directory: tmpDir})
-      const uiExtension2 = await testUIExtension({type: 'ui_extension', directory: tmpDir})
+      const ext1Dir = joinPath(tmpDir, 'extensions', 'ext1')
+      const ext2Dir = joinPath(tmpDir, 'extensions', 'ext2')
+
+      await mkdir(ext1Dir)
+      await mkdir(ext2Dir)
+
+      const uiExtension1 = await testUIExtension({type: 'ui_extension', handle: 'ext1', directory: ext1Dir})
+      const uiExtension2 = await testUIExtension({type: 'ui_extension', handle: 'ext2', directory: ext2Dir})
 
       const app = testApp({
         directory: tmpDir,
@@ -630,30 +636,42 @@ describe('generateExtensionTypes', () => {
       })
 
       // Mock the extension contributions
-      vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockResolvedValue([
-        {
-          libraryRoot: `${tmpDir}/extensions/extension-1/node_modules/@shopify/ui-extensions/index.d.ts`,
-          definition: `declare module './ext1' { // mocked definition }`,
-        },
-      ])
-      vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockResolvedValue([
-        {
-          libraryRoot: `${tmpDir}/extensions/extension-2/node_modules/@shopify/ui-extensions/index.d.ts`,
-          definition: `declare module './ext2' { // mocked definition }`,
-        },
-      ])
+      vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockImplementation(async (typeDefinitionsByFile) => {
+        typeDefinitionsByFile.set(
+          joinPath(ext1Dir, 'shopify.d.ts'),
+          new Set([
+            "declare module './ext1-module-1.jsx' { // mocked ext1 module 1 definition }",
+            "declare module './ext1-module-2.jsx' { // mocked ext1 module 2 definition }",
+          ]),
+        )
+      })
+      vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockImplementation(async (typeDefinitionsByFile) => {
+        typeDefinitionsByFile.set(
+          joinPath(ext2Dir, 'shopify.d.ts'),
+          new Set([
+            "declare module './ext2-module-1.jsx' { // mocked ext2 module 1 definition }",
+            "declare module './ext2-module-2.jsx' { // mocked ext2 module 2 definition }",
+          ]),
+        )
+      })
 
       // When
       await app.generateExtensionTypes()
 
       // Then
-      const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
-      const fileContent = await readFile(typeFilePath)
-      const normalizedContent = fileContent.toString().replace(/\\/g, '/')
-      expect(normalizedContent)
-        .toBe(`import './extensions/extension-1/node_modules/@shopify/ui-extensions/index.d.ts';\n
-declare module './ext1' { // mocked definition }
-declare module './ext2' { // mocked definition }`)
+      const ext1TypeFilePath = joinPath(ext1Dir, 'shopify.d.ts')
+      const ext1FileContent = await readFile(ext1TypeFilePath)
+      const normalizedExt1Content = ext1FileContent.toString().replace(/\\/g, '/')
+      expect(normalizedExt1Content).toBe(`import '@shopify/ui-extension';\n
+declare module './ext1-module-1.jsx' { // mocked ext1 module 1 definition }
+declare module './ext1-module-2.jsx' { // mocked ext1 module 2 definition }`)
+
+      const ext2TypeFilePath = joinPath(ext2Dir, 'shopify.d.ts')
+      const ext2FileContent = await readFile(ext2TypeFilePath)
+      const normalizedExt2Content = ext2FileContent.toString().replace(/\\/g, '/')
+      expect(normalizedExt2Content).toBe(`import '@shopify/ui-extension';\n
+declare module './ext2-module-1.jsx' { // mocked ext2 module 1 definition }
+declare module './ext2-module-2.jsx' { // mocked ext2 module 2 definition }`)
     })
   })
 })
