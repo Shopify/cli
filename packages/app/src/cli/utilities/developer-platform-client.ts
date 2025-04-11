@@ -60,9 +60,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
-import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -88,12 +86,8 @@ export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   if (!blockPartnersAccess()) {
     clients.push(new PartnersClient())
   }
-  if (!isAppManagementDisabled()) {
-    clients.push(new AppManagementClient())
-  }
-  if (clients.length === 0) {
-    throw new AbortError('Both Partners and App Management APIs are deactivated.')
-  }
+
+  clients.push(new AppManagementClient())
   return clients
 }
 
@@ -133,7 +127,6 @@ export function selectDeveloperPlatformClient({
   configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
-  if (isAppManagementDisabled()) return new PartnersClient()
   if (organization) return selectDeveloperPlatformClientByOrg(organization)
   return selectDeveloperPlatformClientByConfig(configuration)
 }
