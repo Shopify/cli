@@ -5,7 +5,7 @@ import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends AppCommand {
@@ -37,7 +37,7 @@ export default class EnvPull extends AppCommand {
       userProvidedConfigName: flags.config,
     })
     const envFile = joinPath(app.directory, flags['env-file'] ?? getDotEnvFileName(app.configuration.path))
-    outputInfo(await pullEnv({app, remoteApp, organization, envFile}))
+    outputResult(await pullEnv({app, remoteApp, organization, envFile}))
     return {app}
   }
 }

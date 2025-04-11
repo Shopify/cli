@@ -3,7 +3,7 @@ import {evaluate} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {describe, expect, test, vi} from 'vitest'
-import {consoleWarn} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {createInterface} from 'readline'
 
 vi.mock('@shopify/cli-kit/node/output')
@@ -25,7 +25,7 @@ describe('handleInput', () => {
     output: process.stdout,
   })
 
-  test('should call consoleWarn if input has {{ delimiter', async () => {
+  test('should call outputInfo if input has {{ delimiter', async () => {
     // Given
     const inputValue = '{{ collections.first }}'
 
@@ -33,10 +33,10 @@ describe('handleInput', () => {
     await handleInput(inputValue, themeSesssion, themeId, url, rl, [])
 
     // Then
-    expect(consoleWarn).toHaveBeenCalledWith(DELIMITER_WARNING_MESSAGE)
+    expect(outputInfo).toHaveBeenCalledWith(DELIMITER_WARNING_MESSAGE)
   })
 
-  test('should call consoleWarn if input has {% delimiter', async () => {
+  test('should call outputInfo if input has {% delimiter', async () => {
     // Given
     const inputValue = '{%'
 
@@ -44,10 +44,10 @@ describe('handleInput', () => {
     await handleInput(inputValue, themeSesssion, themeId, url, rl, [])
 
     // Then
-    expect(consoleWarn).toHaveBeenCalledWith(DELIMITER_WARNING_MESSAGE)
+    expect(outputInfo).toHaveBeenCalledWith(DELIMITER_WARNING_MESSAGE)
   })
 
-  test('should not call consoleWarn if {{ delimiter is wrapped in quotes', async () => {
+  test('should not call outputInfo if {{ delimiter is wrapped in quotes', async () => {
     // Given
     const inputValue = '"{{ collections.first }}"'
 
@@ -55,7 +55,7 @@ describe('handleInput', () => {
     await handleInput(inputValue, themeSesssion, themeId, url, rl, [])
 
     // Then
-    expect(consoleWarn).not.toHaveBeenCalled()
+    expect(outputInfo).not.toHaveBeenCalled()
   })
 
   test('should call evaluate, presentValue, and prompt readline if input is valid', async () => {
@@ -66,7 +66,7 @@ describe('handleInput', () => {
     await handleInput(inputValue, themeSesssion, themeId, url, rl, [])
 
     // Then
-    expect(consoleWarn).not.toHaveBeenCalled()
+    expect(outputInfo).not.toHaveBeenCalled()
     expect(evaluate).toHaveBeenCalled()
     expect(presentValue).toHaveBeenCalled()
   })
