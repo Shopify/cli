@@ -1,5 +1,17 @@
 # @shopify/app
 
+## 3.79.0
+
+### Patch Changes
+
+- 321e2e2: Enable multi-memory with wasm-opt
+- db8131b: Updated Binaryen version to 123.0.0
+- e647600: Fix 401 error during the app log resubscribe process
+- Updated dependencies [031feb7]
+  - @shopify/cli-kit@3.79.0
+  - @shopify/plugin-cloudflare@3.79.0
+  - @shopify/theme@3.79.0
+
 ## 3.78.0
 
 ### Minor Changes
