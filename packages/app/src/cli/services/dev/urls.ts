@@ -33,8 +33,6 @@ export type FrontendURLOptions = UseLocalhostFrontendUrlOptions | UseTunnelFront
 interface UseLocalhostFrontendUrlOptions {
   noTunnelUseLocalhost: true
   port: number
-  tunnelUrl?: undefined
-  tunnelClient?: undefined
 }
 
 interface UseTunnelFrontendUrlOptions {
@@ -62,6 +60,14 @@ interface FrontendURLResult {
  * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
  */
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
+  if (options.noTunnelUseLocalhost) {
+    return {
+      frontendUrl: 'https://localhost',
+      frontendPort: options.port,
+      usingLocalhost: true,
+    }
+  }
+
   let frontendPort = 4040
   let frontendUrl = ''
   const usingLocalhost = options.noTunnelUseLocalhost
@@ -107,10 +113,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (options.noTunnelUseLocalhost) {
-    frontendPort = options.port
-    frontendUrl = 'https://localhost'
-  } else if (options.tunnelClient) {
+  if (options.tunnelClient) {
     frontendPort = options.tunnelClient.port
     frontendUrl = await pollTunnelURL(options.tunnelClient)
   }

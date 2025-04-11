@@ -526,7 +526,7 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
       const portAvailable = await checkPortAvailability(graphiqlPort)
       if (!portAvailable) {
         const errorMessage = `Port ${graphiqlPort} is not available for serving GraphiQL.`
-        const tryMessage = ['Choose a different port by setting the', {command: '--graphiql-port'}, 'flag.']
+        const tryMessage = ['Choose a different port for the', {command: '--graphiql-port'}, 'flag.']
         throw new AbortError(errorMessage, tryMessage)
       }
     })(),
@@ -538,69 +538,78 @@ function setPreviousAppId(directory: string, apiKey: string) {
 }
 
 /**
- * Gets the tunnel config for doing app dev
+ * Gets the tunnel or localhost config for doing app dev
  * @param options - Options required for the config
  * @returns A tunnel configuration object
  */
-
 export async function getTunnelMode({
   useLocalhost,
   localhostPort,
   tunnelUrl,
 }: {
+  tunnelUrl?: string
   useLocalhost?: boolean
   localhostPort?: number
-  tunnelUrl?: string
 }): Promise<TunnelMode> {
-  if (useLocalhost) {
-    const requestedPort = localhostPort ?? ports.localhost
-    const actualPort = await getAvailableTCPPort(requestedPort)
-
-    return {
-      mode: 'use-localhost',
-      port: actualPort,
-      provideCertificate: async (appDirectory) => {
-        renderInfo({
-          headline: 'Localhost-based development is in developer preview.',
-          body: [
-            '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
-            '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
-            'device (such as POS). Please report any issues and provide feedback on the dev community:',
-          ],
-          link: {
-            label: 'Create a feedback post',
-            url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
-          },
-        })
-
-        if (requestedPort !== actualPort) {
-          renderWarning({
-            headline: [
-              'A random port will be used for localhost because',
-              {command: `${requestedPort}`},
-              'is not available.',
-            ],
-            body: [
-              'If you want to use a specific port, choose a different one or free up the one you requested. Then re-run the command with the',
-              {command: '--localhost-port PORT'},
-              'flag.',
-            ],
-          })
-        }
-
-        return generateCertificate({
-          appDirectory,
-          onRequiresConfirmation: generateCertificatePrompt,
-        })
-      },
-    }
-  }
-
+  // Developer brought their own tunnel
   if (tunnelUrl) {
     return {mode: 'custom', url: tunnelUrl}
   }
 
+  // CLI should create a tunnel
+  if (!useLocalhost && !localhostPort) {
+    return {
+      mode: 'auto',
+    }
+  }
+
+  const requestedPort = localhostPort ?? ports.localhost
+  const actualPort = await getAvailableTCPPort(requestedPort)
+
+  // The user specified a port. It's not available. Abort!
+  if (localhostPort && actualPort !== requestedPort) {
+    const errorMessage = `Port ${localhostPort} is not available.`
+    const tryMessage = ['Choose a different port for the', {command: '--localhost-port'}, 'flag.']
+    throw new AbortError(errorMessage, tryMessage)
+  }
+
   return {
-    mode: 'auto',
+    mode: 'use-localhost',
+    port: actualPort,
+    provideCertificate: async (appDirectory) => {
+      renderInfo({
+        headline: 'Localhost-based development is in developer preview.',
+        body: [
+          '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
+          '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
+          'device (such as POS). Please report any issues and provide feedback on the dev community:',
+        ],
+        link: {
+          label: 'Create a feedback post',
+          url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
+        },
+      })
+
+      // The user didn't specify a port. The default isn't available. Warn
+      if (requestedPort !== actualPort) {
+        renderWarning({
+          headline: [
+            'A random port will be used for localhost because',
+            {command: `${requestedPort}`},
+            'is not available.',
+          ],
+          body: [
+            'If you want to use a specific port, choose a different one or free up the one you requested. Then re-run the command with the',
+            {command: '--localhost-port PORT'},
+            'flag.',
+          ],
+        })
+      }
+
+      return generateCertificate({
+        appDirectory,
+        onRequiresConfirmation: generateCertificatePrompt,
+      })
+    },
   }
 }
