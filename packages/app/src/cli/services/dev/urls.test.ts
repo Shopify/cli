@@ -450,13 +450,13 @@ describe('generateFrontendURL', () => {
 
   test('returns localhost if noTunnelUseLocalhost is true', async () => {
     // Given
-    const options = {...defaultOptions, noTunnelUseLocalhost: true}
+    const options: FrontendURLOptions = {noTunnelUseLocalhost: true, port: 1234}
 
     // When
     const got = await generateFrontendURL(options)
 
     // Then
-    expect(got).toEqual({frontendUrl: 'https://localhost', frontendPort: 3042, usingLocalhost: true})
+    expect(got).toEqual({frontendUrl: 'https://localhost', frontendPort: 1234, usingLocalhost: true})
     expect(renderSelectPrompt).not.toBeCalled()
   })
 

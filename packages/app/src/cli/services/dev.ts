@@ -1,5 +1,6 @@
 import {
   ApplicationURLs,
+  FrontendURLOptions,
   generateApplicationURLs,
   generateFrontendURL,
   getURLs,
@@ -33,6 +34,8 @@ import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {generateCertificate} from '../utilities/mkcert.js'
+import {generateCertificatePrompt} from '../prompts/dev.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -40,28 +43,28 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning, renderInfo} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-interface NoTunnel {
-  mode: 'no-tunnel-use-localhost'
+export interface NoTunnel {
+  mode: 'use-localhost'
+  port: number
   provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
 }
 
-interface AutoTunnel {
+export interface AutoTunnel {
   mode: 'auto'
 }
 
-interface TunnelProvided {
-  mode: 'provided'
+export interface CustomTunnel {
+  mode: 'custom'
   url: string
 }
 
-export type TunnelMode = NoTunnel | AutoTunnel | TunnelProvided
-
+type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
 export interface DevOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
@@ -319,14 +322,22 @@ async function setupNetworkingOptions(
 
   await validateCustomPorts(webs, graphiqlPort)
 
+  const frontendUrlOptions: FrontendURLOptions =
+    tunnelOptions.mode === 'use-localhost'
+      ? {
+          noTunnelUseLocalhost: true,
+          port: tunnelOptions.port,
+        }
+      : {
+          noTunnelUseLocalhost: false,
+          tunnelUrl: tunnelOptions.mode === 'custom' ? tunnelOptions.url : undefined,
+          tunnelClient,
+        }
+
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
   const [{frontendUrl, frontendPort: proxyPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
-    generateFrontendURL({
-      noTunnelUseLocalhost: tunnelOptions.mode === 'no-tunnel-use-localhost',
-      tunnelUrl: tunnelOptions.mode === 'provided' ? tunnelOptions.url : undefined,
-      tunnelClient,
-    }),
+    generateFrontendURL(frontendUrlOptions),
     getBackendPort() ?? backendConfig?.configuration.port ?? getAvailableTCPPort(),
     getURLs(remoteAppConfig),
   ])
@@ -342,12 +353,13 @@ async function setupNetworkingOptions(
   frontendPort = frontendPort ?? (await getAvailableTCPPort())
 
   let reverseProxyCert
-  if (tunnelOptions.mode === 'no-tunnel-use-localhost') {
+  if (tunnelOptions.mode === 'use-localhost') {
     const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
     reverseProxyCert = {
       key: keyContent,
       cert: certContent,
       certPath,
+      port: tunnelOptions.port,
     }
   }
 
@@ -514,7 +526,7 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
       const portAvailable = await checkPortAvailability(graphiqlPort)
       if (!portAvailable) {
         const errorMessage = `Port ${graphiqlPort} is not available for serving GraphiQL.`
-        const tryMessage = ['Choose a different port by setting the', {command: '--graphiql-port'}, 'flag.']
+        const tryMessage = ['Choose a different port for the', {command: '--graphiql-port'}, 'flag.']
         throw new AbortError(errorMessage, tryMessage)
       }
     })(),
@@ -523,4 +535,81 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
 
 function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
+}
+
+/**
+ * Gets the tunnel or localhost config for doing app dev
+ * @param options - Options required for the config
+ * @returns A tunnel configuration object
+ */
+export async function getTunnelMode({
+  useLocalhost,
+  localhostPort,
+  tunnelUrl,
+}: {
+  tunnelUrl?: string
+  useLocalhost?: boolean
+  localhostPort?: number
+}): Promise<TunnelMode> {
+  // Developer brought their own tunnel
+  if (tunnelUrl) {
+    return {mode: 'custom', url: tunnelUrl}
+  }
+
+  // CLI should create a tunnel
+  if (!useLocalhost && !localhostPort) {
+    return {
+      mode: 'auto',
+    }
+  }
+
+  const requestedPort = localhostPort ?? ports.localhost
+  const actualPort = await getAvailableTCPPort(requestedPort)
+
+  // The user specified a port. It's not available. Abort!
+  if (localhostPort && actualPort !== requestedPort) {
+    const errorMessage = `Port ${localhostPort} is not available.`
+    const tryMessage = ['Choose a different port for the', {command: '--localhost-port'}, 'flag.']
+    throw new AbortError(errorMessage, tryMessage)
+  }
+
+  return {
+    mode: 'use-localhost',
+    port: actualPort,
+    provideCertificate: async (appDirectory) => {
+      renderInfo({
+        headline: 'Localhost-based development is in developer preview.',
+        body: [
+          '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
+          '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
+          'device (such as POS). Please report any issues and provide feedback on the dev community:',
+        ],
+        link: {
+          label: 'Create a feedback post',
+          url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
+        },
+      })
+
+      // The user didn't specify a port. The default isn't available. Warn
+      if (requestedPort !== actualPort) {
+        renderWarning({
+          headline: [
+            'A random port will be used for localhost because',
+            {command: `${requestedPort}`},
+            'is not available.',
+          ],
+          body: [
+            'If you want to use a specific port, choose a different one or free up the one you requested. Then re-run the command with the',
+            {command: '--localhost-port PORT'},
+            'flag.',
+          ],
+        })
+      }
+
+      return generateCertificate({
+        appDirectory,
+        onRequiresConfirmation: generateCertificatePrompt,
+      })
+    },
+  }
 }
