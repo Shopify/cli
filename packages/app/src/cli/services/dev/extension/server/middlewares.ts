@@ -224,7 +224,10 @@ export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExte
       })
     }
 
-    if (!extension.hasExtensionPointTarget(requestedTarget)) {
+    if (
+      extension.configuration.type !== 'checkout_post_purchase' &&
+      !extension.hasExtensionPointTarget(requestedTarget)
+    ) {
       return sendError(response, {
         statusCode: 404,
         statusMessage: `Extension with id ${extensionID} has not configured the "${requestedTarget}" extension target`,

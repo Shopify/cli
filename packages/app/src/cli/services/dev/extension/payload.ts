@@ -1,8 +1,8 @@
 import {getLocalization} from './localization.js'
 import {Asset, DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
+import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
-import {ExtensionDevOptions} from '../extension.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
@@ -10,7 +10,7 @@ import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
-export type GetUIExtensionPayloadOptions = Omit<ExtensionDevOptions, 'appWatcher'> & {
+export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>
   currentLocalizationPayload?: UIExtensionPayload['localization']
 }
@@ -24,9 +24,7 @@ export async function getUIExtensionPayload(
     const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
-
     const renderer = await getUIExtensionRendererVersion(extension)
-
     const extensionPoints = await getExtensionPoints(extension, url)
 
     const defaultConfig = {
@@ -86,7 +84,12 @@ export async function getUIExtensionPayload(
 }
 
 async function getExtensionPoints(extension: ExtensionInstance, url: string) {
-  const extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
+  let extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
+
+  if (extension.type === 'checkout_post_purchase') {
+    // Mock target for post-purchase in order to get the right extension point redirect url
+    extensionPoints = [{target: 'purchase.post.render'}] as DevNewExtensionPointSchema[]
+  }
 
   if (isNewExtensionPointsSchema(extensionPoints)) {
     return Promise.all(
