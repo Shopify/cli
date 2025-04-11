@@ -318,9 +318,10 @@ function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target:
   } catch (_) {
     // Remove the type reference from the source file
     updateTypeReference({fullPath, template, shouldAddTypeReference: false})
-    throw new Error(
-      `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@${apiVersion} in your dependencies.`,
-    )
+    // throw new Error(
+    //   `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@${apiVersion} in your dependencies.`,
+    // )
+    return types
   }
 
   // Update the type reference
