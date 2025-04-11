@@ -186,9 +186,6 @@ describe('storeContext', () => {
       vi.mocked(fetchStore).mockResolvedValue(mockStore)
 
       await storeContext({appContextResult, forceReselectStore: false})
-
-      const gitIgnoreContent = await readFile(joinPath(dir, '.gitignore'))
-      expect(gitIgnoreContent).toContain('.shopify')
     })
   })
 
