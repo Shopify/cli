@@ -1,0 +1,30 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+### CLI
+
+[README.md](mdc:docs/README.md)
+[architecture.md](mdc:docs/cli/architecture.md)
+[conventions.md](mdc:docs/cli/conventions.md)
+[cross-os-compatibility.md](mdc:docs/cli/cross-os-compatibility.md)
+[debugging.md](mdc:docs/cli/debugging.md)
+[eslint-rules.md](mdc:docs/cli/eslint-rules.md)
+[faq.md](mdc:docs/cli/faq.md)
+[get-started.md](mdc:docs/cli/get-started.md)
+[naming-conventions.md](mdc:docs/cli/naming-conventions.md)
+[performance.md](mdc:docs/cli/performance.md)
+[testing-strategy.md](mdc:docs/cli/testing-strategy.md)
+[troubleshooting.md](mdc:docs/cli/troubleshooting.md)
+
+### CLI kit
+
+[command-guidelines.md](mdc:docs/cli-kit/command-guidelines.md)
+[errors.md](mdc:docs/cli-kit/errors.md)
+[README.md](mdc:packages/cli/README.md)
+
+### UI kit
+[contributing.md](mdc:docs/cli-kit/ui-kit/contributing.md)
+[guidelines.md](mdc:docs/cli-kit/ui-kit/guidelines.md)
+[readme.md](mdc:docs/cli-kit/ui-kit/readme.md)
