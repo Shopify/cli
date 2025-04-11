@@ -1,6 +1,6 @@
 import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
-import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
+import {Dictionary, ObjectIterator, PropertyPath, ValueKeyIteratee} from 'lodash'
 import lodashPickBy from 'lodash/pickBy.js'
 import lodashMapValues from 'lodash/mapValues.js'
 import lodashIsEqual from 'lodash/isEqual.js'
@@ -88,7 +88,7 @@ export function deepDifference(one: object, two: object): [object, object] {
  * @param path - The path of the property to get.
  * @returns - Returns the resolved value.
  */
-export function getPathValue<T = object>(object: object, path: string): T | undefined {
+export function getPathValue<T = object>(object: object, path: PropertyPath): T | undefined {
   return get(object, path) === undefined ? undefined : (get(object, path) as T)
 }
 
@@ -100,7 +100,7 @@ export function getPathValue<T = object>(object: object, path: string): T | unde
  * @param value - The value to set.
  * @returns - Returns object.
  */
-export function setPathValue(object: object, path: string, value?: unknown): object {
+export function setPathValue(object: object, path: PropertyPath, value?: unknown): object {
   return set(object, path, value)
 }
 
@@ -111,7 +111,7 @@ export function setPathValue(object: object, path: string, value?: unknown): obj
  * @param path - The path of the property to unset.
  * @returns - Returns true if the property is deleted or not found, else false.
  */
-export function unsetPathValue(object: object, path: string): boolean {
+export function unsetPathValue(object: object, path: PropertyPath): boolean {
   return unset(object, path)
 }
 
