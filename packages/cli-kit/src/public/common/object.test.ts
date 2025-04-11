@@ -7,6 +7,7 @@ import {
   mapValues,
   pickBy,
   setPathValue,
+  unsetPathValue,
 } from './object.js'
 import {describe, expect, test} from 'vitest'
 
@@ -273,5 +274,88 @@ describe('compact', () => {
 
     // Then
     expect(result).toEqual({})
+  })
+})
+
+describe('unsetPathValue', () => {
+  test('removes the path value at the top level if it exists', () => {
+    // Given
+    const obj: object = {
+      key1: '1',
+      key2: '2',
+    }
+
+    // When
+    const result = unsetPathValue(obj, 'key1')
+
+    // Then
+    expect(result).toBeTruthy()
+    expect(obj).toEqual({key2: '2'})
+  })
+
+  test('removes the path value inside a nested object if it exists', () => {
+    // Given
+    const obj: object = {
+      key1: {
+        key11: 2,
+        key12: 3,
+      },
+    }
+
+    // When
+    const result = unsetPathValue(obj, 'key1.key11')
+
+    // Then
+    expect(result).toBeTruthy()
+    expect(obj).toEqual({key1: {key12: 3}})
+  })
+
+  test('returns true and does not modify the object if the specific path does not exist', () => {
+    // Given
+    const obj: object = {
+      key1: {
+        key11: 3,
+      },
+    }
+
+    // When
+    const result = unsetPathValue(obj, 'key1.key21')
+
+    // Then
+    expect(result).toBeTruthy()
+    expect(obj).toEqual({key1: {key11: 3}})
+  })
+
+  test('returns false when trying to remove a property from a frozen object', () => {
+    // Given
+    const obj: object = {
+      key1: '1',
+      key2: '2',
+    }
+    Object.freeze(obj)
+
+    // When
+    const result = unsetPathValue(obj, 'key1')
+
+    // Then
+    expect(result).toBeFalsy()
+    expect(obj).toEqual({key1: '1', key2: '2'})
+  })
+
+  test('returns false when trying to remove a non-configurable property', () => {
+    // Given
+    const obj: object = {}
+    Object.defineProperty(obj, 'key1', {
+      value: '1',
+      configurable: false,
+      enumerable: true,
+    })
+
+    // When
+    const result = unsetPathValue(obj, 'key1')
+
+    // Then
+    expect(result).toBeFalsy()
+    expect(Object.prototype.hasOwnProperty.call(obj, 'key1')).toBeTruthy()
   })
 })
