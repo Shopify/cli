@@ -95,9 +95,8 @@ If you're using the Ruby app template, then you need to complete the following s
     }),
     'localhost-port': Flags.integer({
       hidden: true,
-      description: 'Port to use for localhost. Only applicable when --use-localhost is specified.',
+      description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
-      dependsOn: ['use-localhost'],
     }),
     theme: Flags.string({
       hidden: false,
