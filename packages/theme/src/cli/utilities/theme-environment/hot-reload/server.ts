@@ -382,7 +382,10 @@ export function handleHotReloadScriptInjection(html: string, ctx: DevServerConte
   }
 
   // Inject the HotReload script in the HTML Head
-  return html.replace(/<\/head>/, `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head>`)
+  return html.replace(
+    /<\/head>/,
+    `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}" defer></script></head>`,
+  )
 }
 
 function isAsset(key: string) {
