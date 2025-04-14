@@ -984,11 +984,13 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           apiVersion: '2025-07',
         })
 
-        // Add another target sharing the same tsconfig.json
+        // Add another target sharing the same tsconfig.json as the main target
         const otherTarget = 'admin.orders-details.block.render'
         const targetPath = joinPath(nodeModulesPath, otherTarget)
         await mkdir(targetPath)
         await writeFile(joinPath(targetPath, 'index.js'), '// Mock other target')
+        await writeFile(joinPath(tmpDir, 'src', 'another-target-module.jsx'), '// JSX code for other target')
+
         extension.configuration.extension_points.push({
           target: otherTarget,
           module: './src/another-target-module.jsx',
