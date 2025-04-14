@@ -237,6 +237,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     storeFqdn: string,
   ) => Promise<string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
+  preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   migratePendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   pendingSchemaChanges?: (extension: ExtensionInstance<TConfiguration>) => string[]
 }): ExtensionSpecification<TConfiguration> {
@@ -253,6 +254,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
+    preDeployValidation: spec.preDeployValidation,
     migratePendingSchemaChanges: spec.migratePendingSchemaChanges,
     pendingSchemaChanges: spec.pendingSchemaChanges,
   })
