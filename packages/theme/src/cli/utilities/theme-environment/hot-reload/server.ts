@@ -363,8 +363,14 @@ const localHotReloadScriptEndpoint = '/@shopify/theme-hot-reload'
  * Injects a `<script>` tag in the HTML Head containing
  * inlined code for HotReload.
  */
-export function handleHotReloadScriptInjection(html: string, ctx: DevServerContext) {
+export function handleHotReloadScriptInjection(htmlDoc: string, ctx: DevServerContext, theme?: Theme) {
+  let html = htmlDoc
+
   if (ctx.options.liveReload === 'off') return html.replace(hotReloadScriptRE, '')
+
+  if (theme && !html.includes('window.Shopify')) {
+    html = html.replace(/<\/head>/, `<script>window.Shopify = {theme: {id: ${theme.id}}}</script></head>`)
+  }
 
   if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD) {
     // When running locally, use the local script for easy development.

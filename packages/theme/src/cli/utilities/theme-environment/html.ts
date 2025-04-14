@@ -28,6 +28,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
     if (shouldRenderUploadErrorPage) {
       return createErrorPageResponse(
         ctx,
+        theme,
         {status: 500, statusText: 'Internal Server Error'},
         {
           title: 'Failed to Upload Theme Files',
@@ -68,7 +69,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
         return patchRenderingResponse(ctx, response, (body) => {
           assertThemeId(response, body, String(theme.id))
           themeIdMismatchRedirects = 0
-          return handleHotReloadScriptInjection(body, ctx)
+          return handleHotReloadScriptInjection(body, ctx, theme)
         })
       })
       .catch(async (error) => {
@@ -115,6 +116,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
 
         return createErrorPageResponse(
           ctx,
+          theme,
           {status, statusText},
           {
             title,
@@ -133,10 +135,11 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
 
 function createErrorPageResponse(
   ctx: DevServerContext,
+  theme: Theme,
   responseInit: ResponseInit,
   options: Parameters<typeof getErrorPage>[0],
 ) {
-  const errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx)
+  const errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx, theme)
 
   return new Response(errorPageHtml, {
     ...responseInit,

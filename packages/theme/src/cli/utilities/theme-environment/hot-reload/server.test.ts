@@ -57,6 +57,16 @@ describe('Hot Reload', () => {
 
       expect(handleHotReloadScriptInjection(htmlWithoutHrScript, ctx)).toEqual(htmlWithoutHrScript)
     })
+
+    test('injects theme id if missing', () => {
+      const ctx = {
+        options: {liveReload: 'hot-reload'},
+      } as unknown as DevServerContext
+
+      expect(handleHotReloadScriptInjection(htmlWithoutHrScript, ctx, {id: THEME_ID} as unknown as Theme)).toMatch(
+        'window.Shopify = {theme: {id: my-theme-id}}',
+      )
+    })
   })
 
   describe('server events', () => {
