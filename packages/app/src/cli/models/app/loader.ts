@@ -260,6 +260,17 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
   return loader.loaded()
 }
 
+export async function unsafeLoadApp(
+  options: Omit<AppLoaderConstructorArgs<AppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
+    directory: string
+    userProvidedConfigName: string | undefined
+    specifications: ExtensionSpecification[]
+    remoteFlags?: Flag[]
+  },
+): Promise<AppLinkedInterface> {
+  return loadApp(options) as Promise<AppLinkedInterface>
+}
+
 export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
   const state = await getAppConfigurationState(app.directory, basename(app.configuration.path))
   if (state.state !== 'connected-app') {
