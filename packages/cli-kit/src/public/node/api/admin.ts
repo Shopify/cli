@@ -65,7 +65,7 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
   }
   let unauthorizedHandler
   if ('refresh' in session) {
-    unauthorizedHandler = session.refresh as () => Promise<void>
+    unauthorizedHandler = session.refresh as () => Promise<undefined>
   }
   const result = graphqlRequestDoc<TResult, TVariables>({
     ...opts,

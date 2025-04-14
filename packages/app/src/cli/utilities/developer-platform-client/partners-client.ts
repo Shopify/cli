@@ -159,7 +159,7 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
-import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
+import {CacheOptions, GraphQLVariables, RefreshTokenOnAuthorizedResponse} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -218,7 +218,9 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = false
   public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
+
   private _session: PartnersSession | undefined
+  private tokenRefreshInProgress: undefined | Promise<string>
 
   constructor(session?: PartnersSession) {
     this._session = session
@@ -247,14 +249,14 @@ export class PartnersClient implements DeveloperPlatformClient {
     variables: GraphQLVariables | undefined = undefined,
     cacheOptions?: CacheOptions,
   ): Promise<T> {
-    return partnersRequest(query, await this.token(), variables, cacheOptions)
+    return partnersRequest(query, await this.token(), variables, cacheOptions, this.createUnauthorizedHandler())
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
     document: TypedDocumentNode<TResult, TVariables>,
     variables?: TVariables,
   ): Promise<TResult> {
-    return partnersRequestDoc(document, await this.token(), variables)
+    return partnersRequestDoc(document, await this.token(), variables, this.createUnauthorizedHandler())
   }
 
   async token(): Promise<string> {
@@ -638,6 +640,25 @@ export class PartnersClient implements DeveloperPlatformClient {
     const parsedOrg = {id: org.id, businessName: org.businessName, source: this.organizationSource}
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
+  }
+
+  private createUnauthorizedHandler(): () => RefreshTokenOnAuthorizedResponse {
+    let unauthorisedRetriesUsed = 0
+    return async () => {
+      unauthorisedRetriesUsed++
+      if (unauthorisedRetriesUsed > 1) {
+        return {action: 'throw'}
+      }
+      if (this.tokenRefreshInProgress) {
+        const refreshedToken = await this.tokenRefreshInProgress
+        return {action: 'retry', token: refreshedToken}
+      } else {
+        this.tokenRefreshInProgress = this.refreshToken()
+        const refreshedToken = await this.tokenRefreshInProgress
+        this.tokenRefreshInProgress = undefined
+        return {action: 'retry', token: refreshedToken}
+      }
+    }
   }
 }
 

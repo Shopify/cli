@@ -1,4 +1,11 @@
-import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc, CacheOptions} from './graphql.js'
+import {
+  graphqlRequest,
+  GraphQLVariables,
+  GraphQLResponse,
+  graphqlRequestDoc,
+  CacheOptions,
+  RefreshTokenOnAuthorizedResponse,
+} from './graphql.js'
 import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
@@ -42,6 +49,7 @@ async function setupRequest(token: string) {
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options.
+ * @param refreshTokenOnAuthorizedResponse - Optional handler for unauthorized requests.
  * @returns The response of the query of generic type <T>.
  */
 export async function partnersRequest<T>(
@@ -49,6 +57,7 @@ export async function partnersRequest<T>(
   token: string,
   variables?: GraphQLVariables,
   cacheOptions?: CacheOptions,
+  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponse,
 ): Promise<T> {
   const opts = await setupRequest(token)
   const result = limiter.schedule(() =>
@@ -57,6 +66,7 @@ export async function partnersRequest<T>(
       query,
       variables,
       cacheOptions,
+      refreshTokenOnAuthorizedResponse,
     }),
   )
 
@@ -81,12 +91,14 @@ export const generateFetchAppLogUrl = async (
  * @param query - GraphQL query to execute.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param refreshTokenOnAuthorizedResponse - Optional handler for unauthorized requests.
  * @returns The response of the query of generic type <TResult>.
  */
 export async function partnersRequestDoc<TResult, TVariables extends Variables>(
   query: TypedDocumentNode<TResult, TVariables>,
   token: string,
   variables?: TVariables,
+  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponse,
 ): Promise<TResult> {
   try {
     const opts = await setupRequest(token)
@@ -95,6 +107,7 @@ export async function partnersRequestDoc<TResult, TVariables extends Variables>(
         ...opts,
         query,
         variables,
+        refreshTokenOnAuthorizedResponse,
       }),
     )
 
