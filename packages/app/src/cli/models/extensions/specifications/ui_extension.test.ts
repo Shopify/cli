@@ -947,7 +947,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         await writeFile(tsconfigPath, '// TypeScript config')
 
         // When
-        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+        await extension.postLoadAction?.(typeDefinitionsByFile)
 
         const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
 
@@ -1010,7 +1010,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         await writeFile(shouldRenderModuleTsConfigPath, '// TypeScript config')
 
         // When
-        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+        await extension.postLoadAction?.(typeDefinitionsByFile)
 
         // Then
         expect(typeDefinitionsByFile).toStrictEqual(
@@ -1061,7 +1061,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
 
         // When
-        await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
+        await expect(extension.postLoadAction?.(typeDefinitionsByFile)).rejects.toThrow(
           'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-07 in your dependencies.',
         )
 
@@ -1085,7 +1085,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
 
         // When
-        await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).resolves.not.toThrow()
+        await expect(extension.postLoadAction?.(typeDefinitionsByFile)).resolves.not.toThrow()
 
         // No shopify.d.ts file should be created
         expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
@@ -1103,7 +1103,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         })
 
         // When
-        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+        await extension.postLoadAction?.(typeDefinitionsByFile)
 
         // Then
         expect(typeDefinitionsByFile).toStrictEqual(new Map())

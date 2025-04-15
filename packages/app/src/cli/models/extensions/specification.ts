@@ -115,10 +115,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    */
   parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
 
-  contributeToSharedTypeFile?: (
-    extension: ExtensionInstance<TConfiguration>,
-    typeDefinitionsByFile: Map<string, Set<string>>,
-  ) => Promise<void>
+  postLoadAction?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
 }
 
 /**

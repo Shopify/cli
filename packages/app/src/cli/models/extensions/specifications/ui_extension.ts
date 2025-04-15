@@ -4,7 +4,14 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {fileExists, findPathUp} from '@shopify/cli-kit/node/fs'
+import {
+  fileExists,
+  fileExistsSync,
+  findPathUp,
+  readFileSync,
+  removeFileSync,
+  writeFileSync,
+} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -149,11 +156,10 @@ const uiExtensionSpec = createExtensionSpecification({
       }) !== undefined
     )
   },
-  contributeToSharedTypeFile: async (extension, typeDefinitionsByFile) => {
-    if (!isRemoteDomExtension(extension.configuration)) {
-      return
-    }
+  postLoadAction: async (extension) => {
+    if (!isRemoteDomExtension(extension.configuration)) return
 
+    const typeDefinitionsByFile = new Map<string, Set<string>>()
     const {configuration} = extension
     for await (const extensionPoint of configuration.extension_points) {
       const fullPath = joinPath(extension.directory, extensionPoint.module)
@@ -196,6 +202,26 @@ const uiExtensionSpec = createExtensionSpecification({
           typeDefinitionsByFile.set(shouldRenderTypeFilePath, currentTypes)
         }
       }
+
+      typeDefinitionsByFile.forEach((types, typeFilePath) => {
+        const exists = fileExistsSync(typeFilePath)
+        // No types to add, remove the file if it exists
+        if (types.size === 0) {
+          if (exists) {
+            removeFileSync(typeFilePath)
+          }
+          return
+        }
+
+        const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
+        // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
+        // This is needed to enable file-specific global type declarations.
+        const typeContent = [`import '@shopify/ui-extension';\n`, ...Array.from(types)].join('\n')
+        if (originalContent === typeContent) {
+          return
+        }
+        writeFileSync(typeFilePath, typeContent)
+      })
     }
   },
 })
