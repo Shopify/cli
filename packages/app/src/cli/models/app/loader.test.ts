@@ -2380,7 +2380,7 @@ wrong = "property"
   test('call app.generateExtensionTypes', async () => {
     // Given
     await writeConfig(appConfiguration)
-    const generateTypesSpy = vi.spyOn(App.prototype, 'generateExtensionTypes')
+    const generateTypesSpy = vi.spyOn(App.prototype, 'postLoadAction')
 
     // When
     await loadTestingApp()
