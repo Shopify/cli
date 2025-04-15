@@ -4,7 +4,7 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {AssetIdentifier} from '../specification.js'
-import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -932,8 +932,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
   describe('contributeToSharedTypeFile', () => {
     test('sets the typeDefinitionsByFile map for both main and should-render modules when api version supports Remote DOM', async () => {
-      const typeDefinitionsByFile = new Map<string, Set<string>>()
-
       await inTemporaryDirectory(async (tmpDir) => {
         const {extension} = await setupUIExtensionWithNodeModules({
           tmpDir,
@@ -947,34 +945,28 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         await writeFile(tsconfigPath, '// TypeScript config')
 
         // When
-        await extension.postLoadAction?.(typeDefinitionsByFile)
+        await extension.postLoadAction?.()
 
-        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
-
-        // Then
-        expect(typeDefinitionsByFile).toStrictEqual(
-          new Map([
-            [
-              shopifyDtsPath,
-              new Set([
-                `//@ts-ignore\ndeclare module './src/index.jsx' {
+        const extTypeFilePath = joinPath(extension.directory, 'shopify.d.ts')
+        const extFileContent = await readFile(extTypeFilePath)
+        const normalizedExtContent = extFileContent.toString().replace(/\\/g, '/')
+        expect(normalizedExtContent).toBe(`import '@shopify/ui-extension';\n
+//@ts-ignore
+declare module './src/index.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`,
-                `//@ts-ignore\ndeclare module './src/condition/should-render.js' {
+}
+
+//@ts-ignore
+declare module './src/condition/should-render.js' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`,
-              ]),
-            ],
-          ]),
-        )
+}
+`)
       })
     })
 
     test('supports individual and shared tsconfig.json files when api version supports Remote DOM', async () => {
-      const typeDefinitionsByFile = new Map<string, Set<string>>()
-
       await inTemporaryDirectory(async (tmpDir) => {
         const {extension, nodeModulesPath} = await setupUIExtensionWithNodeModules({
           tmpDir,
@@ -1010,41 +1002,42 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         await writeFile(shouldRenderModuleTsConfigPath, '// TypeScript config')
 
         // When
-        await extension.postLoadAction?.(typeDefinitionsByFile)
+        await extension.postLoadAction?.()
 
         // Then
-        expect(typeDefinitionsByFile).toStrictEqual(
-          new Map([
-            [
-              joinPath(tmpDir, 'shopify.d.ts'),
-              new Set([
-                `//@ts-ignore\ndeclare module './src/index.jsx' {
+        const extTypeFilePath = joinPath(extension.directory, 'shopify.d.ts')
+        const extFileContent = await readFile(extTypeFilePath)
+        const normalizedExtContent = extFileContent.toString().replace(/\\/g, '/')
+        expect(normalizedExtContent).toBe(`import '@shopify/ui-extension';
+
+//@ts-ignore
+declare module './src/index.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`,
-                `//@ts-ignore\ndeclare module './src/another-target-module.jsx' {
+}
+
+//@ts-ignore
+declare module './src/another-target-module.jsx' {
   const shopify: import('@shopify/ui-extensions/admin.orders-details.block.render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`,
-              ]),
-            ],
-            [
-              joinPath(tmpDir, 'src', 'condition', 'shopify.d.ts'),
-              new Set([
-                `//@ts-ignore\ndeclare module './should-render.js' {
+}
+`)
+
+        const shouldRenderTypeFilePath = joinPath(extension.directory, 'src', 'condition', 'shopify.d.ts')
+        const shouldRenderFileContent = await readFile(shouldRenderTypeFilePath)
+        const normalizedShouldRenderContent = shouldRenderFileContent.toString().replace(/\\/g, '/')
+        expect(normalizedShouldRenderContent).toBe(`import '@shopify/ui-extension';
+
+//@ts-ignore
+declare module './should-render.js' {
   const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`,
-              ]),
-            ],
-          ]),
-        )
+}
+`)
       })
     })
 
     test("throws error when when api version supports Remote DOM and there's a tsconfig.json but type reference for target could not be found", async () => {
-      const typeDefinitionsByFile = new Map<string, Set<string>>()
-
       await inTemporaryDirectory(async (tmpDir) => {
         const {extension} = await setupUIExtensionWithNodeModules({
           tmpDir,
@@ -1061,7 +1054,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
 
         // When
-        await expect(extension.postLoadAction?.(typeDefinitionsByFile)).rejects.toThrow(
+        await expect(extension.postLoadAction?.()).rejects.toThrow(
           'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-07 in your dependencies.',
         )
 
@@ -1071,8 +1064,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     })
 
     test('does not throw error when when api version supports Remote DOM but there is no tsconfig.json', async () => {
-      const typeDefinitionsByFile = new Map<string, Set<string>>()
-
       await inTemporaryDirectory(async (tmpDir) => {
         const {extension} = await setupUIExtensionWithNodeModules({
           tmpDir,
@@ -1085,7 +1076,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
 
         // When
-        await expect(extension.postLoadAction?.(typeDefinitionsByFile)).resolves.not.toThrow()
+        await expect(extension.postLoadAction?.()).resolves.not.toThrow()
 
         // No shopify.d.ts file should be created
         expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
@@ -1093,9 +1084,8 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     })
 
     test('does not set the typeDefinitionsByFile map when api version does not support Remote DOM', async () => {
-      const typeDefinitionsByFile = new Map<string, Set<string>>()
       await inTemporaryDirectory(async (tmpDir) => {
-        const {extension, filePath} = await setupUIExtensionWithNodeModules({
+        const {extension} = await setupUIExtensionWithNodeModules({
           tmpDir,
           fileContent: '// TypeScript React code',
           // Non-Remote DOM supported version
@@ -1103,12 +1093,9 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         })
 
         // When
-        await extension.postLoadAction?.(typeDefinitionsByFile)
+        await extension.postLoadAction?.()
 
         // Then
-        expect(typeDefinitionsByFile).toStrictEqual(new Map())
-
-        // No shopify.d.ts file should be created
         expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
       })
     })
