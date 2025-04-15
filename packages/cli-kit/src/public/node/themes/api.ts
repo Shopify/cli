@@ -93,16 +93,11 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function themeCreate(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const themeSource = params.src ?? SkeletonThemeCdn
-  const {themeCreate} = await adminRequestDoc(
-    ThemeCreate,
-    session,
-    {
-      name: params.name ?? '',
-      source: themeSource,
-      role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
-    },
-    '2025-04',
-  )
+  const {themeCreate} = await adminRequestDoc(ThemeCreate, session, {
+    name: params.name ?? '',
+    source: themeSource,
+    role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
+  })
 
   if (!themeCreate) {
     unexpectedGraphQLError('Failed to create theme')
