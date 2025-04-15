@@ -389,7 +389,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       usedCustomLayoutForExtensions: configuration.extension_directories !== undefined,
     })
 
-    await appClass.generateExtensionTypes()
+    await appClass.postLoadAction()
 
     return appClass
   }

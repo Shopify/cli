@@ -26,8 +26,8 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {describe, expect, test} from 'vitest'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
@@ -613,47 +613,6 @@ describe('manifest', () => {
           },
         },
       ],
-    })
-  })
-})
-
-describe('generateExtensionTypes', () => {
-  test('combines type definitions from multiple extensions with the first import being from the library root of the first extension', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uiExtension1 = await testUIExtension({type: 'ui_extension', directory: tmpDir})
-      const uiExtension2 = await testUIExtension({type: 'ui_extension', directory: tmpDir})
-
-      const app = testApp({
-        directory: tmpDir,
-        allExtensions: [uiExtension1, uiExtension2],
-      })
-
-      // Mock the extension contributions
-      vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockResolvedValue([
-        {
-          libraryRoot: `${tmpDir}/extensions/extension-1/node_modules/@shopify/ui-extensions/index.d.ts`,
-          definition: `declare module './ext1' { // mocked definition }`,
-        },
-      ])
-      vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockResolvedValue([
-        {
-          libraryRoot: `${tmpDir}/extensions/extension-2/node_modules/@shopify/ui-extensions/index.d.ts`,
-          definition: `declare module './ext2' { // mocked definition }`,
-        },
-      ])
-
-      // When
-      await app.generateExtensionTypes()
-
-      // Then
-      const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
-      const fileContent = await readFile(typeFilePath)
-      const normalizedContent = fileContent.toString().replace(/\\/g, '/')
-      expect(normalizedContent)
-        .toBe(`import './extensions/extension-1/node_modules/@shopify/ui-extensions/index.d.ts';\n
-declare module './ext1' { // mocked definition }
-declare module './ext2' { // mocked definition }`)
     })
   })
 })
