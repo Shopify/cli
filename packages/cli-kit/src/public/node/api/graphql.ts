@@ -1,7 +1,7 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
-import {retryAwareRequest} from '../../../private/node/api.js'
+import {retryAwareRequest, UnauthorizedHandlerResult, UnauthorizedHandlerThrow} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
 import {nonRandomUUID} from '../crypto.js'
 import {
@@ -40,6 +40,15 @@ export interface CacheOptions {
   cacheStore?: LocalStorage<ConfSchema>
 }
 
+interface RefreshTokenOnAuthorizedResponseRetryWithNewToken {
+  action: 'retry'
+  token: string
+}
+
+export type RefreshTokenOnAuthorizedResponse = Promise<
+  UnauthorizedHandlerThrow | RefreshTokenOnAuthorizedResponseRetryWithNewToken
+>
+
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
   url: string
@@ -47,29 +56,51 @@ interface GraphQLRequestBaseOptions<TResult> {
   addedHeaders?: {[header: string]: string}
   responseOptions?: GraphQLResponseOptions<TResult>
   cacheOptions?: CacheOptions
+  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponse
 }
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
   variables?: Variables
-  unauthorizedHandler?: () => Promise<void>
+  unauthorizedHandler?: () => UnauthorizedHandlerResult
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
-  unauthorizedHandler?: () => Promise<void>
+  unauthorizedHandler?: () => UnauthorizedHandlerResult
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
-  unauthorizedHandler?: () => Promise<void>
+  unauthorizedHandler?: () => UnauthorizedHandlerResult
 }
 
 export interface GraphQLResponseOptions<T> {
   handleErrors?: boolean
   onResponse?: (response: GraphQLResponse<T>) => void
+}
+
+async function createGraphQLClient({
+  url,
+  addedHeaders,
+  token,
+}: {
+  url: string
+  token: string | undefined
+  addedHeaders?: {[header: string]: string}
+}) {
+  const headers = {
+    ...addedHeaders,
+    ...buildHeaders(token),
+  }
+  const clientOptions = {agent: await httpsAgent(), headers}
+
+  return {
+    client: new GraphQLClient(url, clientOptions),
+    headers,
+  }
 }
 
 /**
@@ -78,19 +109,21 @@ export interface GraphQLResponseOptions<T> {
  * @param options - GraphQL request options.
  */
 async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
-  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler, cacheOptions} =
-    options
-  const headers = {
-    ...addedHeaders,
-    ...buildHeaders(token),
-  }
-
-  debugLogRequestInfo(api, queryAsString, url, variables, headers)
-
+  const {
+    token,
+    addedHeaders,
+    queryAsString,
+    variables,
+    api,
+    url,
+    responseOptions,
+    unauthorizedHandler,
+    cacheOptions,
+    refreshTokenOnAuthorizedResponse,
+  } = options
   const requestBehaviour = requestMode('default')
-
-  const clientOptions = {agent: await httpsAgent(), headers}
-  const client = new GraphQLClient(url, clientOptions)
+  let {headers, client} = await createGraphQLClient({url, addedHeaders, token})
+  debugLogRequestInfo(api, queryAsString, url, variables, headers)
 
   const performRequest = async () => {
     let fullResponse: GraphQLResponse<TResult>
@@ -113,12 +146,35 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     }
   }
 
+  const unauthorizedHandlerFunction =
+    unauthorizedHandler ??
+    (async () => {
+      if (refreshTokenOnAuthorizedResponse) {
+        const refreshTokenResult = await refreshTokenOnAuthorizedResponse()
+        if (refreshTokenResult.action === 'retry') {
+          const {token: refreshedToken} = refreshTokenResult
+          const {client: newClient, headers: newHeaders} = await createGraphQLClient({
+            url,
+            addedHeaders,
+            token: refreshedToken,
+          })
+          client = newClient
+          headers = newHeaders
+          return {action: 'continue'}
+        } else {
+          return {action: 'throw'}
+        }
+      } else {
+        return {action: 'throw'}
+      }
+    })
+
   const executeWithTimer = () =>
     runWithTimer('cmd_all_timing_network_ms')(async () => {
       const response = await retryAwareRequest(
         {request: performRequest, url, ...requestBehaviour},
         responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-        unauthorizedHandler,
+        unauthorizedHandlerFunction,
       )
 
       if (responseOptions?.onResponse) {
