@@ -12,7 +12,7 @@ import {
   timeIntervalToMilliseconds,
 } from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
-import {abortSignalFromRequestBehaviour, requestMode} from '../http.js'
+import {requestMode} from '../http.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -98,8 +98,8 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     // throw.
     try {
       // mapping signal to any due to polyfill meaning types don't exactly match (but are functionally equivalent)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      client.requestConfig.signal = abortSignalFromRequestBehaviour(requestBehaviour) as any
+
+      // client.requestConfig.signal = abortSignalFromRequestBehaviour(requestBehaviour) as any
       fullResponse = await client.rawRequest<TResult>(queryAsString, variables)
       await logLastRequestIdFromResponse(fullResponse)
       return fullResponse
