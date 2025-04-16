@@ -32,6 +32,7 @@ interface PushOptions {
   publish?: boolean
   ignore?: string[]
   only?: string[]
+  environment?: string
 }
 
 interface JsonOutput {
@@ -97,6 +98,9 @@ export interface PushFlags {
 
   /** Require theme check to pass without errors before pushing. Warnings are allowed. */
   strict?: boolean
+
+  /** The environment to push the theme to. */
+  environment?: string
 }
 
 /**
@@ -104,7 +108,7 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags): Promise<void> {
+export async function push(flags: PushFlags, initialAdminSession?: AdminSession) {
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -126,8 +130,8 @@ export async function push(flags: PushFlags): Promise<void> {
 
   const force = flags.force ?? false
 
-  const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  const adminSession: AdminSession =
+    initialAdminSession ?? (await ensureAuthenticatedThemes(ensureThemeStore({store: flags.store}), flags.password))
 
   const workingDirectory = path ? resolvePath(path) : cwd()
   if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
