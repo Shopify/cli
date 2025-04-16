@@ -3,7 +3,7 @@ import {fetchOrganizations} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
-import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {setAppConfigValue, unsetAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
@@ -212,8 +212,7 @@ async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
   const includeConfigOnDeploy = configuration.build?.include_config_on_deploy
   if (includeConfigOnDeploy === undefined) return
 
-  const patch = {build: {include_config_on_deploy: undefined}}
-  await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
+  await unsetAppConfigValue(localApp.configuration.path, 'build.include_config_on_deploy', localApp.configSchema)
 
   includeConfigOnDeploy ? renderInfoAboutIncludeConfigOnDeploy() : renderWarningAboutIncludeConfigOnDeploy()
 }
@@ -251,8 +250,12 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
     ...localConfiguration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
-  const patch = {build: {include_config_on_deploy: shouldIncludeConfigDeploy}}
-  await patchAppConfigurationFile({path: localConfiguration.path, patch, schema: options.localApp.configSchema})
+  await setAppConfigValue(
+    localConfiguration.path,
+    'build.include_config_on_deploy',
+    shouldIncludeConfigDeploy,
+    options.localApp.configSchema,
+  )
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 
