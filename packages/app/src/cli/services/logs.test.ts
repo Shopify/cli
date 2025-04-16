@@ -11,7 +11,7 @@ import {
   testOrganizationStore,
 } from '../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {consoleLog} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, vi, expect, beforeEach} from 'vitest'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -54,7 +54,7 @@ describe('logs', () => {
     })
 
     // Then
-    expect(consoleLog).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
+    expect(outputInfo).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
     expect(spy).toHaveBeenCalled()
   })
 
@@ -78,7 +78,7 @@ describe('logs', () => {
     })
 
     // Then
-    expect(consoleLog).toHaveBeenCalledWith('Waiting for app logs...\n')
+    expect(outputInfo).toHaveBeenCalledWith('Waiting for app logs...\n')
     expect(spy).toHaveBeenCalled()
   })
 
@@ -156,8 +156,8 @@ describe('logs', () => {
     const expectedStoreMap = new Map()
     expectedStoreMap.set('1', 'store-fqdn')
     expectedStoreMap.set('2', 'other-fqdn')
-    expect(consoleLog).toHaveBeenCalledWith('{"subscribedToStores":["store-fqdn","other-fqdn"]}')
-    expect(consoleLog).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
+    expect(outputResult).toHaveBeenCalledWith('{"subscribedToStores":["store-fqdn","other-fqdn"]}')
+    expect(outputInfo).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
@@ -197,7 +197,7 @@ describe('logs', () => {
     const expectedStoreMap = new Map()
     expectedStoreMap.set('1', 'store-fqdn')
     expectedStoreMap.set('2', 'other-fqdn')
-    expect(consoleLog).toHaveBeenCalledWith('Waiting for app logs...\n')
+    expect(outputInfo).toHaveBeenCalledWith('Waiting for app logs...\n')
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
