@@ -1,5 +1,21 @@
 # @shopify/app
 
+## 3.79.0
+
+### Patch Changes
+
+- 6dba2c8: Improve type definition support for POLARIS_UNIFIED extensions
+- aa85a63: Bump theme-tools packages
+- 321e2e2: Enable multi-memory with wasm-opt
+- db8131b: Updated Binaryen version to 123.0.0
+- e647600: Fix 401 error during the app log resubscribe process
+- Updated dependencies [f9ac5cf]
+- Updated dependencies [aa85a63]
+- Updated dependencies [031feb7]
+  - @shopify/cli-kit@3.79.0
+  - @shopify/theme@3.79.0
+  - @shopify/plugin-cloudflare@3.79.0
+
 ## 3.78.0
 
 ### Minor Changes
