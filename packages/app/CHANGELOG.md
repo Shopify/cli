@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.78.1
+
+### Patch Changes
+
+- 224eb15: Improve type definition support for POLARIS_UNIFIED extensions
+  - @shopify/cli-kit@3.78.1
+  - @shopify/theme@3.78.1
+  - @shopify/plugin-cloudflare@3.78.1
+
 ## 3.78.0
 
 ### Minor Changes
