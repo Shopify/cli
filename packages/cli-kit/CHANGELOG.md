@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.79.0
+
+### Minor Changes
+
+- f9ac5cf: Update `getPathValue`, `setPathValue`, and `unsetPathValue` to support the lodash `PropertyPath` type
+- 031feb7: Add new `unsetPathValue` function which wraps the `unset` function from lodash
+
 ## 3.78.0
 
 ## 3.77.0
