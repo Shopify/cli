@@ -10,7 +10,11 @@ import {
 import {getPartnersToken} from './environment.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
-import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
+import {
+  exchangeCustomPartnerToken,
+  exchangeCliTokenForAppManagementAccessToken,
+  exchangeCliTokenForBusinessPlatformAccessToken,
+} from '../../private/node/session/exchange.js'
 import {vi, describe, expect, test} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -241,5 +245,29 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow('No App Management or Business Platform token found after ensuring authenticated')
+  })
+
+  test('returns app managment and business platform tokens if CLI token envvar is defined', async () => {
+    // Given
+    vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
+    vi.mocked(exchangeCliTokenForAppManagementAccessToken).mockResolvedValueOnce({
+      accessToken: 'app-management-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+    vi.mocked(exchangeCliTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
+      accessToken: 'business-platform-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+
+    // When
+    const got = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+
+    // Then
+    expect(got).toEqual({
+      appManagementToken: 'app-management-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+      businessPlatformToken: 'business-platform-token',
+    })
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
