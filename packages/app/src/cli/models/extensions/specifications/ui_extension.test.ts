@@ -4,7 +4,7 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {AssetIdentifier} from '../specification.js'
-import {inTemporaryDirectory, touchFile, writeFile, readFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -706,7 +706,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           apiVersion: '2025-07',
           extensionPoints: [
             {
-              target: 'admin.product-details.block.render',
+              target: 'admin.product-details.action.render',
               module: './src/ExtensionPointA.js',
               build_manifest: {
                 assets: {
@@ -729,11 +729,11 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then
         expect(stdInContent.main).toBe(
-          `import Target_0 from './src/ExtensionPointA.js';shopify.extend('admin.product-details.block.render', (...args) => Target_0(...args));`,
+          `import Target_0 from './src/ExtensionPointA.js';shopify.extend('admin.product-details.action.render', (...args) => Target_0(...args));`,
         )
 
         expect(stdInContent.assets!.find((asset) => asset.identifier === AssetIdentifier.ShouldRender)?.content).toBe(
-          `import shouldRender from './src/condition/should-render.js';shopify.extend('admin.product-details.block.should-render', (...args) => shouldRender(...args));`,
+          `import shouldRender from './src/condition/should-render.js';shopify.extend('admin.product-details.action.should-render', (...args) => shouldRender(...args));`,
         )
       })
     })
@@ -747,7 +747,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           apiVersion: '2025-01',
           extensionPoints: [
             {
-              target: 'admin.product-details.block.render',
+              target: 'admin.product-details.action.render',
               module: './src/ExtensionPointA.js',
               build_manifest: {
                 assets: {
@@ -851,7 +851,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     fileContent,
     shouldRenderFileContent,
     apiVersion,
-    target = 'admin.product-details.block.render',
+    target = 'admin.product-details.action.render',
   }: {
     tmpDir: string
     fileContent: string
@@ -866,10 +866,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
     await writeFile(filePath, fileContent)
 
-    // Create shopify.d.ts type file
-    const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
-    await writeFile(typeFilePath, '// Type definitions')
-
     // Create node_modules structure
     const nodeModulesPath = joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions')
     await mkdir(nodeModulesPath)
@@ -877,9 +873,6 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     const targetPath = joinPath(nodeModulesPath, target)
     await mkdir(targetPath)
     await writeFile(joinPath(targetPath, 'index.js'), '// Mock UI extension target')
-
-    const libraryPath = joinPath(nodeModulesPath, 'index.js')
-    await writeFile(libraryPath, '// Mock UI extension library')
 
     let shouldRenderFilePath
     if (shouldRenderFileContent) {
@@ -930,82 +923,179 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     })
 
     return {
-      typeFilePath,
       filePath,
-      libraryPath,
       extension,
       shouldRenderFilePath,
+      nodeModulesPath,
     }
   }
 
   describe('contributeToSharedTypeFile', () => {
-    test('updates both main and should-render modules with type reference and returns shared types definition when api version supports Remote DOM', async () => {
+    test('sets the typeDefinitionsByFile map for both main and should-render modules when api version supports Remote DOM', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
       await inTemporaryDirectory(async (tmpDir) => {
-        const {extension, typeFilePath, filePath, libraryPath, shouldRenderFilePath} =
-          await setupUIExtensionWithNodeModules({
-            tmpDir,
-            fileContent: '// JSX code',
-            shouldRenderFileContent: '// JS code',
-            // Remote DOM supported version
-            apiVersion: '2025-07',
-          })
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// JSX code',
+          shouldRenderFileContent: '// JS code',
+          // Remote DOM supported version
+          apiVersion: '2025-07',
+        })
+        // Create tsconfig.json
+        const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(tsconfigPath, '// TypeScript config')
 
         // When
-        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
 
         // Then
-        expect(result).toHaveLength(2)
-
-        // Main module types
-        const expectedDefinition = `//@ts-ignore\ndeclare module './src/index.jsx' {
-  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.render/index.js').Api;
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              shopifyDtsPath,
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`
-        expect(result[0]?.definition).toBe(expectedDefinition)
-        expect(result[0]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
-
-        // Check if the TS file was updated with reference
-        const moduleFileContent = await readFile(filePath)
-        expect(moduleFileContent.toString()).toContain('/// <reference types="../shopify.d.ts" />')
-
-        // Should-render module types
-        const expectedShouldRenderDefinition = `//@ts-ignore\ndeclare module './src/condition/should-render.js' {
-  const shopify: import('./node_modules/@shopify/ui-extensions/admin.product-details.block.should-render/index.js').Api;
+}\n`,
+                `//@ts-ignore\ndeclare module './src/condition/should-render.js' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
   const globalThis: { shopify: typeof shopify };
-}\n`
-        expect(result[1]?.definition).toBe(expectedShouldRenderDefinition)
-        expect(result[1]?.libraryRoot.replace(/\\/g, '/')).toBe(libraryPath.replace(/\\/g, '/'))
-
-        const shouldRenderFileContent = await readFile(shouldRenderFilePath!)
-        expect(shouldRenderFileContent.toString()).toContain('/// <reference types="../../shopify.d.ts" />')
+}\n`,
+              ]),
+            ],
+          ]),
+        )
       })
     })
 
-    test('throws error when and remove type reference when api version supports Remote DOM but type reference for target could not be found', async () => {
+    test('supports individual and shared tsconfig.json files when api version supports Remote DOM', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
       await inTemporaryDirectory(async (tmpDir) => {
-        const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
+        const {extension, nodeModulesPath} = await setupUIExtensionWithNodeModules({
           tmpDir,
-          fileContent: '/// <reference types="../shopify.d.ts" />\n// Preact code',
+          fileContent: '// JSX code',
+          shouldRenderFileContent: '// JS code',
+          // Remote DOM supported version
+          apiVersion: '2025-07',
+        })
+
+        // Add another target sharing the same tsconfig.json as the main target
+        const otherTarget = 'admin.orders-details.block.render'
+        const targetPath = joinPath(nodeModulesPath, otherTarget)
+        await mkdir(targetPath)
+        await writeFile(joinPath(targetPath, 'index.js'), '// Mock other target')
+        await writeFile(joinPath(tmpDir, 'src', 'another-target-module.jsx'), '// JSX code for other target')
+
+        extension.configuration.extension_points.push({
+          target: otherTarget,
+          module: './src/another-target-module.jsx',
+          build_manifest: {
+            assets: {
+              main: {
+                module: './src/another-target-module.jsx',
+              },
+            } as any,
+          },
+        })
+
+        const mainModuleTsConfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(mainModuleTsConfigPath, '// TypeScript config')
+
+        const shouldRenderModuleTsConfigPath = joinPath(tmpDir, 'src', 'condition', 'tsconfig.json')
+        await writeFile(shouldRenderModuleTsConfigPath, '// TypeScript config')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        // Then
+        expect(typeDefinitionsByFile).toStrictEqual(
+          new Map([
+            [
+              joinPath(tmpDir, 'shopify.d.ts'),
+              new Set([
+                `//@ts-ignore\ndeclare module './src/index.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+                `//@ts-ignore\ndeclare module './src/another-target-module.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.orders-details.block.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+            [
+              joinPath(tmpDir, 'src', 'condition', 'shopify.d.ts'),
+              new Set([
+                `//@ts-ignore\ndeclare module './should-render.js' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.should-render').Api;
+  const globalThis: { shopify: typeof shopify };
+}\n`,
+              ]),
+            ],
+          ]),
+        )
+      })
+    })
+
+    test("throws error when when api version supports Remote DOM and there's a tsconfig.json but type reference for target could not be found", async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Preact code',
+          // Remote DOM supported version
+          apiVersion: '2025-07',
+        })
+
+        // Create tsconfig.json file for testing
+        const mainModuleTsConfigPath = joinPath(tmpDir, 'tsconfig.json')
+        await writeFile(mainModuleTsConfigPath, '// TypeScript config')
+
+        // Change target to a target that does not exist in the library
+        extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
+
+        // When
+        await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
+          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-07 in your dependencies.',
+        )
+
+        // No shopify.d.ts file should be created
+        expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
+      })
+    })
+
+    test('does not throw error when when api version supports Remote DOM but there is no tsconfig.json', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Preact code',
           // Remote DOM supported version
           apiVersion: '2025-07',
         })
 
         // Change target to a target that does not exist in the library
         extension.configuration.extension_points[0]!.target = 'admin.unknown.action.render'
-        // Then
-        await expect(extension.contributeToSharedTypeFile?.(typeFilePath)).rejects.toThrow(
-          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-07 in your dependencies.',
-        )
 
-        // TSX file should remain unchanged
-        const moduleFileContent = await readFile(filePath)
-        expect(moduleFileContent.toString()).toBe('// Preact code')
+        // When
+        await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).resolves.not.toThrow()
+
+        // No shopify.d.ts file should be created
+        expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
       })
     })
 
-    test('returns empty shared types definition and leaves file unchanged when api version does not support Remote DOM', async () => {
+    test('does not set the typeDefinitionsByFile map when api version does not support Remote DOM', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
       await inTemporaryDirectory(async (tmpDir) => {
-        const {extension, typeFilePath, filePath} = await setupUIExtensionWithNodeModules({
+        const {extension, filePath} = await setupUIExtensionWithNodeModules({
           tmpDir,
           fileContent: '// TypeScript React code',
           // Non-Remote DOM supported version
@@ -1013,14 +1103,13 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         })
 
         // When
-        const result = await extension.contributeToSharedTypeFile?.(typeFilePath)
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
 
         // Then
-        expect(result).toEqual([])
+        expect(typeDefinitionsByFile).toStrictEqual(new Map())
 
-        // TSX file should remain unchanged
-        const moduleFileContent = await readFile(filePath)
-        expect(moduleFileContent.toString()).toBe('// TypeScript React code')
+        // No shopify.d.ts file should be created
+        expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
       })
     })
   })
