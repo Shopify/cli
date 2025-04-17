@@ -1,4 +1,5 @@
 import {gql} from 'graphql-request'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export const AppRelease = gql`
   mutation AppRelease($apiKey: String!, $appVersionId: ID, $versionTag: String) {
@@ -31,16 +32,17 @@ export interface AppReleaseVariables {
 
 export interface AppReleaseSchema {
   appRelease: {
-    appVersion: {
+    appVersion?: {
       versionTag?: string | null
       message?: string | null
       location: string
     }
-    userErrors: {
+    userErrors?: {
       field?: string[] | null
       message: string
       category: string
       details: ErrorDetail[]
+      on?: JsonMapType[]
     }[]
   }
 }

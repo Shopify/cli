@@ -17,7 +17,7 @@ export type ReleaseVersionMutation = {
       message: string
       category: string
       code?: Types.Code | null
-      on: JsonMapType
+      on: JsonMapType[]
     }[]
   }
 }

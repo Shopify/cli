@@ -678,42 +678,34 @@ export class AppManagementClient implements DeveloperPlatformClient {
       releaseVariables,
     )
 
-    const versionResult: AppReleaseSchema = {
-      appRelease: {
-        appVersion: {
-          versionTag: null,
-          message: null,
-          location: '',
-        },
-        userErrors: releaseResult.appReleaseCreate.userErrors?.map((err) => ({
-          field: err.field,
-          message: err.message,
-          category: '',
-          details: [],
-        })),
-      },
-    }
     if (releaseResult.appReleaseCreate?.release) {
-      versionResult.appRelease.appVersion = {
-        versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
-        message: releaseResult.appReleaseCreate.release.version.metadata.message,
-        location: [
-          await appDeepLink({organizationId, id: appId}),
-          'versions',
-          numberFromGid(releaseResult.appReleaseCreate.release.version.id).toString(),
-        ].join('/'),
+      return {
+        appRelease: {
+          appVersion: {
+            versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
+            message: releaseResult.appReleaseCreate.release.version.metadata.message,
+            location: [
+              await appDeepLink({organizationId, id: appId}),
+              'versions',
+              numberFromGid(releaseResult.appReleaseCreate.release.version.id).toString(),
+            ].join('/'),
+          },
+        },
       }
     } else {
-      versionResult.appRelease.userErrors =
-        releaseResult.appReleaseCreate.userErrors?.map((err) => ({
-          field: err.field,
-          message: err.message,
-          category: err.category,
-          details: [],
-        })) ?? []
+      return {
+        appRelease: {
+          userErrors:
+            releaseResult.appReleaseCreate.userErrors?.map((err) => ({
+              field: err.field,
+              message: err.message,
+              category: err.category,
+              details: [],
+              on: err.on,
+            })) ?? [],
+        },
+      }
     }
-
-    return versionResult
   }
 
   // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
