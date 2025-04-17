@@ -81,13 +81,16 @@ export async function release(options: ReleaseOptions) {
     versionDetails.message ? `\n${versionDetails.message}` : '',
   ]
 
-  if (release.userErrors?.length > 0) {
+  if (release.userErrors) {
+    const errorMessages = release.userErrors
+      .map((error) => {
+        const appModule = error.on?.[error.on.length - 1]?.specification_identifier ?? null
+        return appModule ? `[${appModule as string}]: ${error.message}` : error.message
+      })
+      .join(', ')
     renderError({
       headline: "Version couldn't be released.",
-      body: [
-        ...linkAndMessage,
-        `${linkAndMessage.length > 0 ? '\n\n' : ''}${release.userErrors.map((error) => error.message).join(', ')}`,
-      ],
+      body: [...linkAndMessage, `${linkAndMessage.length > 0 ? '\n\n' : ''}${errorMessages}`],
     })
   } else {
     renderSuccess({
