@@ -183,6 +183,131 @@ describe('retryAwareRequest', () => {
     expect(mockUnauthorizedHandler).toHaveBeenCalledTimes(1)
   })
 
+  test('throws original 401 when unauthorizedHandler returns {action: "throw"}', async () => {
+    const unauthorizedError = new ClientError({status: 401}, {query: ''})
+
+    const mockRequestFn = vi.fn().mockRejectedValueOnce(unauthorizedError)
+    const mockUnauthorizedHandler = vi.fn().mockResolvedValue({action: 'throw'})
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      mockUnauthorizedHandler,
+      {
+        scheduleDelay: vi.fn((fn) => fn()),
+      },
+    )
+
+    await vi.runAllTimersAsync()
+    await expect(result).rejects.toThrow(unauthorizedError)
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledTimes(1)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledWith()
+  })
+
+  test('retries using standard logic when unauthorizedHandler returns {action: "continue"}', async () => {
+    const unauthorizedError = new ClientError({status: 401}, {query: ''})
+
+    const mockRequestFn = vi
+      .fn()
+      // First call: 401
+      .mockRejectedValueOnce(unauthorizedError)
+      // Second call: Success
+      .mockResolvedValueOnce({status: 200, data: {success: true}, headers: new Headers()})
+
+    const mockUnauthorizedHandler = vi.fn().mockResolvedValue({action: 'continue'})
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        // Network retry is irrelevant here as 401 is handled by handler
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      mockUnauthorizedHandler,
+      {
+        scheduleDelay: vi.fn((fn) => fn()),
+      },
+    )
+
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toEqual({status: 200, data: {success: true}, headers: expect.any(Headers)})
+    // Original + Retry after handler
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledTimes(1)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledWith()
+  })
+
+  test('retries using standard logic when unauthorizedHandler returns undefined (legacy)', async () => {
+    const unauthorizedError = new ClientError({status: 401}, {query: ''})
+
+    const mockRequestFn = vi
+      .fn()
+      // First call: 401
+      .mockRejectedValueOnce(unauthorizedError)
+      // Second call: Success
+      .mockResolvedValueOnce({status: 200, data: {success: true}, headers: new Headers()})
+
+    // Legacy return
+    const mockUnauthorizedHandler = vi.fn().mockResolvedValue(undefined)
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      mockUnauthorizedHandler,
+      {
+        scheduleDelay: vi.fn((fn) => fn()),
+      },
+    )
+
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toEqual({status: 200, data: {success: true}, headers: expect.any(Headers)})
+    // Original + Retry after handler
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledTimes(1)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledWith()
+  })
+
+  test('throws handler error if unauthorizedHandler rejects', async () => {
+    const unauthorizedError = new ClientError({status: 401}, {query: ''})
+    const handlerError = new Error('Handler failed spectacularly')
+
+    const mockRequestFn = vi.fn().mockRejectedValueOnce(unauthorizedError)
+    const mockUnauthorizedHandler = vi.fn().mockRejectedValue(handlerError)
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+      },
+      undefined,
+      mockUnauthorizedHandler,
+      {
+        scheduleDelay: vi.fn((fn) => fn()),
+      },
+    )
+
+    await vi.runAllTimersAsync()
+    await expect(result).rejects.toThrow(handlerError)
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledTimes(1)
+    expect(mockUnauthorizedHandler).toHaveBeenCalledWith()
+  })
+
   test('fails on network issue if retries are disabled', async () => {
     // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
     vi.useRealTimers()
