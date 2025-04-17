@@ -6,7 +6,9 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppAccessSchema = BaseSchema.extend({
+const AppAccessSchema = BaseSchema.omit({
+  metafields: true,
+}).extend({
   access: zod
     .object({
       admin: zod

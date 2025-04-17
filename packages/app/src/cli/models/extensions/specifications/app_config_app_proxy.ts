@@ -3,7 +3,9 @@ import {ExtensionSpecification, TransformationConfig, createConfigExtensionSpeci
 import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppProxySchema = BaseSchema.extend({
+const AppProxySchema = BaseSchema.omit({
+  metafields: true,
+}).extend({
   app_proxy: zod
     .object({
       url: validateUrl(zod.string({invalid_type_error: 'Value must be a valid URL'})),

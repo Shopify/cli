@@ -23,6 +23,8 @@ const WebhooksConfigSchema = zod.object({
 
 export type SingleWebhookSubscriptionType = zod.infer<typeof SingleWebhookSubscriptionSchema>
 
-export const WebhooksSchema = BaseSchema.extend({
+export const WebhooksSchema = BaseSchema.omit({
+  metafields: true,
+}).extend({
   webhooks: WebhooksConfigSchema.superRefine(webhookValidator),
 })
