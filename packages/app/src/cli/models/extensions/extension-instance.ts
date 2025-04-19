@@ -437,8 +437,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification.patchWithAppDevURLs(this.configuration, urls)
   }
 
-  async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
-    await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
+  async postLoadAction() {
+    await this.specification.postLoadAction?.(this)
   }
 
   private buildHandle() {

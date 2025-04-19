@@ -18,14 +18,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
-import {
-  fileExistsSync,
-  fileRealPath,
-  findPathUp,
-  readFileSync,
-  removeFileSync,
-  writeFileSync,
-} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
@@ -302,7 +295,7 @@ export interface AppInterface<
   removeExtension: (extensionUid: string) => void
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
-  generateExtensionTypes(): Promise<void>
+  postLoadAction: () => Promise<void>
 }
 
 type AppConstructor<
@@ -505,30 +498,8 @@ export class App<
     this.realExtensions = this.realExtensions.filter((ext) => ext.uid !== extensionUid)
   }
 
-  async generateExtensionTypes() {
-    const typeDefinitionsByFile = new Map<string, Set<string>>()
-    await Promise.all(
-      this.allExtensions.map((extension) => extension.contributeToSharedTypeFile(typeDefinitionsByFile)),
-    )
-    typeDefinitionsByFile.forEach((types, typeFilePath) => {
-      const exists = fileExistsSync(typeFilePath)
-      // No types to add, remove the file if it exists
-      if (types.size === 0) {
-        if (exists) {
-          removeFileSync(typeFilePath)
-        }
-        return
-      }
-
-      const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
-      // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
-      // This is needed to enable file-specific global type declarations.
-      const typeContent = [`import '@shopify/ui-extension';\n`, ...Array.from(types)].join('\n')
-      if (originalContent === typeContent) {
-        return
-      }
-      writeFileSync(typeFilePath, typeContent)
-    })
+  async postLoadAction() {
+    await Promise.all(this.allExtensions.map((extension) => extension.postLoadAction()))
   }
 
   get includeConfigOnDeploy() {
