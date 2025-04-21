@@ -2,6 +2,7 @@ import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {toLiquidHtmlAST, walk, NodeTypes} from '@shopify/liquid-html-parser'
 import type {Theme, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -105,11 +106,19 @@ function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
     const blockFiles = getLiquidFilesFromDir('blocks')
     const snippetFiles = getLiquidFilesFromDir('snippets')
 
-    let stylesheet = '/* Generated locally */\n'
+    const stylesheets = ['/* Generated locally */']
 
     for (const [, file] of [...sectionFiles, ...blockFiles, ...snippetFiles]) {
-      stylesheet += file.value?.match(/{%\s*stylesheet\s*%}([\s\S]*?){%\s*endstylesheet\s*%}/)?.[1] ?? ''
+      if (file.value) {
+        walk(toLiquidHtmlAST(file.value), (node) => {
+          if (node.type === NodeTypes.LiquidRawTag && node.name === 'stylesheet') {
+            stylesheets.push(node.body.value)
+          }
+        })
+      }
     }
+
+    const stylesheet = stylesheets.join('\n')
 
     return serveStatic(event, {
       getContents: () => stylesheet,
