@@ -27,6 +27,7 @@ export interface DevProps {
   previewUrl: string
   graphiqlUrl?: string
   graphiqlPort: number
+  graphiqlAdvertiseUrl?: string
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -54,6 +55,7 @@ const Dev: FunctionComponent<DevProps> = ({
   previewUrl,
   graphiqlUrl = '',
   graphiqlPort,
+  graphiqlAdvertiseUrl,
   app,
   pollingTime = 5000,
   developerPreview,
@@ -64,7 +66,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const graphiqlURLMessage = graphiqlUrl ? `GraphiQL URL: ${localhostGraphiqlUrl}` : ''
+  const graphiqlURLMessage = graphiqlUrl ? `GraphiQL URL: ${graphiqlAdvertiseUrl ?? localhostGraphiqlUrl}` : ''
 
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
