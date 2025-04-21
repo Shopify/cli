@@ -268,6 +268,108 @@ describe('setupDevServer', () => {
       expect(res.getHeader('content-length')).toEqual(25)
     })
 
+    test('serves compiled_assets/styles.css by aggregating liquid stylesheets', async () => {
+      const sectionFile = {
+        key: 'sections/test-section.liquid',
+        checksum: 'section1',
+        value: `<div class="section">
+          {% schema %}
+          {
+            "name": "Test Section"
+          }
+          {% endschema %}
+
+          {% stylesheet %}
+          .test-section {
+            color: red;
+          }
+          {% endstylesheet %}
+        </div>`,
+      }
+
+      const blockFile = {
+        key: 'blocks/test-block.liquid',
+        checksum: 'block1',
+        value: `<div class="block">
+          {% schema %}
+          {
+            "name": "Test Block"
+          }
+          {% endschema %}
+
+          {% stylesheet %}
+          .test-block {
+            background: blue;
+          }
+          {% endstylesheet %}
+        </div>`,
+      }
+
+      const snippetFile = {
+        key: 'snippets/test-snippet.liquid',
+        checksum: 'snippet1',
+        value: `<div class="snippet">
+          {% stylesheet %}
+          .test-snippet {
+            border: 1px solid green;
+          }
+          {% endstylesheet %}
+        </div>`,
+      }
+
+      // Add the test files to the filesystem
+      localThemeFileSystem.files.set(sectionFile.key, sectionFile)
+      localThemeFileSystem.files.set(blockFile.key, blockFile)
+      localThemeFileSystem.files.set(snippetFile.key, snippetFile)
+
+      // Request the compiled CSS
+      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/styles.css')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/css')
+
+      expect(body.toString()).toMatchInlineSnapshot(`
+        "/*** GENERATED LOCALLY ***/
+
+        /* sections/test-section.liquid */
+
+                  .test-section {
+                    color: red;
+                  }
+
+        /* blocks/test-block.liquid */
+
+                  .test-block {
+                    background: blue;
+                  }
+
+        /* snippets/test-snippet.liquid */
+
+                  .test-snippet {
+                    border: 1px solid green;
+                  }
+                  "
+      `)
+    })
+
+    test('forwards unknown compiled_assets requests to SFR', async () => {
+      const fetchStub = vi.fn(async () => new Response())
+      vi.stubGlobal('fetch', fetchStub)
+
+      // Request a compiled asset that doesn't exist
+      await dispatchEvent('/compiled_assets/nonexistent.js')
+
+      // Should fall back to proxy
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        new URL(
+          `https://${defaultServerContext.session.storeFqdn}/compiled_assets/nonexistent.js?${targetQuerystring}`,
+        ),
+        expect.any(Object),
+      )
+    })
+
     test('renders HTML', async () => {
       vi.mocked(render).mockResolvedValueOnce(
         new Response(
