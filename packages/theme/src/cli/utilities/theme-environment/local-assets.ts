@@ -12,6 +12,10 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') return
 
+    if (isCompiledAssetRequest(event)) {
+      return handleCompiledAssetRequest(event, ctx)
+    }
+
     // Matches asset filenames in an HTTP Request URL path
 
     const {file, fileKey, isUnsynced} = findLocalFile(event, ctx)
@@ -79,4 +83,29 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
       file: undefined,
     }
   )
+}
+
+function isCompiledAssetRequest(event: H3Event) {
+  return event.path.includes('/compiled_assets')
+}
+
+function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
+  const assetPath = new URL(event.path, 'http://e.c').pathname.split('/').at(-1)
+
+  if (assetPath === 'styles.css') {
+    const files = [...ctx.localThemeFileSystem.files.entries()]
+      .filter(([key]) => key.endsWith('.liquid'))
+      .sort(([key1], [key2]) => key1.localeCompare(key2))
+
+    let stylesheet = '/* Generated locally */\n'
+
+    for (const [, file] of files) {
+      stylesheet += file.value?.match(/{%\s*stylesheet\s*%}([\s\S]*?){%\s*endstylesheet\s*%}/)?.[1] ?? ''
+    }
+
+    return serveStatic(event, {
+      getContents: () => stylesheet,
+      getMeta: () => ({type: 'text/css', size: stylesheet.length, mtime: new Date()}),
+    })
+  }
 }
