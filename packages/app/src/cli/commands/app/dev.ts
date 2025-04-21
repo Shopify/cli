@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions, getTunnelMode} from '../../services/dev.js'
+import {dev, DevOptions, getTunnelMode, PortWarning} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
@@ -141,10 +141,15 @@ If you're using the Ruby app template, then you need to complete the following s
       await showApiKeyDeprecationWarning()
     }
 
+    // getTunnelMode can populate this array. This array is then passed to the dev function.
+    // This allows the dev function to group port warnings into a single renderWarning
+    const portWarnings: PortWarning[] = []
+
     const tunnelMode = await getTunnelMode({
       useLocalhost: flags['use-localhost'],
       tunnelUrl: flags['tunnel-url'],
       localhostPort: flags['localhost-port'],
+      portWarnings,
     })
 
     await addPublicMetadata(() => {
@@ -184,6 +189,7 @@ If you're using the Ruby app template, then you need to complete the following s
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
       tunnel: tunnelMode,
+      portWarnings,
     }
 
     await dev(devOptions)

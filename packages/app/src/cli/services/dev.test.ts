@@ -4,6 +4,8 @@ import {
   developerPreviewController,
   getTunnelMode,
   NoTunnel,
+  PortWarning,
+  renderPortWarnings,
   warnIfScopesDifferBeforeDev,
 } from './dev.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
@@ -110,11 +112,75 @@ describe('warnIfScopesDifferBeforeDev', () => {
   })
 })
 
+describe('renderPortWarnings()', () => {
+  test('does not call renderWarning when no warnings', () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const portWarnings: PortWarning[] = []
+
+    // When
+    mockOutput.clear()
+    renderPortWarnings(portWarnings)
+
+    // Then
+    expect(mockOutput.warn()).toBe('')
+  })
+
+  test('calls renderWarning when there is a warning', () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const portWarnings: PortWarning[] = [
+      {
+        type: 'localhost',
+        flag: '--localhost-port',
+        requestedPort: 1234,
+      },
+    ]
+
+    // When
+    mockOutput.clear()
+    renderPortWarnings(portWarnings)
+
+    // Then
+    expect(mockOutput.warn()).toContain('A random port will be used for localhost because 1234 is not available.')
+    expect(mockOutput.warn()).toContain('If you want to use a specific port, you can choose a different one by')
+    expect(mockOutput.warn()).toContain('setting the  `--localhost-port`  flag.')
+  })
+
+  test('Combines warnings when there are multiple', () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const portWarnings: PortWarning[] = [
+      {
+        type: 'localhost',
+        flag: '--localhost-port',
+        requestedPort: 1234,
+      },
+      {
+        type: 'GraphiQL',
+        flag: '--graphiql-port',
+        requestedPort: 5678,
+      },
+    ]
+
+    // When
+    mockOutput.clear()
+    renderPortWarnings(portWarnings)
+
+    // Then
+    expect(mockOutput.warn()).toContain('Random ports will be used for localhost and GraphiQL because the requested')
+    expect(mockOutput.warn()).toContain('ports are not available')
+    expect(mockOutput.warn()).toContain('If you want to use specific ports, you can choose different ports using')
+    expect(mockOutput.warn()).toContain('the `--localhost-port` and `--graphiql-port` flags.')
+  })
+})
+
 describe('getTunnelMode() if tunnelUrl is defined', () => {
   const defaultOptions = {
     useLocalhost: false,
     localhostPort: undefined,
     tunnelUrl: undefined,
+    portWarnings: [],
   }
 
   test('returns AutoTunnel', async () => {
@@ -135,6 +201,7 @@ describe('getTunnelMode() if useLocalhost is false and tunnelUrl is a string', (
     useLocalhost: false,
     localhostPort: undefined,
     tunnelUrl: 'https://my-tunnel-url.com',
+    portWarnings: [],
   }
 
   test('returns CustomTunnel', async () => {
@@ -168,6 +235,7 @@ describe('getTunnelMode() if useLocalhost is true', () => {
     useLocalhost: true,
     localhostPort: undefined,
     tunnelUrl: undefined,
+    portWarnings: [],
   }
 
   test('returns localhostPort when passed', async () => {
@@ -220,6 +288,28 @@ describe('getTunnelMode() if useLocalhost is true', () => {
     })
   })
 
+  test('Warns if ports.localhost is not available', async () => {
+    // Given
+    const availablePort = ports.localhost + 1
+    vi.mocked(checkPortAvailability).mockResolvedValue(false)
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(ports.localhost + 1)
+    const portWarnings: PortWarning[] = []
+
+    // When
+    const result = (await getTunnelMode({...defaultOptions, portWarnings})) as NoTunnel
+    await result.provideCertificate('app-directory')
+
+    // Then
+    expect(result.port).toBe(availablePort)
+    expect(portWarnings).toStrictEqual([
+      {
+        type: 'localhost',
+        flag: '--localhost-port',
+        requestedPort: ports.localhost,
+      },
+    ])
+  })
+
   describe('provideCertificate()', () => {
     test('Calls renderInfo', async () => {
       // Given
@@ -233,23 +323,6 @@ describe('getTunnelMode() if useLocalhost is true', () => {
 
       // Then
       expect(mockOutput.info()).toContain('Localhost-based development is in developer preview')
-    })
-
-    test('Renders warning if ports.localhost is not available', async () => {
-      // Given
-      const availablePort = ports.localhost + 1
-      vi.mocked(checkPortAvailability).mockResolvedValue(false)
-      vi.mocked(getAvailableTCPPort).mockResolvedValue(ports.localhost + 1)
-
-      // When
-      const mockOutput = mockAndCaptureOutput()
-      mockOutput.clear()
-      const result = (await getTunnelMode(defaultOptions)) as NoTunnel
-      await result.provideCertificate('app-directory')
-
-      // Then
-      expect(result.port).toBe(availablePort)
-      expect(mockOutput.warn()).toContain('A random port will be used for localhost')
     })
 
     test('Calls generateCertificate and returns its value', async () => {

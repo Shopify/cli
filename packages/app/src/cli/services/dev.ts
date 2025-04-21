@@ -43,7 +43,7 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning, renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderWarning, renderInfo, Token} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -65,6 +65,19 @@ export interface CustomTunnel {
 }
 
 type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
+export type PortWarning = (
+  | {
+      type: 'GraphiQL'
+      flag: '--graphiql-port'
+    }
+  | {
+      type: 'localhost'
+      flag: '--localhost-port'
+    }
+) & {
+  requestedPort: number
+}
+
 export interface DevOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
@@ -84,6 +97,7 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
+  portWarnings: PortWarning[]
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -95,7 +109,7 @@ export async function dev(commandOptions: DevOptions) {
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
-  const {app, remoteApp, developerPlatformClient, store, specifications} = commandOptions
+  const {app, remoteApp, developerPlatformClient, store, specifications, portWarnings} = commandOptions
 
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
@@ -136,22 +150,17 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const graphiqlPort = commandOptions.graphiqlPort ?? (await getAvailableTCPPort(ports.graphiql))
-  const {graphiqlKey} = commandOptions
+  const requestedGraphiqlPort = commandOptions.graphiqlPort ?? ports.graphiql
 
-  if (graphiqlPort !== (commandOptions.graphiqlPort ?? ports.graphiql)) {
-    renderWarning({
-      headline: [
-        'A random port will be used for GraphiQL because',
-        {command: `${ports.graphiql}`},
-        'is not available.',
-      ],
-      body: [
-        'If you want to keep your session in GraphiQL, you can choose a different one by setting the',
-        {command: '--graphiql-port'},
-        'flag.',
-      ],
+  if (graphiqlPort !== requestedGraphiqlPort) {
+    portWarnings.push({
+      type: 'GraphiQL',
+      requestedPort: requestedGraphiqlPort,
+      flag: '--graphiql-port',
     })
   }
+
+  renderPortWarnings(portWarnings)
 
   const {webs, ...network} = await setupNetworkingOptions(
     app.directory,
@@ -189,7 +198,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     network,
     partnerUrlsUpdated,
     graphiqlPort,
-    graphiqlKey,
+    graphiqlKey: commandOptions.graphiqlKey,
   }
 }
 
@@ -546,10 +555,12 @@ export async function getTunnelMode({
   useLocalhost,
   localhostPort,
   tunnelUrl,
+  portWarnings,
 }: {
   tunnelUrl?: string
   useLocalhost?: boolean
   localhostPort?: number
+  portWarnings: PortWarning[]
 }): Promise<TunnelMode> {
   // Developer brought their own tunnel
   if (tunnelUrl) {
@@ -573,6 +584,17 @@ export async function getTunnelMode({
     throw new AbortError(errorMessage, tryMessage)
   }
 
+  // The user didn't specify a port. The default isn't available. Add to warnings array
+  // This will be rendered using renderWarning later when dev() is called
+  // This allows us to consolidate all port warnings into one renderWarning message
+  if (requestedPort !== actualPort) {
+    portWarnings.push({
+      type: 'localhost',
+      requestedPort,
+      flag: '--localhost-port',
+    })
+  }
+
   return {
     mode: 'use-localhost',
     port: actualPort,
@@ -590,26 +612,69 @@ export async function getTunnelMode({
         },
       })
 
-      // The user didn't specify a port. The default isn't available. Warn
-      if (requestedPort !== actualPort) {
-        renderWarning({
-          headline: [
-            'A random port will be used for localhost because',
-            {command: `${requestedPort}`},
-            'is not available.',
-          ],
-          body: [
-            'If you want to use a specific port, choose a different one or free up the one you requested. Then re-run the command with the',
-            {command: '--localhost-port PORT'},
-            'flag.',
-          ],
-        })
-      }
-
       return generateCertificate({
         appDirectory,
         onRequiresConfirmation: generateCertificatePrompt,
       })
     },
   }
+}
+
+export function renderPortWarnings(portWarnings: PortWarning[] = []) {
+  if (portWarnings.length === 0 || !portWarnings[0]) return
+
+  if (portWarnings.length === 1) {
+    const warning = portWarnings[0]
+
+    renderWarning({
+      headline: [`A random port will be used for ${warning.type} because ${warning?.requestedPort} is not available.`],
+      body: [
+        `If you want to use a specific port, you can choose a different one by setting the `,
+        {command: warning?.flag},
+        ` flag.`,
+      ],
+    })
+    return
+  }
+
+  const formattedWarningTypes = asHumanFriendlyTokenList(portWarnings.map((warning) => warning.type)).join(' ')
+  const formattedFlags = asHumanFriendlyTokenList(portWarnings.map((warning) => ({command: warning.flag})))
+
+  renderWarning({
+    headline: [`Random ports will be used for ${formattedWarningTypes} because the requested ports are not available.`],
+    body: [`If you want to use specific ports, you can choose different ports using the`, ...formattedFlags, `flags.`],
+  })
+}
+
+/**
+ * Converts an array of Tokens into a human friendly list
+ *
+ * Returns a new array that contains the items separated by commas,
+ * except for the last item, which is seperated by "and".
+ * This is useful for creating human-friendly sentences.
+ *
+ * @example
+ * ```ts
+ *   const items = ['apple', 'banana', 'cherry'];
+ *   const result = asHumanFriendlyList(items)
+ *
+ *   //['apple', ',', 'banana', ',', 'and', 'cherry']
+ *   console.log(result);
+ * ```
+ */
+
+function asHumanFriendlyTokenList(items: Token[]): Token[] {
+  if (items.length < 2) {
+    return items
+  }
+
+  return items.reduce<Token[]>((acc, item, index) => {
+    if (index === items.length - 1) {
+      acc.push('and')
+    } else if (index !== 0) {
+      acc.push(', ')
+    }
+    acc.push(item)
+    return acc
+  }, [])
 }

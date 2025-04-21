@@ -2,7 +2,7 @@
 '@shopify/app': minor
 ---
 
-Improved how port selection when using localhost development
+Improved how port selection works when using localhost development
 
 Added a `--localhost-port` flag. Use this to specify that you want to develop using localhost on a specific port.  For example: `shopify app dev --localhost-port=4000`
 

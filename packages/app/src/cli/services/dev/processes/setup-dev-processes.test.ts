@@ -95,6 +95,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      portWarnings: [],
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -308,6 +309,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      portWarnings: [],
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -380,6 +382,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      portWarnings: [],
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -474,6 +477,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      portWarnings: [],
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -558,6 +562,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      portWarnings: [],
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
