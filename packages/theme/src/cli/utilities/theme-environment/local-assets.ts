@@ -4,7 +4,7 @@ import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {toLiquidHtmlAST, walk, NodeTypes} from '@shopify/liquid-html-parser'
-import type {Theme, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeAsset, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
 /**
@@ -107,16 +107,10 @@ function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
     const blockFiles = getLiquidFilesFromDir('blocks')
     const snippetFiles = getLiquidFilesFromDir('snippets')
 
-    const stylesheets = ['/* Generated locally */']
-
+    const stylesheets = ['/*** GENERATED LOCALLY ***/\n']
     for (const [, file] of [...sectionFiles, ...blockFiles, ...snippetFiles]) {
-      if (file.value) {
-        walk(toLiquidHtmlAST(file.value), (node) => {
-          if (node.type === NodeTypes.LiquidRawTag && node.name === 'stylesheet') {
-            stylesheets.push(node.body.value)
-          }
-        })
-      }
+      const stylesheet = getCompiledStylesheet(file)
+      if (stylesheet) stylesheets.push(stylesheet)
     }
 
     const stylesheet = stylesheets.join('\n')
@@ -125,5 +119,32 @@ function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
       getContents: () => stylesheet,
       getMeta: () => ({type: 'text/css', size: stylesheet.length, mtime: new Date()}),
     })
+  }
+}
+
+const compiledStylesheets = new Map<string, {checksum: string; content: string}>()
+
+function getCompiledStylesheet(file: ThemeAsset) {
+  const cached = compiledStylesheets.get(file.key)
+  if (cached) {
+    if (cached.checksum === file.checksum) return cached.content
+    else compiledStylesheets.delete(file.key)
+  }
+
+  if (file.value) {
+    const stylesheets = [`/* ${file.key} */`]
+
+    walk(toLiquidHtmlAST(file.value), (node) => {
+      if (node.type === NodeTypes.LiquidRawTag && node.name === 'stylesheet') {
+        stylesheets.push(node.body.value)
+      }
+    })
+
+    if (stylesheets.length > 1) {
+      const stylesheet = stylesheets.join('\n')
+      compiledStylesheets.set(file.key, {checksum: file.checksum, content: stylesheet})
+
+      return stylesheet
+    }
   }
 }
