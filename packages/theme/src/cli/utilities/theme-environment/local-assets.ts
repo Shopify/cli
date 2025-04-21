@@ -1,4 +1,5 @@
 import {injectCdnProxy} from './proxy.js'
+import {parseServerEvent} from './server-utils.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -91,7 +92,7 @@ function isCompiledAssetRequest(event: H3Event) {
 }
 
 function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
-  const assetPath = new URL(event.path, 'http://e.c').pathname.split('/').at(-1)
+  const assetPath = parseServerEvent(event).pathname.split('/').at(-1)
 
   if (assetPath === 'styles.css') {
     const allLiquidFiles = [...ctx.localThemeFileSystem.files.entries()].filter(([key]) => key.endsWith('.liquid'))
