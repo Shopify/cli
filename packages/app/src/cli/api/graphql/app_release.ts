@@ -1,5 +1,5 @@
 import {gql} from 'graphql-request'
-
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const AppRelease = gql`
   mutation AppRelease($apiKey: String!, $appVersionId: ID, $versionTag: String) {
     appRelease(input: {apiKey: $apiKey, appVersionId: $appVersionId, versionTag: $versionTag}) {
@@ -31,12 +31,12 @@ export interface AppReleaseVariables {
 
 export interface AppReleaseSchema {
   appRelease: {
-    appVersion: {
+    appVersion?: {
       versionTag?: string | null
       message?: string | null
       location: string
     }
-    userErrors: {
+    userErrors?: {
       field?: string[] | null
       message: string
       category: string

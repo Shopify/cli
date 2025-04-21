@@ -740,27 +740,34 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       releaseVariables,
     )
-    if (!releaseResult.appReleaseCreate?.release) {
-      throw new AbortError('Failed to release version')
-    }
-    return {
-      appRelease: {
-        appVersion: {
-          versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
-          message: releaseResult.appReleaseCreate.release.version.metadata.message,
-          location: [
-            await appDeepLink({organizationId, id: appId}),
-            'versions',
-            numberFromGid(releaseResult.appReleaseCreate.release.version.id),
-          ].join('/'),
+
+    if (releaseResult.appReleaseCreate?.release) {
+      return {
+        appRelease: {
+          appVersion: {
+            versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
+            message: releaseResult.appReleaseCreate.release.version.metadata.message,
+            location: [
+              await appDeepLink({organizationId, id: appId}),
+              'versions',
+              numberFromGid(releaseResult.appReleaseCreate.release.version.id).toString(),
+            ].join('/'),
+          },
         },
-        userErrors: releaseResult.appReleaseCreate.userErrors?.map((err) => ({
-          field: err.field,
-          message: err.message,
-          category: '',
-          details: [],
-        })),
-      },
+      }
+    } else {
+      return {
+        appRelease: {
+          userErrors:
+            releaseResult.appReleaseCreate.userErrors?.map((err) => ({
+              field: err.field,
+              message: err.message,
+              category: err.category,
+              details: [],
+              on: err.on,
+            })) ?? [],
+        },
+      }
     }
   }
 
