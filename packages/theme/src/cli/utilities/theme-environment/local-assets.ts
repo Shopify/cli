@@ -93,13 +93,21 @@ function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
   const assetPath = new URL(event.path, 'http://e.c').pathname.split('/').at(-1)
 
   if (assetPath === 'styles.css') {
-    const files = [...ctx.localThemeFileSystem.files.entries()]
-      .filter(([key]) => key.endsWith('.liquid'))
-      .sort(([key1], [key2]) => key1.localeCompare(key2))
+    const allLiquidFiles = [...ctx.localThemeFileSystem.files.entries()].filter(([key]) => key.endsWith('.liquid'))
+
+    const getLiquidFilesFromDir = (dirPrefix: string) => {
+      return allLiquidFiles
+        .filter(([key]) => key.startsWith(`${dirPrefix}/`))
+        .sort(([key1], [key2]) => key1.localeCompare(key2))
+    }
+
+    const sectionFiles = getLiquidFilesFromDir('sections')
+    const blockFiles = getLiquidFilesFromDir('blocks')
+    const snippetFiles = getLiquidFilesFromDir('snippets')
 
     let stylesheet = '/* Generated locally */\n'
 
-    for (const [, file] of files) {
+    for (const [, file] of [...sectionFiles, ...blockFiles, ...snippetFiles]) {
       stylesheet += file.value?.match(/{%\s*stylesheet\s*%}([\s\S]*?){%\s*endstylesheet\s*%}/)?.[1] ?? ''
     }
 
