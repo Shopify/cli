@@ -6,9 +6,10 @@ import {
 } from './patch-app-configuration-file.js'
 import {getAppVersionedSchema} from '../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {environmentVariableNames} from '../../constants.js'
 import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 const defaultToml = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 client_id = "12345"
@@ -119,7 +120,15 @@ describe('patchAppHiddenConfigFile', () => {
   })
 })
 
-describe('setAppConfigValue', () => {
+describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+  beforeEach(() => {
+    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test('sets a top-level value in the configuration', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
@@ -156,7 +165,15 @@ describe('setAppConfigValue', () => {
   })
 })
 
-describe('unsetAppConfigValue', () => {
+describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+  beforeEach(() => {
+    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test('unsets a top-level value in the configuration', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
@@ -185,7 +202,15 @@ describe('unsetAppConfigValue', () => {
   })
 })
 
-describe('setManyAppConfigValues', () => {
+describe.each([false, true])('setManyAppConfigValues (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+  beforeEach(() => {
+    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test('sets multiple top-level values in the configuration', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configPath = writeDefaulToml(tmpDir)
@@ -194,14 +219,14 @@ describe('setManyAppConfigValues', () => {
         configPath,
         [
           {keyPath: 'name', value: 'Updated App Name'},
-          {keyPath: 'client_id', value: '67890'},
+          {keyPath: 'client_id', value: 'abcdef'},
         ],
         schema,
       )
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile).toContain('name = "Updated App Name"')
-      expect(updatedTomlFile).toContain('client_id = "67890"')
+      expect(updatedTomlFile).toContain('client_id = "abcdef"')
     })
   })
 
