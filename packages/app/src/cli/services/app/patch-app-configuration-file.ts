@@ -124,6 +124,9 @@ export async function setManyAppConfigValues(
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  */
 export async function unsetAppConfigValue(path: string, keyPath: string, schema?: zod.AnyZodObject) {
+  if (shouldUseWasmTomlPatch()) {
+    return patchAppConfigurationFileWithWasm(path, [{keyPath, value: undefined}])
+  }
   const patch = createPatchFromDottedPath(keyPath, undefined)
   await patchAppConfigurationFile({path, patch, schema})
 }

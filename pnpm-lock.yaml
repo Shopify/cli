@@ -6635,8 +6635,8 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/toml-patch@0.2.0:
-    resolution: {integrity: sha512-k/5+ymXTu4WkAGkw8V5XYmRIgYCi2FjRjqFDPkH5KqqObKeQhhNFw43iySq9Del0fXQtVendNfFlzFKzCbI/Ag==}
+  /@shopify/toml-patch@0.3.0:
+    resolution: {integrity: sha512-ruv2FT17FW3CfWx8jXEyfx3xZDdo22PDaFQ9R7QYOovXQbgQCIKY+5QjGVBA7jsyLm+Wa2ngVANmt7MS0M/g+w==}
     dev: false
 
   /@shopify/useful-types@4.0.3:
