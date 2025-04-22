@@ -220,7 +220,7 @@ describe('linkedAppContext', () => {
       })
 
       // Then
-      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: 'shopify.app.toml'})
+      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: undefined})
     })
   })
 
