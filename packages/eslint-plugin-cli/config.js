@@ -194,7 +194,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.test.ts', '**/*.test.tsx', '**/*.test-data.ts', '**/testing/*.{ts,tsx}'],
+      files: ['**/*.test.ts', '**/*.test.tsx', '**/*.test-data.ts', '**/testing/*.{ts,tsx}', '**/*.bench.ts'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         'no-restricted-syntax': 'off',
@@ -213,6 +213,12 @@ module.exports = {
         '@typescript-eslint/non-nullable-type-assertion-style': 'off',
         '@typescript-eslint/prefer-reduce-type-parameter': 'warn',
         'no-restricted-globals': 'off',
+      },
+    },
+    {
+      files: ['**/*.bench.ts'],
+      rules: {
+        'vitest/consistent-test-it': 'off',
       },
     },
   ],
