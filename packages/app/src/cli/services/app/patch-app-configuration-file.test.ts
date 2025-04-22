@@ -219,14 +219,14 @@ describe.each([false, true])('setManyAppConfigValues (useWasmTomlPatch: %s)', (u
         configPath,
         [
           {keyPath: 'name', value: 'Updated App Name'},
-          {keyPath: 'client_id', value: 'abcdef'},
+          {keyPath: 'client_id', value: '67890'},
         ],
         schema,
       )
 
       const updatedTomlFile = await readFile(configPath)
       expect(updatedTomlFile).toContain('name = "Updated App Name"')
-      expect(updatedTomlFile).toContain('client_id = "abcdef"')
+      expect(updatedTomlFile).toContain('client_id = "67890"')
     })
   })
 

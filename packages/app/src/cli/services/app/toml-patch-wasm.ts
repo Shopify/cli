@@ -1,12 +1,8 @@
 import * as tomlPatch from '@shopify/toml-patch'
 
-type TomlSingleValue = string | number | boolean | undefined
+type TomlSingleValue = string | number | boolean
 
-function forPatch(value: TomlSingleValue): string {
-  return value?.toString() ?? '$undefined'
-}
-
-type TomlPatchValue = TomlSingleValue | TomlSingleValue[]
+type TomlPatchValue = TomlSingleValue | TomlSingleValue[] | undefined
 
 /**
  * Update the TOML content using the WASM module
@@ -15,13 +11,5 @@ type TomlPatchValue = TomlSingleValue | TomlSingleValue[]
  * @returns The updated TOML content
  */
 export async function updateTomlValues(tomlContent: string, patches: [string[], TomlPatchValue][]): Promise<string> {
-  const preparedPatches = patches.map(([path, value]) => {
-    if (Array.isArray(value)) {
-      return tomlPatch.patchArrayValues(path, value.map(forPatch))
-    } else {
-      return tomlPatch.patchSingleValue(path, forPatch(value))
-    }
-  })
-
-  return tomlPatch.updateTomlValues(tomlContent, preparedPatches)
+  return tomlPatch.updateTomlValues(tomlContent, patches)
 }
