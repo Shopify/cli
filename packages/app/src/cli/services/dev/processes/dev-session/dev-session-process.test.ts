@@ -180,7 +180,7 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Update error'))
   })
 
-  test('handles scope changes and displays action required message', async () => {
+  test('handles scope changes and displays updated message', async () => {
     // Given
     vi.mocked(buildAppURLForWeb).mockResolvedValue('https://test.myshopify.com/admin/apps/test')
     const appAccess = await testAppAccessConfigExtension()
@@ -196,8 +196,10 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
+    expect(stdout.write).toHaveBeenCalledWith(
+      expect.stringContaining('Access scopes auto-granted: read_products, write_products'),
+    )
+
     expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'app-preview', stripAnsi: false}, expect.anything())
     contextSpy.mockRestore()
   })

@@ -164,15 +164,15 @@ describe('DevSessionLogger', () => {
     })
   })
 
-  describe('logActionRequiredMessages', () => {
+  describe('logExtensionUpdateMessages', () => {
     test('does nothing when no event is provided', async () => {
-      await logger.logActionRequiredMessages('test.myshopify.com')
+      await logger.logExtensionUpdateMessages()
       expect(output).toMatchInlineSnapshot(`[]`)
     })
 
-    test('logs warning messages when actions are required', async () => {
+    test('logs messages', async () => {
       const mockExtension = {
-        getDevSessionActionUpdateMessage: vi.fn().mockResolvedValue('Action required message'),
+        getDevSessionUpdateMessage: vi.fn().mockResolvedValue('This has been updated.'),
         entrySourceFilePath: '',
         devUUID: '',
         localIdentifier: '',
@@ -191,11 +191,10 @@ describe('DevSessionLogger', () => {
         startTime: [0, 0],
       }
 
-      await logger.logActionRequiredMessages('test.myshopify.com', event)
+      await logger.logExtensionUpdateMessages(event)
       expect(output).toMatchInlineSnapshot(`
         [
-          "[33m🔄 Action required[39m",
-          "[33m└ Action required message[39m",
+          "└  This has been updated.",
         ]
       `)
     })
