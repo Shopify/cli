@@ -1,13 +1,13 @@
 import {TestFlags} from './test.types.js'
 import {buildLocators, type Locators} from './locators.js'
+import {waitForNetworkIdle} from './utils.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {Flags} from '@oclif/core'
-import {chromium, Cookie, devices, type Page} from 'playwright'
+import {chromium, Cookie, devices, type Page, errors} from 'playwright'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import colors from '@shopify/cli-kit/node/colors'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import assert from 'node:assert'
 
 const ANALYTICS_Y_COOKIE = '_shopify_y'
 const ANALYTICS_S_COOKIE = '_shopify_s'
@@ -53,7 +53,8 @@ export default class Test extends BaseCommand {
       env: 'SHOPIFY_FLAG_TEST_NO_HEADLESS',
     }),
     locators: Flags.string({
-      description: 'The path to the test configuration file',
+      description:
+        'The path to the test configuration file. If not provided, a default file will be generated at shopify-test-locators.js',
       required: false,
       default: '',
       env: 'SHOPIFY_FLAG_TEST_CONFIG',
@@ -78,13 +79,9 @@ export default class Test extends BaseCommand {
       // Setup
       const page = await context.newPage()
 
-      // The actual interesting bit
-      await context.route('**.jpg', (route) => route.abort())
-
       await fullSuite({page, flags, locators})
     } finally {
       // Teardown
-      await context.close()
       await browser.close()
     }
   }
@@ -111,7 +108,7 @@ async function fullSuite({page, flags, locators}: {page: Page; flags: TestFlags;
 
   printStepSuccess()
 
-  await page.waitForLoadState('networkidle')
+  await waitForNetworkIdle(page)
 
   if (!flags['skip-cookies']) {
     await acceptCookies({page, flags, locators})
@@ -146,7 +143,7 @@ async function loadCollection({page, flags, locators}: {page: Page; flags: TestF
       throw new Error('Collection link not found')
     }
 
-    const href = await collectionLinks.first().getAttribute('href')
+    const href = await collectionLinks.filter({visible: true}).first().getAttribute('href')
 
     process.stdout.write(pad(`${href}`, 53))
 
@@ -154,7 +151,7 @@ async function loadCollection({page, flags, locators}: {page: Page; flags: TestF
       throw new Error('Collection link href not found')
     }
 
-    await collectionLinks.first().click()
+    await collectionLinks.filter({visible: true}).first().click({force: true})
     const url = new URL(page.url())
 
     await page.waitForURL(`${url.origin + href}*`)
@@ -163,8 +160,10 @@ async function loadCollection({page, flags, locators}: {page: Page; flags: TestF
   } catch (error) {
     process.stdout.write('\n')
     renderError({
-      headline: 'Unable to load a collection.',
-      body: 'Make sure a link on the homepage with the `data-shopify-collection-link` attribute exists.\n Alternatively, you can skip this step by passing the --skip-collection flag.',
+      headline: 'Unable to navigate to collection.',
+      body: `Make sure the locateCollectionLink function returns a valid locator.\n\nError: ${
+        error instanceof Error ? error.message : error
+      }`,
     })
 
     if (flags.verbose) {
@@ -185,7 +184,8 @@ async function loadProduct({page, flags, locators}: {page: Page; flags: TestFlag
       throw new Error('Product link not found')
     }
 
-    const href = await productLinks.first().getAttribute('href')
+    const product = await productLinks.filter({visible: true}).first()
+    const href = await product.getAttribute('href')
 
     if (!href) {
       throw new Error('Product link href not found')
@@ -193,16 +193,18 @@ async function loadProduct({page, flags, locators}: {page: Page; flags: TestFlag
 
     process.stdout.write(pad(href, 56))
 
-    await productLinks.first().click()
+    await product.click()
 
-    await page.waitForLoadState('networkidle')
+    await waitForNetworkIdle(page)
 
     printStepSuccess()
   } catch (error) {
     process.stdout.write('\n')
     renderError({
-      headline: 'Unable to load a product.',
-      body: 'Make sure your product links have the `data-shopify-product-link` attribute.',
+      headline: 'Unable to navigate to product.',
+      body: `Make sure the locateProductLink function returns a valid locator.\n\nError: ${
+        error instanceof Error ? error.message : error
+      }`,
     })
 
     if (flags.verbose) {
@@ -217,21 +219,26 @@ async function addToCart({page, flags, locators}: {page: Page; flags: TestFlags;
   try {
     process.stdout.write(`    ├ ${pad(`🛒 Add to cart `)}`)
 
+    await waitForNetworkIdle(page)
+
     const addToCartButton = await locators.addToCartButton({page, flags})
 
     if (!addToCartButton) {
       throw new Error('Add to cart button not found')
     }
 
-    await addToCartButton.first().click()
-    await page.waitForLoadState('networkidle')
+    await addToCartButton.filter({visible: true}).first().click()
+
+    await waitForNetworkIdle(page)
 
     printStepSuccess()
   } catch (error) {
     process.stdout.write('\n')
     renderError({
       headline: 'Unable to add to cart.',
-      body: 'Make sure your product add to cart button has the `data-shopify-product-add-to-cart` attribute.',
+      body: `Make sure the locateAddToCartButton function returns a valid locator.\n\nError: ${
+        error instanceof Error ? error.message : error
+      }`,
     })
 
     if (flags.verbose) {
@@ -251,16 +258,18 @@ async function checkout({page, flags, locators}: {page: Page; flags: TestFlags; 
       throw new Error('Checkout link not found')
     }
 
-    await checkoutLink.first().click()
+    await checkoutLink.filter({visible: true}).first().click()
 
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     printStepSuccess()
   } catch (error) {
     process.stdout.write('\n')
     renderError({
       headline: 'Unable to navigate to checkout.',
-      body: 'Make sure your checkout link has the `data-shopify-cart-checkout-link` attribute.',
+      body: `Make sure the locateCheckoutLink function returns a valid locator.\n\nError: ${
+        error instanceof Error ? error.message : error
+      }`,
     })
 
     if (flags.verbose) {
@@ -276,22 +285,25 @@ async function acceptCookies({page, flags, locators}: {page: Page; flags: TestFl
     process.stdout.write(`    ├ ${pad('🍪 Cookie consent ')}`)
     // there is no shopify analytics cookie, this means we need to accept cookies
     const cookiesButton = await locators.acceptCookiesButton({page, flags})
-    await cookiesButton.first().click()
+    await cookiesButton.filter({visible: true}).first().click()
 
     printStepSuccess()
-    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    process.stdout.write('\n')
-    renderWarning({
-      headline: 'Unable to accept consent for cookies.',
-      body: 'If you are using custom consent, you can skip this step by passing the --skip-cookies flag.',
-    })
-
-    if (flags.verbose) {
+    if (error instanceof errors.TimeoutError) {
+      process.stdout.write('\n')
       renderWarning({
-        headline: 'Cookie consent error.',
-        body: (error as Error)?.message,
+        headline: 'Unable to accept consent for cookies.',
+        body: 'If you are using custom consent, you can skip this step by passing the --skip-cookies flag.',
       })
+
+      if (flags.verbose) {
+        renderWarning({
+          headline: 'Cookie consent error.',
+          body: (error as Error)?.message,
+        })
+      }
+    } else {
+      throw error
     }
   }
 }
@@ -301,8 +313,18 @@ async function verifyCheckout({page, cookies, flags}: {cookies: Cookie[]; flags:
   const checkoutCookies = await page.context().cookies()
 
   if (!flags['skip-cookies']) {
-    assert(findCookie(checkoutCookies, ANALYTICS_Y_COOKIE) === findCookie(cookies, ANALYTICS_Y_COOKIE))
-    assert(findCookie(checkoutCookies, ANALYTICS_S_COOKIE) === findCookie(cookies, ANALYTICS_S_COOKIE))
+    if (
+      findCookie(checkoutCookies, ANALYTICS_Y_COOKIE) !== findCookie(cookies, ANALYTICS_Y_COOKIE) ||
+      findCookie(checkoutCookies, ANALYTICS_S_COOKIE) !== findCookie(cookies, ANALYTICS_S_COOKIE)
+    ) {
+      process.stdout.write('\n')
+      renderError({
+        headline: 'Analytics cookies not found.',
+        body: "Analytics are broken on the checkout page. The analytics cookies set on the primary domain don't match the cookies on the checkout page. This means that order attribution is broken.",
+      })
+
+      process.exit(1)
+    }
   }
 
   printStepSuccess()
