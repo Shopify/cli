@@ -26,6 +26,8 @@ import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
+import {TunnelMode} from './dev/tunnel-mode.js'
+import {PortWarning, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -34,8 +36,6 @@ import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {generateCertificate} from '../utilities/mkcert.js'
-import {generateCertificatePrompt} from '../prompts/dev.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -43,40 +43,11 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning, renderInfo, Token} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
-export interface NoTunnel {
-  mode: 'use-localhost'
-  port: number
-  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
-}
-
-export interface AutoTunnel {
-  mode: 'auto'
-}
-
-export interface CustomTunnel {
-  mode: 'custom'
-  url: string
-}
-
-type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
-export type PortWarning = (
-  | {
-      type: 'GraphiQL'
-      flag: '--graphiql-port'
-    }
-  | {
-      type: 'localhost'
-      flag: '--localhost-port'
-    }
-) & {
-  requestedPort: number
-}
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -544,137 +515,4 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
 
 function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
-}
-
-/**
- * Gets the tunnel or localhost config for doing app dev
- * @param options - Options required for the config
- * @returns A tunnel configuration object
- */
-export async function getTunnelMode({
-  useLocalhost,
-  localhostPort,
-  tunnelUrl,
-  portWarnings,
-}: {
-  tunnelUrl?: string
-  useLocalhost?: boolean
-  localhostPort?: number
-  portWarnings: PortWarning[]
-}): Promise<TunnelMode> {
-  // Developer brought their own tunnel
-  if (tunnelUrl) {
-    return {mode: 'custom', url: tunnelUrl}
-  }
-
-  // CLI should create a tunnel
-  if (!useLocalhost && !localhostPort) {
-    return {
-      mode: 'auto',
-    }
-  }
-
-  const requestedPort = localhostPort ?? ports.localhost
-  const actualPort = await getAvailableTCPPort(requestedPort)
-
-  // The user specified a port. It's not available. Abort!
-  if (localhostPort && actualPort !== requestedPort) {
-    const errorMessage = `Port ${localhostPort} is not available.`
-    const tryMessage = ['Choose a different port for the', {command: '--localhost-port'}, 'flag.']
-    throw new AbortError(errorMessage, tryMessage)
-  }
-
-  // The user didn't specify a port. The default isn't available. Add to warnings array
-  // This will be rendered using renderWarning later when dev() is called
-  // This allows us to consolidate all port warnings into one renderWarning message
-  if (requestedPort !== actualPort) {
-    portWarnings.push({
-      type: 'localhost',
-      requestedPort,
-      flag: '--localhost-port',
-    })
-  }
-
-  return {
-    mode: 'use-localhost',
-    port: actualPort,
-    provideCertificate: async (appDirectory) => {
-      renderInfo({
-        headline: 'Localhost-based development is in developer preview.',
-        body: [
-          '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
-          '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
-          'device (such as POS). Please report any issues and provide feedback on the dev community:',
-        ],
-        link: {
-          label: 'Create a feedback post',
-          url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
-        },
-      })
-
-      return generateCertificate({
-        appDirectory,
-        onRequiresConfirmation: generateCertificatePrompt,
-      })
-    },
-  }
-}
-
-export function renderPortWarnings(portWarnings: PortWarning[] = []) {
-  if (portWarnings.length === 0 || !portWarnings[0]) return
-
-  if (portWarnings.length === 1) {
-    const warning = portWarnings[0]
-
-    renderWarning({
-      headline: [`A random port will be used for ${warning.type} because ${warning?.requestedPort} is not available.`],
-      body: [
-        `If you want to use a specific port, you can choose a different one by setting the `,
-        {command: warning?.flag},
-        ` flag.`,
-      ],
-    })
-    return
-  }
-
-  const formattedWarningTypes = asHumanFriendlyTokenList(portWarnings.map((warning) => warning.type)).join(' ')
-  const formattedFlags = asHumanFriendlyTokenList(portWarnings.map((warning) => ({command: warning.flag})))
-
-  renderWarning({
-    headline: [`Random ports will be used for ${formattedWarningTypes} because the requested ports are not available.`],
-    body: [`If you want to use specific ports, you can choose different ports using the`, ...formattedFlags, `flags.`],
-  })
-}
-
-/**
- * Converts an array of Tokens into a human friendly list
- *
- * Returns a new array that contains the items separated by commas,
- * except for the last item, which is seperated by "and".
- * This is useful for creating human-friendly sentences.
- *
- * @example
- * ```ts
- *   const items = ['apple', 'banana', 'cherry'];
- *   const result = asHumanFriendlyList(items)
- *
- *   //['apple', ',', 'banana', ',', 'and', 'cherry']
- *   console.log(result);
- * ```
- */
-
-function asHumanFriendlyTokenList(items: Token[]): Token[] {
-  if (items.length < 2) {
-    return items
-  }
-
-  return items.reduce<Token[]>((acc, item, index) => {
-    if (index === items.length - 1) {
-      acc.push('and')
-    } else if (index !== 0) {
-      acc.push(', ')
-    }
-    acc.push(item)
-    return acc
-  }, [])
 }
