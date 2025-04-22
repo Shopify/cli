@@ -17,5 +17,8 @@ query ListAppDevStores($searchTerm: String) {
         hasNextPage
       }
     }
+    currentUser {
+      organizationPermissions
+    }
   }
 }
