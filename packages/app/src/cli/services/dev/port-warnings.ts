@@ -1,38 +1,43 @@
 import {asHumanFriendlyArray} from '@shopify/cli-kit/common/array'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export type PortWarning = (
+export type PortDetail = (
   | {
-      type: 'GraphiQL'
-      flag: '--graphiql-port'
+      for: 'GraphiQL'
+      flagToRemedy: '--graphiql-port'
     }
   | {
-      type: 'localhost'
-      flag: '--localhost-port'
+      for: 'localhost'
+      flagToRemedy: '--localhost-port'
     }
 ) & {
-  requestedPort: number
+  requested: number
+  actual: number
 }
 
-export function renderPortWarnings(portWarnings: PortWarning[] = []) {
-  if (portWarnings.length === 0 || !portWarnings[0]) return
+export function renderPortWarnings(portDetails: PortDetail[]) {
+  if (!portDetails.length) return
 
-  if (portWarnings.length === 1) {
+  const portWarnings = portDetails.filter((warning) => warning.requested !== warning.actual)
+
+  if (portWarnings.length === 0) return
+
+  if (portWarnings.length === 1 && portWarnings[0]) {
     const warning = portWarnings[0]
 
     renderWarning({
-      headline: [`A random port will be used for ${warning.type} because ${warning?.requestedPort} is not available.`],
+      headline: [`A random port will be used for ${warning.for} because ${warning?.requested} is not available.`],
       body: [
         `If you want to use a specific port, you can choose a different one by setting the `,
-        {command: warning?.flag},
+        {command: warning?.flagToRemedy},
         ` flag.`,
       ],
     })
     return
   }
 
-  const formattedWarningTypes = asHumanFriendlyArray(portWarnings.map((warning) => warning.type)).join(' ')
-  const formattedFlags = asHumanFriendlyArray(portWarnings.map((warning) => ({command: warning.flag})))
+  const formattedWarningTypes = asHumanFriendlyArray(portWarnings.map((warning) => warning.for)).join(' ')
+  const formattedFlags = asHumanFriendlyArray(portWarnings.map((warning) => ({command: warning.flagToRemedy})))
 
   renderWarning({
     headline: [`Random ports will be used for ${formattedWarningTypes} because the requested ports are not available.`],

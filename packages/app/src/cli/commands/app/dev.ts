@@ -5,7 +5,6 @@ import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
-import {PortWarning} from '../../services/dev/port-warnings.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -143,15 +142,10 @@ If you're using the Ruby app template, then you need to complete the following s
       await showApiKeyDeprecationWarning()
     }
 
-    // getTunnelMode can populate this array. This array is then passed to the dev function.
-    // This allows the dev function to group port warnings into a single renderWarning
-    const portWarnings: PortWarning[] = []
-
     const tunnelMode = await getTunnelMode({
       useLocalhost: flags['use-localhost'],
       tunnelUrl: flags['tunnel-url'],
       localhostPort: flags['localhost-port'],
-      portWarnings,
     })
 
     await addPublicMetadata(() => {
@@ -191,7 +185,6 @@ If you're using the Ruby app template, then you need to complete the following s
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
       tunnel: tunnelMode,
-      portWarnings,
     }
 
     await dev(devOptions)

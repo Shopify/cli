@@ -1,4 +1,3 @@
-import {PortWarning} from './port-warnings.js'
 import {ports} from '../../constants.js'
 import {generateCertificate} from '../../utilities/mkcert.js'
 import {generateCertificatePrompt} from '../../prompts/dev.js'
@@ -10,7 +9,8 @@ export type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
 
 export interface NoTunnel {
   mode: 'use-localhost'
-  port: number
+  actualPort: number
+  requestedPort: number
   provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
 }
 
@@ -32,12 +32,10 @@ export async function getTunnelMode({
   useLocalhost,
   localhostPort,
   tunnelUrl,
-  portWarnings,
 }: {
   tunnelUrl?: string
   useLocalhost?: boolean
   localhostPort?: number
-  portWarnings: PortWarning[]
 }): Promise<TunnelMode> {
   // Developer brought their own tunnel
   if (tunnelUrl) {
@@ -61,20 +59,10 @@ export async function getTunnelMode({
     throw new AbortError(errorMessage, tryMessage)
   }
 
-  // The user didn't specify a port. The default isn't available. Add to warnings array
-  // This will be rendered using renderWarning later when dev() is called
-  // This allows us to consolidate all port warnings into one renderWarning message
-  if (requestedPort !== actualPort) {
-    portWarnings.push({
-      type: 'localhost',
-      requestedPort,
-      flag: '--localhost-port',
-    })
-  }
-
   return {
     mode: 'use-localhost',
-    port: actualPort,
+    requestedPort,
+    actualPort,
     provideCertificate: async (appDirectory) => {
       renderInfo({
         headline: 'Localhost-based development is in developer preview.',

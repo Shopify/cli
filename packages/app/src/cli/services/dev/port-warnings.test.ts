@@ -1,35 +1,68 @@
-import {PortWarning, renderPortWarnings} from './port-warnings.js'
+import {PortDetail, renderPortWarnings} from './port-warnings.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test} from 'vitest'
 
 describe('renderPortWarnings()', () => {
-  test('does not call renderWarning when no warnings', () => {
+  test('does not call renderWarning when no port details', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const portWarnings: PortWarning[] = []
+    const portDetails: PortDetail[] = []
 
     // When
     mockOutput.clear()
-    renderPortWarnings(portWarnings)
+    renderPortWarnings(portDetails)
 
     // Then
     expect(mockOutput.warn()).toBe('')
   })
 
-  test('calls renderWarning when there is a warning', () => {
+  test('does not call renderWarning when request & actual ports match', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const portWarnings: PortWarning[] = [
+    const portDetails: PortDetail[] = [
       {
-        type: 'localhost',
-        flag: '--localhost-port',
-        requestedPort: 1234,
+        for: 'GraphiQL',
+        flagToRemedy: '--graphiql-port',
+        requested: 5678,
+        actual: 5678,
+      },
+      {
+        for: 'localhost',
+        flagToRemedy: '--localhost-port',
+        requested: 1234,
+        actual: 1234,
       },
     ]
 
     // When
     mockOutput.clear()
-    renderPortWarnings(portWarnings)
+    renderPortWarnings(portDetails)
+
+    // Then
+    expect(mockOutput.warn()).toBe('')
+  })
+
+  test('calls renderWarning once when there is one warning', () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const portDetails: PortDetail[] = [
+      {
+        for: 'GraphiQL',
+        flagToRemedy: '--graphiql-port',
+        requested: 4321,
+        actual: 4321,
+      },
+      {
+        for: 'localhost',
+        flagToRemedy: '--localhost-port',
+        requested: 1234,
+        actual: 4567,
+      },
+    ]
+
+    // When
+    mockOutput.clear()
+    renderPortWarnings(portDetails)
 
     // Then
     expect(mockOutput.warn()).toContain('A random port will be used for localhost because 1234 is not available.')
@@ -37,25 +70,27 @@ describe('renderPortWarnings()', () => {
     expect(mockOutput.warn()).toContain('setting the  `--localhost-port`  flag.')
   })
 
-  test('Combines warnings when there are multiple', () => {
+  test('Calls renderWarning once, combining warnings when there are multiple warnings', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const portWarnings: PortWarning[] = [
+    const portDetails: PortDetail[] = [
       {
-        type: 'localhost',
-        flag: '--localhost-port',
-        requestedPort: 1234,
+        for: 'localhost',
+        flagToRemedy: '--localhost-port',
+        requested: 4567,
+        actual: 7654,
       },
       {
-        type: 'GraphiQL',
-        flag: '--graphiql-port',
-        requestedPort: 5678,
+        for: 'GraphiQL',
+        flagToRemedy: '--graphiql-port',
+        requested: 1234,
+        actual: 4321,
       },
     ]
 
     // When
     mockOutput.clear()
-    renderPortWarnings(portWarnings)
+    renderPortWarnings(portDetails)
 
     // Then
     expect(mockOutput.warn()).toContain('Random ports will be used for localhost and GraphiQL because the requested')
