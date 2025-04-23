@@ -8,6 +8,7 @@ import {inTemporaryDirectory} from '../fs.js'
 import {LocalStorage} from '../local-storage.js'
 import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
 import {nonRandomUUID} from '../crypto.js'
+import {ClientError} from '@shopify/cli-kit/node/error'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -528,5 +529,202 @@ describe('graphqlRequest with caching', () => {
     // Then
     expect(cacheRetrieveSpy).not.toHaveBeenCalled()
     expect(retryAwareSpy).toHaveBeenCalled()
+  })
+})
+
+describe('performGraphQLRequest', () => {
+  // Note: createGraphQLClient is tested implicitly via performGraphQLRequest
+
+  test('uses default retry strategy for non-401 errors', async () => {
+    // Given
+    const query = 'query Fails { fails }'
+    const mockRetryAwareRequest = vi.spyOn(api, 'retryAwareRequest')
+    server.use(
+      mockApi.query('Fails', () => {
+        return HttpResponse.json(
+          {
+            errors: [{message: 'Server error'}],
+          },
+          {status: 500, headers: {'x-request-id': 'failed-request-id'}},
+        )
+      }),
+    )
+
+    // When/Then
+    await expect(
+      graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+      }),
+    ).rejects.toThrowError(ClientError)
+
+    // Then
+    expect(mockRetryAwareRequest).toHaveBeenCalled()
+    expect(mockRetryAwareRequest.mock.calls[0][2]).toBeInstanceOf(Function)
+    expect(mockRetryAwareRequest.mock.calls[0][3]).toBeUndefined()
+  })
+
+  test('handles 401 by calling refreshTokenOnAuthorizedResponse and retrying with new token', async () => {
+    // Given
+    const query = 'query QueryName { example }'
+    const refreshTokenHandler = vi.fn().mockResolvedValue({action: 'retry' as const, token: 'new-token'})
+    let callCount = 0
+    server.use(
+      mockApi.query('QueryName', ({request}) => {
+        callCount++
+        if (callCount === 1) {
+          // Fail first time with 401
+          return HttpResponse.json({errors: [{message: 'Unauthorized'}], status: 401})
+        } else {
+          // Succeed second time
+          expect(request.headers.get('Authorization')).toBe('Bearer new-token')
+          return HttpResponse.json({data: {QueryName: {example: 'success after refresh'}}})
+        }
+      }),
+    )
+
+    // When
+    const result = await graphqlRequest({
+      query,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: 'old-token',
+      refreshTokenOnAuthorizedResponse: refreshTokenHandler,
+    })
+
+    // Then
+    expect(refreshTokenHandler).toHaveBeenCalledOnce()
+    expect(callCount).toBe(2)
+    expect(result).toEqual({QueryName: {example: 'success after refresh'}})
+  })
+
+  test('handles 401 by calling refreshTokenOnAuthorizedResponse and throwing original error', async () => {
+    // Given
+    const query = 'query QueryName { example }'
+    const refreshTokenHandler = vi.fn().mockResolvedValue({action: 'throw' as const})
+    server.use(
+      mockApi.query('QueryName', () => {
+        return HttpResponse.json(
+          {errors: [{message: 'Unauthorized', extensions: {code: 'INVALID_AUTH'}}]},
+          {status: 401},
+        )
+      }),
+    )
+
+    // When/Then
+    const requestPromise = graphqlRequest({
+      query,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: 'old-token',
+      refreshTokenOnAuthorizedResponse: refreshTokenHandler,
+    })
+
+    try {
+      await requestPromise
+      throw new Error('Expected requestPromise to reject')
+    } catch (error: any) {
+      expect(error.message).toMatch(/Unauthorized/)
+      expect(error.statusCode).toBe(401)
+      expect(error.response?.errors).toEqual([{message: 'Unauthorized', extensions: {code: 'INVALID_AUTH'}}])
+    }
+
+    // Then
+    expect(refreshTokenHandler).toHaveBeenCalledOnce()
+  })
+
+  test('handles 401 by calling refreshTokenOnAuthorizedResponse and throwing if handler throws', async () => {
+    // Given
+    const query = 'query QueryName { example }'
+    const refreshError = new Error('Refresh mechanism failed')
+    const refreshTokenHandler = vi.fn().mockRejectedValue(refreshError)
+    server.use(
+      mockApi.query('QueryName', () => {
+        return HttpResponse.json({errors: [{message: 'Unauthorized'}], status: 401})
+      }),
+    )
+
+    // When/Then
+    await expect(
+      graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: 'old-token',
+        refreshTokenOnAuthorizedResponse: refreshTokenHandler,
+      }),
+    ).rejects.toThrow(refreshError)
+
+    // Then
+    expect(refreshTokenHandler).toHaveBeenCalledOnce()
+  })
+
+  test('prioritizes refreshTokenOnAuthorizedResponse over unauthorizedHandler for 401', async () => {
+    // Given
+    const query = 'query QueryName { example }'
+    const refreshTokenHandler = vi.fn().mockResolvedValue({action: 'retry' as const, token: 'new-token'})
+    const unauthorizedHandler = vi.fn()
+    let callCount = 0
+    server.use(
+      mockApi.query('QueryName', ({request}) => {
+        callCount++
+        if (callCount === 1) {
+          return HttpResponse.json({errors: [{message: 'Unauthorized'}], status: 401})
+        } else {
+          expect(request.headers.get('Authorization')).toBe('Bearer new-token')
+          return HttpResponse.json({data: {QueryName: {example: 'success after refresh'}}})
+        }
+      }),
+    )
+
+    // When
+    const result = await graphqlRequest({
+      query,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: 'old-token',
+      refreshTokenOnAuthorizedResponse: refreshTokenHandler,
+      unauthorizedHandler,
+    })
+
+    // Then
+    expect(refreshTokenHandler).toHaveBeenCalledOnce()
+    expect(unauthorizedHandler).not.toHaveBeenCalled()
+    expect(callCount).toBe(2)
+    expect(result).toEqual({QueryName: {example: 'success after refresh'}})
+  })
+
+  test('uses unauthorizedHandler for non-401 errors when both handlers provided', async () => {
+    // Given
+    const query = 'query Fails { fails }'
+    const refreshTokenHandler = vi.fn()
+    const unauthorizedHandler = vi.fn().mockResolvedValue(undefined)
+    let callCount = 0
+
+    server.use(
+      mockApi.query('Fails', () => {
+        callCount++
+        return HttpResponse.json({errors: [{message: 'Internal Server Error'}], status: 500})
+      }),
+    )
+
+    // When/Then
+    await expect(
+      graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: 'old-token',
+        refreshTokenOnAuthorizedResponse: refreshTokenHandler,
+        unauthorizedHandler,
+      }),
+    ).rejects.toThrow(/Internal Server Error/)
+
+    // Then
+    expect(refreshTokenHandler).not.toHaveBeenCalled()
+    expect(unauthorizedHandler).toHaveBeenCalledTimes(2)
+    expect(callCount).toBe(3)
   })
 })
