@@ -52,10 +52,6 @@ describe('getTunnelMode() if useLocalhost is true', () => {
     certPath: '/path/to/cert',
   }
 
-  // beforeEach(() => {
-  //   vi.mocked(generateCertificate).mockResolvedValue(mockCertificate)
-  // })
-
   const defaultOptions = {
     useLocalhost: true,
     localhostPort: undefined,
