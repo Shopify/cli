@@ -56,4 +56,15 @@ describe('getAvailableTCPPort', () => {
     // Then
     expect(got).toBe(5)
   })
+
+  test('reserves random ports and does not reuse them', async () => {
+    vi.mocked(port.checkPort).mockResolvedValue(false)
+    vi.mocked(port.getRandomPort).mockResolvedValueOnce(55).mockResolvedValueOnce(55).mockResolvedValueOnce(66)
+
+    let got = await getAvailableTCPPort(123)
+    expect(got).toBe(55)
+
+    got = await getAvailableTCPPort(123)
+    expect(got).toBe(66)
+  })
 })
