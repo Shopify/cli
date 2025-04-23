@@ -179,18 +179,21 @@ export function fetchNotificationsInBackground(
   environment: NodeJS.ProcessEnv = process.env,
 ): void {
   if (skipNotifications(currentCommand, environment)) return
+  if (!argv[0] || !argv[1]) return
 
-  let command = 'shopify'
-  const args = ['notifications', 'list', '--ignore-errors']
-  // Run the Shopify command the same way as the current execution when it's not the global installation
-  if (argv[0] && argv[0] !== 'shopify') {
-    command = argv[0]
-    const indexValue = currentCommand.split(':')[0] ?? ''
-    const index = argv.indexOf(indexValue)
-    if (index > 0) args.unshift(...argv.slice(1, index))
-  }
+  // Run the Shopify command the same way as the current execution
+  const nodeBinary = argv[0]
+  const shopifyBinary = argv[1]
+  const args = [shopifyBinary, 'notifications', 'list', '--ignore-errors']
+
   // eslint-disable-next-line no-void
-  void exec(command, args, {background: true, env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}})
+  void exec(nodeBinary, args, {
+    background: true,
+    env: {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'},
+    externalErrorHandler: async (error: unknown) => {
+      outputDebug(`Failed to fetch notifications in background: ${(error as Error).message}`)
+    },
+  })
 }
 
 /**
