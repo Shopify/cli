@@ -673,6 +673,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:dev:clean",
@@ -680,7 +681,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Stop the app."
+      "summary": "Cleans up the app preview from the selected store."
     },
     "app:env:pull": {
       "aliases": [

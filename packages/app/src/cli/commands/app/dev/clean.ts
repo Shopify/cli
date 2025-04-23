@@ -17,6 +17,8 @@ export default class DevClean extends AppCommand {
 
   static description = this.descriptionWithoutMarkdown()
 
+  static hidden = true
+
   static flags = {
     ...globalFlags,
     ...appFlags,
