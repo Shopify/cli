@@ -58,7 +58,7 @@ export function getExtensionPointRedirectUrl(
         rawUrl.searchParams.set('socket_url', options.websocketURL)
       }
 
-      if (extension.configuration.metafields) {
+      if ('metafields' in extension.configuration) {
         const config = {config: {metafields: extension.configuration.metafields}}
         rawUrl.searchParams.set('config', JSON.stringify(config))
       }

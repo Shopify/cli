@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const TaxCalculationsSchema = BaseSchema.extend({
@@ -16,6 +16,7 @@ const TaxCalculationsSchema = BaseSchema.extend({
         .optional(),
     })
     .optional(),
+  metafields: zod.array(MetafieldSchema).optional(),
 })
 
 const spec = createExtensionSpecification({

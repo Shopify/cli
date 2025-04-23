@@ -1,4 +1,4 @@
-import {BaseSchemaWithHandle} from '../schemas.js'
+import {BaseSchemaWithHandle, MetafieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
   validateFieldShape,
@@ -19,6 +19,7 @@ const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   config_page_preview_url: zod.string().url().refine(startsWithHttps).optional(),
   schema: zod.string().optional(),
   return_type_ref: zod.string().optional(),
+  metafields: zod.array(MetafieldSchema).optional(),
 }).refine((config) => {
   const configurationPageIsValid = validateCustomConfigurationPageConfig(
     config.config_page_url,
