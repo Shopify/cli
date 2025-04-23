@@ -25,7 +25,7 @@ export default class DevClean extends AppCommand {
     store: Flags.string({
       hidden: false,
       char: 's',
-      description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
+      description: 'Store URL. Must be an existing development store.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => normalizeStoreFqdn(input),
     }),
@@ -53,7 +53,7 @@ export default class DevClean extends AppCommand {
     renderSuccess({
       headline: 'App preview stopped.',
       body: [
-        `The app preview has been stopped on "${store.shopDomain}" and the app active version has been restored.`,
+        `The app preview has been stopped on "${store.shopDomain}" and the app's active version has been restored.`,
         'You can start it again with `shopify app dev`.',
       ],
     })
