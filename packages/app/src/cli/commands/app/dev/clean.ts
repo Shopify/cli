@@ -12,7 +12,7 @@ export default class DevClean extends AppCommand {
 
   static descriptionWithMarkdown = `Stop the app preview that was started with \`shopify app dev\`.
 
-  It restores the app active version to the selected development store.
+  It restores the app's active version to the selected development store.
   `
 
   static description = this.descriptionWithoutMarkdown()
