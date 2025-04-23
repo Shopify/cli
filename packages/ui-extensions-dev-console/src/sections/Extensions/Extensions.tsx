@@ -8,6 +8,7 @@ import {useApp} from './hooks/useApp'
 import {useI18n} from '@shopify/react-i18n'
 import React from 'react'
 import {isEmbedded} from '@/utilities/embedded'
+import {isAppPreview} from '@/utilities/app-preview'
 
 export function Extensions() {
   const [i18n] = useI18n({
@@ -36,7 +37,7 @@ export function Extensions() {
   })
 
   return (
-    <section className={styles.ExtensionList}>
+    <section className={`${styles.ExtensionList} ${isAppPreview ? styles.isAppPreview : ''}`}>
       {isEmbedded ? null : <p className={styles.Intro}>{introMessage}</p>}
       <table>
         <thead>
