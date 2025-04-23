@@ -12,7 +12,8 @@ import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test} from 'vitest'
+import {ClientError} from 'graphql-request'
+import {describe, expect, vi, test, beforeEach, Mock, afterEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -188,5 +189,96 @@ describe('fetchApp', async () => {
       undefined,
       expect.any(Function),
     )
+  })
+})
+
+describe('Request authorization and token refresh', () => {
+  let partnersClient: PartnersClient
+  let sessionMock: typeof testPartnersUserSession
+  const partnersRequestMock = vi.mocked(partnersRequest)
+
+  beforeEach(() => {
+    sessionMock = testPartnersUserSession
+    partnersClient = new PartnersClient(sessionMock)
+    vi.spyOn(partnersClient, 'refreshToken').mockImplementation(vi.fn())
+    partnersRequestMock.mockClear()
+    ;(partnersClient.refreshToken as Mock).mockClear()
+  })
+
+  afterEach(() => {
+    // Clear mocks if necessary, though Vitest often handles this
+  })
+
+  describe('partnersRequest integration', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const query = `query { shop { name } }`
+    const variables = {shopId: '123'}
+    // Error representing an unauthorized (401) response
+    const unauthorizedError = new ClientError({status: 401, headers: {}}, {query, variables})
+
+    test('throws error if refresh token fails', async () => {
+      // Given
+      const refreshError = new Error('Token refresh failed')
+      ;(partnersClient.refreshToken as Mock).mockRejectedValue(refreshError)
+
+      partnersRequestMock.mockImplementationOnce(async (_query, _token, _variables, _headers, handler) => {
+        if (handler) {
+          await handler()
+        }
+        throw unauthorizedError
+      })
+
+      // When / Then
+      await expect(partnersClient.request(query, variables)).rejects.toThrow(refreshError)
+      expect(partnersClient.refreshToken).toHaveBeenCalledOnce()
+      expect(partnersRequestMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('throws other errors immediately without attempting refresh', async () => {
+      // Given
+      const otherError = new ClientError({status: 500, headers: {}}, {query, variables})
+      partnersRequestMock.mockRejectedValueOnce(otherError)
+
+      // When / Then
+      await expect(partnersClient.request(query, variables)).rejects.toThrow(otherError)
+      expect(partnersClient.refreshToken).not.toHaveBeenCalled()
+      expect(partnersRequestMock).toHaveBeenCalledTimes(1)
+    })
+
+    test('throws original 401 if retry also fails after successful refresh', async () => {
+      // Given
+      // Mock refreshToken to succeed and spy on it
+      const refreshTokenSpy = vi.spyOn(partnersClient, 'refreshToken').mockResolvedValue('new-token')
+
+      // Mock partnersRequest to throw 401 twice, ensuring handler is called first time
+      partnersRequestMock.mockImplementationOnce(async (_query, _token, _variables, _headers, handler) => {
+        // Simulate the first 401, triggering the handler
+        if (handler) {
+          // Explicitly await the handler which calls refreshToken
+          await handler()
+          // Ensure refreshToken was called before throwing
+          expect(refreshTokenSpy).toHaveBeenCalled()
+        }
+        // Then throw the error AFTER handler completes
+        throw unauthorizedError
+      })
+
+      // When / Then
+      // Explicitly await the request call
+      await expect(partnersClient.request(query, variables)).rejects.toThrow(unauthorizedError)
+
+      // Verify refresh was attempted
+      expect(refreshTokenSpy).toHaveBeenCalledOnce()
+
+      // Verify the request was made, and handled refr
+      expect(partnersRequestMock).toHaveBeenCalledTimes(1)
+    })
   })
 })
