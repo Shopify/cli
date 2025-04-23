@@ -67,3 +67,37 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
   return lodashDifference(array, ...values)
 }
+
+/**
+ * Converts an array of anything into a human friendly list.
+ *
+ * Returns a new array that contains the items separated by commas,
+ * except for the last item, which is separated by "and".
+ * This is useful for creating human-friendly sentences.
+ *
+ * @param items - Token[].
+ * @returns Token[].
+ * @example
+ * ```ts
+ *   const items = ['apple', 'banana', {command: "--flag"}];
+ *   const result = asHumanFriendlyList(items)
+ *
+ *   // ['apple', ',', 'banana', ',', 'and', {command: "--flag"}]
+ *   console.log(result);
+ * ```
+ */
+export function asHumanFriendlyArray<T>(items: T[]): (T | string)[] {
+  if (items.length < 2) {
+    return items
+  }
+
+  return items.reduce<(T | string)[]>((acc, item, index) => {
+    if (index === items.length - 1) {
+      acc.push('and')
+    } else if (index !== 0) {
+      acc.push(', ')
+    }
+    acc.push(item)
+    return acc
+  }, [])
+}
