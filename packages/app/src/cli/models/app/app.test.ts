@@ -241,7 +241,6 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
     },
     api_version: '2022-07',
     configuration_ui: true,
-    metafields: [],
     name: 'test function extension',
     type: type ?? 'product_discounts',
     ui: {

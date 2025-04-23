@@ -1,4 +1,4 @@
-import {BaseSchemaWithHandle, MetafieldSchema} from '../schemas.js'
+import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -42,7 +42,6 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
     discoverable: zod.boolean().optional(),
     allow_one_click_activate: zod.boolean().optional(),
     enabled: zod.boolean().optional(),
-    metafields: zod.array(MetafieldSchema).optional(),
   }),
 })
 

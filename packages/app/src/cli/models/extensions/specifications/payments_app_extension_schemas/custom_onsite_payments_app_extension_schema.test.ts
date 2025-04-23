@@ -33,7 +33,6 @@ const config: CustomOnsitePaymentsAppExtensionConfigType = {
   modal_payment_method_fields: [],
   description: 'Custom onsite extension',
   ui_extension_handle: 'sample-ui-extension',
-  metafields: [],
   input: {
     metafield_identifiers: {
       namespace: 'namespace',
