@@ -143,7 +143,7 @@ export async function downloadGitHubRelease(
       const tempPath = joinPath(tmpDir, assetName)
       let response: Response
       try {
-        response = await fetch(url)
+        response = await fetch(url, undefined, 'slow-request')
         if (!response.ok) {
           throw new AbortError(`Failed to download ${assetName}: ${response.statusText}`)
         }
