@@ -159,6 +159,7 @@ export async function setupDevProcesses({
           appPreviewURL: appPreviewUrl,
           appLocalProxyURL: devConsoleURL,
           devSessionStatusManager,
+          productionMode: commandOptions.productionMode,
         })
       : await setupDraftableExtensionsProcess({
           localApp: reloadedApp,

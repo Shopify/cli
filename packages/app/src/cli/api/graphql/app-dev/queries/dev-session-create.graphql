@@ -1,5 +1,5 @@
-mutation DevSessionCreate($appId: String!, $assetsUrl: String!) {
-  devSessionCreate(appId: $appId, assetsUrl: $assetsUrl) {
+mutation DevSessionCreate($appId: String!, $assetsUrl: String!, $productionMode: Boolean!) {
+  devSessionCreate(appId: $appId, assetsUrl: $assetsUrl, productionMode: $productionMode) {
     userErrors {
       message
       on
