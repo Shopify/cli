@@ -44,7 +44,6 @@
   "dependencies": {
     "@oclif/core": "3.26.5",
     "@shopify/cli-kit": "3.78.0",
-    "@shopify/liquid-html-parser": "2.8.1",
     "@shopify/theme-check-node": "3.15.1",
     "@shopify/theme-language-server-node": "2.14.1",
     "chokidar": "3.6.0",
@@ -55,6 +54,9 @@
     "@shopify/theme-hot-reload": "^0.0.11",
     "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0"
+  },
+  "peerDependencies": {
+    "@shopify/liquid-html-parser": "^2.8.1"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"
