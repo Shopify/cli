@@ -8,6 +8,8 @@ interface GetTCPPortOptions {
   maxTries?: number
 }
 
+const obtainedRandomPorts = new Set<number>()
+
 /**
  * Returns an available port in the current environment.
  *
@@ -21,12 +23,26 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
     return preferredPort
   }
   outputDebug(outputContent`Getting a random port...`)
-  const randomPort = await retryOnError(
+  let randomPort = await retryOnError(
     () => port.getRandomPort('localhost'),
     options?.maxTries,
     options?.waitTimeInSeconds,
   )
+
+  for (let i = 0; i < (options?.maxTries ?? 5); i++) {
+    if (!obtainedRandomPorts.has(randomPort)) {
+      break
+    }
+    // eslint-disable-next-line no-await-in-loop
+    randomPort = await retryOnError(
+      () => port.getRandomPort('localhost'),
+      options?.maxTries,
+      options?.waitTimeInSeconds,
+    )
+  }
+
   outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
+  obtainedRandomPorts.add(randomPort)
   return randomPort
 }
 
