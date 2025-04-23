@@ -123,6 +123,12 @@ If you're using the Ruby app template, then you need to complete the following s
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
+    'production-mode': Flags.boolean({
+      hidden: false,
+      description: 'Run the app in production mode.',
+      env: 'SHOPIFY_FLAG_PRODUCTION_MODE',
+      default: false,
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -212,6 +218,7 @@ If you're using the Ruby app template, then you need to complete the following s
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
       tunnel,
+      productionMode: flags['production-mode'],
     }
 
     await dev(devOptions)

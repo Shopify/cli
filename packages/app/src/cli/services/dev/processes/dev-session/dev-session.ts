@@ -16,6 +16,7 @@ interface DevSessionPayload {
   shopFqdn: string
   appId: string
   assetsUrl: string
+  productionMode: boolean
 }
 
 export interface UserError {
@@ -246,7 +247,12 @@ export class DevSession {
     // Create or update the dev session
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     try {
-      const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
+      const payload = {
+        shopFqdn: this.options.storeFqdn, 
+        appId: this.options.appId, 
+        assetsUrl: signedURL,
+        productionMode: this.options.productionMode
+      }
       if (this.statusManager.status.isReady) {
         return this.devSessionUpdateWithRetry(payload)
       } else {
@@ -290,6 +296,7 @@ export class DevSession {
    * @param payload - The payload to update the dev session with
    */
   private async devSessionUpdateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+    await this.logger.info(`Dev session update options: ${JSON.stringify(payload)}`)
     const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionUpdate(payload),
       () => this.options.developerPlatformClient.refreshToken(),
@@ -306,6 +313,7 @@ export class DevSession {
    * @param payload - The payload to create the dev session with
    */
   private async devSessionCreateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+    await this.logger.info(`Dev session create options: ${JSON.stringify(payload)}`)
     const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionCreate(payload),
       () => this.options.developerPlatformClient.refreshToken(),

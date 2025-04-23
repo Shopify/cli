@@ -7,6 +7,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 export type DevSessionCreateMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
   assetsUrl: Types.Scalars['String']['input']
+  productionMode: Types.Scalars['Boolean']['input']
 }>
 
 export type DevSessionCreateMutation = {
@@ -33,6 +34,11 @@ export const DevSessionCreate = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'productionMode'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'Boolean'}}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -50,6 +56,11 @@ export const DevSessionCreate = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'assetsUrl'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'productionMode'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'productionMode'}},
               },
             ],
             selectionSet: {

@@ -197,6 +197,7 @@ export interface DevSessionOptions {
   shopFqdn: string
   appId: string
   assetsUrl: string
+  productionMode: boolean
 }
 
 type WithUserErrors<T> = T & {
@@ -299,6 +300,6 @@ export interface DeveloperPlatformClient {
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
-  devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
+  devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl' | 'productionMode'>) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (input: string) => Promise<string>
 }

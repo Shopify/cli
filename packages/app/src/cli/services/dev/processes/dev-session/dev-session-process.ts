@@ -17,6 +17,7 @@ export interface DevSessionProcessOptions {
   appPreviewURL: string
   appLocalProxyURL: string
   devSessionStatusManager: DevSessionStatusManager
+  productionMode: boolean
 }
 
 export interface DevSessionProcess extends BaseProcess<DevSessionProcessOptions> {

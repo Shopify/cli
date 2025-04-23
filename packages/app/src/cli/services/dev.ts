@@ -81,6 +81,7 @@ export interface DevOptions {
   notify?: string
   graphiqlPort?: number
   graphiqlKey?: string
+  productionMode: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {

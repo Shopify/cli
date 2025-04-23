@@ -940,17 +940,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDeepLink({id, organizationId})
   }
 
-  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
+  async devSessionCreate({appId, assetsUrl, shopFqdn, productionMode}: DevSessionOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl, productionMode})
   }
 
-  async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
+  async devSessionUpdate({appId, assetsUrl, shopFqdn, productionMode}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl, productionMode})
   }
 
-  async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
+  async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl' | 'productionMode'>): Promise<DevSessionDeleteMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
