@@ -457,7 +457,7 @@
           "description": "Port to use for localhost.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
           "hasDynamicHelp": false,
-          "hidden": true,
+          "hidden": false,
           "multiple": false,
           "name": "localhost-port",
           "type": "option"
@@ -571,7 +571,7 @@
           "exclusive": [
             "tunnel-url"
           ],
-          "hidden": true,
+          "hidden": false,
           "name": "use-localhost",
           "type": "boolean"
         },

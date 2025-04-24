@@ -462,6 +462,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--localhost-port <value>",
+                "value": "string",
+                "description": "Port to use for localhost.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_LOCALHOST_PORT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -543,6 +552,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--use-localhost",
+                "value": "\"\"",
+                "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_USE_LOCALHOST"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the output.",
@@ -577,7 +595,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME"
               }
             ],
-            "value": "export interface appdev {\n  /**\n   * Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"\n   * @environment SHOPIFY_FLAG_CHECKOUT_CART_URL\n   */\n  '--checkout-cart-url <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Skips the Partners Dashboard URL update step.\n   * @environment SHOPIFY_FLAG_NO_UPDATE\n   */\n  '--no-update'?: ''\n\n  /**\n   * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.\n   * @environment SHOPIFY_FLAG_NOTIFY\n   */\n  '--notify <value>'?: string\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Skips the installation of dependencies. Deprecated, use workspaces instead.\n   * @environment SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Store URL. Must be an existing development or Shopify Plus sandbox store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Resource URL for subscription UI extension. Format: \"/products/{productId}\"\n   * @environment SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL\n   */\n  '--subscription-product-url <value>'?: string\n\n  /**\n   * Theme ID or name of the theme app extension host theme.\n   * @environment SHOPIFY_FLAG_THEME\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Local port of the theme app extension development server.\n   * @environment SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT\n   */\n  '--theme-app-extension-port <value>'?: string\n\n  /**\n   * Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".\n   * @environment SHOPIFY_FLAG_TUNNEL_URL\n   */\n  '--tunnel-url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface appdev {\n  /**\n   * Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"\n   * @environment SHOPIFY_FLAG_CHECKOUT_CART_URL\n   */\n  '--checkout-cart-url <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Port to use for localhost.\n   * @environment SHOPIFY_FLAG_LOCALHOST_PORT\n   */\n  '--localhost-port <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Skips the Partners Dashboard URL update step.\n   * @environment SHOPIFY_FLAG_NO_UPDATE\n   */\n  '--no-update'?: ''\n\n  /**\n   * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.\n   * @environment SHOPIFY_FLAG_NOTIFY\n   */\n  '--notify <value>'?: string\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Skips the installation of dependencies. Deprecated, use workspaces instead.\n   * @environment SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Store URL. Must be an existing development or Shopify Plus sandbox store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Resource URL for subscription UI extension. Format: \"/products/{productId}\"\n   * @environment SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL\n   */\n  '--subscription-product-url <value>'?: string\n\n  /**\n   * Theme ID or name of the theme app extension host theme.\n   * @environment SHOPIFY_FLAG_THEME\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Local port of the theme app extension development server.\n   * @environment SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT\n   */\n  '--theme-app-extension-port <value>'?: string\n\n  /**\n   * Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".\n   * @environment SHOPIFY_FLAG_TUNNEL_URL\n   */\n  '--tunnel-url <value>'?: string\n\n  /**\n   * Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)\n   * @environment SHOPIFY_FLAG_USE_LOCALHOST\n   */\n  '--use-localhost'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

@@ -19,6 +19,12 @@ export interface appdev {
   '-c, --config <value>'?: string
 
   /**
+   * Port to use for localhost.
+   * @environment SHOPIFY_FLAG_LOCALHOST_PORT
+   */
+  '--localhost-port <value>'?: string
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */
@@ -83,6 +89,12 @@ export interface appdev {
    * @environment SHOPIFY_FLAG_TUNNEL_URL
    */
   '--tunnel-url <value>'?: string
+
+  /**
+   * Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)
+   * @environment SHOPIFY_FLAG_USE_LOCALHOST
+   */
+  '--use-localhost'?: ''
 
   /**
    * Increase the verbosity of the output.
