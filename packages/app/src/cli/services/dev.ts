@@ -103,6 +103,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     selectedStore: store,
     cachedInfo: getCachedAppInfo(commandOptions.directory),
     organization: commandOptions.organization,
+    tunnelMode: tunnel.mode,
   })
 
   // If the dev_store_url is set in the app configuration, keep updating it.

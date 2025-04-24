@@ -129,21 +129,6 @@ describe('getTunnelMode() if useLocalhost is true', () => {
   })
 
   describe('provideCertificate()', () => {
-    test('Calls renderInfo', async () => {
-      // Given
-      vi.mocked(checkPortAvailability).mockResolvedValue(true)
-      vi.mocked(generateCertificate).mockResolvedValue(mockCertificate)
-
-      // When
-      const mockOutput = mockAndCaptureOutput()
-      mockOutput.clear()
-      const result = (await getTunnelMode(defaultOptions)) as NoTunnel
-      await result.provideCertificate('app-directory')
-
-      // Then
-      expect(mockOutput.info()).toContain('Localhost-based development is in developer preview')
-    })
-
     test('Calls generateCertificate and returns its value', async () => {
       // Given
       vi.mocked(checkPortAvailability).mockResolvedValue(true)
