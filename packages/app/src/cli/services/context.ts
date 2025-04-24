@@ -298,12 +298,20 @@ interface ReusedValuesOptions {
   remoteApp: OrganizationApp
   selectedStore: OrganizationStore
   cachedInfo?: CachedAppInfo
+  tunnelMode?: string
 }
 
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-export function showReusedDevValues({organization, app, remoteApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+export function showReusedDevValues({
+  organization,
+  app,
+  remoteApp,
+  selectedStore,
+  cachedInfo,
+  tunnelMode,
+}: ReusedValuesOptions) {
   if (!cachedInfo) return
   if (sniffForJson()) return
 
@@ -318,6 +326,7 @@ export function showReusedDevValues({organization, app, remoteApp, selectedStore
     updateURLs,
     configFile: cachedInfo.configFile,
     resetMessage: resetHelpMessage,
+    tunnelMode,
   })
 }
 
@@ -330,6 +339,7 @@ interface CurrentlyUsedConfigInfoOptions {
   appDotEnv?: string
   includeConfigOnDeploy?: boolean
   resetMessage?: Token[]
+  tunnelMode?: string
 }
 
 export function formInfoBoxBody(
@@ -363,16 +373,33 @@ export function renderCurrentlyUsedConfigInfo({
   appDotEnv,
   resetMessage,
   includeConfigOnDeploy,
+  tunnelMode,
 }: CurrentlyUsedConfigInfoOptions): void {
   const devStores = []
   if (devStore) devStores.push(devStore)
 
-  const body = formInfoBoxBody(appName, org, devStores, resetMessage, updateURLs, includeConfigOnDeploy)
   const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
-  renderInfo({
+  const infoOptions = {
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
-    body,
-  })
+    body: formInfoBoxBody(appName, org, devStores, resetMessage, updateURLs, includeConfigOnDeploy),
+  }
+
+  // Add localhost warning if using localhost mode
+  if (tunnelMode === 'use-localhost') {
+    const bodyArray = Array.isArray(infoOptions.body) ? infoOptions.body : [infoOptions.body]
+    infoOptions.body = [
+      ...bodyArray,
+      '\n',
+      '\n',
+      'Note:',
+      {command: '--use-localhost'},
+      'is not compatible with Shopify features which directly invoke your app',
+      '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
+      'device (such as POS).',
+    ]
+  }
+
+  renderInfo(infoOptions)
 }
 
 export async function logMetadataForLoadedContext(

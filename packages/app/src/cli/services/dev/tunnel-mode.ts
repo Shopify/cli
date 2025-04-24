@@ -3,7 +3,6 @@ import {generateCertificate} from '../../utilities/mkcert.js'
 import {generateCertificatePrompt} from '../../prompts/dev.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
 
@@ -64,19 +63,6 @@ export async function getTunnelMode({
     requestedPort,
     actualPort,
     provideCertificate: async (appDirectory) => {
-      renderInfo({
-        headline: 'Localhost-based development is in developer preview.',
-        body: [
-          '`--use-localhost` is not compatible with Shopify features which directly invoke your app',
-          '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
-          'device (such as POS). Please report any issues and provide feedback on the dev community:',
-        ],
-        link: {
-          label: 'Create a feedback post',
-          url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=app-dev-on-localhost',
-        },
-      })
-
       return generateCertificate({
         appDirectory,
         onRequiresConfirmation: generateCertificatePrompt,
