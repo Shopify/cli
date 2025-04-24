@@ -87,7 +87,7 @@ If you're using the Ruby app template, then you need to complete the following s
       exclusive: ['tunnel'],
     }),
     'use-localhost': Flags.boolean({
-      hidden: true,
+      hidden: false,
       description:
         "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
       env: 'SHOPIFY_FLAG_USE_LOCALHOST',
@@ -95,7 +95,7 @@ If you're using the Ruby app template, then you need to complete the following s
       exclusive: ['tunnel-url'],
     }),
     'localhost-port': Flags.integer({
-      hidden: true,
+      hidden: false,
       description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
     }),
