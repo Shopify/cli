@@ -17,7 +17,7 @@ const globalNPMPath = '/path/to/global/npm'
 const globalYarnPath = '/path/to/global/yarn'
 const globalPNPMPath = '/path/to/global/pnpm'
 const unknownGlobalPath = '/path/to/global/unknown'
-const localProjectPath = '/path/local'
+const localProjectPath = '/path/local/node_modules'
 
 beforeEach(() => {
   ;(vi.mocked(execa.execaSync) as any).mockReturnValue({stdout: localProjectPath})
@@ -53,7 +53,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', globalYarnPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('yarn')
@@ -64,7 +64,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', globalPNPMPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('pnpm')
@@ -75,7 +75,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', unknownGlobalPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('npm')
@@ -86,7 +86,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', localProjectPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('unknown')
