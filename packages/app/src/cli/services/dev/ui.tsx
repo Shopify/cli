@@ -62,9 +62,9 @@ async function renderDevNonInteractive({
 }: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
   if (canEnablePreviewMode) {
     await developerPreview.enable()
-    abortController?.signal.addEventListener('abort', async () => {
-      await developerPreview.disable()
-    })
+    // abortController?.signal.addEventListener('abort', async () => {
+    //   await developerPreview.disable()
+    // })
   }
   return Promise.all(
     processes.map(async (concurrentProcess) => {
