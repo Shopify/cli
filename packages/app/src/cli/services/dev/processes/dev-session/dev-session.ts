@@ -234,18 +234,16 @@ export class DevSession {
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     await writeManifestToBundle(appEvent.app, this.bundlePath)
     await compressBundle(this.bundlePath, bundleZipPath)
-
-    // Get a signed URL to upload the zip file
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const signedURL = await this.getSignedURLWithRetry()
-
-    // Upload the zip file
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await uploadToGCS(signedURL, bundleZipPath)
-
-    // Create or update the dev session
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
     try {
+      // Get a signed URL to upload the zip file
+      if (currentBundleController.signal.aborted) return {status: 'aborted'}
+      const signedURL = await this.getSignedURLWithRetry()
+
+      // Upload the zip file
+      if (currentBundleController.signal.aborted) return {status: 'aborted'}
+      await uploadToGCS(signedURL, bundleZipPath)
+      // Create or update the dev session
+      if (currentBundleController.signal.aborted) return {status: 'aborted'}
       const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
       if (this.statusManager.status.isReady) {
         return this.devSessionUpdateWithRetry(payload)
@@ -262,6 +260,11 @@ export class DevSession {
         } else {
           await this.logger.debug(JSON.stringify(error.response, null, 2))
           throw new AbortError('Unknown error')
+        }
+      } else if (error.code === 'ETIMEDOUT') {
+        return {
+          status: 'unknown-error',
+          error: new Error('Request timed out, please check your internet connection and try again.'),
         }
       } else {
         return {status: 'unknown-error', error}
