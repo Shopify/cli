@@ -47,11 +47,17 @@ const allowedTemplate: GatedExtensionTemplate = {
   organizationBetaFlags: ['allowedFlag'],
   minimumCliVersion: '1.0.0',
 }
-const templateDisallowedByCliVersion: GatedExtensionTemplate = {
+const templateDisallowedByMinimumCliVersion: GatedExtensionTemplate = {
   ...testRemoteExtensionTemplates[2]!,
   organizationBetaFlags: ['allowedFlag'],
   // minimum CLI version is higher than the current CLI version
   minimumCliVersion: `1${CLI_KIT_VERSION}`,
+}
+const templateDisallowedByDeprecatedFromCliVersion: GatedExtensionTemplate = {
+  ...testRemoteExtensionTemplates[2]!,
+  organizationBetaFlags: ['allowedFlag'],
+  // deprecated CLI version is lower than the current CLI version
+  deprecatedFromCliVersion: '1.0.0',
 }
 const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
   ...testRemoteExtensionTemplates[3]!,
@@ -211,7 +217,8 @@ describe('allowedTemplates', () => {
     const templates: GatedExtensionTemplate[] = [
       templateWithoutRules,
       allowedTemplate,
-      templateDisallowedByCliVersion,
+      templateDisallowedByMinimumCliVersion,
+      templateDisallowedByDeprecatedFromCliVersion,
       templateDisallowedByBetaFlag,
     ]
 
