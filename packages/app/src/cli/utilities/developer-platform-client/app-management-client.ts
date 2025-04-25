@@ -158,6 +158,7 @@ type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
+  deprecatedFromCliVersion?: string
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
@@ -1108,7 +1109,9 @@ export async function allowedTemplates(
       !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
     const satisfiesMinCliVersion =
       !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
-    return hasAnyNeededBetas && satisfiesMinCliVersion
+    const satisfiesDeprecatedFromCliVersion =
+      !ext.deprecatedFromCliVersion || versionSatisfies(CLI_KIT_VERSION, `<${ext.deprecatedFromCliVersion}`)
+    return hasAnyNeededBetas && satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
   })
 }
 
