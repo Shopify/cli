@@ -265,13 +265,13 @@ export interface AppConfigurationInterface<
 
 export type AppLinkedInterface = AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
 
-export interface AppManifest {
+export interface AppManifest extends JsonMapType {
   name: string
   handle: string
   modules: ManifestModule[]
 }
 
-export interface ManifestModule {
+export interface ManifestModule extends JsonMapType {
   type: string
   handle: string
   uid: string

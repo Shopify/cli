@@ -996,7 +996,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables: DevSessionUpdateMutationVariables = {
       appId: appIdNumber,
       assetsUrl,
-      manifest: manifest ?? {},
+      manifest: JSON.stringify(manifest ?? {}),
       inheritedModuleUids: inheritedModuleUids ?? [],
     }
     return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), variables)

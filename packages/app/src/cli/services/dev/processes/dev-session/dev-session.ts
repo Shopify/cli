@@ -301,7 +301,8 @@ export class DevSession {
 
     // Create zip file with everything
     if (bundleController.signal.aborted) return undefined
-    await compressBundle(this.bundlePath, bundleZipPath)
+    const filePattern = [...assets.map((ext) => `${ext}/**`), 'manifest.json', '!**/*.js.map']
+    await compressBundle(this.bundlePath, bundleZipPath, filePattern)
 
     // Get a signed URL to upload the zip file
     if (bundleController.signal.aborted) return undefined
