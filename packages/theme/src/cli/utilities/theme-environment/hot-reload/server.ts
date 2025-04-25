@@ -355,7 +355,7 @@ function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
 }
 
 export const hotReloadScriptId = 'hot-reload-client'
-export const hotReloadScriptUrl = 'https://unpkg.com/@shopify/theme-hot-reload'
+export const hotReloadScriptUrl = '/cdn/shopifycloud/theme-hot-reload/theme-hot-reload.js'
 const hotReloadScriptRE = new RegExp(`<script id="${hotReloadScriptId}"[^>]*>[^<]*</script>`)
 const localHotReloadScriptEndpoint = '/@shopify/theme-hot-reload'
 
