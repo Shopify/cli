@@ -271,7 +271,7 @@ function isRemoteDomExtension(
     return false
   }
 
-  return year > 2025 || (year === 2025 && month >= 7)
+  return year > 2025 || (year === 2025 && month >= 10)
 }
 
 export function getShouldRenderTarget(target: string) {
