@@ -134,7 +134,7 @@ function renderAppLogsConfigInfo(
   } else {
     devStores.push(storeFqdn)
   }
-  const body = formInfoBoxBody(appName, org, devStores, resetHelpMessage)
+  const body = formInfoBoxBody({appName, org, devStores, messages: [resetHelpMessage]})
   const fileName = configFile ? getAppConfigurationFileName(configFile) : undefined
 
   renderInfo({

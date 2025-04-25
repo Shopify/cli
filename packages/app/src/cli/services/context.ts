@@ -196,8 +196,8 @@ async function checkIncludeConfigOnDeploy({
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
-    resetMessage: resetHelpMessage,
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
+    messages: [resetHelpMessage],
   })
 
   if (force || previousIncludeConfigOnDeploy === true) return
@@ -319,15 +319,94 @@ export function showReusedDevValues({
   const updateURLsValue = app.configuration.build?.automatically_update_urls_on_dev
   if (updateURLsValue !== undefined) updateURLs = updateURLsValue ? 'Yes' : 'No'
 
+  const messages = [resetHelpMessage]
+
+  if (tunnelMode === 'use-localhost') {
+    messages.push([
+      'Note:',
+      {command: '--use-localhost'},
+      'is not compatible with Shopify features which directly invoke your app',
+      '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
+      'device (such as POS).',
+    ])
+  }
+
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
     appName: remoteApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
     configFile: cachedInfo.configFile,
-    resetMessage: resetHelpMessage,
-    tunnelMode,
+    messages,
   })
+}
+
+interface FormInfoBoxBodyOptions {
+  appName: string
+  org?: string
+  devStores?: string[]
+  updateURLs?: string
+  includeConfigOnDeploy?: boolean
+  messages?: Token[][]
+}
+
+/**
+ * Returns the body for a renderInfo().
+ *
+ * The body tells the user what config is being used for their app.
+ *
+ * @param options - The options to render the info box
+ * @returns The body of the info box
+ *
+ * @example
+ * ```
+ * ╭─ info ─────────────────────────────────────────────╮
+ * │                                                    │
+ * │  Using shopify.app.toml for default values:        │
+ * │                                                    │
+ * │    • Org:             [org]                        │
+ * │    • App:             [appName]                    │
+ * │    • Dev store:       [devStore[0]] [devStore[1]]  │
+ * │    • Update URLs:     [updateURLs]                 │
+ * │                                                    │
+ * │  [messages[0]]                                     │
+ * │                                                    │
+ * │  [messages[1]]                                     │
+ * │                                                    │
+ * ╰────────────────────────────────────────────────────╯
+ * ```
+ */
+export function formInfoBoxBody({
+  appName,
+  org,
+  devStores,
+  updateURLs,
+  includeConfigOnDeploy,
+  messages,
+}: FormInfoBoxBodyOptions): TokenItem {
+  const items = [`App:             ${appName}`]
+  if (org) items.unshift(`Org:             ${org}`)
+  if (devStores && devStores.length > 0) {
+    devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
+  }
+  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
+  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
+
+  let body: Token[] = [{list: {items}}]
+
+  if (messages && messages.length) {
+    for (let index = 0; index < messages.length; index++) {
+      const message = messages[index]
+
+      if (!message || message.length === 0) continue
+
+      const separator = index === 0 ? '\n' : '\n\n'
+
+      body = body.concat(separator, message)
+    }
+  }
+
+  return body
 }
 
 interface CurrentlyUsedConfigInfoOptions {
@@ -338,30 +417,7 @@ interface CurrentlyUsedConfigInfoOptions {
   configFile?: string
   appDotEnv?: string
   includeConfigOnDeploy?: boolean
-  resetMessage?: Token[]
-  tunnelMode?: string
-}
-
-export function formInfoBoxBody(
-  appName: string,
-  org?: string,
-  devStores?: string[],
-  resetMessage?: Token[],
-  updateURLs?: string,
-  includeConfigOnDeploy?: boolean,
-): TokenItem {
-  const items = [`App:             ${appName}`]
-  if (org) items.unshift(`Org:             ${org}`)
-  if (devStores && devStores.length > 0) {
-    devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
-  }
-  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
-  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
-
-  let body: TokenItem = [{list: {items}}]
-  if (resetMessage) body = [...body, '\n', ...resetMessage]
-
-  return body
+  messages?: Token[][]
 }
 
 export function renderCurrentlyUsedConfigInfo({
@@ -371,35 +427,18 @@ export function renderCurrentlyUsedConfigInfo({
   updateURLs,
   configFile,
   appDotEnv,
-  resetMessage,
   includeConfigOnDeploy,
-  tunnelMode,
+  messages,
 }: CurrentlyUsedConfigInfoOptions): void {
   const devStores = []
   if (devStore) devStores.push(devStore)
 
   const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
-  const infoOptions = {
+
+  renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
-    body: formInfoBoxBody(appName, org, devStores, resetMessage, updateURLs, includeConfigOnDeploy),
-  }
-
-  // Add localhost warning if using localhost mode
-  if (tunnelMode === 'use-localhost') {
-    const bodyArray = Array.isArray(infoOptions.body) ? infoOptions.body : [infoOptions.body]
-    infoOptions.body = [
-      ...bodyArray,
-      '\n',
-      '\n',
-      'Note:',
-      {command: '--use-localhost'},
-      'is not compatible with Shopify features which directly invoke your app',
-      '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
-      'device (such as POS).',
-    ]
-  }
-
-  renderInfo(infoOptions)
+    body: formInfoBoxBody({appName, org, devStores, updateURLs, includeConfigOnDeploy, messages}),
+  })
 }
 
 export async function logMetadataForLoadedContext(
