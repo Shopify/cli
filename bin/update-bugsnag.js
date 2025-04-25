@@ -46,6 +46,7 @@ if (!packageName) {
             appVersion,
             overwrite: true,
             directory: '.',
+            endpoint: 'https://error-analytics-production.shopifysvc.com/api/v1/sourcemap/browser'
           });
 
           resolve();
