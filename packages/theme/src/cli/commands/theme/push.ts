@@ -5,6 +5,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 type PushFlags = OutputFlags<typeof Push.flags>
 
@@ -111,6 +112,16 @@ export default class Push extends ThemeCommand {
   static multiEnvironmentsFlags = ['store', 'password', 'theme', 'force']
 
   async command(flags: PushFlags, adminSession: AdminSession): Promise<void> {
+    // eslint-disable-next-line no-console
+    console.log('HEY!!!!')
     await push(flags, adminSession)
+
+    // eslint-disable-next-line no-console
+    console.log('BYE!!!!')
+
+    await sleep(2)
+
+    // eslint-disable-next-line no-console
+    console.log('BYE BYE!!!!')
   }
 }

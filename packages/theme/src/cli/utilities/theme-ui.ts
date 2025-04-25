@@ -38,6 +38,8 @@ export async function ensureDirectoryConfirmed(
 // This prevents the progress bar from polluting stdout (important for pipe operations)
 export async function renderTasksToStdErr(tasks: Task[]) {
   if (tasks.length > 0) {
-    await renderTasks(tasks, {renderOptions: {stdout: process.stderr}})
+    await renderTasks(tasks, {
+      renderOptions: {debug: true, exitOnCtrlC: false, patchConsole: false, stdout: process.stderr},
+    })
   }
 }

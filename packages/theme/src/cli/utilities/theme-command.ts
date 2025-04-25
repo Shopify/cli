@@ -91,6 +91,8 @@ export default abstract class ThemeCommand extends Command {
           throw new AbortError(`No session found for environment ${environment}`)
         }
 
+        // eslint-disable-next-line no-console
+        console.log('EXECUTING COMMAND...')
         return this.command(environmentFlags, session)
       }),
     )

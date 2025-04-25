@@ -1,13 +1,15 @@
+/* eslint-disable no-console */
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
+import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Task} from '@shopify/cli-kit/node/ui'
+import {Task, renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface UploadOptions {
   nodelete?: boolean
@@ -71,7 +73,29 @@ export function uploadTheme(
   return {
     uploadResults,
     workPromise,
+    uploadJobPromise,
+    deleteJobPromise,
     renderThemeSyncProgress: async () => {
+      // if (options?.deferPartialWork) return
+
+      // const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
+      // const trackProgress = async (promise: Promise<unknown>, titleGetter: () => string) => {
+      //   const interval = setInterval(() => {
+      //     console.log(titleGetter())
+      //   }, 1000)
+
+      //   try {
+      //     await promise
+      //   } finally {
+      //     // clearInterval(interval)
+      //   }
+      // }
+
+      // await trackProgress(uploadPromise, () => `Uploading files to remote theme ${getProgress(uploadProgress)}`)
+
+      // const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+      // await trackProgress(deletePromise, () => `Cleaning your remote theme ${getProgress(deleteProgress)}`)
+
       if (options?.deferPartialWork) return
 
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
@@ -91,6 +115,328 @@ export function uploadTheme(
           timeout: 1000,
         }),
       )
+    },
+  }
+}
+
+export function uploadTheme2(
+  theme: Theme,
+  session: AdminSession,
+  checksums: Checksum[],
+  themeFileSystem: ThemeFileSystem,
+  options: UploadOptions = {},
+) {
+  const remoteChecksums = rejectGeneratedStaticAssets(checksums)
+  const uploadResults = new Map<string, Result>()
+  const getProgress = (params: {current: number; total: number}) =>
+    `[${Math.round((params.current / params.total) * 100)}%]`
+
+  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
+
+  const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
+    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, uploadResults),
+  )
+
+  const deleteJobPromise = uploadJobPromise
+    .then((result) => result.promise)
+    .then(() => reportFailedUploads(uploadResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
+
+  const workPromise = options?.deferPartialWork
+    ? themeCreationPromise
+    : deleteJobPromise.then((result) => result.promise)
+
+  if (options?.backgroundWorkCatch) {
+    // Aggregate all background work in a single promise and handle errors
+    Promise.all([
+      themeCreationPromise,
+      uploadJobPromise.then((result) => result.promise),
+      deleteJobPromise.then((result) => result.promise),
+    ]).catch(options.backgroundWorkCatch)
+  }
+
+  return {
+    uploadResults,
+    workPromise,
+    renderThemeSyncProgress: async () => {
+      if (options?.deferPartialWork) return
+
+      const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
+      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+
+      // Use a shorter prefix to avoid truncation issues
+      const storeDomain = session.storeFqdn.split('.')[0]
+      // Limit the theme name length to prevent truncation
+      const themeName = theme.name.length > 15 ? `${theme.name.substring(0, 12)}...` : theme.name
+      const themePrefix = `${storeDomain}:${themeName}`
+
+      // Create a promise that all UI rendering can resolve against
+      const renderPromise = renderConcurrent({
+        processes: [
+          {
+            prefix: themePrefix,
+            action: async (stdout, stderr, _signal) => {
+              try {
+                // Create a promise for both operations with their own output
+                const uploadPromiseWithOutput = (async () => {
+                  if (uploadProgress.total > 0) {
+                    stdout.write(`Uploading files to remote theme ${getProgress(uploadProgress)}\n`)
+                    await uploadPromise
+                    stdout.write(
+                      `Upload completed ${getProgress({current: uploadProgress.total, total: uploadProgress.total})}\n`,
+                    )
+                  }
+                })()
+
+                const deletePromiseWithOutput = (async () => {
+                  if (deleteProgress.total > 0 && !options.nodelete) {
+                    stdout.write(`Cleaning your remote theme ${getProgress(deleteProgress)}\n`)
+                    await deletePromise
+                    stdout.write(
+                      `Cleanup completed ${getProgress({
+                        current: deleteProgress.total,
+                        total: deleteProgress.total,
+                      })}\n`,
+                    )
+                  }
+                })()
+
+                // Wait for both operations to complete
+                await Promise.all([uploadPromiseWithOutput, deletePromiseWithOutput])
+
+                // Explicitly return to ensure proper completion
+              } catch (error) {
+                stderr.write(`Error: ${error instanceof Error ? error.message : String(error)}\n`)
+                // Re-throw to ensure promise rejection is properly propagated
+                throw error
+              }
+            },
+          },
+        ],
+        showTimestamps: true,
+        // Don't hold up the process
+        keepRunningAfterProcessesResolve: false,
+      })
+
+      // Make sure we wait for the rendering to complete
+      await renderPromise
+    },
+  }
+}
+
+export function uploadTheme3(
+  theme: Theme,
+  session: AdminSession,
+  checksums: Checksum[],
+  themeFileSystem: ThemeFileSystem,
+  options: UploadOptions = {},
+) {
+  const remoteChecksums = rejectGeneratedStaticAssets(checksums)
+  const uploadResults = new Map<string, Result>()
+  const getProgress = (params: {current: number; total: number}) =>
+    `[${Math.round((params.current / params.total) * 100)}%]`
+
+  // Store and theme name for logging
+  const store = session.storeFqdn.split('.')[0]
+  const themeName = theme.name
+
+  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
+
+  const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
+    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, uploadResults),
+  )
+
+  const deleteJobPromise = uploadJobPromise
+    .then((result) => result.promise)
+    .then(() => reportFailedUploads(uploadResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
+
+  const workPromise = options?.deferPartialWork
+    ? themeCreationPromise
+    : deleteJobPromise.then((result) => result.promise)
+
+  if (options?.backgroundWorkCatch) {
+    // Aggregate all background work in a single promise and handle errors
+    Promise.all([
+      themeCreationPromise,
+      uploadJobPromise.then((result) => result.promise),
+      deleteJobPromise.then((result) => result.promise),
+    ]).catch(options.backgroundWorkCatch)
+  }
+
+  return {
+    uploadResults,
+    workPromise,
+    renderThemeSyncProgress: async () => {
+      if (options?.deferPartialWork) return
+
+      const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
+
+      // Simple progress watcher for upload
+      const uploadWatcher = (async () => {
+        console.log(`${store}:${themeName} │ Uploading files to remote theme ${getProgress(uploadProgress)}`)
+        await uploadPromise
+        console.log(
+          `${store}:${themeName} │ Upload completed ${getProgress({
+            current: uploadProgress.total,
+            total: uploadProgress.total,
+          })}`,
+        )
+      })()
+
+      // Wait for upload to complete
+      await uploadWatcher
+
+      // Now handle deletion
+      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+
+      // Simple progress watcher for deletion
+      const deleteWatcher = (async () => {
+        if (deleteProgress.total > 0 && !options.nodelete) {
+          console.log(`${store}:${themeName} │ Cleaning your remote theme ${getProgress(deleteProgress)}`)
+          await deletePromise
+          console.log(
+            `${store}:${themeName} │ Cleanup completed ${getProgress({
+              current: deleteProgress.total,
+              total: deleteProgress.total,
+            })}`,
+          )
+        }
+      })()
+
+      // Wait for deletion to complete
+      await deleteWatcher
+
+      // Final completion message
+      console.log(`${store}:${themeName} │ All operations completed for ${store}:${themeName}`)
+    },
+  }
+}
+
+export function uploadTheme4(
+  theme: Theme,
+  session: AdminSession,
+  checksums: Checksum[],
+  themeFileSystem: ThemeFileSystem,
+  options: UploadOptions = {},
+) {
+  const remoteChecksums = rejectGeneratedStaticAssets(checksums)
+  const uploadResults = new Map<string, Result>()
+  const getProgress = (params: {current: number; total: number}) =>
+    `[${Math.round((params.current / params.total) * 100)}%]`
+
+  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
+
+  const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
+    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, uploadResults),
+  )
+
+  const deleteJobPromise = uploadJobPromise
+    .then((result) => result.promise)
+    .then(() => reportFailedUploads(uploadResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
+
+  const workPromise = options?.deferPartialWork
+    ? themeCreationPromise
+    : deleteJobPromise.then((result) => result.promise)
+
+  if (options?.backgroundWorkCatch) {
+    // Aggregate all background work in a single promise and handle errors
+    Promise.all([
+      themeCreationPromise,
+      uploadJobPromise.then((result) => result.promise),
+      deleteJobPromise.then((result) => result.promise),
+    ]).catch(options.backgroundWorkCatch)
+  }
+
+  return {
+    uploadResults,
+    workPromise,
+    renderThemeSyncProgress: async () => {
+      if (options?.deferPartialWork) return
+
+      // Get initial progress objects
+      const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
+      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+
+      // Create an AbortController to stop our periodic updates when done
+      const abortController = new AbortController()
+      const signal = abortController.signal
+
+      // Format store and theme name for prettier output
+      const storeName = session.storeFqdn.split('.')[0]
+      const themeName = theme.name.length > 20 ? `${theme.name.substring(0, 17)}...` : theme.name
+
+      try {
+        await renderConcurrent({
+          processes: [
+            {
+              prefix: `${storeName}:${themeName}`,
+              action: async (stdout, stderr, _signal) => {
+                try {
+                  // Set up interval to periodically report upload progress
+                  const uploadInterval = setInterval(() => {
+                    if (signal.aborted) return clearInterval(uploadInterval)
+
+                    if (uploadProgress.total > 0) {
+                      stdout.write(`Uploading files to theme ${getProgress(uploadProgress)}\n`)
+                    }
+                  }, 500)
+
+                  // Set up cleanup for the interval
+                  signal.addEventListener('abort', () => clearInterval(uploadInterval))
+
+                  // Wait for upload to complete
+                  await uploadPromise
+                  if (uploadProgress.total > 0) {
+                    stdout.write(
+                      `Upload completed ${getProgress({current: uploadProgress.total, total: uploadProgress.total})}\n`,
+                    )
+                  }
+
+                  // Set up interval for delete progress
+                  const deleteInterval = setInterval(() => {
+                    if (signal.aborted) return clearInterval(deleteInterval)
+
+                    if (deleteProgress.total > 0 && !options.nodelete) {
+                      stdout.write(`Cleaning remote theme ${getProgress(deleteProgress)}\n`)
+                    }
+                  }, 500)
+
+                  // Set up cleanup for the interval
+                  signal.addEventListener('abort', () => clearInterval(deleteInterval))
+
+                  // Wait for delete to complete
+                  await deletePromise
+                  if (deleteProgress.total > 0 && !options.nodelete) {
+                    stdout.write(
+                      `Cleanup completed ${getProgress({
+                        current: deleteProgress.total,
+                        total: deleteProgress.total,
+                      })}\n`,
+                    )
+                  }
+
+                  stdout.write(`Theme sync completed successfully\n`)
+                } catch (error) {
+                  stderr.write(`Error: ${error instanceof Error ? error.message : String(error)}\n`)
+                  throw error
+                } finally {
+                  // Make sure to abort to clean up intervals
+                  abortController.abort()
+                }
+              },
+            },
+          ],
+          abortSignal: signal,
+          showTimestamps: true,
+          keepRunningAfterProcessesResolve: false,
+        })
+      } catch (error) {
+        // Ensure we clean up intervals even if rendering fails
+        abortController.abort()
+        throw error
+      }
     },
   }
 }

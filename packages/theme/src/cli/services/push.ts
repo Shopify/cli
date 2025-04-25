@@ -23,6 +23,7 @@ import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 interface PushOptions {
   path: string
@@ -162,18 +163,43 @@ export async function push(flags: PushFlags, initialAdminSession?: AdminSession)
  * @param options - the options that modify how the theme gets uploaded
  */
 async function executePush(theme: Theme, session: AdminSession, options: PushOptions) {
+  // eslint-disable-next-line no-console
+  console.log('EXECUTING PUSH...')
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
-  const {uploadResults, renderThemeSyncProgress} = uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+  // eslint-disable-next-line no-console
+  console.log('EXECUTING PUSH NOW THAT THE FILE SYSTEM IS MOUNTED...')
+  const {
+    // uploadJobPromise, deleteJobPromise
+    renderThemeSyncProgress,
+  } = uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+
+  // eslint-disable-next-line no-console
+  console.log(`THE THEME ${theme.name} SYNC PROGRESS IS BEING RENDERED...`)
+
+  // await renderThemeSyncProgress()
+
+  // await uploadJobPromise
+  // await deleteJobPromise
 
   await renderThemeSyncProgress()
+
+  // eslint-disable-next-line no-console
+  console.log(`THE THEME ${theme.name} SYNC PROGRESS WAS RENDERED ${session.storeFqdn}...`)
 
   if (options.publish) {
     await themePublish(theme.id, session)
   }
 
-  await handlePushOutput(uploadResults, theme, session, options)
+  await sleep(3)
+
+  // eslint-disable-next-line no-console
+  console.log('1'.repeat(Math.floor(Math.random() * 4) + 1))
+
+  // eslint-disable-next-line no-console
+  console.log(`Your theme ${theme.name} was pushed successfully in the store ${session.storeFqdn}.`)
+  // await handlePushOutput(uploadResults, theme, session, options)
 }
 
 /**
