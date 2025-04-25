@@ -1,8 +1,9 @@
-import {formInfoBoxBody, resetHelpMessage} from './context.js'
+import {resetHelpMessage} from './context.js'
 import {renderLogs} from './app-logs/logs-command/ui.js'
 import {subscribeToAppLogs, sourcesForApp} from './app-logs/utils.js'
 import {renderJsonLogs} from './app-logs/logs-command/render-json-logs.js'
 import {fetchStore} from './dev/fetch.js'
+import {formatConfigInfoBody} from './format-config-info-body.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {getAppConfigurationFileName} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -134,11 +135,11 @@ function renderAppLogsConfigInfo(
   } else {
     devStores.push(storeFqdn)
   }
-  const body = formInfoBoxBody({appName, org, devStores, messages: [resetHelpMessage]})
+
   const fileName = configFile ? getAppConfigurationFileName(configFile) : undefined
 
   renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
-    body,
+    body: formatConfigInfoBody({appName, org, devStores, messages: [resetHelpMessage]}),
   })
 }
