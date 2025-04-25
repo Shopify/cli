@@ -703,7 +703,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const uiExtension = await getTestUIExtension({
           directory: tmpDir,
           // Remote DOM supported API version
-          apiVersion: '2025-07',
+          apiVersion: '2025-10',
           extensionPoints: [
             {
               target: 'admin.product-details.action.render',
@@ -940,7 +940,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           fileContent: '// JSX code',
           shouldRenderFileContent: '// JS code',
           // Remote DOM supported version
-          apiVersion: '2025-07',
+          apiVersion: '2025-10',
         })
         // Create tsconfig.json
         const tsconfigPath = joinPath(tmpDir, 'tsconfig.json')
@@ -981,7 +981,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           fileContent: '// JSX code',
           shouldRenderFileContent: '// JS code',
           // Remote DOM supported version
-          apiVersion: '2025-07',
+          apiVersion: '2025-10',
         })
 
         // Add another target sharing the same tsconfig.json as the main target
@@ -1050,7 +1050,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           tmpDir,
           fileContent: '// Preact code',
           // Remote DOM supported version
-          apiVersion: '2025-07',
+          apiVersion: '2025-10',
         })
 
         // Create tsconfig.json file for testing
@@ -1062,7 +1062,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // When
         await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
-          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-07 in your dependencies.',
+          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-10 in your dependencies.',
         )
 
         // No shopify.d.ts file should be created
@@ -1078,7 +1078,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           tmpDir,
           fileContent: '// Preact code',
           // Remote DOM supported version
-          apiVersion: '2025-07',
+          apiVersion: '2025-10',
         })
 
         // Change target to a target that does not exist in the library
