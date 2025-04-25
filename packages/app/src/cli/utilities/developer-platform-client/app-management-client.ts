@@ -303,7 +303,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true})
+    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true, forceRefresh: true})
     const session = await this.session()
     session.token = result.appManagementToken
     session.businessPlatformToken = result.businessPlatformToken
