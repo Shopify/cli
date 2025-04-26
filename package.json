@@ -1,7 +1,7 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@8.15.7",
+  "packageManager": "pnpm@10.8.1",
   "scripts": {
     "build-api-docs": "nx run-many --target=build-api-docs --all --skip-nx-cache",
     "build-dev-docs": "pnpm shopify docs generate && sh ./bin/docs/build-dev-docs.sh",

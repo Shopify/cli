@@ -13,6 +13,7 @@ import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
+import Test from './cli/commands/test/test.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
@@ -144,6 +145,7 @@ export const COMMANDS: any = {
   'notifications:list': List,
   'notifications:generate': Generate,
   'cache:clear': ClearCache,
+  test: Test,
 }
 
 export default runShopifyCLI
