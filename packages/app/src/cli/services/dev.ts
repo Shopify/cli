@@ -24,7 +24,7 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
-import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {setAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
@@ -112,8 +112,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    const patch = {build: {dev_store_url: store.shopDomain}}
-    await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
+    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain, app.configSchema)
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
@@ -237,7 +236,7 @@ export async function warnIfScopesDifferBeforeDev({
 }
 
 async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
-  setPreviousAppId(config.commandOptions.directory, config.remoteApp.apiKey)
+  setCachedAppInfo({directory: config.commandOptions.directory, previousAppId: config.remoteApp.apiKey})
 
   await logMetadataForDev({
     devOptions: config.commandOptions,
@@ -519,8 +518,4 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
       }
     })(),
   ])
-}
-
-function setPreviousAppId(directory: string, apiKey: string) {
-  setCachedAppInfo({directory, previousAppId: apiKey})
 }
