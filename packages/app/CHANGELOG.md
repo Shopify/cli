@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.78.2
+
+### Patch Changes
+
+- 65f92ff: Allow a deprecatedFromCliVersion to be configured for app management extension templates
+  Use 2025-10 as the version for remote dom UI extension
+  - @shopify/cli-kit@3.78.2
+  - @shopify/theme@3.78.2
+  - @shopify/plugin-cloudflare@3.78.2
+
 ## 3.78.1
 
 ### Patch Changes
