@@ -1,3 +1,4 @@
+import {isDevelopment} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {captureOutput, exec, terminalSupportsPrompting} from './system.js'
@@ -11,7 +12,7 @@ import {renderSelectPrompt} from './ui.js'
  */
 export function currentProcessIsGlobal(argv = process.argv): boolean {
   const currentExecutable = argv[1] ?? ''
-  return !currentExecutable.includes('node_modules')
+  return !currentExecutable.includes('node_modules') && !isDevelopment()
 }
 
 /**

@@ -1,5 +1,6 @@
 import {versionSatisfies} from '../node/node-package-manager.js'
 import {captureOutput} from '../node/system.js'
+import which from 'which'
 
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
@@ -25,6 +26,8 @@ export async function localCLIVersion(directory: string): Promise<string | undef
 export async function globalCLIVersion(): Promise<string | undefined> {
   try {
     const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
+    // This raises an error if the command is not found. We need it because execa runs the project dependency when the global version does not exist.
+    which.sync('shopify')
     const version = await captureOutput('shopify', ['version'], {env})
     if (versionSatisfies(version, `>=3.59.0`)) {
       return version

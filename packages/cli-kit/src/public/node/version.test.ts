@@ -2,8 +2,10 @@ import {localCLIVersion, globalCLIVersion} from './version.js'
 import {inTemporaryDirectory} from '../node/fs.js'
 import {captureOutput} from '../node/system.js'
 import {describe, expect, test, vi} from 'vitest'
+import which from 'which'
 
 vi.mock('../node/system.js')
+vi.mock('which')
 
 describe('localCLIVersion', () => {
   test('returns the version of the local CLI', async () => {
@@ -60,7 +62,7 @@ describe('globalCLIVersion', () => {
 
   test('returns undefined when the global version is not installed', async () => {
     // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('command not found: shopify'))
+    vi.mocked(which).mockImplementationOnce(() => Promise.resolve('command not found: shopify'))
 
     // When
     const got = await globalCLIVersion()
