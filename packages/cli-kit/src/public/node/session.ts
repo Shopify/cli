@@ -31,6 +31,7 @@ export interface AdminSession {
 
 interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
+  forceRefresh?: boolean
 }
 
 /**
