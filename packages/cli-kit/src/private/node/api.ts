@@ -68,14 +68,6 @@ type VerboseResponse<T> =
   | CanRetryErrorResponse
   | UnauthorizedErrorResponse
 
-export interface UnauthorizedHandlerThrow {
-  action: 'throw'
-}
-// `undefined` is a legacy version of this.
-type UnauthorizedHandlerContinue = {action: 'continue'} | undefined
-
-export type UnauthorizedHandlerResult = Promise<UnauthorizedHandlerThrow | UnauthorizedHandlerContinue>
-
 function isARetryableNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
     const networkErrorMessages = [
@@ -285,7 +277,7 @@ ${result.sanitizedHeaders}
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
-  unauthorizedHandler?: () => UnauthorizedHandlerResult,
+  unauthorizedHandler?: () => Promise<void>,
   retryOptions: {
     limitRetriesTo?: number
     defaultDelayMs?: number
@@ -296,9 +288,6 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
 ): Promise<T> {
   let retriesUsed = 0
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
-
-  // by default, throw an error if we get a 401
-  const unauthorizedHandlerFunction = unauthorizedHandler ?? (() => Promise.resolve({action: 'throw'}))
 
   let result = await makeVerboseRequest(requestOptions)
 
@@ -326,21 +315,11 @@ ${result.sanitizedHeaders}
         throw result.error
       }
     } else if (result.status === 'unauthorized') {
-      // eslint-disable-next-line no-await-in-loop
-      let unauthorizedHandlerResult = await unauthorizedHandlerFunction()
-
-      // legacy result format
-      if (unauthorizedHandlerResult === undefined) {
-        unauthorizedHandlerResult = {action: 'continue'}
-      }
-
-      switch (unauthorizedHandlerResult.action) {
-        case 'continue':
-          // let the request retry as-is
-          break
-        case 'throw':
-          // this is the default behaviour
-          throw result.clientError
+      if (unauthorizedHandler) {
+        // eslint-disable-next-line no-await-in-loop
+        await unauthorizedHandler()
+      } else {
+        throw result.clientError
       }
     }
 

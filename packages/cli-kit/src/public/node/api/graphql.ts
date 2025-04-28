@@ -1,7 +1,7 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
-import {retryAwareRequest, UnauthorizedHandlerResult, UnauthorizedHandlerThrow} from '../../../private/node/api.js'
+import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
 import {nonRandomUUID} from '../crypto.js'
 import {
@@ -41,13 +41,8 @@ export interface CacheOptions {
 }
 
 interface RefreshTokenOnAuthorizedResponseRetryWithNewToken {
-  action: 'retry'
-  token: string
+  token?: string
 }
-
-export type RefreshTokenOnAuthorizedResponse = Promise<
-  UnauthorizedHandlerThrow | RefreshTokenOnAuthorizedResponseRetryWithNewToken
->
 
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
@@ -56,25 +51,25 @@ interface GraphQLRequestBaseOptions<TResult> {
   addedHeaders?: {[header: string]: string}
   responseOptions?: GraphQLResponseOptions<TResult>
   cacheOptions?: CacheOptions
-  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponse
+  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponseRetryWithNewToken
 }
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
   variables?: Variables
-  unauthorizedHandler?: () => UnauthorizedHandlerResult
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
-  unauthorizedHandler?: () => UnauthorizedHandlerResult
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
-  unauthorizedHandler?: () => UnauthorizedHandlerResult
+  unauthorizedHandler?: () => Promise<void>
 }
 
 export interface GraphQLResponseOptions<T> {
@@ -146,36 +141,49 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     }
   }
 
-  const unauthorizedHandlerFunction =
-    unauthorizedHandler ??
-    (async () => {
-      if (refreshTokenOnAuthorizedResponse) {
+  const unauthorizedHandlerFunction = refreshTokenOnAuthorizedResponse
+    ? async () => {
         const refreshTokenResult = await refreshTokenOnAuthorizedResponse()
-        if (refreshTokenResult.action === 'retry') {
-          const {token: refreshedToken} = refreshTokenResult
+        if (refreshTokenResult.token) {
           const {client: newClient, headers: newHeaders} = await createGraphQLClient({
             url,
             addedHeaders,
-            token: refreshedToken,
+            token: refreshTokenResult.token,
           })
           client = newClient
           headers = newHeaders
-          return {action: 'continue'}
+          return true
         } else {
-          return {action: 'throw'}
+          return false
         }
-      } else {
-        return {action: 'throw'}
       }
-    })
+    : undefined
 
   const executeWithTimer = () =>
     runWithTimer('cmd_all_timing_network_ms')(async () => {
-      const response = await retryAwareRequest(
-        {request: performRequest, url, ...requestBehaviour},
-        responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-        unauthorizedHandlerFunction,
-      )
+      let response
+      try {
+        response = await retryAwareRequest(
+          {request: performRequest, url, ...requestBehaviour},
+          responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+          unauthorizedHandler,
+        )
+      } catch (error) {
+        if (error instanceof ClientError && unauthorizedHandlerFunction) {
+          const shouldRetry = await unauthorizedHandlerFunction()
+          if (shouldRetry) {
+            response = await retryAwareRequest(
+              {request: performRequest, url, ...requestBehaviour},
+              responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+              unauthorizedHandler,
+            )
+          } else {
+            throw error
+          }
+        } else {
+          throw error
+        }
+      }
 
       if (responseOptions?.onResponse) {
         responseOptions.onResponse(response)
