@@ -126,7 +126,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
     expect(spyContext).toHaveBeenCalledWith({outputPrefix: 'test-ui-extension', stripAnsi: false}, expect.anything())
 
     // In theory this shouldn't be necessary, but vitest doesn't restore spies automatically.
@@ -195,7 +195,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
     expect(stdout.write).toHaveBeenCalledWith(
       expect.stringContaining('Access scopes auto-granted: read_products, write_products'),
     )
@@ -296,6 +296,8 @@ describe('pushUpdatesForDevSession', () => {
   test('sets correct status messages during dev session lifecycle', async () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(`Preparing app preview on ${options.storeFqdn}`))
 
     const statusSpy = vi.spyOn(devSessionStatusManager, 'setMessage')
 
