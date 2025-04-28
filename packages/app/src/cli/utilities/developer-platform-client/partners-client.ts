@@ -162,7 +162,7 @@ import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shop
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
+import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
@@ -246,8 +246,9 @@ export class PartnersClient implements DeveloperPlatformClient {
     query: string,
     variables: GraphQLVariables | undefined = undefined,
     cacheOptions?: CacheOptions,
+    preferredBehaviour?: RequestModeInput,
   ): Promise<T> {
-    return partnersRequest(query, await this.token(), variables, cacheOptions)
+    return partnersRequest(query, await this.token(), variables, cacheOptions, preferredBehaviour)
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
@@ -444,7 +445,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const {uid, ...otherFields} = element
       return otherFields
     })
-    return this.request(AppDeploy, variables)
+    return this.request(AppDeploy, variables, undefined, 'slow-request')
   }
 
   async release({

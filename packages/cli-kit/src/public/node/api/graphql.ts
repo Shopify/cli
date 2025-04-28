@@ -12,7 +12,7 @@ import {
   timeIntervalToMilliseconds,
 } from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
-import {abortSignalFromRequestBehaviour, requestMode} from '../http.js'
+import {abortSignalFromRequestBehaviour, requestMode, RequestModeInput} from '../http.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -47,6 +47,7 @@ interface GraphQLRequestBaseOptions<TResult> {
   addedHeaders?: {[header: string]: string}
   responseOptions?: GraphQLResponseOptions<TResult>
   cacheOptions?: CacheOptions
+  preferredBehaviour?: RequestModeInput
 }
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
@@ -87,7 +88,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
 
   debugLogRequestInfo(api, queryAsString, url, variables, headers)
 
-  const requestBehaviour = requestMode('default')
+  const requestBehaviour = requestMode(options.preferredBehaviour ?? 'default')
 
   const clientOptions = {agent: await httpsAgent(), headers}
   const client = new GraphQLClient(url, clientOptions)

@@ -623,27 +623,34 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith('gid://shopify/Organization/123', expect.anything(), 'token', {
-      appId: 'gid://shopify/App/123',
-      version: {
-        source: {
-          name: 'Test App',
-          modules: [
-            {
-              uid: 'branding',
-              type: BrandingSpecIdentifier,
-              handle: 'test-app',
-              config: {name: 'Test App'},
-            },
-          ],
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          source: {
+            name: 'Test App',
+            modules: [
+              {
+                uid: 'branding',
+                type: BrandingSpecIdentifier,
+                handle: 'test-app',
+                config: {name: 'Test App'},
+              },
+            ],
+          },
+        },
+        metadata: {
+          versionTag,
+          message,
+          sourceControlUrl: commitReference,
         },
       },
-      metadata: {
-        versionTag,
-        message,
-        sourceControlUrl: commitReference,
-      },
-    })
+      undefined,
+      'slow-request',
+    )
   })
 
   test('uses bundleUrl when provided instead of modules', async () => {
@@ -673,13 +680,20 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith('gid://shopify/Organization/123', expect.anything(), 'token', {
-      appId: 'gid://shopify/App/123',
-      version: {
-        sourceUrl: bundleUrl,
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          sourceUrl: bundleUrl,
+        },
+        metadata: expect.any(Object),
       },
-      metadata: expect.any(Object),
-    })
+      undefined,
+      'slow-request',
+    )
   })
 
   test('updates name from branding module if present', async () => {
@@ -729,6 +743,8 @@ describe('deploy', () => {
           },
         },
       }),
+      undefined,
+      'slow-request',
     )
   })
 

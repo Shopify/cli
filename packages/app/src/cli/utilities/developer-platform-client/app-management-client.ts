@@ -704,7 +704,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
       metadata,
     }
 
-    const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      CreateAppVersion,
+      await this.token(),
+      variables,
+      undefined,
+      'slow-request',
+    )
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
