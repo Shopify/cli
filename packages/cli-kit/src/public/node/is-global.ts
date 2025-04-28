@@ -3,6 +3,7 @@ import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {captureOutput, exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
+import which from 'which'
 
 /**
  * Returns true if the current process is running in a global context.
@@ -22,6 +23,8 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
  */
 export async function isGlobalCLIInstalled(): Promise<boolean> {
   try {
+    // This raises an error if the command is not found. We need it because execa runs the project dependency when the global version does not exist.
+    which.sync('shopify')
     const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
     const output = await captureOutput('shopify', ['app'], {env})
     // Installed if `app dev` is available globally
