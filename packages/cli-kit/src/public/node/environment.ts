@@ -119,6 +119,6 @@ export function maxRequestTimeForNetworkCallsMs(environment = getEnvironmentVari
   if (maxRequestTime && !isNaN(Number(maxRequestTime))) {
     return Number(maxRequestTime)
   }
-  // 15 seconds is the default
-  return 15 * 1000
+  // 30 seconds is the default
+  return 30 * 1000
 }
