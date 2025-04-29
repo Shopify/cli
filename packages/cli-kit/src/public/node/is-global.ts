@@ -1,9 +1,9 @@
 import {isDevelopment} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
-import {captureOutput, exec, terminalSupportsPrompting} from './system.js'
+import {exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
-import which from 'which'
+import {globalCLIVersion} from './version.js'
 
 /**
  * Returns true if the current process is running in a global context.
@@ -14,25 +14,6 @@ import which from 'which'
 export function currentProcessIsGlobal(argv = process.argv): boolean {
   const currentExecutable = argv[1] ?? ''
   return !currentExecutable.includes('node_modules') && !isDevelopment()
-}
-
-/**
- * Returns true if the global CLI is installed.
- *
- * @returns `true` if the global CLI is installed.
- */
-export async function isGlobalCLIInstalled(): Promise<boolean> {
-  try {
-    // This raises an error if the command is not found. We need it because execa runs the project dependency when the global version does not exist.
-    which.sync('shopify')
-    const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
-    const output = await captureOutput('shopify', ['app'], {env})
-    // Installed if `app dev` is available globally
-    return output.includes('app dev')
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
-  }
 }
 
 /**
@@ -58,7 +39,7 @@ export interface InstallGlobalCLIPromptResult {
  */
 export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
   if (!terminalSupportsPrompting()) return {install: false, alreadyInstalled: false}
-  if (await isGlobalCLIInstalled()) {
+  if (await globalCLIVersion()) {
     return {install: false, alreadyInstalled: true}
   }
   const result = await renderSelectPrompt({

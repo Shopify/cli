@@ -40,7 +40,9 @@ describe('localCLIVersion', () => {
 describe('globalCLIVersion', () => {
   test('returns the version when a recent CLI is installed globally', async () => {
     // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('3.65.0'))
+    // TS is not detecting the return type correctly, so we need to cast it
+    vi.mocked(which.sync).mockReturnValue(['path/to/shopify'] as unknown as string)
+    vi.mocked(captureOutput).mockResolvedValueOnce('@shopify/cli/3.65.0')
 
     // When
     const got = await globalCLIVersion()
@@ -51,7 +53,9 @@ describe('globalCLIVersion', () => {
 
   test('returns undefined when the global version is older than 3.59', async () => {
     // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('3.55.0'))
+    // TS is not detecting the return type correctly, so we need to cast it
+    vi.mocked(which.sync).mockReturnValue(['path/to/shopify'] as unknown as string)
+    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('@shopify/cli/3.50.0'))
 
     // When
     const got = await globalCLIVersion()
@@ -62,7 +66,7 @@ describe('globalCLIVersion', () => {
 
   test('returns undefined when the global version is not installed', async () => {
     // Given
-    vi.mocked(which).mockImplementationOnce(() => Promise.resolve('command not found: shopify'))
+    vi.mocked(which.sync).mockReturnValue(['node_modules/bin/shopify'] as unknown as string)
 
     // When
     const got = await globalCLIVersion()
