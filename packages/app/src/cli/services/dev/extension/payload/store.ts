@@ -3,6 +3,7 @@ import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {numberFromGid} from '../../../../utilities/developer-platform-client/app-management-client.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 import {EventEmitter} from 'events'
@@ -26,7 +27,7 @@ export async function getExtensionsPayloadStoreRawPayload(
       url: await buildAppURLForWeb(options.storeFqdn, options.apiKey),
       mobileUrl: await buildAppURLForMobile(options.storeFqdn, options.apiKey),
     },
-    appId: options.id,
+    appId: options.id ? numberFromGid(options.id).toString() : undefined,
     version: options.manifestVersion,
     root: {
       url: new URL('/extensions', options.url).toString(),

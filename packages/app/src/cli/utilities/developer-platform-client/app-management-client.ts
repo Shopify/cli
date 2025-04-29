@@ -1094,7 +1094,8 @@ function idFromEncodedGid(gid: string): string {
 }
 
 // gid://organization/Organization/1234 => 1234
-function numberFromGid(gid: string): number {
+export function numberFromGid(gid: string): number {
+  if (Number(gid)) return Number(gid)
   return Number(gid.match(/^gid.*\/(\d+)$/)![1])
 }
 
