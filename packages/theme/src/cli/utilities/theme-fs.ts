@@ -112,7 +112,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
           case 'change':
             return handleFileUpdate(eventName, themeId, adminSession, fileKey)
           case 'unlink':
-            return handleFileDelete(themeId, adminSession, fileKey)
+            return handleFileDelete(themeId, adminSession, fileKey, uploadErrors)
         }
       })
       .catch((error) => {
@@ -176,10 +176,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     })
   }
 
-  const handleFileDelete = (themeId: string, adminSession: AdminSession, fileKey: string) => {
+  const handleFileDelete = (
+    themeId: string,
+    adminSession: AdminSession,
+    fileKey: string,
+    uploadErrors: Map<string, string[]>,
+  ) => {
     if (isFileIgnored(fileKey)) return
 
     // Optimistically delete the file from the local file system.
+    uploadErrors.delete(fileKey)
     files.delete(fileKey)
     unsyncedFileKeys.add(fileKey)
 
