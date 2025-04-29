@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.78.3
+
+### Patch Changes
+
+- b537d53: Update cli-hydrogen to 10.0.1
+
 ## 3.78.2
 
 ## 3.78.1
