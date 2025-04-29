@@ -271,8 +271,8 @@ importers:
         specifier: 3.78.2
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 10.0.0
-        version: 10.0.0(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 10.0.1
+        version: 10.0.1(@graphql-codegen/cli@5.0.4)(graphql@16.10.0)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
         specifier: 3.78.2
         version: link:../cli-kit
@@ -6299,15 +6299,15 @@ packages:
     resolution: {integrity: sha512-fTIQwLF+Qhuws31iw7Ncl1R3HUDtGwIipiJ9iU+UsDUwMhegFcQKQHd51nZjb7CArq0MvON8rbgCGQYWHUKAdg==}
     dev: true
 
-  /@shopify/cli-hydrogen@10.0.0(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-tCMumGpFekiUF/0qm7vONNklj/0tSvA5ahLddabK+7nZNr3YIwWbCgGB/Ly+mo3hVE5u8451V35sqLJ9uxThpQ==}
+  /@shopify/cli-hydrogen@10.0.1(@graphql-codegen/cli@5.0.4)(graphql@16.10.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-wqkuQ37Ymslpowzqh8jWJRU8bKa5Ln0JB2Kaut3PbjwmuCa++vnMxvwpmir6Cnp8Y5SwpfYd1w5ANPqYyO2L0g==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.16.1
       '@shopify/hydrogen-codegen': ^0.3.3
-      '@shopify/mini-oxygen': ^3.2.0
+      '@shopify/mini-oxygen': ^3.2.1
       graphql-config: ^5.0.3
       vite: 5.4.12
     peerDependenciesMeta:
@@ -6328,7 +6328,7 @@ packages:
       '@graphql-codegen/cli': 5.0.4(@types/node@18.19.70)(graphql@16.10.0)(typescript@5.7.3)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.10(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.1
       chokidar: 3.5.3
@@ -6346,6 +6346,7 @@ packages:
       ts-morph: 20.0.0
       use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
     transitivePeerDependencies:
+      - graphql
       - react
       - react-dom
     dev: true
@@ -6437,14 +6438,14 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.6.10(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-Riekd/TGICdyW4ly4nIk+Chn2K+PvDzrDLjDnQpjwxAERjn2Xl5Q0Mo4rX24o+sAjuA1EUMx1KpyohLuwRMc3w==}
+  /@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0):
+    resolution: {integrity: sha512-LxJUkHL1Oudxy712XHTBd1se3Gq2w+/FYVyj5rAmyiNSFfbXD3zHWHjB5zbeeFjbRIPhbJW3OgRjJgn7VIo8EA==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
     peerDependencies:
       '@oclif/core': 3.26.5
-      '@shopify/cli-kit': ^3.58.0
+      '@shopify/cli-kit': ^3.78.1
     dependencies:
       '@bugsnag/core': 8.2.0
       '@bugsnag/js': 8.2.0
@@ -6452,6 +6453,9 @@ packages:
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
+      graphql-request: 7.1.2(graphql@16.10.0)
+    transitivePeerDependencies:
+      - graphql
     dev: true
 
   /@shopify/polaris-icons@8.0.0:
@@ -11921,6 +11925,15 @@ packages:
       graphql: 16.10.0
     transitivePeerDependencies:
       - encoding
+
+  /graphql-request@7.1.2(graphql@16.10.0):
+    resolution: {integrity: sha512-+XE3iuC55C2di5ZUrB4pjgwe+nIQBuXVIK9J98wrVwojzDW3GMdSBZfxUk8l4j9TieIpjpggclxhNEU9ebGF8w==}
+    peerDependencies:
+      graphql: 14 - 16
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.10.0)
+      graphql: 16.10.0
+    dev: true
 
   /graphql-tag@2.12.6(graphql@16.10.0):
     resolution: {integrity: sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==}
