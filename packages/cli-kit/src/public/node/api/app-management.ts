@@ -3,6 +3,7 @@ import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
+import {RequestModeInput} from '../http.js'
 import Bottleneck from 'bottleneck'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
@@ -44,6 +45,10 @@ export const appManagementAppLogsUrl = async (
   return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }
 
+export interface RequestOptions {
+  requestMode: RequestModeInput
+}
+
 /**
  * Executes an org-scoped GraphQL query against the App Management API. Uses typed documents.
  *
@@ -52,6 +57,7 @@ export const appManagementAppLogsUrl = async (
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options for the request. If not present, the request will not be cached.
+ * @param requestOptions - Preferred behaviour for the request.
  * @returns The response of the query of generic type <T>.
  */
 export async function appManagementRequestDoc<TResult, TVariables extends Variables>(
@@ -60,6 +66,7 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
   token: string,
   variables?: TVariables,
   cacheOptions?: CacheOptions,
+  requestOptions?: RequestOptions,
 ): Promise<TResult> {
   // For app management, we need to cache the response based on the orgId.
   const cacheExtraKey = (cacheOptions?.cacheExtraKey ?? '') + orgId
@@ -71,6 +78,7 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
       query,
       variables,
       cacheOptions: newCacheOptions,
+      preferredBehaviour: requestOptions?.requestMode,
     }),
   )
 
