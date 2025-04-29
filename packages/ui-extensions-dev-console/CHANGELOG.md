@@ -1,5 +1,7 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.78.3
+
 ## 3.78.2
 
 ## 3.78.1
