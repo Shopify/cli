@@ -96,21 +96,17 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(setManyAppConfigValues).toHaveBeenCalledWith(
-      appWithConfig.configuration.path,
-      [
-        {keyPath: 'application_url', value: 'https://example.com'},
-        {
-          keyPath: 'auth.redirect_urls',
-          value: [
-            'https://example.com/auth/callback',
-            'https://example.com/auth/shopify/callback',
-            'https://example.com/api/auth/callback',
-          ],
-        },
-      ],
-      expect.any(Object),
-    )
+    expect(setManyAppConfigValues).toHaveBeenCalledWith(appWithConfig.configuration.path, [
+      {keyPath: 'application_url', value: 'https://example.com'},
+      {
+        keyPath: 'auth.redirect_urls',
+        value: [
+          'https://example.com/auth/callback',
+          'https://example.com/auth/shopify/callback',
+          'https://example.com/api/auth/callback',
+        ],
+      },
+    ])
   })
 
   test('throws an error if requests has a user error', async () => {
@@ -183,24 +179,20 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(setManyAppConfigValues).toHaveBeenCalledWith(
-      appWithConfig.configuration.path,
-      [
-        {keyPath: 'application_url', value: 'https://example.com'},
-        {
-          keyPath: 'auth.redirect_urls',
-          value: [
-            'https://example.com/auth/callback',
-            'https://example.com/auth/shopify/callback',
-            'https://example.com/api/auth/callback',
-          ],
-        },
-        {keyPath: 'app_proxy.url', value: 'https://example.com'},
-        {keyPath: 'app_proxy.subpath', value: 'subpath'},
-        {keyPath: 'app_proxy.prefix', value: 'prefix'},
-      ],
-      expect.any(Object),
-    )
+    expect(setManyAppConfigValues).toHaveBeenCalledWith(appWithConfig.configuration.path, [
+      {keyPath: 'application_url', value: 'https://example.com'},
+      {
+        keyPath: 'auth.redirect_urls',
+        value: [
+          'https://example.com/auth/callback',
+          'https://example.com/auth/shopify/callback',
+          'https://example.com/api/auth/callback',
+        ],
+      },
+      {keyPath: 'app_proxy.url', value: 'https://example.com'},
+      {keyPath: 'app_proxy.subpath', value: 'subpath'},
+      {keyPath: 'app_proxy.prefix', value: 'prefix'},
+    ])
   })
 })
 
@@ -385,11 +377,9 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(setManyAppConfigValues).toHaveBeenCalledWith(
-      localApp.configuration.path,
-      [{keyPath: 'build.automatically_update_urls_on_dev', value: true}],
-      localApp.configSchema,
-    )
+    expect(setManyAppConfigValues).toHaveBeenCalledWith(localApp.configuration.path, [
+      {keyPath: 'build.automatically_update_urls_on_dev', value: true},
+    ])
   })
 })
 
