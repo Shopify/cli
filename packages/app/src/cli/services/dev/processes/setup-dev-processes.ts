@@ -93,7 +93,6 @@ export async function setupDevProcesses({
   const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
-  const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
@@ -185,17 +184,17 @@ export async function setupDevProcesses({
       apiSecret,
       remoteAppUpdated,
     }),
-    shouldPerformAppLogPolling
-      ? await setupAppLogsPollingProcess({
-          developerPlatformClient,
-          subscription: {
-            shopIds: [Number(storeId)],
-            apiKey,
-          },
-          storeName: storeFqdn,
-          organizationId: remoteApp.organizationId,
-        })
-      : undefined,
+    await setupAppLogsPollingProcess({
+      developerPlatformClient,
+      subscription: {
+        shopIds: [Number(storeId)],
+        apiKey,
+      },
+      storeName: storeFqdn,
+      organizationId: remoteApp.organizationId,
+      localApp,
+      appWatcher,
+    }),
     await setupAppWatcherProcess({
       appWatcher,
     }),

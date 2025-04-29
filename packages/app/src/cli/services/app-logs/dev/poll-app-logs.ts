@@ -28,6 +28,7 @@ export const pollAppLogs = async ({
   resubscribeCallback,
   storeName,
   organizationId,
+  abortSignal,
 }: {
   stdout: Writable
   appLogsFetchInput: AppLogsOptions
@@ -36,7 +37,12 @@ export const pollAppLogs = async ({
   resubscribeCallback: () => Promise<string>
   storeName: string
   organizationId: string
+  abortSignal?: AbortSignal
 }) => {
+  if (abortSignal?.aborted) {
+    return
+  }
+
   try {
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
@@ -116,6 +122,7 @@ export const pollAppLogs = async ({
         resubscribeCallback,
         storeName,
         organizationId,
+        abortSignal,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -138,6 +145,7 @@ export const pollAppLogs = async ({
         resubscribeCallback,
         storeName,
         organizationId,
+        abortSignal,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
