@@ -333,7 +333,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
-    const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
+    const variables: ExtensionSpecificationsQueryVariables = {apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
     return result.extensionSpecifications.map((spec) => ({

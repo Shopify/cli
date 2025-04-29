@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const ExtensionSpecificationsQuery = gql`
-  query fetchSpecifications($api_key: String!) {
-    extensionSpecifications(apiKey: $api_key) {
+  query fetchSpecifications($apiKey: String!) {
+    extensionSpecifications(apiKey: $apiKey) {
       name
       externalName
       externalIdentifier
@@ -26,7 +26,7 @@ export const ExtensionSpecificationsQuery = gql`
 `
 
 export interface ExtensionSpecificationsQueryVariables {
-  api_key: string
+  apiKey: string
 }
 
 export interface RemoteSpecification {
