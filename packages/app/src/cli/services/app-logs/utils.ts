@@ -194,36 +194,44 @@ export const subscribeToAppLogs = async (
   variables: AppLogsSubscribeMutationVariables,
   organizationId: string,
 ): Promise<string> => {
-  // Refresh the token since it might have expired since the last subscribeToAppLogs request
-  await developerPlatformClient.refreshToken()
+  console.log('MED MAN DEV - subscribeToAppLogs - Starting subscription');
 
-  // Now try the subscription with the fresh token
-  const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
+  try {
+    // Refresh the token since it might have expired since the last subscribeToAppLogs request
+    await developerPlatformClient.refreshToken()
 
-  if (!result.appLogsSubscribe) {
-    throw new AbortError('Failed to subscribe to app logs: No response received')
-  }
+    // Now try the subscription with the fresh token
+    console.log('MED MAN DEV - subscribeToAppLogs - Calling subscribeToAppLogs API with variables:',
+                JSON.stringify({apiKey: variables.apiKey, shopIds: variables.shopIds}));
 
-  const {jwtToken, success, errors} = result.appLogsSubscribe
+    const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
 
-  outputDebug(`Token: ${jwtToken}\n`)
-  outputDebug(`API Key: ${variables.apiKey}\n`)
-
-  if (errors && errors.length > 0) {
-    const errorOutput = errors.join(', ')
-    outputWarn(`Errors subscribing to app logs: ${errorOutput}`)
-    outputWarn('App log streaming is not available in this session.')
-    throw new AbortError(errorOutput)
-  } else {
-    if (!jwtToken) {
+    if (!result.appLogsSubscribe) {
       throw new AbortError('Failed to subscribe to app logs: No response received')
     }
-    const shopIdsArray = Array.isArray(variables.shopIds) ? variables.shopIds : [variables.shopIds]
-    outputDebug(`Subscribed to App Events for shop ID(s) ${shopIdsArray.join(', ')}`)
-    if (success !== undefined) outputDebug(`Success: ${success}\n`)
-  }
 
-  return jwtToken
+    const {jwtToken, success, errors} = result.appLogsSubscribe
+    console.log('MED MAN DEV - subscribeToAppLogs - JWT Token:', jwtToken ? 'received' : 'missing',
+                'Success:', success, 'Errors:', errors?.length || 0);
+
+    if (errors && errors.length > 0) {
+      const errorOutput = errors.join(', ')
+      outputWarn(`Errors subscribing to app logs: ${errorOutput}`)
+      outputWarn('App log streaming is not available in this session.')
+      throw new AbortError(errorOutput)
+    } else {
+      if (!jwtToken) {
+        throw new AbortError('Failed to subscribe to app logs: No JWT token received')
+      }
+      const shopIdsArray = Array.isArray(variables.shopIds) ? variables.shopIds : [variables.shopIds]
+      outputDebug(`Subscribed to App Events for shop ID(s) ${shopIdsArray.join(', ')}`)
+      if (success !== undefined) outputDebug(`Success: ${success}\n`)
+    }
+
+    return jwtToken
+  } catch (error) {
+    throw error;
+  }
 }
 
 export function prettyPrintJsonIfPossible(json: unknown) {

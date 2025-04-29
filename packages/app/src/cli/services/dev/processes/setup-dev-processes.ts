@@ -18,12 +18,14 @@ import {LocalhostCert, getProxyingWebServer} from '../../../utilities/app/http-r
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputDebug} from '@shopify/cli-kit/node/output'
+import {Writable} from 'stream'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 interface ProxyServerProcess
   extends BaseProcess<{
@@ -93,7 +95,7 @@ export async function setupDevProcesses({
   const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
-  const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
+  let shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
 
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
@@ -109,6 +111,16 @@ export async function setupDevProcesses({
     : undefined
 
   const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
+
+  const setupLogsPolling = async () => {
+    const logsProcess = await setupAppLogsPollingProcess({
+      developerPlatformClient,
+      subscription: {shopIds: [Number(storeId)], apiKey},
+      storeName: storeFqdn,
+      organizationId: remoteApp.organizationId,
+    })
+    return logsProcess
+  }
 
   const processes = [
     ...(await setupWebProcesses({
@@ -186,16 +198,7 @@ export async function setupDevProcesses({
       remoteAppUpdated,
     }),
     shouldPerformAppLogPolling
-      ? await setupAppLogsPollingProcess({
-          developerPlatformClient,
-          subscription: {
-            shopIds: [Number(storeId)],
-            apiKey,
-          },
-          storeName: storeFqdn,
-          organizationId: remoteApp.organizationId,
-        })
-      : undefined,
+      ? await setupLogsPolling() : undefined,
     await setupAppWatcherProcess({
       appWatcher,
     }),
@@ -203,6 +206,101 @@ export async function setupDevProcesses({
 
   // Add http server proxy & configure ports, for processes that need it
   const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort, network.reverseProxyCert)
+
+  // Set up a listener to detect when functions are added during the dev session
+  outputInfo('Setting up app watcher listener for detecting function extensions');
+
+  // Custom function to properly launch a process with stdout/stderr
+  const launchProcess = async <T extends DevProcessDefinition>(process: T) => {
+    // Create an abort controller and get its signal
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    try {
+      outputDebug('Launching process directly with global process.stdout/stderr');
+
+      // Directly invoke the process function with the proper parameters
+      return await process.function(
+        {
+          stdout: global.process.stdout,
+          stderr: global.process.stderr,
+          abortSignal: signal
+        },
+        process.options as any // Type assertion needed due to union type constraints
+      );
+    } catch (error) {
+      outputInfo(`❌ Error launching process: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
+  // Create a function to start log polling that can be reused
+  const startLogPolling = async (appEvent: AppEvent) => {
+    shouldPerformAppLogPolling = true;
+
+    try {
+      const functionExtensions = appEvent.app.allExtensions.filter(ext => ext.isFunctionExtension);
+      const extensionNames = functionExtensions.map(e => e.name).join(', ');
+
+      outputInfo(`⚡ Starting function logs polling for extensions: ${extensionNames}`);
+
+      const logsPollingProcess = await setupLogsPolling();
+      if (logsPollingProcess) {
+        // Add to our processes array for bookkeeping
+        processesWithProxy.push(logsPollingProcess);
+
+        // Directly launch the process with proper stdout/stderr
+        outputInfo('Launching log polling process...');
+        launchProcess(logsPollingProcess).catch(error => {
+          outputInfo(`❌ Error in log polling process: ${error instanceof Error ? error.message : String(error)}`);
+        });
+
+        outputInfo('✅ Function log polling started successfully');
+      } else {
+        outputInfo('❌ Failed to create log polling process - undefined result returned');
+      }
+    } catch (error) {
+      outputInfo(`❌ Error setting up log polling: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
+  appWatcher.onEvent(async (appEvent) => {
+    outputDebug(`App event received with ${appEvent.extensionEvents.length} extension events ${appEvent.appWasReloaded ? '(app was reloaded)' : ''}`);
+
+    // Always check if the app has function extensions
+    const appHasFunctions = appEvent.app.allExtensions.some(ext => ext.isFunctionExtension);
+    outputDebug(`App has function extensions: ${appHasFunctions}, shouldPerformAppLogPolling: ${shouldPerformAppLogPolling}`);
+
+    // If the app has functions and log polling isn't running, start it
+    if (appHasFunctions && !shouldPerformAppLogPolling) {
+      outputDebug('Starting log polling because app has functions');
+      await startLogPolling(appEvent);
+      return;
+    }
+
+    // Skip events with no changes
+    if (appEvent.extensionEvents.length === 0) {
+      return;
+    }
+
+    // Check if any event is for a function extension
+    const hasFunctionEvents = appEvent.extensionEvents.some(event => event.extension.isFunctionExtension);
+    outputDebug(`Events include function extensions: ${hasFunctionEvents}`);
+
+    // Check specifically for created function extensions
+    const createdFunctionExtensions = appEvent.extensionEvents.filter(
+      event => event.type === EventType.Created && event.extension.isFunctionExtension
+    );
+
+    if (createdFunctionExtensions.length > 0) {
+      const extensionNames = createdFunctionExtensions.map(e => e.extension.name).join(', ');
+      outputDebug(`Created function extensions: ${extensionNames}`);
+
+      // If we're not already polling, start it
+      if (!shouldPerformAppLogPolling) {
+        await startLogPolling(appEvent);
+      }
+    }
+  });
 
   return {
     processes: processesWithProxy,

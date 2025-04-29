@@ -6,7 +6,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {reloadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 
 /**
  * Transforms an array of WatcherEvents from the file system into a processed AppEvent.
@@ -20,6 +20,13 @@ export async function handleWatcherEvents(
   app: AppLinkedInterface,
   options: OutputContextOptions,
 ): Promise<AppEvent | undefined> {
+  outputDebug(`handleWatcherEvents received ${events.length} events: ${events.map(e => e.type).join(', ')}`)
+  
+  // Check for extension_folder_created events and log them specifically
+  const extensionFolderCreatedEvents = events.filter(e => e.type === 'extension_folder_created');
+  if (extensionFolderCreatedEvents.length > 0) {
+    outputDebug(`Detected ${extensionFolderCreatedEvents.length} extension_folder_created events`)
+  }
   if (events[0] === undefined) return undefined
   const appReloadNeeded = events.some((event) => eventsThatRequireReload.includes(event.type))
   const otherEvents = events.filter((event) => !eventsThatRequireReload.includes(event.type))
@@ -114,12 +121,77 @@ function AppConfigDeletedHandler(_input: HandlerInput): AppEvent {
  * - When an extension toml is updated
  */
 async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
+  console.log('MED MAN DEV - ReloadAppHandler called - event type:', event.type);
+  
   const newApp = await reload(app)
   const diff = appDiff(app, newApp, true)
+  
+  // Log info about all extensions before and after reloading
+  const oldFunctionExtensions = app.allExtensions.filter(ext => ext.isFunctionExtension);
+  const newFunctionExtensions = newApp.allExtensions.filter(ext => ext.isFunctionExtension);
+  
+  console.log('MED MAN DEV - Before reload:', app.allExtensions.length, 'total extensions,', oldFunctionExtensions.length, 'functions');
+  console.log('MED MAN DEV - After reload:', newApp.allExtensions.length, 'total extensions,', newFunctionExtensions.length, 'functions');
+  
+  outputInfo(`RELOAD: Before reload: ${app.allExtensions.length} total extensions, ${oldFunctionExtensions.length} functions`);
+  outputInfo(`RELOAD: After reload: ${newApp.allExtensions.length} total extensions, ${newFunctionExtensions.length} functions`);
+  
+  if (newFunctionExtensions.length > oldFunctionExtensions.length) {
+    const newFunctions = newFunctionExtensions.filter(newF => 
+      !oldFunctionExtensions.some(oldF => oldF.uid === newF.uid)
+    );
+    
+    const newFunctionNames = newFunctions.map(f => f.name).join(', ');
+    outputInfo(`New function extensions detected after reload: ${newFunctionNames}`);
+    console.log('MED MAN DEV - New functions:', newFunctionNames);
+  }
+  
+  // Debug log all created extensions to see what's happening
+  if (diff.created.length > 0) {
+    outputInfo(`App reload created ${diff.created.length} extensions:`)
+    console.log('MED MAN DEV - Created extensions:', diff.created.length);
+    
+    diff.created.forEach((ext) => {
+      outputInfo(`  - ${ext.name} (${ext.type}), is function: ${ext.isFunctionExtension}`)
+      console.log('MED MAN DEV - Created extension:', ext.name, 'type:', ext.type, 'is function:', ext.isFunctionExtension);
+    })
+  }
+  
+  // Check for any function extensions in created events
+  const createdFunctions = diff.created.filter(ext => ext.isFunctionExtension);
+  if (createdFunctions.length > 0) {
+    console.log('MED MAN DEV - Created function extensions:', createdFunctions.map(f => f.name).join(', '));
+    outputInfo(`Created function extensions: ${createdFunctions.map(f => f.name).join(', ')}`);
+  } else {
+    console.log('MED MAN DEV - No created function extensions found in diff');
+  }
+  
   const createdEvents = diff.created.map((ext) => ({type: EventType.Created, extension: ext}))
   const deletedEvents = diff.deleted.map((ext) => ({type: EventType.Deleted, extension: ext}))
   const updatedEvents = diff.updated.map((ext) => ({type: EventType.Updated, extension: ext}))
-  const extensionEvents = [...createdEvents, ...deletedEvents, ...updatedEvents]
+  let extensionEvents = [...createdEvents, ...deletedEvents, ...updatedEvents]
+  
+  // Workaround: Make sure we have events for all new function extensions
+  if (newFunctionExtensions.length > oldFunctionExtensions.length) {
+    const newFunctionIds = newFunctionExtensions.map(f => f.uid);
+    const oldFunctionIds = oldFunctionExtensions.map(f => f.uid);
+    const addedFunctionIds = newFunctionIds.filter(id => !oldFunctionIds.includes(id));
+    
+    // Add missing function extensions as created events
+    const missingFunctionEvents = newFunctionExtensions
+      .filter(ext => addedFunctionIds.includes(ext.uid))
+      .filter(ext => !extensionEvents.some(event => 
+        event.type === EventType.Created && event.extension.uid === ext.uid
+      ))
+      .map(ext => ({type: EventType.Created, extension: ext}));
+      
+    if (missingFunctionEvents.length > 0) {
+      console.log('MED MAN DEV - Adding missing function events:', missingFunctionEvents.length);
+      outputInfo(`Adding ${missingFunctionEvents.length} missing function events that were not detected by diffing`);
+      extensionEvents = [...extensionEvents, ...missingFunctionEvents];
+    }
+  }
+  
   return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path, appWasReloaded: true}
 }
 

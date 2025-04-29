@@ -135,6 +135,8 @@ If you're using the Ruby app template, then you need to complete the following s
   public async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Dev)
 
+    console.log('MED MAN DEV', "v1")
+
     if (!flags['api-key'] && process.env.SHOPIFY_API_KEY) {
       flags['api-key'] = process.env.SHOPIFY_API_KEY
     }

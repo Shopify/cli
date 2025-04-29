@@ -38,6 +38,9 @@ export const pollAppLogs = async ({
   organizationId: string
 }) => {
   try {
+    // For debug purposes only - don't output to stdout in tests
+    outputDebug('Starting to poll for function logs');
+    
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
 

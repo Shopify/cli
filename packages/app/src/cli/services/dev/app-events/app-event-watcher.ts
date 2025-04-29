@@ -5,7 +5,7 @@ import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
@@ -145,26 +145,44 @@ export class AppEventWatcher extends EventEmitter {
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
     this.fileWatcher.onChange((events) => {
+      outputDebug(`AppEventWatcher.fileWatcher: received ${events.length} events from file system`)
+      // Check for extension creation events specifically
+      const extensionEvents = events.filter(e => e.type === 'extension_folder_created' || e.type === 'extensions_config_updated');
+      if (extensionEvents.length > 0) {
+        outputInfo(`Detected extension changes: ${extensionEvents.map(e => e.type).join(', ')}`)
+      }
       handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
-          if (!appEvent) return
+          if (!appEvent) {
+            outputDebug('No app event returned from handleWatcherEvents')
+            return
+          }
+
+          outputDebug(`AppEventWatcher: processing app event with ${appEvent.extensionEvents.length} extension events`)
 
           this.app = appEvent.app
-          if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
+          if (appEvent.appWasReloaded) {
+            outputDebug('App was reloaded, updating file watcher')
+            this.fileWatcher?.updateApp(this.app)
+          }
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
+          outputDebug(`AppEventWatcher: found ${buildableEvents.length} buildable events`)
 
           // Build the created/updated extensions and update the extension events with the build result
           await this.buildExtensions(buildableEvents)
 
           // Find deleted extensions and delete their previous build output
           await this.deleteExtensionsBuildOutput(appEvent)
+
+          outputDebug(`AppEventWatcher: emitting 'all' event with ${appEvent.extensionEvents.length} extension events`)
           this.emit('all', appEvent)
         })
         .catch((error) => {
+          outputDebug(`AppEventWatcher: Error handling watcher events: ${error}`)
           this.emit('error', error)
         })
     })
@@ -181,8 +199,26 @@ export class AppEventWatcher extends EventEmitter {
    * @returns The AppEventWatcher instance
    */
   onEvent(listener: (appEvent: AppEvent) => Promise<void> | void) {
+    outputDebug('AppEventWatcher: registering event listener for "all" events')
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    this.addListener('all', listener)
+    this.addListener('all', (appEvent: AppEvent) => {
+      outputDebug(`AppEventWatcher: "all" event triggered with ${appEvent.extensionEvents.length} extension events`)
+      
+      // Only log extension details if app and allExtensions are available
+      if (appEvent.app && appEvent.app.allExtensions) {
+        // Log details about all extensions in the app
+        const allExtensions = appEvent.app.allExtensions;
+        const functionExtensions = allExtensions.filter(ext => ext.isFunctionExtension);
+        
+        outputDebug(`AppEventWatcher: App has ${allExtensions.length} total extensions, ${functionExtensions.length} function extensions`);
+        
+        if (functionExtensions.length > 0) {
+          outputDebug(`Function extensions in app: ${functionExtensions.map(ext => ext.name).join(', ')}`);
+        }
+      }
+      
+      return listener(appEvent)
+    })
     return this
   }
 
