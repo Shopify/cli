@@ -8,7 +8,6 @@ export const environmentVariableNames = {
   enableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_ENABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
   disableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
   disableMinificationOnDev: 'SHOPIFY_CLI_DISABLE_MINIFICATION_ON_DEV',
-  disableWasmTomlPatch: 'SHOPIFY_CLI_DISABLE_WASM_TOML_PATCH',
 }
 
 export const configurationFileNames = {

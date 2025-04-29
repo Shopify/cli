@@ -68,7 +68,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
   return config
 }
 
-export function addDefaultCommentsToToml(fileString: string) {
+function addDefaultCommentsToToml(fileString: string) {
   const appTomlInitialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const appTomlScopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
