@@ -8,6 +8,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session/dev-session-process.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
+import {FunctionWatcherProcess, setupFunctionWatcherProcess} from './function-watcher-process.js'
 import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
@@ -45,6 +46,7 @@ type DevProcessDefinition =
   | DevSessionProcess
   | AppLogsSubscribeProcess
   | AppWatcherProcess
+  | FunctionWatcherProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -93,7 +95,8 @@ export async function setupDevProcesses({
   const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
-  const shouldPerformAppLogPolling = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
+  const hasFunctionExtension = localApp.allExtensions.some((extension) => extension.isFunctionExtension)
+  const shouldPerformAppLogPolling = hasFunctionExtension
 
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
@@ -198,6 +201,17 @@ export async function setupDevProcesses({
       : undefined,
     await setupAppWatcherProcess({
       appWatcher,
+    }),
+    await setupFunctionWatcherProcess({
+      appWatcher,
+      developerPlatformClient,
+      appLogsSubscribeVariables: {
+        shopIds: [Number(storeId)],
+        apiKey,
+      },
+      storeName: storeFqdn,
+      organizationId: remoteApp.organizationId,
+      logsActive: shouldPerformAppLogPolling,
     }),
   ].filter(stripUndefineds)
 

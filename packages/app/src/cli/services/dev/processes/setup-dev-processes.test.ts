@@ -8,6 +8,7 @@ import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
+import {launchFunctionWatcher} from './function-watcher-process.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -270,12 +271,22 @@ describe('setup-dev-processes', () => {
       },
     })
 
+    expect(res.processes[7]).toMatchObject({
+      type: 'function-watcher',
+      prefix: 'function-logs-watcher',
+      function: launchFunctionWatcher,
+      options: {
+        appWatcher: expect.any(AppEventWatcher),
+        logsActive: false,
+      },
+    })
+
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
     const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
-    expect(res.processes[7]).toMatchObject({
+    expect(res.processes[8]).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
       function: startProxyServer,
@@ -452,6 +463,25 @@ describe('setup-dev-processes', () => {
           shopIds: [123456789],
           apiKey: 'api-key',
         },
+      },
+    })
+
+    expect(res.processes[7]).toMatchObject({
+      type: 'app-watcher',
+      prefix: 'app-preview',
+      function: launchAppWatcher,
+      options: {
+        appWatcher: expect.any(AppEventWatcher),
+      },
+    })
+
+    expect(res.processes[8]).toMatchObject({
+      type: 'function-watcher',
+      prefix: 'function-logs-watcher',
+      function: launchFunctionWatcher,
+      options: {
+        appWatcher: expect.any(AppEventWatcher),
+        logsActive: true,
       },
     })
   })
