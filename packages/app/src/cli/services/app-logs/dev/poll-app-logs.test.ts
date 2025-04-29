@@ -287,54 +287,58 @@ describe('pollAppLogs', () => {
       expect.any(Function),
     )
 
-    // app_logs[0]
+    // Initial message and then app_logs[0]
     expect(stdout.write).toHaveBeenNthCalledWith(
       1,
+      '🔄 Initializing function logs...',
+    )
+    expect(stdout.write).toHaveBeenNthCalledWith(
+      2,
       'Function export "run" executed successfully using 0.5124M instructions.',
     )
-    expect(stdout.write).toHaveBeenNthCalledWith(2, expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenNthCalledWith(3, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(3, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(4, expect.stringContaining('Log: '))
 
     // app_logs[1]
     expect(stdout.write).toHaveBeenNthCalledWith(
-      4,
+      5,
       `❌ Function export "run" failed to execute with error: ${FUNCTION_ERROR}`,
     )
-    expect(stdout.write).toHaveBeenNthCalledWith(5, expect.stringContaining(LOGS))
-    expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(6, expect.stringContaining(LOGS))
+    expect(stdout.write).toHaveBeenNthCalledWith(7, expect.stringContaining('Log: '))
 
     // app_logs[2]
-    expect(stdout.write).toHaveBeenNthCalledWith(7, 'Function network access request executed successfully.')
-    expect(stdout.write).toHaveBeenNthCalledWith(8, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(8, 'Function network access request executed successfully.')
+    expect(stdout.write).toHaveBeenNthCalledWith(9, expect.stringContaining('Log: '))
 
     // app_logs[3]
     expect(stdout.write).toHaveBeenNthCalledWith(
-      9,
+      10,
       '❌ Function network access request failed to execute with error: Timeout Error.',
     )
-    expect(stdout.write).toHaveBeenNthCalledWith(10, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(11, expect.stringContaining('Log: '))
 
     // app_logs[4]
-    expect(stdout.write).toHaveBeenNthCalledWith(11, 'Function network access response retrieved from cache.')
-    expect(stdout.write).toHaveBeenNthCalledWith(12, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(12, 'Function network access response retrieved from cache.')
+    expect(stdout.write).toHaveBeenNthCalledWith(13, expect.stringContaining('Log: '))
 
     // app_logs[5]
     expect(stdout.write).toHaveBeenNthCalledWith(
-      13,
+      14,
       'Function network access request executing in background because the cached response is about to expire.',
     )
-    expect(stdout.write).toHaveBeenNthCalledWith(14, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(15, expect.stringContaining('Log: '))
 
     // app_logs[6]
     expect(stdout.write).toHaveBeenNthCalledWith(
-      15,
+      16,
       'Function network access request executing in background because there is no cached response.',
     )
-    expect(stdout.write).toHaveBeenNthCalledWith(16, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(17, expect.stringContaining('Log: '))
 
     // app_logs[7]
-    expect(stdout.write).toHaveBeenNthCalledWith(17, JSON.stringify(OTHER_PAYLOAD))
-    expect(stdout.write).toHaveBeenNthCalledWith(18, expect.stringContaining('Log: '))
+    expect(stdout.write).toHaveBeenNthCalledWith(18, JSON.stringify(OTHER_PAYLOAD))
+    expect(stdout.write).toHaveBeenNthCalledWith(19, expect.stringContaining('Log: '))
 
     expect(vi.getTimerCount()).toEqual(1)
   })

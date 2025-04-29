@@ -50,51 +50,11 @@
     - If not, starts the log polling process and adds it to active processes
   4. Ensure the event listener handles both direct extension creation and app reload cases
 
-  5. Implementation Details
-
-  Code Changes Required
-
-  1. In setup-dev-processes.ts:
-  // Create a reusable helper function
-  const setupLogsPolling = async () => {
-    return setupAppLogsPollingProcess({
-      developerPlatformClient,
-      subscription: {shopIds: [Number(storeId)], apiKey},
-      storeName: storeFqdn,
-      organizationId: remoteApp.organizationId,
-    })
-  }
-
-  // Add an event listener to monitor for function extensions
-  appWatcher.onEvent(async (appEvent) => {
-    // Check if the app contains function extensions after update
-    const appHasFunctions = appEvent.app.allExtensions.some(ext => ext.isFunctionExtension);
-
-    // If app has functions and polling isn't already running, start it
-    if (appHasFunctions && !shouldPerformAppLogPolling) {
-      shouldPerformAppLogPolling = true;
-
-      const logsPollingProcess = await setupLogsPolling();
-      if (logsPollingProcess) {
-        processesWithProxy.push(logsPollingProcess);
-      }
-    }
-  });
-
-  Testing Scenarios
-
-  1. Start app dev from scratch with no functions, then add a function
-    - Expected: Log polling should start automatically when function is added
-  2. Start app dev with an existing function
-    - Expected: Log polling should start at initialization
-  3. Start app dev with no functions, create multiple functions in sequence
-    - Expected: Log polling should only start once, when the first function is added
 
   6. Acceptance Criteria
 
   - When a function extension is added during dev, log polling starts automatically
-  - User sees visible indication that log polling has begun
-  - Function logs appear in the terminal without requiring a restart
+  - Function logs appear in the Dev output correctly
   - All existing functionality continues to work correctly
 
   7. Further Considerations
@@ -133,25 +93,27 @@
   // We need working changes for convergence on Thursday (2 days)
 
 
-
-  1. We identified that the shouldPerformAppLogPolling flag was only being set once at CLI startup, never getting updated when new function extensions were
-  added.
-  2. We implemented a solution that:
+IDEA: Tag onto the app watched, and try to kick off polling
+- Issue, Dev kicks off its polling
+  1. the shouldPerformAppLogPolling flag was only being set once at CLI startup, never getting updated when new function extensions were
+  added. So polling would never kick kicked off if extension was created on an empty app, and when `app dev` is running.
+  2. So far, i have a solution that:
     - Made shouldPerformAppLogPolling mutable (using let instead of const)
     - Created a reusable helper function setupLogsPolling for consistent process initialization
     - Added an event listener that detects when function extensions are added
     - Implemented a generic process launcher that properly passes global stdout/stderr streams
     - Added robust error handling around the process launch
-  3. We improved the code with:
-    - Clear, informative logging (replacing console.log with proper outputDebug/outputInfo calls)
-    - Generic type handling for the process launcher function
-    - Comprehensive checks for both full app reloads and incremental extension additions
-
-  The solution is minimal and follows the existing patterns in the codebase. When a function extension is added during development:
-  1. The file watcher detects the change
-  2. Our event handler identifies it as a function extension
-  3. If log polling isn't already active, it starts the process with proper stdout/stderr handling
-  4. The user sees function logs without needing to restart the CLI
+    - output is not integrated with `Dev`
+    - probably need a better sollution with integrating into
 
   This should provide a much better developer experience, as they won't need to restart the dev process just to see function logs.
 
+That leads me to:
+
+    - ANOTHER IDEA: we always pass the polling function as a process for the `Dev` component, but instead it has some additional like delayedStart? which
+    can delay the start, until the Dev component knows that an extension has been added, then kicks off the process which some managed state.
+        - 2 parts of this to me:
+            - Dev needs to be able to detect those AppExtension watcher changes
+            - Dev when triggering the error handles process, can then have a if else on the delayed start.
+                - or manage delatyed process in some other way that can be added to by other, thinking, this seems great
+  - or just always poll for functions (not good)

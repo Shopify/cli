@@ -28,6 +28,7 @@ export const pollAppLogs = async ({
   resubscribeCallback,
   storeName,
   organizationId,
+  skipInitMessage = false,
 }: {
   stdout: Writable
   appLogsFetchInput: AppLogsOptions
@@ -36,10 +37,14 @@ export const pollAppLogs = async ({
   resubscribeCallback: () => Promise<string>
   storeName: string
   organizationId: string
+  skipInitMessage?: boolean
 }) => {
   try {
-    // For debug purposes only - don't output to stdout in tests
-    outputDebug('Starting to poll for function logs');
+    // Display a message to the user that we're starting polling, but only if not skipping init messages
+    outputDebug('Starting function logs polling')
+    if (!skipInitMessage) {
+      stdout.write('🔄 Initializing function logs...\n')
+    }
     
     let nextJwtToken = jwtToken
     let retryIntervalMs = POLLING_INTERVAL_MS
@@ -119,6 +124,7 @@ export const pollAppLogs = async ({
         resubscribeCallback,
         storeName,
         organizationId,
+        skipInitMessage: true, // Always skip init message in subsequent polling calls
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -141,6 +147,7 @@ export const pollAppLogs = async ({
         resubscribeCallback,
         storeName,
         organizationId,
+        skipInitMessage: true, // Always skip init message in retry calls
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })

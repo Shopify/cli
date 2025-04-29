@@ -12,6 +12,7 @@ interface SubscribeAndStartPollingOptions {
   appLogsSubscribeVariables: AppLogsSubscribeMutationVariables
   storeName: string
   organizationId: string
+  delayedStart?: boolean
 }
 
 export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPollingOptions> {
@@ -33,8 +34,9 @@ export async function setupAppLogsPollingProcess({
   subscription: {shopIds, apiKey},
   storeName,
   organizationId,
-}: Props): Promise<AppLogsSubscribeProcess> {
-  outputDebug(`Setting up app logs polling for apiKey: ${apiKey}, shop IDs: ${shopIds.join(',')}`)
+  delayedStart = false,
+}: Props & { delayedStart?: boolean }): Promise<AppLogsSubscribeProcess> {
+  outputDebug(`Setting up app logs polling for apiKey: ${apiKey}, shop IDs: ${shopIds.join(',')}, delayedStart: ${delayedStart}`)
   return {
     type: 'app-logs-subscribe',
     prefix: 'app-logs',
@@ -47,31 +49,42 @@ export async function setupAppLogsPollingProcess({
       },
       storeName,
       organizationId,
+      delayedStart,
     },
   }
 }
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
   {stdout, stderr: _stderr, abortSignal: _abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId},
+  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, delayedStart},
 ) => {
   try {
-    stdout.write('🔄 Initializing function logs...\n');
-    outputInfo('Starting function logs polling')
+    // Only output initialization messages if not in delayedStart mode
+    if (!delayedStart) {
+      stdout.write('🔄 Initializing function logs...\n');
+      outputInfo('Starting function logs polling')
+    }
     
     outputDebug(`Starting logs subscription for API key: ${appLogsSubscribeVariables.apiKey}`)
     
     const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, organizationId)
     outputDebug('Successfully subscribed to app logs')
-    stdout.write('✅ Successfully subscribed to function logs\n');
+    
+    // Only output success message if not in delayedStart mode
+    if (!delayedStart) {
+      stdout.write('✅ Successfully subscribed to function logs\n');
+    }
 
     const apiKey = appLogsSubscribeVariables.apiKey
     await createLogsDir(apiKey)
     outputDebug(`Created logs directory for API key: ${apiKey}`)
 
-    stdout.write('👀 Watching for function logs...\n');
+    // Only output watching message if not in delayedStart mode
+    if (!delayedStart) {
+      stdout.write('👀 Watching for function logs...\n');
+    }
     
-    // Start the polling process
+    // Start the polling process with the delayedStart flag
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken},
@@ -83,6 +96,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       developerPlatformClient,
       storeName,
       organizationId,
+      skipInitMessage: delayedStart, // Skip initialization messages in pollAppLogs if delayedStart is true
     })
   // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

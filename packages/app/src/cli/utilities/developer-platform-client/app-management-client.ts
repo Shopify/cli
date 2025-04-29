@@ -217,6 +217,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
         cursor?: string
         errors?: string[]
       }
+      
+      outputDebug(`App logs fetch result: ${data.app_logs?.length || 0} logs, errors: ${data.errors ? 'yes' : 'no'}`)
 
       if (!response.ok) {
         return {

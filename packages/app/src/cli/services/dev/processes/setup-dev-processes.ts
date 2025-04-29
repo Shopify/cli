@@ -112,12 +112,13 @@ export async function setupDevProcesses({
 
   const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
 
-  const setupLogsPolling = async () => {
+  const setupLogsPolling = async ({delayedStart = false} = {}) => {
     const logsProcess = await setupAppLogsPollingProcess({
       developerPlatformClient,
       subscription: {shopIds: [Number(storeId)], apiKey},
       storeName: storeFqdn,
       organizationId: remoteApp.organizationId,
+      delayedStart,
     })
     return logsProcess
   }
@@ -198,7 +199,7 @@ export async function setupDevProcesses({
       remoteAppUpdated,
     }),
     shouldPerformAppLogPolling
-      ? await setupLogsPolling() : undefined,
+      ? await setupLogsPolling({delayedStart: false}) : undefined,
     await setupAppWatcherProcess({
       appWatcher,
     }),
@@ -217,7 +218,9 @@ export async function setupDevProcesses({
     const signal = controller.signal;
 
     try {
-      outputDebug('Launching process directly with global process.stdout/stderr');
+      // Use the process.stdout/stderr from the DevConfig context
+      // This ensures logs are integrated into the CLI's output system
+      outputDebug('Launching process with CLI output streams');
 
       // Directly invoke the process function with the proper parameters
       return await process.function(
@@ -243,7 +246,7 @@ export async function setupDevProcesses({
 
       outputInfo(`⚡ Starting function logs polling for extensions: ${extensionNames}`);
 
-      const logsPollingProcess = await setupLogsPolling();
+      const logsPollingProcess = await setupLogsPolling({delayedStart: true});
       if (logsPollingProcess) {
         // Add to our processes array for bookkeeping
         processesWithProxy.push(logsPollingProcess);
@@ -265,6 +268,12 @@ export async function setupDevProcesses({
 
   appWatcher.onEvent(async (appEvent) => {
     outputDebug(`App event received with ${appEvent.extensionEvents.length} extension events ${appEvent.appWasReloaded ? '(app was reloaded)' : ''}`);
+
+    // Make sure app and allExtensions exist
+    if (!appEvent.app || !appEvent.app.allExtensions) {
+      outputDebug('App or allExtensions not available in event');
+      return;
+    }
 
     // Always check if the app has function extensions
     const appHasFunctions = appEvent.app.allExtensions.some(ext => ext.isFunctionExtension);
