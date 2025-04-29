@@ -28,12 +28,12 @@ export async function globalCLIVersion(): Promise<string | undefined> {
     const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
     // Both execa and which find the project dependency. We need to exclude it.
     const shopifyBinaries = which.sync('shopify', {all: true}).filter((path) => !path.includes('node_modules'))
-    if (shopifyBinaries.length === 0) return undefined
-    const output = await captureOutput('shopify', [], {env})
+    if (!shopifyBinaries[0]) return undefined
+    const output = await captureOutput(shopifyBinaries[0], [], {env})
     const versionMatch = output.match(/@shopify\/cli\/([^\s]+)/)
     if (versionMatch && versionMatch[1]) {
       const version = versionMatch[1]
-      if (satisfies(version, `>=3.59.0`)) {
+      if (satisfies(version, `>=3.59.0`) || version.startsWith('0.0.0')) {
         return version
       }
     }

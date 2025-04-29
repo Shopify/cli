@@ -49,6 +49,7 @@ describe('globalCLIVersion', () => {
 
     // Then
     expect(got).toBe('3.65.0')
+    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify', [], {env: expect.any(Object)})
   })
 
   test('returns undefined when the global version is older than 3.59', async () => {
@@ -62,6 +63,7 @@ describe('globalCLIVersion', () => {
 
     // Then
     expect(got).toBeUndefined()
+    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify', [], {env: expect.any(Object)})
   })
 
   test('returns undefined when the global version is not installed', async () => {
@@ -73,5 +75,6 @@ describe('globalCLIVersion', () => {
 
     // Then
     expect(got).toBeUndefined()
+    expect(captureOutput).not.toHaveBeenCalled()
   })
 })
