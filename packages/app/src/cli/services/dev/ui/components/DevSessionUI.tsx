@@ -7,7 +7,7 @@ import {
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
+import {Alert, ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -23,6 +23,7 @@ interface DevSesionUIProps {
   processes: OutputProcess[]
   abortController: AbortController
   devSessionStatusManager: DevSessionStatusManager
+  shopFqdn: string
   onAbort: () => Promise<void>
 }
 
@@ -30,6 +31,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   abortController,
   processes,
   devSessionStatusManager,
+  shopFqdn,
   onAbort,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -37,20 +39,22 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
   const [error, setError] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
+  const [shouldShowPersistentDevInfo, setShouldShowPersistentDevInfo] = useState<boolean>(false)
 
-  const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
-    if (err) {
-      setIsShuttingDownMessage('Shutting down dev because of an error ...')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const {isAborted} = useAbortSignal(abortController.signal, async (err: any) => {
+    if (err) setError(typeof err === 'string' ? err : err.message)
+    const appPreviewReady = devSessionStatusManager.status.isReady
+    if (appPreviewReady) {
+      setShouldShowPersistentDevInfo(true)
     } else {
       setIsShuttingDownMessage('Shutting down dev ...')
-      setTimeout(() => {
-        if (isUnitTest()) return
-        treeKill(process.pid, 'SIGINT', false, () => {
-          process.exit(0)
-        })
-      }, 2000)
+      await onAbort()
     }
-    await onAbort()
+    if (isUnitTest()) return
+    treeKill(process.pid, 'SIGINT', false, () => {
+      process.exit(0)
+    })
   })
 
   const errorHandledProcesses = useMemo(() => {
@@ -131,6 +135,19 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         keepRunningAfterProcessesResolve={true}
         useAlternativeColorPalette={true}
       />
+      {shouldShowPersistentDevInfo && (
+        <Box marginTop={1} flexDirection="column">
+          <Alert
+            type={'info'}
+            headline={`A preview of your development changes is still available on ${shopFqdn}.`}
+            body={['Run', {command: 'shopify app dev clean'}, 'to restore the latest released version of your app.']}
+            link={{
+              label: 'Learn more about app previews',
+              url: 'https://shopify.dev/beta/developer-dashboard/shopify-app-dev',
+            }}
+          />
+        </Box>
+      )}
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
         <Box
@@ -182,8 +199,11 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               </>
             )}
           </Box>
-
-          {error ? <Text color="red">{error}</Text> : null}
+        </Box>
+      ) : null}
+      {error ? (
+        <Box marginTop={1} flexDirection="column">
+          <Text color="red">{error}</Text>
         </Box>
       ) : null}
     </>
