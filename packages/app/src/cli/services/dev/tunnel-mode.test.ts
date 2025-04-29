@@ -1,9 +1,7 @@
 import {AutoTunnel, CustomTunnel, getTunnelMode, NoTunnel} from './tunnel-mode.js'
-import {generateCertificate} from '../../utilities/mkcert.js'
 import {ports} from '../../constants.js'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {test, expect, describe, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('../../utilities/mkcert.js')
@@ -75,7 +73,6 @@ describe('getTunnelMode() if useLocalhost is true', () => {
       mode: 'use-localhost',
       requestedPort: localhostPort,
       actualPort: localhostPort,
-      provideCertificate: expect.any(Function),
     })
   })
 
@@ -106,7 +103,6 @@ describe('getTunnelMode() if useLocalhost is true', () => {
       mode: 'use-localhost',
       actualPort: ports.localhost,
       requestedPort: ports.localhost,
-      provideCertificate: expect.any(Function),
     })
   })
 
@@ -124,28 +120,6 @@ describe('getTunnelMode() if useLocalhost is true', () => {
       mode: 'use-localhost',
       actualPort: availablePort,
       requestedPort: ports.localhost,
-      provideCertificate: expect.any(Function),
-    })
-  })
-
-  describe('provideCertificate()', () => {
-    test('Calls generateCertificate and returns its value', async () => {
-      // Given
-      vi.mocked(checkPortAvailability).mockResolvedValue(true)
-      vi.mocked(generateCertificate).mockResolvedValue(mockCertificate)
-
-      // When
-      const mockOutput = mockAndCaptureOutput()
-      mockOutput.clear()
-      const result = (await getTunnelMode(defaultOptions)) as NoTunnel
-      const certificate = await result.provideCertificate('app-directory')
-
-      // Then
-      expect(generateCertificate).toHaveBeenCalledWith({
-        appDirectory: 'app-directory',
-        onRequiresConfirmation: expect.any(Function),
-      })
-      expect(certificate).toEqual(mockCertificate)
     })
   })
 })

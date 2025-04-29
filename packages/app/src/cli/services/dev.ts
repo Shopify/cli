@@ -36,6 +36,8 @@ import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ports} from '../constants.js'
+import {generateCertificate} from '../utilities/mkcert.js'
+import {generateCertificatePrompt} from '../prompts/dev.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -342,7 +344,11 @@ async function setupNetworkingOptions(
 
   let reverseProxyCert
   if (tunnelOptions.mode === 'use-localhost') {
-    const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
+    const {keyContent, certContent, certPath} = await generateCertificate({
+      appDirectory,
+      onRequiresConfirmation: generateCertificatePrompt,
+    })
+
     reverseProxyCert = {
       key: keyContent,
       cert: certContent,

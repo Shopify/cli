@@ -1,6 +1,4 @@
 import {ports} from '../../constants.js'
-import {generateCertificate} from '../../utilities/mkcert.js'
-import {generateCertificatePrompt} from '../../prompts/dev.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
@@ -10,7 +8,6 @@ export interface NoTunnel {
   mode: 'use-localhost'
   actualPort: number
   requestedPort: number
-  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
 }
 
 export interface AutoTunnel {
@@ -62,11 +59,5 @@ export async function getTunnelMode({
     mode: 'use-localhost',
     requestedPort,
     actualPort,
-    provideCertificate: async (appDirectory) => {
-      return generateCertificate({
-        appDirectory,
-        onRequiresConfirmation: generateCertificatePrompt,
-      })
-    },
   }
 }
