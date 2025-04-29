@@ -710,7 +710,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       variables,
       undefined,
-      'slow-request',
+      {requestMode: 'slow-request'},
     )
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema

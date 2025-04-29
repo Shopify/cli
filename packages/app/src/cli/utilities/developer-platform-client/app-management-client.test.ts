@@ -649,7 +649,7 @@ describe('deploy', () => {
         },
       },
       undefined,
-      'slow-request',
+      {requestMode: 'slow-request'},
     )
   })
 
@@ -692,7 +692,7 @@ describe('deploy', () => {
         metadata: expect.any(Object),
       },
       undefined,
-      'slow-request',
+      {requestMode: 'slow-request'},
     )
   })
 
@@ -744,7 +744,7 @@ describe('deploy', () => {
         },
       }),
       undefined,
-      'slow-request',
+      {requestMode: 'slow-request'},
     )
   })
 

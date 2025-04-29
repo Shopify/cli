@@ -45,6 +45,10 @@ export const appManagementAppLogsUrl = async (
   return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }
 
+export interface RequestOptions {
+  requestMode: RequestModeInput
+}
+
 /**
  * Executes an org-scoped GraphQL query against the App Management API. Uses typed documents.
  *
@@ -53,7 +57,7 @@ export const appManagementAppLogsUrl = async (
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options for the request. If not present, the request will not be cached.
- * @param preferredBehaviour - Preferred behaviour for the request.
+ * @param requestOptions - Preferred behaviour for the request.
  * @returns The response of the query of generic type <T>.
  */
 export async function appManagementRequestDoc<TResult, TVariables extends Variables>(
@@ -62,7 +66,7 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
   token: string,
   variables?: TVariables,
   cacheOptions?: CacheOptions,
-  preferredBehaviour?: RequestModeInput,
+  requestOptions?: RequestOptions,
 ): Promise<TResult> {
   // For app management, we need to cache the response based on the orgId.
   const cacheExtraKey = (cacheOptions?.cacheExtraKey ?? '') + orgId
@@ -74,7 +78,7 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
       query,
       variables,
       cacheOptions: newCacheOptions,
-      preferredBehaviour,
+      preferredBehaviour: requestOptions?.requestMode,
     }),
   )
 
