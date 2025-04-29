@@ -113,7 +113,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain, app.configSchema)
+    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain)
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {

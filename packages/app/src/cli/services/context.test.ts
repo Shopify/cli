@@ -209,12 +209,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({cmd_deploy_confirm_include_config_used: true})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      'build.include_config_on_deploy',
-      true,
-      expect.any(Object),
-    )
+    expect(setAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy', true)
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -253,12 +248,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      'build.include_config_on_deploy',
-      false,
-      expect.any(Object),
-    )
+    expect(setAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy', false)
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -399,12 +389,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({cmd_deploy_confirm_include_config_used: false})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      'build.include_config_on_deploy',
-      false,
-      expect.any(Object),
-    )
+    expect(setAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy', false)
 
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
@@ -533,11 +518,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(unsetAppConfigValueSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      'build.include_config_on_deploy',
-      expect.any(Object),
-    )
+    expect(unsetAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy')
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         'The `include_config_on_deploy` field is no longer supported, since all apps must now include configuration on deploy. It has been removed from your configuration file.',
@@ -578,11 +559,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(unsetAppConfigValueSpy).toHaveBeenCalledWith(
-      app.configuration.path,
-      'build.include_config_on_deploy',
-      expect.any(Object),
-    )
+    expect(unsetAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy')
     expect(renderWarning).toHaveBeenCalledWith({
       body: [
         "The `include_config_on_deploy` field is no longer supported and has been removed from your configuration file. Review this file to ensure it's up to date with the correct configuration.",
