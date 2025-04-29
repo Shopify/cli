@@ -169,6 +169,9 @@ importers:
       '@shopify/theme-check-node':
         specifier: 3.15.1
         version: 3.15.1
+      '@shopify/toml-patch':
+        specifier: 0.3.0
+        version: 0.3.0
       body-parser:
         specifier: 1.20.3
         version: 1.20.3
@@ -6630,6 +6633,10 @@ packages:
       vscode-uri: 3.0.8
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@shopify/toml-patch@0.3.0:
+    resolution: {integrity: sha512-ruv2FT17FW3CfWx8jXEyfx3xZDdo22PDaFQ9R7QYOovXQbgQCIKY+5QjGVBA7jsyLm+Wa2ngVANmt7MS0M/g+w==}
     dev: false
 
   /@shopify/useful-types@4.0.3:

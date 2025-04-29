@@ -1,14 +1,22 @@
 import {addDefaultCommentsToToml} from './write-app-configuration-file.js'
 import {AppHiddenConfig} from '../../models/app/app.js'
+import {environmentVariableNames} from '../../constants.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export interface PatchTomlOptions {
   path: string
   patch: {[key: string]: unknown}
   schema?: zod.AnyZodObject
+}
+
+type TomlPatchValue = string | number | boolean | undefined | string[]
+
+function shouldUseWasmTomlPatch(env = process.env): boolean {
+  return isTruthy(env[environmentVariableNames.useWasmTomlPatch])
 }
 
 /**
@@ -42,6 +50,20 @@ async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions
   await writeFile(path, encodedString)
 }
 
+async function patchAppConfigurationFileWithWasm(
+  path: string,
+  configValues: {keyPath: string; value: TomlPatchValue}[],
+) {
+  // Don't import WASM unless we are really using it.
+  const {updateTomlValues} = await import('./toml-patch-wasm.js')
+  const tomlContents = await readFile(path)
+  const updatedConfig = await updateTomlValues(
+    tomlContents,
+    configValues.map(({keyPath, value}) => [keyPath.split('.'), value]),
+  )
+  await writeFile(path, updatedConfig)
+}
+
 /**
  * Sets a single value in the app configuration file based on a dotted key path.
  *
@@ -50,7 +72,15 @@ async function patchAppConfigurationFile({path, patch, schema}: PatchTomlOptions
  * @param value - The value to set
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  */
-export async function setAppConfigValue(path: string, keyPath: string, value: unknown, schema?: zod.AnyZodObject) {
+export async function setAppConfigValue(
+  path: string,
+  keyPath: string,
+  value: TomlPatchValue,
+  schema?: zod.AnyZodObject,
+) {
+  if (shouldUseWasmTomlPatch()) {
+    return patchAppConfigurationFileWithWasm(path, [{keyPath, value}])
+  }
   const patch = createPatchFromDottedPath(keyPath, value)
   await patchAppConfigurationFile({path, patch, schema})
 }
@@ -72,9 +102,12 @@ export async function setAppConfigValue(path: string, keyPath: string, value: un
  */
 export async function setManyAppConfigValues(
   path: string,
-  configValues: {keyPath: string; value: unknown}[],
+  configValues: {keyPath: string; value: TomlPatchValue}[],
   schema?: zod.AnyZodObject,
 ) {
+  if (shouldUseWasmTomlPatch()) {
+    return patchAppConfigurationFileWithWasm(path, configValues)
+  }
   const patch = configValues.reduce((acc, {keyPath, value}) => {
     const valuePatch = createPatchFromDottedPath(keyPath, value)
     return deepMergeObjects(acc, valuePatch, replaceArrayStrategy)
@@ -91,6 +124,9 @@ export async function setManyAppConfigValues(
  * @param schema - The schema to validate the patch against. If not provided, the toml will not be validated.
  */
 export async function unsetAppConfigValue(path: string, keyPath: string, schema?: zod.AnyZodObject) {
+  if (shouldUseWasmTomlPatch()) {
+    return patchAppConfigurationFileWithWasm(path, [{keyPath, value: undefined}])
+  }
   const patch = createPatchFromDottedPath(keyPath, undefined)
   await patchAppConfigurationFile({path, patch, schema})
 }
