@@ -221,7 +221,7 @@ export async function updateURLs(
       )
     }
 
-    await setManyAppConfigValues(localApp.configuration.path, configValues, localApp.configSchema)
+    await setManyAppConfigValues(localApp.configuration.path, configValues)
   }
 }
 
@@ -271,11 +271,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
       const path = options.localApp.configuration.path
-      await setManyAppConfigValues(
-        path,
-        [{keyPath: 'build.automatically_update_urls_on_dev', value: shouldUpdateURLs}],
-        options.localApp.configSchema,
-      )
+      await setManyAppConfigValues(path, [{keyPath: 'build.automatically_update_urls_on_dev', value: shouldUpdateURLs}])
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }
