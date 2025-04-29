@@ -7,7 +7,6 @@ export const environmentVariableNames = {
   mkcertBinaryPath: 'SHOPIFY_CLI_MKCERT_BINARY',
   enableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_ENABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
   disableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
-  disableWasmTomlPatch: 'SHOPIFY_CLI_DISABLE_WASM_TOML_PATCH',
 }
 
 export const configurationFileNames = {
