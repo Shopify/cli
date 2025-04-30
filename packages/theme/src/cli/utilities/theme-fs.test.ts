@@ -555,6 +555,47 @@ describe('theme-fs', () => {
       expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
     })
 
+    test('clears any entries in uploadErrors when a file is deleted', async () => {
+      // Given
+      const fileKey = 'assets/base.css'
+      vi.mocked(fetchThemeAssets).mockResolvedValue([
+        {
+          key: fileKey,
+          checksum: '1',
+          value: 'content',
+          attachment: '',
+          stats: {size: 100, mtime: 100},
+        },
+      ])
+      vi.mocked(deleteThemeAssets).mockResolvedValue([{key: fileKey, success: true, operation: Operation.Delete}])
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+
+      // Add an error to the uploadErrors map
+      themeFileSystem.uploadErrors.set(fileKey, ['Some upload error'])
+      expect(themeFileSystem.uploadErrors.has(fileKey)).toBe(true)
+
+      const deleteOperationPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Explicitly emit the 'unlink' event
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/${fileKey}`)
+
+      await deleteOperationPromise
+
+      // Then
+      expect(themeFileSystem.uploadErrors.has(fileKey)).toBe(false)
+      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), [fileKey], adminSession)
+    })
+
     test('does not delete file from remote when options.noDelete is true', async () => {
       // Given
       vi.mocked(fetchThemeAssets).mockResolvedValue([
