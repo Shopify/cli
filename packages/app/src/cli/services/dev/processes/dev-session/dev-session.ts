@@ -53,7 +53,7 @@ export class DevSession {
   }
 
   private async start() {
-    await this.logger.info('Preparing app preview')
+    await this.logger.info(`Preparing app preview on ${this.options.storeFqdn}`)
     this.statusManager.setMessage('LOADING')
 
     this.appWatcher
@@ -161,7 +161,7 @@ export class DevSession {
    */
   private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
     if (result.status === 'updated') {
-      await this.logger.success(`✅ Updated`)
+      await this.logger.success(`✅ Updated app preview on ${this.options.storeFqdn}`)
       await this.logger.logExtensionUpdateMessages(event)
       await this.setUpdatedStatusMessage()
     } else if (result.status === 'created') {
