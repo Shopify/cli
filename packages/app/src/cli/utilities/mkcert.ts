@@ -7,7 +7,7 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -34,22 +34,20 @@ async function getMkcertPath(
   const binaryName = platform === 'win32' ? 'mkcert.exe' : 'mkcert'
   const dotShopifyPath = joinPath(appDirectory, '.shopify')
   const defaultMkcertPath = joinPath(dotShopifyPath, binaryName)
-  const downloadLicensePromise = downloadMkcertLicense(dotShopifyPath)
 
   if (await fileExists(defaultMkcertPath)) {
-    await downloadLicensePromise
+    await downloadMkcertLicense(dotShopifyPath)
     return defaultMkcertPath
   }
 
   const mkcertLocation = await which('mkcert', {nothrow: true})
   if (mkcertLocation) {
     outputDebug(outputContent`Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`)
-    await downloadLicensePromise
     return mkcertLocation
   }
 
+  await downloadMkcertLicense(dotShopifyPath)
   await downloadMkcert(defaultMkcertPath, platform, arch)
-  await downloadLicensePromise
 
   return defaultMkcertPath
 }
@@ -93,8 +91,13 @@ async function downloadMkcertLicense(dotShopifyPath: string): Promise<void> {
 
   if (await fileExists(licensePath)) return
 
-  await downloadGitHubFile(MKCERT_REPO, MKCERT_VERSION, 'LICENSE', licensePath, {
-    throw: false,
+  await downloadGitHubFile(MKCERT_REPO, MKCERT_VERSION, 'LICENSE-13', licensePath, {
+    onError: (_, url) => {
+      renderInfo({
+        headline: 'Failed to download mkcert license.',
+        body: [`You can usually`, {link: {url, label: 'view the license here'}}],
+      })
+    },
   })
 }
 

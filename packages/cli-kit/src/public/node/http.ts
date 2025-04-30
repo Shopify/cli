@@ -254,6 +254,9 @@ export function downloadFile(url: string, to: string): Promise<string> {
 
       nodeFetch(url, {redirect: 'follow'})
         .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Failed to download file: ${res.statusText}`)
+          }
           res.body?.pipe(file)
         })
         .catch((err) => {
