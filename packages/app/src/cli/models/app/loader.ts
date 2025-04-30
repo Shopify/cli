@@ -18,7 +18,6 @@ import {
   AppLinkedInterface,
   AppHiddenConfig,
 } from './app.js'
-import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -34,6 +33,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/load-specificatio
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
+import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/cli'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -351,9 +351,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     const hiddenConfig = await loadHiddenConfig(directory, configuration)
 
-    if (!this.previousApp) {
-      await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
-    }
+    await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
 
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
       directory,
