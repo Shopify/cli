@@ -14,7 +14,7 @@ const FUNCTION_RUNNER_VERSION = 'v8.0.1'
 const JAVY_VERSION = 'v4.0.0'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
-const JAVY_PLUGIN_VERSION = 'v1'
+const JAVY_PLUGIN_VERSION = 'v2'
 
 const BINARYEN_VERSION = '123.0.0'
 
