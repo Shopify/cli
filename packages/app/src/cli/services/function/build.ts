@@ -17,8 +17,8 @@ import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
-const ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS = ['0', '1']
-export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '1'
+const ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS = ['2']
+export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
