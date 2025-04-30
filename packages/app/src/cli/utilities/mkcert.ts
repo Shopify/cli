@@ -1,6 +1,6 @@
 import {environmentVariableNames} from '../constants.js'
 import {generateCertificatePrompt} from '../prompts/dev.js'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, isWsl} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -8,7 +8,7 @@ import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
-import {RenderAlertOptions, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, keypress, renderInfo, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -184,6 +184,24 @@ export async function generateCertificate({
   outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
   outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}\n`)
+
+  const wsl = await isWsl()
+  if (!wsl) {
+    renderWarning({
+      headline:
+        "We've detected that you are running Shopify CLI under WSL. Additional steps are required to configure certificate trust in Windows.",
+      body: [
+        'This is only needed the first time you run an app with',
+        {command: '--use-localhost'},
+        'If needed, we recommend following these steps before proceeding. Press enter to continue',
+      ],
+      link: {
+        label: 'See Shopify CLI documentation for details',
+        url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options#localhost-based-development-with-windows-subsystem-for-linux-wsl',
+      },
+    })
+    await keypress()
+  }
 
   return {
     keyContent: await readFile(keyPath),
