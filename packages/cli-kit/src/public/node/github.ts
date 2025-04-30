@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {err, ok, Result} from './result.js'
-import {fetch, Response} from './http.js'
-import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
+import {downloadFile, fetch} from './http.js'
+import {mkdir, inTemporaryDirectory, chmod, moveFile} from './fs.js'
 import {dirname, joinPath} from './path.js'
-import {runWithTimer} from './metadata.js'
 import {AbortError} from './error.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
+import {outputContent, outputDebug} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,61 +131,66 @@ export function parseGitHubRepositoryReference(reference: string): GithubReposit
 export async function downloadGitHubRelease(
   repo: string,
   version: string,
-  assetName: string,
+  asset: string,
   targetPath: string,
 ): Promise<void> {
-  const url = `https://github.com/${repo}/releases/download/${version}/${assetName}`
+  const url = `https://github.com/${repo}/releases/download/${version}/${asset}`
 
-  await download(url, assetName, targetPath, {throw: true, mode: 0o755})
+  await download(url, {
+    to: targetPath,
+    mode: 0o755,
+  })
 }
 
 export async function downloadGitHubFile(
   repo: string,
   tag: string,
-  assetPath: string,
+  asset: string,
   targetPath: string,
-  options: DownloadOptions,
+  options: Pick<DownloadOptions, 'onError'> = {},
 ): Promise<void> {
-  const url = `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${assetPath}`
+  const url = `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`
 
-  await download(url, assetPath, targetPath, options)
+  await download(url, {
+    to: targetPath,
+    ...options,
+  })
 }
 
 interface DownloadOptions {
-  throw?: boolean
+  to: string
   mode?: number
+  onError?: (error: unknown, url: string) => void
 }
 
-async function download(url: string, assetName: string, targetPath: string, options: DownloadOptions = {}) {
-  return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
-    await inTemporaryDirectory(async (tmpDir) => {
-      const tempPath = joinPath(tmpDir, assetName)
-      let response: Response
-      try {
-        response = await fetch(url, undefined, 'slow-request')
-        if (!response.ok && options.throw) {
-          throw new AbortError(`Failed to download ${assetName}: ${response.statusText}`)
-        }
-      } catch (error) {
-        if (options.throw) {
-          throw new AbortError(
-            `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
-          )
-        }
-        return
-      }
+async function download(url: string, options: DownloadOptions): Promise<void> {
+  await inTemporaryDirectory(async (tmpDir) => {
+    const assetName = url.split('/').pop()!
+    const tempPath = joinPath(tmpDir, assetName)
 
-      const buffer = await response.arrayBuffer()
-      await writeFile(tempPath, Buffer.from(buffer))
+    try {
+      const file = await downloadFile(url, tempPath)
 
       if (options.mode) {
-        await chmod(tempPath, options.mode)
+        await chmod(file, options.mode)
       }
 
-      await mkdir(dirname(targetPath))
-      await moveFile(tempPath, targetPath)
-    })
-    outputDebug(outputContent`${outputToken.successIcon()} Successfully downloaded ${outputToken.path(targetPath)}`)
+      await mkdir(dirname(options.to))
+      await moveFile(file, options.to)
+
+      // The consumer may prefer to silently error
+      // The onError pattern allows the consumer to receive the URL
+    } catch (error) {
+      outputDebug(
+        outputContent`Failed to download ${assetName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+      if (options.onError) {
+        options.onError(error, url)
+      } else {
+        throw new AbortError(
+          `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
+        )
+      }
+    }
   })
 }
