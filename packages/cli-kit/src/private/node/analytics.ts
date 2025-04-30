@@ -88,7 +88,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_package_manager: await getPackageManager(cwd()),
     env_is_global: currentProcessIsGlobal(),
     env_auth_method: await getLastSeenAuthMethod(),
-    env_is_wsl: isWsl,
+    env_is_wsl: await isWsl(),
   }
 }
 
