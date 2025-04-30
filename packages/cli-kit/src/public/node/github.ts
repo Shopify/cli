@@ -137,6 +137,27 @@ export async function downloadGitHubRelease(
 ): Promise<void> {
   const url = `https://github.com/${repo}/releases/download/${version}/${assetName}`
 
+  await download(url, assetName, targetPath, {throw: true, mode: 0o755})
+}
+
+export async function downloadGitHubFile(
+  repo: string,
+  tag: string,
+  assetPath: string,
+  targetPath: string,
+  options: DownloadOptions,
+): Promise<void> {
+  const url = `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${assetPath}`
+
+  await download(url, assetPath, targetPath, options)
+}
+
+interface DownloadOptions {
+  throw?: boolean
+  mode?: number
+}
+
+async function download(url: string, assetName: string, targetPath: string, options: DownloadOptions = {}) {
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
     await inTemporaryDirectory(async (tmpDir) => {
@@ -144,19 +165,25 @@ export async function downloadGitHubRelease(
       let response: Response
       try {
         response = await fetch(url, undefined, 'slow-request')
-        if (!response.ok) {
+        if (!response.ok && options.throw) {
           throw new AbortError(`Failed to download ${assetName}: ${response.statusText}`)
         }
       } catch (error) {
-        throw new AbortError(
-          `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
-        )
+        if (options.throw) {
+          throw new AbortError(
+            `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
+          )
+        }
+        return
       }
 
       const buffer = await response.arrayBuffer()
       await writeFile(tempPath, Buffer.from(buffer))
 
-      await chmod(tempPath, 0o755)
+      if (options.mode) {
+        await chmod(tempPath, options.mode)
+      }
+
       await mkdir(dirname(targetPath))
       await moveFile(tempPath, targetPath)
     })

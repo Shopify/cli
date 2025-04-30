@@ -1,7 +1,7 @@
 import {environmentVariableNames} from '../constants.js'
 import {generateCertificatePrompt} from '../prompts/dev.js'
 import {exec} from '@shopify/cli-kit/node/system'
-import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
+import {downloadGitHubFile, downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
@@ -13,6 +13,14 @@ const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
 const mkcertSnippet = outputToken.genericShellCommand('mkcert')
 
+/**
+ * Gets the path to the mkcert binary.
+ *
+ * 1. If the path is set in the enviroment variables, it return that path.  Otherwise it will be appDirectory/.shopify/mkcert
+ * 2. Downloads the mkcert binary to appDirectory/.shopify/mkcert if it doesn't exist
+ * 3. Downloads the mkcert LICENSE to appDirectory/.shopify/mkcert-LICENSE if it doesn't exist
+ *
+ */
 async function getMkcertPath(
   appDirectory: string,
   env: NodeJS.ProcessEnv,
@@ -20,24 +28,37 @@ async function getMkcertPath(
   arch: NodeJS.Architecture,
 ): Promise<string> {
   const envPath = env[environmentVariableNames.mkcertBinaryPath]
+
   if (envPath) return envPath
 
   const binaryName = platform === 'win32' ? 'mkcert.exe' : 'mkcert'
+  const dotShopifyPath = joinPath(appDirectory, '.shopify')
+  const defaultMkcertPath = joinPath(dotShopifyPath, binaryName)
+  const downloadLicensePromise = downloadMkcertLicense(dotShopifyPath)
 
-  const defaultPath = joinPath(appDirectory, '.shopify', binaryName)
-  if (await fileExists(defaultPath)) return defaultPath
+  if (await fileExists(defaultMkcertPath)) {
+    await downloadLicensePromise
+    return defaultMkcertPath
+  }
 
-  // Check if mkcert is available on the system PATH
   const mkcertLocation = await which('mkcert', {nothrow: true})
   if (mkcertLocation) {
     outputDebug(outputContent`Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`)
+    await downloadLicensePromise
     return mkcertLocation
   }
 
-  await downloadMkcert(defaultPath, platform, arch)
-  return defaultPath
+  await downloadMkcert(defaultMkcertPath, platform, arch)
+  await downloadLicensePromise
+
+  return defaultMkcertPath
 }
 
+/**
+ * Downloads the mkcert binary for the specified platform and architecture
+ * File is downloaded to the target path
+ * If the file already exists, it won't be downloaded again
+ */
 async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arch: NodeJS.Architecture): Promise<void> {
   let assetName: string
 
@@ -58,6 +79,23 @@ async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arc
   await downloadGitHubRelease(MKCERT_REPO, MKCERT_VERSION, assetName, targetPath)
 
   outputDebug(outputContent`${mkcertSnippet} saved to ${outputToken.path(targetPath)}`)
+}
+
+/**
+ * Downloads the mkcert LICENSE file to the specified directory
+ * If the file already exists, it won't be downloaded again
+ * If the download fails, it will log the error but not throw
+ *
+ * @param dotShopifyPath - The .shopify directory path
+ */
+async function downloadMkcertLicense(dotShopifyPath: string): Promise<void> {
+  const licensePath = joinPath(dotShopifyPath, 'mkcert-LICENSE')
+
+  if (await fileExists(licensePath)) return
+
+  await downloadGitHubFile(MKCERT_REPO, MKCERT_VERSION, 'LICENSE', licensePath, {
+    throw: false,
+  })
 }
 
 interface GenerateCertificateOptions {
