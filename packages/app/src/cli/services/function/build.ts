@@ -129,11 +129,38 @@ export async function buildGraphqlTypes(
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
-      cwd: fun.directory,
-      stderr: options.stderr,
-      signal: options.signal,
-    })
+    try {
+      return await exec(
+        'npm',
+        [
+          'exec',
+          '--package',
+          // The version here should match the version of @graphql-codegen/cli here:
+          // https://github.com/Shopify/shopify-function-javascript/blob/main/package.json
+          '@graphql-codegen/cli@5.0.5',
+          '--no',
+          '--',
+          'graphql-code-generator',
+          '--config',
+          'package.json',
+        ],
+        {
+          cwd: fun.directory,
+          stderr: options.stderr,
+          signal: options.signal,
+        },
+      )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errorMessage = (error as Error).message
+      if (errorMessage && errorMessage.includes('npx canceled due to missing packages')) {
+        outputDebug(`Error generating GraphQL types: ${errorMessage}`)
+        throw new AbortError(
+          'Unable to generate function GraphQL types. Please ensure you have restored all workspace dependencies with the correct package manager.',
+        )
+      }
+      throw error
+    }
   })
 }
 
