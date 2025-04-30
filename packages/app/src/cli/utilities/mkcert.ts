@@ -7,7 +7,7 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
-import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -22,7 +22,7 @@ const mkcertSnippet = outputToken.genericShellCommand('mkcert')
  *
  */
 async function getMkcertPath(
-  appDirectory: string,
+  dotShopifyPath: string,
   env: NodeJS.ProcessEnv,
   platform: NodeJS.Platform,
   arch: NodeJS.Architecture,
@@ -32,7 +32,6 @@ async function getMkcertPath(
   if (envPath) return envPath
 
   const binaryName = platform === 'win32' ? 'mkcert.exe' : 'mkcert'
-  const dotShopifyPath = joinPath(appDirectory, '.shopify')
   const defaultMkcertPath = joinPath(dotShopifyPath, binaryName)
 
   if (await fileExists(defaultMkcertPath)) {
@@ -86,19 +85,26 @@ async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arc
  *
  * @param dotShopifyPath - The .shopify directory path
  */
-async function downloadMkcertLicense(dotShopifyPath: string): Promise<void> {
+async function downloadMkcertLicense(dotShopifyPath: string): Promise<undefined | RenderAlertOptions> {
   const licensePath = joinPath(dotShopifyPath, 'mkcert-LICENSE')
 
   if (await fileExists(licensePath)) return
 
-  await downloadGitHubFile(MKCERT_REPO, MKCERT_VERSION, 'LICENSE-13', licensePath, {
+  let maybeError: RenderAlertOptions | undefined
+
+  await downloadGitHubFile(MKCERT_REPO, MKCERT_VERSION, 'LICENSE', licensePath, {
     onError: (_, url) => {
-      renderInfo({
+      maybeError = {
         headline: 'Failed to download mkcert license.',
-        body: [`You can usually`, {link: {url, label: 'view the license here'}}],
-      })
+        body: [
+          `We tried to download the license for mkcert, but the request failed. You can `,
+          {link: {url, label: 'view the license here'}},
+        ],
+      }
     },
   })
+
+  return maybeError
 }
 
 interface GenerateCertificateOptions {
@@ -145,16 +151,25 @@ export async function generateCertificate({
   }
 
   let mkcertPath = ''
+  let licenseError: RenderAlertOptions | undefined
 
-  const taskList = []
-  taskList.push({
-    title: 'Finding or downloading mkcert binary',
-    task: async () => {
-      mkcertPath = await getMkcertPath(appDirectory, env, platform, arch)
-      outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
+  await renderTasks([
+    {
+      title: 'Finding or downloading mkcert binary',
+      task: async () => {
+        const dotShopifyPath = joinPath(appDirectory, '.shopify')
+
+        mkcertPath = await getMkcertPath(dotShopifyPath, env, platform, arch)
+        licenseError = await downloadMkcertLicense(dotShopifyPath)
+
+        outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
+      },
     },
-  })
-  await renderTasks(taskList)
+  ])
+
+  if (licenseError) {
+    renderInfo(licenseError)
+  }
 
   outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
