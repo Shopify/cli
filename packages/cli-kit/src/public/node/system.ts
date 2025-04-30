@@ -190,3 +190,13 @@ export function terminalSupportsPrompting(): boolean {
 export function isCI(): boolean {
   return isTruthy(process.env.CI)
 }
+
+/**
+ * Check if the current environment is a WSL environment.
+ *
+ * @returns True if the current environment is a WSL environment.
+ */
+export async function isWsl(): Promise<boolean> {
+  const wsl = await import('is-wsl')
+  return wsl.default
+}
