@@ -9,6 +9,7 @@ import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import which from 'which'
 import {delimiter} from 'pathe'
+import wsl from 'is-wsl'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -190,3 +191,10 @@ export function terminalSupportsPrompting(): boolean {
 export function isCI(): boolean {
   return isTruthy(process.env.CI)
 }
+
+/**
+ * Check if the current environment is a WSL environment.
+ *
+ * @returns True if the current environment is a WSL environment.
+ */
+export const isWsl = wsl
