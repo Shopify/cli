@@ -162,11 +162,12 @@ export class DevSession {
   private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
     if (result.status === 'updated') {
       await this.logger.success(`✅ Updated`)
-      await this.logger.logActionRequiredMessages(this.options.storeFqdn, event)
+      await this.logger.logExtensionUpdateMessages(event)
       await this.setUpdatedStatusMessage()
     } else if (result.status === 'created') {
       this.statusManager.updateStatus({isReady: true})
       await this.logger.success(`✅ Ready, watching for changes in your app `)
+      await this.logger.logExtensionUpdateMessages(event)
       this.statusManager.setMessage('READY')
     } else if (result.status === 'aborted') {
       await this.logger.debug('❌ App preview update aborted (new change detected or error during update)')

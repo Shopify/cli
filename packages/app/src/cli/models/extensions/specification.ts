@@ -4,7 +4,7 @@ import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {Result} from '@shopify/cli-kit/node/result'
@@ -74,11 +74,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  getDevSessionActionUpdateMessage?: (
-    config: TConfiguration,
-    appConfig: CurrentAppConfiguration,
-    storeFqdn: string,
-  ) => Promise<string>
+  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -190,7 +186,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
-    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
+    getDevSessionUpdateMessage: spec.getDevSessionUpdateMessage,
   }
   const merged = {...defaults, ...spec}
 
@@ -235,11 +231,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
-  getDevSessionActionUpdateMessage?: (
-    config: TConfiguration,
-    appConfig: CurrentAppConfiguration,
-    storeFqdn: string,
-  ) => Promise<string>
+  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
@@ -253,7 +245,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
-    getDevSessionActionUpdateMessage: spec.getDevSessionActionUpdateMessage,
+    getDevSessionUpdateMessage: spec.getDevSessionUpdateMessage,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
 }
