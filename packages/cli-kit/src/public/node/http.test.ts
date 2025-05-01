@@ -292,19 +292,6 @@ describe('downloadFile', () => {
       await expect(fileExists(to)).resolves.toBe(false)
     })
   })
-
-  test.skipIf(runningOnWindows)('Throws an error if the response status is not ok', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const url = 'https://shopify.example/500.txt'
-      const filename = '/bin/not-found.txt'
-      const to = joinPath(tmpDir, filename)
-
-      // Then
-      await expect(downloadFile(url, to)).rejects.toThrow('Failed to download file: Internal Server Error')
-      await expect(fileExists(to)).resolves.toBe(false)
-    })
-  })
 })
 
 describe('requestMode', () => {

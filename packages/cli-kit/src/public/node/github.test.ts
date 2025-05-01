@@ -10,7 +10,7 @@ import {fetch, downloadFile} from './http.js'
 import {AbortError} from './error.js'
 import {testWithTempDir} from './testing/test-with-temp-dir.js'
 import {joinPath} from './path.js'
-import {readFile, writeFile} from './fs.js'
+import {readFile} from './fs.js'
 import {isExecutable} from 'is-executable'
 import {describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -180,20 +180,25 @@ describe('downloadGitHubRelease', () => {
 
   testWithTempDir('successfully downloads the release asset', async ({tempDir}) => {
     // GIVEN
-    const binary = process.platform === 'win32' ? 'test-asset.exe' : 'test-asset'
-    const tempFilePath = joinPath(tempDir, binary)
-    const targetPath = joinPath(tempDir, 'downloads', binary)
     const downloadContent = 'hello'
-    await writeFile(tempFilePath, downloadContent)
-    vi.mocked(downloadFile).mockResolvedValue(tempFilePath)
+    const content = Buffer.from(downloadContent)
+    const mockResponse = {
+      ok: true,
+      arrayBuffer: vi.fn().mockResolvedValue(content),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    const binary = process.platform === 'win32' ? 'test-asset.exe' : 'test-asset'
+    const targetPath = joinPath(tempDir, 'downloads', binary)
 
     // WHEN
     await downloadGitHubRelease(repo, version, asset, targetPath)
 
     // THEN
-    expect(downloadFile).toHaveBeenCalledWith(
+    expect(fetch).toHaveBeenCalledWith(
       `https://github.com/${repo}/releases/download/${version}/${asset}`,
-      expect.any(String),
+      undefined,
+      'slow-request',
     )
 
     const downloadedContent = await readFile(targetPath)
@@ -235,29 +240,33 @@ describe('downloadGitHubFile', () => {
 
   testWithTempDir('successfully downloads the file', async ({tempDir}) => {
     // GIVEN
-    const tempFilePath = joinPath(tempDir, asset)
-    const targetPath = joinPath(tempDir, 'downloads', asset)
     const downloadContent = 'hello'
-    await writeFile(tempFilePath, downloadContent)
-    vi.mocked(downloadFile).mockResolvedValue(tempFilePath)
+    const content = Buffer.from(downloadContent)
+    const mockResponse = {
+      ok: true,
+      arrayBuffer: vi.fn().mockResolvedValue(content),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+    const targetPath = joinPath(tempDir, 'downloads', asset)
 
     // WHEN
     await downloadGitHubFile(repo, tag, asset, targetPath)
 
     // THEN
-    expect(downloadFile).toHaveBeenCalledWith(
+    expect(fetch).toHaveBeenCalledWith(
       `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`,
-      expect.any(String),
+      undefined,
+      'slow-request',
     )
 
     const downloadedContent = await readFile(targetPath)
-    expect(downloadedContent).toEqual(downloadContent)
+    await expect(readFile(targetPath)).resolves.toEqual(downloadContent)
   })
 
   testWithTempDir('calls options.onError if the network is down', async ({tempDir}) => {
     // GIVEN
-    const networkError = new Error('Network error')
-    vi.mocked(downloadFile).mockRejectedValue(networkError)
+    const message = 'Network error'
+    vi.mocked(fetch).mockRejectedValue(new Error(message))
     const targetPath = joinPath(tempDir, 'downloads', asset)
     const onError = vi.fn()
 
@@ -266,7 +275,7 @@ describe('downloadGitHubFile', () => {
 
     // THEN
     expect(onError).toHaveBeenCalledWith(
-      networkError,
+      `Failed to download test-asset: ${message}`,
       `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`,
     )
   })
@@ -285,8 +294,8 @@ describe('downloadGitHubFile', () => {
 
   testWithTempDir('calls options.onError if the response is not ok', async ({tempDir}) => {
     // GIVEN
-    const notFoundError = new Error('Not Found')
-    vi.mocked(downloadFile).mockRejectedValue(notFoundError)
+    const response = {ok: false, status: 404, statusText: 'Not Found'} as Response
+    vi.mocked(fetch).mockResolvedValue(response)
     const targetPath = joinPath(tempDir, 'downloads', asset)
     const onError = vi.fn()
 
@@ -295,7 +304,7 @@ describe('downloadGitHubFile', () => {
 
     // THEN
     expect(onError).toHaveBeenCalledWith(
-      notFoundError,
+      `Failed to download test-asset: ${response.status} ${response.statusText}`,
       `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`,
     )
   })
@@ -304,7 +313,8 @@ describe('downloadGitHubFile', () => {
     'throws an AbortError if the response is not ok and options.onError is undefined',
     async ({tempDir}) => {
       // GIVEN
-      vi.mocked(downloadFile).mockRejectedValue(new Error('Not Found'))
+      const response = {ok: false, status: 404, statusText: 'Not Found'} as Response
+      vi.mocked(fetch).mockResolvedValue(response)
       const targetPath = joinPath(tempDir, 'downloads', asset)
 
       // WHEN

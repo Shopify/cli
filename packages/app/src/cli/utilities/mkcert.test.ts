@@ -243,7 +243,7 @@ describe('mkcert', () => {
       await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
     })
     vi.mocked(downloadGitHubFile).mockImplementation(async (_repo, _tag, _file, _path, options) => {
-      options?.onError?.(new Error('Failed to download mkcert LICENSE'), licenseUrl)
+      options?.onError?.('Oops!', licenseUrl)
     })
     const mockOutput = mockAndCaptureOutput()
 

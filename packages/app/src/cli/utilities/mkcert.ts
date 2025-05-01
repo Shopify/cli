@@ -16,7 +16,7 @@ const mkcertSnippet = outputToken.genericShellCommand('mkcert')
 /**
  * Gets the path to the mkcert binary.
  *
- * 1. If the path is set in the enviroment variables, it return that path.  Otherwise it will be appDirectory/.shopify/mkcert
+ * 1. If the path is set in the environment variables, it return that path.  Otherwise it will be appDirectory/.shopify/mkcert
  * 2. Downloads the mkcert binary to appDirectory/.shopify/mkcert if it doesn't exist
  * 3. Downloads the mkcert LICENSE to appDirectory/.shopify/mkcert-LICENSE if it doesn't exist
  *
