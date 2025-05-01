@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {err, ok, Result} from './result.js'
-import {downloadFile, fetch} from './http.js'
-import {mkdir, inTemporaryDirectory, chmod, moveFile} from './fs.js'
+import {fetch, Response} from './http.js'
+import {mkdir, inTemporaryDirectory, chmod, moveFile, writeFile} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {AbortError} from './error.js'
-import {outputContent, outputDebug} from '../../public/node/output.js'
+import {runWithTimer} from './metadata.js'
+import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,37 +161,54 @@ export async function downloadGitHubFile(
 interface DownloadOptions {
   to: string
   mode?: number
-  onError?: (error: unknown, url: string) => void
+  onError?: (error: string, url: string) => void
 }
 
 async function download(url: string, options: DownloadOptions): Promise<void> {
-  await inTemporaryDirectory(async (tmpDir) => {
-    const assetName = url.split('/').pop()!
-    const tempPath = joinPath(tmpDir, assetName)
+  const assetName = url.split('/').pop()!
 
-    try {
-      const file = await downloadFile(url, tempPath)
+  function handleError(error: string) {
+    const message = `Failed to download ${assetName}: ${error}`
+
+    if (options.onError) {
+      options.onError(message, url)
+    } else {
+      throw new AbortError(message)
+    }
+  }
+
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      const tempPath = joinPath(tmpDir, assetName)
+
+      let response: Response
+      try {
+        response = await fetch(url, undefined, 'slow-request')
+
+        if (!response.ok) {
+          handleError(`${response.status} ${response.statusText}`)
+          return
+        }
+
+        // if options.onError is set, we don't want to throw an error
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        handleError(error instanceof Error ? error.message : 'unknown error')
+        return
+      }
+
+      const responseBuffer = await response.arrayBuffer()
+      await writeFile(tempPath, Buffer.from(responseBuffer))
 
       if (options.mode) {
-        await chmod(file, options.mode)
+        await chmod(tempPath, options.mode)
       }
 
       await mkdir(dirname(options.to))
-      await moveFile(file, options.to)
-
-      // The consumer may prefer to silently error
-      // The onError pattern allows the consumer to receive the URL
-    } catch (error) {
-      outputDebug(
-        outputContent`Failed to download ${assetName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
-      if (options.onError) {
-        options.onError(error, url)
-      } else {
-        throw new AbortError(
-          `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
-        )
-      }
-    }
+      await moveFile(tempPath, options.to)
+    })
+    outputDebug(outputContent`${outputToken.successIcon()} Successfully downloaded ${outputToken.path(options.to)}`)
   })
 }
