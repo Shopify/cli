@@ -43,6 +43,19 @@ const handlers = [
   http.get('https://shopify.example/fails-to-download.txt', async () => {
     return HttpResponse.error()
   }),
+  http.get('https://shopify.example/redirect-me', () => {
+    return new HttpResponse(null, {
+      status: 302,
+      headers: {
+        Location: 'https://shopify.example/example.txt',
+      },
+    })
+  }),
+  http.get('https://shopify.example/500.txt', () => {
+    return new HttpResponse(null, {
+      status: 500,
+    })
+  }),
 ]
 
 // set up the server & clean-up
@@ -227,6 +240,42 @@ describe('downloadFile', () => {
     })
   })
 
+  test('Sanitizes the URL in debug output', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const mockOutput = mockAndCaptureOutput()
+      mockOutput.clear()
+      const url = 'https://shopify.example/example.txt?token=secret'
+      const filename = '/bin/example-sanitized.txt'
+      const to = joinPath(tmpDir, filename)
+
+      // When
+      await downloadFile(url, to)
+
+      // Then
+      expect(mockOutput.debug()).toContain('Downloading https://shopify.example/example.txt?token=****')
+    })
+  })
+
+  test('Follows redirects when downloading a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const url = 'https://shopify.example/redirect-me'
+      const filename = '/bin/redirected-file.txt'
+      const to = joinPath(tmpDir, filename)
+
+      // When
+      const result = await downloadFile(url, to)
+      const exists = await fileExists(result)
+      const contents = await readFile(result)
+
+      // Then
+      expect(result).toBe(to)
+      expect(exists).toBe(true)
+      expect(contents).toBe('Hello world')
+    })
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)('Cleans up if download fails', async () => {
@@ -240,8 +289,19 @@ describe('downloadFile', () => {
       const result = downloadFile(url, to)
 
       await expect(result).rejects.toThrow('Network error')
+      await expect(fileExists(to)).resolves.toBe(false)
+    })
+  })
 
-      // no file if download fails
+  test.skipIf(runningOnWindows)('Throws an error if the response status is not ok', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const url = 'https://shopify.example/500.txt'
+      const filename = '/bin/not-found.txt'
+      const to = joinPath(tmpDir, filename)
+
+      // Then
+      await expect(downloadFile(url, to)).rejects.toThrow('Failed to download file: Internal Server Error')
       await expect(fileExists(to)).resolves.toBe(false)
     })
   })
