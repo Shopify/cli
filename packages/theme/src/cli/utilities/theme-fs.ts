@@ -35,6 +35,7 @@ const THEME_DIRECTORY_PATTERNS = [
 ]
 
 const THEME_PARTITION_REGEX = {
+  layoutLiquidRegex: /^layout\/.+\.liquid$/,
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
   blockLiquidRegex: /^blocks\/.+\.liquid$/,
   configRegex: /^config\/(settings_schema|settings_data)\.json$/,
@@ -359,6 +360,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   const configFiles: T[] = []
   const staticAssetFiles: T[] = []
   const blockLiquidFiles: T[] = []
+  const layoutFiles: T[] = []
 
   files.forEach((file) => {
     const fileKey = file.key
@@ -367,6 +369,8 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
         sectionLiquidFiles.push(file)
       } else if (THEME_PARTITION_REGEX.blockLiquidRegex.test(fileKey)) {
         blockLiquidFiles.push(file)
+      } else if (THEME_PARTITION_REGEX.layoutLiquidRegex.test(fileKey)) {
+        layoutFiles.push(file)
       } else {
         otherLiquidFiles.push(file)
       }
@@ -397,6 +401,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
     configFiles,
     staticAssetFiles,
     blockLiquidFiles,
+    layoutFiles,
   }
 }
 
