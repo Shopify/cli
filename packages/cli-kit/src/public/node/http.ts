@@ -236,9 +236,9 @@ export function downloadFile(url: string, to: string): Promise<string> {
       const tryToRemoveFile = () => {
         try {
           unlinkFileSync(to)
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${err}`)
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (err: unknown) {
+          outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
         }
       }
 
@@ -254,7 +254,7 @@ export function downloadFile(url: string, to: string): Promise<string> {
 
       nodeFetch(url, {redirect: 'follow'})
         .then((res) => {
-          if (!res.ok) {
+          if (!res.ok || res.status >= 400) {
             throw new Error(`Failed to download file: ${res.statusText}`)
           }
           res.body?.pipe(file)
