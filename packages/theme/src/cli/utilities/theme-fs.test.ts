@@ -407,31 +407,33 @@ describe('theme-fs', () => {
         {key: 'config/settings_data.json', checksum: '9'},
         {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
-        {key: 'templates/404.context.uk.json', checksum: '11'},
-        {key: 'blocks/block.liquid', checksum: '12'},
+        {key: 'templates/404.context.uk.json', checksum: '12'},
+        {key: 'templates/404.liquid', checksum: '13'},
+        {key: 'blocks/block.liquid', checksum: '14'},
       ]
       // When
       const {
         sectionLiquidFiles,
         otherLiquidFiles,
         templateJsonFiles,
+        templateLiquidFiles,
         otherJsonFiles,
         configFiles,
         staticAssetFiles,
         contextualizedJsonFiles,
         blockLiquidFiles,
+        layoutFiles,
       } = partitionThemeFiles(files)
 
       // Then
       expect(sectionLiquidFiles).toEqual([{key: 'sections/announcement-bar.liquid', checksum: '10'}])
       expect(otherLiquidFiles).toEqual([
         {key: 'assets/base.css.liquid', checksum: '2'},
-        {key: 'layout/password.liquid', checksum: '4'},
-        {key: 'layout/theme.liquid', checksum: '5'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
       ])
-      expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
       expect(otherJsonFiles).toEqual([{key: 'locales/en.default.json', checksum: '6'}])
+      expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
+      expect(templateLiquidFiles).toEqual([{key: 'templates/404.liquid', checksum: '13'}])
       expect(configFiles).toEqual([
         {key: 'config/settings_schema.json', checksum: '8'},
         {key: 'config/settings_data.json', checksum: '9'},
@@ -440,8 +442,12 @@ describe('theme-fs', () => {
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
       ])
-      expect(contextualizedJsonFiles).toEqual([{key: 'templates/404.context.uk.json', checksum: '11'}])
-      expect(blockLiquidFiles).toEqual([{key: 'blocks/block.liquid', checksum: '12'}])
+      expect(contextualizedJsonFiles).toEqual([{key: 'templates/404.context.uk.json', checksum: '12'}])
+      expect(blockLiquidFiles).toEqual([{key: 'blocks/block.liquid', checksum: '14'}])
+      expect(layoutFiles).toEqual([
+        {key: 'layout/password.liquid', checksum: '4'},
+        {key: 'layout/theme.liquid', checksum: '5'},
+      ])
     })
 
     test('should handle empty file array', () => {

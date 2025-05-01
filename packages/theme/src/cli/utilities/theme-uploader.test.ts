@@ -253,6 +253,7 @@ describe('theme-uploader', () => {
       {key: 'assets/liquid.liquid', checksum: '5'},
       {key: 'config/settings_data.json', checksum: '6'},
       {key: 'assets/image.png', checksum: '7'},
+      {key: 'layout/custom.liquid', checksum: '8'},
     ]
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
@@ -275,6 +276,7 @@ describe('theme-uploader', () => {
         'templates/product.json',
         'sections/header-group.json',
         'templates/index.liquid',
+        'layout/custom.liquid',
         'assets/liquid.liquid',
         'config/settings_data.json',
         'assets/image.png',
@@ -313,7 +315,7 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(8)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(9)
     // Minimum theme files start first
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(1, remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
     // Dependent assets start second
@@ -330,9 +332,6 @@ describe('theme-uploader', () => {
       [
         {
           key: 'assets/liquid.liquid',
-        },
-        {
-          key: 'templates/index.liquid',
         },
         {
           key: 'assets/image.png',
@@ -362,12 +361,13 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       6,
       remoteTheme.id,
       [
         {
-          key: 'templates/product.json',
+          key: 'templates/index.liquid',
         },
       ],
       adminSession,
@@ -377,13 +377,24 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
-          key: 'templates/product.context.uk.json',
+          key: 'templates/product.json',
         },
       ],
       adminSession,
     )
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       8,
+      remoteTheme.id,
+      [
+        {
+          key: 'templates/product.context.uk.json',
+        },
+      ],
+      adminSession,
+    )
+
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      9,
       remoteTheme.id,
       [
         {
