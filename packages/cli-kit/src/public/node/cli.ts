@@ -1,13 +1,13 @@
 import {isTruthy} from './context/utilities.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
+import {renderInfo} from './ui.js'
+import {currentProcessIsGlobal} from './is-global.js'
+import {globalCLIVersion, localCLIVersion} from './version.js'
+import {jsonOutputEnabled} from './environment.js'
 import {cacheClear, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {environmentVariables} from '../../private/node/constants.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
 import {Flags} from '@oclif/core'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
-import {globalCLIVersion, localCLIVersion} from '@shopify/cli-kit/node/version'
-import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -193,7 +193,7 @@ export async function showMultipleCLIWarningIfNeeded(
       headline: `Two Shopify CLI installations found – using ${currentInstallation}`,
       body: [
         `A global installation (v${globalVersion}) and a local dependency (v${localVersion}) were detected.
-  We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json, unless you want to use different versions across multiple apps.`,
+We recommend removing the @shopify/cli and @shopify/app dependencies from your package.json, unless you want to use different versions across multiple apps.`,
       ],
       link: {
         label: 'See Shopify CLI documentation.',

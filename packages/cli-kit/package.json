@@ -92,7 +92,12 @@
                 "../../private/node/conf-store.js",
                 "../../private/node/constants.js",
                 "url",
-                "./cli-launcher.js"
+                "./cli-launcher.js",
+                "./is-global.js",
+                "./ui.js",
+                "./version.js",
+                "../common/version.js",
+                "./environment.js"
               ]
             }
           ]
