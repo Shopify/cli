@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 3.79.0
+
+### Patch Changes
+
+- 0e244dc: Update cli-hydrogen 10.0.1
+- 5839055: Added formatting and comment preserving TOML support via @shopify/toml-patch; opt-in by setting "SHOPIFY_CLI_USE_WASM_TOML_PATCH"
+
 ## 3.78.0
 
 ### Minor Changes

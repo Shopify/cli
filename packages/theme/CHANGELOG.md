@@ -1,5 +1,24 @@
 # @shopify/theme
 
+## 3.79.0
+
+### Patch Changes
+
+- aa85a63: Bump theme-tools packages
+- 164bbbe: The hidden `.shopify` folder now has its own generic .gitignore file
+- d8f017d: Bump theme check & language libraries
+- d9c7b4c: Fix: Clear asset upload error overlay for deleted / renamed files
+- 4134504: Add the actual "errors" during theme upload to the JSON output from `shopify theme push --json`
+- Updated dependencies [f9ac5cf]
+- Updated dependencies [0b1e588]
+- Updated dependencies [94362f9]
+- Updated dependencies [4f17786]
+- Updated dependencies [036bcaf]
+- Updated dependencies [164bbbe]
+- Updated dependencies [68b53f6]
+- Updated dependencies [031feb7]
+  - @shopify/cli-kit@3.79.0
+
 ## 3.78.0
 
 ### Minor Changes
