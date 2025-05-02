@@ -37,7 +37,7 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
-import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/cli'
+import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
@@ -48,7 +48,8 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
   globalCLIVersion: vi.fn(),
 }))
 vi.mock('@shopify/cli-kit/node/version')
-vi.mock('@shopify/cli-kit/node/cli')
+vi.mock('@shopify/cli-kit/node/multiple-installation-warning')
+
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
 
