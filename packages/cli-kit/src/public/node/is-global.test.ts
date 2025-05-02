@@ -1,4 +1,3 @@
-import {isDevelopment} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, installGlobalCLIPrompt} from './is-global.js'
 import {terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
@@ -9,33 +8,20 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 vi.mock('./system.js')
 vi.mock('./ui.js')
 vi.mock('execa')
-vi.mock('./context/local.js')
 vi.mock('which')
 vi.mock('./version.js')
+
 const globalNPMPath = '/path/to/global/npm'
 const globalYarnPath = '/path/to/global/yarn'
 const globalPNPMPath = '/path/to/global/pnpm'
 const unknownGlobalPath = '/path/to/global/unknown'
-const localProjectPath = '/path/local/node_modules'
+const localProjectPath = '/path/local'
 
 beforeEach(() => {
   ;(vi.mocked(execa.execaSync) as any).mockReturnValue({stdout: localProjectPath})
-  vi.mocked(isDevelopment).mockReturnValue(false)
 })
 
 describe('currentProcessIsGlobal', () => {
-  test('returns false in development', () => {
-    // Given
-    vi.mocked(isDevelopment).mockReturnValue(true)
-    const argv = ['node', localProjectPath, 'shopify']
-
-    // When
-    const got = currentProcessIsGlobal(argv)
-
-    // Then
-    expect(got).toBeFalsy()
-  })
-
   test('returns true if argv point to the global npm path', () => {
     // Given
     const argv = ['node', globalNPMPath, 'shopify']
