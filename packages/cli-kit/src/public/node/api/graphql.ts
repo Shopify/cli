@@ -40,9 +40,11 @@ export interface CacheOptions {
   cacheStore?: LocalStorage<ConfSchema>
 }
 
-interface RefreshTokenOnAuthorizedResponseRetryWithNewToken {
+interface RefreshedTokenOnAuthorizedResponse {
   token?: string
 }
+
+export type RefreshTokenOnAuthorizedResponse = Promise<RefreshedTokenOnAuthorizedResponse>
 
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
@@ -52,7 +54,7 @@ interface GraphQLRequestBaseOptions<TResult> {
   responseOptions?: GraphQLResponseOptions<TResult>
   cacheOptions?: CacheOptions
   preferredBehaviour?: RequestModeInput
-  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponseRetryWithNewToken
+  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponse
 }
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {

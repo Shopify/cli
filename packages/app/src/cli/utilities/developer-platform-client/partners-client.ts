@@ -655,16 +655,16 @@ export class PartnersClient implements DeveloperPlatformClient {
     return async () => {
       unauthorisedRetriesUsed++
       if (unauthorisedRetriesUsed > 1) {
-        return {action: 'throw'}
+        return {token: undefined}
       }
       if (this.tokenRefreshInProgress) {
         const refreshedToken = await this.tokenRefreshInProgress
-        return {action: 'retry', token: refreshedToken}
+        return {token: refreshedToken}
       } else {
         this.tokenRefreshInProgress = this.refreshToken()
         const refreshedToken = await this.tokenRefreshInProgress
         this.tokenRefreshInProgress = undefined
-        return {action: 'retry', token: refreshedToken}
+        return {token: refreshedToken}
       }
     }
   }
