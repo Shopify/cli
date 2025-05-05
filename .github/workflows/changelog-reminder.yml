@@ -18,6 +18,5 @@ jobs:
             If the changes are user-facing, run `pnpm changeset add` to track your changes and include them in the next release CHANGELOG.
 
             > [!CAUTION]
-
             > DO NOT create changesets for features which you do not wish to be included in the public changelog of the next CLI release.
 
