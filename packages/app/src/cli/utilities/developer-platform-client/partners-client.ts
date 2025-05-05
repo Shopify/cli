@@ -159,7 +159,7 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
-import {CacheOptions, GraphQLVariables, RefreshTokenOnAuthorizedResponse} from '@shopify/cli-kit/node/api/graphql'
+import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -650,21 +650,24 @@ export class PartnersClient implements DeveloperPlatformClient {
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
   }
 
-  private createUnauthorizedHandler(): () => RefreshTokenOnAuthorizedResponse {
+  private createUnauthorizedHandler(): UnauthorizedHandler {
     let unauthorisedRetriesUsed = 0
-    return async () => {
-      unauthorisedRetriesUsed++
-      if (unauthorisedRetriesUsed > 1) {
-        return {token: undefined}
-      }
-      if (this.tokenRefreshInProgress) {
-        throw new Error('Multiple simultaneous token refresh attempts are not allowed')
-      } else {
-        this.tokenRefreshInProgress = this.refreshToken()
-        const refreshedToken = await this.tokenRefreshInProgress
-        this.tokenRefreshInProgress = undefined
-        return {token: refreshedToken}
-      }
+    return {
+      type: 'token_refresh',
+      handler: async () => {
+        unauthorisedRetriesUsed++
+        if (unauthorisedRetriesUsed > 1) {
+          return {token: undefined}
+        }
+        if (this.tokenRefreshInProgress) {
+          throw new Error('Multiple simultaneous token refresh attempts are not allowed')
+        } else {
+          this.tokenRefreshInProgress = this.refreshToken()
+          const refreshedToken = await this.tokenRefreshInProgress
+          this.tokenRefreshInProgress = undefined
+          return {token: refreshedToken}
+        }
+      },
     }
   }
 }

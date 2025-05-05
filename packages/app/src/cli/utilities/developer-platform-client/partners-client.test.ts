@@ -103,14 +103,10 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
-    expect(partnersRequest).toHaveBeenCalledWith(
-      CreateAppQuery,
-      'token',
-      variables,
-      undefined,
-      undefined,
-      expect.any(Function),
-    )
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 
   test('creates an app with non-launchable defaults', async () => {
@@ -139,14 +135,10 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
-    expect(partnersRequest).toHaveBeenCalledWith(
-      CreateAppQuery,
-      'token',
-      variables,
-      undefined,
-      undefined,
-      expect.any(Function),
-    )
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 
   test('throws error if requests has a user error', async () => {
@@ -177,14 +169,10 @@ describe('fetchApp', async () => {
 
     // Then
     expect(got).toEqual({organization: partnerMarkedOrg, apps: [APP1, APP2], hasMorePages: false})
-    expect(partnersRequest).toHaveBeenCalledWith(
-      FindOrganizationQuery,
-      'token',
-      {id: ORG1.id},
-      undefined,
-      undefined,
-      expect.any(Function),
-    )
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 
   test('throws if there are no organizations', async () => {
@@ -197,14 +185,10 @@ describe('fetchApp', async () => {
 
     // Then
     await expect(got).rejects.toThrowError(new NoOrgError(testPartnersUserSession.accountInfo))
-    expect(partnersRequest).toHaveBeenCalledWith(
-      FindOrganizationQuery,
-      'token',
-      {id: ORG1.id},
-      undefined,
-      undefined,
-      expect.any(Function),
-    )
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 })
 
@@ -226,8 +210,8 @@ describe('Token refresh', () => {
 
     partnersRequestMock.mockImplementation(
       async (_query, _token, _variables, _headers, _preferredBehaviour, handler) => {
-        if (handler) {
-          refreshedToken = (await handler()).token
+        if (handler?.type === 'token_refresh') {
+          refreshedToken = (await handler.handler()).token
         }
         return Promise.resolve(response)
       },
@@ -245,10 +229,10 @@ describe('Token refresh', () => {
   test('if token refresh is called twice, the token returns undefined', async () => {
     partnersRequestMock.mockImplementation(
       async (_query, _token, _variables, _headers, _preferredBehaviour, handler) => {
-        if (handler) {
+        if (handler?.type === 'token_refresh') {
           // Call handler twice, simulating a failure of the first call.
-          await handler()
-          refreshedToken = (await handler()).token
+          await handler.handler()
+          refreshedToken = (await handler.handler()).token
         }
         return Promise.resolve(response)
       },

@@ -46,6 +46,18 @@ interface RefreshedTokenOnAuthorizedResponse {
 
 export type RefreshTokenOnAuthorizedResponse = Promise<RefreshedTokenOnAuthorizedResponse>
 
+interface SimpleUnauthorizedHandler {
+  type: 'simple'
+  handler: () => Promise<void>
+}
+
+interface TokenRefreshHandler {
+  type: 'token_refresh'
+  handler: () => RefreshTokenOnAuthorizedResponse
+}
+
+export type UnauthorizedHandler = SimpleUnauthorizedHandler | TokenRefreshHandler
+
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
   url: string
@@ -54,25 +66,24 @@ interface GraphQLRequestBaseOptions<TResult> {
   responseOptions?: GraphQLResponseOptions<TResult>
   cacheOptions?: CacheOptions
   preferredBehaviour?: RequestModeInput
-  refreshTokenOnAuthorizedResponse?: () => RefreshTokenOnAuthorizedResponse
 }
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
   variables?: Variables
-  unauthorizedHandler?: () => Promise<void>
+  unauthorizedHandler?: UnauthorizedHandler
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
-  unauthorizedHandler?: () => Promise<void>
+  unauthorizedHandler?: UnauthorizedHandler
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
-  unauthorizedHandler?: () => Promise<void>
+  unauthorizedHandler?: UnauthorizedHandler
 }
 
 export interface GraphQLResponseOptions<T> {
@@ -107,18 +118,8 @@ async function createGraphQLClient({
  * @param options - GraphQL request options.
  */
 async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
-  const {
-    token,
-    addedHeaders,
-    queryAsString,
-    variables,
-    api,
-    url,
-    responseOptions,
-    unauthorizedHandler,
-    cacheOptions,
-    refreshTokenOnAuthorizedResponse,
-  } = options
+  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler, cacheOptions} =
+    options
   const requestBehaviour = requestMode(options.preferredBehaviour ?? 'default')
 
   let {headers, client} = await createGraphQLClient({url, addedHeaders, token})
@@ -145,9 +146,12 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     }
   }
 
-  const unauthorizedHandlerFunction = refreshTokenOnAuthorizedResponse
+  const simpleUnauthorizedHandler = unauthorizedHandler?.type === 'simple' ? unauthorizedHandler.handler : undefined
+  const tokenRefreshHandler = unauthorizedHandler?.type === 'token_refresh' ? unauthorizedHandler.handler : undefined
+
+  const tokenRefreshUnauthorizedHandlerFunction = tokenRefreshHandler
     ? async () => {
-        const refreshTokenResult = await refreshTokenOnAuthorizedResponse()
+        const refreshTokenResult = await tokenRefreshHandler()
         if (refreshTokenResult.token) {
           const {client: newClient, headers: newHeaders} = await createGraphQLClient({
             url,
@@ -170,16 +174,16 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
         response = await retryAwareRequest(
           {request: performRequest, url, ...requestBehaviour},
           responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-          unauthorizedHandler,
+          simpleUnauthorizedHandler,
         )
       } catch (error) {
-        if (error instanceof ClientError && unauthorizedHandlerFunction) {
-          const shouldRetry = await unauthorizedHandlerFunction()
+        if (error instanceof ClientError && error.response.status === 401 && tokenRefreshUnauthorizedHandlerFunction) {
+          const shouldRetry = await tokenRefreshUnauthorizedHandlerFunction()
           if (shouldRetry) {
             response = await retryAwareRequest(
               {request: performRequest, url, ...requestBehaviour},
               responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-              unauthorizedHandler,
+              simpleUnauthorizedHandler,
             )
           } else {
             throw error
