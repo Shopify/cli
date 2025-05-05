@@ -311,9 +311,12 @@ export function createUnauthorizedHandler(client: DeveloperPlatformClient): Unau
         throw new Error('Multiple simultaneous token refresh attempts are not allowed')
       } else {
         client.setTokenRefreshInProgress(true)
-        const token = await client.refreshToken()
-        client.setTokenRefreshInProgress(false)
-        return {token}
+        try {
+          const token = await client.refreshToken()
+          return {token}
+        } finally {
+          client.setTokenRefreshInProgress(false)
+        }
       }
     },
   }
