@@ -13,6 +13,7 @@ import {
   AppVersionWithContext,
   CreateAppOptions,
   AppLogsResponse,
+  createUnauthorizedHandler,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -218,12 +219,20 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = false
   public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
+  private _tokenRefreshInProgress = false
 
   private _session: PartnersSession | undefined
-  private tokenRefreshInProgress: undefined | Promise<string>
 
   constructor(session?: PartnersSession) {
     this._session = session
+  }
+
+  getTokenRefreshInProgress(): boolean {
+    return this._tokenRefreshInProgress
+  }
+
+  setTokenRefreshInProgress(value: boolean): void {
+    this._tokenRefreshInProgress = value
   }
 
   async session(): Promise<PartnersSession> {
@@ -651,24 +660,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   private createUnauthorizedHandler(): UnauthorizedHandler {
-    let unauthorisedRetriesUsed = 0
-    return {
-      type: 'token_refresh',
-      handler: async () => {
-        unauthorisedRetriesUsed++
-        if (unauthorisedRetriesUsed > 1) {
-          return {token: undefined}
-        }
-        if (this.tokenRefreshInProgress) {
-          throw new Error('Multiple simultaneous token refresh attempts are not allowed')
-        } else {
-          this.tokenRefreshInProgress = this.refreshToken()
-          const refreshedToken = await this.tokenRefreshInProgress
-          this.tokenRefreshInProgress = undefined
-          return {token: refreshedToken}
-        }
-      },
-    }
+    return createUnauthorizedHandler(this)
   }
 }
 

@@ -20,6 +20,7 @@ import {
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
+  createUnauthorizedHandler,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -149,6 +150,7 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -170,10 +172,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = true
   public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
+  private _tokenRefreshInProgress = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
     this._session = session
+  }
+
+  getTokenRefreshInProgress(): boolean {
+    return this._tokenRefreshInProgress
+  }
+
+  setTokenRefreshInProgress(value: boolean): void {
+    this._tokenRefreshInProgress = value
   }
 
   async subscribeToAppLogs(
@@ -995,6 +1006,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       `Looks like you don't have a dev store in the organization you selected. ` +
       `Keep going — create a dev store on the Developer Dashboard:\n${url}\n`
     )
+  }
+
+  private createUnauthorizedHandler(): UnauthorizedHandler {
+    return createUnauthorizedHandler(this)
   }
 
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {

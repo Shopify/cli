@@ -61,6 +61,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -234,6 +235,8 @@ export interface DeveloperPlatformClient {
   readonly supportsDevSessions: boolean
   readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
+  getTokenRefreshInProgress: () => boolean
+  setTokenRefreshInProgress: (value: boolean) => void
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
@@ -294,4 +297,24 @@ export interface DeveloperPlatformClient {
   devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (input: string) => Promise<string>
+}
+
+export function createUnauthorizedHandler(client: DeveloperPlatformClient): UnauthorizedHandler {
+  let unauthorizedRetriesUsed = 0
+  return {
+    type: 'token_refresh',
+    handler: async () => {
+      unauthorizedRetriesUsed++
+      if (unauthorizedRetriesUsed > 1) {
+        return {token: undefined}
+      } else if (client.getTokenRefreshInProgress()) {
+        throw new Error('Multiple simultaneous token refresh attempts are not allowed')
+      } else {
+        client.setTokenRefreshInProgress(true)
+        const token = await client.refreshToken()
+        client.setTokenRefreshInProgress(false)
+        return {token}
+      }
+    },
+  }
 }
