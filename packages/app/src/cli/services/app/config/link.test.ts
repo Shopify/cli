@@ -47,7 +47,7 @@ const DEFAULT_REMOTE_CONFIGURATION = {
   access_scopes: {use_legacy_install_flow: true},
 }
 
-function buildDeveloperPlatformClient(): DeveloperPlatformClient {
+function buildDeveloperPlatformClient(extraFields: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
@@ -57,6 +57,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
           return undefined
       }
     },
+    ...extraFields,
   })
 }
 
@@ -1450,6 +1451,59 @@ application_url = "https://example.com"
 embedded = true
 
 [build]
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
+  test('when remote app is new and supports dev sessions then include automatically_update_urls_on_dev = true', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const initialContent = `scopes = ""
+    `
+      writeFileSync(filePath, initialContent)
+      const developerPlatformClient = buildDeveloperPlatformClient({supportsDevSessions: true})
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient,
+      }
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...mockRemoteApp(),
+        newApp: true,
+        developerPlatformClient,
+      })
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+extension_directories = [ ]
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
 include_config_on_deploy = true
 
 [access_scopes]
