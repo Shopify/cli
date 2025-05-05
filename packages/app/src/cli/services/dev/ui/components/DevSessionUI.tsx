@@ -7,7 +7,7 @@ import {
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {Alert, ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
+import {Alert, ConcurrentOutput, Link} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -192,8 +192,16 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               <>
                 {status.isReady && (
                   <>
-                    <Text>{`Preview URL: ${status.previewURL}`}</Text>
-                    {status.graphiqlURL ? <Text>{`GraphiQL URL: ${status.graphiqlURL}`}</Text> : null}
+                    {status.previewURL ? (
+                      <Text>
+                        Preview URL: <Link url={status.previewURL} />
+                      </Text>
+                    ) : null}
+                    {status.graphiqlURL ? (
+                      <Text>
+                        GraphiQL URL: <Link url={status.graphiqlURL} />
+                      </Text>
+                    ) : null}
                   </>
                 )}
               </>
