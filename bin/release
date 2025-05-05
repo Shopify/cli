@@ -12,13 +12,9 @@ if [ "$tag" != "latest" ] && [ "$tag" != "nightly" ] && [ "$tag" != "experimenta
   exit 1
 fi
 
-if [ "$tag" = "experimental" ]; then
-  # Only for experimental releases, force an empty changeset to ensure a build is created
-  echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-experimental-build.md
-fi
-
-# Only for nightly and experimental releases, set the snapshot version
+# Only for nightly and experimental releases, force an empty changeset to ensure a build is created and set the snapshot version
 if [ "$tag" = "nightly" ] || [ "$tag" = "experimental" ]; then
+  echo -e "---\n'"'@shopify/cli'"': patch\n---" > .changeset/force-release.md
   pnpm changeset version --snapshot $tag
   ./bin/update-cli-kit-version.js
 fi
