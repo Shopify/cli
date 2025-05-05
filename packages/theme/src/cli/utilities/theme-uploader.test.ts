@@ -253,6 +253,7 @@ describe('theme-uploader', () => {
       {key: 'assets/liquid.liquid', checksum: '5'},
       {key: 'config/settings_data.json', checksum: '6'},
       {key: 'assets/image.png', checksum: '7'},
+      {key: 'layout/custom.liquid', checksum: '8'},
     ]
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map([]))
 
@@ -274,6 +275,7 @@ describe('theme-uploader', () => {
         'templates/product.context.uk.json',
         'templates/product.json',
         'sections/header-group.json',
+        'layout/custom.liquid',
         'templates/index.liquid',
         'assets/liquid.liquid',
         'config/settings_data.json',
@@ -299,6 +301,7 @@ describe('theme-uploader', () => {
         ['assets/image.png', {key: 'assets/image.png', checksum: '7'}],
         ['templates/product.context.uk.json', {key: 'templates/product.context.uk.json', checksum: '8'}],
         ['blocks/block.liquid', {key: 'blocks/block.liquid', checksum: '9'}],
+        ['layout/theme.liquid', {key: 'layout/theme.liquid', checksum: '10'}],
       ]),
     )
 
@@ -313,14 +316,14 @@ describe('theme-uploader', () => {
     await renderThemeSyncProgress()
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(8)
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(9)
     // Minimum theme files start first
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(1, remoteTheme.id, MINIMUM_THEME_ASSETS, adminSession)
     // Dependent assets start second
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       2,
       remoteTheme.id,
-      [{key: 'blocks/block.liquid'}],
+      [{key: 'layout/theme.liquid'}],
       adminSession,
     )
     // Independent assets start right after dependent assets start
@@ -344,6 +347,12 @@ describe('theme-uploader', () => {
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
       4,
       remoteTheme.id,
+      [{key: 'blocks/block.liquid'}],
+      adminSession,
+    )
+    expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
+      5,
+      remoteTheme.id,
       [
         {
           key: 'sections/header.liquid',
@@ -353,7 +362,7 @@ describe('theme-uploader', () => {
     )
 
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      5,
+      6,
       remoteTheme.id,
       [
         {
@@ -362,8 +371,9 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      6,
+      7,
       remoteTheme.id,
       [
         {
@@ -372,8 +382,9 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      7,
+      8,
       remoteTheme.id,
       [
         {
@@ -382,8 +393,9 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+
     expect(bulkUploadThemeAssets).toHaveBeenNthCalledWith(
-      8,
+      9,
       remoteTheme.id,
       [
         {

@@ -190,6 +190,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.otherJsonFiles,
     ...fileSets.sectionLiquidFiles,
     ...fileSets.blockLiquidFiles,
+    ...fileSets.layoutFiles,
     ...fileSets.otherLiquidFiles,
     ...fileSets.configFiles,
     ...fileSets.staticAssetFiles,
@@ -289,14 +290,16 @@ function selectUploadableFiles(themeFileSystem: ThemeFileSystem, remoteChecksums
  * We use this 2d array to batch files of the same type together
  * while maintaining the order between file types. The files with
  * dependencies we have are:
- * 1. Liquid sections need to be uploaded first
- * 2. JSON sections need to be uploaded afterward so they can reference Liquid sections
- * 3. JSON templates should be the next ones so they can reference sections
- * 4. Contextualized templates should be uploaded after as they are variations of templates
- * 5. Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
+ * 1. Layout files don't necessarily need to be the first, but they must uploaded before templates.
+ * 2. Liquid blocks need to be uploaded before sections
+ * 3. Liquid sections need to be uploaded afterwards
+ * 4. JSON sections need to be uploaded after sections
+ * 5. JSON templates need to be uploaded after all sections and layouts
+ * 6. Contextualized templates should be uploaded after as they are variations of templates
+ * 7. Config files must be the last ones, but we need to upload config/settings_schema.json first, followed by config/settings_data.json
  *
  * The files with no dependencies we have are:
- * - The other Liquid files (for example, snippets)
+ * - The other Liquid files (for example, snippets, and liquid templates)
  * - The other JSON files (for example, locales)
  * - The static assets
  *
@@ -312,6 +315,7 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
     independentFiles: [fileSets.otherLiquidFiles, fileSets.otherJsonFiles, fileSets.staticAssetFiles],
     // Follow order of dependencies:
     dependentFiles: [
+      fileSets.layoutFiles,
       fileSets.blockLiquidFiles,
       fileSets.sectionLiquidFiles,
       fileSets.sectionJsonFiles,
