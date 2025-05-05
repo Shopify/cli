@@ -658,8 +658,7 @@ export class PartnersClient implements DeveloperPlatformClient {
         return {token: undefined}
       }
       if (this.tokenRefreshInProgress) {
-        const refreshedToken = await this.tokenRefreshInProgress
-        return {token: refreshedToken}
+        throw new Error('Multiple simultaneous token refresh attempts are not allowed')
       } else {
         this.tokenRefreshInProgress = this.refreshToken()
         const refreshedToken = await this.tokenRefreshInProgress

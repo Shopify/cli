@@ -11,8 +11,9 @@ import {
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
+import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, beforeEach, Mock} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -204,5 +205,77 @@ describe('fetchApp', async () => {
       undefined,
       expect.any(Function),
     )
+  })
+})
+
+describe('Token refresh', () => {
+  let partnersClient: PartnersClient
+  let sessionMock: PartnersSession
+  const partnersRequestMock = vi.mocked(partnersRequest)
+  const query = `query { doesnt { matter } }`
+  const variables = undefined
+  const response = {}
+  const newToken = 'new-token'
+  let refreshedToken: string | undefined
+
+  beforeEach(() => {
+    sessionMock = testPartnersUserSession
+    partnersClient = new PartnersClient(sessionMock)
+    vi.spyOn(partnersClient, 'refreshToken').mockImplementation(vi.fn())
+    ;(partnersClient.refreshToken as Mock).mockResolvedValue(newToken)
+
+    partnersRequestMock.mockImplementation(
+      async (_query, _token, _variables, _headers, _preferredBehaviour, handler) => {
+        if (handler) {
+          refreshedToken = (await handler()).token
+        }
+        return Promise.resolve(response)
+      },
+    )
+  })
+
+  test('refreshes token once if the handler is called', async () => {
+    await expect(partnersClient.request(query, variables)).resolves.toEqual(response)
+
+    expect(refreshedToken).toBe(newToken)
+    expect(partnersClient.refreshToken).toHaveBeenCalledOnce()
+    expect(partnersRequestMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('if token refresh is called twice, the token returns undefined', async () => {
+    partnersRequestMock.mockImplementation(
+      async (_query, _token, _variables, _headers, _preferredBehaviour, handler) => {
+        if (handler) {
+          // Call handler twice, simulating a failure of the first call.
+          await handler()
+          refreshedToken = (await handler()).token
+        }
+        return Promise.resolve(response)
+      },
+    )
+
+    await expect(partnersClient.request(query, variables)).resolves.toEqual(response)
+
+    expect(refreshedToken).toBe(undefined)
+    expect(partnersClient.refreshToken).toHaveBeenCalledOnce()
+    expect(partnersRequestMock).toHaveBeenCalledTimes(1)
+  })
+
+  test('if multiple calls to partnerClient are made while token refresh is happening, the second call fails', async () => {
+    let refreshedToken: string | undefined
+    ;(partnersClient.refreshToken as Mock).mockImplementationOnce(async () => {
+      // Just sleep so the second call immediately trips the race condition guard clause
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      return newToken
+    })
+
+    const firstRequest = partnersClient.request(query, variables)
+    const secondRequest = partnersClient.request(query, variables)
+
+    await expect(secondRequest).rejects.toThrow('Multiple simultaneous token refresh attempts are not allowed')
+
+    expect(refreshedToken).toBe(undefined)
+    expect(partnersClient.refreshToken).toHaveBeenCalledOnce()
+    expect(partnersRequestMock).toHaveBeenCalledTimes(2)
   })
 })
