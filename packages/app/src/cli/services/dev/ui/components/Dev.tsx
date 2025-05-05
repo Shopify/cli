@@ -2,7 +2,7 @@ import metadata from '../../../../metadata.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
+import {ConcurrentOutput, Link} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -260,8 +260,14 @@ const Dev: FunctionComponent<DevProps> = ({
               <Text>{isShuttingDownMessage}</Text>
             ) : (
               <>
-                <Text>{`Preview URL: ${previewUrl}`}</Text>
-                {graphiqlUrl ? <Text>{graphiqlURLMessage}</Text> : null}
+                <Text>
+                  Preview URL: <Link url={previewUrl} />
+                </Text>
+                {graphiqlUrl ? (
+                  <Text>
+                    GraphiQL URL: <Link url={localhostGraphiqlUrl} />
+                  </Text>
+                ) : null}
               </>
             )}
           </Box>
