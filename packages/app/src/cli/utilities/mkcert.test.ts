@@ -3,7 +3,7 @@ import {generateCertificatePrompt} from '../prompts/dev.js'
 import * as fs from '@shopify/cli-kit/node/fs'
 import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, vi, expect, beforeEach, afterEach, MockInstance} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, isWsl} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import which from 'which'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
@@ -11,12 +11,21 @@ import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {keypress, renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('which')
 vi.mock('@shopify/cli-kit/node/github')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/ui', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
+  return {
+    ...actual,
+    renderWarning: vi.fn(),
+    keypress: vi.fn(),
+  }
+})
 
 describe('mkcert', () => {
   describe('generateCertificate', () => {
@@ -151,10 +160,12 @@ describe('mkcert', () => {
       )
     })
 
-    testWithTempDir('generates a certificate using a downloaded mkcert.exe on windows', async ({tempDir}) => {
+    testWithTempDir('generates a certificate using a downloaded mkcert.exe on windows with WSL', async ({tempDir}) => {
       const appDirectory = tempDir
 
       const mkcertDefaultPath = joinPath(appDirectory, '.shopify', 'mkcert.exe')
+      vi.mocked(isWsl).mockResolvedValue(true)
+      vi.mocked(keypress).mockResolvedValue(undefined)
       vi.mocked(exec).mockImplementation(async (command) => {
         expect(command).toBe(mkcertDefaultPath)
         await mkdir(joinPath(appDirectory, '.shopify'))
@@ -178,6 +189,17 @@ describe('mkcert', () => {
         expect.any(String),
         mkcertDefaultPath,
       )
+
+      // Verify WSL warning was shown and keypress was called
+      expect(renderWarning).toHaveBeenCalledWith({
+        headline: "It looks like you're using WSL.",
+        body: ['Additional steps are required to configure certificate trust in Windows.'],
+        link: {
+          label: 'See Shopify CLI documentation',
+          url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options#localhost-based-development-with-windows-subsystem-for-linux-wsl',
+        },
+      })
+      expect(keypress).toHaveBeenCalled()
     })
 
     testWithTempDir('skips certificate generation if the user does not confirm', async ({tempDir}) => {

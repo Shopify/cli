@@ -186,21 +186,21 @@ export async function generateCertificate({
   outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}\n`)
 
   const wsl = await isWsl()
-  if (!wsl) {
+  if (wsl) {
     renderWarning({
-      headline:
-        "We've detected that you are running Shopify CLI under WSL. Additional steps are required to configure certificate trust in Windows.",
-      body: [
-        'This is only needed the first time you run an app with',
-        {command: '--use-localhost'},
-        'If needed, we recommend following these steps before proceeding. Press enter to continue',
-      ],
+      headline: "It looks like you're using WSL.",
+      body: ['Additional steps are required to configure certificate trust in Windows.'],
       link: {
-        label: 'See Shopify CLI documentation for details',
+        label: 'See Shopify CLI documentation',
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options#localhost-based-development-with-windows-subsystem-for-linux-wsl',
       },
     })
+
+    outputInfo('👉 Press any key to continue')
+
     await keypress()
+    // Empty line so that the keypress feels more responsive.
+    outputInfo('')
   }
 
   return {
