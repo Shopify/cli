@@ -64,7 +64,6 @@ const Dev: FunctionComponent<DevProps> = ({
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const graphiqlURLMessage = graphiqlUrl ? `GraphiQL URL: ${localhostGraphiqlUrl}` : ''
 
   const [isShuttingDownMessage, setIsShuttingDownMessage] = useState<string | undefined>(undefined)
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
