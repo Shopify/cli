@@ -1,6 +1,6 @@
 import {configurationFileNames, versions} from '../../constants.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {buildGraphqlTypes, PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '../function/build.js'
+import {buildGraphqlTypes, SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from '../extensions/common.js'
@@ -314,7 +314,7 @@ export function getFunctionRuntimeDependencies(templateLanguage: string): Depend
   if (templateLanguage === 'javascript') {
     dependencies.push({
       name: '@shopify/shopify_function',
-      version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
+      version: `~${SHOPIFY_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
     })
   }
   return dependencies
