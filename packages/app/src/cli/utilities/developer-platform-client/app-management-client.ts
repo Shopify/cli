@@ -1134,17 +1134,20 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
 export async function allowedTemplates(
   templates: GatedExtensionTemplate[],
   betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>,
+  version: string = CLI_KIT_VERSION,
 ): Promise<GatedExtensionTemplate[]> {
   const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
   const enabledBetaFlags = await betaFlagsFetcher(allBetaFlags)
   return templates.filter((ext) => {
     const hasAnyNeededBetas =
       !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
-    const satisfiesMinCliVersion =
-      !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
+    const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(version, `>=${ext.minimumCliVersion}`)
     const satisfiesDeprecatedFromCliVersion =
-      !ext.deprecatedFromCliVersion || versionSatisfies(CLI_KIT_VERSION, `<${ext.deprecatedFromCliVersion}`)
-    return hasAnyNeededBetas && satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
+      !ext.deprecatedFromCliVersion || versionSatisfies(version, `<${ext.deprecatedFromCliVersion}`)
+    const isDevelopmentVersion = version.startsWith('0.0.0')
+    const satisfiesVersion = satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
+    const satisfiesDevelopmentVersion = isDevelopmentVersion && ext.deprecatedFromCliVersion === undefined
+    return hasAnyNeededBetas && (satisfiesVersion || satisfiesDevelopmentVersion)
   })
 }
 
