@@ -4,7 +4,7 @@ import * as Types from './types.js'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type CreateAssetUrlMutationVariables = Types.Exact<{
-  format: Types.SourceFormat
+  sourceExtension: Types.SourceExtension
 }>
 
 export type CreateAssetUrlMutation = {
@@ -24,8 +24,8 @@ export const CreateAssetUrl = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'format'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'SourceFormat'}}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'sourceExtension'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'SourceExtension'}}},
         },
       ],
       selectionSet: {
@@ -37,8 +37,8 @@ export const CreateAssetUrl = {
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'format'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'format'}},
+                name: {kind: 'Name', value: 'sourceExtension'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'sourceExtension'}},
               },
             ],
             selectionSet: {

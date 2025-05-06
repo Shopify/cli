@@ -72,11 +72,11 @@ export type Code =
   /** An unknown error. */
   | 'UNKNOWN'
 
-/** File format for compressed files used for app sources. */
-export type SourceFormat =
-  /** Brotli file format. */
+/** File extension for compressed files used for app sources. */
+export type SourceExtension =
+  /** Brotli file extension. */
   | 'BR'
-  /** ZIP file format. */
+  /** ZIP file extension. */
   | 'ZIP'
 
 /** The input fields for app version metadata. */
