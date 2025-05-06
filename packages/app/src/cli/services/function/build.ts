@@ -156,7 +156,7 @@ export async function buildGraphqlTypes(
       if (errorMessage && errorMessage.includes('npx canceled due to missing packages')) {
         outputDebug(`Error generating GraphQL types: ${errorMessage}`)
         throw new AbortError(
-          'Unable to generate function GraphQL types. Please ensure you have restored all workspace dependencies with the correct package manager.',
+          'Unable to generate function GraphQL types. Please ensure you have installed all workspace dependencies with the correct package manager.',
         )
       }
       throw error
