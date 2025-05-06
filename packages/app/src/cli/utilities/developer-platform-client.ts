@@ -234,7 +234,7 @@ export interface DeveloperPlatformClient {
   readonly supportsDevSessions: boolean
   readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
-  readonly bundleFormat: string
+  readonly bundleFormat: 'zip' | 'br'
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
