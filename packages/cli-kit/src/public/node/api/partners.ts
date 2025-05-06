@@ -6,6 +6,7 @@ import {getPackageManager} from '../node-package-manager.js'
 import {cwd} from '../path.js'
 import {AbortError} from '../error.js'
 import {formatPackageManagerCommand} from '../output.js'
+import {RequestModeInput} from '../http.js'
 import Bottleneck from 'bottleneck'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -42,6 +43,7 @@ async function setupRequest(token: string) {
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options.
+ * @param preferredBehaviour - Preferred behaviour for the request.
  * @returns The response of the query of generic type <T>.
  */
 export async function partnersRequest<T>(
@@ -49,6 +51,7 @@ export async function partnersRequest<T>(
   token: string,
   variables?: GraphQLVariables,
   cacheOptions?: CacheOptions,
+  preferredBehaviour?: RequestModeInput,
 ): Promise<T> {
   const opts = await setupRequest(token)
   const result = limiter.schedule(() =>
@@ -57,6 +60,7 @@ export async function partnersRequest<T>(
       query,
       variables,
       cacheOptions,
+      preferredBehaviour,
     }),
   )
 
@@ -81,12 +85,14 @@ export const generateFetchAppLogUrl = async (
  * @param query - GraphQL query to execute.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param preferredBehaviour - Preferred behaviour for the request.
  * @returns The response of the query of generic type <TResult>.
  */
 export async function partnersRequestDoc<TResult, TVariables extends Variables>(
   query: TypedDocumentNode<TResult, TVariables>,
   token: string,
   variables?: TVariables,
+  preferredBehaviour?: RequestModeInput,
 ): Promise<TResult> {
   try {
     const opts = await setupRequest(token)
@@ -95,6 +101,7 @@ export async function partnersRequestDoc<TResult, TVariables extends Variables>(
         ...opts,
         query,
         variables,
+        preferredBehaviour,
       }),
     )
 

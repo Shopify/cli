@@ -149,13 +149,13 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.27.0
@@ -164,11 +164,14 @@ importers:
         specifier: 8.11.1
         version: 8.11.1(react@18.2.0)
       '@shopify/theme':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.14.1
-        version: 3.14.1
+        specifier: 3.15.1
+        version: 3.15.1
+      '@shopify/toml-patch':
+        specifier: 0.3.0
+        version: 0.3.0
       body-parser:
         specifier: 1.20.3
         version: 1.20.3
@@ -268,22 +271,22 @@ importers:
         specifier: 5.4.28
         version: 5.4.28
       '@shopify/app':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 10.0.0
-        version: 10.0.0(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2)
+        specifier: 10.0.1
+        version: 10.0.1(@graphql-codegen/cli@5.0.4)(graphql@16.10.0)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../theme
       '@types/global-agent':
         specifier: 3.0.0
@@ -423,6 +426,9 @@ importers:
       is-interactive:
         specifier: 2.0.0
         version: 2.0.0
+      is-wsl:
+        specifier: 3.1.0
+        version: 3.1.0
       jose:
         specifier: 5.9.6
         version: 5.9.6
@@ -543,10 +549,10 @@ importers:
         version: 0.24.2
     devDependencies:
       '@shopify/app':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../cli-kit
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
@@ -646,7 +652,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -659,7 +665,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -675,14 +681,14 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.78.0
+        specifier: 3.79.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 3.14.1
-        version: 3.14.1
+        specifier: 3.15.1
+        version: 3.15.1
       '@shopify/theme-language-server-node':
-        specifier: 2.13.1
-        version: 2.13.1
+        specifier: 2.14.1
+        version: 2.14.1
       chokidar:
         specifier: 3.6.0
         version: 3.6.0
@@ -6305,15 +6311,15 @@ packages:
     resolution: {integrity: sha512-fTIQwLF+Qhuws31iw7Ncl1R3HUDtGwIipiJ9iU+UsDUwMhegFcQKQHd51nZjb7CArq0MvON8rbgCGQYWHUKAdg==}
     dev: true
 
-  /@shopify/cli-hydrogen@10.0.0(@graphql-codegen/cli@5.0.4)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-tCMumGpFekiUF/0qm7vONNklj/0tSvA5ahLddabK+7nZNr3YIwWbCgGB/Ly+mo3hVE5u8451V35sqLJ9uxThpQ==}
+  /@shopify/cli-hydrogen@10.0.1(@graphql-codegen/cli@5.0.4)(graphql@16.10.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-wqkuQ37Ymslpowzqh8jWJRU8bKa5Ln0JB2Kaut3PbjwmuCa++vnMxvwpmir6Cnp8Y5SwpfYd1w5ANPqYyO2L0g==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@remix-run/dev': ^2.16.1
       '@shopify/hydrogen-codegen': ^0.3.3
-      '@shopify/mini-oxygen': ^3.2.0
+      '@shopify/mini-oxygen': ^3.2.1
       graphql-config: ^5.0.3
       vite: 5.4.12
     peerDependenciesMeta:
@@ -6334,7 +6340,7 @@ packages:
       '@graphql-codegen/cli': 5.0.4(@types/node@18.19.70)(graphql@16.10.0)(typescript@5.7.3)
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.10(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)
+      '@shopify/oxygen-cli': 4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.1
       chokidar: 3.5.3
@@ -6352,6 +6358,7 @@ packages:
       ts-morph: 20.0.0
       use-resize-observer: 9.1.0(react-dom@17.0.2)(react@17.0.2)
     transitivePeerDependencies:
+      - graphql
       - react
       - react-dom
     dev: true
@@ -6436,21 +6443,21 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
-  /@shopify/liquid-html-parser@2.8.1:
-    resolution: {integrity: sha512-+uXoVsxcry7w77Er/spothOfhzodvbvSGdULl/l2bdgvQwn/6FhomJn1D6vuPzdyuYfOBUmVMyvt1cgooqzgYg==}
+  /@shopify/liquid-html-parser@2.8.2:
+    resolution: {integrity: sha512-g8DRcz4wUj4Ttxm+rK1qPuvIV2/ZqlyGRcVytVMbUkrr/+eVL2yQI/jRGDMeOamkRqB3InuoOjF7nARH+o9UYQ==}
     dependencies:
       line-column: 1.0.2
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/oxygen-cli@4.6.10(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit):
-    resolution: {integrity: sha512-Riekd/TGICdyW4ly4nIk+Chn2K+PvDzrDLjDnQpjwxAERjn2Xl5Q0Mo4rX24o+sAjuA1EUMx1KpyohLuwRMc3w==}
+  /@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0):
+    resolution: {integrity: sha512-LxJUkHL1Oudxy712XHTBd1se3Gq2w+/FYVyj5rAmyiNSFfbXD3zHWHjB5zbeeFjbRIPhbJW3OgRjJgn7VIo8EA==}
     engines: {node: '>=18.12.0'}
     os: [darwin, linux, win32]
     hasBin: true
     peerDependencies:
       '@oclif/core': 3.26.5
-      '@shopify/cli-kit': ^3.58.0
+      '@shopify/cli-kit': ^3.78.1
     dependencies:
       '@bugsnag/core': 8.2.0
       '@bugsnag/js': 8.2.0
@@ -6458,6 +6465,9 @@ packages:
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
+      graphql-request: 7.1.2(graphql@16.10.0)
+    transitivePeerDependencies:
+      - graphql
     dev: true
 
   /@shopify/polaris-icons@8.0.0:
@@ -6567,10 +6577,10 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@3.14.1:
-    resolution: {integrity: sha512-1vOD7WNyga7zAkcNuZzGciaAPR9sXUlJX1YecctRkD3HoffAs/61JvZ5wTXN+IHIVoEBbBVAY64cxgyE5vmBaQ==}
+  /@shopify/theme-check-common@3.15.1:
+    resolution: {integrity: sha512-jv9Z+huH3vK0IIEkxUtncTezpPx6GDM6Vy8sxU1zwGdq+Td6TUGJ2tDvEW2QBEEVdKv4WQsnm3L6cpQzYlyW+g==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.8.1
+      '@shopify/liquid-html-parser': 2.8.2
       cross-fetch: 4.0.0
       jsonc-parser: 3.3.1
       line-column: 1.0.2
@@ -6582,22 +6592,22 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@3.14.1:
-    resolution: {integrity: sha512-dTtDMgr8H+/7x7khiTZv1s0oJU/UXJKkffEWBIGiY/P1rpeskicmHXL62gLws5OPTwO6PNzRlpllyyBzU5msyA==}
+  /@shopify/theme-check-docs-updater@3.15.1:
+    resolution: {integrity: sha512-v9jR1pZGoDGp9DBiCrMWSzku2P3bjO8hjSYeKTLf1gUmsEKmURC9y07dnhSDB6ZnYkVccTcNTupEMiNB84tJAw==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 3.14.1
+      '@shopify/theme-check-common': 3.15.1
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@3.14.1:
-    resolution: {integrity: sha512-NHZDIGIBKvyNsuSQAr1qSuy7C+Y9UyBOBMV822drbOBOwm3PxNZrDHRSX2w0StCs5Hrpvuv88lp+tq1r6VmmWA==}
+  /@shopify/theme-check-node@3.15.1:
+    resolution: {integrity: sha512-LSOznZY+kz54L7jQWHRJXxIDB+/7TnJ1fNvQ8bxgRFncWbn6pl3M3PxIvbPAMc43mwlWQtxKLu8Zb6yXBW4gNw==}
     dependencies:
-      '@shopify/theme-check-common': 3.14.1
-      '@shopify/theme-check-docs-updater': 3.14.1
+      '@shopify/theme-check-common': 3.15.1
+      '@shopify/theme-check-docs-updater': 3.15.1
       glob: 8.1.0
       vscode-uri: 3.0.8
       yaml: 2.7.0
@@ -6609,11 +6619,11 @@ packages:
     resolution: {integrity: sha512-h4yJW1j+PIo1BzsElwIf2LPqI7iZE0XUUkucoXdKZZABcsS6/6+5KEAFSQEsn5VzIg1xS7I0ypOMQ7to2kvojQ==}
     dev: true
 
-  /@shopify/theme-language-server-common@2.13.1:
-    resolution: {integrity: sha512-9agO3rCxTzWnk8mTMRfXQaud8G87A/LWpSemVV7talXcq+r8w7AlqluKl1GHE7T+wu0u0fHLsl/np+BpFtBgtA==}
+  /@shopify/theme-language-server-common@2.14.1:
+    resolution: {integrity: sha512-goanoBuvHr8b3F4A1tu+WTiXCZF7FHuXABYflNuN24xNyg5PcwpMU1dYcw6RcPfoLtfgSa2ZrlHzZ9wW8o+vnw==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.8.1
-      '@shopify/theme-check-common': 3.14.1
+      '@shopify/liquid-html-parser': 2.8.2
+      '@shopify/theme-check-common': 3.15.1
       '@vscode/web-custom-data': 0.4.9
       vscode-css-languageservice: 6.3.2
       vscode-json-languageservice: 5.3.11
@@ -6624,18 +6634,22 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@2.13.1:
-    resolution: {integrity: sha512-WEmtMMrJt6r7iES9pEhhZmmeSWYjP37KRSwRGTe+C0KiEN7zfZ0S9293OCQKiv7GnHQtAS56OljRqSeghOLYsw==}
+  /@shopify/theme-language-server-node@2.14.1:
+    resolution: {integrity: sha512-IqCW4phmSliCEerVaz0dXKUp8I6mVxGiVqz7/TzAnGAIiXbDUE6w+Z4sFzJHfSvqmVfYj0CBCy6eIHYu5jlhSg==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.14.1
-      '@shopify/theme-check-node': 3.14.1
-      '@shopify/theme-language-server-common': 2.13.1
+      '@shopify/theme-check-docs-updater': 3.15.1
+      '@shopify/theme-check-node': 3.15.1
+      '@shopify/theme-language-server-common': 2.14.1
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
       vscode-uri: 3.0.8
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@shopify/toml-patch@0.3.0:
+    resolution: {integrity: sha512-ruv2FT17FW3CfWx8jXEyfx3xZDdo22PDaFQ9R7QYOovXQbgQCIKY+5QjGVBA7jsyLm+Wa2ngVANmt7MS0M/g+w==}
     dev: false
 
   /@shopify/useful-types@4.0.3:
@@ -11940,6 +11954,15 @@ packages:
     transitivePeerDependencies:
       - encoding
 
+  /graphql-request@7.1.2(graphql@16.10.0):
+    resolution: {integrity: sha512-+XE3iuC55C2di5ZUrB4pjgwe+nIQBuXVIK9J98wrVwojzDW3GMdSBZfxUk8l4j9TieIpjpggclxhNEU9ebGF8w==}
+    peerDependencies:
+      graphql: 14 - 16
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.10.0)
+      graphql: 16.10.0
+    dev: true
+
   /graphql-tag@2.12.6(graphql@16.10.0):
     resolution: {integrity: sha512-FdSNcu2QQcWnM2VNvSCCDCVS5PpPqpzgFT8+GXzqJuoDd0CBncxCY278u4mhRO7tMgo2JjgJA5aZ+nWSQ/Z+xg==}
     engines: {node: '>=10'}
@@ -12558,6 +12581,12 @@ packages:
     engines: {node: '>=8'}
     hasBin: true
 
+  /is-docker@3.0.0:
+    resolution: {integrity: sha512-eljcgEDlEns/7AXFosB5K/2nCM4P7FQPkGc/DWLy5rmFEWvZayGrik1d9/QIY5nJ4f9YsVvBkA6kJpHn9rISdQ==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    hasBin: true
+    dev: false
+
   /is-executable@2.0.1:
     resolution: {integrity: sha512-0b7IBZndv6UF62ROvSL0lCmYwgLa2etNumsVdmNZQf/pJdYstJihfg/XDzG+p+5nBzT+1hDm2G5rKkhIDnXSCg==}
     engines: {node: '>=14.16'}
@@ -12615,6 +12644,14 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
     dev: true
+
+  /is-inside-container@1.0.0:
+    resolution: {integrity: sha512-KIYLCCJghfHZxqjYBE7rEy0OBuTd5xCHS7tHVgvCLkx7StIoaxwNW3hCALgEUjFfeRk+MG/Qxmp/vtETEF3tRA==}
+    engines: {node: '>=14.16'}
+    hasBin: true
+    dependencies:
+      is-docker: 3.0.0
+    dev: false
 
   /is-installed-globally@0.4.0:
     resolution: {integrity: sha512-iwGqO3J21aaSkC7jWnHP/difazwS7SFeIqxv6wEtLU8Y5KlzFTjyqcSIT0d8s4+dDhKytsk9PJZ2BkS5eZwQRQ==}
@@ -12858,6 +12895,13 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       is-docker: 2.2.1
+
+  /is-wsl@3.1.0:
+    resolution: {integrity: sha512-UcVfVfaK4Sc4m7X3dUSoHoozQGBEFeDC+zVo06t98xe8CzHSZZBekNXH+tu0NalHolcJ/QAGqS46Hef7QXBIMw==}
+    engines: {node: '>=16'}
+    dependencies:
+      is-inside-container: 1.0.0
+    dev: false
 
   /isarray@1.0.0:
     resolution: {integrity: sha512-VLghIWNM6ELQzo7zwmcg0NmTVyWKYjvIeM83yjp0wRDTmUnrM678fQbcKBo6n2CJEF0szoG//ytg+TKla89ALQ==}

@@ -4,10 +4,10 @@ import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_ur
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {patchAppConfigurationFile} from '../app/patch-app-configuration-file.js'
+import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
-import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {checkPortAvailability} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {appHost, appPort, fetchSpinPort, isSpin, spinFqdn, spinVariables} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/node/context/local'
@@ -28,8 +28,15 @@ export interface ApplicationURLs {
   appProxy?: AppProxy
 }
 
-export interface FrontendURLOptions {
-  noTunnelUseLocalhost: boolean
+export type FrontendURLOptions = UseLocalhostFrontendUrlOptions | UseTunnelFrontendUrlOptions
+
+interface UseLocalhostFrontendUrlOptions {
+  noTunnelUseLocalhost: true
+  port: number
+}
+
+interface UseTunnelFrontendUrlOptions {
+  noTunnelUseLocalhost: false
   tunnelUrl?: string
   tunnelClient: TunnelClient | undefined
 }
@@ -42,7 +49,7 @@ interface FrontendURLResult {
 
 /**
  * The tunnel creation logic depends on 7 variables:
- * - If a Codespaces environment is deteced, then the URL is built using the codespaces hostname. No need for tunnel
+ * - If a Codespaces environment is detected, then the URL is built using the codespaces hostname. No need for tunnel
  * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname. No need for tunnel
  * - If a Spin environment is detected, then the URL is built using the cli + fqdn hostname as configured in nginx.
  *   No need for tunnel. In case problems with that configuration, the flags Tunnel or Custom Tunnel url could be used
@@ -53,6 +60,14 @@ interface FrontendURLResult {
  * If there is no cached tunnel plugin and a tunnel is necessary, we'll ask the user to confirm.
  */
 export async function generateFrontendURL(options: FrontendURLOptions): Promise<FrontendURLResult> {
+  if (options.noTunnelUseLocalhost) {
+    return {
+      frontendUrl: 'https://localhost',
+      frontendPort: options.port,
+      usingLocalhost: true,
+    }
+  }
+
   let frontendPort = 4040
   let frontendUrl = ''
   const usingLocalhost = options.noTunnelUseLocalhost
@@ -98,13 +113,9 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
-  if (options.noTunnelUseLocalhost) {
-    frontendPort = await getAvailableTCPPort()
-    frontendUrl = 'https://localhost'
-  } else if (options.tunnelClient) {
-    const url = await pollTunnelURL(options.tunnelClient)
+  if (options.tunnelClient) {
     frontendPort = options.tunnelClient.port
-    frontendUrl = url
+    frontendUrl = await pollTunnelURL(options.tunnelClient)
   }
 
   return {frontendUrl, frontendPort, usingLocalhost}
@@ -197,23 +208,20 @@ export async function updateURLs(
   }
 
   if (localApp && localApp.configuration.client_id === apiKey) {
-    const patch = {
-      application_url: urls.applicationUrl,
-      auth: {
-        redirect_urls: urls.redirectUrlWhitelist,
-      },
-      ...(urls.appProxy
-        ? {
-            app_proxy: {
-              url: urls.appProxy.proxyUrl,
-              subpath: urls.appProxy.proxySubPath,
-              prefix: urls.appProxy.proxySubPathPrefix,
-            },
-          }
-        : {}),
+    const configValues = [
+      {keyPath: 'application_url', value: urls.applicationUrl},
+      {keyPath: 'auth.redirect_urls', value: urls.redirectUrlWhitelist},
+    ]
+
+    if (urls.appProxy) {
+      configValues.push(
+        {keyPath: 'app_proxy.url', value: urls.appProxy.proxyUrl},
+        {keyPath: 'app_proxy.subpath', value: urls.appProxy.proxySubPath},
+        {keyPath: 'app_proxy.prefix', value: urls.appProxy.proxySubPathPrefix},
+      )
     }
 
-    await patchAppConfigurationFile({path: localApp.configuration.path, patch, schema: localApp.configSchema})
+    await setManyAppConfigValues(localApp.configuration.path, configValues, localApp.configSchema)
   }
 }
 
@@ -262,9 +270,12 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
-      const patch = {build: {automatically_update_urls_on_dev: shouldUpdateURLs}}
       const path = options.localApp.configuration.path
-      await patchAppConfigurationFile({path, patch, schema: options.localApp.configSchema})
+      await setManyAppConfigValues(
+        path,
+        [{keyPath: 'build.automatically_update_urls_on_dev', value: shouldUpdateURLs}],
+        options.localApp.configSchema,
+      )
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

@@ -3,7 +3,11 @@ import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
 import * as secureStore from '../../private/node/session/store.js'
-import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
+import {
+  exchangeCustomPartnerToken,
+  exchangeCliTokenForAppManagementAccessToken,
+  exchangeCliTokenForBusinessPlatformAccessToken,
+} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {
   AdminAPIScope,
@@ -27,6 +31,7 @@ export interface AdminSession {
 
 interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
+  forceRefresh?: boolean
 }
 
 /**
@@ -77,6 +82,19 @@ export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
   outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
 ${outputToken.json(appManagementScopes)}
 `)
+
+  const envToken = getPartnersToken()
+  if (envToken) {
+    const appManagmentToken = await exchangeCliTokenForAppManagementAccessToken(envToken)
+    const businessPlatformToken = await exchangeCliTokenForBusinessPlatformAccessToken(envToken)
+
+    return {
+      appManagementToken: appManagmentToken.accessToken,
+      userId: appManagmentToken.userId,
+      businessPlatformToken: businessPlatformToken.accessToken,
+    }
+  }
+
   const tokens = await ensureAuthenticated(
     {appManagementApi: {scopes: appManagementScopes}, businessPlatformApi: {scopes: businessPlatformScopes}},
     env,

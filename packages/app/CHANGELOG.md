@@ -1,5 +1,51 @@
 # @shopify/app
 
+## 3.79.0
+
+### Minor Changes
+
+- 7cdc129: Improved how port selection works when using localhost development
+
+  Added a `--localhost-port` flag. Use this to specify that you want to develop using localhost on a specific port. For example: `shopify app dev --localhost-port=4000`
+
+  `shopify app dev --use-localhost` will always try to use port 3458. If port 3458 is not available the CLI will warn the user and select a different port.
+
+- 68b53f6: Add support to use App Management API with CLI Tokens.
+
+### Patch Changes
+
+- 6dba2c8: Improve type definition support for POLARIS_UNIFIED extensions
+- aa85a63: Bump theme-tools packages
+- 0b1e588: Show the multiple CLI installations warning only once a day
+- 321e2e2: Enable multi-memory with wasm-opt
+- 3d0fc1a: Auto grant declared scopes during dev sessions. Replace action required message with information on granted scopes.
+- 4f17786: Prevent deploy requests from timing out
+- 8772a75: Name `apiKey` consistently, so log scrubbing will work correctly
+- a463e4b: Allow a deprecatedFromCliVersion to be configured for app management extension templates
+  Use 2025-10 as the version for remote dom UI extension
+- db8131b: Updated Binaryen version to 123.0.0
+- 5839055: Added formatting and comment preserving TOML support via @shopify/toml-patch; opt-in by setting "SHOPIFY_CLI_USE_WASM_TOML_PATCH"
+- 164bbbe: The hidden `.shopify` folder now has its own generic .gitignore file
+- e647600: Fix 401 error during the app log resubscribe process
+- d8f017d: Bump theme check & language libraries
+- e2902c9: Improve app preview messages to include store context.
+- 748f607: Fix issue when using `--reset` not creating a new config toml file
+- Updated dependencies [f9ac5cf]
+- Updated dependencies [aa85a63]
+- Updated dependencies [0b1e588]
+- Updated dependencies [94362f9]
+- Updated dependencies [4f17786]
+- Updated dependencies [036bcaf]
+- Updated dependencies [164bbbe]
+- Updated dependencies [d8f017d]
+- Updated dependencies [d9c7b4c]
+- Updated dependencies [68b53f6]
+- Updated dependencies [4134504]
+- Updated dependencies [031feb7]
+  - @shopify/cli-kit@3.79.0
+  - @shopify/theme@3.79.0
+  - @shopify/plugin-cloudflare@3.79.0
+
 ## 3.78.0
 
 ### Minor Changes

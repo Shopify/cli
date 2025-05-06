@@ -53,7 +53,7 @@ export class DevSession {
   }
 
   private async start() {
-    await this.logger.info('Preparing app preview')
+    await this.logger.info(`Preparing app preview on ${this.options.storeFqdn}`)
     this.statusManager.setMessage('LOADING')
 
     this.appWatcher
@@ -161,12 +161,13 @@ export class DevSession {
    */
   private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
     if (result.status === 'updated') {
-      await this.logger.success(`✅ Updated`)
-      await this.logger.logActionRequiredMessages(this.options.storeFqdn, event)
+      await this.logger.success(`✅ Updated app preview on ${this.options.storeFqdn}`)
+      await this.logger.logExtensionUpdateMessages(event)
       await this.setUpdatedStatusMessage()
     } else if (result.status === 'created') {
       this.statusManager.updateStatus({isReady: true})
       await this.logger.success(`✅ Ready, watching for changes in your app `)
+      await this.logger.logExtensionUpdateMessages(event)
       this.statusManager.setMessage('READY')
     } else if (result.status === 'aborted') {
       await this.logger.debug('❌ App preview update aborted (new change detected or error during update)')
@@ -228,7 +229,7 @@ export class DevSession {
     this.bundleControllers.push(currentBundleController)
 
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const bundlePath = joinPath(
+    const compressedFilePath = joinPath(
       dirname(this.bundlePath),
       `dev-bundle.${this.options.developerPlatformClient.bundleFormat}`,
     )
@@ -236,19 +237,17 @@ export class DevSession {
     // Create compressed br file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     await writeManifestToBundle(appEvent.app, this.bundlePath)
-    await compressBundle(this.bundlePath, bundlePath)
-
-    // Get a signed URL to upload the br file
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const signedURL = await this.getSignedURLWithRetry()
-
-    // Upload the br file
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await uploadToGCS(signedURL, bundlePath)
-
-    // Create or update the dev session
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
+    await compressBundle(this.bundlePath, compressedFilePath)
     try {
+      // Get a signed URL to upload the zip file
+      if (currentBundleController.signal.aborted) return {status: 'aborted'}
+      const signedURL = await this.getSignedURLWithRetry()
+
+      // Upload the zip file
+      if (currentBundleController.signal.aborted) return {status: 'aborted'}
+      await uploadToGCS(signedURL, compressedFilePath)
+      // Create or update the dev session
+      if (currentBundleController.signal.aborted) return {status: 'aborted'}
       const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
       if (this.statusManager.status.isReady) {
         return this.devSessionUpdateWithRetry(payload)
@@ -265,6 +264,11 @@ export class DevSession {
         } else {
           await this.logger.debug(JSON.stringify(error.response, null, 2))
           throw new AbortError('Unknown error')
+        }
+      } else if (error.code === 'ETIMEDOUT') {
+        return {
+          status: 'unknown-error',
+          error: new Error('Request timed out, please check your internet connection and try again.'),
         }
       } else {
         return {status: 'unknown-error', error}

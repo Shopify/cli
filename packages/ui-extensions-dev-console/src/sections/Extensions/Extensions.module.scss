@@ -23,6 +23,22 @@
   }
 }
 
+.ExtensionList.isAppPreview {
+  font-size: 1.1rem;
+  th {
+    color: #808689;
+  }
+  th:first-child,
+  td:first-child {
+    padding-left: 2rem
+  }
+  th, td {
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+    vertical-align: middle;
+  }
+}
+
 .WithIcon {
   display: inline-grid;
   grid-template-columns: auto auto;

@@ -25,6 +25,24 @@ export function apiScopes(api: API, extraScopes: string[] = []): string[] {
   return Array.from(new Set(scopes))
 }
 
+/**
+ * Returns specific scopes required for token exchange with the given API.
+ * @param api - API to get the scopes for
+ * @returns Array of transformed scopes
+ */
+export function tokenExchangeScopes(api: API): string[] {
+  switch (api) {
+    case 'partners':
+      return [scopeTransform('cli')]
+    case 'app-management':
+      return [scopeTransform('app-management')]
+    case 'business-platform':
+      return [scopeTransform('destinations')]
+    default:
+      throw new BugError(`API not supported for token exchange: ${api}`)
+  }
+}
+
 function defaultApiScopes(api: API): string[] {
   switch (api) {
     case 'admin':

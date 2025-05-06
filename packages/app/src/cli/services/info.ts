@@ -243,7 +243,7 @@ class AppInfo {
       [`📂 ${extension.handle || NOT_LOADED_TEXT}`, {filePath: relativePath(this.app.directory, extension.directory)}],
       ['     config file', {filePath: relativePath(extension.directory, extension.configurationPath)}],
     ]
-    if (config && config.metafields?.length) {
+    if (config && 'metafields' in config && Array.isArray(config.metafields) && config.metafields.length > 0) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
     const error = this.app.errors?.getError(extension.configurationPath)

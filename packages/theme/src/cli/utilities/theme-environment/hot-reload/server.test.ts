@@ -23,7 +23,7 @@ const THEME_ID = 'my-theme-id'
 
 describe('Hot Reload', () => {
   describe('handleHotReloadScriptInjection', () => {
-    const htmlWithHrScript = `<html><head><script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head><body></body></html>`
+    const htmlWithHrScript = `<html><head><script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}" defer></script></head><body></body></html>`
     const htmlWithoutHrScript = '<html><head></head><body></body></html>'
 
     test('keeps the SFR injected script when hot reload is enabled', () => {

@@ -22,7 +22,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../app/app.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
@@ -419,12 +419,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async getDevSessionActionUpdateMessage(
-    appConfig: CurrentAppConfiguration,
-    storeFqdn: string,
-  ): Promise<string | undefined> {
-    if (!this.specification.getDevSessionActionUpdateMessage) return undefined
-    return this.specification.getDevSessionActionUpdateMessage(this.configuration, appConfig, storeFqdn)
+  async getDevSessionUpdateMessage(): Promise<string | undefined> {
+    if (!this.specification.getDevSessionUpdateMessage) return undefined
+    return this.specification.getDevSessionUpdateMessage(this.configuration)
   }
 
   /**

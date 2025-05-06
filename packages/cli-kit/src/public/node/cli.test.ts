@@ -1,11 +1,10 @@
 import {clearCache, runCLI, runCreateCLI} from './cli.js'
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {cacheClear} from '../../private/node/conf-store.js'
+import * as confStore from '../../private/node/conf-store.js'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./node-package-manager.js')
-vi.mock('../../private/node/conf-store.js')
 
 describe('cli', () => {
   test('prepares to run the CLI', async () => {
@@ -109,7 +108,9 @@ describe('cli', () => {
 
 describe('clearCache', () => {
   test('clears the cache', () => {
+    const spy = vi.spyOn(confStore, 'cacheClear')
     clearCache()
-    expect(cacheClear).toHaveBeenCalled()
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
   })
 })

@@ -126,7 +126,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
     expect(spyContext).toHaveBeenCalledWith({outputPrefix: 'test-ui-extension', stripAnsi: false}, expect.anything())
 
     // In theory this shouldn't be necessary, but vitest doesn't restore spies automatically.
@@ -180,7 +180,7 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Update error'))
   })
 
-  test('handles scope changes and displays action required message', async () => {
+  test('handles scope changes and displays updated message', async () => {
     // Given
     vi.mocked(buildAppURLForWeb).mockResolvedValue('https://test.myshopify.com/admin/apps/test')
     const appAccess = await testAppAccessConfigExtension()
@@ -195,9 +195,11 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Action required'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Scopes updated'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(stdout.write).toHaveBeenCalledWith(
+      expect.stringContaining('Access scopes auto-granted: read_products, write_products'),
+    )
+
     expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'app-preview', stripAnsi: false}, expect.anything())
     contextSpy.mockRestore()
   })
@@ -294,6 +296,8 @@ describe('pushUpdatesForDevSession', () => {
   test('sets correct status messages during dev session lifecycle', async () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(`Preparing app preview on ${options.storeFqdn}`))
 
     const statusSpy = vi.spyOn(devSessionStatusManager, 'setMessage')
 

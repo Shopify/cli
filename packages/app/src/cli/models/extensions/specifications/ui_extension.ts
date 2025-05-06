@@ -1,5 +1,5 @@
 import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
+import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
@@ -42,6 +42,7 @@ export const UIExtensionSchema = BaseSchema.extend({
   type: zod.literal('ui_extension'),
   extension_points: NewExtensionPointsSchema.optional(),
   targeting: NewExtensionPointsSchema.optional(),
+  metafields: zod.array(MetafieldSchema).optional(),
 })
   .refine((config) => validatePoints(config), missingExtensionPointsMessage)
   .transform((config) => {
@@ -271,7 +272,7 @@ function isRemoteDomExtension(
     return false
   }
 
-  return year > 2025 || (year === 2025 && month >= 7)
+  return year > 2025 || (year === 2025 && month >= 10)
 }
 
 export function getShouldRenderTarget(target: string) {

@@ -43,6 +43,7 @@ interface JsonOutput {
     editor_url: string
     preview_url: string
     warning?: string
+    errors?: Result['errors']
   }
 }
 
@@ -210,7 +211,7 @@ async function handlePushOutput(
   const hasErrors = hasUploadErrors(results)
 
   if (options.json) {
-    handleJsonOutput(theme, hasErrors, session)
+    handleJsonOutput(theme, hasErrors, session, results)
   } else if (options.publish) {
     handlePublishOutput(hasErrors, session)
   } else {
@@ -224,8 +225,9 @@ async function handlePushOutput(
  * @param theme - The theme being pushed.
  * @param hasErrors - Indicates if there were any errors during the push operation.
  * @param session - The admin session for the theme.
+ * @param results - The map of upload results.
  */
-function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSession) {
+function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSession, results: Map<string, Result>) {
   const output: JsonOutput = {
     theme: {
       id: theme.id,
@@ -240,6 +242,17 @@ function handleJsonOutput(theme: Theme, hasErrors: boolean, session: AdminSessio
   if (hasErrors) {
     const message = `The theme '${theme.name}' was pushed with errors`
     output.theme.warning = message
+
+    // Add errors from results
+    const errors: {[key: string]: string[]} = {}
+    for (const [key, result] of results.entries()) {
+      if (!result.success && result.errors?.asset) {
+        errors[key] = result.errors.asset
+      }
+    }
+    if (Object.keys(errors).length > 0) {
+      output.theme.errors = errors
+    }
   }
   outputInfo(JSON.stringify(output))
 }

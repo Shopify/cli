@@ -162,7 +162,7 @@ import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shop
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {Response, shopifyFetch} from '@shopify/cli-kit/node/http'
+import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
@@ -247,8 +247,9 @@ export class PartnersClient implements DeveloperPlatformClient {
     query: string,
     variables: GraphQLVariables | undefined = undefined,
     cacheOptions?: CacheOptions,
+    preferredBehaviour?: RequestModeInput,
   ): Promise<T> {
-    return partnersRequest(query, await this.token(), variables, cacheOptions)
+    return partnersRequest(query, await this.token(), variables, cacheOptions, preferredBehaviour)
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
@@ -263,7 +264,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+    const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true, forceRefresh: true})
     const session = await this.session()
     if (token) {
       session.token = token
@@ -294,7 +295,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const result = await this.requestDoc(AllOrgs)
       return result.organizations.nodes!.map((org) => ({
         id: org!.id,
-        businessName: org!.businessName,
+        businessName: `${org!.businessName} (Partner Dashboard)`,
         source: this.organizationSource,
       }))
     } catch (error: unknown) {
@@ -333,7 +334,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
-    const variables: ExtensionSpecificationsQueryVariables = {api_key: apiKey}
+    const variables: ExtensionSpecificationsQueryVariables = {apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
     // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
     return result.extensionSpecifications.map((spec) => ({
@@ -445,7 +446,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       const {uid, ...otherFields} = element
       return otherFields
     })
-    return this.request(AppDeploy, variables)
+    return this.request(AppDeploy, variables, undefined, 'slow-request')
   }
 
   async release({

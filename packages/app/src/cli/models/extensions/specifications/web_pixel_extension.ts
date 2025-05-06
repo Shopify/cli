@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize} from '@shopify/cli-kit/node/fs'
@@ -14,6 +14,7 @@ const WebPixelSchema = BaseSchema.extend({
   runtime_context: zod.string(),
   version: zod.string().optional(),
   configuration: zod.any(),
+  metafields: zod.array(MetafieldSchema).optional(),
   customer_privacy: zod
     .object({
       analytics: zod.boolean(),

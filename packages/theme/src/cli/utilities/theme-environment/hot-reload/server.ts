@@ -355,7 +355,7 @@ function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
 }
 
 export const hotReloadScriptId = 'hot-reload-client'
-export const hotReloadScriptUrl = 'https://unpkg.com/@shopify/theme-hot-reload'
+export const hotReloadScriptUrl = '/cdn/shopifycloud/theme-hot-reload/theme-hot-reload.js'
 const hotReloadScriptRE = new RegExp(`<script id="${hotReloadScriptId}"[^>]*>[^<]*</script>`)
 const localHotReloadScriptEndpoint = '/@shopify/theme-hot-reload'
 
@@ -382,7 +382,10 @@ export function handleHotReloadScriptInjection(html: string, ctx: DevServerConte
   }
 
   // Inject the HotReload script in the HTML Head
-  return html.replace(/<\/head>/, `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}"></script></head>`)
+  return html.replace(
+    /<\/head>/,
+    `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}" defer></script></head>`,
+  )
 }
 
 function isAsset(key: string) {

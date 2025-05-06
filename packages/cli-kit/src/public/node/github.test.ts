@@ -190,7 +190,11 @@ describe('downloadGitHubRelease', () => {
 
     await downloadGitHubRelease(repo, version, asset, targetPath)
 
-    expect(fetch).toHaveBeenCalledWith(`https://github.com/${repo}/releases/download/${version}/${asset}`)
+    expect(fetch).toHaveBeenCalledWith(
+      `https://github.com/${repo}/releases/download/${version}/${asset}`,
+      undefined,
+      'slow-request',
+    )
 
     const downloadedContent = await readFile(targetPath)
     expect(downloadedContent).toEqual('hello')

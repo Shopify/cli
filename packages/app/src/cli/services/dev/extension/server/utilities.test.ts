@@ -117,7 +117,7 @@ describe('getExtensionPointRedirectUrl()', () => {
       devUUID: '123abc',
       localIdentifier: 'post-purchase-extension',
       configuration: {metafields: [{namespace: 'test', key: 'test'}]},
-    } as ExtensionInstance
+    } as unknown as ExtensionInstance
 
     const options = {
       storeFqdn: 'example.myshopify.com',

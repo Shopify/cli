@@ -278,5 +278,9 @@ function initializeBugsnag() {
     autoTrackSessions: false,
     autoDetectErrors: false,
     enabledReleaseStages: ['production'],
+    endpoints: {
+      notify: 'https://error-analytics-production.shopifysvc.com',
+      sessions: 'https://error-analytics-sessions-production.shopifysvc.com',
+    },
   })
 }

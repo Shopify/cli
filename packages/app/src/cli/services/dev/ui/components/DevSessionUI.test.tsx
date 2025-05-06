@@ -78,6 +78,7 @@ describe('DevSessionUI', () => {
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -114,6 +115,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -134,6 +136,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -158,6 +161,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -175,7 +179,31 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows shutting down message when aborted', async () => {
+  test('shows shutting down message when aborted before app preview is ready', async () => {
+    // Given
+    const abortController = new AbortController()
+    devSessionStatusManager.updateStatus({isReady: false})
+
+    // When
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={abortController}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    abortController.abort()
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toContain('Shutting down dev ...')
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('shows persistent dev info when aborting and app preview is ready', async () => {
     // Given
     const abortController = new AbortController()
 
@@ -185,21 +213,33 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
+    await waitForInputsToBeReady()
 
     const promise = renderInstance.waitUntilExit()
 
     abortController.abort()
 
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toContain('Shutting down dev ...')
-
     await promise
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      ""
-    `)
+      "
+      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  A preview of your development changes is still available on                 │
+      │  mystore.myshopify.com.                                                      │
+      │                                                                              │
+      │  Run \`shopify app dev clean\` to restore the latest released version of your  │
+      │   app.                                                                       │
+      │                                                                              │
+      │  Learn more about app previews [0]                                           │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
+      "`)
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -227,6 +267,7 @@ describe('DevSessionUI', () => {
         processes={[backendProcess]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -240,14 +281,31 @@ describe('DevSessionUI', () => {
       00:00:00 │                   backend │ second backend message
       00:00:00 │                   backend │ third backend message
 
+      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  A preview of your development changes is still available on                 │
+      │  mystore.myshopify.com.                                                      │
+      │                                                                              │
+      │  Run \`shopify app dev clean\` to restore the latest released version of your  │
+      │   app.                                                                       │
+      │                                                                              │
+      │  Learn more about app previews [0]                                           │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
+
+
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
-      Shutting down dev because of an error ...
-      "
+      Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
+
+
+      something went wrong"
     `)
 
     await promise
@@ -256,7 +314,22 @@ describe('DevSessionUI', () => {
       "00:00:00 │                   backend │ first backend message
       00:00:00 │                   backend │ second backend message
       00:00:00 │                   backend │ third backend message
-      "
+
+      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  A preview of your development changes is still available on                 │
+      │  mystore.myshopify.com.                                                      │
+      │                                                                              │
+      │  Run \`shopify app dev clean\` to restore the latest released version of your  │
+      │   app.                                                                       │
+      │                                                                              │
+      │  Learn more about app previews [0]                                           │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
+
+
+      something went wrong"
     `)
 
     // unmount so that polling is cleared after every test
@@ -273,6 +346,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -306,6 +380,7 @@ describe('DevSessionUI', () => {
         processes={[]}
         abortController={new AbortController()}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )
@@ -348,6 +423,7 @@ describe('DevSessionUI', () => {
         processes={[errorProcess]}
         abortController={abortController}
         devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
     )

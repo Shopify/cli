@@ -5,6 +5,8 @@ import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('./dev/fetch.js')
+vi.mock('@shopify/cli-kit/node/tcp')
+vi.mock('../utilities/mkcert.js')
 
 describe('developerPreviewController', () => {
   test('does not refresh the tokens when they are still valid', async () => {

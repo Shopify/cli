@@ -1,11 +1,11 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
+import {tokenExchangeScopes} from './scopes.js'
 import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
-import {isAppManagementDisabled} from '../../../public/node/context/local.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import * as jose from 'jose'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -40,7 +40,7 @@ export async function exchangeAccessForApplicationTokens(
     requestAppToken('storefront-renderer', token, scopes.storefront),
     requestAppToken('business-platform', token, scopes.businessPlatform),
     store ? requestAppToken('admin', token, scopes.admin, store) : {},
-    isAppManagementDisabled() ? {} : requestAppToken('app-management', token, scopes.appManagement),
+    requestAppToken('app-management', token, scopes.appManagement),
   ])
 
   return {
@@ -69,15 +69,20 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid partners API token
- * This token does not accept extra scopes, just the cli one.
- * @param token - The CLI token passed as ENV variable
+ * Given a custom CLI token passed as ENV variable  request a valid API access token
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * @param apiName - The API to exchange for the access token
+ * @param scopes - The scopes to request with the access token
  * @returns An instance with the application access tokens.
  */
-export async function exchangeCustomPartnerToken(token: string): Promise<{accessToken: string; userId: string}> {
-  const appId = applicationId('partners')
+async function exchangeCliTokenForAccessToken(
+  apiName: API,
+  token: string,
+  scopes: string[],
+): Promise<{accessToken: string; userId: string}> {
+  const appId = applicationId(apiName)
   try {
-    const newToken = await requestAppToken('partners', token, ['https://api.shopify.com/auth/partners.app.cli.access'])
+    const newToken = await requestAppToken(apiName, token, scopes)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const accessToken = newToken[appId]!.accessToken
     const userId = nonRandomUUID(token)
@@ -85,8 +90,44 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
     setLastSeenAuthMethod('partners_token')
     return {accessToken, userId}
   } catch (error) {
-    throw new AbortError('The custom token provided is invalid.', 'Ensure the token is correct and not expired.')
+    const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+    throw new AbortError(
+      `The custom token provided can't be used for the ${prettyName} API.`,
+      'Ensure the token is correct and not expired.',
+    )
   }
+}
+
+/**
+ * Given a custom CLI token passed as ENV variable, request a valid Partners API token
+ * This token does not accept extra scopes, just the cli one.
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * @returns An instance with the application access tokens.
+ */
+export async function exchangeCustomPartnerToken(token: string): Promise<{accessToken: string; userId: string}> {
+  return exchangeCliTokenForAccessToken('partners', token, tokenExchangeScopes('partners'))
+}
+
+/**
+ * Given a custom CLI token passed as ENV variable, request a valid App Management API token
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * @returns An instance with the application access tokens.
+ */
+export async function exchangeCliTokenForAppManagementAccessToken(
+  token: string,
+): Promise<{accessToken: string; userId: string}> {
+  return exchangeCliTokenForAccessToken('app-management', token, tokenExchangeScopes('app-management'))
+}
+
+/**
+ * Given a custom CLI token passed as ENV variable, request a valid Business Platform API token
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * @returns An instance with the application access tokens.
+ */
+export async function exchangeCliTokenForBusinessPlatformAccessToken(
+  token: string,
+): Promise<{accessToken: string; userId: string}> {
+  return exchangeCliTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
 }
 
 type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_token' | 'slow_down' | 'unknown_failure'
@@ -187,6 +228,7 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
+
   const res = await shopifyFetch(url.href, {method: 'POST'})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload: any = await res.json()

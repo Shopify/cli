@@ -40,7 +40,7 @@ type AutomaticCancellationBehaviour =
 
 type RequestBehaviour = NetworkRetryBehaviour & AutomaticCancellationBehaviour
 
-type RequestModeInput = PresetFetchBehaviour | RequestBehaviour
+export type RequestModeInput = PresetFetchBehaviour | RequestBehaviour
 
 /**
  * Specify the behaviour of a network request.

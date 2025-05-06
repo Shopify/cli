@@ -71,27 +71,23 @@ export class DevSessionLogger {
   }
 
   /**
-   * Some extensions may require the user to take some action after an update in the dev session.
-   * This function will print those action messages to the terminal.
+   * Display update messages from extensions after a dev session update.
+   * This function collects and displays update messages from all extensions.
    */
-  async logActionRequiredMessages(storeFqdn: string, event?: AppEvent) {
+  async logExtensionUpdateMessages(event?: AppEvent) {
     if (!event) return
     const extensionEvents = event.extensionEvents ?? []
-    const warningMessages = getArrayRejectingUndefined(
+    const messages = getArrayRejectingUndefined(
       await Promise.all(
-        extensionEvents.map((eve) =>
-          eve.extension.getDevSessionActionUpdateMessage(event.app.configuration, storeFqdn),
-        ),
+        extensionEvents.map(async (eve) => {
+          const message = await eve.extension.getDevSessionUpdateMessage()
+          return message ? message : undefined
+        }),
       ),
     )
 
-    if (warningMessages.length) {
-      await this.warning(`🔄 Action required`)
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      warningMessages.forEach(async (message) => {
-        await this.warning(outputContent`└ ${message}`.value)
-      })
-    }
+    const logPromises = messages.map((message) => this.log(`└  ${message}`, 'app-preview'))
+    await Promise.all(logPromises)
   }
 
   async logMultipleErrors(errors: {error: string; prefix: string}[]) {

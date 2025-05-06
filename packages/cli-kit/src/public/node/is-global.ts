@@ -1,9 +1,10 @@
-import {isUnitTest} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
 import {cwd, sniffForPath} from './path.js'
-import {captureOutput, exec, terminalSupportsPrompting} from './system.js'
+import {exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
+import {globalCLIVersion} from './version.js'
+import {isUnitTest} from './context/local.js'
 import {execaSync} from 'execa'
 
 let _isGlobal: boolean | undefined
@@ -41,23 +42,6 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 }
 
 /**
- * Returns true if the global CLI is installed.
- *
- * @returns `true` if the global CLI is installed.
- */
-export async function isGlobalCLIInstalled(): Promise<boolean> {
-  try {
-    const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
-    const output = await captureOutput('shopify', ['app'], {env})
-    // Installed if `app dev` is available globally
-    return output.includes('app dev')
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return false
-  }
-}
-
-/**
  * Installs the global Shopify CLI, using the provided package manager.
  *
  * @param packageManager - The package manager to use.
@@ -80,7 +64,7 @@ export interface InstallGlobalCLIPromptResult {
  */
 export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
   if (!terminalSupportsPrompting()) return {install: false, alreadyInstalled: false}
-  if (await isGlobalCLIInstalled()) {
+  if (await globalCLIVersion()) {
     return {install: false, alreadyInstalled: true}
   }
   const result = await renderSelectPrompt({

@@ -1,17 +1,15 @@
-import {
-  currentProcessIsGlobal,
-  inferPackageManagerForGlobalCLI,
-  installGlobalCLIPrompt,
-  isGlobalCLIInstalled,
-} from './is-global.js'
-import {captureOutput, terminalSupportsPrompting} from './system.js'
+import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, installGlobalCLIPrompt} from './is-global.js'
+import {terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
+import {globalCLIVersion} from './version.js'
 import * as execa from 'execa'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
 vi.mock('./ui.js')
 vi.mock('execa')
+vi.mock('which')
+vi.mock('./version.js')
 
 const globalNPMPath = '/path/to/global/npm'
 const globalYarnPath = '/path/to/global/yarn'
@@ -53,7 +51,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', globalYarnPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('yarn')
@@ -64,7 +62,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', globalPNPMPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('pnpm')
@@ -75,7 +73,7 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', unknownGlobalPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('npm')
@@ -86,55 +84,17 @@ describe('inferPackageManagerForGlobalCLI', () => {
     const argv = ['node', localProjectPath, 'shopify']
 
     // When
-    const got = await inferPackageManagerForGlobalCLI(argv)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
     // Then
     expect(got).toBe('unknown')
   })
 })
 
-describe('isGlobalCLIInstalled', () => {
-  test('returns true if the global CLI is installed', async () => {
-    // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app help includes the `app dev` command'))
-
-    // When
-    const got = await isGlobalCLIInstalled()
-
-    // Then
-    expect(got).toBeTruthy()
-  })
-
-  test('returns false if the global CLI is not installed', async () => {
-    // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => {
-      throw new Error('')
-    })
-
-    // When
-    const got = await isGlobalCLIInstalled()
-
-    // Then
-    expect(got).toBeFalsy()
-  })
-
-  test('returns false if the global CLI is installed but doesnt have app dev command', async () => {
-    // Given
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app help that includes something else'))
-
-    // When
-    const got = await isGlobalCLIInstalled()
-
-    // Then
-    expect(got).toBeFalsy()
-  })
-})
-
 describe('installGlobalCLIPrompt', () => {
-  test('if global CLI is already installed', async () => {
+  test('does not prompt if global CLI is already installed', async () => {
     // Given
-    // Global CLI is already installed
-    vi.mocked(captureOutput).mockImplementationOnce(() => Promise.resolve('app dev'))
+    vi.mocked(globalCLIVersion).mockImplementationOnce(() => Promise.resolve('3.78.0'))
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
 
     // When
@@ -147,10 +107,7 @@ describe('installGlobalCLIPrompt', () => {
 
   test('returns true if the user installs the global CLI', async () => {
     // Given
-    // Global CLI is not installed yet
-    vi.mocked(captureOutput).mockImplementationOnce(() => {
-      throw new Error('')
-    })
+    vi.mocked(globalCLIVersion).mockImplementationOnce(() => Promise.resolve(undefined))
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('yes'))
 
@@ -163,10 +120,7 @@ describe('installGlobalCLIPrompt', () => {
 
   test('returns false if the user does not install the global CLI', async () => {
     // Given
-    // Global CLI is not installed yet
-    vi.mocked(captureOutput).mockImplementationOnce(() => {
-      throw new Error('')
-    })
+    vi.mocked(globalCLIVersion).mockImplementationOnce(() => Promise.resolve(undefined))
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(renderSelectPrompt).mockImplementationOnce(() => Promise.resolve('no'))
 

@@ -261,7 +261,8 @@ describe('setup-dev-processes', () => {
       },
     })
 
-    expect(res.processes[6]).toMatchObject({
+    const appWatcherProcess = res.processes.find((process) => process.type === 'app-watcher')
+    expect(appWatcherProcess).toMatchObject({
       type: 'app-watcher',
       prefix: 'app-preview',
       function: launchAppWatcher,
@@ -275,7 +276,8 @@ describe('setup-dev-processes', () => {
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
     const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
-    expect(res.processes[7]).toMatchObject({
+    const proxyServerProcess = res.processes.find((process) => process.type === 'proxy-server')
+    expect(proxyServerProcess).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
       function: startProxyServer,
@@ -452,6 +454,7 @@ describe('setup-dev-processes', () => {
           shopIds: [123456789],
           apiKey: 'api-key',
         },
+        appWatcher: expect.any(AppEventWatcher),
       },
     })
   })
@@ -537,9 +540,10 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    res.processes.forEach((process) => {
-      expect(process.type).not.toBe('app-logs-subscribe')
-    })
+    const logsProcess = res.processes.find((process) => process.type === 'app-logs-subscribe')
+    expect(logsProcess).not.toBeUndefined()
+    expect(logsProcess?.options).toHaveProperty('localApp')
+    expect(logsProcess?.options).toHaveProperty('appWatcher')
   })
 
   test('pushUpdatesForDraftableExtensions does not include config extensions except app_access', async () => {

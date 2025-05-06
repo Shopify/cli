@@ -3,7 +3,7 @@ import {
   GatedExtensionTemplate,
   allowedTemplates,
   diffAppModules,
-  encodedGidFromId,
+  encodedGidFromOrganizationId,
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -50,11 +50,17 @@ const allowedTemplate: GatedExtensionTemplate = {
   organizationBetaFlags: ['allowedFlag'],
   minimumCliVersion: '1.0.0',
 }
-const templateDisallowedByCliVersion: GatedExtensionTemplate = {
+const templateDisallowedByMinimumCliVersion: GatedExtensionTemplate = {
   ...testRemoteExtensionTemplates[2]!,
   organizationBetaFlags: ['allowedFlag'],
   // minimum CLI version is higher than the current CLI version
   minimumCliVersion: `1${CLI_KIT_VERSION}`,
+}
+const templateDisallowedByDeprecatedFromCliVersion: GatedExtensionTemplate = {
+  ...testRemoteExtensionTemplates[2]!,
+  organizationBetaFlags: ['allowedFlag'],
+  // deprecated CLI version is lower than the current CLI version
+  deprecatedFromCliVersion: '1.0.0',
 }
 const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
   ...testRemoteExtensionTemplates[3]!,
@@ -137,7 +143,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromId(orgApp.organizationId),
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
         flag_allowedFlag: true,
       },
     }
@@ -164,7 +170,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromId(orgApp.organizationId),
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
         flag_allowedFlag: true,
         flag_notAllowedFlag: false,
       },
@@ -189,7 +195,7 @@ describe('templateSpecifications', () => {
     }`,
       'business-platform-token',
       orgApp.organizationId,
-      {organizationId: encodedGidFromId(orgApp.organizationId)},
+      {organizationId: encodedGidFromOrganizationId(orgApp.organizationId)},
     )
     const expectedAllowedTemplates = [templateWithoutRules, allowedTemplate]
     expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
@@ -214,7 +220,8 @@ describe('allowedTemplates', () => {
     const templates: GatedExtensionTemplate[] = [
       templateWithoutRules,
       allowedTemplate,
-      templateDisallowedByCliVersion,
+      templateDisallowedByMinimumCliVersion,
+      templateDisallowedByDeprecatedFromCliVersion,
       templateDisallowedByBetaFlag,
     ]
 
@@ -619,27 +626,34 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith('gid://shopify/Organization/123', expect.anything(), 'token', {
-      appId: 'gid://shopify/App/123',
-      version: {
-        source: {
-          name: 'Test App',
-          modules: [
-            {
-              uid: 'branding',
-              type: BrandingSpecIdentifier,
-              handle: 'test-app',
-              config: {name: 'Test App'},
-            },
-          ],
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          source: {
+            name: 'Test App',
+            modules: [
+              {
+                uid: 'branding',
+                type: BrandingSpecIdentifier,
+                handle: 'test-app',
+                config: {name: 'Test App'},
+              },
+            ],
+          },
+        },
+        metadata: {
+          versionTag,
+          message,
+          sourceControlUrl: commitReference,
         },
       },
-      metadata: {
-        versionTag,
-        message,
-        sourceControlUrl: commitReference,
-      },
-    })
+      undefined,
+      {requestMode: 'slow-request'},
+    )
   })
 
   test('uses bundleUrl when provided instead of modules', async () => {
@@ -669,13 +683,20 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith('gid://shopify/Organization/123', expect.anything(), 'token', {
-      appId: 'gid://shopify/App/123',
-      version: {
-        sourceUrl: bundleUrl,
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          sourceUrl: bundleUrl,
+        },
+        metadata: expect.any(Object),
       },
-      metadata: expect.any(Object),
-    })
+      undefined,
+      {requestMode: 'slow-request'},
+    )
   })
 
   test('updates name from branding module if present', async () => {
@@ -725,6 +746,8 @@ describe('deploy', () => {
           },
         },
       }),
+      undefined,
+      {requestMode: 'slow-request'},
     )
   })
 

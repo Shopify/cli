@@ -66,9 +66,7 @@ describe('release', () => {
 
       return {
         appRelease: {
-          appRelease: {
-            userErrors: [],
-          },
+          appRelease: {},
         },
       }
     })

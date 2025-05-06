@@ -1,5 +1,6 @@
 import {
   ApplicationURLs,
+  FrontendURLOptions,
   generateApplicationURLs,
   generateFrontendURL,
   getURLs,
@@ -23,16 +24,18 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
-import {patchAppConfigurationFile} from './app/patch-app-configuration-file.js'
+import {setAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
+import {TunnelMode} from './dev/tunnel-mode.js'
+import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
-import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {ports} from '../constants.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -45,22 +48,6 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
-interface NoTunnel {
-  mode: 'no-tunnel-use-localhost'
-  provideCertificate: (appDirectory: string) => Promise<{keyContent: string; certContent: string; certPath: string}>
-}
-
-interface AutoTunnel {
-  mode: 'auto'
-}
-
-interface TunnelProvided {
-  mode: 'provided'
-  url: string
-}
-
-export type TunnelMode = NoTunnel | AutoTunnel | TunnelProvided
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -92,12 +79,13 @@ export async function dev(commandOptions: DevOptions) {
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
-  const {app, remoteApp, developerPlatformClient, store, specifications} = commandOptions
+  const {app, remoteApp, developerPlatformClient, store, specifications, tunnel} = commandOptions
 
   // Be optimistic about tunnel creation and do it as early as possible
-  const tunnelPort = await getAvailableTCPPort()
   let tunnelClient: TunnelClient | undefined
-  if (commandOptions.tunnel.mode === 'auto') {
+
+  if (tunnel.mode === 'auto') {
+    const tunnelPort = await getAvailableTCPPort()
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
@@ -124,8 +112,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    const patch = {build: {dev_store_url: store.shopDomain}}
-    await patchAppConfigurationFile({path: app.configuration.path, patch, schema: app.configSchema})
+    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain, app.configSchema)
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
@@ -133,28 +120,31 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const graphiqlPort = commandOptions.graphiqlPort ?? (await getAvailableTCPPort(ports.graphiql))
-  const {graphiqlKey} = commandOptions
+  const portDetails: PortDetail[] = [
+    {
+      for: 'GraphiQL',
+      flagToRemedy: '--graphiql-port',
+      requested: commandOptions.graphiqlPort ?? ports.graphiql,
+      actual: graphiqlPort,
+    },
+  ]
 
-  if (graphiqlPort !== (commandOptions.graphiqlPort ?? ports.graphiql)) {
-    renderWarning({
-      headline: [
-        'A random port will be used for GraphiQL because',
-        {command: `${ports.graphiql}`},
-        'is not available.',
-      ],
-      body: [
-        'If you want to keep your session in GraphiQL, you can choose a different one by setting the',
-        {command: '--graphiql-port'},
-        'flag.',
-      ],
+  if (tunnel.mode === 'use-localhost') {
+    portDetails.push({
+      for: 'localhost',
+      flagToRemedy: '--localhost-port',
+      requested: tunnel.requestedPort,
+      actual: tunnel.actualPort,
     })
   }
+
+  renderPortWarnings(portDetails)
 
   const {webs, ...network} = await setupNetworkingOptions(
     app.directory,
     app.webs,
     graphiqlPort,
-    commandOptions.tunnel,
+    tunnel,
     tunnelClient,
     remoteApp.configuration,
   )
@@ -186,7 +176,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     network,
     partnerUrlsUpdated,
     graphiqlPort,
-    graphiqlKey,
+    graphiqlKey: commandOptions.graphiqlKey,
   }
 }
 
@@ -246,7 +236,7 @@ export async function warnIfScopesDifferBeforeDev({
 }
 
 async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
-  setPreviousAppId(config.commandOptions.directory, config.remoteApp.apiKey)
+  setCachedAppInfo({directory: config.commandOptions.directory, previousAppId: config.remoteApp.apiKey})
 
   await logMetadataForDev({
     devOptions: config.commandOptions,
@@ -319,14 +309,22 @@ async function setupNetworkingOptions(
 
   await validateCustomPorts(webs, graphiqlPort)
 
+  const frontendUrlOptions: FrontendURLOptions =
+    tunnelOptions.mode === 'use-localhost'
+      ? {
+          noTunnelUseLocalhost: true,
+          port: tunnelOptions.actualPort,
+        }
+      : {
+          noTunnelUseLocalhost: false,
+          tunnelUrl: tunnelOptions.mode === 'custom' ? tunnelOptions.url : undefined,
+          tunnelClient,
+        }
+
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
   const [{frontendUrl, frontendPort: proxyPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
-    generateFrontendURL({
-      noTunnelUseLocalhost: tunnelOptions.mode === 'no-tunnel-use-localhost',
-      tunnelUrl: tunnelOptions.mode === 'provided' ? tunnelOptions.url : undefined,
-      tunnelClient,
-    }),
+    generateFrontendURL(frontendUrlOptions),
     getBackendPort() ?? backendConfig?.configuration.port ?? getAvailableTCPPort(),
     getURLs(remoteAppConfig),
   ])
@@ -342,12 +340,13 @@ async function setupNetworkingOptions(
   frontendPort = frontendPort ?? (await getAvailableTCPPort())
 
   let reverseProxyCert
-  if (tunnelOptions.mode === 'no-tunnel-use-localhost') {
+  if (tunnelOptions.mode === 'use-localhost') {
     const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
     reverseProxyCert = {
       key: keyContent,
       cert: certContent,
       certPath,
+      port: tunnelOptions.actualPort,
     }
   }
 
@@ -514,13 +513,9 @@ async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
       const portAvailable = await checkPortAvailability(graphiqlPort)
       if (!portAvailable) {
         const errorMessage = `Port ${graphiqlPort} is not available for serving GraphiQL.`
-        const tryMessage = ['Choose a different port by setting the', {command: '--graphiql-port'}, 'flag.']
+        const tryMessage = ['Choose a different port for the', {command: '--graphiql-port'}, 'flag.']
         throw new AbortError(errorMessage, tryMessage)
       }
     })(),
   ])
-}
-
-function setPreviousAppId(directory: string, apiKey: string) {
-  setCachedAppInfo({directory, previousAppId: apiKey})
 }

@@ -1,5 +1,21 @@
 # @shopify/cli-kit
 
+## 3.79.0
+
+### Minor Changes
+
+- f9ac5cf: Update `getPathValue`, `setPathValue`, and `unsetPathValue` to support the lodash `PropertyPath` type
+- 68b53f6: Add support to use App Management API with CLI Tokens.
+- 031feb7: Add new `unsetPathValue` function which wraps the `unset` function from lodash
+
+### Patch Changes
+
+- 0b1e588: Show the multiple CLI installations warning only once a day
+- 94362f9: Avoid showing errors when fetching notifications in background
+- 4f17786: Prevent deploy requests from timing out
+- 036bcaf: Fix a bug with binary downloads timing out
+- 164bbbe: The hidden `.shopify` folder now has its own generic .gitignore file
+
 ## 3.78.0
 
 ## 3.77.0

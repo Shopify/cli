@@ -27,6 +27,15 @@ export async function getUIExtensionPayload(
     const renderer = await getUIExtensionRendererVersion(extension)
     const extensionPoints = await getExtensionPoints(extension, url)
 
+    let metafields: {namespace: string; key: string}[] | null = null
+    if (
+      'metafields' in extension.configuration &&
+      Array.isArray(extension.configuration.metafields) &&
+      extension.configuration.metafields.length > 0
+    ) {
+      metafields = extension.configuration.metafields
+    }
+
     const defaultConfig = {
       assets: {
         main: {
@@ -60,7 +69,7 @@ export async function getUIExtensionPayload(
       },
       extensionPoints,
       localization: localization ?? null,
-      metafields: extension.configuration.metafields?.length === 0 ? null : extension.configuration.metafields,
+      metafields,
       type: extension.type,
 
       externalType: extension.externalType,

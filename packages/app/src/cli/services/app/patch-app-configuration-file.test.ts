@@ -1,9 +1,15 @@
-import {patchAppConfigurationFile, patchAppHiddenConfigFile} from './patch-app-configuration-file.js'
+import {
+  patchAppHiddenConfigFile,
+  setAppConfigValue,
+  unsetAppConfigValue,
+  setManyAppConfigValues,
+} from './patch-app-configuration-file.js'
 import {getAppVersionedSchema} from '../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {environmentVariableNames} from '../../constants.js'
 import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 const defaultToml = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 client_id = "12345"
@@ -32,150 +38,6 @@ function writeDefaulToml(tmpDir: string) {
   writeFileSync(configPath, defaultToml)
   return configPath
 }
-
-describe('patchAppConfigurationFile', () => {
-  test('updates existing configuration with new values and adds new top-levelfields, replaces arrays', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const configPath = writeDefaulToml(tmpDir)
-      const patch = {
-        name: 'Updated App Name',
-        application_url: 'https://example.com',
-        access_scopes: {
-          use_legacy_install_flow: false,
-        },
-        auth: {
-          redirect_urls: ['https://example.com/redirect3', 'https://example.com/redirect4'],
-        },
-      }
-
-      await patchAppConfigurationFile({path: configPath, patch, schema})
-
-      const updatedTomlFile = await readFile(configPath)
-      expect(updatedTomlFile)
-        .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "Updated App Name"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = false
-
-[auth]
-redirect_urls = [
-  "https://example.com/redirect3",
-  "https://example.com/redirect4"
-]
-
-[webhooks]
-api_version = "2023-04"
-`)
-    })
-  })
-
-  test('Adds new table to the toml file', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const configPath = writeDefaulToml(tmpDir)
-      const patch = {
-        application_url: 'https://example.com',
-        build: {
-          dev_store_url: 'example.myshopify.com',
-        },
-      }
-
-      await patchAppConfigurationFile({path: configPath, patch, schema})
-
-      const updatedTomlFile = await readFile(configPath)
-      expect(updatedTomlFile)
-        .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [
-  "https://example.com/redirect",
-  "https://example.com/redirect2"
-]
-
-[webhooks]
-api_version = "2023-04"
-
-[build]
-dev_store_url = "example.myshopify.com"
-`)
-    })
-  })
-
-  test('Adds a new field to a toml table, merging with exsisting values', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const configPath = writeDefaulToml(tmpDir)
-      const patch = {
-        application_url: 'https://example.com',
-        access_scopes: {
-          scopes: 'read_products',
-        },
-      }
-
-      await patchAppConfigurationFile({path: configPath, patch, schema})
-
-      const updatedTomlFile = await readFile(configPath)
-      expect(updatedTomlFile)
-        .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-scopes = "read_products"
-
-[auth]
-redirect_urls = [
-  "https://example.com/redirect",
-  "https://example.com/redirect2"
-]
-
-[webhooks]
-api_version = "2023-04"
-`)
-    })
-  })
-
-  test('does not validate the toml if no schema is provided', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const configPath = joinPath(tmpDir, 'shopify.app.toml')
-      writeFileSync(
-        configPath,
-        `
-random_toml_field = "random_value"
-`,
-      )
-      const patch = {name: 123}
-
-      await patchAppConfigurationFile({path: configPath, patch, schema: undefined})
-
-      const updatedTomlFile = await readFile(configPath)
-      expect(updatedTomlFile)
-        .toEqual(`# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-random_toml_field = "random_value"
-name = 123
-`)
-    })
-  })
-})
 
 describe('patchAppHiddenConfigFile', () => {
   test('creates a new hidden config file when it does not exist', async () => {
@@ -254,6 +116,203 @@ describe('patchAppHiddenConfigFile', () => {
           dev_store_url: 'store-2.myshopify.com',
         },
       })
+    })
+  })
+})
+
+describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+  beforeEach(() => {
+    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('sets a top-level value in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setAppConfigValue(configPath, 'name', 'Updated App Name', schema)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('name = "Updated App Name"')
+    })
+  })
+
+  test('sets a nested value in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setAppConfigValue(configPath, 'build.dev_store_url', 'example.myshopify.com', schema)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('[build]')
+      expect(updatedTomlFile).toContain('dev_store_url = "example.myshopify.com"')
+    })
+  })
+
+  test('sets a deeply nested value in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setAppConfigValue(configPath, 'build.auth.settings', true, schema)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('[build.auth]')
+      expect(updatedTomlFile).toContain('settings = true')
+    })
+  })
+})
+
+describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+  beforeEach(() => {
+    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('unsets a top-level value in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await unsetAppConfigValue(configPath, 'name', schema)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).not.toContain('name = "app1"')
+    })
+  })
+
+  test('unsets a nested value in existing table in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      // Add a value first
+      await setAppConfigValue(configPath, 'build.dev_store_url', 'example.myshopify.com', schema)
+
+      // Now unset it
+      await unsetAppConfigValue(configPath, 'build.dev_store_url', schema)
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('[build]')
+      expect(updatedTomlFile).not.toContain('dev_store_url = "example.myshopify.com"')
+    })
+  })
+})
+
+describe.each([false, true])('setManyAppConfigValues (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+  beforeEach(() => {
+    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('sets multiple top-level values in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setManyAppConfigValues(
+        configPath,
+        [
+          {keyPath: 'name', value: 'Updated App Name'},
+          {keyPath: 'client_id', value: '67890'},
+        ],
+        schema,
+      )
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('name = "Updated App Name"')
+      expect(updatedTomlFile).toContain('client_id = "67890"')
+    })
+  })
+
+  test('sets a mix of top-level and nested values in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setManyAppConfigValues(
+        configPath,
+        [
+          {keyPath: 'name', value: 'Updated App Name'},
+          {keyPath: 'build.dev_store_url', value: 'example.myshopify.com'},
+        ],
+        schema,
+      )
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('name = "Updated App Name"')
+      expect(updatedTomlFile).toContain('[build]')
+      expect(updatedTomlFile).toContain('dev_store_url = "example.myshopify.com"')
+    })
+  })
+
+  test('properly handles array values in the configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setManyAppConfigValues(
+        configPath,
+        [{keyPath: 'auth.redirect_urls', value: ['https://example.com/redirect3', 'https://example.com/redirect4']}],
+        schema,
+      )
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('[auth]')
+      expect(updatedTomlFile).toContain('redirect_urls = [')
+      expect(updatedTomlFile).toContain('"https://example.com/redirect3"')
+      expect(updatedTomlFile).toContain('"https://example.com/redirect4"')
+      expect(updatedTomlFile).not.toContain('"https://example.com/redirect"')
+      expect(updatedTomlFile).not.toContain('"https://example.com/redirect2"')
+    })
+  })
+
+  test('combines multiple nested keys into a single object structure', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setManyAppConfigValues(
+        configPath,
+        [
+          {keyPath: 'build.dev_store_url', value: 'example.myshopify.com'},
+          {keyPath: 'build.automatically_update_urls_on_dev', value: true},
+        ],
+        schema,
+      )
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('[build]')
+      expect(updatedTomlFile).toContain('dev_store_url = "example.myshopify.com"')
+      expect(updatedTomlFile).toContain('automatically_update_urls_on_dev = true')
+    })
+  })
+
+  test('updates existing configuration with new values and replaces arrays', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configPath = writeDefaulToml(tmpDir)
+
+      await setManyAppConfigValues(
+        configPath,
+        [
+          {keyPath: 'name', value: 'Updated App Name'},
+          {keyPath: 'application_url', value: 'https://example.com'},
+          {keyPath: 'access_scopes.use_legacy_install_flow', value: false},
+          {keyPath: 'auth.redirect_urls', value: ['https://example.com/redirect3', 'https://example.com/redirect4']},
+        ],
+        schema,
+      )
+
+      const updatedTomlFile = await readFile(configPath)
+      expect(updatedTomlFile).toContain('name = "Updated App Name"')
+      expect(updatedTomlFile).toContain('application_url = "https://example.com"')
+      expect(updatedTomlFile).toContain('use_legacy_install_flow = false')
+      expect(updatedTomlFile).toContain('redirect_urls = [')
+      expect(updatedTomlFile).toContain('"https://example.com/redirect3"')
+      expect(updatedTomlFile).toContain('"https://example.com/redirect4"')
+      expect(updatedTomlFile).not.toContain('"https://example.com/redirect"')
     })
   })
 })

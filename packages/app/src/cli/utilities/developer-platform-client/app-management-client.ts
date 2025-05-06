@@ -126,6 +126,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceFormat} from '../../api/graphql/app-management/generated/types.js'
+import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -159,6 +160,7 @@ type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
   minimumCliVersion?: string
+  deprecatedFromCliVersion?: string
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
@@ -253,7 +255,25 @@ export class AppManagementClient implements DeveloperPlatformClient {
         cacheExtraKey: userId,
       })
 
-      if (userInfoResult.currentUserAccount) {
+      if (getPartnersToken() && userInfoResult.currentUserAccount) {
+        const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
+          name: org.name,
+        }))
+
+        if (organizations.length > 1) {
+          throw new BugError('Multiple organizations found for the CLI token')
+        }
+
+        this._session = {
+          token: appManagementToken,
+          businessPlatformToken,
+          accountInfo: {
+            type: 'ServiceAccount',
+            orgName: organizations[0]?.name ?? 'Unknown organization',
+          },
+          userId,
+        }
+      } else if (userInfoResult.currentUserAccount) {
         this._session = {
           token: appManagementToken,
           businessPlatformToken,
@@ -286,7 +306,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async refreshToken(): Promise<string> {
-    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true})
+    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true, forceRefresh: true})
     const session = await this.session()
     session.token = result.appManagementToken
     session.businessPlatformToken = result.businessPlatformToken
@@ -322,13 +342,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (!organizationsResult.currentUserAccount) return []
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
-      businessName: org.name,
+      businessName: `${org.name} (Dev Dashboard)`,
       source: this.organizationSource,
     }))
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    const base64Id = encodedGidFromId(orgId)
+    const base64Id = encodedGidFromOrganizationId(orgId)
     const variables = {organizationId: base64Id}
     const organizationResult = await businessPlatformRequestDoc(
       FindOrganizations,
@@ -479,7 +499,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
-    const storesResult = await businessPlatformOrganizationsRequestDoc<ListAppDevStoresQuery>(
+    const storesResult = await businessPlatformOrganizationsRequestDoc(
       ListAppDevStores,
       await this.businessPlatformToken(),
       orgId,
@@ -685,7 +705,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
       metadata,
     }
 
-    const result = await appManagementRequestDoc(organizationId, CreateAppVersion, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      CreateAppVersion,
+      await this.token(),
+      variables,
+      undefined,
+      {requestMode: 'slow-request'},
+    )
     const {version, userErrors} = result.appVersionCreate
     if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
 
@@ -741,27 +768,34 @@ export class AppManagementClient implements DeveloperPlatformClient {
       await this.token(),
       releaseVariables,
     )
-    if (!releaseResult.appReleaseCreate?.release) {
-      throw new AbortError('Failed to release version')
-    }
-    return {
-      appRelease: {
-        appVersion: {
-          versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
-          message: releaseResult.appReleaseCreate.release.version.metadata.message,
-          location: [
-            await appDeepLink({organizationId, id: appId}),
-            'versions',
-            numberFromGid(releaseResult.appReleaseCreate.release.version.id),
-          ].join('/'),
+
+    if (releaseResult.appReleaseCreate?.release) {
+      return {
+        appRelease: {
+          appVersion: {
+            versionTag: releaseResult.appReleaseCreate.release.version.metadata.versionTag,
+            message: releaseResult.appReleaseCreate.release.version.metadata.message,
+            location: [
+              await appDeepLink({organizationId, id: appId}),
+              'versions',
+              numberFromGid(releaseResult.appReleaseCreate.release.version.id).toString(),
+            ].join('/'),
+          },
         },
-        userErrors: releaseResult.appReleaseCreate.userErrors?.map((err) => ({
-          field: err.field,
-          message: err.message,
-          category: '',
-          details: [],
-        })),
-      },
+      }
+    } else {
+      return {
+        appRelease: {
+          userErrors:
+            releaseResult.appReleaseCreate.userErrors?.map((err) => ({
+              field: err.field,
+              message: err.message,
+              category: err.category,
+              details: [],
+              on: err.on,
+            })) ?? [],
+        },
+      }
     }
   }
 
@@ -972,7 +1006,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     organizationId: string,
     allBetaFlags: string[],
   ): Promise<{[flag: (typeof allBetaFlags)[number]]: boolean}> {
-    const variables: OrganizationBetaFlagsQueryVariables = {organizationId: encodedGidFromId(organizationId)}
+    const variables: OrganizationBetaFlagsQueryVariables = {
+      organizationId: encodedGidFromOrganizationId(organizationId),
+    }
     const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>(
       organizationBetaFlagsQuery(allBetaFlags),
       await this.businessPlatformToken(),
@@ -1047,7 +1083,7 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
 // just the integer portion of that ID. These functions convert between the two.
 
 // 1234 => gid://organization/Organization/1234 => base64
-export function encodedGidFromId(id: string): string {
+export function encodedGidFromOrganizationId(id: string): string {
   const gid = `gid://organization/Organization/${id}`
   return Buffer.from(gid).toString('base64')
 }
@@ -1107,7 +1143,9 @@ export async function allowedTemplates(
       !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
     const satisfiesMinCliVersion =
       !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
-    return hasAnyNeededBetas && satisfiesMinCliVersion
+    const satisfiesDeprecatedFromCliVersion =
+      !ext.deprecatedFromCliVersion || versionSatisfies(CLI_KIT_VERSION, `<${ext.deprecatedFromCliVersion}`)
+    return hasAnyNeededBetas && satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
   })
 }
 

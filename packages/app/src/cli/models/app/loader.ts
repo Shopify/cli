@@ -16,10 +16,8 @@ import {
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
   AppLinkedInterface,
-  appHiddenConfigPath,
   AppHiddenConfig,
 } from './app.js'
-import {showMultipleCLIWarningIfNeeded} from './validation/multi-cli-warning.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -34,7 +32,9 @@ import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_sc
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
-import {fileExists, readFile, glob, findPathUp, fileExistsSync, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
+import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
+import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -53,7 +53,6 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
-import {addToGitIgnore} from '@shopify/cli-kit/node/git'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -1087,30 +1086,23 @@ export async function loadHiddenConfig(
 ): Promise<AppHiddenConfig> {
   if (!configuration.client_id || typeof configuration.client_id !== 'string') return {}
 
-  const hiddenConfigPath = appHiddenConfigPath(appDirectory)
-  if (fileExistsSync(hiddenConfigPath)) {
-    try {
-      const allConfigs: {[key: string]: AppHiddenConfig} = JSON.parse(await readFile(hiddenConfigPath))
-      const currentAppConfig = allConfigs[configuration.client_id]
+  const hiddenConfigPath = await getOrCreateAppConfigHiddenPath(appDirectory)
 
-      if (currentAppConfig) return currentAppConfig
+  try {
+    const allConfigs: {[key: string]: AppHiddenConfig} = JSON.parse(await readFile(hiddenConfigPath))
+    const currentAppConfig = allConfigs[configuration.client_id]
 
-      // Migration from legacy format, can be safely removed in version >=3.77
-      const oldConfig = allConfigs.dev_store_url
-      if (oldConfig !== undefined && typeof oldConfig === 'string') {
-        await patchAppHiddenConfigFile(hiddenConfigPath, configuration.client_id, {dev_store_url: oldConfig})
-        return {dev_store_url: oldConfig}
-      }
-      return {}
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch {
-      return {}
+    if (currentAppConfig) return currentAppConfig
+
+    // Migration from legacy format, can be safely removed in version >=3.77
+    const oldConfig = allConfigs.dev_store_url
+    if (oldConfig !== undefined && typeof oldConfig === 'string') {
+      await patchAppHiddenConfigFile(hiddenConfigPath, configuration.client_id, {dev_store_url: oldConfig})
+      return {dev_store_url: oldConfig}
     }
-  } else {
-    // If the hidden config file doesn't exist, create an empty one.
-    await mkdir(dirname(hiddenConfigPath))
-    await writeFile(hiddenConfigPath, '{}')
-    await addToGitIgnore(appDirectory, configurationFileNames.hiddenFolder)
+    return {}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
     return {}
   }
 }
