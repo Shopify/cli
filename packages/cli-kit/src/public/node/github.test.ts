@@ -4,7 +4,6 @@ import {
   GithubRelease,
   parseGitHubRepositoryReference,
   downloadGitHubRelease,
-  downloadGitHubFile,
 } from './github.js'
 import {fetch, downloadFile} from './http.js'
 import {AbortError} from './error.js'
@@ -231,97 +230,4 @@ describe('downloadGitHubRelease', () => {
     // THEN
     await expect(result).rejects.toThrow(AbortError)
   })
-})
-
-describe('downloadGitHubFile', () => {
-  const repo = 'testuser/testrepo'
-  const tag = 'v1.0.0'
-  const asset = 'test-asset'
-
-  testWithTempDir('successfully downloads the file', async ({tempDir}) => {
-    // GIVEN
-    const downloadContent = 'hello'
-    const content = Buffer.from(downloadContent)
-    const mockResponse = {
-      ok: true,
-      arrayBuffer: vi.fn().mockResolvedValue(content),
-    }
-    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
-    const targetPath = joinPath(tempDir, 'downloads', asset)
-
-    // WHEN
-    await downloadGitHubFile(repo, tag, asset, targetPath)
-
-    // THEN
-    expect(fetch).toHaveBeenCalledWith(
-      `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`,
-      undefined,
-      'slow-request',
-    )
-
-    const downloadedContent = await readFile(targetPath)
-    await expect(readFile(targetPath)).resolves.toEqual(downloadContent)
-  })
-
-  testWithTempDir('calls options.onError if the network is down', async ({tempDir}) => {
-    // GIVEN
-    const message = 'Network error'
-    vi.mocked(fetch).mockRejectedValue(new Error(message))
-    const targetPath = joinPath(tempDir, 'downloads', asset)
-    const onError = vi.fn()
-
-    // WHEN
-    await downloadGitHubFile(repo, tag, asset, targetPath, {onError})
-
-    // THEN
-    expect(onError).toHaveBeenCalledWith(
-      `Failed to download test-asset: ${message}`,
-      `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`,
-    )
-  })
-
-  testWithTempDir('throws an AbortError if the network is down and options.onError is undefined', async ({tempDir}) => {
-    // GIVEN
-    vi.mocked(downloadFile).mockRejectedValue(new Error('Network error'))
-    const targetPath = joinPath(tempDir, 'downloads', asset)
-
-    // WHEN
-    const result = downloadGitHubFile(repo, tag, asset, targetPath)
-
-    // THEN
-    await expect(result).rejects.toThrow(AbortError)
-  })
-
-  testWithTempDir('calls options.onError if the response is not ok', async ({tempDir}) => {
-    // GIVEN
-    const response = {ok: false, status: 404, statusText: 'Not Found'} as Response
-    vi.mocked(fetch).mockResolvedValue(response)
-    const targetPath = joinPath(tempDir, 'downloads', asset)
-    const onError = vi.fn()
-
-    // WHEN
-    await downloadGitHubFile(repo, tag, asset, targetPath, {onError})
-
-    // THEN
-    expect(onError).toHaveBeenCalledWith(
-      `Failed to download test-asset: ${response.status} ${response.statusText}`,
-      `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`,
-    )
-  })
-
-  testWithTempDir(
-    'throws an AbortError if the response is not ok and options.onError is undefined',
-    async ({tempDir}) => {
-      // GIVEN
-      const response = {ok: false, status: 404, statusText: 'Not Found'} as Response
-      vi.mocked(fetch).mockResolvedValue(response)
-      const targetPath = joinPath(tempDir, 'downloads', asset)
-
-      // WHEN
-      const result = downloadGitHubFile(repo, tag, asset, targetPath)
-
-      // THEN
-      await expect(result).rejects.toThrow(AbortError)
-    },
-  )
 })

@@ -1,9 +1,10 @@
 import {environmentVariableNames} from '../constants.js'
 import {generateCertificatePrompt} from '../prompts/dev.js'
 import {exec} from '@shopify/cli-kit/node/system'
-import {downloadGitHubFile, downloadGitHubRelease} from '@shopify/cli-kit/node/github'
+import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
@@ -88,21 +89,32 @@ async function downloadMkcertLicense(dotShopifyPath: string): Promise<undefined 
 
   if (await fileExists(licensePath)) return
 
-  let maybeError: RenderAlertOptions | undefined
+  const url = `https://raw.githubusercontent.com/${MKCERT_REPO}/refs/tags/${MKCERT_VERSION}/LICENSE`
+  const errorAlertOptions: RenderAlertOptions = {
+    headline: 'Failed to download mkcert license.',
+    body: [
+      `We tried to download the license for mkcert, but the request failed. You can `,
+      {link: {url, label: 'view the license here'}},
+    ],
+  }
 
-  await downloadGitHubFile(MKCERT_REPO, MKCERT_VERSION, 'LICENSE', licensePath, {
-    onError: (_, url) => {
-      maybeError = {
-        headline: 'Failed to download mkcert license.',
-        body: [
-          `We tried to download the license for mkcert, but the request failed. You can `,
-          {link: {url, label: 'view the license here'}},
-        ],
-      }
-    },
-  })
+  let response: Response
 
-  return maybeError
+  try {
+    response = await fetch(url)
+
+    if (!response.ok) {
+      return errorAlertOptions
+    }
+    // We don't want to throw an error if we can't download the license
+    // Instead we renderInfo explaining it failed
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return errorAlertOptions
+  }
+
+  const fileContent = await response.text()
+  await writeFile(licensePath, fileContent)
 }
 
 interface GenerateCertificateOptions {
