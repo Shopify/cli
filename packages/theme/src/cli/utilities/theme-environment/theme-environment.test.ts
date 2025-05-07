@@ -268,6 +268,362 @@ describe('setupDevServer', () => {
       expect(res.getHeader('content-length')).toEqual(25)
     })
 
+    test('serves compiled_assets/styles.css by aggregating liquid stylesheets', async () => {
+      const sectionFile = {
+        key: 'sections/test-section.liquid',
+        checksum: 'section1',
+        value: `<div class="section">
+          {% schema %}
+          {
+            "name": "Test Section"
+          }
+          {% endschema %}
+
+          {% stylesheet %}
+          .test-section {
+            color: red;
+          }
+          {% endstylesheet %}
+        </div>`,
+      }
+
+      const blockFile = {
+        key: 'blocks/test-block.liquid',
+        checksum: 'block1',
+        value: `<div class="block">
+          {% schema %}
+          {
+            "name": "Test Block"
+          }
+          {% endschema %}
+
+          {% stylesheet %}
+          .test-block {
+            background: blue;
+          }
+          {% endstylesheet %}
+        </div>`,
+      }
+
+      const snippetFile = {
+        key: 'snippets/test-snippet.liquid',
+        checksum: 'snippet1',
+        value: `<div class="snippet">
+          {% stylesheet %}
+          .test-snippet {
+            border: 1px solid green;
+          }
+          {% endstylesheet %}
+        </div>`,
+      }
+
+      // Add the test files to the filesystem
+      localThemeFileSystem.files.set(sectionFile.key, sectionFile)
+      localThemeFileSystem.files.set(blockFile.key, blockFile)
+      localThemeFileSystem.files.set(snippetFile.key, snippetFile)
+
+      // Request the compiled CSS
+      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/styles.css')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      const {res, body} = await eventPromise
+      expect(res.getHeader('content-type')).toEqual('text/css')
+
+      expect(body.toString()).toMatchInlineSnapshot(`
+        "/*** GENERATED LOCALLY ***/
+
+        /* sections/test-section.liquid */
+
+                  .test-section {
+                    color: red;
+                  }
+
+        /* blocks/test-block.liquid */
+
+                  .test-block {
+                    background: blue;
+                  }
+
+        /* snippets/test-snippet.liquid */
+
+                  .test-snippet {
+                    border: 1px solid green;
+                  }
+                  "
+      `)
+    })
+
+    test('serves compiled_assets/block-scripts.js by aggregating liquid javascript from block files', async () => {
+      const blockFile1 = {
+        key: 'blocks/test-block.liquid',
+        checksum: 'block1',
+        value: `
+          <div class="block">
+            {% javascript %}
+              console.log('This is block script');
+            {% endjavascript %}
+          </div>`,
+      }
+      const blockFile2 = {
+        key: 'blocks/another-block.liquid',
+        checksum: 'block2',
+        value: `
+          <div class="another-block">
+            {% javascript %}
+              console.log('This is another block script');
+            {% endjavascript %}
+          </div>`,
+      }
+      const blockFile3 = {
+        key: 'blocks/no-js-block.liquid',
+        checksum: 'block3',
+        value: `
+          <div class="no-js-block">
+            <p>This block has no JavaScript</p>
+          </div>`,
+      }
+
+      localThemeFileSystem.files.set(blockFile1.key, blockFile1)
+      localThemeFileSystem.files.set(blockFile2.key, blockFile2)
+      localThemeFileSystem.files.set(blockFile3.key, blockFile3)
+
+      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/block-scripts.js')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      const {res, body} = await eventPromise
+      const keepIndent = ''
+
+      expect(res.getHeader('content-type')).toEqual('text/javascript')
+      expect(body.toString()).toMatchInlineSnapshot(`
+        "
+              /*** GENERATED LOCALLY ***/
+
+              (function () {
+                var __blocks__ = {};
+
+                (function () {
+                  var element = document.getElementById(\\"blocks-script\\");
+                  var attribute = element ? element.getAttribute(\\"data-blocks\\") : \\"\\";
+                  var blocks = attribute.split(\\",\\").filter(Boolean);
+
+                  for (var i = 0; i < blocks.length; i++) {
+                    __blocks__[blocks[i]] = true;
+                  }
+                })();
+
+                (function () {
+                  if (!__blocks__[\\"another-block\\"] && !Shopify.designMode) return;
+                  try {
+                    /* blocks/another-block.liquid */
+
+                      console.log('This is another block script');
+                    ${keepIndent}
+                  } catch (e) {
+                    console.error(e);
+                  }
+                })();
+
+                (function () {
+                  if (!__blocks__[\\"test-block\\"] && !Shopify.designMode) return;
+                  try {
+                    /* blocks/test-block.liquid */
+
+                      console.log('This is block script');
+                    ${keepIndent}
+                  } catch (e) {
+                    console.error(e);
+                  }
+                })();
+        })();"
+      `)
+    })
+
+    test('serves compiled_assets/snippet-scripts.js by aggregating liquid javascript from snippet files', async () => {
+      const snippetFile1 = {
+        key: 'snippets/test-snippet.liquid',
+        checksum: 'snippet1',
+        value: `
+          <div class="snippet">
+            {% javascript %}
+              console.log('This is snippet script');
+            {% endjavascript %}
+          </div>`,
+      }
+      const snippetFile2 = {
+        key: 'snippets/another-snippet.liquid',
+        checksum: 'snippet2',
+        value: `
+          <div class="another-snippet">
+            {% javascript %}
+              console.log('This is another snippet script');
+            {% endjavascript %}
+          </div>`,
+      }
+      const snippetFile3 = {
+        key: 'snippets/no-js-snippet.liquid',
+        checksum: 'snippet3',
+        value: `
+          <div class="no-js-snippet">
+            <p>This snippet has no JavaScript</p>
+          </div>`,
+      }
+
+      localThemeFileSystem.files.set(snippetFile1.key, snippetFile1)
+      localThemeFileSystem.files.set(snippetFile2.key, snippetFile2)
+      localThemeFileSystem.files.set(snippetFile3.key, snippetFile3)
+
+      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/snippet-scripts.js')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      const {res, body} = await eventPromise
+      const keepIndent = ''
+
+      expect(res.getHeader('content-type')).toEqual('text/javascript')
+      expect(body.toString()).toMatchInlineSnapshot(`
+        "
+              /*** GENERATED LOCALLY ***/
+
+              (function () {
+                var __snippets__ = {};
+
+                (function () {
+                  var element = document.getElementById(\\"snippets-script\\");
+                  var attribute = element ? element.getAttribute(\\"data-snippets\\") : \\"\\";
+                  var snippets = attribute.split(\\",\\").filter(Boolean);
+
+                  for (var i = 0; i < snippets.length; i++) {
+                    __snippets__[snippets[i]] = true;
+                  }
+                })();
+
+                (function () {
+                  if (!__snippets__[\\"another-snippet\\"] && !Shopify.designMode) return;
+                  try {
+                    /* snippets/another-snippet.liquid */
+
+                      console.log('This is another snippet script');
+                    ${keepIndent}
+                  } catch (e) {
+                    console.error(e);
+                  }
+                })();
+
+                (function () {
+                  if (!__snippets__[\\"test-snippet\\"] && !Shopify.designMode) return;
+                  try {
+                    /* snippets/test-snippet.liquid */
+
+                      console.log('This is snippet script');
+                    ${keepIndent}
+                  } catch (e) {
+                    console.error(e);
+                  }
+                })();
+        })();"
+      `)
+    })
+
+    test('serves compiled_assets/scripts.js by aggregating liquid javascript from section files', async () => {
+      const sectionFile1 = {
+        key: 'sections/test-section.liquid',
+        checksum: 'section1',
+        value: `
+          <div class="section">
+            {% javascript %}
+              console.log('This is section script');
+            {% endjavascript %}
+          </div>`,
+      }
+      const sectionFile2 = {
+        key: 'sections/another-section.liquid',
+        checksum: 'section2',
+        value: `
+          <div class="another-section">
+            {% javascript %}
+              console.log('This is another section script');
+            {% endjavascript %}
+          </div>`,
+      }
+      const sectionFile3 = {
+        key: 'sections/no-js-section.liquid',
+        checksum: 'section3',
+        value: `
+          <div class="no-js-section">
+            <p>This section has no JavaScript</p>
+          </div>`,
+      }
+
+      localThemeFileSystem.files.set(sectionFile1.key, sectionFile1)
+      localThemeFileSystem.files.set(sectionFile2.key, sectionFile2)
+      localThemeFileSystem.files.set(sectionFile3.key, sectionFile3)
+      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/scripts.js')
+      await expect(eventPromise).resolves.not.toThrow()
+
+      const {res, body} = await eventPromise
+      const keepIndent = ''
+
+      expect(res.getHeader('content-type')).toEqual('text/javascript')
+      expect(body.toString()).toMatchInlineSnapshot(`
+        "
+              /*** GENERATED LOCALLY ***/
+
+              (function () {
+                var __sections__ = {};
+
+                (function () {
+                  var element = document.getElementById(\\"sections-script\\");
+                  var attribute = element ? element.getAttribute(\\"data-sections\\") : \\"\\";
+                  var sections = attribute.split(\\",\\").filter(Boolean);
+
+                  for (var i = 0; i < sections.length; i++) {
+                    __sections__[sections[i]] = true;
+                  }
+                })();
+
+                (function () {
+                  if (!__sections__[\\"another-section\\"] && !Shopify.designMode) return;
+                  try {
+                    /* sections/another-section.liquid */
+
+                      console.log('This is another section script');
+                    ${keepIndent}
+                  } catch (e) {
+                    console.error(e);
+                  }
+                })();
+
+                (function () {
+                  if (!__sections__[\\"test-section\\"] && !Shopify.designMode) return;
+                  try {
+                    /* sections/test-section.liquid */
+
+                      console.log('This is section script');
+                    ${keepIndent}
+                  } catch (e) {
+                    console.error(e);
+                  }
+                })();
+        })();"
+      `)
+    })
+
+    test('forwards unknown compiled_assets requests to SFR', async () => {
+      const fetchStub = vi.fn(async () => new Response())
+      vi.stubGlobal('fetch', fetchStub)
+
+      // Request a compiled asset that doesn't exist
+      await dispatchEvent('/compiled_assets/nonexistent.js')
+
+      // Should fall back to proxy
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenLastCalledWith(
+        new URL(
+          `https://${defaultServerContext.session.storeFqdn}/compiled_assets/nonexistent.js?${targetQuerystring}`,
+        ),
+        expect.any(Object),
+      )
+    })
+
     test('renders HTML', async () => {
       vi.mocked(render).mockResolvedValueOnce(
         new Response(

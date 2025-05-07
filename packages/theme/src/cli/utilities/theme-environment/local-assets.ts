@@ -1,9 +1,16 @@
 import {injectCdnProxy} from './proxy.js'
+import {parseServerEvent} from './server-utils.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import type {Theme, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {toLiquidHtmlAST, walk, NodeTypes} from '@shopify/liquid-html-parser'
+import type {Theme, ThemeAsset, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
+
+const tagContentCache = {
+  stylesheet: new Map<string, {checksum: string; content: string}>(),
+  javascript: new Map<string, {checksum: string; content: string}>(),
+}
 
 /**
  * Handles requests for assets to the proxied Shopify CDN, serving local files.
@@ -11,6 +18,10 @@ import type {DevServerContext} from './types.js'
 export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') return
+
+    if (isCompiledAssetRequest(event)) {
+      return handleCompiledAssetRequest(event, ctx)
+    }
 
     // Matches asset filenames in an HTTP Request URL path
 
@@ -64,6 +75,7 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
       const file = fileSystem.files.get(fileKey)
       const isUnsynced = fileSystem.unsyncedFileKeys.has(fileKey)
 
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       if (file || isUnsynced) {
         return {file, isUnsynced, fileKey}
       }
@@ -79,4 +91,145 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
       file: undefined,
     }
   )
+}
+
+function isCompiledAssetRequest(event: H3Event): boolean {
+  return event.path.includes('/compiled_assets')
+}
+
+function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
+  const pathname = parseServerEvent(event).pathname
+  const assetPath = pathname.split('/').at(-1)
+
+  switch (assetPath) {
+    case 'styles.css':
+      return handleStylesCss(ctx, event)
+    case 'block-scripts.js':
+      return handleBlockScriptsJs(ctx, event, 'block')
+    case 'snippet-scripts.js':
+      return handleBlockScriptsJs(ctx, event, 'snippet')
+    case 'scripts.js':
+      return handleBlockScriptsJs(ctx, event, 'section')
+    default:
+  }
+}
+
+function handleStylesCss(ctx: DevServerContext, event: H3Event) {
+  const sectionFiles = getLiquidFilesByKind(ctx, 'section')
+  const blockFiles = getLiquidFilesByKind(ctx, 'block')
+  const snippetFiles = getLiquidFilesByKind(ctx, 'snippet')
+
+  const stylesheets = ['/*** GENERATED LOCALLY ***/\n']
+
+  for (const [, file] of [...sectionFiles, ...blockFiles, ...snippetFiles]) {
+    const stylesheet = getTagContent(file, 'stylesheet')
+    if (stylesheet) stylesheets.push(stylesheet)
+  }
+
+  const stylesheet = stylesheets.join('\n')
+
+  return serveStatic(event, {
+    getContents: () => stylesheet,
+    getMeta: () => ({type: 'text/css', size: stylesheet.length, mtime: new Date()}),
+  })
+}
+
+function handleBlockScriptsJs(ctx: DevServerContext, event: H3Event, kind: 'block' | 'snippet' | 'section') {
+  const liquidFiles = getLiquidFilesByKind(ctx, kind)
+  const kinds = `${kind}s`
+
+  const javascripts = [
+    `
+      /*** GENERATED LOCALLY ***/
+
+      (function () {
+        var __${kinds}__ = {};
+
+        (function () {
+          var element = document.getElementById("${kinds}-script");
+          var attribute = element ? element.getAttribute("data-${kinds}") : "";
+          var ${kinds} = attribute.split(",").filter(Boolean);
+
+          for (var i = 0; i < ${kinds}.length; i++) {
+            __${kinds}__[${kinds}[i]] = true;
+          }
+        })();`,
+  ]
+
+  for (const [key, file] of liquidFiles) {
+    const baseName = key.split('/').pop()?.replace('.liquid', '')
+    const javascript = getTagContent(file, 'javascript') ?? ''
+
+    if (baseName && javascript) {
+      /**
+       * For sections, this approach isn't completely accurate, as we'd have
+       * something like this:
+       * ```
+       *    if (!__sections__['header'] && !window.DesignMode) return;
+       * ```
+       * However, this works well enough for most cases. It's preferable to have
+       * a consistent JavaScript workflow across sections, blocks, and snippets,
+       * especially when considering hot reloading. This only affects JavaScript
+       * sections in the theme editor and doesn't impact the main runtime.
+       */
+      javascripts.push(`
+        (function () {
+          if (!__${kinds}__["${baseName}"] && !Shopify.designMode) return;
+          try {
+            ${javascript}
+          } catch (e) {
+            console.error(e);
+          }
+        })();`)
+    }
+  }
+
+  javascripts.push('})();')
+
+  const javascript = javascripts.join('\n')
+
+  return serveStatic(event, {
+    getContents: () => javascript,
+    getMeta: () => ({type: 'text/javascript', size: javascript.length, mtime: new Date()}),
+  })
+}
+
+function getLiquidFilesByKind(ctx: DevServerContext, kind: 'section' | 'block' | 'snippet') {
+  return [...ctx.localThemeFileSystem.files.entries()]
+    .filter(([key]) => {
+      return key.endsWith('.liquid') && key.startsWith(`${kind}s/`)
+    })
+    .sort(([key1], [key2]) => {
+      return key1.localeCompare(key2)
+    })
+}
+
+function getTagContent(file: ThemeAsset, tag: 'javascript' | 'stylesheet') {
+  const cache = tagContentCache[tag]
+  const cached = cache.get(file.key)
+
+  if (cached?.checksum === file.checksum) {
+    return cached.content
+  }
+
+  cache.delete(file.key)
+
+  if (!file.value) {
+    return
+  }
+
+  const contents = [`/* ${file.key} */`]
+
+  walk(toLiquidHtmlAST(file.value), (node) => {
+    if (node.type === NodeTypes.LiquidRawTag && node.name === tag) {
+      contents.push(node.body.value)
+    }
+  })
+
+  if (contents.length > 1) {
+    const content = contents.join('\n')
+    cache.set(file.key, {checksum: file.checksum, content})
+
+    return content
+  }
 }
