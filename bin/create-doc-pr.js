@@ -7,7 +7,7 @@ import {findUp} from "find-up"
 import {withOctokit} from './github-utils.js'
 
 const require = createRequire(import.meta.url)
-const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-extra')
+const {readFile} = require('fs-extra')
 
 async function createPR() {
 
