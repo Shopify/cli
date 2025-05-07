@@ -35,7 +35,6 @@ async function getMkcertPath(
   const defaultMkcertPath = joinPath(dotShopifyPath, binaryName)
 
   if (await fileExists(defaultMkcertPath)) {
-    await downloadMkcertLicense(dotShopifyPath)
     return defaultMkcertPath
   }
 
@@ -45,7 +44,6 @@ async function getMkcertPath(
     return mkcertLocation
   }
 
-  await downloadMkcertLicense(dotShopifyPath)
   await downloadMkcert(defaultMkcertPath, platform, arch)
 
   return defaultMkcertPath
