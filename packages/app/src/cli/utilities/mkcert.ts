@@ -1,4 +1,5 @@
 import {environmentVariableNames} from '../constants.js'
+import {generateCertificatePrompt} from '../prompts/dev.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -61,7 +62,6 @@ async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arc
 
 interface GenerateCertificateOptions {
   appDirectory: string
-  onRequiresConfirmation: () => Promise<boolean>
   resetFirst?: boolean
   env?: NodeJS.ProcessEnv
   platform?: NodeJS.Platform
@@ -80,7 +80,6 @@ interface GenerateCertificateOptions {
  */
 export async function generateCertificate({
   appDirectory,
-  onRequiresConfirmation,
   env = process.env,
   platform = process.platform,
   arch = process.arch,
@@ -98,7 +97,8 @@ export async function generateCertificate({
     }
   }
 
-  const shouldGenerate = await onRequiresConfirmation()
+  const shouldGenerate = await generateCertificatePrompt()
+
   if (!shouldGenerate) {
     throw new AbortError(`Localhost certificate and key are required at ${relativeCertPath} and ${relativeKeyPath}`)
   }

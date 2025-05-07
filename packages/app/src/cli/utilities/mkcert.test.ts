@@ -1,4 +1,5 @@
 import {generateCertificate} from './mkcert.js'
+import {generateCertificatePrompt} from '../prompts/dev.js'
 import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, vi, expect} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -11,6 +12,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('which')
 vi.mock('@shopify/cli-kit/node/github')
+vi.mock('../prompts/dev.js')
 
 describe('mkcert', () => {
   describe('generateCertificate', () => {
@@ -24,10 +26,9 @@ describe('mkcert', () => {
         await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
       })
 
-      const onRequiresConfirmation = vi.fn().mockReturnValue(true)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         env: {
           SHOPIFY_CLI_MKCERT_BINARY: '/path/to/mkcert',
         },
@@ -54,10 +55,9 @@ describe('mkcert', () => {
         await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
       })
 
-      const onRequiresConfirmation = vi.fn().mockReturnValue(true)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'linux',
       })
 
@@ -79,10 +79,9 @@ describe('mkcert', () => {
         await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
       })
 
-      const onRequiresConfirmation = vi.fn().mockReturnValue(true)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'linux',
       })
 
@@ -102,17 +101,16 @@ describe('mkcert', () => {
         await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
       })
 
-      const onRequiresConfirmation = vi.fn().mockReturnValue(true)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'linux',
       })
 
       expect(keyContent).toBe('key')
       expect(certContent).toBe('cert')
       expect(certPath).toBe(joinPath('.shopify', 'localhost.pem'))
-      expect(onRequiresConfirmation).toHaveBeenCalled()
+      expect(generateCertificatePrompt).toHaveBeenCalled()
       expect(downloadGitHubRelease).toHaveBeenCalledWith(
         'FiloSottile/mkcert',
         'v1.4.4',
@@ -132,17 +130,16 @@ describe('mkcert', () => {
         await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
       })
 
-      const onRequiresConfirmation = vi.fn().mockReturnValue(true)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'win32',
       })
 
       expect(keyContent).toBe('key')
       expect(certContent).toBe('cert')
       expect(certPath).toBe(joinPath('.shopify', 'localhost.pem'))
-      expect(onRequiresConfirmation).toHaveBeenCalled()
+      expect(generateCertificatePrompt).toHaveBeenCalled()
       expect(downloadGitHubRelease).toHaveBeenCalledWith(
         'FiloSottile/mkcert',
         'v1.4.4',
@@ -153,15 +150,14 @@ describe('mkcert', () => {
 
     testWithTempDir('skips certificate generation if the user does not confirm', async ({tempDir}) => {
       const appDirectory = tempDir
-      const onRequiresConfirmation = vi.fn().mockReturnValue(false)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(false)
       const generatePromise = generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'linux',
       })
 
       await expect(generatePromise).rejects.toThrow(AbortError)
-      expect(onRequiresConfirmation).toHaveBeenCalled()
+      expect(generateCertificatePrompt).toHaveBeenCalled()
       expect(exec).not.toHaveBeenCalled()
       expect(downloadGitHubRelease).not.toHaveBeenCalled()
     })
@@ -172,17 +168,15 @@ describe('mkcert', () => {
       await writeFile(joinPath(appDirectory, '.shopify', 'localhost-key.pem'), 'key')
       await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
 
-      const onRequiresConfirmation = vi.fn()
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'linux',
       })
 
       expect(keyContent).toBe('key')
       expect(certContent).toBe('cert')
       expect(certPath).toBe(joinPath('.shopify', 'localhost.pem'))
-      expect(onRequiresConfirmation).not.toHaveBeenCalled()
+      expect(generateCertificatePrompt).not.toHaveBeenCalled()
       expect(exec).not.toHaveBeenCalled()
       expect(downloadGitHubRelease).not.toHaveBeenCalled()
     })
