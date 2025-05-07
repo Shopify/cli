@@ -1,19 +1,22 @@
 import {generateCertificate} from './mkcert.js'
 import {generateCertificatePrompt} from '../prompts/dev.js'
+import * as fs from '@shopify/cli-kit/node/fs'
 import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {describe, vi, expect} from 'vitest'
+import {describe, vi, expect, beforeEach, afterEach, MockInstance} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import which from 'which'
-import {downloadGitHubFile, downloadGitHubRelease} from '@shopify/cli-kit/node/github'
+import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('which')
 vi.mock('@shopify/cli-kit/node/github')
 vi.mock('../prompts/dev.js')
+vi.mock('@shopify/cli-kit/node/http')
 
 describe('mkcert', () => {
   describe('generateCertificate', () => {
@@ -131,17 +134,15 @@ describe('mkcert', () => {
         await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
       })
 
-      const onRequiresConfirmation = vi.fn().mockReturnValue(true)
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
       const {keyContent, certContent, certPath} = await generateCertificate({
         appDirectory,
-        onRequiresConfirmation,
         platform: 'darwin',
       })
 
       expect(keyContent).toBe('key')
       expect(certContent).toBe('cert')
       expect(certPath).toBe(joinPath('.shopify', 'localhost.pem'))
-      expect(onRequiresConfirmation).toHaveBeenCalled()
       expect(downloadGitHubRelease).toHaveBeenCalledWith(
         'FiloSottile/mkcert',
         'v1.4.4',
@@ -213,46 +214,97 @@ describe('mkcert', () => {
     })
   })
 
-  testWithTempDir('downloads the mkcert LICENSE when downloading mkcert', async ({tempDir}) => {
-    const appDirectory = tempDir
-    const mkcertLicensePath = joinPath(appDirectory, '.shopify', 'mkcert-LICENSE')
-    vi.mocked(exec).mockImplementation(async () => {
+  describe('LICENSE download', () => {
+    beforeEach(() => {
+      vi.spyOn(fs, 'writeFile')
+    })
+
+    afterEach(() => {
+      const writeFileSpy = fs.writeFile as unknown as MockInstance
+
+      writeFileSpy.mockRestore()
+    })
+
+    async function setup(appDirectory: string) {
+      const dotShopifyPath = joinPath(appDirectory, '.shopify')
+
       await mkdir(joinPath(appDirectory, '.shopify'))
-      await writeFile(joinPath(appDirectory, '.shopify', 'localhost-key.pem'), 'key')
-      await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
-    })
-    vi.mocked(downloadGitHubFile).mockImplementation(async () => {})
+      vi.mocked(exec).mockImplementation(async () => {
+        await writeFile(joinPath(dotShopifyPath, 'localhost-key.pem'), 'key')
+        await writeFile(joinPath(dotShopifyPath, 'localhost.pem'), 'cert')
+      })
+      vi.mocked(generateCertificatePrompt).mockResolvedValue(true)
 
-    await generateCertificate({
-      appDirectory,
-      onRequiresConfirmation: vi.fn().mockReturnValue(true),
-      platform: 'linux',
+      return dotShopifyPath
+    }
+
+    testWithTempDir('downloads the mkcert LICENSE when downloading mkcert', async ({tempDir}) => {
+      // GIVEN
+      const dotShopifyPath = await setup(tempDir)
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => 'LICENSE CONTENT',
+      } as unknown as Response)
+
+      vi.mocked(fetch).mockImplementation(mockFetch)
+
+      // WHEN
+      await generateCertificate({
+        appDirectory: tempDir,
+        platform: 'linux',
+      })
+
+      // THEN
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://raw.githubusercontent.com/FiloSottile/mkcert/refs/tags/v1.4.4/LICENSE',
+      )
+
+      const licensePath = joinPath(dotShopifyPath, 'mkcert-LICENSE')
+      expect(fs.writeFile).toHaveBeenCalledWith(licensePath, 'LICENSE CONTENT')
     })
 
-    expect(downloadGitHubFile).toHaveBeenCalledWith('FiloSottile/mkcert', 'v1.4.4', 'LICENSE', mkcertLicensePath, {
-      onError: expect.any(Function),
-    })
-  })
+    testWithTempDir('Renders info if the fetch status for the LICENSE is not ok', async ({tempDir}) => {
+      // GIVEN
+      await setup(tempDir)
 
-  testWithTempDir('Renders info if downloading the mkcert LICENSE fails', async ({tempDir}) => {
-    const appDirectory = tempDir
-    const licenseUrl = 'http://url.com'
-    vi.mocked(exec).mockImplementation(async () => {
-      await mkdir(joinPath(appDirectory, '.shopify'))
-      await writeFile(joinPath(appDirectory, '.shopify', 'localhost-key.pem'), 'key')
-      await writeFile(joinPath(appDirectory, '.shopify', 'localhost.pem'), 'cert')
-    })
-    vi.mocked(downloadGitHubFile).mockImplementation(async (_repo, _tag, _file, _path, options) => {
-      options?.onError?.('Oops!', licenseUrl)
-    })
-    const mockOutput = mockAndCaptureOutput()
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => 'LICENSE CONTENT',
+      } as unknown as Response)
+      const mockOutput = mockAndCaptureOutput()
 
-    await generateCertificate({
-      appDirectory,
-      onRequiresConfirmation: vi.fn().mockReturnValue(true),
-      platform: 'linux',
+      vi.mocked(fetch).mockImplementation(mockFetch)
+
+      // WHEN
+      await generateCertificate({
+        appDirectory: tempDir,
+        platform: 'linux',
+      })
+
+      // THEN
+      expect(mockOutput.info()).toMatch('Failed to download mkcert license.')
     })
 
-    expect(mockOutput.info()).toMatch('Failed to download mkcert license.')
+    testWithTempDir('Renders info if the fetch throws', async ({tempDir}) => {
+      // GIVEN
+      await setup(tempDir)
+
+      const mockFetch = vi.fn().mockResolvedValue(() => {
+        throw new Error('Oops!')
+      })
+      const mockOutput = mockAndCaptureOutput()
+
+      vi.mocked(fetch).mockImplementation(mockFetch)
+
+      // WHEN
+      await generateCertificate({
+        appDirectory: tempDir,
+        platform: 'linux',
+      })
+
+      // THEN
+      expect(mockOutput.info()).toMatch('Failed to download mkcert license.')
+    })
   })
 })

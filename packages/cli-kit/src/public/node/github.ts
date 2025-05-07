@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {err, ok, Result} from './result.js'
 import {fetch, Response} from './http.js'
-import {mkdir, inTemporaryDirectory, chmod, moveFile, writeFile} from './fs.js'
+import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
 import {dirname, joinPath} from './path.js'
-import {AbortError} from './error.js'
 import {runWithTimer} from './metadata.js'
+import {AbortError} from './error.js'
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
@@ -132,83 +132,34 @@ export function parseGitHubRepositoryReference(reference: string): GithubReposit
 export async function downloadGitHubRelease(
   repo: string,
   version: string,
-  asset: string,
+  assetName: string,
   targetPath: string,
 ): Promise<void> {
-  const url = `https://github.com/${repo}/releases/download/${version}/${asset}`
-
-  await download(url, {
-    to: targetPath,
-    mode: 0o755,
-  })
-}
-
-export async function downloadGitHubFile(
-  repo: string,
-  tag: string,
-  asset: string,
-  targetPath: string,
-  options: Pick<DownloadOptions, 'onError'> = {},
-): Promise<void> {
-  const url = `https://raw.githubusercontent.com/${repo}/refs/tags/${tag}/${asset}`
-
-  await download(url, {
-    to: targetPath,
-    ...options,
-  })
-}
-
-interface DownloadOptions {
-  to: string
-  mode?: number
-  onError?: (error: string, url: string) => void
-}
-
-async function download(url: string, options: DownloadOptions): Promise<void> {
-  const assetName = url.split('/').pop()!
-
-  function handleError(error: string) {
-    const message = `Failed to download ${assetName}: ${error}`
-
-    if (options.onError) {
-      options.onError(message, url)
-    } else {
-      throw new AbortError(message)
-    }
-  }
+  const url = `https://github.com/${repo}/releases/download/${version}/${assetName}`
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
-
     await inTemporaryDirectory(async (tmpDir) => {
       const tempPath = joinPath(tmpDir, assetName)
-
       let response: Response
       try {
         response = await fetch(url, undefined, 'slow-request')
-
         if (!response.ok) {
-          handleError(`${response.status} ${response.statusText}`)
-          return
+          throw new AbortError(`Failed to download ${assetName}: ${response.statusText}`)
         }
-
-        // if options.onError is set, we don't want to throw an error
-        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error) {
-        handleError(error instanceof Error ? error.message : 'unknown error')
-        return
+        throw new AbortError(
+          `Failed to download ${assetName}: ${error instanceof Error ? error.message : 'unknown error'}`,
+        )
       }
 
-      const responseBuffer = await response.arrayBuffer()
-      await writeFile(tempPath, Buffer.from(responseBuffer))
+      const buffer = await response.arrayBuffer()
+      await writeFile(tempPath, Buffer.from(buffer))
 
-      if (options.mode) {
-        await chmod(tempPath, options.mode)
-      }
-
-      await mkdir(dirname(options.to))
-      await moveFile(tempPath, options.to)
+      await chmod(tempPath, 0o755)
+      await mkdir(dirname(targetPath))
+      await moveFile(tempPath, targetPath)
     })
-    outputDebug(outputContent`${outputToken.successIcon()} Successfully downloaded ${outputToken.path(options.to)}`)
+    outputDebug(outputContent`${outputToken.successIcon()} Successfully downloaded ${outputToken.path(targetPath)}`)
   })
 }
