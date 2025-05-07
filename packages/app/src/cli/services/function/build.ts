@@ -244,7 +244,6 @@ export async function runWasmOpt(modulePath: string) {
 
 export async function runTrampoline(modulePath: string) {
   const trampoline = trampolineBinary()
-  console.log('runTrampoline function called')
   await downloadBinary(trampoline)
 
   const command = trampoline.path
