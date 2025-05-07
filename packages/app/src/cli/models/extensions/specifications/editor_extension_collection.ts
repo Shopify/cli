@@ -1,7 +1,6 @@
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 interface IncludeSchema {
@@ -36,20 +35,6 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
   identifier: 'editor_extension_collection',
   schema: EditorExtensionCollectionSchema,
   appModuleFeatures: (_) => [],
-  validate: async (config, path) => {
-    const errors: string[] = []
-
-    if (config.inCollection.length < 2) {
-      errors.push(`${config.handle}: This editor extension collection must include at least 2 extensions`)
-    }
-
-    if (errors.length > 0) {
-      errors.push(`Please check the configuration in ${path}`)
-      return err(errors.join('\n\n'))
-    }
-
-    return ok({})
-  },
   deployConfig: async (config, directory) => {
     return {
       name: config.name,
