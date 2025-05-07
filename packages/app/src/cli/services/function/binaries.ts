@@ -39,7 +39,7 @@ class Executable implements DownloadableBinary {
   readonly release: string
   private readonly gitHubRepo: string
 
-  constructor(name: string, version: string, gitHubRepo: string, release = '') {
+  constructor(name: string, version: string, gitHubRepo: string, release = version) {
     this.name = name
     this.version = version
     this.release = release
@@ -86,7 +86,7 @@ class Executable implements DownloadableBinary {
       throw Error(`Unsupported platform/architecture combination ${processPlatform}/${processArch}`)
     }
 
-    return `https://github.com/${this.gitHubRepo}/releases/download/${this.release}${this.version}/${this.name}-${archPlatform}-${this.version}.gz`
+    return `https://github.com/${this.gitHubRepo}/releases/download/${this.release}/${this.name}-${archPlatform}-${this.version}.gz`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -180,7 +180,7 @@ export function trampolineBinary() {
       'shopify-function-trampoline',
       TRAMPOLINE_VERSION,
       'Shopify/shopify-function-wasm-api',
-      'shopify_function_trampoline/',
+      `shopify_function_trampoline/${TRAMPOLINE_VERSION}`,
     )
   }
   return _trampoline
