@@ -4,27 +4,12 @@ import {runCommand} from './run-command.js'
 import {createPullRequest} from 'octokit-plugin-create-pull-request'
 
 /**
- * @param {string} output
- * @returns {string}
- */
-function extractPassword(output) {
-  const passwordRegex = /Password: (\w+)/
-  const match = output.match(passwordRegex)
-  if (match && match[1]) {
-    return match[1]
-  }
-  throw new Error('Password not found in output')
-}
-
-/**
  * @returns {Promise<string>}
  */
 async function getGithubPasswordFromDev() {
   try {
     // Uses token from `dev`
-    const output = await runCommand('/opt/dev/bin/dev', ['github', 'print-auth'])
-    const password = extractPassword(output)
-    return password
+    return (await runCommand('/opt/dev/bin/dev', ['github', 'print-auth', '--password'])).trim()
   } catch (error) {
     console.warn(`Soft-error fetching password from dev: ${error.message}. Try running \`dev github print-auth\` manually.`)
     process.exit(0)
