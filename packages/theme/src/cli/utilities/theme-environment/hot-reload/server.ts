@@ -3,6 +3,7 @@ import {getExtensionInMemoryTemplates} from '../../theme-ext-environment/theme-e
 import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
 import {inferLocalHotReloadScriptPath} from '../../theme-fs.js'
+import {parseServerEvent} from '../server-utils.js'
 import {
   createError,
   createEventStream,
@@ -162,7 +163,7 @@ function emitHotReloadEvent(
 export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
     const isEventSourceConnection = event.headers.get('accept') === 'text/event-stream'
-    const query = new URL(event.path, 'http://e.c').searchParams
+    const query = parseServerEvent(event).searchParams
 
     if (isEventSourceConnection) {
       const eventStream = createEventStream(event)
