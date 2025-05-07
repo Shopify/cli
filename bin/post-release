@@ -16,6 +16,13 @@ if [[ -n $(git status -s) ]]; then
     exit 1
 fi
 
+# Check if github print-auth is working
+if ! $(/opt/dev/bin/dev github print-auth --password > /dev/null 2>&1); then
+    echo "Error: GitHub CLI authentication failed"
+    echo "Try running \`dev github print-auth\` manually"
+    exit 1
+fi
+
 # Create a PR to update homebrew
 ./bin/create-homebrew-pr.js
 
