@@ -1,5 +1,7 @@
 # @shopify/cli
 
+## 3.79.1
+
 ## 3.79.0
 
 ### Patch Changes
