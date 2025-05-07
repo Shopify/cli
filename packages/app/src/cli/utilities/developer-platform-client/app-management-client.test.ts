@@ -24,8 +24,8 @@ import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/ge
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
-import {SourceFormat} from '../../api/graphql/app-management/generated/types.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -912,7 +912,7 @@ describe('AppManagementClient', () => {
         CreateAssetUrl,
         'token',
         {
-          format: 'BR' as SourceFormat,
+          sourceExtension: 'BR' as SourceExtension,
         },
         expect.objectContaining({
           cacheTTL: expect.anything(),
