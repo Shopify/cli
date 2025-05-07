@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.79.1
+
+### Patch Changes
+
+- 8c291d1: Fixes editor extension collection validation being run on generate
+  - @shopify/cli-kit@3.79.1
+  - @shopify/theme@3.79.1
+  - @shopify/plugin-cloudflare@3.79.1
+
 ## 3.79.0
 
 ### Minor Changes
