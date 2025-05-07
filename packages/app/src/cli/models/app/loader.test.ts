@@ -38,6 +38,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
@@ -2456,6 +2457,29 @@ wrong = "property"
         cmd_app_linked_config_git_tracked: true,
       }),
     )
+  })
+
+  test('throws the correct error when multi-extension configuration is invalid', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+      description = "global description"
+
+      [extensions]
+      type = "checkout_post_purchase"
+      name = "my_extension_1"
+      handle = "checkout-ext"
+      description = "custom description"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    await expect(loadTestingApp()).rejects.toThrow(AbortError)
   })
 })
 
