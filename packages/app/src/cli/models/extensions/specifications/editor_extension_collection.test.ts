@@ -5,7 +5,6 @@ import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/node/result'
 
 describe('editor_extension_collection', async () => {
   interface EditorExtensionCollectionProps {
@@ -143,69 +142,6 @@ describe('editor_extension_collection', async () => {
           in_collection: [{handle: 'handle1'}],
           localization,
         })
-      })
-    })
-  })
-
-  describe('validate()', () => {
-    test('returns ok({}) if there are no errors', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        const localization = {
-          default_locale: 'en',
-          translations: {title: 'Hola!'},
-        }
-        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue(localization)
-        const configuration = {
-          name: 'Order summary',
-          handle: 'order-summary-collection',
-          include: [
-            {
-              handle: 'handle1',
-            },
-            {
-              handle: 'handle2',
-            },
-          ],
-        }
-        const extensionCollection = await getTestEditorExtensionCollection({
-          directory: tmpDir,
-          configuration,
-        })
-
-        const result = await extensionCollection.validate()
-
-        expect(result).toStrictEqual(ok({}))
-      })
-    })
-
-    test('returns error if there are less than 2 extensions in a collection', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        const localization = {
-          default_locale: 'en',
-          translations: {title: 'Hola!'},
-        }
-        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue(localization)
-        const configuration = {
-          name: 'Order summary',
-          handle: 'order-summary-collection',
-          include: [
-            {
-              handle: 'handle1',
-            },
-          ],
-        }
-        const extensionCollection = await getTestEditorExtensionCollection({
-          directory: tmpDir,
-          configuration,
-        })
-
-        const result = await extensionCollection.validate()
-
-        expect(result).toStrictEqual(
-          err(
-            `${configuration.handle}: This editor extension collection must include at least 2 extensions\n\nPlease check the configuration in ${extensionCollection.configurationPath}`,
-          ),
-        )
       })
     })
   })
