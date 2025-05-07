@@ -39,9 +39,14 @@ async function createPR() {
             commit: `Update Shopify CLI documentation to version ${version}`,
           },
         ],
+        createWhenEmpty: false,
       })
 
-    console.log(`PR URL: https://github.com/shopify/shopify-dev/pull/${response.data.number}`)
+    if (response) {
+      console.log(`PR URL: https://github.com/shopify/shopify-dev/pull/${response.data.number}`)
+    } else {
+      console.log("No changes detected, PR not created.")
+    }
   })
 }
 
