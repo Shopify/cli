@@ -237,7 +237,9 @@ export class AppEventWatcher extends EventEmitter {
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts?.[ext.uid]?.length) {
+            this.options.stdout.write(`Building extension ${ext.handle}...`)
             await this.esbuildManager.rebuildContext(ext)
+            this.options.stdout.write(`Done!`)
           } else {
             await this.buildExtension(ext)
           }
