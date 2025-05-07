@@ -1,8 +1,5 @@
 #! /usr/bin/env node
 import {Octokit} from '@octokit/rest'
-import * as fs from 'fs'
-import * as path from 'path'
-import {spawn} from 'child_process'
 import {runCommand} from './run-command.js'
 import {createPullRequest} from 'octokit-plugin-create-pull-request'
 
