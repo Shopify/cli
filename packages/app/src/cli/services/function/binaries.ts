@@ -18,7 +18,6 @@ const JAVY_PLUGIN_VERSION = 'v1'
 
 const BINARYEN_VERSION = '123.0.0'
 
-// TODO: Select the right version once a release is out
 const TRAMPOLINE_VERSION = 'v1.0.0'
 
 interface DownloadableBinary {
@@ -37,11 +36,13 @@ class Executable implements DownloadableBinary {
   readonly name: string
   readonly version: string
   readonly path: string
+  readonly release: string
   private readonly gitHubRepo: string
 
-  constructor(name: string, version: string, gitHubRepo: string) {
+  constructor(name: string, version: string, gitHubRepo: string, release = '') {
     this.name = name
     this.version = version
+    this.release = release
     const filename = process.platform === 'win32' ? `${name}.exe` : name
     this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', filename)
     this.gitHubRepo = gitHubRepo
@@ -85,7 +86,7 @@ class Executable implements DownloadableBinary {
       throw Error(`Unsupported platform/architecture combination ${processPlatform}/${processArch}`)
     }
 
-    return `https://github.com/${this.gitHubRepo}/releases/download/${this.version}/${this.name}-${archPlatform}-${this.version}.gz`
+    return `https://github.com/${this.gitHubRepo}/releases/download/${this.release}${this.version}/${this.name}-${archPlatform}-${this.version}.gz`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -175,11 +176,11 @@ export function wasmOptBinary() {
 
 export function trampolineBinary() {
   if (!_trampoline) {
-    // TODO: The repo arg (last one) doesn't matter for now, since I'm "stubbing out"/skipping the download by just placing the file in the bin directory
     _trampoline = new Executable(
-      'shopify_function_wasm_api_trampoline',
+      'shopify-function-trampoline',
       TRAMPOLINE_VERSION,
       'Shopify/shopify-function-wasm-api',
+      'shopify_function_trampoline/',
     )
   }
   return _trampoline
