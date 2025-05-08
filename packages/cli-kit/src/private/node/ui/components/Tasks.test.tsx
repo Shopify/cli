@@ -505,9 +505,9 @@ describe('Tasks', () => {
     test('supports updating title during task execution', async () => {
       // Given
       const firstTaskFunction = vi.fn(async (_ctx, _task, updateTitle) => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await new Promise((resolve) => setTimeout(resolve, 300))
         updateTitle('Updated title')
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await new Promise((resolve) => setTimeout(resolve, 300))
         updateTitle('Updated title 2')
         await new Promise((resolve) => setTimeout(resolve, 1000))
       })
@@ -519,7 +519,7 @@ describe('Tasks', () => {
 
       // When
       const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-      await taskHasRendered()
+      await taskHasRendered(800)
 
       const frames = renderInstance.frames.map((frame) => unstyled(frame))
 
@@ -608,6 +608,6 @@ describe('Tasks', () => {
   })
 })
 
-async function taskHasRendered() {
-  await new Promise((resolve) => setTimeout(resolve, 100))
+async function taskHasRendered(wait = 100) {
+  await new Promise((resolve) => setTimeout(resolve, wait))
 }
