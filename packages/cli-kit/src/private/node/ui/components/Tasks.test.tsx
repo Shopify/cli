@@ -501,108 +501,110 @@ describe('Tasks', () => {
     await expect(promise).resolves.toEqual(undefined)
   })
 
-  test('supports updating title during task execution', async () => {
-    // Given
-    const firstTaskFunction = vi.fn(async (_ctx, _task, updateTitle) => {
-      await new Promise((resolve) => setTimeout(resolve, 30))
-      updateTitle('Updated title')
-      await new Promise((resolve) => setTimeout(resolve, 30))
-      updateTitle('Updated title 2')
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-    })
+  describe('updateTitle', () => {
+    test('supports updating title during task execution', async () => {
+      // Given
+      const firstTaskFunction = vi.fn(async (_ctx, _task, updateTitle) => {
+        await new Promise((resolve) => setTimeout(resolve, 30))
+        updateTitle('Updated title')
+        await new Promise((resolve) => setTimeout(resolve, 30))
+        updateTitle('Updated title 2')
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+      })
 
-    const firstTask = {
-      title: 'Initial title',
-      task: firstTaskFunction,
-    }
-
-    // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-    await taskHasRendered()
-
-    const frames = renderInstance.frames.map((frame) => unstyled(frame))
-
-    // Then
-    // Check presence
-    expect(frames.some((frame) => frame.includes('Initial title'))).toBe(true)
-    expect(frames.some((frame) => frame.includes('Updated title'))).toBe(true)
-    expect(frames.some((frame) => frame.includes('Updated title 2'))).toBe(true)
-
-    // Check order
-    const firstTitleIndex = frames.findIndex((frame) => frame.includes('Initial title'))
-    const updatedTitleIndex = frames.findIndex((frame) => frame.includes('Updated title'))
-    const updatedTitle2Index = frames.findIndex((frame) => frame.includes('Updated title 2'))
-
-    expect(firstTitleIndex).toBeLessThan(updatedTitleIndex)
-    expect(updatedTitleIndex).toBeLessThan(updatedTitle2Index)
-  })
-
-  test('supports updating title in subtasks', async () => {
-    // Given
-    const subtaskFunction = vi.fn(async (_ctx, _task, updateTitle) => {
-      await new Promise((resolve) => setTimeout(resolve, 30))
-      updateTitle('Updated subtask title')
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-    })
-
-    const firstTask = {
-      title: 'Parent task',
-      task: async () => {
-        return [{title: 'Initial subtask title', task: subtaskFunction}]
-      },
-    }
-
-    // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-    await taskHasRendered()
-
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      Updated subtask title ..."
-    `)
-  })
-
-  test('title updates persist through retries', async () => {
-    // Given
-    const firstTaskFunction = vi.fn(async (_ctx, task, updateTitle) => {
-      if (task.retryCount === 0) {
-        updateTitle('Updated during retry')
-        throw new Error('retry me')
+      const firstTask = {
+        title: 'Initial title',
+        task: firstTaskFunction,
       }
-      if (task.retryCount === 1) {
-        updateTitle('Updated during retry 2')
-      }
+
+      // When
+      const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
+      await taskHasRendered()
+
+      const frames = renderInstance.frames.map((frame) => unstyled(frame))
+
+      // Then
+      // Check presence
+      expect(frames.some((frame) => frame.includes('Initial title'))).toBe(true)
+      expect(frames.some((frame) => frame.includes('Updated title'))).toBe(true)
+      expect(frames.some((frame) => frame.includes('Updated title 2'))).toBe(true)
+
+      // Check order
+      const firstTitleIndex = frames.findIndex((frame) => frame.includes('Initial title'))
+      const updatedTitleIndex = frames.findIndex((frame) => frame.includes('Updated title'))
+      const updatedTitle2Index = frames.findIndex((frame) => frame.includes('Updated title 2'))
+
+      expect(firstTitleIndex).toBeLessThan(updatedTitleIndex)
+      expect(updatedTitleIndex).toBeLessThan(updatedTitle2Index)
     })
 
-    const firstTask: Task = {
-      title: 'Initial title',
-      task: firstTaskFunction,
-      retry: 1,
-    }
+    test('supports updating title in subtasks', async () => {
+      // Given
+      const subtaskFunction = vi.fn(async (_ctx, _task, updateTitle) => {
+        await new Promise((resolve) => setTimeout(resolve, 30))
+        updateTitle('Updated subtask title')
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      })
 
-    // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-    await taskHasRendered()
+      const firstTask = {
+        title: 'Parent task',
+        task: async () => {
+          return [{title: 'Initial subtask title', task: subtaskFunction}]
+        },
+      }
 
-    const frames = renderInstance.frames.map((frame) => unstyled(frame))
+      // When
+      const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
+      await taskHasRendered()
 
-    // Then
-    // Verify the task was called twice (initial + retry)
-    expect(firstTaskFunction).toHaveBeenCalledTimes(2)
+      // Then
+      expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+        "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+        Updated subtask title ..."
+      `)
+    })
 
-    // Verify both titles appear in the frames
-    expect(frames.some((frame) => frame.includes('Initial title'))).toBe(true)
-    expect(frames.some((frame) => frame.includes('Updated during retry'))).toBe(true)
-    expect(frames.some((frame) => frame.includes('Updated during retry 2'))).toBe(true)
+    test('title updates persist through retries', async () => {
+      // Given
+      const firstTaskFunction = vi.fn(async (_ctx, task, updateTitle) => {
+        if (task.retryCount === 0) {
+          updateTitle('Updated during retry')
+          throw new Error('retry me')
+        }
+        if (task.retryCount === 1) {
+          updateTitle('Updated during retry 2')
+        }
+      })
 
-    // Verify the order - Initial title should appear before Updated during retry
-    const firstTitleIndex = frames.findIndex((frame) => frame.includes('Initial title'))
-    const updatedTitleIndex = frames.findIndex((frame) => frame.includes('Updated during retry'))
-    const updatedTitle2Index = frames.findIndex((frame) => frame.includes('Updated during retry 2'))
+      const firstTask: Task = {
+        title: 'Initial title',
+        task: firstTaskFunction,
+        retry: 1,
+      }
 
-    expect(firstTitleIndex).toBeLessThan(updatedTitleIndex)
-    expect(updatedTitleIndex).toBeLessThan(updatedTitle2Index)
+      // When
+      const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
+      await taskHasRendered()
+
+      const frames = renderInstance.frames.map((frame) => unstyled(frame))
+
+      // Then
+      // Verify the task was called twice (initial + retry)
+      expect(firstTaskFunction).toHaveBeenCalledTimes(2)
+
+      // Verify both titles appear in the frames
+      expect(frames.some((frame) => frame.includes('Initial title'))).toBe(true)
+      expect(frames.some((frame) => frame.includes('Updated during retry'))).toBe(true)
+      expect(frames.some((frame) => frame.includes('Updated during retry 2'))).toBe(true)
+
+      // Verify the order - Initial title should appear before Updated during retry
+      const firstTitleIndex = frames.findIndex((frame) => frame.includes('Initial title'))
+      const updatedTitleIndex = frames.findIndex((frame) => frame.includes('Updated during retry'))
+      const updatedTitle2Index = frames.findIndex((frame) => frame.includes('Updated during retry 2'))
+
+      expect(firstTitleIndex).toBeLessThan(updatedTitleIndex)
+      expect(updatedTitleIndex).toBeLessThan(updatedTitle2Index)
+    })
   })
 })
 
