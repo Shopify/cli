@@ -229,6 +229,26 @@ describe('allowedTemplates', () => {
     expect(got.length).toEqual(2)
     expect(got).toEqual([templateWithoutRules, allowedTemplate])
   })
+
+  test('allows newer templates for any version if the CLI is nightly, but not deprecated ones', async () => {
+    // Given
+    const templates: GatedExtensionTemplate[] = [
+      allowedTemplate,
+      templateDisallowedByMinimumCliVersion,
+      templateDisallowedByDeprecatedFromCliVersion,
+    ]
+
+    // When
+    const got = await allowedTemplates(
+      templates,
+      () => Promise.resolve({allowedFlag: true, notAllowedFlag: false}),
+      '0.0.0-nightly',
+    )
+
+    // Then
+    expect(got.length).toEqual(2)
+    expect(got).toEqual([allowedTemplate, templateDisallowedByMinimumCliVersion])
+  })
 })
 
 describe('versionDeepLink', () => {
