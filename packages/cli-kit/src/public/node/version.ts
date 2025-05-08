@@ -1,7 +1,6 @@
 import {captureOutput} from '../node/system.js'
 import which from 'which'
 import {satisfies} from 'semver'
-
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -33,7 +32,7 @@ export async function globalCLIVersion(): Promise<string | undefined> {
     const versionMatch = output.match(/@shopify\/cli\/([^\s]+)/)
     if (versionMatch && versionMatch[1]) {
       const version = versionMatch[1]
-      if (satisfies(version, `>=3.59.0`) || version.startsWith('0.0.0')) {
+      if (satisfies(version, `>=3.59.0`) || isPreReleaseVersion(version)) {
         return version
       }
     }
@@ -42,4 +41,15 @@ export async function globalCLIVersion(): Promise<string | undefined> {
   } catch {
     return undefined
   }
+}
+
+/**
+ * Returns true if the given version is a pre-release version.
+ * Meaning is a `nightly`, `snapshot`, or `experimental` version.
+ *
+ * @param version - The version to check.
+ * @returns True if the version is a pre-release version.
+ */
+export function isPreReleaseVersion(version: string): boolean {
+  return version.startsWith('0.0.0')
 }

@@ -1,4 +1,4 @@
-import {localCLIVersion, globalCLIVersion} from './version.js'
+import {localCLIVersion, globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {inTemporaryDirectory} from '../node/fs.js'
 import {captureOutput} from '../node/system.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -76,5 +76,15 @@ describe('globalCLIVersion', () => {
     // Then
     expect(got).toBeUndefined()
     expect(captureOutput).not.toHaveBeenCalled()
+  })
+})
+
+describe('isPreReleaseVersion', () => {
+  test('returns true when the version is a pre-release version', () => {
+    expect(isPreReleaseVersion('0.0.0')).toBe(true)
+  })
+
+  test('returns false when the version is not a pre-release version', () => {
+    expect(isPreReleaseVersion('3.68.0')).toBe(false)
   })
 })
