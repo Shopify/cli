@@ -1418,6 +1418,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     supportsDevSessions: stubs.supportsDevSessions ?? false,
     supportsStoreSearch: false,
     organizationSource: OrganizationSource.BusinessPlatform,
+    getTokenRefreshInProgress: () => false,
+    setTokenRefreshInProgress: () => {},
     session: () => Promise.resolve(testPartnersUserSession),
     refreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
