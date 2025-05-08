@@ -505,9 +505,9 @@ describe('Tasks', () => {
     test('supports updating title during task execution', async () => {
       // Given
       const firstTaskFunction = vi.fn(async (_ctx, _task, updateTitle) => {
-        await new Promise((resolve) => setTimeout(resolve, 30))
+        await new Promise((resolve) => setTimeout(resolve, 10))
         updateTitle('Updated title')
-        await new Promise((resolve) => setTimeout(resolve, 30))
+        await new Promise((resolve) => setTimeout(resolve, 10))
         updateTitle('Updated title 2')
         await new Promise((resolve) => setTimeout(resolve, 1000))
       })
