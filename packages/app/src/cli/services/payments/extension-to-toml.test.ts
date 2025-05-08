@@ -12,6 +12,8 @@ const SAMPLE_CUSTOM_ONSITE_CONFIG =
   '{"start_payment_session_url":"https://test-domain.com/startsession/bogus-pay","start_refund_session_url":"https://test-domain.com/refund","start_capture_session_url":"https://test-domain.com/capture","start_void_session_url":"https://test-domain.com/void","confirmation_callback_url":null,"checkout_payment_method_fields":[{"key":"bogus_customer_document","type":"string","required":true}],"supported_payment_methods":["bogus-pay"],"supported_countries":["BR"],"test_mode_available":true,"merchant_label":"Test Label","default_buyer_label": "Bogus Pay Buyer Label","buyer_label_to_locale":[],"supports_3ds":false,"supports_oversell_protection":false,"api_version":"unstable","ui_extension_registration_uuid":"3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc","multiple_capture":false,"supports_installments":false,"supports_deferred_payments":false}'
 const SAMPLE_REDEEMABLE_CONFIG =
   '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/void_sessions","supported_countries":["CA","MX","US"],"test_mode_available":true,"merchant_label":"Bogus Redeemable Payments App","default_buyer_label":null,"buyer_label_to_locale":null,"api_version":"unstable","ui_extension_registration_uuid":"3f9d1c40-0f7d-48f9-b802-ca7d302ee8bc","supported_payment_methods":["gift-card"],"balance_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/redeemable/retrieve_balance","checkout_payment_method_fields":[{"key":"card_number","type":"string","required":true},{"key":"pin","type":"string","required":true}],"supported_buyer_contexts":[{"currency":"USD","countries":["US"]},{"currency":"GBP"}]}'
+const SAMPLE_CARD_PRESENT_CONFIG =
+  '{"start_payment_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/payment_sessions","start_refund_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/refund_sessions","start_capture_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/capture_sessions","start_void_session_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/void_sessions","sync_terminal_transaction_result_url":"https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/terminal_transaction_result","supported_payment_methods":["visa","master","american_express"],"supported_countries":["AU","CA","GB","US"],"test_mode_available":true,"merchant_label":"Card Present Payments App Extension","api_version":"2025-04"}'
 
 const translateDeployConfigKeyToCLI = (deployConfigKey: string): string => {
   switch (deployConfigKey) {
@@ -433,6 +435,44 @@ ui_extension_handle = "checkout-ui-extension"
 
   [[extensions.targeting]]
   target = "payments.redeemable.render"
+`)
+  })
+
+  test('correctly builds a toml string for a card present app', async () => {
+    // Given
+    const extension1: ExtensionRegistration = {
+      id: '30366498817',
+      uuid: '626ab61a-e494-4e16-b511-e8721ec011a4',
+      title: 'Bogus Pay',
+      type: DashboardPaymentExtensionType.CardPresent,
+      draftVersion: {
+        config: SAMPLE_CARD_PRESENT_CONFIG,
+      },
+    }
+
+    // When
+    const got = buildTomlObject(extension1, [extension1])
+
+    // Then
+    expectIncludesKeys(got, SAMPLE_CARD_PRESENT_CONFIG)
+    expect(got).toEqual(`api_version = "2025-04"
+
+[[extensions]]
+name = "Bogus Pay"
+type = "payments_extension"
+handle = "bogus-pay"
+payment_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/payment_sessions"
+refund_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/refund_sessions"
+capture_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/capture_sessions"
+void_session_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/void_sessions"
+sync_terminal_transaction_result_url = "https://bogus-payment-sessions.shopifycloud.com/bogus/card_present/terminal_transaction_result"
+merchant_label = "Card Present Payments App Extension"
+supported_countries = [ "AU", "CA", "GB", "US" ]
+supported_payment_methods = [ "visa", "master", "american_express" ]
+test_mode_available = true
+
+  [[extensions.targeting]]
+  target = "payments.card-present.render"
 `)
   })
 })
