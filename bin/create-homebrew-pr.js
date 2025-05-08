@@ -73,7 +73,14 @@ program
               commit: `Update Shopify CLI 3 formula to install the version ${version}`,
             },
           ],
+          createWhenEmpty: false,
         })
+
+        if (!response) {
+          console.log("No changes detected, PR not created.")
+          return
+        }
+
         if (["pre", "nightly"].includes(templateVersion)) {
           // Merge the PR immediately if we're releasing a pre or nightly version
           octokit.request("PUT /repos/{owner}/{repo}/pulls/{pull_number}/merge", {
