@@ -6,6 +6,7 @@ import {
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
+  requestAppToken,
 } from './exchange.js'
 import {applicationId, clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
@@ -179,10 +180,36 @@ describe('refresh access tokens', () => {
         'you should be the store owner or create a staff account on the store.' +
         '\n\n' +
         "If you're the store owner, then you need to log in to the store directly using the " +
-        'store URL at least once before you log in using Shopify CLI.' +
+        'store URL at least once before you log in using Shopify CLI. ' +
         'Logging in to the Shopify admin directly connects the development ' +
         'store with your Shopify login.',
     )
+  })
+
+  describe('when there is a store in the request params', () => {
+    test('includes the store in the error message', async () => {
+      // Given
+      const error = {error: 'invalid_target'}
+      const response = new Response(JSON.stringify(error), {status: 400})
+      vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+      // When
+      const got = () => requestAppToken('admin', 'token', undefined, 'bob.myshopify.com')
+
+      // Then
+      await expect(got).rejects.toThrowError(
+        'You are not authorized to use the CLI to develop in the provided store: bob.myshopify.com' +
+          '\n\n' +
+          "You can't use Shopify CLI with development stores if you only have Partner " +
+          'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
+          'you should be the store owner or create a staff account on the store.' +
+          '\n\n' +
+          "If you're the store owner, then you need to log in to the store directly using the " +
+          'store URL at least once before you log in using Shopify CLI. ' +
+          'Logging in to the Shopify admin directly connects the development ' +
+          'store with your Shopify login.',
+      )
+    })
   })
 
   test('throws an AbortError when Identity returns another error', async () => {
