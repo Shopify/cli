@@ -25,6 +25,11 @@ import {
   customOnsiteDeployConfigToCLIConfig,
   CUSTOM_ONSITE_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
+import {
+  CardPresentPaymentsAppExtensionDeployConfigType,
+  cardPresentDeployConfigToCLIConfig,
+  CARD_PRESENT_TARGET,
+} from '../../models/extensions/specifications/payments_app_extension_schemas/card_present_payments_app_extension_schema.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -41,6 +46,8 @@ function typeToContext(type: string) {
       return CUSTOM_ONSITE_TARGET
     case DashboardPaymentExtensionType.Redeemable:
       return REDEEMABLE_TARGET
+    case DashboardPaymentExtensionType.CardPresent:
+      return CARD_PRESENT_TARGET
   }
 }
 export enum DashboardPaymentExtensionType {
@@ -49,6 +56,7 @@ export enum DashboardPaymentExtensionType {
   CustomCreditCard = 'payments_app_custom_credit_card',
   CustomOnsite = 'payments_app_custom_onsite',
   Redeemable = 'payments_app_redeemable',
+  CardPresent = 'payments_app_card_present',
 }
 
 export function buildTomlObject(extension: ExtensionRegistration, allExtensions: ExtensionRegistration[]): string {
@@ -83,6 +91,12 @@ export function buildTomlObject(extension: ExtensionRegistration, allExtensions:
         extension,
         allExtensions,
         redeemableDeployConfigToCLIConfig,
+      )
+    case CARD_PRESENT_TARGET:
+      return buildPaymentsToml<CardPresentPaymentsAppExtensionDeployConfigType>(
+        extension,
+        allExtensions,
+        cardPresentDeployConfigToCLIConfig,
       )
     default:
       throw new Error(`Unsupported extension: ${context}`)
