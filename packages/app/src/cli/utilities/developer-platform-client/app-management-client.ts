@@ -149,6 +149,7 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -1144,10 +1145,9 @@ export async function allowedTemplates(
     const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(version, `>=${ext.minimumCliVersion}`)
     const satisfiesDeprecatedFromCliVersion =
       !ext.deprecatedFromCliVersion || versionSatisfies(version, `<${ext.deprecatedFromCliVersion}`)
-    const isDevelopmentVersion = version.startsWith('0.0.0')
     const satisfiesVersion = satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
-    const satisfiesDevelopmentVersion = isDevelopmentVersion && ext.deprecatedFromCliVersion === undefined
-    return hasAnyNeededBetas && (satisfiesVersion || satisfiesDevelopmentVersion)
+    const satisfiesPreReleaseVersion = isPreReleaseVersion(version) && ext.deprecatedFromCliVersion === undefined
+    return hasAnyNeededBetas && (satisfiesVersion || satisfiesPreReleaseVersion)
   })
 }
 

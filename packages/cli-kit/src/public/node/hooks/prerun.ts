@@ -6,6 +6,7 @@ import {getOutputUpdateCLIReminder} from '../../../public/node/upgrade.js'
 import Command from '../../../public/node/base-command.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {fetchNotificationsInBackground} from '../notifications-system.js'
+import {isPreReleaseVersion} from '../version.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -93,7 +94,7 @@ function findAlias(aliases: string[]) {
 export async function warnOnAvailableUpgrade(): Promise<void> {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
-  if (currentVersion.startsWith('0.0.0')) {
+  if (isPreReleaseVersion(currentVersion)) {
     // This is a nightly/snapshot/experimental version, so we don't want to check for updates
     return
   }
