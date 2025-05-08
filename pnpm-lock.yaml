@@ -6414,6 +6414,7 @@ packages:
 
   /@shopify/function-runner@4.1.1:
     resolution: {integrity: sha512-NXRh8W9xb8JFitNeQcYjvJc6Jx7qta2UBsPs+Kw2M2bZhB7JdOOR0pIeFrFBi3GHpPN3aOflL/g4w7oRWWWDjg==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     hasBin: true
     dependencies:
       cachedir: 2.4.0
