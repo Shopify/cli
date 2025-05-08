@@ -17,7 +17,7 @@ type UpdateTitle = (title: string) => void
 export interface Task<TContext = unknown> {
   title: string
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
-  task: (ctx: TContext, task: Task<TContext>, updateTitle: UpdateTitle) => Promise<void | Task<TContext>[]>
+  task: (ctx: TContext, task: Task<TContext>, updateTitle?: UpdateTitle) => Promise<void | Task<TContext>[]>
   retry?: number
   retryCount?: number
   errors?: Error[]
