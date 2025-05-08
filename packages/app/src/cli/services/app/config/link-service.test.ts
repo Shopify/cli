@@ -18,6 +18,7 @@ beforeEach(async () => {})
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
+    supportsDevSessions: true,
     async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
@@ -37,6 +38,7 @@ function buildDeveloperPlatformClient(): DeveloperPlatformClient {
       return testOrganizationApp({
         requestedAccessScopes: options?.scopesArray,
         developerPlatformClient: this as DeveloperPlatformClient,
+        newApp: true,
       })
     },
   })
@@ -82,6 +84,10 @@ name = "app1"
 application_url = ""
 embedded = true
 
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_something_unusual"
@@ -102,6 +108,10 @@ embedded = false
         embedded: true,
         access_scopes: {
           scopes: 'write_something_unusual',
+        },
+        build: {
+          automatically_update_urls_on_dev: true,
+          include_config_on_deploy: true,
         },
         auth: {
           redirect_urls: [],
