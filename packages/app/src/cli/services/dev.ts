@@ -36,6 +36,7 @@ import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ports} from '../constants.js'
+import {generateCertificate} from '../utilities/mkcert.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -103,6 +104,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     selectedStore: store,
     cachedInfo: getCachedAppInfo(commandOptions.directory),
     organization: commandOptions.organization,
+    tunnelMode: tunnel.mode,
   })
 
   // If the dev_store_url is set in the app configuration, keep updating it.
@@ -341,7 +343,10 @@ async function setupNetworkingOptions(
 
   let reverseProxyCert
   if (tunnelOptions.mode === 'use-localhost') {
-    const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
+    const {keyContent, certContent, certPath} = await generateCertificate({
+      appDirectory,
+    })
+
     reverseProxyCert = {
       key: keyContent,
       cert: certContent,

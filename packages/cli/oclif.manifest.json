@@ -408,7 +408,6 @@
           "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
           "env": "SHOPIFY_FLAG_CHECKOUT_CART_URL",
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
           "name": "checkout-cart-url",
           "type": "option"
@@ -457,7 +456,6 @@
           "description": "Port to use for localhost.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
           "hasDynamicHelp": false,
-          "hidden": true,
           "multiple": false,
           "name": "localhost-port",
           "type": "option"
@@ -474,7 +472,6 @@
           "allowNo": false,
           "description": "Skips the Partners Dashboard URL update step.",
           "env": "SHOPIFY_FLAG_NO_UPDATE",
-          "hidden": false,
           "name": "no-update",
           "type": "boolean"
         },
@@ -510,7 +507,6 @@
           "allowNo": false,
           "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
           "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
-          "hidden": false,
           "name": "skip-dependencies-installation",
           "type": "boolean"
         },
@@ -519,7 +515,6 @@
           "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
           "env": "SHOPIFY_FLAG_STORE",
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
           "name": "store",
           "type": "option"
@@ -528,7 +523,6 @@
           "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
           "env": "SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL",
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
           "name": "subscription-product-url",
           "type": "option"
@@ -538,7 +532,6 @@
           "description": "Theme ID or name of the theme app extension host theme.",
           "env": "SHOPIFY_FLAG_THEME",
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
           "name": "theme",
           "type": "option"
@@ -547,7 +540,6 @@
           "description": "Local port of the theme app extension development server.",
           "env": "SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT",
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
           "name": "theme-app-extension-port",
           "type": "option"
@@ -559,7 +551,6 @@
             "tunnel"
           ],
           "hasDynamicHelp": false,
-          "hidden": false,
           "multiple": false,
           "name": "tunnel-url",
           "type": "option"
@@ -571,7 +562,6 @@
           "exclusive": [
             "tunnel-url"
           ],
-          "hidden": true,
           "name": "use-localhost",
           "type": "boolean"
         },
