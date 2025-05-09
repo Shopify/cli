@@ -6,6 +6,7 @@ import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {updateTomlValues} from '@shopify/toml-patch'
 
 export interface PatchTomlOptions {
   path: string
@@ -16,7 +17,7 @@ export interface PatchTomlOptions {
 type TomlPatchValue = string | number | boolean | undefined | string[]
 
 function shouldUseWasmTomlPatch(env = process.env): boolean {
-  return isTruthy(env[environmentVariableNames.useWasmTomlPatch])
+  return !isTruthy(env[environmentVariableNames.disableWasmTomlPatch])
 }
 
 /**
@@ -54,8 +55,6 @@ async function patchAppConfigurationFileWithWasm(
   path: string,
   configValues: {keyPath: string; value: TomlPatchValue}[],
 ) {
-  // Don't import WASM unless we are really using it.
-  const {updateTomlValues} = await import('./toml-patch-wasm.js')
   const tomlContents = await readFile(path)
   const updatedConfig = await updateTomlValues(
     tomlContents,
