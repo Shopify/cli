@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.80.0
+
+### Minor Changes
+
+- ae9e30d: Hot-reloading in `shopify theme dev` now supports `{% javascript %}` tags
+
+### Patch Changes
+
+- 737c9ab: Support hot reloading after changes to Liquid `{% stylesheet %}` tag.
+- 44e8bc7: Improved theme upload ordering to ensure layout files are uploaded before templates
+  - @shopify/cli-kit@3.80.0
+
 ## 3.79.0
 
 ### Patch Changes
