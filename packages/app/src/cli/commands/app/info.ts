@@ -4,7 +4,7 @@ import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class AppInfo extends AppCommand {
@@ -48,7 +48,7 @@ export default class AppInfo extends AppCommand {
       developerPlatformClient,
     })
     if (typeof results === 'string' || 'value' in results) {
-      outputInfo(results)
+      outputResult(results)
     } else {
       renderInfo({customSections: results})
     }

@@ -1,10 +1,13 @@
 import {presentValue} from './presenter.js'
-import {consoleWarn, outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/output')
 
 describe('presentValue', () => {
+  const cantBePrintedMessage =
+    "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid."
+
   test('should print a warning message if value has a JSON error', () => {
     // Given
     const value = {error: 'json not allowed for this object'}
@@ -13,10 +16,8 @@ describe('presentValue', () => {
     presentValue(value)
 
     // Then
-    expect(consoleWarn).toHaveBeenCalledWith(
-      "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid.",
-    )
-    expect(outputInfo).not.toHaveBeenCalled()
+    expect(outputInfo).toHaveBeenCalledOnce()
+    expect(outputInfo).toHaveBeenCalledWith(cantBePrintedMessage)
   })
 
   test('should print "null" if value is undefined', () => {
@@ -28,7 +29,7 @@ describe('presentValue', () => {
 
     // Then
     expect(outputInfo).toHaveBeenCalledWith(outputContent`${outputToken.cyan('null')}`)
-    expect(consoleWarn).not.toHaveBeenCalled()
+    expect(outputInfo).not.toHaveBeenCalledWith(cantBePrintedMessage)
   })
 
   test('should print "null" if value is null', () => {
@@ -40,7 +41,7 @@ describe('presentValue', () => {
 
     // Then
     expect(outputInfo).toHaveBeenCalledWith(outputContent`${outputToken.cyan('null')}`)
-    expect(consoleWarn).not.toHaveBeenCalled()
+    expect(outputInfo).not.toHaveBeenCalledWith(cantBePrintedMessage)
   })
 
   test('should print the formatted output if value is not undefined, null, or has a JSON error', () => {
@@ -53,6 +54,6 @@ describe('presentValue', () => {
 
     // Then
     expect(outputInfo).toHaveBeenCalledWith(outputContent`${outputToken.cyan(formattedOutput)}`)
-    expect(consoleWarn).not.toHaveBeenCalled()
+    expect(outputInfo).not.toHaveBeenCalledWith(cantBePrintedMessage)
   })
 })
