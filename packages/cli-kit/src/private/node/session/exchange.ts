@@ -151,13 +151,13 @@ export async function exchangeDeviceCodeForAccessToken(
 
   const tokenResult = await tokenRequest(params)
   if (tokenResult.isErr()) {
-    return err(tokenResult.error as IdentityDeviceError)
+    return err(tokenResult.error.error as IdentityDeviceError)
   }
   const identityToken = buildIdentityToken(tokenResult.value)
   return ok(identityToken)
 }
 
-async function requestAppToken(
+export async function requestAppToken(
   api: API,
   token: string,
   scopes: string[] = [],
@@ -174,7 +174,7 @@ async function requestAppToken(
     audience: appId,
     scope: scopes.join(' '),
     subject_token: token,
-    ...(api === 'admin' && {destination: `https://${store}/admin`}),
+    ...(api === 'admin' && {destination: `https://${store}/admin`, store}),
   }
 
   let identifier = appId
@@ -195,18 +195,19 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler(error: string) {
+function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
   const invalidTargetErrorMessage =
-    'You are not authorized to use the CLI to develop in the provided store.' +
+    `You are not authorized to use the CLI to develop in the provided store${store ? `: ${store}` : '.'}` +
     '\n\n' +
     "You can't use Shopify CLI with development stores if you only have Partner " +
     'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
     'you should be the store owner or create a staff account on the store.' +
     '\n\n' +
     "If you're the store owner, then you need to log in to the store directly using the " +
-    'store URL at least once before you log in using Shopify CLI.' +
+    'store URL at least once before you log in using Shopify CLI. ' +
     'Logging in to the Shopify admin directly connects the development ' +
     'store with your Shopify login.'
+
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
     // using a valid refresh token. When that happens, we take the user through the authentication flow.
@@ -224,7 +225,9 @@ function tokenRequestErrorHandler(error: string) {
   return new AbortError(error)
 }
 
-async function tokenRequest(params: {[key: string]: string}): Promise<Result<TokenRequestResult, string>> {
+async function tokenRequest(params: {
+  [key: string]: string
+}): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
@@ -234,7 +237,8 @@ async function tokenRequest(params: {[key: string]: string}): Promise<Result<Tok
   const payload: any = await res.json()
 
   if (res.ok) return ok(payload)
-  return err(payload.error)
+
+  return err({error: payload.error, store: params.store})
 }
 
 function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
