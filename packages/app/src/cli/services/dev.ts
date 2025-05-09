@@ -170,7 +170,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   // Remove for GA
   if (developerPlatformClient.supportsDevSessions) {
     renderInfo({
-      headline: `You're experiencing a whole new \`app dev\``,
+      // eslint-disable-next-line @shopify/cli/banner-headline-format
+      headline: [`You're experiencing a whole new`, {command: 'shopify app dev'}],
       body: [
         {
           link: {
