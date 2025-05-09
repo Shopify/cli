@@ -2,10 +2,10 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
 import {appFlags} from '../../../flags.js'
 import {storeContext} from '../../../services/store-context.js'
+import {devClean} from '../../../services/dev-clean.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export default class DevClean extends AppCommand {
   static summary = 'Cleans up the app preview from the selected store.'
@@ -47,16 +47,7 @@ export default class DevClean extends AppCommand {
       forceReselectStore: flags.reset,
     })
 
-    const client = appContextResult.developerPlatformClient
-    await client.devSessionDelete({shopFqdn: store.shopDomain, appId: appContextResult.remoteApp.id})
-
-    renderSuccess({
-      headline: 'App preview stopped.',
-      body: [
-        `The app preview has been stopped on "${store.shopDomain}" and the app's active version has been restored.`,
-        'You can start it again with `shopify app dev`.',
-      ],
-    })
+    await devClean({appContextResult, store})
 
     return {app: appContextResult.app}
   }
