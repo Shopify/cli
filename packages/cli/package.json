@@ -104,7 +104,7 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
-    "esbuild": "0.25.0",
+    "esbuild": "0.25.4",
     "global-agent": "3.0.0"
   },
   "devDependencies": {
