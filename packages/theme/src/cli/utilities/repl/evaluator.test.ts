@@ -3,7 +3,7 @@ import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../theme-environment/storefront-renderer')
 vi.mock('@shopify/cli-kit/node/output')
@@ -174,33 +174,31 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     jsonParseSpy.mockRestore()
   })
 
-  test('should handle expired session and throw AbortSilentError', async () => {
+  test('should handle expired session and throw AbortError', async () => {
     const mockResponse = createMockResponse({
       status: 401,
       text: 'Unauthorized',
     })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
-    expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText('Session expired. Please initiate a new one.')}`,
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
+      new AbortError('Session expired. Please initiate a new one.'),
     )
   })
 
-  test('should handle too many requests and throw AbortSilentError', async () => {
+  test('should handle too many requests and throw AbortError', async () => {
     const mockResponse = createMockResponse({
       status: 429,
       text: 'Too Many Requests',
     })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
-    expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText('Evaluations limit reached. Try again later.')}`,
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
+      new AbortError('Evaluations limit reached. Try again later.'),
     )
   })
 
-  test('should handle resource not found and throw AbortSilentError', async () => {
+  test('should handle resource not found and throw AbortError', async () => {
     const mockResponse = createMockResponse({
       status: 200,
       text: 'Not Found',
@@ -208,9 +206,8 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
-    expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText('Page not found. Please provide a valid --url value.')}`,
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
+      new AbortError('Page not found. Please provide a valid --url value.'),
     )
   })
 })

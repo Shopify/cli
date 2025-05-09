@@ -1,6 +1,6 @@
 import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 export interface SessionItem {
@@ -179,18 +179,15 @@ function isResourceNotFound(response: Response): boolean {
 }
 
 function expiredSessionError(): never {
-  outputInfo(outputContent`${outputToken.errorText('Session expired. Please initiate a new one.')}`)
-  throw new AbortSilentError()
+  throw new AbortError('Session expired. Please initiate a new one.')
 }
 
 function tooManyRequestsError(): never {
-  outputInfo(outputContent`${outputToken.errorText('Evaluations limit reached. Try again later.')}`)
-  throw new AbortSilentError()
+  throw new AbortError('Evaluations limit reached. Try again later.')
 }
 
 function notFoundError(): never {
-  outputInfo(outputContent`${outputToken.errorText('Page not found. Please provide a valid --url value.')}`)
-  throw new AbortSilentError()
+  throw new AbortError('Page not found. Please provide a valid --url value!')
 }
 
 function isSmartAssignment(input: string): boolean {
