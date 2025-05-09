@@ -238,6 +238,7 @@ export class AppEventWatcher extends EventEmitter {
         try {
           if (this.esbuildManager.contexts?.[ext.uid]?.length) {
             await this.esbuildManager.rebuildContext(ext)
+            this.options.stdout.write(`Build successful`)
           } else {
             await this.buildExtension(ext)
           }
