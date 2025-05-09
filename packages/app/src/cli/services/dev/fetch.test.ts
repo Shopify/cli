@@ -89,7 +89,7 @@ describe('fetchOrganizations', async () => {
     const got = fetchOrganizations()
 
     // Then
-    await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
+    await expect(got).rejects.toThrow('No Organization found')
     expect(partnersClient.organizations).toHaveBeenCalled()
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })

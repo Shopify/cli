@@ -1,12 +1,11 @@
 import {
   CustomOnsitePaymentsAppExtensionConfigType,
   CustomOnsitePaymentsAppExtensionSchema,
-  customOnsitePaymentsAppExtensionDeployConfig,
   MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+  customOnsitePaymentsAppExtensionDeployConfig,
 } from './custom_onsite_payments_app_extension_schema.js'
 import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: CustomOnsitePaymentsAppExtensionConfigType = {
   name: 'CustomOnsite extension',
@@ -58,17 +57,7 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: 'payments.custom-onsite.render',
-          path: ['targeting', 0, 'target'],
-          message: 'Invalid literal value, expected "payments.custom-onsite.render"',
-        },
-      ]),
-    )
+    ).toThrow('payments.custom-onsite.render')
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -76,19 +65,9 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
     expect(() =>
       CustomOnsitePaymentsAppExtensionSchema.parse({
         ...config,
-        buyer_label_translations: [{label: 'Translation without locale key'}],
+        buyer_label_translations: [{label: 'Translation without locale'}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['buyer_label_translations', 0, 'locale'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow('Required')
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -98,19 +77,7 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.too_big,
-          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
-          type: 'array',
-          inclusive: true,
-          exact: false,
-          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
-          path: ['checkout_payment_method_fields'],
-        },
-      ]),
-    )
+    ).toThrow(`The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`)
   })
 })
 

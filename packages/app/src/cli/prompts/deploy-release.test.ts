@@ -6,7 +6,7 @@ import {
   buildDashboardBreakdownInfo,
   buildExtensionBreakdownInfo,
 } from '../services/context/breakdown-extensions.js'
-import {SpyInstance, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/context/local')
@@ -475,7 +475,7 @@ function verifyMetada({
   confirmed,
   configExtensionIdentifiersBreakdown,
 }: {
-  metadataSpyOn: SpyInstance
+  metadataSpyOn: any
   extensionIdentifiersBreakdown?: ExtensionIdentifiersBreakdown
   confirmed: boolean
   configExtensionIdentifiersBreakdown: ConfigExtensionIdentifiersBreakdown

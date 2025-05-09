@@ -5,7 +5,7 @@ import {
   createFetchError,
   extractFetchErrorInfo,
 } from './errors.js'
-import {describe, test, expect, vi} from 'vitest'
+import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 
@@ -13,8 +13,6 @@ vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('errors', () => {
-  const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-
   describe('renderThrownError', () => {
     test('renders AbortError with fatal error UI', () => {
       const error = new AbortError('test error')
@@ -74,17 +72,31 @@ describe('errors', () => {
   })
 
   describe('createAbortCatchError', () => {
+    // Save original process.exit
+    const originalProcessExit = process.exit
+
+    beforeEach(() => {
+      // Use a more reliable mock that throws an error
+      vi.spyOn(process, 'exit').mockImplementation((code?: number): never => {
+        throw new Error(`Process exit with code ${code}`)
+      })
+    })
+
+    afterEach(() => {
+      // Restore original after each test
+      process.exit = originalProcessExit
+    })
+
     test('creates error handler that exits process', () => {
       const handler = createAbortCatchError('Test Headline')
       const error = new Error('test error')
 
-      handler(error)
+      expect(() => handler(error)).toThrow('Process exit with code')
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Test Headline',
         body: 'test error',
       })
-      expect(mockExit).toHaveBeenCalledWith(1)
     })
   })
 

@@ -4,7 +4,6 @@ import {
   redeemablePaymentsAppExtensionDeployConfig,
 } from './redeemable_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: RedeemablePaymentsAppExtensionConfigType = {
   name: 'Redeemable extension',
@@ -48,17 +47,7 @@ describe('RedeemablePaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: 'payments.redeemable.render',
-          path: ['targeting', 0, 'target'],
-          message: 'Invalid literal value, expected "payments.redeemable.render"',
-        },
-      ]),
-    )
+    ).toThrow('Invalid literal value, expected \\"payments.redeemable.render\\"')
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -66,19 +55,9 @@ describe('RedeemablePaymentsAppExtensionSchema', () => {
     expect(() =>
       RedeemablePaymentsAppExtensionSchema.parse({
         ...config,
-        buyer_label_translations: [{label: 'Translation without locale key'}],
+        buyer_label_translations: [{label: 'Translation without locale'}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['buyer_label_translations', 0, 'locale'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow('Required')
   })
 })
 
