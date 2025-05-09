@@ -20,6 +20,7 @@ import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/ge
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
+import {RequestModeInput} from '../http.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -30,13 +31,22 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 const SkeletonThemeCdn = 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip'
+const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
+  useNetworkLevelRetry: true,
+  useAbortSignal: true,
+  timeoutMs: 90 * 1000,
+  maxRetryTimeMs: 90 * 1000,
+}
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const gid = composeThemeGid(id)
 
   try {
-    const {theme} = await adminRequestDoc(GetTheme, session, {id: gid}, undefined, {
-      handleErrors: false,
+    const {theme} = await adminRequestDoc({
+      query: GetTheme,
+      session,
+      variables: {id: gid},
+      responseOptions: {handleErrors: false},
     })
 
     if (theme) {
@@ -67,7 +77,12 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(GetThemes, session, {after})
+    const response = await adminRequestDoc({
+      query: GetThemes,
+      session,
+      variables: {after},
+      responseOptions: {handleErrors: false},
+    })
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')
     }
@@ -93,10 +108,15 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function themeCreate(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const themeSource = params.src ?? SkeletonThemeCdn
-  const {themeCreate} = await adminRequestDoc(ThemeCreate, session, {
-    name: params.name ?? '',
-    source: themeSource,
-    role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
+  const {themeCreate} = await adminRequestDoc({
+    query: ThemeCreate,
+    session,
+    variables: {
+      name: params.name ?? '',
+      source: themeSource,
+      role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
+    },
+    responseOptions: {handleErrors: false},
   })
 
   if (!themeCreate) {
@@ -126,10 +146,11 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(GetThemeFileBodies, session, {
-      id: themeGid(id),
-      filenames,
-      after,
+    const response = await adminRequestDoc({
+      query: GetThemeFileBodies,
+      session,
+      variables: {id: themeGid(id), filenames, after},
+      responseOptions: {handleErrors: false},
     })
 
     if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
@@ -169,9 +190,14 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
   for (let i = 0; i < filenames.length; i += batchSize) {
     const batch = filenames.slice(i, i + batchSize)
     // eslint-disable-next-line no-await-in-loop
-    const {themeFilesDelete} = await adminRequestDoc(ThemeFilesDelete, session, {
-      themeId: composeThemeGid(id),
-      files: batch,
+    const {themeFilesDelete} = await adminRequestDoc({
+      query: ThemeFilesDelete,
+      session,
+      variables: {
+        themeId: composeThemeGid(id),
+        files: batch,
+      },
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!themeFilesDelete) {
@@ -248,7 +274,12 @@ async function uploadFiles(
   files: {filename: string; body: {type: OnlineStoreThemeFileBodyInputType; value: string}}[],
   session: AdminSession,
 ): Promise<ThemeFilesUpsertMutation> {
-  return adminRequestDoc(ThemeFilesUpsert, session, {themeId: themeGid(themeId), files})
+  return adminRequestDoc({
+    query: ThemeFilesUpsert,
+    session,
+    variables: {themeId: themeGid(themeId), files},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+  })
 }
 
 function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[] {
@@ -291,7 +322,12 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
-    const response = await adminRequestDoc(GetThemeFileChecksums, session, {id: themeGid(id), after})
+    const response = await adminRequestDoc({
+      query: GetThemeFileChecksums,
+      session,
+      variables: {id: themeGid(id), after},
+      responseOptions: {handleErrors: false},
+    })
 
     if (!response?.theme?.files?.nodes || !response?.theme?.files?.pageInfo) {
       const userErrors = response.theme?.files?.userErrors.map((error) => error.filename).join(', ')
@@ -322,7 +358,12 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
     input.name = name
   }
 
-  const {themeUpdate} = await adminRequestDoc(ThemeUpdate, session, {id: composeThemeGid(id), input})
+  const {themeUpdate} = await adminRequestDoc({
+    query: ThemeUpdate,
+    session,
+    variables: {id: composeThemeGid(id), input},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+  })
   if (!themeUpdate) {
     // An unexpected error occurred during the GraphQL request execution
     unexpectedGraphQLError('Failed to update theme')
@@ -347,7 +388,12 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
 }
 
 export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
-  const {themePublish} = await adminRequestDoc(ThemePublish, session, {id: composeThemeGid(id)})
+  const {themePublish} = await adminRequestDoc({
+    query: ThemePublish,
+    session,
+    variables: {id: composeThemeGid(id)},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+  })
   if (!themePublish) {
     // An unexpected error occurred during the GraphQL request execution
     unexpectedGraphQLError('Failed to update theme')
@@ -372,7 +418,12 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
 }
 
 export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
-  const {themeDelete} = await adminRequestDoc(ThemeDelete, session, {id: composeThemeGid(id)})
+  const {themeDelete} = await adminRequestDoc({
+    query: ThemeDelete,
+    session,
+    variables: {id: composeThemeGid(id)},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+  })
   if (!themeDelete) {
     // An unexpected error occurred during the GraphQL request execution
     unexpectedGraphQLError('Failed to update theme')
@@ -393,8 +444,10 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
 }
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
-  const {metafieldDefinitions} = await adminRequestDoc(MetafieldDefinitionsByOwnerType, session, {
-    ownerType: type,
+  const {metafieldDefinitions} = await adminRequestDoc({
+    query: MetafieldDefinitionsByOwnerType,
+    session,
+    variables: {ownerType: type},
   })
 
   return metafieldDefinitions.nodes.map((definition) => ({
@@ -410,7 +463,10 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
 }
 
 export async function passwordProtected(session: AdminSession): Promise<boolean> {
-  const {onlineStore} = await adminRequestDoc(OnlineStorePasswordProtection, session)
+  const {onlineStore} = await adminRequestDoc({
+    query: OnlineStorePasswordProtection,
+    session,
+  })
   if (!onlineStore) {
     unexpectedGraphQLError("Unable to get details about the storefront's password protection")
   }

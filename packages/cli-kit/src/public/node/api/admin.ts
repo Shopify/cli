@@ -8,7 +8,7 @@ import {
   restRequestUrl,
   isThemeAccessSession,
 } from '../../../private/node/api/rest.js'
-import {shopifyFetch} from '../http.js'
+import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {normalizeStoreFqdn} from '../context/fqdn.js'
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
@@ -34,23 +34,32 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
   return graphqlRequest({query, api, addedHeaders, url, token: session.token, variables})
 }
 
+export interface AdminRequestOptions<TResult, TVariables extends Variables> {
+  /** GraphQL query to execute. */
+  query: TypedDocumentNode<TResult, TVariables>
+  /** Shopify admin session including token and Store FQDN. */
+  session: AdminSession
+  /** GraphQL variables to pass to the query. */
+  variables?: TVariables
+  /** API version. */
+  version?: string
+  /** Control how API responses will be handled. */
+  responseOptions?: GraphQLResponseOptions<TResult>
+  /** Custom request behaviour for retries and timeouts. */
+  requestBehaviour?: RequestModeInput
+}
+
 /**
  * Executes a GraphQL query against the Admin API. Uses typed documents.
  *
- * @param query - GraphQL query to execute.
- * @param session - Shopify admin session including token and Store FQDN.
- * @param variables - GraphQL variables to pass to the query.
- * @param version - API version.
- * @param responseOptions - Control how API responses will be handled.
+ * @param options - Admin request options.
  * @returns The response of the query of generic type <TResult>.
  */
 export async function adminRequestDoc<TResult, TVariables extends Variables>(
-  query: TypedDocumentNode<TResult, TVariables>,
-  session: AdminSession,
-  variables?: TVariables,
-  version?: string,
-  responseOptions?: GraphQLResponseOptions<TResult>,
+  options: AdminRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
+  const {query, session, variables, version, responseOptions, requestBehaviour} = options
+
   let apiVersion = version ?? LatestApiVersionByFQDN.get(session.storeFqdn)
   if (!apiVersion) {
     apiVersion = await fetchLatestSupportedApiVersion(session)
@@ -73,6 +82,7 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
     variables,
     responseOptions,
     unauthorizedHandler,
+    requestBehaviour,
   })
   return result
 }
@@ -119,7 +129,13 @@ export async function supportedApiVersions(session: AdminSession): Promise<strin
  */
 async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
   try {
-    const response = await adminRequestDoc(PublicApiVersions, session, {}, 'unstable', {handleErrors: false})
+    const response = await adminRequestDoc({
+      query: PublicApiVersions,
+      session,
+      variables: {},
+      version: 'unstable',
+      responseOptions: {handleErrors: false},
+    })
     return response.publicApiVersions
   } catch (error) {
     if (error instanceof ClientError && error.response.status === 403) {
