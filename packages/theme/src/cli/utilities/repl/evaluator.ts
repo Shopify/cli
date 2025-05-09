@@ -103,6 +103,11 @@ function printSyntaxError(snippet: string, error: string) {
 
 async function makeRequest(config: EvaluationConfig): Promise<Response> {
   const requestBody = buildRequestBody(config)
+
+  if (!config.url.startsWith('/')) {
+    config.url = `/${config.url}`
+  }
+
   const response = await render(config.themeSession, {
     method: 'GET',
     path: config.url,

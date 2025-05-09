@@ -15,7 +15,7 @@ describe('evaluate', () => {
     mockConfig = {
       themeSession: {} as DevServerSession,
       themeId: 'test-theme-id',
-      url: 'https://test-shop.myshopify.com',
+      url: '/',
       replSession: [],
       snippet: '',
     }
@@ -31,6 +31,20 @@ describe('evaluate', () => {
     const result = await evaluate({...mockConfig, snippet: 'shop.id'})
 
     expect(result).toBe(123123)
+  })
+
+  describe('when the URL is not prefixed with a forward slash', () => {
+    test('should add a forward slash to the URL', async () => {
+      const mockResponse = createMockResponse({
+        status: 200,
+        text: '<div id="shopify-section-announcement-bar" class="shopify-section">\n[{ "type": "display", "value": 123123 }]\n</div>',
+      })
+      vi.mocked(render).mockResolvedValue(mockResponse as any)
+
+      await evaluate({...mockConfig, url: 'product/foo-bar'})
+
+      expect(render).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({path: '/product/foo-bar'}))
+    })
   })
 
   test('should add succesful assignments to the session', async () => {
