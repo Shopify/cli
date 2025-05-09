@@ -97,7 +97,6 @@ describe('generateSchemaService', () => {
             },
             api_version: 'unstable',
             configuration_ui: true,
-            metafields: [],
           },
         })
 
@@ -152,7 +151,6 @@ describe('generateSchemaService', () => {
             },
             api_version: 'unstable',
             configuration_ui: true,
-            metafields: [],
           },
         })
 

@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema, MetafieldSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -30,7 +30,6 @@ const FunctionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.string(),
   configuration_ui: zod.boolean().optional().default(true),
-  metafields: zod.array(MetafieldSchema).optional(),
   ui: zod
     .object({
       enable_create: zod.boolean().optional(),

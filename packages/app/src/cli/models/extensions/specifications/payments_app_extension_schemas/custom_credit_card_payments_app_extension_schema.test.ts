@@ -33,7 +33,6 @@ const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   checkout_hosted_fields: ['fields'],
   ui_extension_handle: 'sample-ui-extension',
   description: 'Custom credit card extension',
-  metafields: [],
   input: {
     metafield_identifiers: {
       namespace: 'namespace',

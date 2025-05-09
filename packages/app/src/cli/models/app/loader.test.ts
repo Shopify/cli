@@ -924,6 +924,11 @@ wrong = "property"
       [build]
       command = "make build"
       path = "dist/index.wasm"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -962,6 +967,11 @@ wrong = "property"
         [[settings.fields]]
         type = "single_line_text_field"
         key = "your field key"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1025,6 +1035,11 @@ wrong = "property"
         name = "Display name"
         description = "A description of my field"
         required = true
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1098,6 +1113,11 @@ wrong = "property"
       target = "checkout.fetch"
       input_query = "./input_query.graphql"
       export = "fetch"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1177,6 +1197,11 @@ wrong = "property"
       target = "checkout.fetch"
       input_query = "./input_query.graphql"
       export = "fetch"
+
+      # extra fields not included in the schema should be ignored
+      [[extensions.invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1239,6 +1264,11 @@ wrong = "property"
       module = "./src/ActionExtension.js"
       target = "admin.product-details.action.render"
       [[extensions.metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      # extra fields not included in the schema should be ignored
+      [[extensions.invalid_field]]
       namespace = "my-namespace"
       key = "my-key"
       `
@@ -1340,6 +1370,11 @@ wrong = "property"
         [[extensions.targeting]]
         target = "purchase.checkout.block.render"
         module = "./CheckoutDynamicRender.jsx"
+
+            # extra fields not included in the schema should be ignored
+      [[extensions.invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1463,6 +1498,11 @@ wrong = "property"
       [[metafields]]
       namespace = "my-namespace"
       key = "my-key-2"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1509,6 +1549,11 @@ wrong = "property"
         'pos.home.tile.render',
         'pos.home.modal.render'
       ]
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1555,6 +1600,11 @@ wrong = "property"
       key = "metafield-config"
 
       [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
       namespace = "my-namespace"
       key = "my-key"
       `
@@ -1615,6 +1665,11 @@ wrong = "property"
       name = "second"
       description = "description"
       type = "single_line_text_field"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1686,6 +1741,11 @@ wrong = "property"
       name = "second"
       description = "description"
       type = "single_line_text_field"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1776,6 +1836,11 @@ wrong = "property"
         key = "field_key_2"
         type = "number_integer"
         name = "field-name-2"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,

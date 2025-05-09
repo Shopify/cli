@@ -31,7 +31,6 @@ function functionConfiguration(): FunctionConfigType {
     type: 'function',
     api_version: '2023-07',
     configuration_ui: true,
-    metafields: [],
     build: {
       wasm_opt: true,
     },
