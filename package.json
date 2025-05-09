@@ -48,6 +48,7 @@
     "@octokit/rest": "20.1.1",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/generate-docs": "0.15.6",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "18.19.70",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/parser": "7.18.0",
@@ -77,7 +78,8 @@
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
     "typescript": "5.8.3",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.4",
+    "wait-for-expect": "^3.0.2"
   },
   "workspaces": {
     "packages": [

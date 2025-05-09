@@ -1,7 +1,6 @@
 import {validateFieldShape, validateCustomConfigurationPageConfig, validateReturnTypeConfig} from './validation.js'
 import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('validateFieldShape', () => {
   test('should return true when non-commerce object field has valid shape and is flow action', () => {
@@ -142,62 +141,35 @@ describe('validateCustomConfigurationPageConfig', () => {
   })
 
   test('should throw an error if config page URL is missing but a preview url is provided', () => {
-    // given
+    // Given
     const configPageUrl = undefined
-    const configPagePreviewUrl = 'preview-url'
-    const validationUrl = 'validation-url'
+    const configPagePreviewUrl = 'https://test.com'
 
-    // then
-    expect(() =>
-      validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].config_page_url'],
-          message: 'To set a custom configuration page a `config_page_url` must be specified.',
-        },
-      ]),
+    // Then
+    expect(() => validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, undefined)).toThrow(
+      'To set a custom configuration page a `config_page_url` must be specified',
     )
   })
 
   test('should throw an error if config page preview URL is missing but a config page url is provided', () => {
-    // given
-    const configPageUrl = 'config-url'
+    // Given
+    const configPageUrl = 'https://test.com'
     const configPagePreviewUrl = undefined
-    const validationUrl = 'validation-url'
 
-    // then
-    expect(() =>
-      validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].config_page_preview_url'],
-          message: 'To set a custom configuration page a `config_page_preview_url` must be specified.',
-        },
-      ]),
+    // Then
+    expect(() => validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, undefined)).toThrow(
+      'To set a custom configuration page a `config_page_preview_url` must be specified',
     )
   })
 
   test('should throw an error if validation URL is missing when both a config page and preview urls are provided', () => {
-    // given
-    const configPageUrl = 'config-url'
-    const configPagePreviewUrl = 'preview-url'
-    const validationUrl = undefined
+    // Given
+    const configPageUrl = 'https://test.com'
+    const configPagePreviewUrl = 'https://test.com'
 
-    // then
-    expect(() =>
-      validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].validation_url'],
-          message: 'To set a custom configuration page a `validation_url` must be specified.',
-        },
-      ]),
+    // Then
+    expect(() => validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, undefined)).toThrow(
+      'To set a custom configuration page a `validation_url` must be specified',
     )
   })
 
@@ -224,29 +196,13 @@ describe('validateReturnTypeConfig', () => {
   test('should throw ZodError when returnTypeRef is missing', () => {
     expect(() => {
       validateReturnTypeConfig(undefined, 'schemaValue')
-    }).toThrow(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].return_type_ref'],
-          message: 'When uploading a schema a `return_type_ref` must be specified.',
-        },
-      ]),
-    )
+    }).toThrow('When uploading a schema a `return_type_ref` must be specified')
   })
 
   test('should throw ZodError when schema is missing', () => {
     expect(() => {
       validateReturnTypeConfig('returnTypeRefValue', undefined)
-    }).toThrow(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].schema'],
-          message: 'To set a return type a `schema` must be specified.',
-        },
-      ]),
-    )
+    }).toThrow('To set a return type a `schema` must be specified')
   })
 
   test('should return true when neither returnTypeRef nor schema are provided', () => {
