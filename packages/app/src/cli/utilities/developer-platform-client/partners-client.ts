@@ -218,6 +218,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = false
   public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
+  public readonly bundleFormat = 'zip'
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {

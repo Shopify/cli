@@ -229,12 +229,15 @@ export class DevSession {
     this.bundleControllers.push(currentBundleController)
 
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const bundleZipPath = joinPath(dirname(this.bundlePath), `dev-bundle.zip`)
+    const compressedFilePath = joinPath(
+      dirname(this.bundlePath),
+      `dev-bundle.${this.options.developerPlatformClient.bundleFormat}`,
+    )
 
-    // Create zip file with everything
+    // Create compressed br file with everything
     if (currentBundleController.signal.aborted) return {status: 'aborted'}
     await writeManifestToBundle(appEvent.app, this.bundlePath)
-    await compressBundle(this.bundlePath, bundleZipPath)
+    await compressBundle(this.bundlePath, compressedFilePath)
     try {
       // Get a signed URL to upload the zip file
       if (currentBundleController.signal.aborted) return {status: 'aborted'}
@@ -242,7 +245,7 @@ export class DevSession {
 
       // Upload the zip file
       if (currentBundleController.signal.aborted) return {status: 'aborted'}
-      await uploadToGCS(signedURL, bundleZipPath)
+      await uploadToGCS(signedURL, compressedFilePath)
       // Create or update the dev session
       if (currentBundleController.signal.aborted) return {status: 'aborted'}
       const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
