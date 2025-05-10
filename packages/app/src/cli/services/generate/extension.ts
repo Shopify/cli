@@ -314,7 +314,7 @@ export function getFunctionRuntimeDependencies(templateLanguage: string): Depend
   if (templateLanguage === 'javascript') {
     dependencies.push({
       name: '@shopify/shopify_function',
-      version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
+      version: `0.0.0-snapshot-20250508132339`,
     })
   }
   return dependencies

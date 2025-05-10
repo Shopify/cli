@@ -1,5 +1,14 @@
-import {buildGraphqlTypes, bundleExtension, runJavy, ExportJavyBuilder, jsExports, runWasmOpt} from './build.js'
-import {javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
+import {
+  buildGraphqlTypes,
+  bundleExtension,
+  runJavy,
+  ExportJavyBuilder,
+  jsExports,
+  runWasmOpt,
+  runTrampoline,
+  PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION,
+} from './build.js'
+import {javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -68,7 +77,7 @@ async function installShopifyLibrary(tmpDir: string) {
   await writeFile(runModule, '')
 
   const packageJson = joinPath(shopifyFunctionDir, 'package.json')
-  await writeFile(packageJson, JSON.stringify({version: '1.0.0'}))
+  await writeFile(packageJson, JSON.stringify({version: `${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`}))
 
   return shopifyFunction
 }
@@ -142,7 +151,7 @@ describe('bundleExtension', () => {
   test('errors if shopify library is not on a compatible version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const incompatibleVersion = '999.0.0'
+      const incompatibleVersion = '1.0.0'
       const ourFunction = await testFunctionExtension({dir: tmpDir})
       ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
       await installShopifyLibrary(tmpDir)
@@ -235,6 +244,21 @@ describe('runWasmOpt', () => {
         cwd: dirname(wasmOptBinary().path),
       },
     )
+  })
+})
+
+describe('runTrampoline', () => {
+  test('runs trampoline on the module', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    const modulePath = ourFunction.outputPath
+
+    // When
+    const got = runTrampoline(modulePath)
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(trampolineBinary().path, ['-i', modulePath, '-o', modulePath])
   })
 })
 
