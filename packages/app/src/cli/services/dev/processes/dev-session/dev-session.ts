@@ -3,6 +3,8 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
+import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
+import {AppManifest} from '../../../../models/app/app.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -11,12 +13,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
-
-interface DevSessionPayload {
-  shopFqdn: string
-  appId: string
-  assetsUrl: string
-}
+import {readdir} from 'fs/promises'
 
 export interface UserError {
   message: string
@@ -42,7 +39,7 @@ export class DevSession {
   private readonly options: DevSessionProcessOptions
   private readonly appWatcher: AppEventWatcher
   private readonly bundlePath: string
-  private bundleControllers: AbortController[] = []
+  private currentBundleController?: AbortController
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -69,7 +66,7 @@ export class DevSession {
   private async onEvent(event: AppEvent) {
     const eventIsValid = await this.validateAppEvent(event)
     if (!eventIsValid) return
-    this.abortPreviousOngoingUpdates()
+    this.currentBundleController?.abort()
     this.statusManager.setMessage('CHANGE_DETECTED')
     await this.updatePreviewURL(event)
     await this.logger.logExtensionEvents(event)
@@ -144,16 +141,6 @@ export class DevSession {
   }
 
   /**
-   * Abort any previous ongoing updates
-   * If multiple changes are detected very quickly, this will abort the previous bundle and upload process
-   * and only the last one will be completed.
-   */
-  private abortPreviousOngoingUpdates() {
-    this.bundleControllers.forEach((controller) => controller.abort())
-    this.bundleControllers = this.bundleControllers.filter((controller) => !controller.signal.aborted)
-  }
-
-  /**
    * Handle the result of the dev session
    * It basically logs the result and updates the status message.
    * @param result - The result of the dev session
@@ -225,27 +212,21 @@ export class DevSession {
   private async bundleExtensionsAndUpload(appEvent: AppEvent): Promise<DevSessionResult> {
     // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
     // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
-    const currentBundleController = new AbortController()
-    this.bundleControllers.push(currentBundleController)
+    const newBundleController = new AbortController()
+    this.currentBundleController = newBundleController
 
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    const bundleZipPath = joinPath(dirname(this.bundlePath), `dev-bundle.zip`)
-
-    // Create zip file with everything
-    if (currentBundleController.signal.aborted) return {status: 'aborted'}
-    await writeManifestToBundle(appEvent.app, this.bundlePath)
-    await compressBundle(this.bundlePath, bundleZipPath)
     try {
-      // Get a signed URL to upload the zip file
-      if (currentBundleController.signal.aborted) return {status: 'aborted'}
-      const signedURL = await this.getSignedURLWithRetry()
+      const {manifest, inheritedModuleUids, assets} = await this.createManifest(appEvent)
+      const signedURL = await this.uploadAssetsIfNeeded(assets, newBundleController)
 
-      // Upload the zip file
-      if (currentBundleController.signal.aborted) return {status: 'aborted'}
-      await uploadToGCS(signedURL, bundleZipPath)
-      // Create or update the dev session
-      if (currentBundleController.signal.aborted) return {status: 'aborted'}
-      const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
+      if (newBundleController.signal.aborted) return {status: 'aborted'}
+      const payload = {
+        shopFqdn: this.options.storeFqdn,
+        appId: this.options.appId,
+        assetsUrl: signedURL ?? '',
+        manifest,
+        inheritedModuleUids,
+      }
       if (this.statusManager.status.isReady) {
         return this.devSessionUpdateWithRetry(payload)
       } else {
@@ -274,7 +255,68 @@ export class DevSession {
   }
 
   /**
-   * Get a signed URL to upload the zip file to GCS. If the request fails, we refresh the token and retry the operation.
+   * Create a manifest for the dev session
+   * It will only include the extensions that have been updated. (or all extensions when creating a new session)
+   * @param appEvent - The app event
+   * @returns The manifest and the inherited module uids
+   */
+  private async createManifest(
+    appEvent: AppEvent,
+  ): Promise<{manifest: AppManifest; inheritedModuleUids: string[]; assets: string[]}> {
+    const updatedUids = appEvent.extensionEvents
+      .filter((event) => event.type !== 'deleted')
+      .map((event) => event.extension.uid)
+
+    const nonUpdatedUids = appEvent.app.allExtensions
+      .filter((ext) => !updatedUids.includes(ext.uid))
+      .map((ext) => ext.uid)
+
+    const appManifest = await appEvent.app.manifest()
+
+    // Only use inherited for UPDATE session. Create still needs the manifest in the bundle.
+    if (this.statusManager.status.isReady) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      appManifest.modules = (appManifest as any).modules.filter((module: any) => updatedUids.includes(module.uid))
+    } else {
+      await writeManifestToBundle(appEvent.app, this.bundlePath)
+    }
+
+    const existingDirs = await readdir(this.bundlePath)
+    const assets = appManifest.modules
+      .map((module) => module.assets)
+      .filter((assetPath) => existingDirs.includes(assetPath))
+
+    return {manifest: appManifest, inheritedModuleUids: nonUpdatedUids, assets}
+  }
+
+  /**
+   * Upload the assets if needed
+   * If the affected modules in the manifest don't have any assets, we don't need to upload anything.
+   * @param assets - The list of asset folders to upload
+   * @param bundleController - abortController to abort the bundle process if a new change is detected
+   * @returns The signed URL if we uploaded any assets, otherwise undefined
+   */
+  private async uploadAssetsIfNeeded(assets: string[], bundleController: AbortController): Promise<string | undefined> {
+    if (!assets.length) return undefined
+    const bundleZipPath = joinPath(dirname(this.bundlePath), `bundle.zip`)
+
+    // Create zip file with everything
+    if (bundleController.signal.aborted) return undefined
+    const filePattern = [...assets.map((ext) => `${ext}/**`), 'manifest.json', '!**/*.js.map']
+    await compressBundle(this.bundlePath, bundleZipPath, filePattern)
+
+    // Get a signed URL to upload the zip file
+    if (bundleController.signal.aborted) return undefined
+    const signedURL = await this.getSignedURLWithRetry()
+
+    // Upload the zip file
+    if (bundleController.signal.aborted) return undefined
+    await uploadToGCS(signedURL, bundleZipPath)
+    return signedURL
+  }
+
+  /**
+   * Get a signed URL to upload the zip file to GCS
    * @returns The signed URL
    */
   private async getSignedURLWithRetry() {
@@ -293,7 +335,7 @@ export class DevSession {
    * Update the dev session
    * @param payload - The payload to update the dev session with
    */
-  private async devSessionUpdateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+  private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
     const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionUpdate(payload),
       () => this.options.developerPlatformClient.refreshToken(),
@@ -309,7 +351,7 @@ export class DevSession {
    * This only happens if an error is thrown. Won't be triggered if we receive an error inside the response.
    * @param payload - The payload to create the dev session with
    */
-  private async devSessionCreateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+  private async devSessionCreateWithRetry(payload: DevSessionCreateOptions): Promise<DevSessionResult> {
     const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionCreate(payload),
       () => this.options.developerPlatformClient.refreshToken(),

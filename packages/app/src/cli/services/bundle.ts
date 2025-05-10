@@ -15,11 +15,11 @@ export async function writeManifestToBundle(app: AppInterface, bundlePath: strin
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 }
 
-export async function compressBundle(inputPath: string, outputPath: string) {
+export async function compressBundle(inputPath: string, outputPath: string, customMatchFilePattern?: string[]) {
   await zip({
     inputDirectory: inputPath,
     outputZipPath: outputPath,
-    matchFilePattern: ['**/*', '!**/*.js.map'],
+    matchFilePattern: customMatchFilePattern ?? ['**/*', '!**/*.js.map'],
   })
 }
 
