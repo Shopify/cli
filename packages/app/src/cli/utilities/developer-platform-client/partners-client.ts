@@ -164,6 +164,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {ClientError} from 'graphql-request'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -248,7 +249,18 @@ export class PartnersClient implements DeveloperPlatformClient {
     cacheOptions?: CacheOptions,
     preferredBehaviour?: RequestModeInput,
   ): Promise<T> {
-    return partnersRequest(query, await this.token(), variables, cacheOptions, preferredBehaviour)
+    try {
+      return await partnersRequest(query, await this.token(), variables, cacheOptions, preferredBehaviour)
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const {response} = error
+        if (response && response.status === 401) {
+          await this.refreshToken()
+          return partnersRequest(query, await this.token(), variables, cacheOptions, preferredBehaviour)
+        }
+      }
+      throw error
+    }
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
