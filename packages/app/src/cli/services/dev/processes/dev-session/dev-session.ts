@@ -3,6 +3,7 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
+import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -11,12 +12,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
-
-interface DevSessionPayload {
-  shopFqdn: string
-  appId: string
-  assetsUrl: string
-}
 
 export interface UserError {
   message: string
@@ -90,7 +85,7 @@ export class DevSession {
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
       await this.logger.logMultipleErrors(errors)
-      throw new AbortError('App preview aborted, build errors detected in extensions.')
+      throw new AbortError('App preview aborted, build errors detected in extensions')
     }
     const result = await this.bundleExtensionsAndUpload(event)
     await this.handleDevSessionResult(result, event)
@@ -248,7 +243,14 @@ export class DevSession {
       await uploadToGCS(signedURL, compressedFilePath)
       // Create or update the dev session
       if (currentBundleController.signal.aborted) return {status: 'aborted'}
-      const payload = {shopFqdn: this.options.storeFqdn, appId: this.options.appId, assetsUrl: signedURL}
+      const manifest = await appEvent.app.manifest()
+      const payload = {
+        shopFqdn: this.options.storeFqdn,
+        appId: this.options.appId,
+        assetsUrl: signedURL,
+        manifest,
+        inheritedModuleUids: [],
+      }
       if (this.statusManager.status.isReady) {
         return this.devSessionUpdateWithRetry(payload)
       } else {
@@ -296,7 +298,7 @@ export class DevSession {
    * Update the dev session
    * @param payload - The payload to update the dev session with
    */
-  private async devSessionUpdateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+  private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
     const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionUpdate(payload),
       () => this.options.developerPlatformClient.refreshToken(),
@@ -312,7 +314,7 @@ export class DevSession {
    * This only happens if an error is thrown. Won't be triggered if we receive an error inside the response.
    * @param payload - The payload to create the dev session with
    */
-  private async devSessionCreateWithRetry(payload: DevSessionPayload): Promise<DevSessionResult> {
+  private async devSessionCreateWithRetry(payload: DevSessionCreateOptions): Promise<DevSessionResult> {
     const result = await performActionWithRetryAfterRecovery(
       async () => this.options.developerPlatformClient.devSessionCreate(payload),
       () => this.options.developerPlatformClient.refreshToken(),

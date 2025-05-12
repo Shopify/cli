@@ -36,7 +36,9 @@ import {
   AssetUrlSchema,
   CreateAppOptions,
   DeveloperPlatformClient,
-  DevSessionOptions,
+  DevSessionCreateOptions,
+  DevSessionDeleteOptions,
+  DevSessionUpdateOptions,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -1482,9 +1484,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       }),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
-    devSessionCreate: (_input: DevSessionOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
-    devSessionUpdate: (_input: DevSessionOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
-    devSessionDelete: (_input: unknown) => Promise.resolve({devSessionDelete: {userErrors: []}}),
+    devSessionCreate: (_input: DevSessionCreateOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
+    devSessionUpdate: (_input: DevSessionUpdateOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
+    devSessionDelete: (_input: DevSessionDeleteOptions) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     getCreateDevStoreLink: (_input: string) =>
       Promise.resolve(
         `Looks like you don't have a dev store in the Partners org you selected. Keep going — create a dev store on Shopify Partners: https://partners.shopify.com/1234/stores`,

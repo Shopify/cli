@@ -7,7 +7,6 @@ import {
   AppVersionIdentifiers,
   DeveloperPlatformClient,
   Paginateable,
-  DevSessionOptions,
   filterDisabledFlags,
   ClientName,
   AppVersionWithContext,
@@ -612,12 +611,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     }
   }
 
-  async devSessionCreate(_input: DevSessionOptions): Promise<never> {
+  async devSessionCreate(_input: unknown): Promise<never> {
     // Dev Sessions are not supported in partners client.
     throw new Error('Unsupported operation')
   }
 
-  async devSessionUpdate(_input: DevSessionOptions): Promise<never> {
+  async devSessionUpdate(_input: unknown): Promise<never> {
     // Dev Sessions are not supported in partners client.
     throw new Error('Unsupported operation')
   }
