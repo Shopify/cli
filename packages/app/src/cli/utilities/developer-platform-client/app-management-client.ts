@@ -1275,14 +1275,7 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
   const details = []
   const extensionId = (err.on[0] as {user_identifier: string})?.user_identifier
   if (extensionId) {
-    details.push({
-      extension_id: extensionId,
-      // Adding the fields extension_title and specification_identifier to
-      // matchthe Partners interface for now, but this will be removed when
-      // PartnersClient is gone.
-      extension_title: 'not returned from API',
-      specification_identifier: 'not returned from API',
-    })
+    details.push({extension_id: extensionId})
   }
   return {...err, details}
 }
