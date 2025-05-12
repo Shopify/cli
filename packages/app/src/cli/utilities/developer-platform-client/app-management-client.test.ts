@@ -4,6 +4,7 @@ import {
   allowedTemplates,
   diffAppModules,
   encodedGidFromOrganizationId,
+  shopifyGidFromOrganizationId,
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -368,27 +369,28 @@ describe('createApp', () => {
       org.id,
       CreateApp,
       'token',
-      {
-        initialVersion: {
-          source: {
+      expect.objectContaining({
+        initialVersion: expect.objectContaining({
+          source: expect.objectContaining({
             name: 'app-name',
             modules: expect.arrayContaining([
-              {
-                config: {
+              expect.objectContaining({
+                config: expect.objectContaining({
                   api_version: '2025-01',
-                },
+                }),
                 type: 'webhooks',
-              },
+              }),
             ]),
-          },
-        },
-      },
+          }),
+        }),
+        organizationId: shopifyGidFromOrganizationId(org.id),
+      }),
       undefined,
       undefined,
       expect.objectContaining({
         handler: expect.any(Function),
         type: 'token_refresh',
-      }),
+      })
     )
   })
 
@@ -434,6 +436,56 @@ describe('createApp', () => {
 
     // Then
     expect(result).toMatchObject(expectedApp)
+  })
+
+  test('passes organization ID to createAppVars when creating an app', async () => {
+    // Given
+    const client = new AppManagementClient()
+    const org = testOrganization()
+    const orgId = org.id
+
+    vi.mocked(webhooksRequest).mockResolvedValueOnce({
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    })
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {
+        app: {
+          id: '1',
+          key: 'api-key',
+          activeRoot: {
+            clientCredentials: {
+              secrets: [{key: 'secret'}],
+            },
+          },
+        },
+        userErrors: [],
+      },
+    })
+
+    // When
+    client.token = () => Promise.resolve('token')
+    await client.createApp(org, {name: 'app-name'})
+
+    // Then
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      orgId,
+      CreateApp,
+      'token',
+      expect.objectContaining({
+        initialVersion: expect.objectContaining({
+          source: expect.objectContaining({
+            name: 'app-name',
+          }),
+        }),
+        organizationId: shopifyGidFromOrganizationId(orgId),
+      }),
+      undefined,
+      undefined,
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      })
+    )
   })
 })
 
