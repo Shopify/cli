@@ -6,6 +6,7 @@ import {
   jsExports,
   runWasmOpt,
   runTrampoline,
+  PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION,
 } from './build.js'
 import {javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
