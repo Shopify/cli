@@ -37,7 +37,7 @@ beforeEach(() => {
   vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
     for (const task of tasks) {
       // eslint-disable-next-line no-await-in-loop
-      await task.task({}, task)
+      await task.task({}, task, vi.fn())
     }
 
     return {}
@@ -61,7 +61,7 @@ describe('release', () => {
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
+        await task.task({}, task, vi.fn())
       }
 
       return {
@@ -101,7 +101,7 @@ describe('release', () => {
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
+        await task.task({}, task, vi.fn())
       }
 
       return {
