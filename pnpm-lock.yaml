@@ -492,6 +492,9 @@ importers:
       which:
         specifier: 4.0.0
         version: 4.0.0
+      yaml:
+        specifier: 2.7.0
+        version: 2.7.0
       zod:
         specifier: 3.24.1
         version: 3.24.1
@@ -3346,7 +3349,7 @@ packages:
       util-arity: 1.1.0
       verror: 1.10.1
       xmlbuilder: 15.1.1
-      yaml: 2.3.2
+      yaml: 2.7.0
       yup: 1.2.0
     dev: true
 
@@ -17808,11 +17811,6 @@ packages:
   /yaml@1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
-    dev: true
-
-  /yaml@2.3.2:
-    resolution: {integrity: sha512-N/lyzTPaJasoDmfV7YTrYCI0G/3ivm/9wdG0aHuheKowWQwGTsK0Eoiw6utmzAnI6pkJa0DUVygvp3spqqEKXg==}
-    engines: {node: '>= 14'}
     dev: true
 
   /yaml@2.7.0:

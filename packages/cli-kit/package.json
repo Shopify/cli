@@ -163,6 +163,7 @@
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",
     "which": "4.0.0",
+    "yaml": "2.7.0",
     "zod": "3.24.1"
   },
   "devDependencies": {
