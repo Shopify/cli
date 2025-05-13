@@ -364,7 +364,7 @@ describe('createApp', () => {
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       org.id,
       CreateApp,
       'token',
@@ -665,7 +665,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -680,6 +680,175 @@ describe('deploy', () => {
                 type: BrandingSpecIdentifier,
                 handle: 'test-app',
                 config: {name: 'Test App'},
+                target: 'unused-context',
+              },
+            ],
+          },
+        },
+        metadata: {
+          versionTag,
+          message,
+          sourceControlUrl: commitReference,
+        },
+      },
+      undefined,
+      {requestMode: 'slow-request'},
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
+    )
+  })
+
+  test('includes the target property when context is provided', async () => {
+    // Given
+    const versionTag = '1.0.0'
+    const message = 'Test deploy'
+    const commitReference = 'https://github.com/org/repo/commit/123'
+    const appModules = [
+      {
+        uid: 'payments_extension uuid',
+        config: JSON.stringify({name: 'Test App'}),
+        handle: 'test-app',
+        specificationIdentifier: 'payments_extension',
+        context: 'payments.offsite.render',
+      },
+    ]
+
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {
+            versionTag,
+            message,
+            sourceControlUrl: commitReference,
+          },
+          appModules: [
+            {
+              uuid: 'some_uuid',
+            },
+          ],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      appModules,
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag,
+      message,
+      commitReference,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          source: {
+            name: 'Test App',
+            modules: [
+              {
+                uid: 'payments_extension uuid',
+                type: 'payments_extension',
+                handle: 'test-app',
+                config: {name: 'Test App'},
+                target: 'payments.offsite.render',
+              },
+            ],
+          },
+        },
+        metadata: {
+          versionTag,
+          message,
+          sourceControlUrl: commitReference,
+        },
+      },
+      undefined,
+      {requestMode: 'slow-request'},
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
+    )
+  })
+
+  test('does not include target property when context is empty', async () => {
+    // Given
+    const versionTag = '1.0.0'
+    const message = 'Test deploy'
+    const commitReference = 'https://github.com/org/repo/commit/123'
+    const appModules = [
+      {
+        uid: 'branding',
+        config: JSON.stringify({name: 'Test App'}),
+        handle: 'test-app',
+        specificationIdentifier: BrandingSpecIdentifier,
+        context: '',
+      },
+    ]
+
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {
+            versionTag,
+            message,
+            sourceControlUrl: commitReference,
+          },
+          appModules: [
+            {
+              uuid: 'some_uuid',
+            },
+          ],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      appModules,
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag,
+      message,
+      commitReference,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          source: {
+            name: 'Test App',
+            modules: [
+              {
+                uid: 'branding',
+                type: BrandingSpecIdentifier,
+                handle: 'test-app',
+                config: {name: 'Test App'},
+                // The target property should not be present
               },
             ],
           },
@@ -726,7 +895,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -781,7 +950,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -887,7 +1056,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       AppVersions,
       'token',
