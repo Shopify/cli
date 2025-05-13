@@ -1,4 +1,4 @@
-mutation DevSessionUpdate($appId: String!, $assetsUrl: String!, $manifest: JSON!, $inheritedModuleUids: [String!]!) {
+mutation DevSessionUpdate($appId: String!, $assetsUrl: String, $manifest: JSON, $inheritedModuleUids: [String!]!) {
   devSessionUpdate(appId: $appId, assetsUrl: $assetsUrl, manifest: $manifest, inheritedModuleUids: $inheritedModuleUids) {
     userErrors {
       message

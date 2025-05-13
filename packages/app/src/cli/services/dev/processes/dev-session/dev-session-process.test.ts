@@ -9,14 +9,17 @@ import {
   testAppLinked,
   testDeveloperPlatformClient,
   testFlowActionExtension,
+  testThemeExtensions,
   testUIExtension,
   testWebhookExtensions,
 } from '../../../../models/app/app.test-data.js'
+import {getUploadURL} from '../../../bundle.js'
 import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
+import {readdir} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
@@ -389,6 +392,84 @@ describe('pushUpdatesForDevSession', () => {
     expect(devSessionStatusManager.status.statusMessage).toEqual({
       message: 'Validation error in your app configuration',
       type: 'error',
+    })
+  })
+
+  test('manifest sent in update payload only includes affected extensions', async () => {
+    // Given
+    vi.mocked(readdir).mockResolvedValue(['assets', 'assets/updated-extension'])
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+
+    const updatedExtension = await testUIExtension()
+    updatedExtension.deployConfig = vi.fn().mockResolvedValue({})
+    const unaffectedExtension = await testThemeExtensions()
+    const appWithMultipleExtensions = testAppLinked({
+      allExtensions: [updatedExtension, unaffectedExtension],
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {
+      app: appWithMultipleExtensions,
+      extensionEvents: [{type: 'updated', extension: updatedExtension}],
+    })
+    await flushPromises()
+
+    // Then
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith({
+      shopFqdn: 'test.myshopify.com',
+      appId: 'app123',
+      // Assets URL is empty because the affected extension has no assets
+      assetsUrl: undefined,
+      manifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            uid: 'test-ui-extension-uid',
+            assets: 'test-ui-extension-uid',
+            handle: updatedExtension.handle,
+            type: updatedExtension.externalType,
+            target: updatedExtension.contextValue,
+            config: {},
+          },
+        ],
+      },
+      // The unaffected extension is listed in inheritedModuleUids
+      inheritedModuleUids: [unaffectedExtension.uid],
+    })
+  })
+
+  test('assetsURL is only generated if affected extensions have assets', async () => {
+    // Given
+    vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
+    // Mock readdir to return that a folder for the extension assets exists
+    vi.mocked(readdir).mockResolvedValue(['other-folders', 'ui-extension-uid'])
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+
+    const extensionWithAssets = await testUIExtension({handle: 'ui-extension-handle', uid: 'ui-extension-uid'})
+    extensionWithAssets.deployConfig = vi.fn().mockResolvedValue({})
+    const app = testAppLinked({allExtensions: [extensionWithAssets]})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {
+      app,
+      extensionEvents: [{type: 'updated', extension: extensionWithAssets}],
+    })
+    await flushPromises()
+
+    // Then
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith({
+      shopFqdn: 'test.myshopify.com',
+      appId: 'app123',
+      assetsUrl: 'https://gcs.url',
+      manifest: expect.any(Object),
+      inheritedModuleUids: [],
     })
   })
 })

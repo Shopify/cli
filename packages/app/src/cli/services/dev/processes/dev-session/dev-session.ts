@@ -210,20 +210,20 @@ export class DevSession {
    * @param updating - Whether the dev session is being updated or created
    */
   private async bundleExtensionsAndUpload(appEvent: AppEvent): Promise<DevSessionResult> {
-    // Every new bundle process gets its own controller. This way we can cancel any previous one if a new change
-    // is detected even when multiple events are triggered very quickly (which causes weird edge cases)
+    // Every time we create a new bundle, we need a new controller.
+    // At this point the existing `currentBundleController` is already aborted.
     const newBundleController = new AbortController()
     this.currentBundleController = newBundleController
 
     try {
       const {manifest, inheritedModuleUids, assets} = await this.createManifest(appEvent)
-      const signedURL = await this.uploadAssetsIfNeeded(assets, newBundleController)
+      const signedURL = await this.uploadAssetsIfNeeded(assets, newBundleController, !this.statusManager.status.isReady)
 
       if (newBundleController.signal.aborted) return {status: 'aborted'}
       const payload = {
         shopFqdn: this.options.storeFqdn,
         appId: this.options.appId,
-        assetsUrl: signedURL ?? '',
+        assetsUrl: signedURL,
         manifest,
         inheritedModuleUids,
       }
@@ -295,7 +295,11 @@ export class DevSession {
    * @param bundleController - abortController to abort the bundle process if a new change is detected
    * @returns The signed URL if we uploaded any assets, otherwise undefined
    */
-  private async uploadAssetsIfNeeded(assets: string[], bundleController: AbortController): Promise<string | undefined> {
+  private async uploadAssetsIfNeeded(
+    assets: string[],
+    bundleController: AbortController,
+    includeManifest: boolean,
+  ): Promise<string | undefined> {
     if (!assets.length) return undefined
     const compressedBundlePath = joinPath(
       dirname(this.bundlePath),
@@ -304,7 +308,9 @@ export class DevSession {
 
     // Create zip file with everything
     if (bundleController.signal.aborted) return undefined
-    const filePattern = [...assets.map((ext) => `${ext}/**`), 'manifest.json', '!**/*.js.map']
+    const filePattern = [...assets.map((ext) => `${ext}/**`), '!**/*.js.map']
+    if (includeManifest) filePattern.push('manifest.json')
+
     await compressBundle(this.bundlePath, compressedBundlePath, filePattern)
 
     // Get a signed URL to upload the zip file
