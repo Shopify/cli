@@ -364,7 +364,7 @@ describe('createApp', () => {
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       org.id,
       CreateApp,
       'token',
@@ -665,7 +665,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -693,6 +693,10 @@ describe('deploy', () => {
       },
       undefined,
       {requestMode: 'slow-request'},
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
     )
   })
 
@@ -773,6 +777,10 @@ describe('deploy', () => {
       },
       undefined,
       {requestMode: 'slow-request'},
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
     )
   })
 
@@ -887,7 +895,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -942,7 +950,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -1048,7 +1056,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       AppVersions,
       'token',
