@@ -723,7 +723,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -803,7 +803,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
