@@ -696,6 +696,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
               type: mod.specificationIdentifier,
               handle: mod.handle,
               config: JSON.parse(mod.config),
+              ...(mod.context ? {target: mod.context} : {}),
             })),
           },
         }
