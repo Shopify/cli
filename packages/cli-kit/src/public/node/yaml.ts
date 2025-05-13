@@ -5,7 +5,7 @@ import YAML from 'yaml'
  * Given a YAML string, it returns an object.
  *
  * @param input - YAML string.
- * @returns object.
+ * @returns Object.
  */
 export function decodeYaml(input: string): JsonMapType {
   const normalizedInput = input.replace(/\r\n$/g, '\n')
@@ -15,7 +15,7 @@ export function decodeYaml(input: string): JsonMapType {
 /**
  * Given an object, it returns a YAML string.
  *
- * @param content - object.
+ * @param content - Object.
  * @returns YAML string.
  */
 export function encodeYaml(content: JsonMapType | object): string {
