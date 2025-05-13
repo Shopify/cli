@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {downloadBinary, javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
+import {downloadBinary, javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -17,8 +17,8 @@ import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
-const ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS = ['0', '1']
-export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '1'
+const ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS = ['2']
+export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
@@ -240,6 +240,18 @@ export async function runWasmOpt(modulePath: string) {
   outputDebug(`Wasm binary: ${wasmOptBinary().name}`)
   outputDebug('Optimizing this wasm binary using wasm-opt.')
   await exec(command, args, {cwd: wasmOptDir})
+}
+
+export async function runTrampoline(modulePath: string) {
+  const trampoline = trampolineBinary()
+  await downloadBinary(trampoline)
+
+  const command = trampoline.path
+
+  const args = ['-i', modulePath, '-o', modulePath]
+  outputDebug(`command: ${command}`)
+  outputDebug('Applying trampoline to the wasm binary.')
+  await exec(command, args)
 }
 
 export async function runJavy(

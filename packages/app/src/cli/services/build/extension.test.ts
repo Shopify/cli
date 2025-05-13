@@ -1,6 +1,6 @@
 import {buildFunctionExtension} from './extension.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
-import {buildJSFunction, runWasmOpt} from '../function/build.js'
+import {buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -158,6 +158,25 @@ describe('buildFunctionExtension', () => {
 
     // Then
     expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  test('performs trampoline execution by default', async () => {
+    // Given
+    vi.mocked(fileExistsSync).mockResolvedValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(runTrampoline).toHaveBeenCalled()
   })
 
   test('skips wasm-opt execution when the disable-wasm-opt is true', async () => {
