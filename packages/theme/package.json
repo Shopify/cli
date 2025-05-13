@@ -51,7 +51,7 @@
     "yaml": "2.7.0"
   },
   "devDependencies": {
-    "@shopify/theme-hot-reload": "^0.0.11",
+    "@shopify/theme-hot-reload": "^0.0.18",
     "@vitest/coverage-istanbul": "^1.6.0",
     "node-stream-zip": "^1.15.0"
   },

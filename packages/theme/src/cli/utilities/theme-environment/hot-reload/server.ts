@@ -17,6 +17,7 @@ import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
+import {NodeTypes, toLiquidHtmlAST, walk} from '@shopify/liquid-html-parser'
 import EventEmitter from 'node:events'
 import type {
   HotReloadEvent,
@@ -24,8 +25,17 @@ import type {
   HotReloadOpenEvent,
   HotReloadFullEvent,
 } from '@shopify/theme-hot-reload'
-import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeAsset, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from '../types.js'
+
+// --- Section tag content cache ---
+
+interface TagContent {
+  content: string
+  changed: boolean
+}
+
+const tagContentCache = new Map<string, {checksum: string; stylesheet: TagContent; javascript: TagContent}>()
 
 // --- Template Replacers ---
 
@@ -352,6 +362,7 @@ function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
   return {
     sectionNames: type === 'sections' ? findSectionNamesToReload(key, ctx) : [],
     replaceTemplates: needsTemplateUpdate(key) ? getInMemoryTemplates(ctx) : {},
+    updatedFileParts: getUpdatedFileParts(key, ctx),
   }
 }
 
@@ -391,4 +402,53 @@ export function handleHotReloadScriptInjection(html: string, ctx: DevServerConte
 
 function isAsset(key: string) {
   return key.startsWith('assets/')
+}
+
+function getUpdatedFileParts(key: string, ctx: DevServerContext): {stylesheetTag: boolean; javascriptTag: boolean} {
+  const file = ctx.localThemeFileSystem.files.get(key)
+  const validPrefixes = ['sections/', 'snippets/', 'blocks/']
+  const isValidFileType = validPrefixes.some((prefix) => key.startsWith(prefix)) && key.endsWith('.liquid')
+
+  if (!file || !isValidFileType) {
+    return {stylesheetTag: false, javascriptTag: false}
+  }
+
+  const tagContents = getTagContents(file)
+
+  return {
+    stylesheetTag: tagContents.stylesheet.changed,
+    javascriptTag: tagContents.javascript.changed,
+  }
+}
+
+function getTagContents(file: ThemeAsset) {
+  const cached = tagContentCache.get(file.key)
+  const cacheEntry = {
+    checksum: file.checksum,
+    stylesheet: {content: '', changed: false},
+    javascript: {content: '', changed: false},
+  }
+
+  if (cached?.checksum === file.checksum) {
+    return cached
+  }
+
+  tagContentCache.delete(file.key)
+
+  if (!file.value) return cacheEntry
+
+  walk(toLiquidHtmlAST(file.value), (node) => {
+    if (node.type !== NodeTypes.LiquidRawTag) return
+
+    if (node.name === 'stylesheet' || node.name === 'javascript') {
+      const content = node.body.value
+      const changed = !cached || content !== cached[node.name].content
+
+      cacheEntry[node.name] = {content, changed}
+    }
+  })
+
+  tagContentCache.set(file.key, cacheEntry)
+
+  return cacheEntry
 }
