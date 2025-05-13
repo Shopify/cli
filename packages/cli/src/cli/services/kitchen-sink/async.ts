@@ -1,4 +1,4 @@
-import {renderConcurrent, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
@@ -42,17 +42,31 @@ export async function asyncTasks() {
   })
 
   // renderTasks
+  interface TaskContext {
+    startTime: number
+    duration: string
+  }
   const tasks = [
     {
       title: 'Installing dependencies',
-      task: async () => {
+      task: async (context: TaskContext) => {
+        context.startTime = Date.now()
         await new Promise((resolve) => setTimeout(resolve, 2000))
       },
     },
     {
       title: 'Downloading assets',
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+      task: async (context: TaskContext, _task: Task<TaskContext>, updateTitle: (title: string) => void) => {
+        updateTitle('Downloading assets (1/3)')
+        await new Promise((resolve) => setTimeout(resolve, 600))
+
+        updateTitle('Downloading assets (2/3)')
+        await new Promise((resolve) => setTimeout(resolve, 600))
+
+        updateTitle('Downloading assets (3/3)')
+        await new Promise((resolve) => setTimeout(resolve, 600))
+
+        context.duration = ((Date.now() - context.startTime) / 1000).toFixed(2)
       },
     },
   ]
