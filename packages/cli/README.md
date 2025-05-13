@@ -1944,8 +1944,7 @@ ARGUMENTS
 
 FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
-  -u, --clone-url=<value>  [default: https://github.com/Shopify/dawn.git] The Git URL to clone from. Defaults to
-                           Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
+  -u, --clone-url=<value>  The Git URL to clone from. Defaults to Shopify's example theme.
       --no-color           Disable color output.
       --path=<value>       The path to your theme directory.
       --verbose            Increase the verbosity of the output.
@@ -1955,14 +1954,12 @@ DESCRIPTION
 
   Clones a Git repository to your local machine to use as the starting point for building a theme.
 
-  If no Git repository is specified, then this command creates a copy of "Dawn" (https://github.com/Shopify/dawn),
-  Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted
-  to enter one.
+  If no Git repository is specified, then this command creates a copy of Shopify's example theme, with the specified
+  name in the current folder. If no name is provided, then you're prompted to enter one.
 
-  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However,
-  the theme that you submit needs to be "substantively different from Dawn"
-  (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about
-  the "ways that you can use Dawn" (https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
+  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
+  point. However, the theme that you submit needs to be "substantively different from existing themes"
+  (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
 ```
 
 ## `shopify theme language-server`

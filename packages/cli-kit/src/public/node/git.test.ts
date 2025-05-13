@@ -13,6 +13,7 @@ const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
 const mockedCheckout = vi.fn(async () => ({}))
 const mockedGitStatus = vi.fn(async (): Promise<{isClean: () => boolean}> => ({isClean: () => false}))
+const mockedTags = vi.fn(async () => ({}))
 const simpleGitProperties = {
   clone: mockedClone,
   init: mockedInit,
@@ -23,6 +24,7 @@ const simpleGitProperties = {
   raw: mockedRaw,
   checkoutLocalBranch: mockedCheckout,
   status: mockedGitStatus,
+  tags: mockedTags,
 }
 
 vi.mock('simple-git')
@@ -349,6 +351,31 @@ describe('ensureIsClean()', () => {
 
     // Then
     await expect(git.ensureIsClean()).resolves.toBeUndefined()
+  })
+})
+
+describe('getLatestTag()', () => {
+  test('returns the latest tag from git', async () => {
+    // Given
+    const expectedTag = 'v1.0.0'
+    mockedTags.mockResolvedValue({latest: expectedTag})
+
+    // When
+    const tag = await git.getLatestTag()
+
+    // Then
+    await expect(git.getLatestTag()).resolves.toBe(expectedTag)
+  })
+
+  test('return undefined when no tags exist', async () => {
+    // Given
+    mockedTags.mockResolvedValue({})
+
+    // When
+    const tag = await git.getLatestTag()
+
+    // Then
+    await expect(git.getLatestTag()).resolves.toBeUndefined()
   })
 })
 
