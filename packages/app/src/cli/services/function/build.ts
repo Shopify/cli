@@ -249,8 +249,7 @@ export async function runTrampoline(modulePath: string) {
   const command = trampoline.path
 
   const args = ['-i', modulePath, '-o', modulePath]
-  outputDebug(`command: ${command}`)
-  outputDebug('Applying trampoline to the wasm binary.')
+  outputDebug(`Applying trampoline to the wasm binary with command: ${command} ${args.join(' ')}`)
   await exec(command, args)
 }
 

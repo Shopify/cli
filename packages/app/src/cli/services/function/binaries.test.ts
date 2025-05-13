@@ -339,9 +339,10 @@ describe('trampoline', () => {
     const url = trampoline.downloadUrl('darwin', 'x64')
 
     // Then
-    expect(url).toMatch(
-      /https:\/\/github.com\/Shopify\/shopify-function-wasm-api\/releases\/download\/shopify_function_trampoline\/v1.0.0\/shopify-function-trampoline-x86_64-macos-v\d\.\d\.\d.gz/,
+    const expectedUrlRegex = new RegExp(
+      `https://github.com/Shopify/shopify-function-wasm-api/releases/download/shopify_function_trampoline/${trampoline.version}/shopify-function-trampoline-x86_64-macos-${trampoline.version}.gz`,
     )
+    expect(url).toMatch(expectedUrlRegex)
   })
 
   test('downloads trampoline', async () => {
