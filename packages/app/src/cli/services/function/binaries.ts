@@ -39,24 +39,26 @@ export interface BinaryDependencies {
 
 // Derives the binary dependencies to be used with a particular
 // `@shopify/shopify_function` package version.
-export function deriveJavaScriptBinaryDependencies(version: string): BinaryDependencies | null {
+export function deriveJavaScriptBinaryDependencies(version: string): BinaryDependencies {
   if (version === '0' || version === '1') {
     return {
       functionRunner: 'v7.0.1',
       javy: 'v4.0.0',
       javyPlugin: 'v1',
     }
-  }
-
-  if (version === '2') {
+  } else if (version === '2') {
+    return {
+      functionRunner: PREFERRED_FUNCTION_RUNNER_VERSION,
+      javy: PREFERRED_JAVY_VERSION,
+      javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
+    }
+  } else {
     return {
       functionRunner: PREFERRED_FUNCTION_RUNNER_VERSION,
       javy: PREFERRED_JAVY_VERSION,
       javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
     }
   }
-
-  return null
 }
 
 // The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
@@ -172,24 +174,24 @@ let _functionRunner: DownloadableBinary
 let _wasmOpt: DownloadableBinary
 let _trampoline: DownloadableBinary
 
-export function javyBinary(version: string | null) {
-  let currentVersion = version !== null ? version : PREFERRED_JAVY_VERSION
+export function javyBinary(version?: string) {
+  let currentVersion = version ? version : PREFERRED_JAVY_VERSION
   if (!_javy) {
     _javy = new Executable('javy', currentVersion, 'bytecodealliance/javy')
   }
   return _javy
 }
 
-export function javyPluginBinary(version: string | null) {
-  let currentVersion = version !== null ? version : PREFERRED_JAVY_PLUGIN_VERSION
+export function javyPluginBinary(version?: string) {
+  let currentVersion = version ? version : PREFERRED_JAVY_PLUGIN_VERSION
   if (!_javyPlugin) {
     _javyPlugin = new JavyPlugin(currentVersion)
   }
   return _javyPlugin
 }
 
-export function functionRunnerBinary(version: string | null) {
-  const currentVersion = version !== null ? version : PREFERRED_FUNCTION_RUNNER_VERSION
+export function functionRunnerBinary(version?: string) {
+  const currentVersion = version ? version : PREFERRED_FUNCTION_RUNNER_VERSION
   if (!_functionRunner) {
     _functionRunner = new Executable('function-runner', currentVersion, 'Shopify/function-runner')
   }

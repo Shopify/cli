@@ -142,9 +142,9 @@ describe('javy', () => {
 
 describe('javy-plugin', () => {
   test('properties are set correctly', () => {
-    expect(javyPlugin.name).toBe('shopify_functions_javy_v1')
+    expect(javyPlugin.name).toBe('shopify_functions_javy_v2')
     expect(javyPlugin.version).match(/^v\d+$/)
-    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v1.wasm$/)
+    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v2.wasm$/)
   })
 
   test('downloadUrl returns the correct URL', () => {
