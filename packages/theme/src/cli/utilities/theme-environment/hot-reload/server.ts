@@ -362,7 +362,7 @@ function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
   return {
     sectionNames: type === 'sections' ? findSectionNamesToReload(key, ctx) : [],
     replaceTemplates: needsTemplateUpdate(key) ? getInMemoryTemplates(ctx) : {},
-    liquidTagsModified: getLiquidTagsModified(key, ctx),
+    updatedFileParts: getUpdatedFileParts(key, ctx),
   }
 }
 
@@ -404,20 +404,20 @@ function isAsset(key: string) {
   return key.startsWith('assets/')
 }
 
-function getLiquidTagsModified(key: string, ctx: DevServerContext): {stylesheet: boolean; javascript: boolean} {
+function getUpdatedFileParts(key: string, ctx: DevServerContext): {stylesheetTag: boolean; javascriptTag: boolean} {
   const file = ctx.localThemeFileSystem.files.get(key)
   const validPrefixes = ['sections/', 'snippets/', 'blocks/']
   const isValidFileType = validPrefixes.some((prefix) => key.startsWith(prefix)) && key.endsWith('.liquid')
 
   if (!file || !isValidFileType) {
-    return {stylesheet: false, javascript: false}
+    return {stylesheetTag: false, javascriptTag: false}
   }
 
   const tagContents = getTagContents(file)
 
   return {
-    stylesheet: tagContents.stylesheet.changed,
-    javascript: tagContents.javascript.changed,
+    stylesheetTag: tagContents.stylesheet.changed,
+    javascriptTag: tagContents.javascript.changed,
   }
 }
 
