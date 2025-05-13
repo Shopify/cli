@@ -18,7 +18,7 @@ interface FunctionRunnerOptions {
 }
 
 export async function runFunction(options: FunctionRunnerOptions) {
-  const functionRunner = functionRunnerBinary()
+  const functionRunner = functionRunnerBinary(null);
   await downloadBinary(functionRunner)
 
   const args: string[] = []

@@ -10,11 +10,13 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const FUNCTION_RUNNER_VERSION = 'v8.0.1'
-const JAVY_VERSION = 'v4.0.0'
+export const PREFERRED_FUNCTION_RUNNER_VERSION = 'v8.0.1'
+
+// Javy dependencies.
+const PREFERRED_JAVY_VERSION = 'v5.0.3'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
-const JAVY_PLUGIN_VERSION = 'v1'
+const PREFERRED_JAVY_PLUGIN_VERSION = 'v2'
 
 const BINARYEN_VERSION = '123.0.0'
 
@@ -27,6 +29,34 @@ interface DownloadableBinary {
 
   downloadUrl(processPlatform: string, processArch: string): string
   processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void>
+}
+
+export interface BinaryDependencies {
+  functionRunner: string
+  javy: string
+  javyPlugin: string
+}
+
+// Derives the binary dependencies to be used with a particular
+// `@shopify/shopify_function` package version.
+export function deriveJavaScriptBinaryDependencies(version: string): BinaryDependencies | null {
+  if (version === '0' || version === '1') {
+    return {
+      functionRunner: 'v7.0.1',
+      javy: 'v4.0.0',
+      javyPlugin: 'v1',
+    }
+  }
+
+  if (version === '2') {
+    return {
+      functionRunner: PREFERRED_FUNCTION_RUNNER_VERSION,
+      javy: PREFERRED_JAVY_VERSION,
+      javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
+    }
+  }
+
+  return null
 }
 
 // The logic for determining the download URL and what to do with the response stream is _coincidentally_ the same for
@@ -44,6 +74,8 @@ class Executable implements DownloadableBinary {
     this.version = version
     this.release = release
     const filename = process.platform === 'win32' ? `${name}.exe` : name
+    // TODO(saul): concat the name and version since we can potentially have multiple binaries.
+    // e.g., old cli installatations.
     this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', filename)
     this.gitHubRepo = gitHubRepo
   }
@@ -99,19 +131,14 @@ class JavyPlugin implements DownloadableBinary {
   readonly version: string
   readonly path: string
 
-  constructor() {
-    this.name = `shopify_functions_javy_${JAVY_PLUGIN_VERSION}`
-    this.version = JAVY_PLUGIN_VERSION
-    this.path = joinPath(
-      dirname(fileURLToPath(import.meta.url)),
-      '..',
-      'bin',
-      `shopify_functions_javy_${JAVY_PLUGIN_VERSION}.wasm`,
-    )
+  constructor(version: string) {
+    this.name = `shopify_functions_javy_${version}`
+    this.version = version
+    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', `shopify_functions_javy_${version}.wasm`)
   }
 
   downloadUrl(_processPlatform: string, _processArch: string) {
-    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${JAVY_PLUGIN_VERSION}.wasm`
+    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${PREFERRED_JAVY_PLUGIN_VERSION}.wasm`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -145,23 +172,26 @@ let _functionRunner: DownloadableBinary
 let _wasmOpt: DownloadableBinary
 let _trampoline: DownloadableBinary
 
-export function javyBinary() {
+export function javyBinary(version: string | null) {
+  let currentVersion = version !== null ? version : PREFERRED_JAVY_VERSION
   if (!_javy) {
-    _javy = new Executable('javy', JAVY_VERSION, 'bytecodealliance/javy')
+    _javy = new Executable('javy', currentVersion, 'bytecodealliance/javy')
   }
   return _javy
 }
 
-export function javyPluginBinary() {
+export function javyPluginBinary(version: string | null) {
+  let currentVersion = version !== null ? version : PREFERRED_JAVY_PLUGIN_VERSION
   if (!_javyPlugin) {
-    _javyPlugin = new JavyPlugin()
+    _javyPlugin = new JavyPlugin(currentVersion)
   }
   return _javyPlugin
 }
 
-export function functionRunnerBinary() {
+export function functionRunnerBinary(version: string | null) {
+  const currentVersion = version !== null ? version : PREFERRED_FUNCTION_RUNNER_VERSION
   if (!_functionRunner) {
-    _functionRunner = new Executable('function-runner', FUNCTION_RUNNER_VERSION, 'Shopify/function-runner')
+    _functionRunner = new Executable('function-runner', currentVersion, 'Shopify/function-runner')
   }
   return _functionRunner
 }
