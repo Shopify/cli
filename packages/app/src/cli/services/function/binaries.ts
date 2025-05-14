@@ -168,7 +168,6 @@ class WasmOptExecutable implements DownloadableBinary {
   }
 }
 
-let _functionRunner: DownloadableBinary
 let _wasmOpt: DownloadableBinary
 let _trampoline: DownloadableBinary
 

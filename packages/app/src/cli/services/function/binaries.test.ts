@@ -5,6 +5,8 @@ import {
   javyPluginBinary,
   wasmOptBinary,
   trampolineBinary,
+  PREFERRED_JAVY_VERSION,
+  PREFERRED_FUNCTION_RUNNER_VERSION,
 } from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
@@ -30,7 +32,7 @@ describe('javy', () => {
     if (process.platform === 'win32') {
       expect(javy.path).toMatch(/(\/|\\)javy.exe$/)
     } else {
-      expect(javy.path).toMatch(/(\/|\\)javy$/)
+      expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}`)
     }
   })
 
@@ -179,7 +181,7 @@ describe('functionRunner', () => {
     if (process.platform === 'win32') {
       expect(functionRunner.path).toMatch(/(\/|\\)function-runner.exe$/)
     } else {
-      expect(functionRunner.path).toMatch(/(\/|\\)function-runner$/)
+      expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}`)
     }
   })
 
