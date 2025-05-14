@@ -172,12 +172,12 @@ let _wasmOpt: DownloadableBinary
 let _trampoline: DownloadableBinary
 
 export function javyBinary(version?: string) {
-  let currentVersion = version ? version : PREFERRED_JAVY_VERSION
+  const currentVersion = version ? version : PREFERRED_JAVY_VERSION
   return new Executable('javy', currentVersion, 'bytecodealliance/javy') as DownloadableBinary
 }
 
 export function javyPluginBinary(version?: string) {
-  let currentVersion = version ? version : PREFERRED_JAVY_PLUGIN_VERSION
+  const currentVersion = version ? version : PREFERRED_JAVY_PLUGIN_VERSION
   return new JavyPlugin(currentVersion) as DownloadableBinary
 }
 

@@ -59,7 +59,7 @@ export async function buildJSFunction(fun: ExtensionInstance<FunctionConfigType>
   const exports = jsExports(fun)
   const javyBuilder: JavyBuilder = exports.length === 0 ? DefaultJavyBuilder : new ExportJavyBuilder(exports)
 
-  let deps = await validateShopifyFunctionPackageVersion(fun)
+  const deps = await validateShopifyFunctionPackageVersion(fun)
 
   if (options.useTasks) {
     return buildJSFunctionWithTasks(fun, options, javyBuilder, deps)
@@ -303,12 +303,19 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const extensions = app.allExtensions.filter((ext) => ext.features.includes('function') && ext.isJavaScript)
 
-  for (const ext of extensions) {
-    let deps = await validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
-    const javy = javyBinary(deps.javy)
-    const plugin = javyPluginBinary(deps.javyPlugin)
-    await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
-  }
+  const depsPromises = extensions.map((ext) => {
+    return validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
+  })
+
+  const deps = await Promise.all(depsPromises)
+
+  const downloadPromises: Promise<void>[] = []
+  deps.forEach((dep) => {
+    downloadPromises.push(downloadBinary(javyBinary(dep.javy)))
+    downloadPromises.push(downloadBinary(javyPluginBinary(dep.javyPlugin)))
+  })
+
+  await Promise.all(downloadPromises)
 }
 
 export interface JavyBuilder {
