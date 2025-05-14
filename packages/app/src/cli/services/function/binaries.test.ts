@@ -31,7 +31,7 @@ describe('javy', () => {
     expect(javy.name).toBe('javy')
     expect(javy.version).match(/^v\d\.\d\.\d$/)
     if (process.platform === 'win32') {
-      expect(javy.path).toMatch(/(\/|\\)javy.exe$/)
+      expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}.exe`)
     } else {
       expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}`)
     }
@@ -180,7 +180,7 @@ describe('functionRunner', () => {
     expect(functionRunner.name).toBe('function-runner')
     expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
     if (process.platform === 'win32') {
-      expect(functionRunner.path).toMatch(/(\/|\\)function-runner.exe$/)
+      expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}.exe`)
     } else {
       expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}`)
     }
@@ -331,7 +331,7 @@ describe('trampoline', () => {
     expect(trampoline.name).toBe('shopify-function-trampoline')
     expect(trampoline.version).match(/v\d.\d.\d$/)
     if (process.platform === 'win32') {
-      expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline\.exe$/)
+      expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}.exe`)
     } else {
       expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}`)
     }
