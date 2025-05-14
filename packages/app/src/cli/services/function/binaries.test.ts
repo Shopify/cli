@@ -7,6 +7,7 @@ import {
   trampolineBinary,
   PREFERRED_JAVY_VERSION,
   PREFERRED_FUNCTION_RUNNER_VERSION,
+  TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
@@ -332,7 +333,7 @@ describe('trampoline', () => {
     if (process.platform === 'win32') {
       expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline\.exe$/)
     } else {
-      expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline$/)
+      expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}`)
     }
   })
 
