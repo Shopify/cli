@@ -167,8 +167,8 @@ importers:
         specifier: 3.79.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.15.1
-        version: 3.15.1
+        specifier: 3.17.0
+        version: 3.17.0
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
@@ -681,11 +681,11 @@ importers:
         specifier: ^2.8.2
         version: 2.8.2
       '@shopify/theme-check-node':
-        specifier: 3.15.1
-        version: 3.15.1
+        specifier: 3.17.0
+        version: 3.17.0
       '@shopify/theme-language-server-node':
-        specifier: 2.14.1
-        version: 2.14.1
+        specifier: 2.15.2
+        version: 2.15.2
       chokidar:
         specifier: 3.6.0
         version: 3.6.0
@@ -6612,8 +6612,8 @@ packages:
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
 
-  /@shopify/theme-check-common@3.15.1:
-    resolution: {integrity: sha512-jv9Z+huH3vK0IIEkxUtncTezpPx6GDM6Vy8sxU1zwGdq+Td6TUGJ2tDvEW2QBEEVdKv4WQsnm3L6cpQzYlyW+g==}
+  /@shopify/theme-check-common@3.17.0:
+    resolution: {integrity: sha512-8sKKT7kL3v1Ui/tNzSUMDyqAdATktsdhWrhrTNd90xuPMr9Z3ofXEidTeFgdCLpOpATtmvnUIeSGY2AyhCA8qA==}
     dependencies:
       '@shopify/liquid-html-parser': 2.8.2
       cross-fetch: 4.0.0
@@ -6627,22 +6627,22 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@3.15.1:
-    resolution: {integrity: sha512-v9jR1pZGoDGp9DBiCrMWSzku2P3bjO8hjSYeKTLf1gUmsEKmURC9y07dnhSDB6ZnYkVccTcNTupEMiNB84tJAw==}
+  /@shopify/theme-check-docs-updater@3.17.0:
+    resolution: {integrity: sha512-g6CIKiMR/o9D8cGZ0VbqRkeF4GRYQ8rGAn1GptH7XGHAyBtPFUs1uJJ04MenVuiIblbhoQfOz9ReHHzA3a2IfA==}
     hasBin: true
     dependencies:
-      '@shopify/theme-check-common': 3.15.1
+      '@shopify/theme-check-common': 3.17.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
     dev: false
 
-  /@shopify/theme-check-node@3.15.1:
-    resolution: {integrity: sha512-LSOznZY+kz54L7jQWHRJXxIDB+/7TnJ1fNvQ8bxgRFncWbn6pl3M3PxIvbPAMc43mwlWQtxKLu8Zb6yXBW4gNw==}
+  /@shopify/theme-check-node@3.17.0:
+    resolution: {integrity: sha512-Ai5NEGyD1iU96ydnqLUlFmmQhuKTlk+Fspfk/9RjBP0YiZe+wT9I7p2gN0/qfKeqlgc+xlV9AfycH0cGqFRDQg==}
     dependencies:
-      '@shopify/theme-check-common': 3.15.1
-      '@shopify/theme-check-docs-updater': 3.15.1
+      '@shopify/theme-check-common': 3.17.0
+      '@shopify/theme-check-docs-updater': 3.17.0
       glob: 8.1.0
       vscode-uri: 3.0.8
       yaml: 2.7.0
@@ -6654,11 +6654,11 @@ packages:
     resolution: {integrity: sha512-l+IBuk+rG5T+5PKYyPrwgh7PDCxmEMpBFJeen6PM+h6RI4CDhAGRaiwUo5eN1o1JX51HdHHCts3rTEW+KUgq+Q==}
     dev: true
 
-  /@shopify/theme-language-server-common@2.14.1:
-    resolution: {integrity: sha512-goanoBuvHr8b3F4A1tu+WTiXCZF7FHuXABYflNuN24xNyg5PcwpMU1dYcw6RcPfoLtfgSa2ZrlHzZ9wW8o+vnw==}
+  /@shopify/theme-language-server-common@2.15.2:
+    resolution: {integrity: sha512-GEnlkc36YiOX/aG9N35WU0h9B+dferu96d9/4m0fHXgEyosq2XMYpKGSPN14l6mtUhkCAKfMUp+UTwSGbpZoZg==}
     dependencies:
       '@shopify/liquid-html-parser': 2.8.2
-      '@shopify/theme-check-common': 3.15.1
+      '@shopify/theme-check-common': 3.17.0
       '@vscode/web-custom-data': 0.4.9
       vscode-css-languageservice: 6.3.2
       vscode-json-languageservice: 5.3.11
@@ -6669,12 +6669,12 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-language-server-node@2.14.1:
-    resolution: {integrity: sha512-IqCW4phmSliCEerVaz0dXKUp8I6mVxGiVqz7/TzAnGAIiXbDUE6w+Z4sFzJHfSvqmVfYj0CBCy6eIHYu5jlhSg==}
+  /@shopify/theme-language-server-node@2.15.2:
+    resolution: {integrity: sha512-15e/3MGksibNxRpQkQ9JAn10suHh3ZXhza9JQrImRuGcxdbaho+XONaonL1z+sbbo63SPJTy8VdzfiND9a8YTQ==}
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.15.1
-      '@shopify/theme-check-node': 3.15.1
-      '@shopify/theme-language-server-common': 2.14.1
+      '@shopify/theme-check-docs-updater': 3.17.0
+      '@shopify/theme-check-node': 3.17.0
+      '@shopify/theme-language-server-common': 2.15.2
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
