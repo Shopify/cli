@@ -13,10 +13,10 @@ import {fileURLToPath} from 'node:url'
 export const PREFERRED_FUNCTION_RUNNER_VERSION = 'v8.0.1'
 
 // Javy dependencies.
-const PREFERRED_JAVY_VERSION = 'v5.0.3'
+export const PREFERRED_JAVY_VERSION = 'v5.0.3'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
-const PREFERRED_JAVY_PLUGIN_VERSION = 'v2'
+export const PREFERRED_JAVY_PLUGIN_VERSION = 'v2'
 
 const BINARYEN_VERSION = '123.0.0'
 
@@ -39,7 +39,7 @@ export interface BinaryDependencies {
 
 // Derives the binary dependencies to be used with a particular
 // `@shopify/shopify_function` package version.
-export function deriveJavaScriptBinaryDependencies(version: string): BinaryDependencies {
+export function deriveJavaScriptBinaryDependencies(version: string): BinaryDependencies | null {
   if (version === '0' || version === '1') {
     return {
       functionRunner: 'v7.0.1',
@@ -53,11 +53,7 @@ export function deriveJavaScriptBinaryDependencies(version: string): BinaryDepen
       javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
     }
   } else {
-    return {
-      functionRunner: PREFERRED_FUNCTION_RUNNER_VERSION,
-      javy: PREFERRED_JAVY_VERSION,
-      javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
-    }
+    return null
   }
 }
 
@@ -75,9 +71,13 @@ class Executable implements DownloadableBinary {
     this.name = name
     this.version = version
     this.release = release
-    const filename = process.platform === 'win32' ? `${name}.exe` : name
-    // TODO(saul): concat the name and version since we can potentially have multiple binaries.
-    // e.g., old cli installatations.
+
+    let filename: string
+    // add version to the filename if it's function-runner
+    filename = this.name === 'function-runner' ? `${name}-${version}` : name
+    // add .exe if it's windows
+    filename = process.platform === 'win32' ? `${filename}.exe` : filename
+
     this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', filename)
     this.gitHubRepo = gitHubRepo
   }

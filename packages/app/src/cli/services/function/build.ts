@@ -80,7 +80,7 @@ async function buildJSFunctionWithoutTasks(
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Bundling JS function...\n`)
-    await builder.bundle(fun, options, deps)
+    await builder.bundle(fun, options)
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Running javy...\n`)
@@ -107,7 +107,7 @@ export async function buildJSFunctionWithTasks(
     {
       title: 'Bundling JS function',
       task: async () => {
-        await builder.bundle(fun, options, deps)
+        await builder.bundle(fun, options)
       },
     },
     {
@@ -185,7 +185,6 @@ async function validateShopifyFunctionPackageVersion(
 export async function bundleExtension(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
-  binaryDeps: BinaryDependencies,
   processEnv = process.env,
 ) {
   const entryPoint = await checkForShopifyFunctionRuntimeEntrypoint(fun)
@@ -303,19 +302,15 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const ext = app.allExtensions.find((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (ext) {
-    let deps = await validateShopifyFunctionPackageVersion(ext)
-    const javy = javyBinary(null)
-    const plugin = javyPluginBinary(null)
+    let deps = await validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
+    const javy = javyBinary()
+    const plugin = javyPluginBinary()
     await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
   }
 }
 
 export interface JavyBuilder {
-  bundle(
-    fun: ExtensionInstance<FunctionConfigType>,
-    options: JSFunctionBuildOptions,
-    binaryDeps: BinaryDependencies,
-  ): Promise<BuildResult>
+  bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<BuildResult>
   compile(
     fun: ExtensionInstance<FunctionConfigType>,
     options: JSFunctionBuildOptions,
@@ -324,12 +319,8 @@ export interface JavyBuilder {
 }
 
 export const DefaultJavyBuilder: JavyBuilder = {
-  async bundle(
-    fun: ExtensionInstance<FunctionConfigType>,
-    options: JSFunctionBuildOptions,
-    binaryDeps: BinaryDependencies,
-  ) {
-    return bundleExtension(fun, options, binaryDeps)
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+    return bundleExtension(fun, options)
   },
 
   async compile(
@@ -349,12 +340,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     this.exports = exports
   }
 
-  async bundle(
-    fun: ExtensionInstance<FunctionConfigType>,
-    options: JSFunctionBuildOptions,
-    binaryDeps: BinaryDependencies,
-    processEnv = process.env,
-  ) {
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions, processEnv = process.env) {
     await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
     const contents = this.entrypointContents
