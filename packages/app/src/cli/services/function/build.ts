@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {downloadBinary, javyBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
+import {downloadBinary, javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -240,6 +240,17 @@ export async function runWasmOpt(modulePath: string) {
   outputDebug(`Wasm binary: ${wasmOptBinary().name}`)
   outputDebug('Optimizing this wasm binary using wasm-opt.')
   await exec(command, args, {cwd: wasmOptDir})
+}
+
+export async function runTrampoline(modulePath: string) {
+  const trampoline = trampolineBinary()
+  await downloadBinary(trampoline)
+
+  const command = trampoline.path
+
+  const args = ['-i', modulePath, '-o', modulePath]
+  outputDebug(`Applying trampoline to the wasm binary with command: ${command} ${args.join(' ')}`)
+  await exec(command, args)
 }
 
 export async function runJavy(

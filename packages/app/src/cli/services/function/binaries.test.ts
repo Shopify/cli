@@ -1,4 +1,11 @@
-import {javyBinary, functionRunnerBinary, downloadBinary, javyPluginBinary, wasmOptBinary} from './binaries.js'
+import {
+  javyBinary,
+  functionRunnerBinary,
+  downloadBinary,
+  javyPluginBinary,
+  wasmOptBinary,
+  trampolineBinary,
+} from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
@@ -311,5 +318,44 @@ describe('wasm-opt', () => {
     // Then
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(wasmOpt.path)).resolves.toBeTruthy()
+  })
+})
+
+describe('trampoline', () => {
+  const trampoline = trampolineBinary()
+
+  test('properties are set correctly', () => {
+    expect(trampoline.name).toBe('shopify-function-trampoline')
+    expect(trampoline.version).match(/v\d.\d.\d$/)
+    if (process.platform === 'win32') {
+      expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline\.exe$/)
+    } else {
+      expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline$/)
+    }
+  })
+
+  test('downloadUrl returns the correct URL', () => {
+    // When
+    const url = trampoline.downloadUrl('darwin', 'x64')
+
+    // Then
+    const expectedUrlRegex = new RegExp(
+      `https://github.com/Shopify/shopify-function-wasm-api/releases/download/shopify_function_trampoline/${trampoline.version}/shopify-function-trampoline-x86_64-macos-${trampoline.version}.gz`,
+    )
+    expect(url).toMatch(expectedUrlRegex)
+  })
+
+  test('downloads trampoline', async () => {
+    // Given
+    await removeFile(trampoline.path)
+    await expect(fileExists(trampoline.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('trampoline')))
+
+    // When
+    await downloadBinary(trampoline)
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(trampoline.path)).resolves.toBeTruthy()
   })
 })
