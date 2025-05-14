@@ -53,7 +53,7 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
  * @returns A promise that resolves with a boolean indicating if the port is available.
  */
 export async function checkPortAvailability(portNumber: number): Promise<boolean> {
-  return (await port.checkPort(portNumber)) === portNumber
+  return (await port.checkPort(portNumber, 'localhost')) === portNumber
 }
 
 /**
