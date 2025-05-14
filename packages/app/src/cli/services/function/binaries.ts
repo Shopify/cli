@@ -73,8 +73,8 @@ class Executable implements DownloadableBinary {
     this.release = release
 
     let filename: string
-    // add version to the filename if it's function-runner
-    filename = this.name === 'function-runner' ? `${name}-${version}` : name
+    // add version to the filename
+    filename = `${name}-${version}`
     // add .exe if it's windows
     filename = process.platform === 'win32' ? `${filename}.exe` : filename
 
@@ -140,7 +140,7 @@ class JavyPlugin implements DownloadableBinary {
   }
 
   downloadUrl(_processPlatform: string, _processArch: string) {
-    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${PREFERRED_JAVY_PLUGIN_VERSION}.wasm`
+    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${this.version}.wasm`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -168,34 +168,23 @@ class WasmOptExecutable implements DownloadableBinary {
   }
 }
 
-let _javy: DownloadableBinary
-let _javyPlugin: DownloadableBinary
 let _functionRunner: DownloadableBinary
 let _wasmOpt: DownloadableBinary
 let _trampoline: DownloadableBinary
 
 export function javyBinary(version?: string) {
   let currentVersion = version ? version : PREFERRED_JAVY_VERSION
-  if (!_javy) {
-    _javy = new Executable('javy', currentVersion, 'bytecodealliance/javy')
-  }
-  return _javy
+  return new Executable('javy', currentVersion, 'bytecodealliance/javy') as DownloadableBinary
 }
 
 export function javyPluginBinary(version?: string) {
   let currentVersion = version ? version : PREFERRED_JAVY_PLUGIN_VERSION
-  if (!_javyPlugin) {
-    _javyPlugin = new JavyPlugin(currentVersion)
-  }
-  return _javyPlugin
+  return new JavyPlugin(currentVersion) as DownloadableBinary
 }
 
 export function functionRunnerBinary(version?: string) {
   const currentVersion = version ? version : PREFERRED_FUNCTION_RUNNER_VERSION
-  if (!_functionRunner) {
-    _functionRunner = new Executable('function-runner', currentVersion, 'Shopify/function-runner')
-  }
-  return _functionRunner
+  return new Executable('function-runner', currentVersion, 'Shopify/function-runner') as DownloadableBinary
 }
 
 export function wasmOptBinary() {

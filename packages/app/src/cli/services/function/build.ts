@@ -300,11 +300,12 @@ export async function runJavy(
 }
 
 export async function installJavy(app: AppInterface) {
-  const ext = app.allExtensions.find((ext) => ext.features.includes('function') && ext.isJavaScript)
-  if (ext) {
+  const extensions = app.allExtensions.filter((ext) => ext.features.includes('function') && ext.isJavaScript)
+
+  for (const ext of extensions) {
     let deps = await validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
-    const javy = javyBinary()
-    const plugin = javyPluginBinary()
+    const javy = javyBinary(deps.javy)
+    const plugin = javyPluginBinary(deps.javyPlugin)
     await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
   }
 }
