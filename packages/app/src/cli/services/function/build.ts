@@ -158,7 +158,7 @@ async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<F
   return entryPoint
 }
 
-async function validateShopifyFunctionPackageVersion(
+export async function validateShopifyFunctionPackageVersion(
   fun: ExtensionInstance<FunctionConfigType>,
 ): Promise<BinaryDependencies> {
   const packageJsonPath = await findPathUp('node_modules/@shopify/shopify_function/package.json', {
