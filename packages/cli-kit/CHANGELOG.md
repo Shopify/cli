@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.79.2
+
+### Patch Changes
+
+- 617b3ad: Increase network timeout for theme API requests to prevent failures during long operations. This utilizes the internal request behaviour mechanism for theme-related Admin API calls, setting a longer timeout (90s) specifically for potentially slow actions like asset uploads/downloads.
+
 ## 3.79.1
 
 ## 3.79.0

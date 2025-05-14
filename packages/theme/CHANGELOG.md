@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.79.2
+
+### Patch Changes
+
+- 365d997: Bump Shopify/theme-tools packages to
+
+  - Fix validation for static blocks in JSON templates
+  - Introduce ability the disable theme checks for the next Liquid statement
+
+- Updated dependencies [617b3ad]
+  - @shopify/cli-kit@3.79.2
+
 ## 3.79.1
 
 ### Patch Changes
