@@ -37,7 +37,6 @@ describe('PaymentsAppExtension', () => {
     },
     api_version: '2022-07',
     description: 'my payments app extension',
-    metafields: [],
   }
 
   beforeEach(async () => {

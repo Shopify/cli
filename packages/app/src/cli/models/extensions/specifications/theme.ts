@@ -1,5 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema, MetafieldSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
@@ -7,13 +7,10 @@ import {fileSize} from '@shopify/cli-kit/node/fs'
 import {dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const themeSpec = createExtensionSpecification({
   identifier: 'theme',
-  schema: BaseSchema.extend({
-    metafields: zod.array(MetafieldSchema).optional(),
-  }),
+  schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   appModuleFeatures: (_) => {

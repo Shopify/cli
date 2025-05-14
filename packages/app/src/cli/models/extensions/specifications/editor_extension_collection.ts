@@ -1,5 +1,5 @@
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {BaseSchema, MetafieldSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -15,7 +15,6 @@ const EditorExtensionCollectionSchema = BaseSchema.extend({
   name: zod.string(),
   include: zod.array(IncludeSchema).optional(),
   includes: zod.array(zod.string()).optional(),
-  metafields: zod.array(MetafieldSchema).optional(),
   type: zod.literal('editor_extension_collection'),
 }).transform((data) => {
   const includes =
