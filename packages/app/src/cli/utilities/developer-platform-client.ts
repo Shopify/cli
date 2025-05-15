@@ -193,12 +193,12 @@ interface DevSessionSharedOptions {
 }
 
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
-  assetsUrl: string
+  assetsUrl?: string
   manifest: AppManifest
 }
 
 export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
-  assetsUrl: string
+  assetsUrl?: string
   manifest: AppManifest
   inheritedModuleUids: string[]
 }

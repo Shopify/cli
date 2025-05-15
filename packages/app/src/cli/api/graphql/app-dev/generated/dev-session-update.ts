@@ -6,8 +6,8 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type DevSessionUpdateMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
-  assetsUrl: Types.Scalars['String']['input']
-  manifest: Types.Scalars['JSON']['input']
+  assetsUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
+  manifest?: Types.InputMaybe<Types.Scalars['JSON']['input']>
   inheritedModuleUids: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
 }>
 
@@ -33,12 +33,12 @@ export const DevSessionUpdate = {
         {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
         },
         {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'manifest'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'JSON'}}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'JSON'}},
         },
         {
           kind: 'VariableDefinition',

@@ -365,7 +365,7 @@ export function renderCurrentlyUsedConfigInfo({
   const devStores = []
   if (devStore) devStores.push(devStore)
 
-  const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
+  const fileName = (appDotEnv && basename(appDotEnv)) ?? (configFile && getAppConfigurationFileName(configFile))
 
   renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',

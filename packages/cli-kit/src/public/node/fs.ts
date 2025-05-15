@@ -44,6 +44,7 @@ import {
   access as fsAccess,
   rename as fsRename,
   unlink as fsUnlink,
+  readdir as fsReaddir,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
@@ -582,4 +583,13 @@ export interface MatchGlobOptions {
  */
 export function matchGlob(key: string, pattern: string, options?: MatchGlobOptions): boolean {
   return minimatch(key, pattern, options)
+}
+
+/**
+ * Read a directory.
+ * @param path - The path to read.
+ * @returns A promise that resolves to an array of file names.
+ */
+export function readdir(path: string): Promise<string[]> {
+  return fsReaddir(path)
 }

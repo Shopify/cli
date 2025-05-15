@@ -1043,7 +1043,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {
+      appId: appIdNumber,
+      assetsUrl: assetsUrl ?? '',
+    })
   }
 
   async devSessionUpdate({
@@ -1058,7 +1061,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       appId: appIdNumber,
       assetsUrl,
       manifest: JSON.stringify(manifest),
-      inheritedModuleUids: inheritedModuleUids ?? [],
+      inheritedModuleUids,
     }
     return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), variables)
   }
