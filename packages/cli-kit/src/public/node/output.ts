@@ -20,7 +20,7 @@ import {
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
-import {consoleLog, consoleWarn} from '../../private/node/output.js'
+import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
@@ -257,9 +257,7 @@ export const clearCollectedLogs = (): void => {
  * @param logger - The logging function to use to output to the user.
  */
 export function outputResult(content: OutputMessage, logger: Logger = consoleLog): void {
-  const message = stringifyMessage(content)
-  if (isUnitTest()) collectLog('info', content)
-  outputWhereAppropriate('info', logger, message)
+  output(content, 'info', logger)
 }
 
 /**
