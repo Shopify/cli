@@ -1186,6 +1186,11 @@ describe('AppManagementClient', () => {
         expect.objectContaining({
           cacheTTL: expect.anything(),
         }),
+        undefined,
+        expect.objectContaining({
+          handler: expect.any(Function),
+          type: 'token_refresh',
+        }),
       )
     })
   })
