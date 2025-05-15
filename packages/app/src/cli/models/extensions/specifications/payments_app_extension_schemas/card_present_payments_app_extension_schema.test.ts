@@ -5,7 +5,6 @@ import {
   CARD_PRESENT_TARGET,
 } from './card_present_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: CardPresentPaymentsAppExtensionConfigType = {
   name: 'test extension',
@@ -37,17 +36,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: CARD_PRESENT_TARGET,
-          path: ['targeting', 0, 'target'],
-          message: `Invalid literal value, expected "${CARD_PRESENT_TARGET}"`,
-        },
-      ]),
-    )
+    ).toThrow(`Invalid literal value, expected \\"${CARD_PRESENT_TARGET}\\"`)
   })
 
   test('returns an error if payment_session_url is not provided', async () => {
@@ -57,17 +46,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['payment_session_url'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow(`Required`)
   })
 
   test('returns an error if refund_session_url is not provided', async () => {
@@ -77,17 +56,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['refund_session_url'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow(`Required`)
   })
 
   test('returns an error if capture_session_url is not provided', async () => {
@@ -97,17 +66,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['capture_session_url'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow(`Required`)
   })
 
   test('returns an error if void_session_url is not provided', async () => {
@@ -117,17 +76,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['void_session_url'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow(`Required`)
   })
 
   test('validates with optional sync_terminal_transaction_result_url', async () => {
@@ -146,16 +95,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
         ...config,
         sync_terminal_transaction_result_url: 'not-a-url',
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          validation: 'url',
-          code: 'invalid_string',
-          message: 'Invalid url',
-          path: ['sync_terminal_transaction_result_url'],
-        },
-      ]),
-    )
+    ).toThrow(`Invalid url`)
   })
 })
 

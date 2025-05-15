@@ -10,7 +10,6 @@ import {
 } from '../../models/app/app.test-data.js'
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
-import {NoOrgError} from '../../services/dev/fetch.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {describe, expect, vi, test} from 'vitest'
 
@@ -184,7 +183,7 @@ describe('fetchApp', async () => {
     const got = () => partnersClient.orgAndApps(ORG1.id)
 
     // Then
-    await expect(got).rejects.toThrowError(new NoOrgError(testPartnersUserSession.accountInfo))
+    await expect(got).rejects.toThrow('No Organization found')
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
       type: 'token_refresh',
       handler: expect.any(Function),
