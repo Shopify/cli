@@ -32,8 +32,8 @@
     "test:affected": "nx affected --target=test",
     "test:features": "pnpm nx run features:test",
     "test:regenerate-snapshots": "nx build cli && packages/features/snapshots/regenerate.sh",
-    "test:unit": "nx run-many --target=test --all --skip-nx-cache --exclude=features",
-    "test": "nx run-many --target=test --all --skip-nx-cache",
+    "test:unit": "pnpm vitest run",
+    "test": "pnpm vitest run && pnpm nx run features:test",
     "type-check:affected": "nx affected --target=type-check",
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
     "update-bugsnag": "bin/update-bugsnag.js"
