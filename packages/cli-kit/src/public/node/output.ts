@@ -251,13 +251,12 @@ export const clearCollectedLogs = (): void => {
 /**
  * Outputs command result information to the user.
  * Result messages don't get additional formatting.
- * Note: By default, result messages are logged at info level to stdout.
+ * The messages are logged at info level to stdout.
  *
  * @param content - The content to be output to the user.
- * @param logger - The logging function to use to output to the user.
  */
-export function outputResult(content: OutputMessage, logger: Logger = consoleLog): void {
-  output(content, 'info', logger)
+export function outputResult(content: OutputMessage): void {
+  output(content, 'info', consoleLog)
 }
 
 /**
