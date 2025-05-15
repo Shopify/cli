@@ -171,19 +171,16 @@ class WasmOptExecutable implements DownloadableBinary {
 let _wasmOpt: DownloadableBinary
 let _trampoline: DownloadableBinary
 
-export function javyBinary(version?: string) {
-  const currentVersion = version ? version : PREFERRED_JAVY_VERSION
-  return new Executable('javy', currentVersion, 'bytecodealliance/javy') as DownloadableBinary
+export function javyBinary(version: string = PREFERRED_JAVY_VERSION) {
+  return new Executable('javy', version, 'bytecodealliance/javy') as DownloadableBinary
 }
 
-export function javyPluginBinary(version?: string) {
-  const currentVersion = version ? version : PREFERRED_JAVY_PLUGIN_VERSION
-  return new JavyPlugin(currentVersion) as DownloadableBinary
+export function javyPluginBinary(version: string = PREFERRED_JAVY_PLUGIN_VERSION) {
+  return new JavyPlugin(version) as DownloadableBinary
 }
 
-export function functionRunnerBinary(version?: string) {
-  const currentVersion = version ? version : PREFERRED_FUNCTION_RUNNER_VERSION
-  return new Executable('function-runner', currentVersion, 'Shopify/function-runner') as DownloadableBinary
+export function functionRunnerBinary(version: string = PREFERRED_FUNCTION_RUNNER_VERSION) {
+  return new Executable('function-runner', version, 'Shopify/function-runner') as DownloadableBinary
 }
 
 export function wasmOptBinary() {
