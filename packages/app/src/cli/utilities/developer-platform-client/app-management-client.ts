@@ -130,6 +130,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -177,6 +178,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = true
   public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
+  public readonly bundleFormat = 'br'
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -694,11 +696,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables = {sourceExtension: 'BR' as SourceExtension}
     const result = await appManagementRequestDoc(
       organizationId,
       CreateAssetUrl,
       await this.token(),
-      {},
+      variables,
       {cacheTTL: {minutes: 59}},
       undefined,
       createUnauthorizedHandler(this),

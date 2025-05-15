@@ -190,3 +190,15 @@ describe('fetchApp', async () => {
     })
   })
 })
+
+describe('PartnersClient', () => {
+  describe('bundleFormat', () => {
+    test('uses zip format', () => {
+      // Given
+      const client = new PartnersClient()
+
+      // Then
+      expect(client.bundleFormat).toBe('zip')
+    })
+  })
+})
