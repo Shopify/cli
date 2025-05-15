@@ -303,18 +303,30 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const extensions = app.allExtensions.filter((ext) => ext.features.includes('function') && ext.isJavaScript)
 
+  // Get the dependencies for each extension
   const depsPromises = extensions.map((ext) => {
     return validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
   })
-
   const deps = await Promise.all(depsPromises)
 
-  const downloadPromises: Promise<void>[] = []
+  // Extract the javy and plugin dependencies
+  const javyDeps = new Set<string>()
+  const javyPluginDeps = new Set<string>()
   deps.forEach((dep) => {
-    downloadPromises.push(downloadBinary(javyBinary(dep.javy)))
-    downloadPromises.push(downloadBinary(javyPluginBinary(dep.javyPlugin)))
+    javyDeps.add(dep.javy)
+    javyPluginDeps.add(dep.javyPlugin)
   })
 
+  // Setup our download promises
+  const downloadPromises: Promise<void>[] = []
+  javyDeps.forEach((javyDepVersion) => {
+    downloadPromises.push(downloadBinary(javyBinary(javyDepVersion)))
+  })
+  javyPluginDeps.forEach((javyPluginDepVersion) => {
+    downloadPromises.push(downloadBinary(javyPluginBinary(javyPluginDepVersion)))
+  })
+
+  // Run all the downloads in parallel
   await Promise.all(downloadPromises)
 }
 
