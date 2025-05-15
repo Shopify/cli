@@ -1,11 +1,12 @@
 import {
   CreditCardPaymentsAppExtensionConfigType,
   CreditCardPaymentsAppExtensionSchema,
-  MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
   creditCardPaymentsAppExtensionDeployConfig,
+  MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
 } from './credit_card_payments_app_extension_schema.js'
 import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: CreditCardPaymentsAppExtensionConfigType = {
   name: 'test extension',
@@ -56,7 +57,17 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrow('payments.credit-card.render')
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          received: null,
+          code: zod.ZodIssueCode.invalid_literal,
+          expected: 'payments.credit-card.render',
+          path: ['targeting', 0, 'target'],
+          message: 'Invalid literal value, expected "payments.credit-card.render"',
+        },
+      ]),
+    )
   })
 
   test('returns an error if no confirmation_callback_url is provided with supports 3ds', async () => {
@@ -67,7 +78,15 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         supports_3ds: true,
         confirmation_callback_url: undefined,
       }),
-    ).toThrow('Property required when supports_3ds is true')
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'Property required when supports_3ds is true',
+          path: ['confirmation_callback_url'],
+        },
+      ]),
+    )
   })
 
   test('returns an error if encryption certificate fingerprint is blank', async () => {
@@ -77,7 +96,19 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         encryption_certificate_fingerprint: '',
       }),
-    ).toThrow("Encryption certificate fingerprint can't be blank")
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_small,
+          minimum: 1,
+          type: 'string',
+          inclusive: true,
+          exact: false,
+          message: "Encryption certificate fingerprint can't be blank",
+          path: ['encryption_certificate_fingerprint'],
+        },
+      ]),
+    )
   })
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
@@ -88,7 +119,17 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
       CreditCardPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow('Required')
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'string',
+          received: 'undefined',
+          path: ['encryption_certificate_fingerprint'],
+          message: 'Required',
+        },
+      ]),
+    )
   })
 
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
@@ -99,7 +140,15 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         supports_installments: true,
         supports_deferred_payments: false,
       }),
-    ).toThrow('supports_installments and supports_deferred_payments must be the same')
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'supports_installments and supports_deferred_payments must be the same',
+          path: [],
+        },
+      ]),
+    )
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -109,7 +158,19 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrow(`The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`)
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.too_big,
+          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
+          type: 'array',
+          inclusive: true,
+          exact: false,
+          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
+          path: ['checkout_payment_method_fields'],
+        },
+      ]),
+    )
   })
 
   test('returns an error if supports_moto is not a boolean', async () => {
@@ -119,7 +180,17 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         supports_moto: 'true',
       }),
-    ).toThrow('Value must be Boolean')
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'boolean',
+          received: 'string',
+          path: ['supports_moto'],
+          message: 'Value must be Boolean',
+        },
+      ]),
+    )
   })
 
   test('returns an error if supports_moto is not present', async () => {
@@ -129,7 +200,17 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         supports_moto: undefined,
       }),
-    ).toThrow('supports_moto is required')
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'boolean',
+          received: 'undefined',
+          path: ['supports_moto'],
+          message: 'supports_moto is required',
+        },
+      ]),
+    )
   })
 })
 

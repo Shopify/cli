@@ -1,6 +1,7 @@
 import {validateFieldShape, validateCustomConfigurationPageConfig, validateReturnTypeConfig} from './validation.js'
 import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('validateFieldShape', () => {
   test('should return true when non-commerce object field has valid shape and is flow action', () => {
@@ -66,10 +67,19 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    const message = `'key' property must be a string for 'field[0]' ${JSON.stringify(
-      invalidField,
-    )} of flow extension 'handle'`.replace(/"/g, '\\"')
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'string',
+          received: 'undefined',
+          path: ['key'],
+          message: `'key' property must be a string for 'field[0]' ${JSON.stringify(
+            invalidField,
+          )} of flow extension 'handle'`,
+        },
+      ]),
+    )
   })
 
   test('should throw an error if name is not specified for non-commerce object field in flow action', () => {
@@ -83,10 +93,19 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    const message = `'name' property must be a string for 'field[0]' ${JSON.stringify(
-      invalidField,
-    )} of flow extension 'handle'`.replace(/"/g, '\\"')
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'string',
+          received: 'undefined',
+          path: ['name'],
+          message: `'name' property must be a string for 'field[0]' ${JSON.stringify(
+            invalidField,
+          )} of flow extension 'handle'`,
+        },
+      ]),
+    )
   })
 
   test('should throw an error if key non alpha or space chars for non-commerce object field in flow trigger', () => {
@@ -99,8 +118,16 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    const message = 'String must contain only alphabetic characters and spaces'
-    expect(() => validateFieldShape(invalidField, 'flow_trigger', 'handle', 0)).toThrow(message)
+    expect(() => validateFieldShape(invalidField, 'flow_trigger', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          validation: 'regex',
+          code: 'invalid_string',
+          message: 'String must contain only alphabetic characters and spaces',
+          path: ['key'],
+        },
+      ]),
+    )
   })
 
   test('should throw an error if key specified for a commerce object field', () => {
@@ -112,8 +139,16 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    const message = "Unrecognized key(s) in object: 'key'"
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.unrecognized_keys,
+          keys: ['key'],
+          path: [],
+          message: "Unrecognized key(s) in object: 'key'",
+        },
+      ]),
+    )
   })
 
   test('should throw an error if name a commerce object field in flow action', () => {
@@ -126,8 +161,16 @@ describe('validateFieldShape', () => {
     }
 
     // then
-    const message = "Unrecognized key(s) in object: 'name'"
-    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrow(message)
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.unrecognized_keys,
+          keys: ['name'],
+          path: [],
+          message: "Unrecognized key(s) in object: 'name'",
+        },
+      ]),
+    )
   })
 })
 
@@ -146,9 +189,17 @@ describe('validateCustomConfigurationPageConfig', () => {
     const configPagePreviewUrl = 'preview-url'
     const validationUrl = 'validation-url'
 
-    // Then
-    expect(() => validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl)).toThrow(
-      'To set a custom configuration page a `config_page_url` must be specified',
+    // then
+    expect(() =>
+      validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].config_page_url'],
+          message: 'To set a custom configuration page a `config_page_url` must be specified.',
+        },
+      ]),
     )
   })
 
@@ -158,21 +209,37 @@ describe('validateCustomConfigurationPageConfig', () => {
     const configPagePreviewUrl = undefined
     const validationUrl = 'validation-url'
 
-    // Then
-    expect(() => validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl)).toThrow(
-      'To set a custom configuration page a `config_page_preview_url` must be specified',
+    // then
+    expect(() =>
+      validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].config_page_preview_url'],
+          message: 'To set a custom configuration page a `config_page_preview_url` must be specified.',
+        },
+      ]),
     )
   })
 
   test('should throw an error if validation URL is missing when both a config page and preview urls are provided', () => {
-    // Given
+    // given
     const configPageUrl = 'config-url'
     const configPagePreviewUrl = 'preview-url'
     const validationUrl = undefined
 
-    // Then
-    expect(() => validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl)).toThrow(
-      'To set a custom configuration page a `validation_url` must be specified',
+    // then
+    expect(() =>
+      validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].validation_url'],
+          message: 'To set a custom configuration page a `validation_url` must be specified.',
+        },
+      ]),
     )
   })
 
@@ -199,13 +266,29 @@ describe('validateReturnTypeConfig', () => {
   test('should throw ZodError when returnTypeRef is missing', () => {
     expect(() => {
       validateReturnTypeConfig(undefined, 'schemaValue')
-    }).toThrow('When uploading a schema a `return_type_ref` must be specified')
+    }).toThrow(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].return_type_ref'],
+          message: 'When uploading a schema a `return_type_ref` must be specified.',
+        },
+      ]),
+    )
   })
 
   test('should throw ZodError when schema is missing', () => {
     expect(() => {
       validateReturnTypeConfig('returnTypeRefValue', undefined)
-    }).toThrow('To set a return type a `schema` must be specified')
+    }).toThrow(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].schema'],
+          message: 'To set a return type a `schema` must be specified.',
+        },
+      ]),
+    )
   })
 
   test('should return true when neither returnTypeRef nor schema are provided', () => {

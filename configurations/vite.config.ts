@@ -1,9 +1,6 @@
-/* eslint-disable import/no-extraneous-dependencies */
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import * as path from 'pathe'
 import {defineConfig} from 'vitest/config'
+import type {AliasOptions} from 'vite'
 
 const TIMEOUTS = {
   normal: 5000,
@@ -18,24 +15,22 @@ interface ConfigOptions {
 
 export default function config(packagePath: string, {poolStrategy}: ConfigOptions = {poolStrategy: 'threads'}) {
   // always treat environment as one that doesn't support hyperlinks -- otherwise assertions are hard to keep consistent
-  process.env['FORCE_HYPERLINK'] = '0'
-  process.env['FORCE_COLOR'] = '1'
+  process.env.FORCE_HYPERLINK = '0'
+  process.env.FORCE_COLOR = '1'
 
   let testTimeout = TIMEOUTS.normal
-  if (process.env['VITEST_SKIP_TIMEOUT'] === '1') {
+  if (process.env.VITEST_SKIP_TIMEOUT === '1') {
     testTimeout = TIMEOUTS.debug
-  } else if (process.env['RUNNER_OS'] === 'Windows') {
+  } else if (process.env.RUNNER_OS === 'Windows') {
     testTimeout = TIMEOUTS.windows
-  } else if (process.env['RUNNER_OS'] === 'macOS') {
+  } else if (process.env.RUNNER_OS === 'macOS') {
     testTimeout = TIMEOUTS.macos
   }
 
   return defineConfig({
     resolve: {
-      alias: aliases(packagePath),
+      alias: aliases(packagePath) as AliasOptions,
     },
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     test: {
       testTimeout,
       clearMocks: true,
