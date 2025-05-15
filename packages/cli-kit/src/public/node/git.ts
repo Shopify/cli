@@ -348,3 +348,16 @@ export async function isClean(directory?: string): Promise<boolean> {
   // @ts-ignore
   return (await git({baseDir: directory}).status()).isClean()
 }
+
+/**
+ * Returns the latest tag of a git repository.
+ *
+ * @param directory - The directory to check.
+ * @returns String with the latest tag or undefined if no tags are found.
+ */
+export async function getLatestTag(directory?: string): Promise<string | undefined> {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const tags = await git({baseDir: directory}).tags()
+  return tags.latest
+}
