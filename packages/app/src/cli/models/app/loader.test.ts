@@ -3255,6 +3255,21 @@ describe('getAppConfigurationState', () => {
       expect(state).toMatchObject(resultShouldContain)
     })
   })
+
+  test('raises validation error when AppSchema is missing client_id', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // We know this is a TOML file that follows the AppSchema because
+      // it can contain extra fields (something_extra). In LegacyAppSchema, all fields are optional.
+      // This content is also missing a client_id field which should throw a validation error.
+      const content = `something_extra = "some_value"`
+      const appConfigPath = joinPath(tmpDir, 'shopify.app.toml')
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await writeFile(appConfigPath, content)
+      await writeFile(packageJsonPath, '{}')
+
+      await expect(getAppConfigurationState(tmpDir, undefined)).rejects.toThrowError(/client_id/)
+    })
+  })
 })
 
 describe('loadConfigForAppCreation', () => {
