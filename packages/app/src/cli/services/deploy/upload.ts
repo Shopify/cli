@@ -151,20 +151,19 @@ export async function uploadExtensionsBundle(
 
   const result: AppDeploySchema = await options.developerPlatformClient.deploy(variables)
 
-  if (result.appDeploy?.userErrors?.length > 0) {
+  if (!result.appDeploy.appVersion) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
-      result.appDeploy.userErrors,
+      result.appDeploy.userErrors ?? [],
       options.extensionIds,
       {
         version: options.version,
       },
     )
+    throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
+  }
 
-    if (result.appDeploy.appVersion) {
-      deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
-    } else {
-      throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
-    }
+  if (result.appDeploy.userErrors?.length > 0) {
+    deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
   }
 
   const validationErrors = result.appDeploy.appVersion.appModuleVersions
@@ -198,9 +197,9 @@ export function deploymentErrorsToCustomSections(
 
   const isCliError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
     const errorExtensionId =
-      error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString() ?? ''
+      error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id ?? ''
 
-    return Object.values(extensionIds).includes(errorExtensionId)
+    return Object.values(extensionIds).includes(errorExtensionId.toString())
   }
 
   const [extensionErrors, nonExtensionErrors] = partition(errors, (error) => isExtensionError(error))
@@ -270,7 +269,7 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
     )?.specification_identifier
     const extensionIdentifier = error.details
       .find((detail) => typeof detail.extension_id !== 'undefined')
-      ?.extension_id.toString()
+      ?.extension_id?.toString()
 
     const handle = Object.keys(identifiers).find((key) => identifiers[key] === extensionIdentifier)
     let extensionName = handle ?? remoteTitle

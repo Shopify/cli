@@ -20,6 +20,8 @@ import {
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
+  createUnauthorizedHandler,
+  UserError,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -95,7 +97,10 @@ import {
 } from '../../api/graphql/app-management/generated/active-app-release.js'
 import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
-import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
+import {
+  CreateAppVersion,
+  CreateAppVersionMutation,
+} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
@@ -150,6 +155,8 @@ import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
 import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -386,7 +393,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .map((word) => `title:${word}`)
         .join(' '),
     }
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     if (!result.appsConnection) {
       throw new BugError('Server failed to retrieve apps')
     }
@@ -407,7 +422,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      undefined,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -472,7 +495,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = createAppVars(options, apiVersion)
 
     const mutation = CreateApp
-    const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      org.id,
+      mutation,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     if (!result.appCreate.app || result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -551,7 +582,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return {
       app: {
         id: result.app.id,
@@ -586,7 +625,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
     const variables = {versionTag}
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     const version = result.versionByTag
     if (!version) {
       throw new AbortError(`Version not found for tag: ${versionTag}`)
@@ -649,12 +696,16 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const variables = {
-      sourceExtension: 'BR' as SourceExtension,
-    }
-    const result = await appManagementRequestDoc(organizationId, CreateAssetUrl, await this.token(), variables, {
-      cacheTTL: {minutes: 59},
-    })
+    const variables = {sourceExtension: 'BR' as SourceExtension}
+    const result = await appManagementRequestDoc(
+      organizationId,
+      CreateAssetUrl,
+      await this.token(),
+      variables,
+      {cacheTTL: {minutes: 59}},
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
@@ -696,6 +747,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
               type: mod.specificationIdentifier,
               handle: mod.handle,
               config: JSON.parse(mod.config),
+              ...(mod.context ? {target: mod.context} : {}),
             })),
           },
         }
@@ -712,9 +764,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
       undefined,
       {requestMode: 'slow-request'},
+      createUnauthorizedHandler(this),
     )
-    const {version, userErrors} = result.appVersionCreate
-    if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
+    const {version} = result.appVersionCreate
+    const userErrors = result.appVersionCreate.userErrors.map(toUserError) ?? []
+    if (!version) return {appDeploy: {userErrors}}
 
     const versionResult = {
       appDeploy: {
@@ -733,7 +787,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }),
           message: version.metadata.message,
         },
-        userErrors: userErrors?.map((err) => ({...err, details: []})),
+        userErrors,
       },
     }
     if (noRelease) return versionResult
@@ -744,10 +798,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ReleaseVersion,
       await this.token(),
       releaseVariables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
     )
-    if (releaseResult.appReleaseCreate?.userErrors) {
+    if (releaseResult.appReleaseCreate.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
-        releaseResult.appReleaseCreate.userErrors.map((err) => ({...err, details: []})),
+        releaseResult.appReleaseCreate.userErrors.map(toUserError),
       )
     }
 
@@ -767,9 +824,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ReleaseVersion,
       await this.token(),
       releaseVariables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
     )
 
-    if (releaseResult.appReleaseCreate?.release) {
+    if (releaseResult.appReleaseCreate.release) {
       return {
         appRelease: {
           appVersion: {
@@ -998,6 +1058,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
+  private createUnauthorizedHandler(): UnauthorizedHandler {
+    return createUnauthorizedHandler(this)
+  }
+
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
     return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
   }
@@ -1135,17 +1199,19 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
 export async function allowedTemplates(
   templates: GatedExtensionTemplate[],
   betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>,
+  version: string = CLI_KIT_VERSION,
 ): Promise<GatedExtensionTemplate[]> {
   const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
   const enabledBetaFlags = await betaFlagsFetcher(allBetaFlags)
   return templates.filter((ext) => {
     const hasAnyNeededBetas =
       !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
-    const satisfiesMinCliVersion =
-      !ext.minimumCliVersion || versionSatisfies(CLI_KIT_VERSION, `>=${ext.minimumCliVersion}`)
+    const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(version, `>=${ext.minimumCliVersion}`)
     const satisfiesDeprecatedFromCliVersion =
-      !ext.deprecatedFromCliVersion || versionSatisfies(CLI_KIT_VERSION, `<${ext.deprecatedFromCliVersion}`)
-    return hasAnyNeededBetas && satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
+      !ext.deprecatedFromCliVersion || versionSatisfies(version, `<${ext.deprecatedFromCliVersion}`)
+    const satisfiesVersion = satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
+    const satisfiesPreReleaseVersion = isPreReleaseVersion(version) && ext.deprecatedFromCliVersion === undefined
+    return hasAnyNeededBetas && (satisfiesVersion || satisfiesPreReleaseVersion)
   })
 }
 
@@ -1206,4 +1272,13 @@ interface FetchAppLogsDevDashboardOptions {
     status?: string
     source?: string
   }
+}
+
+function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErrors'][number]): UserError {
+  const details = []
+  const extensionId = (err.on[0] as {user_identifier: string})?.user_identifier
+  if (extensionId) {
+    details.push({extension_id: extensionId})
+  }
+  return {...err, details}
 }

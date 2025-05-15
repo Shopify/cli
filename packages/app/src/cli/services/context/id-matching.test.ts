@@ -237,7 +237,6 @@ beforeAll(async () => {
       },
       configuration_ui: false,
       api_version: '2022-07',
-      metafields: [],
     },
   })
 })

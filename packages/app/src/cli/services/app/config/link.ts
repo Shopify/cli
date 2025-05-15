@@ -398,6 +398,7 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
       existingBuildOptions: localAppOptions.existingBuildOptions,
       linkedAppAndClientIdFromFileAreInSync: localAppOptions.localAppIdMatchedRemote,
       linkedAppWasNewlyCreated: Boolean(remoteApp.newApp),
+      defaultToUpdateUrlsOnDev: developerPlatformClient.supportsDevSessions,
     }),
   }
 
@@ -422,10 +423,17 @@ function buildOptionsForGeneratedConfigFile(options: {
   existingBuildOptions: CliBuildPreferences
   linkedAppAndClientIdFromFileAreInSync: boolean
   linkedAppWasNewlyCreated: boolean
+  defaultToUpdateUrlsOnDev: boolean
 }): CliBuildPreferences {
-  const {existingBuildOptions, linkedAppAndClientIdFromFileAreInSync, linkedAppWasNewlyCreated} = options
+  const {
+    existingBuildOptions,
+    linkedAppAndClientIdFromFileAreInSync,
+    linkedAppWasNewlyCreated,
+    defaultToUpdateUrlsOnDev,
+  } = options
   const buildOptions = {
     ...(linkedAppWasNewlyCreated ? {include_config_on_deploy: true} : {}),
+    ...(defaultToUpdateUrlsOnDev && linkedAppWasNewlyCreated ? {automatically_update_urls_on_dev: true} : {}),
     ...(linkedAppAndClientIdFromFileAreInSync ? existingBuildOptions : {}),
   }
   if (isEmpty(buildOptions)) {

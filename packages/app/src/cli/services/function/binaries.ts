@@ -10,13 +10,15 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-const FUNCTION_RUNNER_VERSION = 'v7.0.1'
+const FUNCTION_RUNNER_VERSION = 'v8.0.1'
 const JAVY_VERSION = 'v4.0.0'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
 const JAVY_PLUGIN_VERSION = 'v1'
 
 const BINARYEN_VERSION = '123.0.0'
+
+const TRAMPOLINE_VERSION = 'v1.0.0'
 
 interface DownloadableBinary {
   path: string
@@ -34,11 +36,13 @@ class Executable implements DownloadableBinary {
   readonly name: string
   readonly version: string
   readonly path: string
+  readonly release: string
   private readonly gitHubRepo: string
 
-  constructor(name: string, version: string, gitHubRepo: string) {
+  constructor(name: string, version: string, gitHubRepo: string, release = version) {
     this.name = name
     this.version = version
+    this.release = release
     const filename = process.platform === 'win32' ? `${name}.exe` : name
     this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', filename)
     this.gitHubRepo = gitHubRepo
@@ -82,7 +86,7 @@ class Executable implements DownloadableBinary {
       throw Error(`Unsupported platform/architecture combination ${processPlatform}/${processArch}`)
     }
 
-    return `https://github.com/${this.gitHubRepo}/releases/download/${this.version}/${this.name}-${archPlatform}-${this.version}.gz`
+    return `https://github.com/${this.gitHubRepo}/releases/download/${this.release}/${this.name}-${archPlatform}-${this.version}.gz`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -139,6 +143,7 @@ let _javy: DownloadableBinary
 let _javyPlugin: DownloadableBinary
 let _functionRunner: DownloadableBinary
 let _wasmOpt: DownloadableBinary
+let _trampoline: DownloadableBinary
 
 export function javyBinary() {
   if (!_javy) {
@@ -167,6 +172,18 @@ export function wasmOptBinary() {
   }
 
   return _wasmOpt
+}
+
+export function trampolineBinary() {
+  if (!_trampoline) {
+    _trampoline = new Executable(
+      'shopify-function-trampoline',
+      TRAMPOLINE_VERSION,
+      'Shopify/shopify-function-wasm-api',
+      `shopify_function_trampoline/${TRAMPOLINE_VERSION}`,
+    )
+  }
+  return _trampoline
 }
 
 export async function downloadBinary(bin: DownloadableBinary) {

@@ -38,6 +38,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
@@ -923,6 +924,11 @@ wrong = "property"
       [build]
       command = "make build"
       path = "dist/index.wasm"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -961,6 +967,11 @@ wrong = "property"
         [[settings.fields]]
         type = "single_line_text_field"
         key = "your field key"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1024,6 +1035,11 @@ wrong = "property"
         name = "Display name"
         description = "A description of my field"
         required = true
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1097,6 +1113,11 @@ wrong = "property"
       target = "checkout.fetch"
       input_query = "./input_query.graphql"
       export = "fetch"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1176,6 +1197,11 @@ wrong = "property"
       target = "checkout.fetch"
       input_query = "./input_query.graphql"
       export = "fetch"
+
+      # extra fields not included in the schema should be ignored
+      [[extensions.invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1238,6 +1264,11 @@ wrong = "property"
       module = "./src/ActionExtension.js"
       target = "admin.product-details.action.render"
       [[extensions.metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      # extra fields not included in the schema should be ignored
+      [[extensions.invalid_field]]
       namespace = "my-namespace"
       key = "my-key"
       `
@@ -1339,6 +1370,11 @@ wrong = "property"
         [[extensions.targeting]]
         target = "purchase.checkout.block.render"
         module = "./CheckoutDynamicRender.jsx"
+
+            # extra fields not included in the schema should be ignored
+      [[extensions.invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1462,6 +1498,11 @@ wrong = "property"
       [[metafields]]
       namespace = "my-namespace"
       key = "my-key-2"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1508,6 +1549,11 @@ wrong = "property"
         'pos.home.tile.render',
         'pos.home.modal.render'
       ]
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1554,6 +1600,11 @@ wrong = "property"
       key = "metafield-config"
 
       [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
       namespace = "my-namespace"
       key = "my-key"
       `
@@ -1614,6 +1665,11 @@ wrong = "property"
       name = "second"
       description = "description"
       type = "single_line_text_field"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1685,6 +1741,11 @@ wrong = "property"
       name = "second"
       description = "description"
       type = "single_line_text_field"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1775,6 +1836,11 @@ wrong = "property"
         key = "field_key_2"
         type = "number_integer"
         name = "field-name-2"
+
+      # extra fields not included in the schema should be ignored
+      [[invalid_field]]
+      namespace = "my-namespace"
+      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -2456,6 +2522,29 @@ wrong = "property"
         cmd_app_linked_config_git_tracked: true,
       }),
     )
+  })
+
+  test('throws the correct error when multi-extension configuration is invalid', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+      description = "global description"
+
+      [extensions]
+      type = "checkout_post_purchase"
+      name = "my_extension_1"
+      handle = "checkout-ext"
+      description = "custom description"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    await expect(loadTestingApp()).rejects.toThrow(AbortError)
   })
 })
 

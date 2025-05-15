@@ -171,7 +171,7 @@ export function graphiqlTemplate({
       integrity="sha512-Wr9OKCTtq1anK0hq5bY3X/AvDI5EflDSAh0mE9gma+4hl+kXdTJPKZ3TwLMBcrgUeoY0s3dq9JjhCQc7vddtFg=="
       crossorigin="anonymous"
     ></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphiql/graphiql.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphiql@3.0.4/graphiql.min.css" />
   </head>
   <body>
     <div id="graphiql">

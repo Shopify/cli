@@ -36,6 +36,7 @@ import metadata from '../metadata.js'
 import {AppConfigurationUsedByCli} from '../models/extensions/specifications/types/app_config.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ports} from '../constants.js'
+import {generateCertificate} from '../utilities/mkcert.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -43,7 +44,7 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -103,6 +104,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     selectedStore: store,
     cachedInfo: getCachedAppInfo(commandOptions.directory),
     organization: commandOptions.organization,
+    tunnelMode: tunnel.mode,
   })
 
   // If the dev_store_url is set in the app configuration, keep updating it.
@@ -164,6 +166,29 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     apiKey,
     developerPlatformClient,
   )
+
+  // Remove for GA
+  if (developerPlatformClient.supportsDevSessions) {
+    renderInfo({
+      // eslint-disable-next-line @shopify/cli/banner-headline-format
+      headline: [`You're experiencing a whole new`, {command: 'shopify app dev'}],
+      body: [
+        {
+          link: {
+            label: 'See documentation for details',
+            url: 'https://shopify.dev/beta/next-gen-dev-platform/shopify-app-dev',
+          },
+        },
+        'and',
+        {
+          link: {
+            label: 'report issues and feedback via the dev community',
+            url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=new-app-dev-command',
+          },
+        },
+      ],
+    })
+  }
 
   return {
     storeFqdn: store.shopDomain,
@@ -341,7 +366,10 @@ async function setupNetworkingOptions(
 
   let reverseProxyCert
   if (tunnelOptions.mode === 'use-localhost') {
-    const {keyContent, certContent, certPath} = await tunnelOptions.provideCertificate(appDirectory)
+    const {keyContent, certContent, certPath} = await generateCertificate({
+      appDirectory,
+    })
+
     reverseProxyCert = {
       key: keyContent,
       cert: certContent,

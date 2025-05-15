@@ -13,8 +13,6 @@ export default class VersionsList extends AppCommand {
 
   static description = this.descriptionWithoutMarkdown()
 
-  static examples = ['<%= config.bin %> <%= command.id %>']
-
   static flags = {
     ...globalFlags,
     ...appFlags,

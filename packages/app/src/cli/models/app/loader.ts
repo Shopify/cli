@@ -560,7 +560,16 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
       const obj = await loadConfigurationFileContent(configurationPath)
-      const {extensions, type} = ExtensionsArraySchema.parse(obj)
+      const parseResult = ExtensionsArraySchema.safeParse(obj)
+      if (!parseResult.success) {
+        this.abortOrReport(
+          outputContent`Invalid extension configuration at ${relativePath(appDirectory, configurationPath)}`,
+          undefined,
+          configurationPath,
+        )
+        return []
+      }
+      const {extensions, type} = parseResult.data
 
       if (extensions) {
         // If the extension is an array, it's a unified toml file.

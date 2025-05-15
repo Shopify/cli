@@ -206,10 +206,10 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--no-color]
-    [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>]
-    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
-    [--verbose]
+  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--localhost-port
+    <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
+    [--skip-dependencies-installation] [-s <value>] [--subscription-product-url <value>] [-t <value>]
+    [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
 
 FLAGS
   -c, --config=<value>                    The name of the app configuration.
@@ -218,6 +218,7 @@ FLAGS
       --checkout-cart-url=<value>         Resource URL for checkout UI extension. Format:
                                           "/cart/{productVariantID}:{productQuantity}"
       --client-id=<value>                 The Client ID of your app.
+      --localhost-port=<value>            Port to use for localhost.
       --no-color                          Disable color output.
       --no-update                         Skips the Partners Dashboard URL update step.
       --notify=<value>                    The file path or URL. The file path is to a file that you want updated on
@@ -230,6 +231,9 @@ FLAGS
       --theme-app-extension-port=<value>  Local port of the theme app extension development server.
       --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
                                           "https://my-tunnel-url:port".
+      --use-localhost                     Service entry point will listen to localhost. A tunnel won't be used. Will
+                                          work for testing many app features, but not those that directly invoke your
+                                          app (E.g: Webhooks)
       --verbose                           Increase the verbosity of the output.
 
 DESCRIPTION
@@ -486,10 +490,6 @@ DESCRIPTION
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
-
-
-EXAMPLES
-  $ shopify app generate extension
 ```
 
 ## `shopify app import-extensions`
@@ -673,9 +673,6 @@ DESCRIPTION
   List deployed versions of your app.
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
-
-EXAMPLES
-  $ shopify app versions list
 ```
 
 ## `shopify app webhook trigger`

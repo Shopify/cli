@@ -1,5 +1,5 @@
 import {loadSchemaFromPath} from '../../../services/flow/utils.js'
-import {BaseSchemaWithHandle, FieldSchema, MetafieldSchema} from '../schemas.js'
+import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {validateFieldShape, validateTriggerSchemaPresence} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
@@ -18,7 +18,6 @@ const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_trigger'),
   name: zod.string(),
   schema: zod.string().optional(),
-  metafields: zod.array(MetafieldSchema).optional(),
   settings: zod
     .object({
       fields: zod.array(FlowTriggerSettingsSchema).optional(),

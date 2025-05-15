@@ -1,4 +1,4 @@
-import {BaseSchema, MetafieldSchema} from '../../schemas.js'
+import {BaseSchema} from '../../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const MAX_LABEL_SIZE = 50
@@ -28,7 +28,7 @@ export const BasePaymentsAppExtensionSchema = BaseSchema.extend({
   supported_payment_methods: zod.array(zod.string()),
 
   test_mode_available: zod.boolean(),
-  metafields: zod.array(MetafieldSchema).optional(),
+
   merchant_label: zod.string().max(MAX_LABEL_SIZE),
 
   input: zod

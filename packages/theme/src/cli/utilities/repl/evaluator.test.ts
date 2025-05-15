@@ -3,7 +3,7 @@ import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../theme-environment/storefront-renderer')
 vi.mock('@shopify/cli-kit/node/output')
@@ -15,7 +15,7 @@ describe('evaluate', () => {
     mockConfig = {
       themeSession: {} as DevServerSession,
       themeId: 'test-theme-id',
-      url: 'https://test-shop.myshopify.com',
+      url: '/',
       replSession: [],
       snippet: '',
     }
@@ -31,6 +31,20 @@ describe('evaluate', () => {
     const result = await evaluate({...mockConfig, snippet: 'shop.id'})
 
     expect(result).toBe(123123)
+  })
+
+  describe('when the URL is not prefixed with a forward slash', () => {
+    test('should add a forward slash to the URL', async () => {
+      const mockResponse = createMockResponse({
+        status: 200,
+        text: '<div id="shopify-section-announcement-bar" class="shopify-section">\n[{ "type": "display", "value": 123123 }]\n</div>',
+      })
+      vi.mocked(render).mockResolvedValue(mockResponse as any)
+
+      await evaluate({...mockConfig, url: 'product/foo-bar'})
+
+      expect(render).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({path: '/product/foo-bar'}))
+    })
   })
 
   test('should add succesful assignments to the session', async () => {
@@ -160,33 +174,31 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     jsonParseSpy.mockRestore()
   })
 
-  test('should handle expired session and throw AbortSilentError', async () => {
+  test('should handle expired session and throw AbortError', async () => {
     const mockResponse = createMockResponse({
       status: 401,
       text: 'Unauthorized',
     })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
-    expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText('Session expired. Please initiate a new one.')}`,
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
+      new AbortError('Session expired. Please initiate a new one.'),
     )
   })
 
-  test('should handle too many requests and throw AbortSilentError', async () => {
+  test('should handle too many requests and throw AbortError', async () => {
     const mockResponse = createMockResponse({
       status: 429,
       text: 'Too Many Requests',
     })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
-    expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText('Evaluations limit reached. Try again later.')}`,
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
+      new AbortError('Evaluations limit reached. Try again later.'),
     )
   })
 
-  test('should handle resource not found and throw AbortSilentError', async () => {
+  test('should handle resource not found and throw AbortError', async () => {
     const mockResponse = createMockResponse({
       status: 200,
       text: 'Not Found',
@@ -194,9 +206,8 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     })
     vi.mocked(render).mockResolvedValue(mockResponse as any)
 
-    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(AbortSilentError)
-    expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText('Page not found. Please provide a valid --url value.')}`,
+    await expect(evaluate({...mockConfig, snippet: 'asdf'})).rejects.toThrow(
+      new AbortError('Page not found. Please provide a valid --url value.'),
     )
   })
 })

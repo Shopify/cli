@@ -51,43 +51,36 @@ If you're using the Ruby app template, then you need to complete the following s
       exclusive: ['config'],
     }),
     store: Flags.string({
-      hidden: false,
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => normalizeStoreFqdn(input),
     }),
     'skip-dependencies-installation': Flags.boolean({
-      hidden: false,
       description: 'Skips the installation of dependencies. Deprecated, use workspaces instead.',
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
     'no-update': Flags.boolean({
-      hidden: false,
       description: 'Skips the Partners Dashboard URL update step.',
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),
     'subscription-product-url': Flags.string({
-      hidden: false,
       description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
       env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
     }),
     'checkout-cart-url': Flags.string({
-      hidden: false,
       description: 'Resource URL for checkout UI extension. Format: "/cart/{productVariantID}:{productQuantity}"',
       env: 'SHOPIFY_FLAG_CHECKOUT_CART_URL',
     }),
     'tunnel-url': Flags.string({
-      hidden: false,
       description:
         'Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".',
       env: 'SHOPIFY_FLAG_TUNNEL_URL',
       exclusive: ['tunnel'],
     }),
     'use-localhost': Flags.boolean({
-      hidden: true,
       description:
         "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
       env: 'SHOPIFY_FLAG_USE_LOCALHOST',
@@ -95,18 +88,15 @@ If you're using the Ruby app template, then you need to complete the following s
       exclusive: ['tunnel-url'],
     }),
     'localhost-port': Flags.integer({
-      hidden: true,
       description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
     }),
     theme: Flags.string({
-      hidden: false,
       char: 't',
       description: 'Theme ID or name of the theme app extension host theme.',
       env: 'SHOPIFY_FLAG_THEME',
     }),
     'theme-app-extension-port': Flags.integer({
-      hidden: false,
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),

@@ -40,6 +40,16 @@ export const templates = {
       options: {
         javascript: {branch: 'javascript', label: 'JavaScript'},
         typescript: {branch: 'main', label: 'TypeScript'},
+        ...(process.env.POLARIS_UNIFIED && {
+          javascriptPolarisEarlyAccess: {
+            branch: 'polaris-docs-2025-js',
+            label: 'JavaScript (Polaris Early Access)',
+          },
+          typescriptPolarisEarlyAccess: {
+            branch: 'polaris-docs-2025',
+            label: 'TypeScript (Polaris Early Access)',
+          },
+        }),
       },
     },
   } as Template,

@@ -6,6 +6,7 @@ import {CachedAppInfo} from './local-storage.js'
 import {setAppConfigValue, unsetAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {formatConfigInfoBody} from './format-config-info-body.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface, isCurrentAppSchema, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -25,7 +26,7 @@ import {
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {Token, TokenItem, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
@@ -196,8 +197,8 @@ async function checkIncludeConfigOnDeploy({
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
-    resetMessage: resetHelpMessage,
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
+    messages: [resetHelpMessage],
   })
 
   if (force || previousIncludeConfigOnDeploy === true) return
@@ -298,12 +299,20 @@ interface ReusedValuesOptions {
   remoteApp: OrganizationApp
   selectedStore: OrganizationStore
   cachedInfo?: CachedAppInfo
+  tunnelMode?: string
 }
 
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-export function showReusedDevValues({organization, app, remoteApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+export function showReusedDevValues({
+  organization,
+  app,
+  remoteApp,
+  selectedStore,
+  cachedInfo,
+  tunnelMode,
+}: ReusedValuesOptions) {
   if (!cachedInfo) return
   if (sniffForJson()) return
 
@@ -311,16 +320,27 @@ export function showReusedDevValues({organization, app, remoteApp, selectedStore
   const updateURLsValue = app.configuration.build?.automatically_update_urls_on_dev
   if (updateURLsValue !== undefined) updateURLs = updateURLsValue ? 'Yes' : 'No'
 
+  const messages = [resetHelpMessage]
+
+  if (tunnelMode === 'use-localhost') {
+    messages.push([
+      'Note:',
+      {command: '--use-localhost'},
+      'is not compatible with Shopify features which directly invoke your app',
+      '(such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another',
+      'device (such as POS).',
+    ])
+  }
+
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
     appName: remoteApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
     configFile: cachedInfo.configFile,
-    resetMessage: resetHelpMessage,
+    messages,
   })
 }
-
 interface CurrentlyUsedConfigInfoOptions {
   appName: string
   org?: string
@@ -329,29 +349,7 @@ interface CurrentlyUsedConfigInfoOptions {
   configFile?: string
   appDotEnv?: string
   includeConfigOnDeploy?: boolean
-  resetMessage?: Token[]
-}
-
-export function formInfoBoxBody(
-  appName: string,
-  org?: string,
-  devStores?: string[],
-  resetMessage?: Token[],
-  updateURLs?: string,
-  includeConfigOnDeploy?: boolean,
-): TokenItem {
-  const items = [`App:             ${appName}`]
-  if (org) items.unshift(`Org:             ${org}`)
-  if (devStores && devStores.length > 0) {
-    devStores.forEach((storeUrl) => items.push(`Dev store:       ${storeUrl}`))
-  }
-  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
-  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
-
-  let body: TokenItem = [{list: {items}}]
-  if (resetMessage) body = [...body, '\n', ...resetMessage]
-
-  return body
+  messages?: Token[][]
 }
 
 export function renderCurrentlyUsedConfigInfo({
@@ -361,17 +359,17 @@ export function renderCurrentlyUsedConfigInfo({
   updateURLs,
   configFile,
   appDotEnv,
-  resetMessage,
   includeConfigOnDeploy,
+  messages,
 }: CurrentlyUsedConfigInfoOptions): void {
   const devStores = []
   if (devStore) devStores.push(devStore)
 
-  const body = formInfoBoxBody(appName, org, devStores, resetMessage, updateURLs, includeConfigOnDeploy)
   const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
+
   renderInfo({
     headline: configFile ? `Using ${fileName} for default values:` : 'Using these settings:',
-    body,
+    body: formatConfigInfoBody({appName, org, devStores, updateURLs, includeConfigOnDeploy, messages}),
   })
 }
 
