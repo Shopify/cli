@@ -981,6 +981,11 @@ describe('deploy', () => {
             field: ['version'],
             message: 'Invalid version',
             details: [],
+            on: [
+              {
+                user_identifier: 'some_user_identifier',
+              },
+            ],
           },
         ],
       },
@@ -1000,6 +1005,41 @@ describe('deploy', () => {
     // Then
     expect(result.appDeploy.userErrors).toHaveLength(1)
     expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
+    expect(result.appDeploy.userErrors[0]?.details).toStrictEqual([
+      expect.objectContaining({extension_id: 'some_user_identifier'}),
+    ])
+  })
+
+  test('handles malformed version creation errors', async () => {
+    // Given
+    const mockResponse = {
+      appVersionCreate: {
+        version: null,
+        userErrors: [
+          {
+            field: ['version'],
+            message: 'Invalid version',
+            on: [],
+          },
+        ],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result = await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag: '1.0.0',
+      skipPublish: true,
+    })
+
+    // Then
+    expect(result.appDeploy.userErrors).toHaveLength(1)
+    expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
+    expect(result.appDeploy.userErrors[0]?.details).toHaveLength(0)
   })
 
   test('queries for versions list', async () => {

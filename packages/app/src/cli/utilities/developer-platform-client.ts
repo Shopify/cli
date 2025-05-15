@@ -227,6 +227,20 @@ export interface AppLogsError {
 
 export type AppLogsResponse = AppLogsSuccess | AppLogsError
 
+export interface UserError {
+  field?: string[] | null
+  message: string
+  category: string
+  details: ErrorDetail[]
+}
+
+interface ErrorDetail {
+  extension_id?: number | string
+  extension_title?: string
+  specification_identifier?: string
+  [key: string]: unknown
+}
+
 export interface DeveloperPlatformClient {
   readonly clientName: string
   readonly webUiName: string

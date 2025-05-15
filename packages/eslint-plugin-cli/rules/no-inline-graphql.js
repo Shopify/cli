@@ -121,7 +121,6 @@ const knownFailures = {
     'f48a44e2dae39f1b33ac685971740e3705f2754de5fdf1d6f1fbb3492bc62be2',
   'packages/app/src/cli/api/graphql/app_active_version.ts':
     '685d858cf3ad636fe8d771707715dd9a793e4aa4529f843eac3df625efd4d5be',
-  'packages/app/src/cli/api/graphql/app_deploy.ts': 'ff060a322caebf8722fc2f0e2e1cec08fbb861fb258af2417fc430006b2c903e',
   'packages/app/src/cli/api/graphql/app_release.ts': '3acace031157856c88dc57506d81364c084fb5ca66ab5c6ff59393ab5255846d',
   'packages/app/src/cli/api/graphql/app_version_by_tag.ts':
     'a3231389ceb20eec4cab51186678b032e52d8f3e4df3078ce1a33c8ae83ac7fa',
