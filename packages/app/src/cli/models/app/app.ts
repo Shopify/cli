@@ -265,6 +265,21 @@ export interface AppConfigurationInterface<
 
 export type AppLinkedInterface = AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>
 
+export interface AppManifest extends JsonMapType {
+  name: string
+  handle: string
+  modules: ManifestModule[]
+}
+
+export interface ManifestModule extends JsonMapType {
+  type: string
+  handle: string
+  uid: string
+  assets: string
+  target: string
+  config: JsonMapType
+}
+
 export interface AppInterface<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
@@ -298,7 +313,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): CreateAppOptions
-  manifest: () => Promise<JsonMapType>
+  manifest: () => Promise<AppManifest>
   removeExtension: (extensionUid: string) => void
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
@@ -400,7 +415,7 @@ export class App<
     this.realExtensions.forEach((ext) => ext.patchWithAppDevURLs(devApplicationURLs))
   }
 
-  async manifest(): Promise<JsonMapType> {
+  async manifest(): Promise<AppManifest> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
         const config = await module.deployConfig({

@@ -14,13 +14,15 @@ import {
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
-  DevSessionOptions,
   filterDisabledFlags,
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
   createUnauthorizedHandler,
+  DevSessionUpdateOptions,
+  DevSessionCreateOptions,
+  DevSessionDeleteOptions,
   UserError,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
@@ -81,7 +83,11 @@ import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
-import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
+import {
+  DevSessionUpdate,
+  DevSessionUpdateMutation,
+  DevSessionUpdateMutationVariables,
+} from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {
   FetchDevStoreByDomain,
@@ -1035,17 +1041,29 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDeepLink({id, organizationId})
   }
 
-  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
+  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
   }
 
-  async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
+  async devSessionUpdate({
+    appId,
+    assetsUrl,
+    shopFqdn,
+    manifest,
+    inheritedModuleUids,
+  }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const variables: DevSessionUpdateMutationVariables = {
+      appId: appIdNumber,
+      assetsUrl,
+      manifest: JSON.stringify(manifest),
+      inheritedModuleUids: inheritedModuleUids ?? [],
+    }
+    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), variables)
   }
 
-  async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
+  async devSessionDelete({appId, shopFqdn}: DevSessionDeleteOptions): Promise<DevSessionDeleteMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
