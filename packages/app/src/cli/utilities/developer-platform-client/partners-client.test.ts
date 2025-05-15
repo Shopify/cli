@@ -101,7 +101,10 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
-    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 
   test('creates an app with non-launchable defaults', async () => {
@@ -130,7 +133,10 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
-    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 
   test('throws error if requests has a user error', async () => {
@@ -161,7 +167,10 @@ describe('fetchApp', async () => {
 
     // Then
     expect(got).toEqual({organization: partnerMarkedOrg, apps: [APP1, APP2], hasMorePages: false})
-    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined)
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 
   test('throws if there are no organizations', async () => {
@@ -174,6 +183,9 @@ describe('fetchApp', async () => {
 
     // Then
     await expect(got).rejects.toThrow('No Organization found')
-    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined)
+    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
+      type: 'token_refresh',
+      handler: expect.any(Function),
+    })
   })
 })

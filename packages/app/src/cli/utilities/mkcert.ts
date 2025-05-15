@@ -1,6 +1,6 @@
 import {environmentVariableNames} from '../constants.js'
 import {generateCertificatePrompt} from '../prompts/dev.js'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, isWsl} from '@shopify/cli-kit/node/system'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
@@ -8,7 +8,7 @@ import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
-import {RenderAlertOptions, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, keypress, renderInfo, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
@@ -184,6 +184,24 @@ export async function generateCertificate({
   outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
   outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}\n`)
+
+  const wsl = await isWsl()
+  if (wsl) {
+    renderWarning({
+      headline: "It looks like you're using WSL.",
+      body: ['Additional steps are required to configure certificate trust in Windows.'],
+      link: {
+        label: 'See Shopify CLI documentation',
+        url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options#localhost-based-development-with-windows-subsystem-for-linux-wsl',
+      },
+    })
+
+    outputInfo('👉 Press any key to continue')
+
+    await keypress()
+    // Empty line so that the keypress feels more responsive.
+    outputInfo('')
+  }
 
   return {
     keyContent: await readFile(keyPath),

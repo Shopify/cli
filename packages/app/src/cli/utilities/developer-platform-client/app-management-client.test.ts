@@ -23,6 +23,9 @@ import {CreateApp} from '../../api/graphql/app-management/generated/create-app.j
 import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -305,7 +308,18 @@ describe('searching for apps', () => {
     const got = await client.appsForOrg(orgId, query)
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(orgId, ListApps, 'token', {query: queryVariable})
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      orgId,
+      ListApps,
+      'token',
+      {query: queryVariable},
+      undefined,
+      undefined,
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
+    )
     expect(got).toEqual({
       apps: apps.map((app, index) => ({
         apiKey: `key-${index}`,
@@ -353,21 +367,32 @@ describe('createApp', () => {
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
-      initialVersion: {
-        source: {
-          name: 'app-name',
-          modules: expect.arrayContaining([
-            {
-              config: {
-                api_version: '2025-01',
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      org.id,
+      CreateApp,
+      'token',
+      {
+        initialVersion: {
+          source: {
+            name: 'app-name',
+            modules: expect.arrayContaining([
+              {
+                config: {
+                  api_version: '2025-01',
+                },
+                type: 'webhooks',
               },
-              type: 'webhooks',
-            },
-          ]),
+            ]),
+          },
         },
       },
-    })
+      undefined,
+      undefined,
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
+    )
   })
 
   test('creates app successfully and returns expected app structure', async () => {
@@ -643,7 +668,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -658,6 +683,7 @@ describe('deploy', () => {
                 type: BrandingSpecIdentifier,
                 handle: 'test-app',
                 config: {name: 'Test App'},
+                target: 'unused-context',
               },
             ],
           },
@@ -670,6 +696,178 @@ describe('deploy', () => {
       },
       undefined,
       {requestMode: 'slow-request'},
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
+    )
+  })
+
+  test('includes the target property when context is provided', async () => {
+    // Given
+    const versionTag = '1.0.0'
+    const message = 'Test deploy'
+    const commitReference = 'https://github.com/org/repo/commit/123'
+    const appModules = [
+      {
+        uid: 'payments_extension uuid',
+        config: JSON.stringify({name: 'Test App'}),
+        handle: 'test-app',
+        specificationIdentifier: 'payments_extension',
+        context: 'payments.offsite.render',
+      },
+    ]
+
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {
+            versionTag,
+            message,
+            sourceControlUrl: commitReference,
+          },
+          appModules: [
+            {
+              uuid: 'some_uuid',
+            },
+          ],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      appModules,
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag,
+      message,
+      commitReference,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          source: {
+            name: 'Test App',
+            modules: [
+              {
+                uid: 'payments_extension uuid',
+                type: 'payments_extension',
+                handle: 'test-app',
+                config: {name: 'Test App'},
+                target: 'payments.offsite.render',
+              },
+            ],
+          },
+        },
+        metadata: {
+          versionTag,
+          message,
+          sourceControlUrl: commitReference,
+        },
+      },
+      undefined,
+      {requestMode: 'slow-request'},
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
+    )
+  })
+
+  test('does not include target property when context is empty', async () => {
+    // Given
+    const versionTag = '1.0.0'
+    const message = 'Test deploy'
+    const commitReference = 'https://github.com/org/repo/commit/123'
+    const appModules = [
+      {
+        uid: 'branding',
+        config: JSON.stringify({name: 'Test App'}),
+        handle: 'test-app',
+        specificationIdentifier: BrandingSpecIdentifier,
+        context: '',
+      },
+    ]
+
+    const mockResponse = {
+      appVersionCreate: {
+        version: {
+          id: 'gid://shopify/Version/1',
+          metadata: {
+            versionTag,
+            message,
+            sourceControlUrl: commitReference,
+          },
+          appModules: [
+            {
+              uuid: 'some_uuid',
+            },
+          ],
+        },
+        userErrors: [],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      appModules,
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag,
+      message,
+      commitReference,
+      skipPublish: true,
+    })
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
+      'gid://shopify/Organization/123',
+      expect.anything(),
+      'token',
+      {
+        appId: 'gid://shopify/App/123',
+        version: {
+          source: {
+            name: 'Test App',
+            modules: [
+              {
+                uid: 'branding',
+                type: BrandingSpecIdentifier,
+                handle: 'test-app',
+                config: {name: 'Test App'},
+                // The target property should not be present
+              },
+            ],
+          },
+        },
+        metadata: {
+          versionTag,
+          message,
+          sourceControlUrl: commitReference,
+        },
+      },
+      undefined,
+      expect.objectContaining({requestMode: 'slow-request'}),
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
     )
   })
 
@@ -700,7 +898,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -712,7 +910,11 @@ describe('deploy', () => {
         metadata: expect.any(Object),
       },
       undefined,
-      {requestMode: 'slow-request'},
+      expect.objectContaining({requestMode: 'slow-request'}),
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
     )
   })
 
@@ -751,7 +953,7 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       expect.anything(),
       'token',
@@ -764,7 +966,11 @@ describe('deploy', () => {
         },
       }),
       undefined,
-      {requestMode: 'slow-request'},
+      expect.objectContaining({requestMode: 'slow-request'}),
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
     )
   })
 
@@ -778,6 +984,11 @@ describe('deploy', () => {
             field: ['version'],
             message: 'Invalid version',
             details: [],
+            on: [
+              {
+                user_identifier: 'some_user_identifier',
+              },
+            ],
           },
         ],
       },
@@ -797,6 +1008,41 @@ describe('deploy', () => {
     // Then
     expect(result.appDeploy.userErrors).toHaveLength(1)
     expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
+    expect(result.appDeploy.userErrors[0]?.details).toStrictEqual([
+      expect.objectContaining({extension_id: 'some_user_identifier'}),
+    ])
+  })
+
+  test('handles malformed version creation errors', async () => {
+    // Given
+    const mockResponse = {
+      appVersionCreate: {
+        version: null,
+        userErrors: [
+          {
+            field: ['version'],
+            message: 'Invalid version',
+            on: [],
+          },
+        ],
+      },
+    }
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result = await client.deploy({
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/123',
+      versionTag: '1.0.0',
+      skipPublish: true,
+    })
+
+    // Then
+    expect(result.appDeploy.userErrors).toHaveLength(1)
+    expect(result.appDeploy.userErrors[0]?.message).toBe('Invalid version')
+    expect(result.appDeploy.userErrors[0]?.details).toHaveLength(0)
   })
 
   test('queries for versions list', async () => {
@@ -853,11 +1099,17 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
       'gid://shopify/Organization/123',
       AppVersions,
       'token',
       expect.objectContaining({appId}),
+      undefined,
+      undefined,
+      expect.objectContaining({
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      }),
     )
     expect(result).toEqual({
       app: {
@@ -894,6 +1146,62 @@ describe('deploy', () => {
           },
         },
       },
+    })
+  })
+})
+
+describe('AppManagementClient', () => {
+  describe('generateSignedUploadUrl', () => {
+    test('passes Brotli format for uploads', async () => {
+      // Given
+      const client = new AppManagementClient()
+      const mockResponse = {
+        appRequestSourceUploadUrl: {
+          sourceUploadUrl: 'https://example.com/upload-url',
+          userErrors: [],
+        },
+      }
+
+      // Mock the app management request
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
+
+      const app: MinimalAppIdentifiers = {
+        apiKey: 'test-api-key',
+        organizationId: 'test-org-id',
+        id: 'test-app-id',
+      }
+
+      // When
+      client.token = () => Promise.resolve('token')
+      await client.generateSignedUploadUrl(app)
+
+      // Then
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        app.organizationId,
+        CreateAssetUrl,
+        'token',
+        {
+          sourceExtension: 'BR' as SourceExtension,
+        },
+        expect.objectContaining({
+          cacheTTL: expect.anything(),
+        }),
+        undefined,
+        expect.objectContaining({
+          handler: expect.any(Function),
+          type: 'token_refresh',
+        }),
+      )
+    })
+  })
+
+  describe('bundleFormat', () => {
+    test('returns br for Brotli compression format', () => {
+      // Given
+      const client = new AppManagementClient()
+
+      // Then
+      expect(client.bundleFormat).toBe('br')
     })
   })
 })

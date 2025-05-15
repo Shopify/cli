@@ -14,12 +14,16 @@ import {
   AppDeployOptions,
   AssetUrlSchema,
   AppVersionIdentifiers,
-  DevSessionOptions,
   filterDisabledFlags,
   ClientName,
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
+  createUnauthorizedHandler,
+  DevSessionUpdateOptions,
+  DevSessionCreateOptions,
+  DevSessionDeleteOptions,
+  UserError,
 } from '../developer-platform-client.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
@@ -79,7 +83,11 @@ import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
-import {DevSessionUpdate, DevSessionUpdateMutation} from '../../api/graphql/app-dev/generated/dev-session-update.js'
+import {
+  DevSessionUpdate,
+  DevSessionUpdateMutation,
+  DevSessionUpdateMutationVariables,
+} from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {
   FetchDevStoreByDomain,
@@ -95,7 +103,10 @@ import {
 } from '../../api/graphql/app-management/generated/active-app-release.js'
 import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
-import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
+import {
+  CreateAppVersion,
+  CreateAppVersionMutation,
+} from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
@@ -125,6 +136,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -150,6 +162,7 @@ import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -171,6 +184,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsDevSessions = true
   public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
+  public readonly bundleFormat = 'br'
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -385,7 +399,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .map((word) => `title:${word}`)
         .join(' '),
     }
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     if (!result.appsConnection) {
       throw new BugError('Server failed to retrieve apps')
     }
@@ -406,7 +428,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      undefined,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -471,7 +501,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = createAppVars(options, apiVersion)
 
     const mutation = CreateApp
-    const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      org.id,
+      mutation,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     if (!result.appCreate.app || result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -550,7 +588,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return {
       app: {
         id: result.app.id,
@@ -585,7 +631,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
     const variables = {versionTag}
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     const version = result.versionByTag
     if (!version) {
       throw new AbortError(`Version not found for tag: ${versionTag}`)
@@ -648,12 +702,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables = {sourceExtension: 'BR' as SourceExtension}
     const result = await appManagementRequestDoc(
       organizationId,
       CreateAssetUrl,
       await this.token(),
-      {},
+      variables,
       {cacheTTL: {minutes: 59}},
+      undefined,
+      createUnauthorizedHandler(this),
     )
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
@@ -696,6 +753,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
               type: mod.specificationIdentifier,
               handle: mod.handle,
               config: JSON.parse(mod.config),
+              ...(mod.context ? {target: mod.context} : {}),
             })),
           },
         }
@@ -712,9 +770,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
       undefined,
       {requestMode: 'slow-request'},
+      createUnauthorizedHandler(this),
     )
-    const {version, userErrors} = result.appVersionCreate
-    if (!version) return {appDeploy: {userErrors}} as unknown as AppDeploySchema
+    const {version} = result.appVersionCreate
+    const userErrors = result.appVersionCreate.userErrors.map(toUserError) ?? []
+    if (!version) return {appDeploy: {userErrors}}
 
     const versionResult = {
       appDeploy: {
@@ -733,7 +793,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           }),
           message: version.metadata.message,
         },
-        userErrors: userErrors?.map((err) => ({...err, details: []})),
+        userErrors,
       },
     }
     if (noRelease) return versionResult
@@ -744,10 +804,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ReleaseVersion,
       await this.token(),
       releaseVariables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
     )
-    if (releaseResult.appReleaseCreate?.userErrors) {
+    if (releaseResult.appReleaseCreate.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
-        releaseResult.appReleaseCreate.userErrors.map((err) => ({...err, details: []})),
+        releaseResult.appReleaseCreate.userErrors.map(toUserError),
       )
     }
 
@@ -767,9 +830,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ReleaseVersion,
       await this.token(),
       releaseVariables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
     )
 
-    if (releaseResult.appReleaseCreate?.release) {
+    if (releaseResult.appReleaseCreate.release) {
       return {
         appRelease: {
           appVersion: {
@@ -975,17 +1041,32 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDeepLink({id, organizationId})
   }
 
-  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionCreateMutation> {
+  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {
+      appId: appIdNumber,
+      assetsUrl: assetsUrl ?? '',
+    })
   }
 
-  async devSessionUpdate({appId, assetsUrl, shopFqdn}: DevSessionOptions): Promise<DevSessionUpdateMutation> {
+  async devSessionUpdate({
+    appId,
+    assetsUrl,
+    shopFqdn,
+    manifest,
+    inheritedModuleUids,
+  }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), {appId: appIdNumber, assetsUrl})
+    const variables: DevSessionUpdateMutationVariables = {
+      appId: appIdNumber,
+      assetsUrl,
+      manifest: JSON.stringify(manifest),
+      inheritedModuleUids,
+    }
+    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), variables)
   }
 
-  async devSessionDelete({appId, shopFqdn}: Omit<DevSessionOptions, 'assetsUrl'>): Promise<DevSessionDeleteMutation> {
+  async devSessionDelete({appId, shopFqdn}: DevSessionDeleteOptions): Promise<DevSessionDeleteMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
   }
@@ -996,6 +1077,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       `Looks like you don't have a dev store in the organization you selected. ` +
       `Keep going — create a dev store on the Developer Dashboard:\n${url}\n`
     )
+  }
+
+  private createUnauthorizedHandler(): UnauthorizedHandler {
+    return createUnauthorizedHandler(this)
   }
 
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
@@ -1208,4 +1293,13 @@ interface FetchAppLogsDevDashboardOptions {
     status?: string
     source?: string
   }
+}
+
+function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErrors'][number]): UserError {
+  const details = []
+  const extensionId = (err.on[0] as {user_identifier: string})?.user_identifier
+  if (extensionId) {
+    details.push({extension_id: extensionId})
+  }
+  return {...err, details}
 }

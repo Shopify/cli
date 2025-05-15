@@ -1,8 +1,8 @@
 import {evaluate, SessionItem} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {consoleWarn, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {consoleWarn, outputDebug} from '@shopify/cli-kit/node/output'
 import {createInterface, Interface} from 'readline'
 
 export const DELIMITER_WARNING =
@@ -45,16 +45,14 @@ export async function handleInput(
     presentValue(evaluatedValue)
     rl.prompt()
   } catch (error) {
-    shutdownReplSession(error)
     rl.close()
-    throw new AbortSilentError()
-  }
-}
 
-function shutdownReplSession(error: unknown) {
-  if (error instanceof Error) {
-    outputInfo(outputContent`${outputToken.errorText(`Shopify Liquid console error: ${error.message}`)}`)
-    outputDebug(error.stack || 'Error backtrace not found')
+    if (error instanceof Error) {
+      outputDebug(error.stack || 'Error backtrace not found')
+      throw new AbortError(error.message)
+    } else {
+      throw new AbortError('An unknown error occurred. Please try again.')
+    }
   }
 }
 

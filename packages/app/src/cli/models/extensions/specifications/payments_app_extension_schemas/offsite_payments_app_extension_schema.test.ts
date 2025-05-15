@@ -25,7 +25,6 @@ const config: OffsitePaymentsAppExtensionConfigType = {
   targeting: [{target: 'payments.offsite.render'}],
   api_version: '2022-07',
   description: 'my payments app extension',
-  metafields: [],
   input: {
     metafield_identifiers: {
       namespace: 'namespace',

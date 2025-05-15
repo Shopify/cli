@@ -45,7 +45,7 @@ import {
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
-import {AppConfiguration, isCurrentAppSchema} from '../models/app/app.js'
+import {AppConfiguration, AppManifest, isCurrentAppSchema} from '../models/app/app.js'
 import {loadAppConfiguration} from '../models/app/loader.js'
 import {
   ExtensionUpdateDraftMutation,
@@ -61,6 +61,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -186,11 +187,23 @@ export type AppDeployOptions = AppDeployVariables & {
   name: string
 }
 
-export interface DevSessionOptions {
+interface DevSessionSharedOptions {
   shopFqdn: string
   appId: string
-  assetsUrl: string
 }
+
+export interface DevSessionCreateOptions extends DevSessionSharedOptions {
+  assetsUrl?: string
+  manifest: AppManifest
+}
+
+export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
+  assetsUrl?: string
+  manifest: AppManifest
+  inheritedModuleUids: string[]
+}
+
+export type DevSessionDeleteOptions = DevSessionSharedOptions
 
 type WithUserErrors<T> = T & {
   userErrors: {
@@ -226,6 +239,20 @@ export interface AppLogsError {
 
 export type AppLogsResponse = AppLogsSuccess | AppLogsError
 
+export interface UserError {
+  field?: string[] | null
+  message: string
+  category: string
+  details: ErrorDetail[]
+}
+
+interface ErrorDetail {
+  extension_id?: number | string
+  extension_title?: string
+  specification_identifier?: string
+  [key: string]: unknown
+}
+
 export interface DeveloperPlatformClient {
   readonly clientName: string
   readonly webUiName: string
@@ -234,6 +261,7 @@ export interface DeveloperPlatformClient {
   readonly supportsDevSessions: boolean
   readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
+  readonly bundleFormat: 'zip' | 'br'
   session: () => Promise<PartnersSession>
   refreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
@@ -290,8 +318,32 @@ export interface DeveloperPlatformClient {
   ) => Promise<AppLogsSubscribeMutation>
   appLogs: (options: AppLogsOptions, organizationId: string) => Promise<AppLogsResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
-  devSessionCreate: (input: DevSessionOptions) => Promise<DevSessionCreateMutation>
-  devSessionUpdate: (input: DevSessionOptions) => Promise<DevSessionUpdateMutation>
-  devSessionDelete: (input: Omit<DevSessionOptions, 'assetsUrl'>) => Promise<DevSessionDeleteMutation>
+  devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
+  devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
+  devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (input: string) => Promise<string>
+}
+
+const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
+
+export function createUnauthorizedHandler(client: DeveloperPlatformClient): UnauthorizedHandler {
+  return {
+    type: 'token_refresh',
+    handler: async () => {
+      let tokenRefresher = inProgressRefreshes.get(client)
+      if (tokenRefresher) {
+        const token = await tokenRefresher
+        return {token}
+      } else {
+        try {
+          tokenRefresher = client.refreshToken()
+          inProgressRefreshes.set(client, tokenRefresher)
+          const token = await tokenRefresher
+          return {token}
+        } finally {
+          inProgressRefreshes.delete(client)
+        }
+      }
+    },
+  }
 }

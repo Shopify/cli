@@ -29,7 +29,6 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   targeting: [{target: 'payments.credit-card.render'}],
   api_version: '2022-07',
   description: 'my payments app extension',
-  metafields: [],
   ui_extension_handle: 'sample-ui-extension',
   encryption_certificate_fingerprint: 'fingerprint',
   checkout_payment_method_fields: [{type: 'string', required: false, key: 'sample_key'}],

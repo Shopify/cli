@@ -490,10 +490,6 @@ DESCRIPTION
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
-
-
-EXAMPLES
-  $ shopify app generate extension
 ```
 
 ## `shopify app import-extensions`
@@ -677,9 +673,6 @@ DESCRIPTION
   List deployed versions of your app.
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
-
-EXAMPLES
-  $ shopify app versions list
 ```
 
 ## `shopify app webhook trigger`

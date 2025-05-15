@@ -44,7 +44,7 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -166,6 +166,29 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     apiKey,
     developerPlatformClient,
   )
+
+  // Remove for GA
+  if (developerPlatformClient.supportsDevSessions) {
+    renderInfo({
+      // eslint-disable-next-line @shopify/cli/banner-headline-format
+      headline: [`You're experiencing a whole new`, {command: 'shopify app dev'}],
+      body: [
+        {
+          link: {
+            label: 'See documentation for details',
+            url: 'https://shopify.dev/beta/next-gen-dev-platform/shopify-app-dev',
+          },
+        },
+        'and',
+        {
+          link: {
+            label: 'report issues and feedback via the dev community',
+            url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=new-app-dev-command',
+          },
+        },
+      ],
+    })
+  }
 
   return {
     storeFqdn: store.shopDomain,

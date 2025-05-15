@@ -1,4 +1,4 @@
-import {BaseSchema, MetafieldSchema} from '../../schemas.js'
+import {BaseSchema} from '../../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const BaseFieldSchema = zod.object({
@@ -122,7 +122,6 @@ export const MarketingActivityExtensionSchema = BaseSchema.extend({
   title: zod.string().min(1),
   description: zod.string().min(1),
   api_path: zod.string(),
-  metafields: zod.array(MetafieldSchema).optional(),
   tactic: zod.enum([
     'ad',
     'retargeting',

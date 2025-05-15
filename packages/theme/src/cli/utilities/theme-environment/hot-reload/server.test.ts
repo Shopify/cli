@@ -91,7 +91,7 @@ describe('Hot Reload', () => {
 
       const expectedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${testSectionFileKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionEvent)
@@ -142,7 +142,7 @@ describe('Hot Reload', () => {
       // Since this is a template, sectionNames will be empty (no sections to reload)
       const expectedTemplateEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${templateKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event for JSON update
       expect(hotReloadEvents.at(-1)).toMatch(expectedTemplateEvent)
@@ -163,7 +163,7 @@ describe('Hot Reload', () => {
       // Since this is a section group, sectionNames will contain all the section names
       const expectedSectionGroupEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${sectionGroupKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event for JSON update
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionGroupEvent)
@@ -178,7 +178,7 @@ describe('Hot Reload', () => {
       expect(hotReloadEvents.at(-1)).toMatch(
         `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
           getInMemoryTemplates(ctx),
-        )}},"version":"${HOT_RELOAD_VERSION}"}`,
+        )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`,
       )
       // Wait for remote sync
       await nextTick()
@@ -197,7 +197,7 @@ describe('Hot Reload', () => {
       expect(getInMemoryTemplates(ctx)).toEqual({[anotherSectionKey]: 'default-value'})
       const expectedUnreferencedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent)
       await nextTick()
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent.replace('local', 'remote'))
@@ -207,7 +207,7 @@ describe('Hot Reload', () => {
       await triggerFileEvent('add', cssFileKey)
       // It does not add assets to the in-memory templates:
       expect(getInMemoryTemplates(ctx)).toEqual({})
-      const expectedCssEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
+      const expectedCssEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedCssEvent)
       // Wait for remote sync
       await nextTick()
@@ -218,7 +218,7 @@ describe('Hot Reload', () => {
       await triggerFileEvent('add', cssLiquidFileKey)
       // It does not add assets to the in-memory templates:
       expect(getInMemoryTemplates(ctx)).toEqual({})
-      const expectedCssLiquidEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
+      const expectedCssLiquidEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedCssLiquidEvent)
       // Wait for remote sync
       await nextTick()
@@ -227,7 +227,7 @@ describe('Hot Reload', () => {
       // -- Test other file types (e.g. JS) --
       const jsFileKey = 'assets/something.js'
       await triggerFileEvent('add', jsFileKey)
-      const expectedJsEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
+      const expectedJsEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedJsEvent)
       // Wait for remote sync
       await nextTick()
