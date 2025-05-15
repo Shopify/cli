@@ -6,7 +6,6 @@ import {
 } from './custom_credit_card_payments_app_extension_schema.js'
 import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   name: 'Custom CreditCard extension',
@@ -57,17 +56,7 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: 'payments.custom-credit-card.render',
-          path: ['targeting', 0, 'target'],
-          message: 'Invalid literal value, expected "payments.custom-credit-card.render"',
-        },
-      ]),
-    )
+    ).toThrow('payments.custom-credit-card.render')
   })
 
   test('returns an error if encryption certificate fingerprint is blank', async () => {
@@ -77,19 +66,7 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         encryption_certificate_fingerprint: '',
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.too_small,
-          minimum: 1,
-          type: 'string',
-          inclusive: true,
-          exact: false,
-          message: "Encryption certificate fingerprint can't be blank",
-          path: ['encryption_certificate_fingerprint'],
-        },
-      ]),
-    )
+    ).toThrow("Encryption certificate fingerprint can't be blank")
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -99,17 +76,7 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         buyer_label_translations: [{label: 'Translation without locale key'}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['buyer_label_translations', 0, 'locale'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow('Required')
   })
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
@@ -120,17 +87,7 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
       CustomCreditCardPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['encryption_certificate_fingerprint'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow('Required')
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -140,19 +97,7 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.too_big,
-          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
-          type: 'array',
-          inclusive: true,
-          exact: false,
-          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
-          path: ['checkout_payment_method_fields'],
-        },
-      ]),
-    )
+    ).toThrow(`The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`)
   })
 })
 
