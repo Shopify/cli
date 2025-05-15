@@ -5,6 +5,9 @@ import {
   javyPluginBinary,
   wasmOptBinary,
   trampolineBinary,
+  PREFERRED_JAVY_VERSION,
+  PREFERRED_FUNCTION_RUNNER_VERSION,
+  TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
@@ -28,9 +31,9 @@ describe('javy', () => {
     expect(javy.name).toBe('javy')
     expect(javy.version).match(/^v\d\.\d\.\d$/)
     if (process.platform === 'win32') {
-      expect(javy.path).toMatch(/(\/|\\)javy.exe$/)
+      expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}.exe`)
     } else {
-      expect(javy.path).toMatch(/(\/|\\)javy$/)
+      expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}`)
     }
   })
 
@@ -142,9 +145,9 @@ describe('javy', () => {
 
 describe('javy-plugin', () => {
   test('properties are set correctly', () => {
-    expect(javyPlugin.name).toBe('shopify_functions_javy_v1')
+    expect(javyPlugin.name).toBe('shopify_functions_javy_v2')
     expect(javyPlugin.version).match(/^v\d+$/)
-    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v1.wasm$/)
+    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v2.wasm$/)
   })
 
   test('downloadUrl returns the correct URL', () => {
@@ -177,9 +180,9 @@ describe('functionRunner', () => {
     expect(functionRunner.name).toBe('function-runner')
     expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
     if (process.platform === 'win32') {
-      expect(functionRunner.path).toMatch(/(\/|\\)function-runner.exe$/)
+      expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}.exe`)
     } else {
-      expect(functionRunner.path).toMatch(/(\/|\\)function-runner$/)
+      expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}`)
     }
   })
 
@@ -328,9 +331,9 @@ describe('trampoline', () => {
     expect(trampoline.name).toBe('shopify-function-trampoline')
     expect(trampoline.version).match(/v\d.\d.\d$/)
     if (process.platform === 'win32') {
-      expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline\.exe$/)
+      expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}.exe`)
     } else {
-      expect(trampoline.path).toMatch(/(\/|\\)shopify-function-trampoline$/)
+      expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}`)
     }
   })
 

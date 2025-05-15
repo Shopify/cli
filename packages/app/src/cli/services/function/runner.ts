@@ -1,4 +1,5 @@
 import {functionRunnerBinary, downloadBinary} from './binaries.js'
+import {validateShopifyFunctionPackageVersion} from './build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -17,8 +18,18 @@ interface FunctionRunnerOptions {
   stderr?: Writable | 'inherit'
 }
 
+async function getFunctionRunnerBinary(ext: ExtensionInstance<FunctionConfigType>) {
+  if (ext.features.includes('function') && ext.isJavaScript) {
+    const deps = await validateShopifyFunctionPackageVersion(ext)
+    return functionRunnerBinary(deps.functionRunner)
+  }
+  return functionRunnerBinary()
+}
+
 export async function runFunction(options: FunctionRunnerOptions) {
-  const functionRunner = functionRunnerBinary()
+  const ext = options.functionExtension
+
+  const functionRunner = await getFunctionRunnerBinary(ext)
   await downloadBinary(functionRunner)
 
   const args: string[] = []

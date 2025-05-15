@@ -6,8 +6,17 @@ import {
   jsExports,
   runWasmOpt,
   runTrampoline,
+  buildJSFunction,
 } from './build.js'
-import {javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
+import {
+  javyBinary,
+  javyPluginBinary,
+  wasmOptBinary,
+  trampolineBinary,
+  PREFERRED_FUNCTION_RUNNER_VERSION,
+  PREFERRED_JAVY_VERSION,
+  PREFERRED_JAVY_PLUGIN_VERSION,
+} from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -27,6 +36,12 @@ vi.mock('esbuild', async () => {
 let stdout: any
 let stderr: any
 let signal: any
+
+const derivedDeps = {
+  functionRunner: PREFERRED_FUNCTION_RUNNER_VERSION,
+  javy: PREFERRED_JAVY_VERSION,
+  javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
+}
 
 const app = testApp({dotenv: {variables: {VAR_FROM_ENV_FILE: 'env_file_var'}, path: ''}})
 
@@ -93,7 +108,10 @@ describe('bundleExtension', () => {
       const got = bundleExtension(
         ourFunction,
         {stdout, stderr, signal, app},
-        {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID_(VAR)': 'invalid_var'},
+        {
+          VAR_FROM_RUNTIME: 'runtime_var',
+          'INVALID_(VAR)': 'invalid_var',
+        },
       )
 
       // Then
@@ -147,7 +165,7 @@ describe('bundleExtension', () => {
     })
   })
 
-  test('errors if shopify library is not on a compatible version', async () => {
+  test('errors if shopify function library is not on a compatible version when building a JS function', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const incompatibleVersion = '999.0.0'
@@ -160,7 +178,7 @@ describe('bundleExtension', () => {
       )
 
       // When
-      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
+      const got = buildJSFunction(ourFunction, {stdout, stderr, signal, app})
 
       // Then
       await expect(got).rejects.toThrow(
@@ -190,18 +208,18 @@ describe('runJavy', () => {
     const ourFunction = await testFunctionExtension()
 
     // When
-    const got = runJavy(ourFunction, {stdout, stderr, signal, app})
+    const got = runJavy(ourFunction, {stdout, stderr, signal, app}, derivedDeps)
 
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith(
-      javyBinary().path,
+      javyBinary(derivedDeps.javy).path,
       [
         'build',
         '-C',
         'dynamic',
         '-C',
-        `plugin=${javyPluginBinary().path}`,
+        `plugin=${javyPluginBinary(derivedDeps.javyPlugin).path}`,
         '-o',
         joinPath(ourFunction.directory, 'dist/index.wasm'),
         'dist/function.js',
@@ -277,7 +295,10 @@ describe('ExportJavyBuilder', () => {
         const got = builder.bundle(
           ourFunction,
           {stdout, stderr, signal, app},
-          {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID_(VAR)': 'invalid_var'},
+          {
+            VAR_FROM_RUNTIME: 'runtime_var',
+            'INVALID_(VAR)': 'invalid_var',
+          },
         )
 
         // Then
@@ -327,19 +348,19 @@ describe('ExportJavyBuilder', () => {
         const ourFunction = await testFunctionExtension()
 
         // When
-        const got = builder.compile(ourFunction, {stdout, stderr, signal, app})
+        const got = builder.compile(ourFunction, {stdout, stderr, signal, app}, derivedDeps)
 
         // Then
         await expect(got).resolves.toBeUndefined()
 
         expect(exec).toHaveBeenCalledWith(
-          javyBinary().path,
+          javyBinary(derivedDeps.javy).path,
           [
             'build',
             '-C',
             'dynamic',
             '-C',
-            `plugin=${javyPluginBinary().path}`,
+            `plugin=${javyPluginBinary(derivedDeps.javyPlugin).path}`,
             '-C',
             expect.stringContaining('wit='),
             '-C',

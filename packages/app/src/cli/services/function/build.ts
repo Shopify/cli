@@ -1,5 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {downloadBinary, javyBinary, javyPluginBinary, trampolineBinary, wasmOptBinary} from './binaries.js'
+import {
+  downloadBinary,
+  javyBinary,
+  javyPluginBinary,
+  wasmOptBinary,
+  deriveJavaScriptBinaryDependencies,
+  BinaryDependencies,
+  trampolineBinary,
+} from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -17,8 +25,7 @@ import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
-const ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS = ['0', '1']
-export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '1'
+export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
@@ -52,10 +59,12 @@ export async function buildJSFunction(fun: ExtensionInstance<FunctionConfigType>
   const exports = jsExports(fun)
   const javyBuilder: JavyBuilder = exports.length === 0 ? DefaultJavyBuilder : new ExportJavyBuilder(exports)
 
+  const deps = await validateShopifyFunctionPackageVersion(fun)
+
   if (options.useTasks) {
-    return buildJSFunctionWithTasks(fun, options, javyBuilder)
+    return buildJSFunctionWithTasks(fun, options, javyBuilder, deps)
   } else {
-    return buildJSFunctionWithoutTasks(fun, options, javyBuilder)
+    return buildJSFunctionWithoutTasks(fun, options, javyBuilder, deps)
   }
 }
 
@@ -63,6 +72,7 @@ async function buildJSFunctionWithoutTasks(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
   builder: JavyBuilder,
+  deps: BinaryDependencies,
 ) {
   if (!options.signal?.aborted) {
     options.stdout.write(`Building function ${fun.localIdentifier}...`)
@@ -75,7 +85,7 @@ async function buildJSFunctionWithoutTasks(
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Running javy...\n`)
-    await builder.compile(fun, options)
+    await builder.compile(fun, options, deps)
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Done!\n`)
@@ -86,6 +96,7 @@ export async function buildJSFunctionWithTasks(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
   builder: JavyBuilder,
+  deps: BinaryDependencies,
 ) {
   await renderTasks([
     {
@@ -103,7 +114,7 @@ export async function buildJSFunctionWithTasks(
     {
       title: 'Running javy',
       task: async () => {
-        await builder.compile(fun, options)
+        await builder.compile(fun, options, deps)
       },
     },
   ])
@@ -148,7 +159,9 @@ async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<F
   return entryPoint
 }
 
-async function validateShopifyFunctionPackageVersion(fun: ExtensionInstance<FunctionConfigType>) {
+export async function validateShopifyFunctionPackageVersion(
+  fun: ExtensionInstance<FunctionConfigType>,
+): Promise<BinaryDependencies> {
   const packageJsonPath = await findPathUp('node_modules/@shopify/shopify_function/package.json', {
     type: 'file',
     cwd: fun.directory,
@@ -161,11 +174,13 @@ async function validateShopifyFunctionPackageVersion(fun: ExtensionInstance<Func
   const packageJson = JSON.parse(await readFile(packageJsonPath))
   const majorVersion = packageJson.version.split('.')[0]
 
-  if (!ALLOWED_FUNCTION_NPM_PACKAGE_MAJOR_VERSIONS.includes(majorVersion)) {
+  const derivedDeps = deriveJavaScriptBinaryDependencies(majorVersion)
+  if (derivedDeps === null) {
     throw new InvalidShopifyFunctionPackageError(
       'The installed version of the Shopify Functions JavaScript library is not compatible with this version of Shopify CLI.',
     )
   }
+  return derivedDeps
 }
 
 export async function bundleExtension(
@@ -173,7 +188,6 @@ export async function bundleExtension(
   options: JSFunctionBuildOptions,
   processEnv = process.env,
 ) {
-  await validateShopifyFunctionPackageVersion(fun)
   const entryPoint = await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
   const esbuildOptions = {
@@ -256,10 +270,11 @@ export async function runTrampoline(modulePath: string) {
 export async function runJavy(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
+  binaryDeps: BinaryDependencies,
   extra: string[] = [],
 ) {
-  const javy = javyBinary()
-  const plugin = javyPluginBinary()
+  const javy = javyBinary(binaryDeps.javy)
+  const plugin = javyPluginBinary(binaryDeps.javyPlugin)
   await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
 
   // Using the `build` command we want to emit:
@@ -286,17 +301,42 @@ export async function runJavy(
 }
 
 export async function installJavy(app: AppInterface) {
-  const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
-  if (javyRequired) {
-    const javy = javyBinary()
-    const plugin = javyPluginBinary()
-    await Promise.all([downloadBinary(javy), downloadBinary(plugin)])
-  }
+  const extensions = app.allExtensions.filter((ext) => ext.features.includes('function') && ext.isJavaScript)
+
+  // Get the dependencies for each extension
+  const depsPromises = extensions.map((ext) => {
+    return validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
+  })
+  const deps = await Promise.all(depsPromises)
+
+  // Extract the javy and plugin dependencies
+  const javyDeps = new Set<string>()
+  const javyPluginDeps = new Set<string>()
+  deps.forEach((dep) => {
+    javyDeps.add(dep.javy)
+    javyPluginDeps.add(dep.javyPlugin)
+  })
+
+  // Setup our download promises
+  const downloadPromises: Promise<void>[] = []
+  javyDeps.forEach((javyDepVersion) => {
+    downloadPromises.push(downloadBinary(javyBinary(javyDepVersion)))
+  })
+  javyPluginDeps.forEach((javyPluginDepVersion) => {
+    downloadPromises.push(downloadBinary(javyPluginBinary(javyPluginDepVersion)))
+  })
+
+  // Run all the downloads in parallel
+  await Promise.all(downloadPromises)
 }
 
 export interface JavyBuilder {
   bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<BuildResult>
-  compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<void>
+  compile(
+    fun: ExtensionInstance<FunctionConfigType>,
+    options: JSFunctionBuildOptions,
+    binaryDeps: BinaryDependencies,
+  ): Promise<void>
 }
 
 export const DefaultJavyBuilder: JavyBuilder = {
@@ -304,8 +344,12 @@ export const DefaultJavyBuilder: JavyBuilder = {
     return bundleExtension(fun, options)
   },
 
-  async compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
-    return runJavy(fun, options)
+  async compile(
+    fun: ExtensionInstance<FunctionConfigType>,
+    options: JSFunctionBuildOptions,
+    binaryDeps: BinaryDependencies,
+  ) {
+    return runJavy(fun, options, binaryDeps)
   },
 }
 
@@ -318,7 +362,6 @@ export class ExportJavyBuilder implements JavyBuilder {
   }
 
   async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions, processEnv = process.env) {
-    await validateShopifyFunctionPackageVersion(fun)
     await checkForShopifyFunctionRuntimeEntrypoint(fun)
 
     const contents = this.entrypointContents
@@ -336,7 +379,11 @@ export class ExportJavyBuilder implements JavyBuilder {
     return esBuild(esbuildOptions)
   }
 
-  async compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+  async compile(
+    fun: ExtensionInstance<FunctionConfigType>,
+    options: JSFunctionBuildOptions,
+    binaryDeps: BinaryDependencies,
+  ) {
     const witContent = this.wit
     outputDebug('Generating world to use with Javy:')
     outputDebug(witContent)
@@ -345,7 +392,7 @@ export class ExportJavyBuilder implements JavyBuilder {
       const witPath = joinPath(dir, 'javy-world.wit')
       await writeFile(witPath, witContent)
 
-      return runJavy(fun, options, ['-C', `wit=${witPath}`, '-C', `wit-world=${JAVY_WORLD}`])
+      return runJavy(fun, options, binaryDeps, ['-C', `wit=${witPath}`, '-C', `wit-world=${JAVY_WORLD}`])
     })
   }
 
