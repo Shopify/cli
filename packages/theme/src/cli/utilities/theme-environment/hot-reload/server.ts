@@ -30,15 +30,20 @@ import type {DevServerContext} from '../types.js'
 
 // --- Section tag content cache ---
 
-interface TagContent {
+interface FilePartDetails {
   content: string
   changed: boolean
 }
 
-const liquidContentCache = new Map<
-  string,
-  {checksum: string; stylesheet: TagContent; javascript: TagContent; schema: TagContent}
->()
+type FileDetailsEntry = {
+  checksum: string
+  stylesheet: FilePartDetails
+  javascript: FilePartDetails
+  schema: FilePartDetails
+  liquid: FilePartDetails
+}
+
+export const fileDetailsCache = new Map<string, FileDetailsEntry>()
 
 // --- Template Replacers ---
 
@@ -414,43 +419,59 @@ function getUpdatedFileParts(key: string, ctx: DevServerContext) {
 
   if (!file || !isValidFileType) return undefined
 
-  const fileDetails = getUpdateFileDetails(file)
+  const fileDetails = getUpdatedFileDetails(file)
 
   return {
-    stylesheetTag: fileDetails.tags.stylesheet.changed,
-    javascriptTag: fileDetails.tags.javascript.changed,
+    stylesheetTag: fileDetails.stylesheet.changed,
+    javascriptTag: fileDetails.javascript.changed,
+    schemaTag: fileDetails.schema.changed,
+    liquid: fileDetails.liquid.changed,
   }
 }
 
-function getUpdateFileDetails(file: ThemeAsset) {
-  const cached = liquidContentCache.get(file.key)
-  const cacheEntry = {
+export function getUpdatedFileDetails(file: ThemeAsset) {
+  const cached = fileDetailsCache.get(file.key)
+  const cacheEntry: FileDetailsEntry = {
     checksum: file.checksum,
     stylesheet: {content: '', changed: false},
     javascript: {content: '', changed: false},
     schema: {content: '', changed: false},
+    liquid: {content: '', changed: false},
   }
 
   if (cached?.checksum === file.checksum) {
     return cached
   }
 
-  liquidContentCache.delete(file.key)
+  fileDetailsCache.delete(file.key)
 
   if (!file.value) return cacheEntry
+
+  const normalizeContent = (content: string) => content?.replace(/\s+/g, ' ').trim()
+  let otherContent = file.value
 
   walk(toLiquidHtmlAST(file.value), (node) => {
     if (node.type !== NodeTypes.LiquidRawTag) return
 
     if (node.name === 'stylesheet' || node.name === 'javascript' || node.name === 'schema') {
-      const content = node.body.value
+      otherContent = otherContent.replace(node.body.value, '')
+      const content = normalizeContent(node.body.value)
       const changed = !cached || content !== cached[node.name].content
 
       cacheEntry[node.name] = {content, changed}
     }
   })
 
-  liquidContentCache.set(file.key, cacheEntry)
+  otherContent = normalizeContent(
+    otherContent.replace(/<!--[\s\S]*?-->/g, '').replace(/{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g, ''),
+  )
+
+  cacheEntry.liquid = {
+    content: otherContent,
+    changed: !cached || otherContent !== cached.liquid.content,
+  }
+
+  fileDetailsCache.set(file.key, cacheEntry)
 
   return cacheEntry
 }
