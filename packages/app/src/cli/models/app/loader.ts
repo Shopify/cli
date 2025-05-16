@@ -19,7 +19,7 @@ import {
   AppHiddenConfig,
   isLegacyAppSchema,
 } from './app.js'
-import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
@@ -54,8 +54,6 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -179,18 +177,6 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
       )
     }
   }
-}
-
-/**
- * Returns true if we should fail if an unsupported app.toml config property is found.
- *
- * This is deactivated if SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS is set
- */
-async function shouldFailIfUnsupportedConfigProperty(): Promise<boolean> {
-  const env = getEnvironmentVariables()
-  // devs can also opt-out
-  const disableUnsupportedConfigPropertyChecks = env[environmentVariableNames.disableUnsupportedConfigPropertyChecks]
-  return !isTruthy(disableUnsupportedConfigPropertyChecks)
 }
 
 export class AppErrors {
@@ -655,8 +641,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
-    const failIfUnsupportedConfigProperty = await shouldFailIfUnsupportedConfigProperty()
-
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
@@ -696,15 +680,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       })
 
     if (unusedKeys.length > 0) {
-      if (failIfUnsupportedConfigProperty) {
-        this.abortOrReport(
-          outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
-          undefined,
-          appConfiguration.path,
-        )
-      } else {
-        outputDebug(outputContent`Unused keys in app configuration: ${outputToken.json(unusedKeys)}`)
-      }
+      this.abortOrReport(
+        outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
+        undefined,
+        appConfiguration.path,
+      )
     }
     return extensionInstancesWithKeys
       .filter(([instance]) => instance)
