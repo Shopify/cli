@@ -149,6 +149,9 @@ export function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerContext
         if (fileKey.endsWith('.json')) {
           const content = file.value ?? (await ctx.localThemeFileSystem.read(fileKey))
           if (content && typeof content === 'string') saveSectionsFromJson(fileKey, content)
+        } else if (fileKey.endsWith('.liquid')) {
+          // Warm cache for the Liquid file parts
+          getUpdatedFileParts(file)
         }
       }),
     )
