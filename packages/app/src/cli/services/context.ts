@@ -8,7 +8,7 @@ import {DeployOptions} from './deploy.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppInterface, isCurrentAppSchema, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -196,7 +196,7 @@ async function checkIncludeConfigOnDeploy({
     org: org.businessName,
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+    configFile: basename(app.configuration.path),
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
     messages: [resetHelpMessage],
   })
@@ -305,15 +305,7 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-export function showReusedDevValues({
-  organization,
-  app,
-  remoteApp,
-  selectedStore,
-  cachedInfo,
-  tunnelMode,
-}: ReusedValuesOptions) {
-  if (!cachedInfo) return
+export function showReusedDevValues({organization, app, remoteApp, selectedStore, tunnelMode}: ReusedValuesOptions) {
   if (sniffForJson()) return
 
   let updateURLs = 'Not yet configured'
@@ -337,7 +329,7 @@ export function showReusedDevValues({
     appName: remoteApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
-    configFile: cachedInfo.configFile,
+    configFile: basename(app.configuration.path),
     messages,
   })
 }
