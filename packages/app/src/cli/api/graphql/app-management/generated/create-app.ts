@@ -6,6 +6,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type CreateAppMutationVariables = Types.Exact<{
   initialVersion: Types.AppVersionInput
+  organizationId?: Types.InputMaybe<Types.Scalars['ID']['input']>
 }>
 
 export type CreateAppMutation = {
@@ -28,6 +29,11 @@ export const CreateApp = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'initialVersion'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'AppVersionInput'}}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'organizationId'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -40,6 +46,11 @@ export const CreateApp = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'initialVersion'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'initialVersion'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'organizationId'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'organizationId'}},
               },
             ],
             selectionSet: {
