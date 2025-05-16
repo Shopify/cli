@@ -1,5 +1,30 @@
 # @shopify/theme
 
+## 3.80.0
+
+### Minor Changes
+
+- ae9e30d: Hot-reloading in `shopify theme dev` now supports `{% javascript %}` tags
+
+### Patch Changes
+
+- c2673be: Ensure that theme console paths are prefixed with a slash
+- 431fd6e: Update `theme init` to use skeleton theme
+- 9cae395: Display theme console errors inside banner
+- 737c9ab: Support hot reloading after changes to Liquid `{% stylesheet %}` tag.
+- eaa8b7c: Fix an issue with hot-reloading the compiled assets (scripts.js, block-scripts.js, etc)
+- 44e8bc7: Improved theme upload ordering to ensure layout files are uploaded before templates
+- acc904f: Bump Shopify/theme-tools packages to
+
+  - Fix validation for static blocks in JSON templates
+  - Introduce ability the disable theme checks for the next Liquid statement
+
+- Updated dependencies [0cc639e]
+- Updated dependencies [431fd6e]
+- Updated dependencies [8422004]
+- Updated dependencies [6517e43]
+  - @shopify/cli-kit@3.80.0
+
 ## 3.79.0
 
 ### Patch Changes

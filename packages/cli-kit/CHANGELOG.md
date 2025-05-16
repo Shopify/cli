@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 3.80.0
+
+### Patch Changes
+
+- 0cc639e: Fix app dev issue about unavailable port when HOST env var is set
+- 431fd6e: [internal] Add method to read local repo's latest git tag
+- 8422004: Increase network timeout for theme API requests to prevent failures during long operations. This utilizes the internal request behaviour mechanism for theme-related Admin API calls, setting a longer timeout (90s) specifically for potentially slow actions like asset uploads/downloads.
+- 6517e43: Enable authentication errors to display store names
+
 ## 3.79.0
 
 ### Minor Changes
