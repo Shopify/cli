@@ -35,7 +35,10 @@ interface TagContent {
   changed: boolean
 }
 
-const tagContentCache = new Map<string, {checksum: string; stylesheet: TagContent; javascript: TagContent}>()
+const liquidContentCache = new Map<
+  string,
+  {checksum: string; stylesheet: TagContent; javascript: TagContent; schema: TagContent}
+>()
 
 // --- Template Replacers ---
 
@@ -404,43 +407,42 @@ function isAsset(key: string) {
   return key.startsWith('assets/')
 }
 
-function getUpdatedFileParts(key: string, ctx: DevServerContext): {stylesheetTag: boolean; javascriptTag: boolean} {
+function getUpdatedFileParts(key: string, ctx: DevServerContext) {
   const file = ctx.localThemeFileSystem.files.get(key)
   const validPrefixes = ['sections/', 'snippets/', 'blocks/']
   const isValidFileType = validPrefixes.some((prefix) => key.startsWith(prefix)) && key.endsWith('.liquid')
 
-  if (!file || !isValidFileType) {
-    return {stylesheetTag: false, javascriptTag: false}
-  }
+  if (!file || !isValidFileType) return undefined
 
-  const tagContents = getTagContents(file)
+  const fileDetails = getUpdateFileDetails(file)
 
   return {
-    stylesheetTag: tagContents.stylesheet.changed,
-    javascriptTag: tagContents.javascript.changed,
+    stylesheetTag: fileDetails.tags.stylesheet.changed,
+    javascriptTag: fileDetails.tags.javascript.changed,
   }
 }
 
-function getTagContents(file: ThemeAsset) {
-  const cached = tagContentCache.get(file.key)
+function getUpdateFileDetails(file: ThemeAsset) {
+  const cached = liquidContentCache.get(file.key)
   const cacheEntry = {
     checksum: file.checksum,
     stylesheet: {content: '', changed: false},
     javascript: {content: '', changed: false},
+    schema: {content: '', changed: false},
   }
 
   if (cached?.checksum === file.checksum) {
     return cached
   }
 
-  tagContentCache.delete(file.key)
+  liquidContentCache.delete(file.key)
 
   if (!file.value) return cacheEntry
 
   walk(toLiquidHtmlAST(file.value), (node) => {
     if (node.type !== NodeTypes.LiquidRawTag) return
 
-    if (node.name === 'stylesheet' || node.name === 'javascript') {
+    if (node.name === 'stylesheet' || node.name === 'javascript' || node.name === 'schema') {
       const content = node.body.value
       const changed = !cached || content !== cached[node.name].content
 
@@ -448,7 +450,7 @@ function getTagContents(file: ThemeAsset) {
     }
   })
 
-  tagContentCache.set(file.key, cacheEntry)
+  liquidContentCache.set(file.key, cacheEntry)
 
   return cacheEntry
 }
