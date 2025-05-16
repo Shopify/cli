@@ -346,7 +346,7 @@ describe('updateURLsPrompt', () => {
     expect(got).toEqual(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message:
-        "Have Shopify override your app URLs with tunnel URLs when running `app dev` against your dev store? This won't affect your app on other stores",
+        "Have Shopify override your app URLs when running `app dev` against your dev store? This won't affect your app on other stores",
       infoTable: {
         'Currently released app URL': ['http://current-url'],
         '=> Dev URL': ['http://new-url'],
@@ -379,7 +379,7 @@ describe('updateURLsPrompt', () => {
     expect(got).toEqual(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message:
-        "Have Shopify override your app URLs with tunnel URLs when running `app dev` against your dev store? This won't affect your app on other stores",
+        "Have Shopify override your app URLs when running `app dev` against your dev store? This won't affect your app on other stores",
       infoTable: {
         'Currently released app URL': ['http://current-url'],
         '=> Dev URL': ['http://new-url'],
