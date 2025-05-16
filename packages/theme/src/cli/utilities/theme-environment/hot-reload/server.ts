@@ -30,17 +30,12 @@ import type {DevServerContext} from '../types.js'
 
 // --- Section tag content cache ---
 
-interface FilePartDetails {
-  content: string
-  changed: boolean
-}
-
 type FileDetailsEntry = {
   checksum: string
-  stylesheet: FilePartDetails
-  javascript: FilePartDetails
-  schema: FilePartDetails
-  liquid: FilePartDetails
+  stylesheet: string
+  javascript: string
+  schema: string
+  liquid: string
 }
 
 export const fileDetailsCache = new Map<string, FileDetailsEntry>()
@@ -419,33 +414,38 @@ function getUpdatedFileParts(key: string, ctx: DevServerContext) {
 
   if (!file || !isValidFileType) return undefined
 
-  const fileDetails = getUpdatedFileDetails(file)
+  const filePartsUpdated = getUpdatedFileDetails(file)
 
   return {
-    stylesheetTag: fileDetails.stylesheet.changed,
-    javascriptTag: fileDetails.javascript.changed,
-    schemaTag: fileDetails.schema.changed,
-    liquid: fileDetails.liquid.changed,
+    stylesheetTag: filePartsUpdated.stylesheet,
+    javascriptTag: filePartsUpdated.javascript,
+    schemaTag: filePartsUpdated.schema,
+    liquid: filePartsUpdated.liquid,
   }
 }
 
 export function getUpdatedFileDetails(file: ThemeAsset) {
-  const cached = fileDetailsCache.get(file.key)
-  const cacheEntry: FileDetailsEntry = {
-    checksum: file.checksum,
-    stylesheet: {content: '', changed: false},
-    javascript: {content: '', changed: false},
-    schema: {content: '', changed: false},
-    liquid: {content: '', changed: false},
+  const result = {
+    stylesheet: false,
+    javascript: false,
+    schema: false,
+    liquid: false,
   }
 
-  if (cached?.checksum === file.checksum) {
-    return cached
+  const cacheEntry: FileDetailsEntry = {
+    checksum: file.checksum,
+    stylesheet: '',
+    javascript: '',
+    schema: '',
+    liquid: '',
   }
+
+  const cached = fileDetailsCache.get(file.key)
+  if (cached?.checksum === file.checksum) return result
 
   fileDetailsCache.delete(file.key)
 
-  if (!file.value) return cacheEntry
+  if (!file.value) return result
 
   const normalizeContent = (content: string) => content?.replace(/\s+/g, ' ').trim()
   let otherContent = file.value
@@ -456,9 +456,9 @@ export function getUpdatedFileDetails(file: ThemeAsset) {
     if (node.name === 'stylesheet' || node.name === 'javascript' || node.name === 'schema') {
       otherContent = otherContent.replace(node.body.value, '')
       const content = normalizeContent(node.body.value)
-      const changed = !cached || content !== cached[node.name].content
+      result[node.name] = !cached || content !== cached[node.name]
 
-      cacheEntry[node.name] = {content, changed}
+      cacheEntry[node.name] = content
     }
   })
 
@@ -466,12 +466,10 @@ export function getUpdatedFileDetails(file: ThemeAsset) {
     otherContent.replace(/<!--[\s\S]*?-->/g, '').replace(/{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g, ''),
   )
 
-  cacheEntry.liquid = {
-    content: otherContent,
-    changed: !cached || otherContent !== cached.liquid.content,
-  }
+  cacheEntry.liquid = otherContent
+  result.liquid = !cached || otherContent !== cached.liquid
 
   fileDetailsCache.set(file.key, cacheEntry)
 
-  return cacheEntry
+  return result
 }
