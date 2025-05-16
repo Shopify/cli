@@ -31,17 +31,12 @@ function createAjvValidator(
   schema: SchemaObject,
 ) {
   // allowUnionTypes: Allows types like `type: ["string", "number"]`
-  // removeAdditional: Removes extraneous properties from the subject if `additionalProperties: false` is specified
-  let removeAdditional
-  switch (handleInvalidAdditionalProperties) {
-    case 'strip':
-      removeAdditional = true
-      break
-    case 'fail':
-      removeAdditional = undefined
-      break
+  if (handleInvalidAdditionalProperties === 'strip') {
+    // we need to let additional properties through, so that we can strip them later
+    schema.additionalProperties = true
   }
-  const ajv = new Ajv({allowUnionTypes: true, removeAdditional, allErrors: true, verbose: true})
+
+  const ajv = new Ajv({allowUnionTypes: true, allErrors: true, verbose: true})
   ajv.addKeyword('x-taplo')
 
   const validator = ajv.compile(schema)
@@ -88,6 +83,19 @@ export function jsonSchemaValidate(
       rawErrors: validator.errors,
     }
   }
+
+  if (handleInvalidAdditionalProperties === 'strip') {
+    const topLevelSchemaProperties = Object.keys(schema.properties ?? {})
+    // strip any properties that are not in the top level schema from subjectToModify
+    Object.keys(subjectToModify).forEach((key) => {
+      if (!topLevelSchemaProperties.includes(key)) {
+        // this isn't actually dynamic, because key came from Object.keys
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete subjectToModify[key as keyof typeof subjectToModify]
+      }
+    })
+  }
+
   return {
     state: 'ok',
     data: subjectToModify,
