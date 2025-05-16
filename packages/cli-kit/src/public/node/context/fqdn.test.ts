@@ -211,6 +211,42 @@ describe('identity', () => {
   })
 })
 
+describe('adminFqdn', () => {
+  test('returns the local fqdn when the environment is local', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+
+    // When
+    const got = await adminFqdn()
+
+    // Then
+    expect(got).toEqual('admin.myshopify.io')
+  })
+
+  test('returns the production fqdn when the environment is production', async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+
+    // When
+    const got = await adminFqdn()
+
+    // Then
+    expect(got).toEqual('admin.shopify.com')
+  })
+
+  test("returns the spin fqdn if the environment is spin and it's running in a Spin environment", async () => {
+    // Given
+    vi.mocked(serviceEnvironment).mockReturnValue(Environment.Spin)
+    vi.mocked(spinFqdn).mockResolvedValue('spin.com')
+
+    // When
+    const got = await adminFqdn()
+
+    // Then
+    expect(got).toEqual('admin.shopify.spin.com')
+  })
+})
+
 describe('normalizeStore', () => {
   test('parses store name with http', async () => {
     // When
