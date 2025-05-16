@@ -215,6 +215,6 @@ export function generateCertificatePrompt() {
   return renderConfirmationPrompt({
     message: '--use-localhost requires a certificate for `localhost`. Generate it now?',
     confirmationMessage: 'Yes, use mkcert to generate it',
-    cancellationMessage: "No, I'll provide it manually",
+    cancellationMessage: "No, I'll run `app dev` again without `--use-localhost`",
   })
 }
