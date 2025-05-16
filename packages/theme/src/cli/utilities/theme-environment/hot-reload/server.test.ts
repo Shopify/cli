@@ -6,16 +6,18 @@ import {
   hotReloadScriptId,
   hotReloadScriptUrl,
   setupInMemoryTemplateWatcher,
+  getUpdatedFileDetails,
+  fileDetailsCache,
 } from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
-import {describe, test, expect, vi} from 'vitest'
+import {describe, test, expect, vi, beforeEach, it} from 'vitest'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from '../types.js'
-import type {Theme, ThemeFSEventName} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
 
@@ -91,7 +93,7 @@ describe('Hot Reload', () => {
 
       const expectedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${testSectionFileKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false,"schemaTag":false,"liquid":true}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionEvent)
@@ -178,7 +180,7 @@ describe('Hot Reload', () => {
       expect(hotReloadEvents.at(-1)).toMatch(
         `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
           getInMemoryTemplates(ctx),
-        )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`,
+        )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false,"schemaTag":false,"liquid":true}},"version":"${HOT_RELOAD_VERSION}"}`,
       )
       // Wait for remote sync
       await nextTick()
@@ -197,7 +199,7 @@ describe('Hot Reload', () => {
       expect(getInMemoryTemplates(ctx)).toEqual({[anotherSectionKey]: 'default-value'})
       const expectedUnreferencedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false,"schemaTag":false,"liquid":false}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent)
       await nextTick()
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent.replace('local', 'remote'))
@@ -289,6 +291,140 @@ describe('Hot Reload', () => {
       subscribeEvent.node.req.destroy()
       await expect(streamPromise).resolves.not.toThrow()
     })
+  })
+})
+
+describe('getUpdatedFileDetails', () => {
+  beforeEach(() => {
+    fileDetailsCache.clear()
+  })
+
+  it('returns empty content and no changes for empty file', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: '',
+    }
+
+    expect(getUpdatedFileDetails(file)).toEqual({
+      stylesheet: false,
+      javascript: false,
+      schema: false,
+      liquid: false,
+    })
+  })
+
+  it('extracts special tag contents and detects changes', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: `
+        {% stylesheet %}
+          .test { color: red; }
+        {% endstylesheet %}
+        {% javascript %}
+          console.log('test');
+        {% endjavascript %}
+        {% schema %}
+          { "name": "Test" }
+        {% endschema %}
+      `,
+    }
+
+    const result = getUpdatedFileDetails(file)
+    const cacheEntry = fileDetailsCache.get(file.key)
+
+    expect(cacheEntry?.stylesheet).toBe('.test { color: red; }')
+    expect(cacheEntry?.javascript).toBe("console.log('test');")
+    expect(cacheEntry?.schema).toBe('{ "name": "Test" }')
+    expect(result.stylesheet).toBe(true)
+    expect(result.javascript).toBe(true)
+    expect(result.schema).toBe(true)
+    expect(result.liquid).toBe(true)
+
+    // Test caching - second call should show no changes
+    const secondResult = getUpdatedFileDetails(file)
+    expect(secondResult.stylesheet).toBe(false)
+    expect(secondResult.javascript).toBe(false)
+    expect(secondResult.schema).toBe(false)
+    expect(secondResult.liquid).toBe(false)
+  })
+
+  it('removes HTML and Liquid comments from other content', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: `
+        <!-- HTML comment -->
+        {% comment %}
+          Liquid comment
+        {% endcomment %}
+        {{ product.title }}
+        {% if product %}
+          Content
+        {% endif %}
+      `,
+    }
+
+    expect(getUpdatedFileDetails(file).liquid).toEqual(true)
+    expect(fileDetailsCache.get(file.key)?.liquid).toBe('{{ product.title }} {% if product %} Content {% endif %}')
+  })
+
+  it('detects changes in tags when the file updates', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: `
+        {% stylesheet %}
+          .test { color: red; }
+        {% endstylesheet %}
+        {% javascript %}
+          console.log('test');
+        {% endjavascript %}
+        {{ product.title }}
+        {% schema %}
+          { "name": "Test" }
+        {% endschema %}
+      `,
+    }
+
+    const newFileResult = getUpdatedFileDetails(file)
+    expect(newFileResult.stylesheet).toBe(true)
+    expect(newFileResult.javascript).toBe(true)
+    expect(newFileResult.schema).toBe(true)
+    expect(newFileResult.liquid).toBe(true)
+
+    file.value = file.value!.replace('color: red', 'color: blue')
+    file.checksum = file.checksum + '1'
+    const stylesheetUpdatedResult = getUpdatedFileDetails(file)
+    expect(stylesheetUpdatedResult.stylesheet).toBe(true)
+    expect(stylesheetUpdatedResult.javascript).toBe(false)
+    expect(stylesheetUpdatedResult.schema).toBe(false)
+    expect(stylesheetUpdatedResult.liquid).toBe(false)
+
+    file.value = file.value!.replace("console.log('test');", "console.log('test2');")
+    file.checksum = file.checksum + '1'
+    const javascriptUpdatedResult = getUpdatedFileDetails(file)
+    expect(javascriptUpdatedResult.stylesheet).toBe(false)
+    expect(javascriptUpdatedResult.javascript).toBe(true)
+    expect(javascriptUpdatedResult.schema).toBe(false)
+    expect(javascriptUpdatedResult.liquid).toBe(false)
+
+    file.value = file.value!.replace('{ "name": "Test" }', '{"name": "Test2"}')
+    file.checksum = file.checksum + '1'
+    const schemaUpdatedResult = getUpdatedFileDetails(file)
+    expect(schemaUpdatedResult.stylesheet).toBe(false)
+    expect(schemaUpdatedResult.javascript).toBe(false)
+    expect(schemaUpdatedResult.schema).toBe(true)
+    expect(schemaUpdatedResult.liquid).toBe(false)
+
+    file.value = file.value!.replace('{{ product.title }}', '{{ product.description }}')
+    file.checksum = file.checksum + '1'
+    const liquidUpdatedResult = getUpdatedFileDetails(file)
+    expect(liquidUpdatedResult.stylesheet).toBe(false)
+    expect(liquidUpdatedResult.javascript).toBe(false)
+    expect(liquidUpdatedResult.schema).toBe(false)
+    expect(liquidUpdatedResult.liquid).toBe(true)
   })
 })
 
