@@ -43,14 +43,14 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
     expect(result).toBeUndefined()
   })
 
-  test('Returns PreviewThemeAppExtensionsOptions if theme extensions are present', async () => {
+  test('Returns PreviewThemeAppExtensionsOptions if theme extensions are present - Partners API app', async () => {
     // Given
     const mockTheme = {id: 123} as Theme
     vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
 
     const storeFqdn = 'test.myshopify.com'
     const theme = '123'
-    const remoteApp = testOrganizationApp()
+    const remoteApp = testOrganizationApp() // Regular Partners API app
     const localApp = testApp({allExtensions: [await testThemeExtensions()]})
 
     // When
@@ -71,6 +71,62 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
             link: {
               label: 'Install your app in your development store',
               url: 'https://partners.shopify.com/1/apps/1/test',
+            },
+          },
+        ],
+        [
+          {
+            link: {
+              label: 'Setup your theme app extension in the host theme',
+              url: 'https://test.myshopify.com/admin/themes/123/editor',
+            },
+          },
+        ],
+        [
+          'Preview your theme app extension at',
+          {
+            link: {
+              label: 'http://127.0.0.1:9293',
+              url: 'http://127.0.0.1:9293',
+            },
+          },
+        ],
+      ],
+      orderedNextSteps: true,
+    })
+  })
+
+  test('Returns PreviewThemeAppExtensionsOptions if theme extensions are present - Management API app', async () => {
+    // Given
+    const mockTheme = {id: 123} as Theme
+    vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
+
+    const storeFqdn = 'test.myshopify.com'
+    const theme = '123'
+    const remoteApp = testOrganizationApp({
+      id: 'gid://shopify/App/1234', // Management API app with GID format
+      apiKey: 'e4c79fb7b99c002a35efdcc44e0ea8f7',
+    })
+    const localApp = testApp({allExtensions: [await testThemeExtensions()]})
+
+    // When
+    const result = await setupPreviewThemeAppExtensionsProcess({
+      localApp,
+      remoteApp,
+      storeFqdn,
+      theme,
+    })
+
+    // Then
+    expect(result).toBeDefined()
+    expect(renderInfo).toBeCalledWith({
+      headline: 'The theme app extension development server is ready.',
+      nextSteps: [
+        [
+          {
+            link: {
+              label: 'Install your app in your development store',
+              url: 'https://admin.shopify.com/?organization_id=1&no_redirect=true&redirect=/oauth/redirect_from_developer_dashboard?client_id%3De4c79fb7b99c002a35efdcc44e0ea8f7',
             },
           },
         ],

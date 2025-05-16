@@ -146,7 +146,14 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
 }
 
 async function buildAppUrl(remoteApp: OrganizationApp) {
-  const fqdn = await partnersFqdn()
-
-  return `https://${fqdn}/${remoteApp.organizationId}/apps/${remoteApp.id}/test`
+  // Check if the app ID is in GID format (gid://shopify/App/<INTEGER>), which indicates it's a Management API app
+  if (remoteApp.id.startsWith('gid://')) {
+    // For Management API apps, we need to generate a different URL format
+    // Extract the organization ID and use the app API key for the client_id parameter
+    return `https://admin.shopify.com/?organization_id=${remoteApp.organizationId}&no_redirect=true&redirect=/oauth/redirect_from_developer_dashboard?client_id%3D${remoteApp.apiKey}`
+  } else {
+    // For Partners API apps, use the original URL format
+    const fqdn = await partnersFqdn()
+    return `https://${fqdn}/${remoteApp.organizationId}/apps/${remoteApp.id}/test`
+  }
 }
