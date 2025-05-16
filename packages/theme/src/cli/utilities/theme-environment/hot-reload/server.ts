@@ -32,10 +32,10 @@ import type {DevServerContext} from '../types.js'
 
 type FileDetailsEntry = {
   checksum: string
-  stylesheet: string
-  javascript: string
-  schema: string
   liquid: string
+  stylesheetTag: string
+  javascriptTag: string
+  schemaTag: string
 }
 
 export const fileDetailsCache = new Map<string, FileDetailsEntry>()
@@ -361,11 +361,12 @@ function findSectionNamesToReload(key: string, ctx: DevServerContext) {
 
 function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
   const [type] = key.split('/')
+  const file = ctx.localThemeFileSystem.files.get(key)
 
   return {
     sectionNames: type === 'sections' ? findSectionNamesToReload(key, ctx) : [],
     replaceTemplates: needsTemplateUpdate(key) ? getInMemoryTemplates(ctx) : {},
-    updatedFileParts: getUpdatedFileParts(key, ctx),
+    updatedFileParts: file && getUpdatedFileParts(file),
   }
 }
 
@@ -407,37 +408,24 @@ function isAsset(key: string) {
   return key.startsWith('assets/')
 }
 
-function getUpdatedFileParts(key: string, ctx: DevServerContext) {
-  const file = ctx.localThemeFileSystem.files.get(key)
+export function getUpdatedFileParts(file: ThemeAsset) {
   const validPrefixes = ['sections/', 'snippets/', 'blocks/']
-  const isValidFileType = validPrefixes.some((prefix) => key.startsWith(prefix)) && key.endsWith('.liquid')
+  const isValidFileType = validPrefixes.some((prefix) => file.key.startsWith(prefix)) && file.key.endsWith('.liquid')
+  if (!isValidFileType) return undefined
 
-  if (!file || !isValidFileType) return undefined
-
-  const filePartsUpdated = getUpdatedFileDetails(file)
-
-  return {
-    stylesheetTag: filePartsUpdated.stylesheet,
-    javascriptTag: filePartsUpdated.javascript,
-    schemaTag: filePartsUpdated.schema,
-    liquid: filePartsUpdated.liquid,
-  }
-}
-
-export function getUpdatedFileDetails(file: ThemeAsset) {
   const result = {
-    stylesheet: false,
-    javascript: false,
-    schema: false,
+    stylesheetTag: false,
+    javascriptTag: false,
+    schemaTag: false,
     liquid: false,
   }
 
   const cacheEntry: FileDetailsEntry = {
     checksum: file.checksum,
-    stylesheet: '',
-    javascript: '',
-    schema: '',
     liquid: '',
+    stylesheetTag: '',
+    javascriptTag: '',
+    schemaTag: '',
   }
 
   const cached = fileDetailsCache.get(file.key)
@@ -455,10 +443,10 @@ export function getUpdatedFileDetails(file: ThemeAsset) {
 
     if (node.name === 'stylesheet' || node.name === 'javascript' || node.name === 'schema') {
       otherContent = otherContent.replace(node.body.value, '')
+      const tagName = `${node.name}Tag` as const
       const content = normalizeContent(node.body.value)
-      result[node.name] = !cached || content !== cached[node.name]
-
-      cacheEntry[node.name] = content
+      result[tagName] = !cached || content !== cached[tagName]
+      cacheEntry[tagName] = content
     }
   })
 

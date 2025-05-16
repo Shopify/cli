@@ -6,7 +6,7 @@ import {
   hotReloadScriptId,
   hotReloadScriptUrl,
   setupInMemoryTemplateWatcher,
-  getUpdatedFileDetails,
+  getUpdatedFileParts,
   fileDetailsCache,
 } from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
@@ -306,10 +306,10 @@ describe('getUpdatedFileDetails', () => {
       value: '',
     }
 
-    expect(getUpdatedFileDetails(file)).toEqual({
-      stylesheet: false,
-      javascript: false,
-      schema: false,
+    expect(getUpdatedFileParts(file)).toEqual({
+      stylesheetTag: false,
+      javascriptTag: false,
+      schemaTag: false,
       liquid: false,
     })
   })
@@ -331,23 +331,23 @@ describe('getUpdatedFileDetails', () => {
       `,
     }
 
-    const result = getUpdatedFileDetails(file)
+    const result = getUpdatedFileParts(file)
     const cacheEntry = fileDetailsCache.get(file.key)
 
-    expect(cacheEntry?.stylesheet).toBe('.test { color: red; }')
-    expect(cacheEntry?.javascript).toBe("console.log('test');")
-    expect(cacheEntry?.schema).toBe('{ "name": "Test" }')
-    expect(result.stylesheet).toBe(true)
-    expect(result.javascript).toBe(true)
-    expect(result.schema).toBe(true)
-    expect(result.liquid).toBe(true)
+    expect(cacheEntry?.stylesheetTag).toBe('.test { color: red; }')
+    expect(cacheEntry?.javascriptTag).toBe("console.log('test');")
+    expect(cacheEntry?.schemaTag).toBe('{ "name": "Test" }')
+    expect(result?.stylesheetTag).toBe(true)
+    expect(result?.javascriptTag).toBe(true)
+    expect(result?.schemaTag).toBe(true)
+    expect(result?.liquid).toBe(true)
 
     // Test caching - second call should show no changes
-    const secondResult = getUpdatedFileDetails(file)
-    expect(secondResult.stylesheet).toBe(false)
-    expect(secondResult.javascript).toBe(false)
-    expect(secondResult.schema).toBe(false)
-    expect(secondResult.liquid).toBe(false)
+    const secondResult = getUpdatedFileParts(file)
+    expect(secondResult?.stylesheetTag).toBe(false)
+    expect(secondResult?.javascriptTag).toBe(false)
+    expect(secondResult?.schemaTag).toBe(false)
+    expect(secondResult?.liquid).toBe(false)
   })
 
   it('removes HTML and Liquid comments from other content', () => {
@@ -369,7 +369,7 @@ describe('getUpdatedFileDetails', () => {
       `,
     }
 
-    expect(getUpdatedFileDetails(file).liquid).toEqual(true)
+    expect(getUpdatedFileParts(file)?.liquid).toEqual(true)
     expect(fileDetailsCache.get(file.key)?.liquid).toBe('{{ product.title }} {% if product %} Content {% endif %}')
   })
 
@@ -391,43 +391,43 @@ describe('getUpdatedFileDetails', () => {
       `,
     }
 
-    const newFileResult = getUpdatedFileDetails(file)
-    expect(newFileResult.stylesheet).toBe(true)
-    expect(newFileResult.javascript).toBe(true)
-    expect(newFileResult.schema).toBe(true)
-    expect(newFileResult.liquid).toBe(true)
+    const newFileResult = getUpdatedFileParts(file)
+    expect(newFileResult?.stylesheetTag).toBe(true)
+    expect(newFileResult?.javascriptTag).toBe(true)
+    expect(newFileResult?.schemaTag).toBe(true)
+    expect(newFileResult?.liquid).toBe(true)
 
     file.value = file.value!.replace('color: red', 'color: blue')
     file.checksum = file.checksum + '1'
-    const stylesheetUpdatedResult = getUpdatedFileDetails(file)
-    expect(stylesheetUpdatedResult.stylesheet).toBe(true)
-    expect(stylesheetUpdatedResult.javascript).toBe(false)
-    expect(stylesheetUpdatedResult.schema).toBe(false)
-    expect(stylesheetUpdatedResult.liquid).toBe(false)
+    const stylesheetUpdatedResult = getUpdatedFileParts(file)
+    expect(stylesheetUpdatedResult?.stylesheetTag).toBe(true)
+    expect(stylesheetUpdatedResult?.javascriptTag).toBe(false)
+    expect(stylesheetUpdatedResult?.schemaTag).toBe(false)
+    expect(stylesheetUpdatedResult?.liquid).toBe(false)
 
     file.value = file.value!.replace("console.log('test');", "console.log('test2');")
     file.checksum = file.checksum + '1'
-    const javascriptUpdatedResult = getUpdatedFileDetails(file)
-    expect(javascriptUpdatedResult.stylesheet).toBe(false)
-    expect(javascriptUpdatedResult.javascript).toBe(true)
-    expect(javascriptUpdatedResult.schema).toBe(false)
-    expect(javascriptUpdatedResult.liquid).toBe(false)
+    const javascriptUpdatedResult = getUpdatedFileParts(file)
+    expect(javascriptUpdatedResult?.stylesheetTag).toBe(false)
+    expect(javascriptUpdatedResult?.javascriptTag).toBe(true)
+    expect(javascriptUpdatedResult?.schemaTag).toBe(false)
+    expect(javascriptUpdatedResult?.liquid).toBe(false)
 
     file.value = file.value!.replace('{ "name": "Test" }', '{"name": "Test2"}')
     file.checksum = file.checksum + '1'
-    const schemaUpdatedResult = getUpdatedFileDetails(file)
-    expect(schemaUpdatedResult.stylesheet).toBe(false)
-    expect(schemaUpdatedResult.javascript).toBe(false)
-    expect(schemaUpdatedResult.schema).toBe(true)
-    expect(schemaUpdatedResult.liquid).toBe(false)
+    const schemaUpdatedResult = getUpdatedFileParts(file)
+    expect(schemaUpdatedResult?.stylesheetTag).toBe(false)
+    expect(schemaUpdatedResult?.javascriptTag).toBe(false)
+    expect(schemaUpdatedResult?.schemaTag).toBe(true)
+    expect(schemaUpdatedResult?.liquid).toBe(false)
 
     file.value = file.value!.replace('{{ product.title }}', '{{ product.description }}')
     file.checksum = file.checksum + '1'
-    const liquidUpdatedResult = getUpdatedFileDetails(file)
-    expect(liquidUpdatedResult.stylesheet).toBe(false)
-    expect(liquidUpdatedResult.javascript).toBe(false)
-    expect(liquidUpdatedResult.schema).toBe(false)
-    expect(liquidUpdatedResult.liquid).toBe(true)
+    const liquidUpdatedResult = getUpdatedFileParts(file)
+    expect(liquidUpdatedResult?.stylesheetTag).toBe(false)
+    expect(liquidUpdatedResult?.javascriptTag).toBe(false)
+    expect(liquidUpdatedResult?.schemaTag).toBe(false)
+    expect(liquidUpdatedResult?.liquid).toBe(true)
   })
 })
 
