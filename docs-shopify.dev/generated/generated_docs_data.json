@@ -5261,7 +5261,7 @@
   },
   {
     "name": "theme init",
-    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
     "overviewPreviewDescription": "Clones a Git repository to use as a starting point for building a new theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -5329,12 +5329,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-u, --clone-url <value>",
                 "value": "string",
-                "description": "The Git URL to clone from. Defaults to Shopify's example theme.",
+                "description": "The Git URL to clone from. Defaults to Shopify's Skeleton theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_CLONE_URL"
               }
             ],
-            "value": "export interface themeinit {\n  /**\n   * The Git URL to clone from. Defaults to Shopify's example theme.\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeinit {\n  /**\n   * The Git URL to clone from. Defaults to Shopify's Skeleton theme.\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
