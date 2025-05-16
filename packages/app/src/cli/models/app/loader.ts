@@ -17,6 +17,7 @@ import {
   SchemaForConfig,
   AppLinkedInterface,
   AppHiddenConfig,
+  isLegacyAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -869,15 +870,15 @@ export async function getAppConfigurationState(
   const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, configName)
   const file = await loadConfigurationFileContent(configurationPath)
 
-  const configFileHasBeenLinked = isCurrentAppSchema(file as AppConfiguration)
+  const configFileHasNotBeenLinked = isLegacyAppSchema(file as AppConfiguration)
 
-  if (configFileHasBeenLinked) {
-    const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
+  if (configFileHasNotBeenLinked) {
+    const parsedConfig = await parseConfigurationFile(LegacyAppSchema, configurationPath)
     return {
-      state: 'connected-app',
       appDirectory,
       configurationPath,
-      basicConfiguration: {
+      state: 'template-only',
+      startingOptions: {
         ...file,
         ...parsedConfig,
       },
@@ -885,12 +886,12 @@ export async function getAppConfigurationState(
       configurationFileName,
     }
   } else {
-    const parsedConfig = await parseConfigurationFile(LegacyAppSchema, configurationPath)
+    const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
     return {
+      state: 'connected-app',
       appDirectory,
       configurationPath,
-      state: 'template-only',
-      startingOptions: {
+      basicConfiguration: {
         ...file,
         ...parsedConfig,
       },
