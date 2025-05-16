@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 /* eslint-disable no-console */
 import {Surface} from './types.js'
+import {ExtensionServer} from './server-types.js'
 import {
   FlattenedLocalization,
   Localization,
@@ -59,19 +60,19 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     event: TEvent,
     listener: (payload: ExtensionServer.InboundEvents[TEvent]) => void,
   ): () => void {
-    if (!this.listeners[event]) {
-      this.listeners[event] = new Set()
+    if (!this.listeners[event as string]) {
+      this.listeners[event as string] = new Set()
     }
 
-    this.listeners[event].add(listener)
-    return () => this.listeners[event].delete(listener)
+    this.listeners[event as string].add(listener)
+    return () => this.listeners[event as string].delete(listener)
   }
 
   public persist<TEvent extends keyof ExtensionServer.OutboundPersistEvents>(
     event: TEvent,
     data: ExtensionServer.OutboundPersistEvents[TEvent],
   ): void {
-    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
+    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event as string)) {
       if (!this.options.locales) {
         return this.connection?.send(JSON.stringify({event, data}))
       }
@@ -101,7 +102,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        * }
        * ```
        */
-      data.extensions?.forEach((extension) => {
+      data.extensions?.forEach((extension: any) => {
         TRANSLATED_KEYS.forEach((key) => {
           if (isUIExtension(extension)) {
             extension.extensionPoints?.forEach((extensionPoint) => {
@@ -120,7 +121,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   public emit<TEvent extends keyof ExtensionServer.DispatchEvents>(...args: ExtensionServer.EmitArgs<TEvent>): void {
     const [event, data] = args
 
-    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
+    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event as string)) {
       return console.warn(
         `You tried to use "emit" with a the "${event}" event. Please use the "persist" method instead to persist changes to the server.`,
       )

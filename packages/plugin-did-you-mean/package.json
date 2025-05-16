@@ -47,7 +47,7 @@
     "n-gram": "2.0.2"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^1.6.0"
+    "@vitest/coverage-istanbul": "^3.0.4"
   },
   "engines": {
     "node": "^18.20.0 || >=20.10.0"

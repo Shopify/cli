@@ -18,7 +18,7 @@ import {
   type Offense,
   type Theme,
 } from '@shopify/theme-check-node'
-import {Mock, MockInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
+import {Mock, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
   fileExists: vi.fn(),
@@ -47,10 +47,6 @@ describe('formatOffenses', () => {
   beforeEach(() => {
     const readFileMock = readFileSync as Mock
     readFileMock.mockReturnValue({toString: () => 'Line1\nLine2\nLine3'})
-  })
-
-  afterAll(() => {
-    vi.unstubAllGlobals()
   })
 
   test('should format offenses correctly', () => {
@@ -234,10 +230,6 @@ describe('renderOffensesText', () => {
     readFileMock.mockReturnValue('Line1\nLine2\nLine3')
   })
 
-  afterAll(() => {
-    vi.unstubAllGlobals()
-  })
-
   test('should call renderInfo for offenses', () => {
     const offensesByFile = {
       '/path/to/file': [
@@ -319,22 +311,17 @@ describe('formatOffensesJson', () => {
 })
 
 describe('handleExit', () => {
-  let exitSpy: MockInstance<[code?: number | undefined], never>
-
   beforeEach(() => {
-    // Create a spy on process.exit
-    exitSpy = vi.spyOn(process, 'exit').mockImplementation(vi.fn())
-  })
-
-  afterAll(() => {
-    // Restore the original process.exit function after each test
-    exitSpy.mockRestore()
+    // Mock process.exit
+    vi.spyOn(process, 'exit').mockImplementation(() => {
+      return undefined as never
+    })
   })
 
   test('should exit with 0 when crash fail level is set', () => {
     const offenses: Offense[] = []
     handleExit(offenses, 'crash')
-    expect(exitSpy).toHaveBeenCalledWith(0)
+    expect(process.exit).toHaveBeenCalledWith(0)
   })
 
   test('should exit with 1 when offenses severity is less than fail level', () => {
@@ -350,7 +337,7 @@ describe('handleExit', () => {
       },
     ]
     handleExit(offenses, 'suggestion')
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exit).toHaveBeenCalledWith(1)
   })
 
   test('should exit with 1 when offenses severity is equal to the fail level', () => {
@@ -366,7 +353,7 @@ describe('handleExit', () => {
       },
     ]
     handleExit(offenses, 'error')
-    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(process.exit).toHaveBeenCalledWith(1)
   })
 
   test('should exit with 0 when offenses severity is not less than fail level', () => {
@@ -382,7 +369,7 @@ describe('handleExit', () => {
       },
     ]
     handleExit(offenses, 'warning')
-    expect(exitSpy).toHaveBeenCalledWith(0)
+    expect(process.exit).toHaveBeenCalledWith(0)
   })
 })
 
@@ -393,10 +380,6 @@ describe('initConfig', () => {
   beforeEach(() => {
     fileMock = fileExists as Mock
     loadConfigMock = loadConfig as Mock
-  })
-
-  afterAll(() => {
-    vi.unstubAllGlobals()
   })
 
   test('should not create a new config file if one already exists', async () => {

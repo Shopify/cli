@@ -42,6 +42,14 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   }
 })
 
+vi.mock('@shopify/cli-kit/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+  return {
+    ...actual,
+    exec: vi.fn().mockResolvedValue({stdout: '', stderr: ''}),
+  }
+})
+
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
   return {

@@ -1,3 +1,4 @@
+import {ExtensionServer} from '../ExtensionServerClient/server-types.js'
 import type {ExtensionServerState, ExtensionServerActions} from '../state'
 
 export interface ExtensionServerContext {

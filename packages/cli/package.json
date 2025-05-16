@@ -119,7 +119,7 @@
     "@shopify/cli-hydrogen": "10.0.1",
     "@types/global-agent": "3.0.0",
     "@typescript-eslint/eslint-plugin": "7.13.1",
-    "@vitest/coverage-istanbul": "^1.6.0",
+    "@vitest/coverage-istanbul": "^3.0.4",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1"
   },
