@@ -39,6 +39,24 @@ export async function partnersFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the Admin service we should interact with.
+ *
+ * @returns Fully-qualified domain of the Admin service we should interact with.
+ */
+export async function adminFqdn(): Promise<string> {
+  const environment = serviceEnvironment()
+  const productionFqdn = 'admin.shopify.com'
+  switch (environment) {
+    case 'local':
+      return new DevServerCore().host('admin')
+    case 'spin':
+      return `admin.shopify.${await spinFqdn()}`
+    default:
+      return productionFqdn
+  }
+}
+
+/**
  * It returns the App Management API service we should interact with.
  *
  * @returns Fully-qualified domain of the App Management service we should interact with.

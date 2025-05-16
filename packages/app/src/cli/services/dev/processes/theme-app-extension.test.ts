@@ -7,11 +7,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 vi.mock('../../../utilities/extensions/theme/host-theme-manager')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/context/fqdn')
 vi.mock('@shopify/cli-kit/node/ui', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/ui')>()
   const mockModule = {renderInfo: vi.fn()}
@@ -24,6 +26,8 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
+    vi.mocked(partnersFqdn).mockResolvedValue('partners.shopify.com')
+    vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
   })
 
   test('Returns undefined if no theme extensions are present', async () => {

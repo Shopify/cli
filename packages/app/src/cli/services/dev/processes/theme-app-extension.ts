@@ -9,7 +9,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {initializeDevelopmentExtensionServer, ensureValidPassword, isStorefrontPasswordProtected} from '@shopify/theme'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ThemeAppExtensionServerOptions {
   theme: Theme
@@ -150,7 +150,8 @@ async function buildAppUrl(remoteApp: OrganizationApp) {
   if (remoteApp.id.startsWith('gid://')) {
     // For Management API apps, we need to generate a different URL format
     // Extract the organization ID and use the app API key for the client_id parameter
-    return `https://admin.shopify.com/?organization_id=${remoteApp.organizationId}&no_redirect=true&redirect=/oauth/redirect_from_developer_dashboard?client_id%3D${remoteApp.apiKey}`
+    const fqdn = await adminFqdn()
+    return `https://${fqdn}/?organization_id=${remoteApp.organizationId}&no_redirect=true&redirect=/oauth/redirect_from_developer_dashboard?client_id%3D${remoteApp.apiKey}`
   } else {
     // For Partners API apps, use the original URL format
     const fqdn = await partnersFqdn()
