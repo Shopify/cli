@@ -10,7 +10,7 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-export const PREFERRED_FUNCTION_RUNNER_VERSION = 'v8.0.1'
+export const PREFERRED_FUNCTION_RUNNER_VERSION = 'v9.0.0'
 
 // Javy dependencies.
 export const PREFERRED_JAVY_VERSION = 'v5.0.3'
