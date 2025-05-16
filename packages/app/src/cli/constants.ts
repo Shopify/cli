@@ -6,7 +6,6 @@ export const environmentVariableNames = {
   templatesJsonPath: 'SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH',
   mkcertBinaryPath: 'SHOPIFY_CLI_MKCERT_BINARY',
   useWasmTomlPatch: 'SHOPIFY_CLI_USE_WASM_TOML_PATCH',
-  disableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
 }
 
 export const configurationFileNames = {
