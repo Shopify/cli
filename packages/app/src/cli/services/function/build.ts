@@ -245,6 +245,7 @@ export async function runWasmOpt(modulePath: string) {
     '-Oz',
     '--enable-bulk-memory',
     '--enable-multimemory',
+    '--enable-nontrapping-float-to-int',
     '--strip-debug',
     // overwrite our existing module with the optimized version
     '-o',
