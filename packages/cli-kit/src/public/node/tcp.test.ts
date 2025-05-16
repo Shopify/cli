@@ -1,4 +1,4 @@
-import {getAvailableTCPPort} from './tcp.js'
+import {getAvailableTCPPort, checkPortAvailability} from './tcp.js'
 import * as system from './system.js'
 import {AbortError} from './error.js'
 import * as port from 'get-port-please'
@@ -66,5 +66,50 @@ describe('getAvailableTCPPort', () => {
 
     got = await getAvailableTCPPort(123)
     expect(got).toBe(66)
+  })
+})
+
+describe('checkPortAvailability', () => {
+  test('returns true when port is available', async () => {
+    // Given
+    const portNumber = 3000
+    vi.mocked(port.checkPort).mockResolvedValue(portNumber)
+
+    // When
+    const result = await checkPortAvailability(portNumber)
+
+    // Then
+    expect(result).toBe(true)
+    expect(port.checkPort).toHaveBeenCalledWith(portNumber, undefined)
+  })
+
+  test('returns false when port is not available', async () => {
+    // Given
+    const portNumber = 3000
+    vi.mocked(port.checkPort).mockResolvedValue(false)
+
+    // When
+    const result = await checkPortAvailability(portNumber)
+
+    // Then
+    expect(result).toBe(false)
+    expect(port.checkPort).toHaveBeenCalledWith(portNumber, undefined)
+  })
+
+  test('uses 0.0.0.0 as host when HOST env var is set', async () => {
+    // Given
+    const portNumber = 3000
+    vi.stubEnv('HOST', 'localhost')
+    vi.mocked(port.checkPort).mockResolvedValue(portNumber)
+
+    // When
+    const result = await checkPortAvailability(portNumber)
+
+    // Then
+    expect(result).toBe(true)
+    expect(port.checkPort).toHaveBeenCalledWith(portNumber, '0.0.0.0')
+
+    // Cleanup
+    vi.unstubAllEnvs()
   })
 })

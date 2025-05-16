@@ -23,22 +23,14 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
     return preferredPort
   }
   outputDebug(outputContent`Getting a random port...`)
-  let randomPort = await retryOnError(
-    () => port.getRandomPort('localhost'),
-    options?.maxTries,
-    options?.waitTimeInSeconds,
-  )
+  let randomPort = await retryOnError(() => port.getRandomPort(host()), options?.maxTries, options?.waitTimeInSeconds)
 
   for (let i = 0; i < (options?.maxTries ?? 5); i++) {
     if (!obtainedRandomPorts.has(randomPort)) {
       break
     }
     // eslint-disable-next-line no-await-in-loop
-    randomPort = await retryOnError(
-      () => port.getRandomPort('localhost'),
-      options?.maxTries,
-      options?.waitTimeInSeconds,
-    )
+    randomPort = await retryOnError(() => port.getRandomPort(host()), options?.maxTries, options?.waitTimeInSeconds)
   }
 
   outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
@@ -53,7 +45,13 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
  * @returns A promise that resolves with a boolean indicating if the port is available.
  */
 export async function checkPortAvailability(portNumber: number): Promise<boolean> {
-  return (await port.checkPort(portNumber, 'localhost')) === portNumber
+  return (await port.checkPort(portNumber, host())) === portNumber
+}
+
+function host(): string | undefined {
+  // The get-port-please library does not work as expected when HOST env var is defined,
+  // so explicitly set the host to 0.0.0.0 to avoid conflicts
+  return process.env.HOST ? '0.0.0.0' : undefined
 }
 
 /**
