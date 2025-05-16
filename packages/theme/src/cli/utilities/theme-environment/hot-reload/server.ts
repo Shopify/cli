@@ -463,7 +463,10 @@ export function getUpdatedFileDetails(file: ThemeAsset) {
   })
 
   otherContent = normalizeContent(
-    otherContent.replace(/<!--[\s\S]*?-->/g, '').replace(/{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g, ''),
+    otherContent
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g, '')
+      .replace(/{%\s*doc\s*%}[\s\S]*?{%\s*enddoc\s*%}/g, ''),
   )
 
   cacheEntry.liquid = otherContent

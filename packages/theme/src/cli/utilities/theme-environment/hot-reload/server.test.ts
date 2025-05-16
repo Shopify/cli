@@ -355,6 +355,9 @@ describe('getUpdatedFileDetails', () => {
       key: 'sections/test.liquid',
       checksum: '123',
       value: `
+        {% doc %}
+          Doc comment
+        {% enddoc %}
         <!-- HTML comment -->
         {% comment %}
           Liquid comment
