@@ -1,5 +1,44 @@
 # @shopify/app
 
+## 3.80.0
+
+### Minor Changes
+
+- 16fb774: Adding trampolining process during function build to guest modules using the Wasm API to allow for it to copy data between the memory of the provider and guest modules.
+- a6d28e0: Add new Remix templates behind the `POLARIS_UNIFIED` environment variable
+- 6fcf4d4: Made the `--use-localhost` and `--localhost-port` flags public for the `shopify app dev` command
+
+  When the `--use-localhost` flag is present a tunnel won't be used. Instead, the app will be loaded using https localhost. A self-signed cert will be generated using mkcert. This flag is not compatible with Shopify features which directly invoke your app (such as Webhooks, App proxy, and Flow actions), or those which require testing your app from another'.
+
+  `--use-localhost` will always try to use port 3458. If port 3458 is not available the CLI will warn the user and automaticlly select a different port. Alternatively use the `--localhost-port` flag to specify that you want to develop using localhost on a specific port. For example: `shopify app dev --localhost-port=4000`.
+
+### Patch Changes
+
+- 9ccf6fa: Fixes editor extension collection validation being run on generate
+- a5ff255: Use terminal hyperlinks for `app dev` preview and GraphiQL links.
+- aebbc75: Fix: Pin GraphiQL CSS version to match JS version
+- c3a5189: Bug-fix: Handling mis-configured extension TOML files
+- acc904f: Bump Shopify/theme-tools packages to
+
+  - Fix validation for static blocks in JSON templates
+  - Introduce ability the disable theme checks for the next Liquid statement
+
+- Updated dependencies [0cc639e]
+- Updated dependencies [c2673be]
+- Updated dependencies [431fd6e]
+- Updated dependencies [431fd6e]
+- Updated dependencies [9cae395]
+- Updated dependencies [8422004]
+- Updated dependencies [737c9ab]
+- Updated dependencies [eaa8b7c]
+- Updated dependencies [44e8bc7]
+- Updated dependencies [6517e43]
+- Updated dependencies [ae9e30d]
+- Updated dependencies [acc904f]
+  - @shopify/cli-kit@3.80.0
+  - @shopify/theme@3.80.0
+  - @shopify/plugin-cloudflare@3.80.0
+
 ## 3.79.0
 
 ### Minor Changes
