@@ -12,7 +12,6 @@ import {
   renderSuccess,
   renderTable,
   renderTasks,
-  renderText,
   renderTextPrompt,
   renderWarning,
 } from '../../src/public/node/ui.js'
@@ -611,11 +610,5 @@ export const examples: {[key in string]: Example} = {
 
       return stdout.lastFrame()!
     },
-  },
-  renderText: {
-    type: 'static',
-    basic: async () => {
-      return renderText({text: 'Hello world!'})
-    },
-  },
+  }
 }

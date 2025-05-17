@@ -2,7 +2,7 @@ import {evaluate, SessionItem} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {consoleWarn, outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {createInterface, Interface} from 'readline'
 
 export const DELIMITER_WARNING =
@@ -38,7 +38,7 @@ export async function handleInput(
 ) {
   try {
     if (hasDelimiter(inputValue)) {
-      consoleWarn(DELIMITER_WARNING)
+      outputInfo(DELIMITER_WARNING)
       return rl.prompt()
     }
     const evaluatedValue = await evaluate({snippet: inputValue, themeSession, themeId, url, replSession})

@@ -13,7 +13,6 @@
   - [Static output](#static-output)
     - [`renderInfo` / `renderWarning` / `renderSuccess` / `renderError`](#renderinfo--renderwarning--rendersuccess--rendererror)
     - [Errors](#errors)
-    - [`renderText`](#rendertext)
   - [Prompts](#prompts)
     - [`renderSelectPrompt`](#renderselectprompt)
     - [`renderConfirmationPrompt`](#renderconfirmationprompt)
@@ -147,10 +146,6 @@ If you're using the `cli-kit`'s `runCLI` function to wrap your CLI, you can thro
 If you're using your own custom errors or you're not using `runCLI` then you can use the `renderFatalError` function.
 Make sure that your error extends the `cli-kit` class `FatalError` (`AbortError` already does) and pass it to `renderFatalError`
 when you want to display it to the terminal, for example in your exception handler.
-
-#### `renderText`
-
-This function is very simple, it accepts a string and it prints it in the terminal while respecting the design system spacing rules. Try to use it instead of `console.log` so that all output is properly aligned.
 
 ### Prompts
 

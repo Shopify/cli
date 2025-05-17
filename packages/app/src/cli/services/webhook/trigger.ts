@@ -5,7 +5,7 @@ import {collectAddressAndMethod, collectApiVersion, collectCredentials, collectT
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {consoleError, outputSuccess} from '@shopify/cli-kit/node/output'
+import {outputWarn, outputSuccess} from '@shopify/cli-kit/node/output'
 
 export interface WebhookTriggerInput {
   app: AppLinkedInterface
@@ -76,7 +76,7 @@ async function sendSample(options: WebhookTriggerOptions) {
   const sample = await getWebhookSample(options.developerPlatformClient, variables, options.organizationId)
 
   if (!sample.success) {
-    consoleError(`Request errors:\n${formatErrors(sample.userErrors)}`)
+    outputWarn(`Request errors:\n${formatErrors(sample.userErrors)}`)
     return
   }
 
@@ -88,7 +88,7 @@ async function sendSample(options: WebhookTriggerOptions) {
       return
     }
 
-    consoleError('Localhost delivery failed')
+    outputWarn('Localhost delivery failed')
     return
   }
 

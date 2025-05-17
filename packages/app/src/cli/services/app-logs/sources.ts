@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {sourcesForApp} from '../../services/app-logs/utils.js'
-import {formatSection, outputInfo} from '@shopify/cli-kit/node/output'
+import {formatSection, outputResult} from '@shopify/cli-kit/node/output'
 
 export function sources(app: AppInterface) {
   const sources = sourcesForApp(app)
@@ -22,6 +22,6 @@ export function sources(app: AppInterface) {
   })
 
   for (const [namespace, sources] of sourcesByNamespace) {
-    outputInfo(formatSection(namespace, sources.join('\n')))
+    outputResult(formatSection(namespace, sources.join('\n')))
   }
 }

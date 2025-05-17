@@ -1,18 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable tsdoc/syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
-import {
-  collectLog,
-  consoleError,
-  consoleLog,
-  Logger,
-  LogLevel,
-  outputContent,
-  outputDebug,
-  outputToken,
-  outputWhereAppropriate,
-} from './output.js'
-import {isUnitTest} from './context/local.js'
+import {outputContent, outputDebug, outputToken} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
@@ -247,7 +236,7 @@ interface RenderFatalErrorOptions {
  */
 // eslint-disable-next-line max-params
 export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalErrorOptions = {}) {
-  return renderOnce(<FatalError error={error} />, {logLevel: 'error', logger: consoleError, renderOptions})
+  return renderOnce(<FatalError error={error} />, {logLevel: 'error', renderOptions})
 }
 
 export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>, 'onSubmit'> {
@@ -580,27 +569,6 @@ export async function renderDangerousConfirmationPrompt(
     )
     return confirmed!
   })
-}
-
-interface RenderTextOptions {
-  text: string
-  logLevel?: LogLevel
-  logger?: Logger
-}
-
-/** Renders a text string to the console.
- * Using this function makes sure that correct spacing is applied among the various components.
- * @example
- * Hello world!
- *
- */
-export function renderText({text, logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
-  let textWithLineReturn = text
-  if (!text.endsWith('\n')) textWithLineReturn += '\n'
-
-  if (isUnitTest()) collectLog(logLevel, textWithLineReturn)
-  outputWhereAppropriate(logLevel, logger, textWithLineReturn)
-  return textWithLineReturn
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
