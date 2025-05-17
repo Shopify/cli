@@ -253,6 +253,7 @@ describe('runWasmOpt', () => {
         '-Oz',
         '--enable-bulk-memory',
         '--enable-multimemory',
+        '--enable-nontrapping-float-to-int',
         '--strip-debug',
         '-o',
         modulePath,
