@@ -85,7 +85,7 @@ jobs:
         run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
       - name: Unit tests
-        run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features --output-style=stream
+        run: pnpm vitest run
       - name: Acceptance tests
         if: ${{ matrix.node == '18.20.3' }}
         env:
@@ -288,7 +288,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm test:unit --output-style=stream
+        run: pnpm vitest run
 
   pr-acceptance-tests:
     name: '[PR] Accept. Test with Node ${{ matrix.node }} in ${{ matrix.os }}'

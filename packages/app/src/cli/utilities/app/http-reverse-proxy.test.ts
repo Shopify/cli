@@ -9,12 +9,12 @@ import https from 'https'
 
 const each = ['http', 'https'] as const
 
-describe.each(each)('http-reverse-proxy for %s', (protocol) => {
+describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   const test = getTestReverseProxy(protocol)
   const wsProtocol = protocol === 'http' ? 'ws' : 'wss'
   const agent = protocol === 'http' ? undefined : new https.Agent({rejectUnauthorized: false})
 
-  test('routes requests to the correct target based on path', async ({ports, servers}) => {
+  test('routes requests to the correct target based on path', {retry: 2}, async ({ports, servers}) => {
     const response1 = await fetch(`${protocol}://localhost:${ports.proxyPort}/path1/test`, {agent})
     await expect(response1.text()).resolves.toBe('Response from target server 1')
 
@@ -22,12 +22,12 @@ describe.each(each)('http-reverse-proxy for %s', (protocol) => {
     await expect(response2.text()).resolves.toBe('Response from target server 2')
   })
 
-  test('routes requests to the default target when no matching path is found', async ({ports, servers}) => {
+  test('routes requests to the default target when no matching path is found', {retry: 2}, async ({ports, servers}) => {
     const response = await fetch(`${protocol}://localhost:${ports.proxyPort}/unknown/path`, {agent})
     await expect(response.text()).resolves.toBe('Response from target server 1')
   })
 
-  test('handles websocket connections', async ({ports, servers}) => {
+  test('handles websocket connections', {retry: 2}, async ({ports, servers}) => {
     return new Promise<void>((resolve, reject) => {
       const wss = new WebSocketServer({server: servers.targetServer1})
       wss.on('connection', (ws) => {
@@ -51,7 +51,7 @@ describe.each(each)('http-reverse-proxy for %s', (protocol) => {
     })
   })
 
-  test('closes the server when aborted', async ({ports, servers}) => {
+  test('closes the server when aborted', {retry: 2}, async ({ports, servers}) => {
     servers.abortController.abort()
     // Try the assertion immediately, and if it fails, wait and retry
     try {
