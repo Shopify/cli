@@ -28,7 +28,7 @@ function host(projectName: string, options: HostOptions = {}): string {
       return `${shopName}.dev-api.shop.dev`
     }
     if (!NON_SHOP_PREFIXES.includes(prefix)) {
-      return `${prefix}.my.shop.dev`
+      return `${prefix}.shop.dev`
     }
   }
   return `${prefix}.shop.dev`
