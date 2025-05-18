@@ -32,8 +32,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "nx run theme:test",
-    "test:watch": "nx test:watch",
+    "vitest": "vitest",
     "type-check": "nx type-check"
   },
   "eslintConfig": {

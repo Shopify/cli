@@ -34,8 +34,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "nx run ui-extensions-server-kit:test",
-    "test:watch": "nx test:watch"
+    "vitest": "vitest"
   },
   "eslintConfig": {
     "extends": [
