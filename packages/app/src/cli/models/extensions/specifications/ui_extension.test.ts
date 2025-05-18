@@ -1062,7 +1062,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // When
         await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
-          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@2025-10 in your dependencies.',
+          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version.',
         )
 
         // No shopify.d.ts file should be created

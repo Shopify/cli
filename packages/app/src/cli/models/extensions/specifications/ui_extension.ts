@@ -8,6 +8,7 @@ import {fileExists, findPathUp} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -290,8 +291,9 @@ function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target:
   const globalThis: { shopify: typeof shopify };
 }\n`
   } catch (_) {
-    throw new Error(
-      `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version. Fix the error by ensuring you install @shopify/ui-extensions@${apiVersion} in your dependencies.`,
+    throw new AbortError(
+      `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
+      `Fix the error by ensuring you install @shopify/ui-extensions@${apiVersion} in your dependencies.`,
     )
   }
 }
