@@ -30,7 +30,7 @@ import type {DevServerContext} from '../types.js'
 
 // --- Section tag content cache ---
 
-type FileDetailsEntry = {
+interface FileDetailsEntry {
   checksum: string
   liquid: string
   stylesheetTag: string
