@@ -892,6 +892,26 @@ describe('getPackageManager', () => {
     })
   })
 
+  test('falls back to packageManagerFromUserAgent when npm prefix fails', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
+
+      // Mock npm prefix to fail
+      mockedCaptureOutput.mockRejectedValueOnce(new Error('npm prefix failed'))
+
+      // When
+      const packageManager = await getPackageManager(tmpDir)
+
+      // Then
+      expect(mockedCaptureOutput).toHaveBeenCalledWith('npm', ['prefix'], expect.anything())
+      expect(packageManager).toEqual('yarn')
+
+      // Restore original implementation
+      vi.unstubAllEnvs()
+    })
+  })
+
   test("tries to guess the package manager from the environment if it can't find a package.json", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
