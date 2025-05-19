@@ -300,7 +300,7 @@ export class DevSession {
     bundleController: AbortController,
     includeManifest: boolean,
   ): Promise<string | undefined> {
-    if (!assets.length) return undefined
+    if (!assets.length && !includeManifest) return undefined
     const compressedBundlePath = joinPath(
       dirname(this.bundlePath),
       `dev-bundle.${this.options.developerPlatformClient.bundleFormat}`,
