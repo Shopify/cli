@@ -1,4 +1,4 @@
-import {CacheOptions, GraphQLResponse, UnauthorizedHandler, graphqlRequestDoc} from './graphql.js'
+import {CacheOptions, GraphQLResponse, graphqlRequestDoc} from './graphql.js'
 import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
@@ -58,7 +58,6 @@ export interface RequestOptions {
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options for the request. If not present, the request will not be cached.
  * @param requestOptions - Preferred behaviour for the request.
- * @param unauthorizedHandler - Optional handler for unauthorized requests.
  * @returns The response of the query of generic type <T>.
  */
 export async function appManagementRequestDoc<TResult, TVariables extends Variables>(
@@ -68,7 +67,6 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
   variables?: TVariables,
   cacheOptions?: CacheOptions,
   requestOptions?: RequestOptions,
-  unauthorizedHandler?: UnauthorizedHandler,
 ): Promise<TResult> {
   // For app management, we need to cache the response based on the orgId.
   const cacheExtraKey = (cacheOptions?.cacheExtraKey ?? '') + orgId
@@ -81,7 +79,6 @@ export async function appManagementRequestDoc<TResult, TVariables extends Variab
       variables,
       cacheOptions: newCacheOptions,
       preferredBehaviour: requestOptions?.requestMode,
-      unauthorizedHandler,
     }),
   )
 
