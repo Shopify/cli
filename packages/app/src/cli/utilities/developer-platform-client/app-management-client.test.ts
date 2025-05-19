@@ -308,18 +308,7 @@ describe('searching for apps', () => {
     const got = await client.appsForOrg(orgId, query)
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      orgId,
-      ListApps,
-      'token',
-      {query: queryVariable},
-      undefined,
-      undefined,
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
-    )
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(orgId, ListApps, 'token', {query: queryVariable})
     expect(got).toEqual({
       apps: apps.map((app, index) => ({
         apiKey: `key-${index}`,
@@ -367,32 +356,21 @@ describe('createApp', () => {
 
     // Then
     expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      org.id,
-      CreateApp,
-      'token',
-      {
-        initialVersion: {
-          source: {
-            name: 'app-name',
-            modules: expect.arrayContaining([
-              {
-                config: {
-                  api_version: '2025-01',
-                },
-                type: 'webhooks',
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
+      initialVersion: {
+        source: {
+          name: 'app-name',
+          modules: expect.arrayContaining([
+            {
+              config: {
+                api_version: '2025-01',
               },
-            ]),
-          },
+              type: 'webhooks',
+            },
+          ]),
         },
       },
-      undefined,
-      undefined,
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
-    )
+    })
   })
 
   test('creates app successfully and returns expected app structure', async () => {
@@ -696,10 +674,6 @@ describe('deploy', () => {
       },
       undefined,
       {requestMode: 'slow-request'},
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
     )
   })
 
@@ -780,10 +754,6 @@ describe('deploy', () => {
       },
       undefined,
       {requestMode: 'slow-request'},
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
     )
   })
 
@@ -863,11 +833,7 @@ describe('deploy', () => {
         },
       },
       undefined,
-      expect.objectContaining({requestMode: 'slow-request'}),
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
+      {requestMode: 'slow-request'},
     )
   })
 
@@ -910,11 +876,7 @@ describe('deploy', () => {
         metadata: expect.any(Object),
       },
       undefined,
-      expect.objectContaining({requestMode: 'slow-request'}),
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
+      {requestMode: 'slow-request'},
     )
   })
 
@@ -966,11 +928,7 @@ describe('deploy', () => {
         },
       }),
       undefined,
-      expect.objectContaining({requestMode: 'slow-request'}),
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
+      {requestMode: 'slow-request'},
     )
   })
 
@@ -1104,12 +1062,6 @@ describe('deploy', () => {
       AppVersions,
       'token',
       expect.objectContaining({appId}),
-      undefined,
-      undefined,
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
     )
     expect(result).toEqual({
       app: {
@@ -1185,11 +1137,6 @@ describe('AppManagementClient', () => {
         },
         expect.objectContaining({
           cacheTTL: expect.anything(),
-        }),
-        undefined,
-        expect.objectContaining({
-          handler: expect.any(Function),
-          type: 'token_refresh',
         }),
       )
     })
