@@ -10,12 +10,14 @@ import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {createEvent} from 'h3'
+import * as output from '@shopify/cli-kit/node/output'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
 vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
 vi.mock('./remote-theme-watcher.js')
 vi.mock('./storefront-renderer.js')
+vi.spyOn(output, 'outputDebug')
 
 // Vitest is resetting this mock between tests due to a global config `mockReset: true`.
 // For some reason we need to re-mock it here and in beforeEach:
@@ -268,7 +270,7 @@ describe('setupDevServer', () => {
       expect(res.getHeader('content-length')).toEqual(25)
     })
 
-    test('serves compiled_assets/styles.css by aggregating liquid stylesheets', async () => {
+    test('serves compiled_assets/styles.css by aggregating liquid stylesheets in a fault tolerant way', async () => {
       const sectionFile = {
         key: 'sections/test-section.liquid',
         checksum: 'section1',
@@ -284,6 +286,22 @@ describe('setupDevServer', () => {
             color: red;
           }
           {% endstylesheet %}
+        </div>`,
+      }
+
+      const brokenSectionFile = {
+        key: 'sections/test-broken-section.liquid',
+        checksum: 'section1',
+        value: `<div class="section">
+          <% broken liquid %>
+
+          {% stylesheet %}
+          .test-broken-section {
+            color: blue;
+          }
+          {% endstylesheet %}
+
+          <% broken liquid %>
         </div>`,
       }
 
@@ -319,6 +337,7 @@ describe('setupDevServer', () => {
 
       // Add the test files to the filesystem
       localThemeFileSystem.files.set(sectionFile.key, sectionFile)
+      localThemeFileSystem.files.set(brokenSectionFile.key, brokenSectionFile)
       localThemeFileSystem.files.set(blockFile.key, blockFile)
       localThemeFileSystem.files.set(snippetFile.key, snippetFile)
 
@@ -329,8 +348,20 @@ describe('setupDevServer', () => {
       const {res, body} = await eventPromise
       expect(res.getHeader('content-type')).toEqual('text/css')
 
+      expect(output.outputDebug).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Error parsing Liquid file "sections/test-broken-section.liquid" to extract stylesheet tag. LiquidHTMLParsingError:',
+        ),
+      )
+
       expect(body.toString()).toMatchInlineSnapshot(`
         "/*** GENERATED LOCALLY ***/
+
+        /* sections/test-broken-section.liquid */
+
+                  .test-broken-section {
+                    color: blue;
+                  }
 
         /* sections/test-section.liquid */
 
