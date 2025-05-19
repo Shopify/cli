@@ -97,7 +97,7 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "5.4.12",
-    "@oclif/core": "3.26.5",
+    "@oclif/core": "3.27.0",
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
     "@graphql-tools/utils": "10.7.2",
