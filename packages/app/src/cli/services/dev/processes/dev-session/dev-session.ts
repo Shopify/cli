@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop */
 import {DevSessionLogger} from './dev-session-logger.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
@@ -14,6 +13,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {readdir} from '@shopify/cli-kit/node/fs'
+import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
 import {Writable} from 'stream'
 
 export interface UserError {
@@ -40,8 +40,7 @@ export class DevSession {
   private readonly options: DevSessionProcessOptions
   private readonly appWatcher: AppEventWatcher
   private readonly bundlePath: string
-  private updateInProgress: Promise<void> | undefined
-  private appEventsQueue: AppEvent[] = []
+  private readonly appEventsProcessor: SerialBatchProcessor<AppEvent>
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -49,6 +48,7 @@ export class DevSession {
     this.options = processOptions
     this.appWatcher = processOptions.appWatcher
     this.bundlePath = processOptions.appWatcher.buildOutputPath
+    this.appEventsProcessor = new SerialBatchProcessor((events: AppEvent[]) => this.processEvents(events))
   }
 
   private async start() {
@@ -71,11 +71,7 @@ export class DevSession {
     const eventIsValid = await this.validateAppEvent(event)
     if (!eventIsValid) return
 
-    this.appEventsQueue.push(event)
-
-    if (!this.updateInProgress) {
-      this.updateInProgress = this.processEvents()
-    }
+    this.appEventsProcessor.enqueue(event)
   }
 
   /**
@@ -84,29 +80,20 @@ export class DevSession {
    * consolidate them into a single event, and process it.
    * @param event - The app event to process
    */
-  private async processEvents() {
-    while (this.appEventsQueue.length > 0) {
-      const events = [...this.appEventsQueue]
-      this.appEventsQueue = []
-      const event = this.consolidateAppEvents(events)
-      if (!event) continue
+  private async processEvents(events: AppEvent[]) {
+    const event = this.consolidateAppEvents(events)
+    if (!event) return
 
-      this.statusManager.setMessage('CHANGE_DETECTED')
-      this.updatePreviewURL(event)
-      await this.logger.logExtensionEvents(event)
+    this.statusManager.setMessage('CHANGE_DETECTED')
+    this.updatePreviewURL(event)
+    await this.logger.logExtensionEvents(event)
 
-      const networkStartTime = startHRTime()
-      const result = await this.bundleExtensionsAndUpload(event)
-      await this.handleDevSessionResult(result, event)
-      await this.logger.debug(
-        `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
-      )
-
-      if (this.appEventsQueue.length > 0) {
-        await this.processEvents()
-      }
-    }
-    this.updateInProgress = undefined
+    const networkStartTime = startHRTime()
+    const result = await this.bundleExtensionsAndUpload(event)
+    await this.handleDevSessionResult(result, event)
+    await this.logger.debug(
+      `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
+    )
   }
 
   /**

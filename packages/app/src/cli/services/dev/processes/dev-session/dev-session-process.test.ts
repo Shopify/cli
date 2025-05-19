@@ -472,4 +472,74 @@ describe('pushUpdatesForDevSession', () => {
       inheritedModuleUids: [],
     })
   })
+
+  test('assetsURL is always generated for create, even if there are no assets', async () => {
+    // Given
+    vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Then
+    expect(developerPlatformClient.devSessionCreate).toHaveBeenCalledWith({
+      shopFqdn: 'test.myshopify.com',
+      appId: 'app123',
+      assetsUrl: 'https://gcs.url',
+      manifest: expect.any(Object),
+      inheritedModuleUids: [],
+    })
+  })
+
+  test('multiple updates to different extensions are consolidated if a request is in progress', async () => {
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+    vi.mocked(readdir).mockResolvedValue([])
+
+    const extension1 = await testUIExtension({type: 'ui_extension'})
+    extension1.uid = 'ext1'
+    extension1.handle = 'ext1-handle'
+    extension1.deployConfig = vi.fn().mockResolvedValue({config1: 'val1'})
+
+    const extension2 = await testWebhookExtensions()
+    extension2.uid = 'ext2'
+    extension2.handle = 'ext2-handle'
+    extension2.deployConfig = vi.fn().mockResolvedValue({config2: 'val2'})
+
+    app = testAppLinked({allExtensions: [extension1, extension2]})
+
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await options.appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // First event is processed immediat
+    options.appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension1}]})
+
+    // second and third event will be queued and processed together in a consolidated event.
+    options.appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension2}]})
+    options.appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension1}]})
+
+    await flushPromises()
+
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
+    const calls = developerPlatformClient.devSessionUpdate.mock.calls
+
+    // First call only has the first event
+    const manifestModules = calls[0][0].manifest.modules
+    expect(manifestModules).toEqual(
+      expect.arrayContaining([expect.objectContaining({uid: 'ext1', config: {config1: 'val1'}})]),
+    )
+    expect(manifestModules.length).toBe(1)
+
+    // Second call has the second and third event
+    const manifestModules2 = calls[1][0].manifest.modules
+    expect(manifestModules2).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({uid: 'ext1', config: {config1: 'val1'}}),
+        expect.objectContaining({uid: 'ext2', config: {config2: 'val2'}}),
+      ]),
+    )
+    expect(manifestModules2.length).toBe(2)
+  })
 })
