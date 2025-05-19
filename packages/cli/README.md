@@ -576,7 +576,7 @@ Stream detailed logs for your Shopify app.
 ```
 USAGE
   $ shopify app logs [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
-    [--source <value>] [--status success|failure] [-s <value>] [--verbose]
+    [--source <value>...] [--status success|failure] [-s <value>...] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -772,7 +772,7 @@ List all shopify commands.
 
 ```
 USAGE
-  $ shopify commands [-c id|plugin|summary|type | --tree] [--deprecated] [-x | ] [--hidden] [--json]
+  $ shopify commands [-c id|plugin|summary|type... | --tree] [--deprecated] [-x | ] [--hidden] [--json]
     [--no-truncate | ] [--sort id|plugin|summary|type | ]
 
 FLAGS
@@ -1696,8 +1696,9 @@ Validate the theme.
 
 ```
 USAGE
-  $ shopify theme check [-a] [-C <value>] [-e <value>] [--fail-level crash|error|suggestion|style|warning|info]
-    [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print] [--verbose] [-v]
+  $ shopify theme check [-a] [-C <value>] [-e <value>...] [--fail-level
+    crash|error|suggestion|style|warning|info] [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print]
+    [--verbose] [-v]
 
 FLAGS
   -C, --config=<value>          Use the config provided, overriding .theme-check.yml if present
@@ -1760,8 +1761,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [-d] [-e <value>] [-f] [--no-color] [--password <value>] [-a] [-s <value>] [-t <value>]
-    [--verbose]
+  $ shopify theme delete [-d] [-e <value>...] [-f] [--no-color] [--password <value>] [-a] [-s <value>] [-t
+    <value>...] [--verbose]
 
 FLAGS
   -a, --show-all                Include others development themes in theme list.
@@ -1793,8 +1794,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [-e <value>] [--error-overlay silent|default] [--host <value>] [-x <value>]
-    [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password
+  $ shopify theme dev [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
+    [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...] [--open] [--password
     <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
     [--theme-editor-sync] [--verbose]
 
@@ -1905,7 +1906,7 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [-d] [-e <value>] [-j] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+  $ shopify theme info [-d] [-e <value>...] [-j] [--no-color] [--password <value>] [-s <value>] [-t <value>]
     [--verbose]
 
 FLAGS
@@ -1979,7 +1980,7 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [-e <value>] [--id <value>] [-j] [--name <value>] [--no-color] [--password <value>]
+  $ shopify theme list [-e <value>...] [--id <value>] [-j] [--name <value>] [--no-color] [--password <value>]
     [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
@@ -2005,8 +2006,8 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>]
-  [--verbose]
+  $ shopify theme metafields pull [-e <value>...] [--no-color] [--password <value>] [--path <value>] [-s <value>]
+    [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
@@ -2031,8 +2032,8 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [-d] [-E] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t <value>]
-    [--verbose]
+  $ shopify theme open [-d] [-E] [-e <value>...] [-l] [--no-color] [--password <value>] [-s <value>] [-t
+    <value>] [--verbose]
 
 FLAGS
   -E, --editor                  Open the theme editor for the specified theme in the browser.
@@ -2121,7 +2122,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [-e <value>] [-f] [--no-color] [--password <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme publish [-e <value>...] [-f] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
@@ -2154,8 +2156,8 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [-d] [-e <value>] [-x <value>] [-l] [--no-color] [-n] [-o <value>] [--password <value>]
-    [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme pull [-d] [-e <value>...] [-x <value>...] [-l] [--no-color] [-n] [-o <value>...] [--password
+    <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development             Pull theme files from your remote development theme.
@@ -2252,7 +2254,7 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [-d] [-e <value>] [-l] [-n <value>] [--no-color] [--password <value>] [-s <value>] [-t
+  $ shopify theme rename [-d] [-e <value>...] [-l] [-n <value>] [--no-color] [--password <value>] [-s <value>] [-t
     <value>] [--verbose]
 
 FLAGS
@@ -2282,7 +2284,8 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme share [-e <value>...] [--no-color] [--password <value>] [--path <value>] [-s <value>]
+    [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
