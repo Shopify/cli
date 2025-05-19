@@ -13,6 +13,8 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {fileURLToPath} from 'node:url'
 
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-store.js')
@@ -124,7 +126,8 @@ describe('pull', () => {
   describe('isEmptyDir', () => {
     test('returns true when directory is empty', async () => {
       // Given
-      const root = 'src/cli/utilities/fixtures/theme'
+      const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
+      const root = joinPath(locationOfThisFile, '../utilities/fixtures/theme')
 
       // When
       const result = await isEmptyDir(root)
