@@ -202,26 +202,20 @@ export async function runWithRateLimit(options: RunWithRateLimitOptions, config 
   const cached = cache[cacheKey]
   const now = Date.now()
 
-  if (cached?.value) {
-    // First sweep through the cache and eliminate old events
-    const windowStart = now - timeIntervalToMilliseconds(timeout)
-    const occurrences = cached.value.filter((occurrence) => occurrence >= windowStart)
+  const windowStart = now - timeIntervalToMilliseconds(timeout)
+  const occurrences = cached?.value ? cached.value.filter((occurrence) => occurrence >= windowStart) : []
 
-    // Now check that the number of occurrences within the interval is below the limit
-    if (occurrences.length >= limit) {
-      // First remove the old occurrences from the cache
-      cache[cacheKey] = {value: occurrences, timestamp: Date.now()}
-      config.set('cache', cache)
-
-      return false
-    }
-
-    await task()
-    cache[cacheKey] = {value: [...occurrences, now], timestamp: now}
-  } else {
-    await task()
-    cache[cacheKey] = {value: [now], timestamp: now}
+  // Now check that the number of occurrences within the interval is below the limit
+  if (occurrences.length >= limit) {
+    // Update the cache with only the recent occurrences
+    cache[cacheKey] = {value: occurrences, timestamp: now}
+    config.set('cache', cache)
+    return false
   }
+
+  // Execute the task and update the cache with the new occurrence
+  await task()
+  cache[cacheKey] = {value: [...occurrences, now], timestamp: now}
   config.set('cache', cache)
 
   return true
