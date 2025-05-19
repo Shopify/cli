@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import {DevSessionLogger} from './dev-session-logger.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
@@ -39,7 +40,7 @@ export class DevSession {
   private readonly options: DevSessionProcessOptions
   private readonly appWatcher: AppEventWatcher
   private readonly bundlePath: string
-  private updateInProgress = false
+  private updateInProgress: Promise<void> | undefined
   private appEventsQueue: AppEvent[] = []
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
@@ -72,7 +73,9 @@ export class DevSession {
 
     this.appEventsQueue.push(event)
 
-    if (!this.updateInProgress) await this.processEvents()
+    if (!this.updateInProgress) {
+      this.updateInProgress = this.processEvents()
+    }
   }
 
   /**
@@ -82,30 +85,28 @@ export class DevSession {
    * @param event - The app event to process
    */
   private async processEvents() {
-    this.updateInProgress = true
-    const events = [...this.appEventsQueue]
+    while (this.appEventsQueue.length > 0) {
+      const events = [...this.appEventsQueue]
+      this.appEventsQueue = []
+      const event = this.consolidateAppEvents(events)
+      if (!event) continue
 
-    this.appEventsQueue = []
+      this.statusManager.setMessage('CHANGE_DETECTED')
+      this.updatePreviewURL(event)
+      await this.logger.logExtensionEvents(event)
 
-    const event = this.consolidateAppEvents(events)
-    if (!event) return
+      const networkStartTime = startHRTime()
+      const result = await this.bundleExtensionsAndUpload(event)
+      await this.handleDevSessionResult(result, event)
+      await this.logger.debug(
+        `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
+      )
 
-    this.statusManager.setMessage('CHANGE_DETECTED')
-    await this.updatePreviewURL(event)
-    await this.logger.logExtensionEvents(event)
-
-    const networkStartTime = startHRTime()
-    const result = await this.bundleExtensionsAndUpload(event)
-    await this.handleDevSessionResult(result, event)
-    await this.logger.debug(
-      `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
-    )
-
-    if (this.appEventsQueue.length > 0) {
-      await this.processEvents()
+      if (this.appEventsQueue.length > 0) {
+        await this.processEvents()
+      }
     }
-
-    this.updateInProgress = false
+    this.updateInProgress = undefined
   }
 
   /**
@@ -249,7 +250,7 @@ export class DevSession {
    * (i.e. if we go from a state with no extensions to a state with ui-extensions or vice versa)
    * @param event - The app event
    */
-  private async updatePreviewURL(event: AppEvent) {
+  private updatePreviewURL(event: AppEvent) {
     const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
     const newPreviewURL = hasPreview ? this.options.appLocalProxyURL : this.options.appPreviewURL
     this.statusManager.updateStatus({previewURL: newPreviewURL})
