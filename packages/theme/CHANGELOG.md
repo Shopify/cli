@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.80.1
+
+### Patch Changes
+
+- 4386668: Make local compiled assets more resilient to Liquid syntax errors.
+- 4386668: Make hot reload events more resilient to Liquid syntax errors.
+  - @shopify/cli-kit@3.80.1
+
 ## 3.80.0
 
 ### Minor Changes
