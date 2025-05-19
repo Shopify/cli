@@ -1,7 +1,7 @@
 import {DevSessionLogger} from './dev-session-logger.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
-import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher, ExtensionEvent} from '../../app-events/app-event-watcher.js'
 import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
 import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
 import {AppManifest} from '../../../../models/app/app.js'
@@ -39,7 +39,8 @@ export class DevSession {
   private readonly options: DevSessionProcessOptions
   private readonly appWatcher: AppEventWatcher
   private readonly bundlePath: string
-  private currentBundleController?: AbortController
+  private updateInProgress = false
+  private appEventsQueue: AppEvent[] = []
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -61,12 +62,34 @@ export class DevSession {
 
   /**
    * Handle the app event, after validating the event it might trigger a dev session update.
+   * If an update is already in progress, it will queue the event to be processed after
+   * the current update completes.
    * @param event - The app event
    */
   private async onEvent(event: AppEvent) {
     const eventIsValid = await this.validateAppEvent(event)
     if (!eventIsValid) return
-    this.currentBundleController?.abort()
+
+    this.appEventsQueue.push(event)
+
+    if (!this.updateInProgress) await this.processEvents()
+  }
+
+  /**
+   * Process an app event by bundling extensions and uploading them.
+   * After completion, it will check if there are any pending events in the queue,
+   * consolidate them into a single event, and process it.
+   * @param event - The app event to process
+   */
+  private async processEvents() {
+    this.updateInProgress = true
+    const events = [...this.appEventsQueue]
+
+    this.appEventsQueue = []
+
+    const event = this.consolidateAppEvents(events)
+    if (!event) return
+
     this.statusManager.setMessage('CHANGE_DETECTED')
     await this.updatePreviewURL(event)
     await this.logger.logExtensionEvents(event)
@@ -77,6 +100,53 @@ export class DevSession {
     await this.logger.debug(
       `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
     )
+
+    if (this.appEventsQueue.length > 0) {
+      await this.processEvents()
+    }
+
+    this.updateInProgress = false
+  }
+
+  /**
+   * Consolidate multiple app events into a single app event.
+   * Takes the app from the latest event and merges extension events from all events.
+   * @param events - Array of app events to consolidate
+   * @returns A consolidated app event
+   */
+  private consolidateAppEvents(events: AppEvent[]): AppEvent | undefined {
+    if (events.length === 0) return undefined
+    if (events.length === 1) return events[0]
+
+    const firstEvent = events[0]
+    const lastEvent = events[events.length - 1]
+
+    if (!firstEvent || !lastEvent) return undefined
+
+    const allExtensionEvents = new Map<string, ExtensionEvent>()
+
+    // Process all events from oldest to newest to get the latest state of each extension
+
+    // The latest event has priority over the previous ones always, examples:
+    // - created/updated and then deleted, keep deleted, the extension won't be included in the manifest.
+    // - updated multiple times, keep the latest one, as they are technically the same event.
+    // - created and then updated, keep the updated event, the manifest is the same in both cases.
+    // - deleted and then created/updated, keep the created/updated event.
+    for (const event of events) {
+      for (const extensionEvent of event.extensionEvents) {
+        allExtensionEvents.set(extensionEvent.extension.uid, extensionEvent)
+      }
+    }
+
+    const consolidatedEvent: AppEvent = {
+      app: lastEvent.app,
+      path: lastEvent.path,
+      extensionEvents: Array.from(allExtensionEvents.values()),
+      startTime: firstEvent.startTime,
+      appWasReloaded: events.some((event) => event.appWasReloaded),
+    }
+
+    return consolidatedEvent
   }
 
   /**
@@ -210,16 +280,10 @@ export class DevSession {
    * @param updating - Whether the dev session is being updated or created
    */
   private async bundleExtensionsAndUpload(appEvent: AppEvent): Promise<DevSessionResult> {
-    // Every time we create a new bundle, we need a new controller.
-    // At this point the existing `currentBundleController` is already aborted.
-    const newBundleController = new AbortController()
-    this.currentBundleController = newBundleController
-
     try {
       const {manifest, inheritedModuleUids, assets} = await this.createManifest(appEvent)
-      const signedURL = await this.uploadAssetsIfNeeded(assets, newBundleController, !this.statusManager.status.isReady)
+      const signedURL = await this.uploadAssetsIfNeeded(assets, !this.statusManager.status.isReady)
 
-      if (newBundleController.signal.aborted) return {status: 'aborted'}
       const payload = {
         shopFqdn: this.options.storeFqdn,
         appId: this.options.appId,
@@ -295,11 +359,7 @@ export class DevSession {
    * @param bundleController - abortController to abort the bundle process if a new change is detected
    * @returns The signed URL if we uploaded any assets, otherwise undefined
    */
-  private async uploadAssetsIfNeeded(
-    assets: string[],
-    bundleController: AbortController,
-    includeManifest: boolean,
-  ): Promise<string | undefined> {
+  private async uploadAssetsIfNeeded(assets: string[], includeManifest: boolean): Promise<string | undefined> {
     if (!assets.length && !includeManifest) return undefined
     const compressedBundlePath = joinPath(
       dirname(this.bundlePath),
@@ -307,18 +367,15 @@ export class DevSession {
     )
 
     // Create zip file with everything
-    if (bundleController.signal.aborted) return undefined
     const filePattern = [...assets.map((ext) => `${ext}/**`), '!**/*.js.map']
     if (includeManifest) filePattern.push('manifest.json')
 
     await compressBundle(this.bundlePath, compressedBundlePath, filePattern)
 
     // Get a signed URL to upload the zip file
-    if (bundleController.signal.aborted) return undefined
     const signedURL = await this.getSignedURLWithRetry()
 
     // Upload the zip file
-    if (bundleController.signal.aborted) return undefined
     await uploadToGCS(signedURL, compressedBundlePath)
     return signedURL
   }
