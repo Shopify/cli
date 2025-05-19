@@ -7,7 +7,6 @@ import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../util
 import {AppManifest} from '../../../../models/app/app.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -280,9 +279,9 @@ export class DevSession {
         inheritedModuleUids,
       }
       if (this.statusManager.status.isReady) {
-        return this.devSessionUpdateWithRetry(payload)
+        return this.devSessionUpdate(payload)
       } else {
-        return this.devSessionCreateWithRetry(payload)
+        return this.devSessionCreate(payload)
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -361,7 +360,7 @@ export class DevSession {
     await compressBundle(this.bundlePath, compressedBundlePath, filePattern)
 
     // Get a signed URL to upload the zip file
-    const signedURL = await this.getSignedURLWithRetry()
+    const signedURL = await this.getSignedURL()
 
     // Upload the zip file
     await uploadToGCS(signedURL, compressedBundlePath)
@@ -372,27 +371,20 @@ export class DevSession {
    * Get a signed URL to upload the zip file to GCS
    * @returns The signed URL
    */
-  private async getSignedURLWithRetry() {
-    return performActionWithRetryAfterRecovery(
-      async () =>
-        getUploadURL(this.options.developerPlatformClient, {
-          apiKey: this.options.appId,
-          organizationId: this.options.organizationId,
-          id: this.options.appId,
-        }),
-      () => this.options.developerPlatformClient.refreshToken(),
-    )
+  private async getSignedURL() {
+    return getUploadURL(this.options.developerPlatformClient, {
+      apiKey: this.options.appId,
+      organizationId: this.options.organizationId,
+      id: this.options.appId,
+    })
   }
 
   /**
    * Update the dev session
    * @param payload - The payload to update the dev session with
    */
-  private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
-    const result = await performActionWithRetryAfterRecovery(
-      async () => this.options.developerPlatformClient.devSessionUpdate(payload),
-      () => this.options.developerPlatformClient.refreshToken(),
-    )
+  private async devSessionUpdate(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
+    const result = await this.options.developerPlatformClient.devSessionUpdate(payload)
     const errors = result.devSessionUpdate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'updated'}
@@ -404,11 +396,8 @@ export class DevSession {
    * This only happens if an error is thrown. Won't be triggered if we receive an error inside the response.
    * @param payload - The payload to create the dev session with
    */
-  private async devSessionCreateWithRetry(payload: DevSessionCreateOptions): Promise<DevSessionResult> {
-    const result = await performActionWithRetryAfterRecovery(
-      async () => this.options.developerPlatformClient.devSessionCreate(payload),
-      () => this.options.developerPlatformClient.refreshToken(),
-    )
+  private async devSessionCreate(payload: DevSessionCreateOptions): Promise<DevSessionResult> {
+    const result = await this.options.developerPlatformClient.devSessionCreate(payload)
     const errors = result.devSessionCreate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'created'}
