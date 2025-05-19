@@ -5,6 +5,7 @@ import {
   normalizeStoreFqdn,
   businessPlatformFqdn,
   appDevFqdn,
+  adminFqdn,
 } from './fqdn.js'
 import {spinFqdn} from '../context/spin.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'

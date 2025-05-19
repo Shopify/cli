@@ -54,7 +54,8 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
 
     const storeFqdn = 'test.myshopify.com'
     const theme = '123'
-    const remoteApp = testOrganizationApp() // Regular Partners API app
+    // Regular Partners API app
+    const remoteApp = testOrganizationApp()
     const localApp = testApp({allExtensions: [await testThemeExtensions()]})
 
     // When
@@ -107,8 +108,9 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
 
     const storeFqdn = 'test.myshopify.com'
     const theme = '123'
+    // Management API app with GID format
     const remoteApp = testOrganizationApp({
-      id: 'gid://shopify/App/1234', // Management API app with GID format
+      id: 'gid://shopify/App/1234',
       apiKey: 'e4c79fb7b99c002a35efdcc44e0ea8f7',
     })
     const localApp = testApp({allExtensions: [await testThemeExtensions()]})
