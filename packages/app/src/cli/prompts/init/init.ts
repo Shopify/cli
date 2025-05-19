@@ -43,11 +43,11 @@ export const templates = {
         ...(process.env.POLARIS_UNIFIED && {
           javascriptPolarisEarlyAccess: {
             branch: 'polaris-docs-2025-js',
-            label: 'JavaScript (Polaris Early Access)',
+            label: 'JavaScript (Polaris Release Candidate)',
           },
           typescriptPolarisEarlyAccess: {
             branch: 'polaris-docs-2025',
-            label: 'TypeScript (Polaris Early Access)',
+            label: 'TypeScript (Polaris Release Candidate)',
           },
         }),
       },
