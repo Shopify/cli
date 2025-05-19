@@ -436,33 +436,40 @@ describe('createApp', () => {
     await client.createApp(org, {name: 'app-name'})
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      org.id,
-      CreateApp,
-      'token',
-      {
-        initialVersion: {
-          source: {
-            name: 'app-name',
-            modules: expect.arrayContaining([
-              {
-                type: 'app_home',
-                config: {
-                  app_url: expect.any(String),
-                  embedded: true,
-                },
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
+      initialVersion: {
+        source: {
+          name: 'app-name',
+          modules: [
+            {
+              type: 'app_home',
+              config: {
+                app_url: 'https://shopify.dev/apps/default-app-home',
+                embedded: true,
               },
-            ]),
-          },
+            },
+            {
+              type: 'branding',
+              config: {
+                name: 'app-name',
+              },
+            },
+            {
+              type: 'webhooks',
+              config: {
+                api_version: '2025-01',
+              },
+            },
+            {
+              type: 'app_access',
+              config: {
+                redirect_url_allowlist: ['https://shopify.dev/apps/default-app-home/api/auth'],
+              },
+            },
+          ],
         },
       },
-      undefined,
-      undefined,
-      expect.objectContaining({
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      }),
-    )
+    })
   })
 })
 
