@@ -6,18 +6,22 @@ import {
   hotReloadScriptId,
   hotReloadScriptUrl,
   setupInMemoryTemplateWatcher,
+  getUpdatedFileParts,
+  fileDetailsCache,
 } from './server.js'
 import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
-import {describe, test, expect, vi} from 'vitest'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {createEvent} from 'h3'
+import * as output from '@shopify/cli-kit/node/output'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from '../types.js'
-import type {Theme, ThemeFSEventName} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
+vi.spyOn(output, 'outputDebug')
 
 const THEME_ID = 'my-theme-id'
 
@@ -91,7 +95,7 @@ describe('Hot Reload', () => {
 
       const expectedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${testSectionFileKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false,"schemaTag":false,"liquid":true}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionEvent)
@@ -142,7 +146,7 @@ describe('Hot Reload', () => {
       // Since this is a template, sectionNames will be empty (no sections to reload)
       const expectedTemplateEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${templateKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event for JSON update
       expect(hotReloadEvents.at(-1)).toMatch(expectedTemplateEvent)
@@ -163,7 +167,7 @@ describe('Hot Reload', () => {
       // Since this is a section group, sectionNames will contain all the section names
       const expectedSectionGroupEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${sectionGroupKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      )}},"version":"${HOT_RELOAD_VERSION}"}`
 
       // Verify local sync event for JSON update
       expect(hotReloadEvents.at(-1)).toMatch(expectedSectionGroupEvent)
@@ -178,7 +182,7 @@ describe('Hot Reload', () => {
       expect(hotReloadEvents.at(-1)).toMatch(
         `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":["first","second"],"replaceTemplates":${JSON.stringify(
           getInMemoryTemplates(ctx),
-        )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`,
+        )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false,"schemaTag":false,"liquid":true}},"version":"${HOT_RELOAD_VERSION}"}`,
       )
       // Wait for remote sync
       await nextTick()
@@ -197,7 +201,7 @@ describe('Hot Reload', () => {
       expect(getInMemoryTemplates(ctx)).toEqual({[anotherSectionKey]: 'default-value'})
       const expectedUnreferencedSectionEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${anotherSectionKey}","payload":{"sectionNames":[],"replaceTemplates":${JSON.stringify(
         getInMemoryTemplates(ctx),
-      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      )},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false,"schemaTag":false,"liquid":false}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent)
       await nextTick()
       expect(hotReloadEvents.at(-1)).toMatch(expectedUnreferencedSectionEvent.replace('local', 'remote'))
@@ -207,7 +211,7 @@ describe('Hot Reload', () => {
       await triggerFileEvent('add', cssFileKey)
       // It does not add assets to the in-memory templates:
       expect(getInMemoryTemplates(ctx)).toEqual({})
-      const expectedCssEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      const expectedCssEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedCssEvent)
       // Wait for remote sync
       await nextTick()
@@ -218,7 +222,7 @@ describe('Hot Reload', () => {
       await triggerFileEvent('add', cssLiquidFileKey)
       // It does not add assets to the in-memory templates:
       expect(getInMemoryTemplates(ctx)).toEqual({})
-      const expectedCssLiquidEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      const expectedCssLiquidEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${cssLiquidFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedCssLiquidEvent)
       // Wait for remote sync
       await nextTick()
@@ -227,7 +231,7 @@ describe('Hot Reload', () => {
       // -- Test other file types (e.g. JS) --
       const jsFileKey = 'assets/something.js'
       await triggerFileEvent('add', jsFileKey)
-      const expectedJsEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{},"updatedFileParts":{"stylesheetTag":false,"javascriptTag":false}},"version":"${HOT_RELOAD_VERSION}"}`
+      const expectedJsEvent = `data: {"sync":"local","themeId":"${THEME_ID}","type":"update","key":"${jsFileKey}","payload":{"sectionNames":[],"replaceTemplates":{}},"version":"${HOT_RELOAD_VERSION}"}`
       expect(hotReloadEvents.at(-1)).toMatch(expectedJsEvent)
       // Wait for remote sync
       await nextTick()
@@ -289,6 +293,178 @@ describe('Hot Reload', () => {
       subscribeEvent.node.req.destroy()
       await expect(streamPromise).resolves.not.toThrow()
     })
+  })
+})
+
+describe('getUpdatedFileParts', () => {
+  beforeEach(() => {
+    fileDetailsCache.clear()
+  })
+
+  test('returns empty content and no changes for empty file', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: '',
+    }
+
+    expect(getUpdatedFileParts(file)).toEqual({
+      stylesheetTag: false,
+      javascriptTag: false,
+      schemaTag: false,
+      liquid: false,
+    })
+  })
+
+  test('extracts special tag contents and detects changes', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: `
+        {% stylesheet %}
+          .test { color: red; }
+        {% endstylesheet %}
+        {% javascript %}
+          console.log('test');
+        {% endjavascript %}
+        {% schema %}
+          { "name": "Test" }
+        {% endschema %}
+      `,
+    }
+
+    const result = getUpdatedFileParts(file)
+    const cacheEntry = fileDetailsCache.get(file.key)
+
+    expect(cacheEntry?.stylesheetTag).toBe('.test { color: red; }')
+    expect(cacheEntry?.javascriptTag).toBe("console.log('test');")
+    expect(cacheEntry?.schemaTag).toBe('{ "name": "Test" }')
+    expect(result?.stylesheetTag).toBe(true)
+    expect(result?.javascriptTag).toBe(true)
+    expect(result?.schemaTag).toBe(true)
+    expect(result?.liquid).toBe(true)
+
+    // Test caching - second call should show no changes
+    const secondResult = getUpdatedFileParts(file)
+    expect(secondResult?.stylesheetTag).toBe(false)
+    expect(secondResult?.javascriptTag).toBe(false)
+    expect(secondResult?.schemaTag).toBe(false)
+    expect(secondResult?.liquid).toBe(false)
+  })
+
+  test('removes HTML and Liquid comments from other content', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: `
+        {% doc %}
+          Doc comment
+        {% enddoc %}
+        <!-- HTML comment -->
+        {% comment %}
+          Liquid comment
+        {% endcomment %}
+        {{ product.title }}
+        {% if product %}
+          Content
+        {% endif %}
+      `,
+    }
+
+    expect(getUpdatedFileParts(file)?.liquid).toEqual(true)
+    expect(fileDetailsCache.get(file.key)?.liquid).toBe('{{ product.title }} {% if product %} Content {% endif %}')
+  })
+
+  test('detects changes in tags when the file updates', () => {
+    const file: ThemeAsset = {
+      key: 'sections/test.liquid',
+      checksum: '123',
+      value: `
+        {% stylesheet %}
+          .test { color: red; }
+        {% endstylesheet %}
+        {% javascript %}
+          console.log('test');
+        {% endjavascript %}
+        {{ product.title }}
+        {% schema %}
+          { "name": "Test" }
+        {% endschema %}
+      `,
+    }
+
+    const newFileResult = getUpdatedFileParts(file)
+    expect(newFileResult?.stylesheetTag).toBe(true)
+    expect(newFileResult?.javascriptTag).toBe(true)
+    expect(newFileResult?.schemaTag).toBe(true)
+    expect(newFileResult?.liquid).toBe(true)
+
+    file.value = file.value!.replace('color: red', 'color: blue')
+    file.checksum = `${file.checksum}1`
+    const stylesheetUpdatedResult = getUpdatedFileParts(file)
+    expect(stylesheetUpdatedResult?.stylesheetTag).toBe(true)
+    expect(stylesheetUpdatedResult?.javascriptTag).toBe(false)
+    expect(stylesheetUpdatedResult?.schemaTag).toBe(false)
+    expect(stylesheetUpdatedResult?.liquid).toBe(false)
+
+    file.value = file.value.replace("console.log('test');", "console.log('test2');")
+    file.checksum = `${file.checksum}1`
+    const javascriptUpdatedResult = getUpdatedFileParts(file)
+    expect(javascriptUpdatedResult?.stylesheetTag).toBe(false)
+    expect(javascriptUpdatedResult?.javascriptTag).toBe(true)
+    expect(javascriptUpdatedResult?.schemaTag).toBe(false)
+    expect(javascriptUpdatedResult?.liquid).toBe(false)
+
+    file.value = file.value.replace('{ "name": "Test" }', '{"name": "Test2"}')
+    file.checksum = `${file.checksum}1`
+    const schemaUpdatedResult = getUpdatedFileParts(file)
+    expect(schemaUpdatedResult?.stylesheetTag).toBe(false)
+    expect(schemaUpdatedResult?.javascriptTag).toBe(false)
+    expect(schemaUpdatedResult?.schemaTag).toBe(true)
+    expect(schemaUpdatedResult?.liquid).toBe(false)
+
+    file.value = file.value.replace('{{ product.title }}', '{{ product.description }}')
+    file.checksum = `${file.checksum}1`
+    const liquidUpdatedResult = getUpdatedFileParts(file)
+    expect(liquidUpdatedResult?.stylesheetTag).toBe(false)
+    expect(liquidUpdatedResult?.javascriptTag).toBe(false)
+    expect(liquidUpdatedResult?.schemaTag).toBe(false)
+    expect(liquidUpdatedResult?.liquid).toBe(true)
+  })
+
+  test('detects changes in tags even when there are Liquid syntax errors', () => {
+    const file: ThemeAsset = {
+      key: 'sections/broken.liquid',
+      checksum: '123',
+      value: `
+        <% broken liquid %>
+        {% stylesheet %}
+          .test { color: red; }
+        {% endstylesheet %}
+        <% broken liquid %>
+      `,
+    }
+
+    const newFileResult = getUpdatedFileParts(file)
+
+    expect(output.outputDebug).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Error parsing Liquid file "sections/broken.liquid" to detect updated file parts. LiquidHTMLParsingError:',
+      ),
+    )
+
+    expect(newFileResult?.stylesheetTag).toBe(true)
+    expect(newFileResult?.javascriptTag).toBe(false)
+    expect(newFileResult?.schemaTag).toBe(false)
+    expect(newFileResult?.liquid).toBe(true)
+
+    file.value = file.value!.replace('color: red', 'color: blue')
+    file.checksum = `${file.checksum}1`
+    const stylesheetUpdatedResult = getUpdatedFileParts(file)
+    expect(stylesheetUpdatedResult?.stylesheetTag).toBe(true)
+    expect(stylesheetUpdatedResult?.javascriptTag).toBe(false)
+    expect(stylesheetUpdatedResult?.schemaTag).toBe(false)
+    expect(stylesheetUpdatedResult?.liquid).toBe(false)
   })
 })
 
