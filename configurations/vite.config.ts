@@ -39,7 +39,7 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
     test: {
       testTimeout,
       clearMocks: true,
-      mockReset: true,
+      mockReset: true, // Note: In Vitest 3.0, mockReset restores the original implementation
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
       reporters: ['verbose', 'hanging-process'],
       pool: poolStrategy,
@@ -54,6 +54,20 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
         escapeString: true,
       },
       includeSource: ['**/src/**/*.{ts,tsx}'],
+      sequence: {
+        hooks: 'list',
+      },
+      fakeTimers: {
+        toFake: [
+          'setTimeout',
+          'clearTimeout',
+          'setInterval',
+          'clearInterval',
+          'setImmediate',
+          'clearImmediate',
+          'Date',
+        ],
+      },
     },
   })
 }
