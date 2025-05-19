@@ -416,6 +416,61 @@ describe('createApp', () => {
     // Then
     expect(result).toMatchObject(expectedApp)
   })
+
+  test('sets embedded to true in app home module', async () => {
+    // Given
+    const client = new AppManagementClient()
+    const org = testOrganization()
+    vi.mocked(webhooksRequest).mockResolvedValueOnce({
+      publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
+    })
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appCreate: {
+        app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
+        userErrors: [],
+      },
+    })
+
+    // When
+    client.token = () => Promise.resolve('token')
+    await client.createApp(org, {name: 'app-name'})
+
+    // Then
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
+      initialVersion: {
+        source: {
+          name: 'app-name',
+          modules: [
+            {
+              type: 'app_home',
+              config: {
+                app_url: 'https://shopify.dev/apps/default-app-home',
+                embedded: true,
+              },
+            },
+            {
+              type: 'branding',
+              config: {
+                name: 'app-name',
+              },
+            },
+            {
+              type: 'webhooks',
+              config: {
+                api_version: '2025-01',
+              },
+            },
+            {
+              type: 'app_access',
+              config: {
+                redirect_url_allowlist: ['https://shopify.dev/apps/default-app-home/api/auth'],
+              },
+            },
+          ],
+        },
+      },
+    })
+  })
 })
 
 describe('apiVersions', () => {

@@ -1071,7 +1071,7 @@ const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
 function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
-  const {isLaunchable, scopesArray, name, isEmbedded} = options
+  const {isLaunchable, scopesArray, name} = options
   const source: AppVersionSource = {
     source: {
       name,
@@ -1080,7 +1080,10 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
           type: AppHomeSpecIdentifier,
           config: {
             app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
-            embedded: isEmbedded,
+            // Ext-only apps should be embedded = false, however we are hardcoding this to
+            // match Partners behaviour for now
+            // https://github.com/Shopify/develop-app-inner-loop/issues/2789
+            embedded: true,
           },
         },
         {
