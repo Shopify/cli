@@ -4,55 +4,19 @@ const require = createRequire(import.meta.url);
 const fs = require("fs");
 
 /**
- * This takes a large combined Jest-format coverage file, and a collection of JSON test reports, and combines them into one master file.
+ * This takes a combined coverage file and creates a report in the format expected by our coverage tools.
  */
 
-const coveragePackages = ["cli", "cli-kit", "app"];
-
-const masterCoverageFile = process.cwd() + "/coverage.raw.json";
+const masterCoverageFile = process.cwd() + "/coverage/coverage-final.json";
+const sourceReportFile = process.cwd() + "/coverage/report.json";
 const masterReportFile = process.cwd() + "/report.json";
 
-// Create the starting file -- the master coverage file and empty test results
-const masterCoverage = {
-  numTotalTestSuites: 0,
-  numPassedTestSuites: 0,
-  numFailedTestSuites: 0,
-  numPendingTestSuites: 0,
-  numTotalTests: 0,
-  numPassedTests: 0,
-  numFailedTests: 0,
-  numPendingTests: 0,
-  numTodoTests: 0,
-  startTime: 999999999999999,
-  success: true,
-  testResults: [],
-  coverageMap: require(masterCoverageFile),
-};
+// Read the coverage report from vitest
+const coverageData = require(masterCoverageFile);
 
-// merge each package's test results into the master file
-coveragePackages.forEach((pkg) => {
-  const testReportFilename =
-    process.cwd() + `/packages/${pkg}/coverage/report.json`;
-  const testReport = require(testReportFilename);
-  masterCoverage.numTotalTestSuites += testReport.numTotalTestSuites;
-  masterCoverage.numPassedTestSuites += testReport.numPassedTestSuites;
-  masterCoverage.numFailedTestSuites += testReport.numFailedTestSuites;
-  masterCoverage.numPendingTestSuites += testReport.numPendingTestSuites;
-  masterCoverage.numTotalTests += testReport.numTotalTests;
-  masterCoverage.numPassedTests += testReport.numPassedTests;
-  masterCoverage.numFailedTests += testReport.numFailedTests;
-  masterCoverage.numPendingTests += testReport.numPendingTests;
-  masterCoverage.numTodoTests += testReport.numTodoTests;
-  masterCoverage.startTime = Math.min(
-    masterCoverage.startTime,
-    testReport.startTime
-  );
-  masterCoverage.success = masterCoverage.success && testReport.success;
-  masterCoverage.testResults = [
-    ...masterCoverage.testResults,
-    ...testReport.testResults,
-  ];
-});
+// Read the test results from the report
+const masterCoverage = require(sourceReportFile);
+masterCoverage.coverageMap = coverageData;
 
 // write it out
 fs.writeFile(masterReportFile, JSON.stringify(masterCoverage), (err) => {
@@ -61,5 +25,5 @@ fs.writeFile(masterReportFile, JSON.stringify(masterCoverage), (err) => {
     process.exit(1);
   }
 
-  console.log("Coverage report appended to " + masterReportFile);
+  console.log("Coverage report saved to " + masterReportFile);
 });
