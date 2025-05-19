@@ -204,7 +204,7 @@ function updateURLsPromptWithDevSessions(currentAppUrl: string, urls: Applicatio
 
   return renderConfirmationPrompt({
     message:
-      "Have Shopify override your app URLs with tunnel URLs when running `app dev` against your dev store? This won't affect your app on other stores",
+      "Have Shopify override your app URLs when running `app dev` against your dev store? This won't affect your app on other stores",
     confirmationMessage: 'Yes, automatically update',
     cancellationMessage: 'No, never',
     infoTable,
