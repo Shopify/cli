@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.80.1
+
+### Patch Changes
+
+- 17ee10f: Function Runner version updated to v9.0.0
+- Updated dependencies [4386668]
+- Updated dependencies [4386668]
+  - @shopify/theme@3.80.1
+  - @shopify/cli-kit@3.80.1
+  - @shopify/plugin-cloudflare@3.80.1
+
 ## 3.80.0
 
 ### Minor Changes
