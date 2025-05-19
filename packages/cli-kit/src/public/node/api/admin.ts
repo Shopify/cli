@@ -1,10 +1,4 @@
-import {
-  graphqlRequest,
-  graphqlRequestDoc,
-  GraphQLResponseOptions,
-  GraphQLVariables,
-  UnauthorizedHandler,
-} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc, GraphQLResponseOptions, GraphQLVariables} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../error.js'
@@ -78,9 +72,9 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
     token: session.token,
     addedHeaders,
   }
-  let unauthorizedHandler: UnauthorizedHandler | undefined
+  let unauthorizedHandler
   if ('refresh' in session) {
-    unauthorizedHandler = {type: 'simple', handler: session.refresh as () => Promise<void>}
+    unauthorizedHandler = session.refresh as () => Promise<void>
   }
   const result = graphqlRequestDoc<TResult, TVariables>({
     ...opts,
