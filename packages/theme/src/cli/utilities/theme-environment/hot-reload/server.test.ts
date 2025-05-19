@@ -14,12 +14,14 @@ import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {createEvent} from 'h3'
+import * as output from '@shopify/cli-kit/node/output'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from '../types.js'
 import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
+vi.spyOn(output, 'outputDebug')
 
 const THEME_ID = 'my-theme-id'
 
@@ -294,7 +296,7 @@ describe('Hot Reload', () => {
   })
 })
 
-describe('getUpdatedFileDetails', () => {
+describe('getUpdatedFileParts', () => {
   beforeEach(() => {
     fileDetailsCache.clear()
   })
@@ -428,6 +430,41 @@ describe('getUpdatedFileDetails', () => {
     expect(liquidUpdatedResult?.javascriptTag).toBe(false)
     expect(liquidUpdatedResult?.schemaTag).toBe(false)
     expect(liquidUpdatedResult?.liquid).toBe(true)
+  })
+
+  test('detects changes in tags even when there are Liquid syntax errors', () => {
+    const file: ThemeAsset = {
+      key: 'sections/broken.liquid',
+      checksum: '123',
+      value: `
+        <% broken liquid %>
+        {% stylesheet %}
+          .test { color: red; }
+        {% endstylesheet %}
+        <% broken liquid %>
+      `,
+    }
+
+    const newFileResult = getUpdatedFileParts(file)
+
+    expect(output.outputDebug).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Error parsing Liquid file "sections/broken.liquid" to detect updated file parts. LiquidHTMLParsingError:',
+      ),
+    )
+
+    expect(newFileResult?.stylesheetTag).toBe(true)
+    expect(newFileResult?.javascriptTag).toBe(false)
+    expect(newFileResult?.schemaTag).toBe(false)
+    expect(newFileResult?.liquid).toBe(true)
+
+    file.value = file.value!.replace('color: red', 'color: blue')
+    file.checksum = `${file.checksum}1`
+    const stylesheetUpdatedResult = getUpdatedFileParts(file)
+    expect(stylesheetUpdatedResult?.stylesheetTag).toBe(true)
+    expect(stylesheetUpdatedResult?.javascriptTag).toBe(false)
+    expect(stylesheetUpdatedResult?.schemaTag).toBe(false)
+    expect(stylesheetUpdatedResult?.liquid).toBe(false)
   })
 })
 

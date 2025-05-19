@@ -18,6 +18,7 @@ import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {NodeTypes, toLiquidHtmlAST, walk} from '@shopify/liquid-html-parser'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import EventEmitter from 'node:events'
 import type {
   HotReloadEvent,
@@ -438,20 +439,40 @@ export function getUpdatedFileParts(file: ThemeAsset) {
 
   if (!file.value) return result
 
+  const liquidTags = ['stylesheet', 'javascript', 'schema'] as const
+  type LiquidTag = (typeof liquidTags)[number]
+
   const normalizeContent = (content: string) => content?.replace(/\s+/g, ' ').trim()
   let otherContent = file.value
 
-  walk(toLiquidHtmlAST(file.value), (node) => {
-    if (node.type !== NodeTypes.LiquidRawTag) return
+  const handleTagMatch = (tag: LiquidTag, value: string) => {
+    otherContent = otherContent.replace(value, '')
+    const content = normalizeContent(value)
+    const tagName = `${tag}Tag` as const
+    result[tagName] = !cached || content !== cached[tagName]
+    cacheEntry[tagName] = content
+  }
 
-    if (node.name === 'stylesheet' || node.name === 'javascript' || node.name === 'schema') {
-      otherContent = otherContent.replace(node.body.value, '')
-      const tagName = `${node.name}Tag` as const
-      const content = normalizeContent(node.body.value)
-      result[tagName] = !cached || content !== cached[tagName]
-      cacheEntry[tagName] = content
+  try {
+    walk(toLiquidHtmlAST(file.value), (node) => {
+      if (node.type !== NodeTypes.LiquidRawTag) return
+
+      const nodeName = node.name as LiquidTag
+      if (liquidTags.includes(nodeName)) {
+        handleTagMatch(nodeName, node.body.value)
+      }
+    })
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (err: unknown) {
+    const error = err as Error
+    outputDebug(`Error parsing Liquid file "${file.key}" to detect updated file parts. ${error.stack ?? error.message}`)
+
+    for (const tag of liquidTags) {
+      const tagRE = new RegExp(`{%\\s*${tag}\\s*%}([^%]*){%\\s*end${tag}\\s*%}`)
+      const match = otherContent.match(tagRE)?.[1]
+      if (match) handleTagMatch(tag, match)
     }
-  })
+  }
 
   otherContent = normalizeContent(
     otherContent
