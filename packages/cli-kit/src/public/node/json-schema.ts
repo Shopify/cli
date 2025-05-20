@@ -41,7 +41,7 @@ function createAjvValidator(
       removeAdditional = undefined
       break
   }
-  const ajv = new Ajv({allowUnionTypes: true, removeAdditional})
+  const ajv = new Ajv({allowUnionTypes: true, removeAdditional, allErrors: true, verbose: true})
   ajv.addKeyword('x-taplo')
 
   const validator = ajv.compile(schema)
@@ -117,7 +117,9 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     }
 
     if (error.params.type) {
-      const expectedType = error.params.type as string
+      const expectedType = Array.isArray(error.params.type)
+        ? error.params.type.join(', ')
+        : (error.params.type as string)
       const actualType = getPathValue(subject, path.join('.'))
       return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
     }
@@ -161,6 +163,21 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
       return {
         path,
         message: capitalize(`${typeof actualValue} must be ${comparisonText} ${limit}`),
+      }
+    }
+
+    if (error.params.additionalProperty) {
+      const supportedProperties = Object.keys(error.parentSchema?.properties ?? {})
+
+      // if a property was already set, remove it from here
+      const alreadySetProperties = Object.keys(error.data ?? {})
+      const remainingProperties = supportedProperties.filter((property) => !alreadySetProperties.includes(property))
+
+      if (remainingProperties.length > 0) {
+        return {
+          path: [...path, error.params.additionalProperty as string],
+          message: `No additional properties allowed. You can set ${remainingProperties.sort().join(', ')}.`,
+        }
       }
     }
 
