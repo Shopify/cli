@@ -2,6 +2,7 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
+import {ClientName} from '../../../utilities/developer-platform-client.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
@@ -146,14 +147,10 @@ export async function findOrCreateHostTheme(adminSession: AdminSession, theme?: 
 }
 
 async function buildAppUrl(remoteApp: OrganizationApp) {
-  // Check if the app ID is in GID format (gid://shopify/App/<INTEGER>), which indicates it's a Management API app
-  if (remoteApp.id.startsWith('gid://')) {
-    // For Management API apps, we need to generate a different URL format
-    // Extract the organization ID and use the app API key for the client_id parameter
+  if (remoteApp.developerPlatformClient?.clientName === ClientName.AppManagement) {
     const fqdn = await adminFqdn()
     return `https://${fqdn}/?organization_id=${remoteApp.organizationId}&no_redirect=true&redirect=/oauth/redirect_from_developer_dashboard?client_id%3D${remoteApp.apiKey}`
   } else {
-    // For Partners API apps, use the original URL format
     const fqdn = await partnersFqdn()
     return `https://${fqdn}/${remoteApp.organizationId}/apps/${remoteApp.id}/test`
   }

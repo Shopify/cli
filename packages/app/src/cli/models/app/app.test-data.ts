@@ -34,6 +34,7 @@ import {
   AppVersionIdentifiers,
   AppVersionWithContext,
   AssetUrlSchema,
+  ClientName,
   CreateAppOptions,
   DeveloperPlatformClient,
   DevSessionCreateOptions,
@@ -1413,7 +1414,7 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
-    clientName: 'test',
+    clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
     requiresOrganization: false,
     supportsAtomicDeployments: false,

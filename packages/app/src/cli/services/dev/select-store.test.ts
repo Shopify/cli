@@ -61,7 +61,11 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
 
     // When
-    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
+    const got = await selectStore(
+      {stores: [STORE1, STORE2], hasMorePages: false},
+      ORG1,
+      testDeveloperPlatformClient({clientName: ClientName.Partners}),
+    )
 
     // Then
     expect(got).toEqual(STORE1)
@@ -97,7 +101,11 @@ describe('selectStore', async () => {
     vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
+    const got = await selectStore(
+      {stores: [STORE1, STORE2], hasMorePages: false},
+      ORG1,
+      testDeveloperPlatformClient({clientName: ClientName.Partners}),
+    )
 
     // Then
     expect(got).toEqual(STORE2)
@@ -117,7 +125,11 @@ describe('selectStore', async () => {
     vi.mocked(confirmConversionToTransferDisabledStorePrompt).mockResolvedValueOnce(false)
 
     // When
-    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
+    const got = await selectStore(
+      {stores: [STORE1, STORE2], hasMorePages: false},
+      ORG1,
+      testDeveloperPlatformClient({clientName: ClientName.Partners}),
+    )
 
     // Then
     expect(got).toEqual(STORE1)
@@ -135,7 +147,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
     vi.mocked(isSpinEnvironment).mockReturnValue(true)
     vi.mocked(firstPartyDev).mockReturnValue(true)
-    const developerPlatformClient = testDeveloperPlatformClient()
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})
 
     // When
     const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient)
@@ -159,7 +171,7 @@ describe('selectStore', async () => {
     const got = selectStore(
       {stores: [STORE1, STORE2, STORE3], hasMorePages: false},
       ORG1,
-      testDeveloperPlatformClient(),
+      testDeveloperPlatformClient({clientName: ClientName.Partners}),
     )
 
     // Then
@@ -172,7 +184,12 @@ describe('selectStore', async () => {
     vi.mocked(reloadStoreListPrompt).mockResolvedValue(false)
 
     // When
-    const got = () => selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, testDeveloperPlatformClient())
+    const got = () =>
+      selectStore(
+        {stores: [STORE1, STORE2], hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.Partners}),
+      )
 
     // Then
     await expect(got).rejects.toThrowError()
@@ -189,7 +206,7 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(true)
     vi.mocked(reloadStoreListPrompt).mockResolvedValueOnce(false)
-    const developerPlatformClient = testDeveloperPlatformClient()
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})
 
     // When
     const got = selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient)
@@ -203,7 +220,7 @@ describe('selectStore', async () => {
   test('prompts user to create with Partners link', async () => {
     // Given
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
-    const developerPlatformClient = testDeveloperPlatformClient()
+    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})
 
     // When
     const got = selectStore({stores: [], hasMorePages: false}, ORG1, developerPlatformClient)
@@ -244,7 +261,7 @@ describe('selectStore', async () => {
     const got = await selectStore(
       {stores: [STORE1, STORE2], hasMorePages: false},
       ORG1,
-      testDeveloperPlatformClient({supportsStoreSearch: true}),
+      testDeveloperPlatformClient({clientName: ClientName.Partners, supportsStoreSearch: true}),
     )
 
     // Then

@@ -1,6 +1,12 @@
 import {setupPreviewThemeAppExtensionsProcess, findOrCreateHostTheme} from './theme-app-extension.js'
 import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-manager.js'
-import {testApp, testOrganizationApp, testThemeExtensions} from '../../../models/app/app.test-data.js'
+import {
+  testApp,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+  testThemeExtensions,
+} from '../../../models/app/app.test-data.js'
+import {ClientName} from '../../../utilities/developer-platform-client.js'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -108,10 +114,12 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
 
     const storeFqdn = 'test.myshopify.com'
     const theme = '123'
-    // Management API app with GID format
     const remoteApp = testOrganizationApp({
       id: 'gid://shopify/App/1234',
       apiKey: 'e4c79fb7b99c002a35efdcc44e0ea8f7',
+      developerPlatformClient: testDeveloperPlatformClient({
+        clientName: ClientName.AppManagement,
+      }),
     })
     const localApp = testApp({allExtensions: [await testThemeExtensions()]})
 
