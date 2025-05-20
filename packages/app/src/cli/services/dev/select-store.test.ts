@@ -196,7 +196,7 @@ describe('selectStore', async () => {
 
     // Then
     await expect(got).rejects.toThrow()
-    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1)
     expect(developerPlatformClient.devStoresForOrg).toHaveBeenCalledTimes(10)
   })
 
@@ -210,8 +210,8 @@ describe('selectStore', async () => {
 
     // Then
     await expect(got).rejects.toThrow()
-    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
-    const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1)
+    const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1))
     expect(res).toContain('https://partners.shopify.com/1234/stores')
   })
 
@@ -220,9 +220,9 @@ describe('selectStore', async () => {
     vi.mocked(selectStorePrompt).mockResolvedValue(undefined)
     const developerPlatformClient = testDeveloperPlatformClient({
       clientName: ClientName.AppManagement,
-      getCreateDevStoreLink: (_input: string) =>
+      getCreateDevStoreLink: (org: Organization) =>
         Promise.resolve(
-          `Looks like you don't have a dev store in the organization you selected. Keep going — create a dev store on the Developer Dashboard: https://dev.shopify.com/dashboard/1234/stores`,
+          `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create one now https://dev.shopify.com/dashboard/1234/stores`,
         ),
     })
 
@@ -231,8 +231,8 @@ describe('selectStore', async () => {
 
     // Then
     await expect(got).rejects.toThrow()
-    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1.id)
-    const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1.id))
+    expect(developerPlatformClient.getCreateDevStoreLink).toHaveBeenCalledWith(ORG1)
+    const res = await Promise.resolve(developerPlatformClient.getCreateDevStoreLink(ORG1))
     expect(res).toContain('https://dev.shopify.com/dashboard/1234/stores')
   })
 

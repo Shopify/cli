@@ -44,7 +44,7 @@ export async function selectStore(
   })
   if (!store) {
     renderInfo({
-      body: await developerPlatformClient.getCreateDevStoreLink(org.id),
+      body: await developerPlatformClient.getCreateDevStoreLink(org),
     })
     await sleep(5)
 
