@@ -253,7 +253,7 @@ interface ErrorDetail {
 }
 
 export interface DeveloperPlatformClient {
-  readonly clientName: string
+  readonly clientName: ClientName
   readonly webUiName: string
   readonly supportsAtomicDeployments: boolean
   readonly requiresOrganization: boolean
