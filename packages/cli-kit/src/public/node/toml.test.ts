@@ -1,4 +1,4 @@
-import {decodeToml} from './toml.js'
+import {decodeToml, encodeToml} from './toml.js'
 import {describe, expect, test} from 'vitest'
 
 describe('decodeToml', () => {
@@ -26,5 +26,35 @@ describe('decodeToml', () => {
     `
     const result = decodeToml(input)
     expect(result).toStrictEqual({access: {admin: {direct_api_mode: 'online'}}})
+  })
+})
+
+describe('encodeToml', () => {
+  test('converts a simple object to TOML', () => {
+    const input = {name: 'app'}
+    const result = encodeToml(input)
+    expect(result).toBe('name = "app"\n')
+  })
+
+  test('converts nested objects to TOML', () => {
+    const input = {
+      webhooks: {
+        api_version: '2023-07',
+      },
+    }
+    const result = encodeToml(input)
+    expect(result).toBe('[webhooks]\napi_version = "2023-07"\n')
+  })
+
+  test('converts complex nested objects to TOML', () => {
+    const input = {
+      access: {
+        admin: {
+          direct_api_mode: 'online',
+        },
+      },
+    }
+    const result = encodeToml(input)
+    expect(result).toBe('[access.admin]\ndirect_api_mode = "online"\n')
   })
 })
