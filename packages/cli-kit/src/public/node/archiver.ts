@@ -2,7 +2,6 @@ import {relativePath} from './path.js'
 import {glob, removeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
-import brotli from 'brotli'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
 import {tmpdir} from 'os'
@@ -139,6 +138,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
     })
 
     const tarContent = readFileSync(tempTarPath)
+    const brotli = await import('brotli')
     const compressed = brotli.compress(tarContent, {
       quality: 7,
       mode: 0,
