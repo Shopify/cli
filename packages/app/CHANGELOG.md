@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.80.3
+
+### Patch Changes
+
+- 513d99c: Fix error when bundling with brotli
+- c99b906: Unhide app:dev:clean command
+  - @shopify/cli-kit@3.80.3
+  - @shopify/theme@3.80.3
+  - @shopify/plugin-cloudflare@3.80.3
+
 ## 3.80.2
 
 ### Patch Changes
