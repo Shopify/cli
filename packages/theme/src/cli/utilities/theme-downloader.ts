@@ -64,8 +64,14 @@ function buildDownloadTasks(
 
   const filenames = checksums.map((checksum) => checksum.key)
 
+  const getProgress = (params: {current: number; total: number}) =>
+    `[${Math.round((params.current / params.total) * 100)}%]`
+
   const batches = batchedTasks(filenames, MAX_GRAPHQL_THEME_FILES, (batchedFilenames, i) => {
-    const title = `Downloading files ${i}..${i + batchedFilenames.length} / ${filenames.length} files`
+    const title = `Downloading files from remote theme ${getProgress({
+      current: i,
+      total: filenames.length,
+    })}`
     return {
       title,
       task: async () => downloadFiles(theme, themeFileSystem, batchedFilenames, session),
