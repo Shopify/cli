@@ -118,7 +118,7 @@ describe('selectOrganization', () => {
 
     // Then
     expect(renderInfo).toHaveBeenCalledWith({
-      headline: 'You have early access to the Next-Gen Dev Platform.',
+      headline: 'You have access to the Next-Gen Dev Platform.',
       body: 'Select a Dev Dashboard organization from the list below to use it.',
       link: {
         label: 'See documentation for more information.',
@@ -142,6 +142,18 @@ describe('selectOrganization', () => {
         source: OrganizationSource.Partners,
       },
     ]
+
+    // When
+    await selectOrganizationPrompt(orgs)
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
+  })
+
+  test('does not display info banner if all orgs are Business Platform', async () => {
+    // Given
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
+    const orgs = [ORG1, ORG2]
 
     // When
     await selectOrganizationPrompt(orgs)
