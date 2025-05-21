@@ -1,10 +1,13 @@
 import {AppEvent, EventType} from './app-event-watcher.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {getESBuildOptions} from '../../extensions/bundle.js'
+import {environmentVariableNames} from '../../../constants.js'
 import {BuildContext, context as esContext, StdinOptions} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 
 export interface DevAppWatcherOptions {
   dotEnvVariables: {[key: string]: string}
@@ -117,8 +120,11 @@ export class ESBuildContextManager {
   }
 
   private async extensionEsBuildOptions(stdin: StdinOptions, outputPath: string) {
+    const env = getEnvironmentVariables()
+    const disableMinificationOnDev = env[environmentVariableNames.disableMinificationOnDev]
+    const minify = !isTruthy(disableMinificationOnDev)
     return getESBuildOptions({
-      minify: false,
+      minify,
       outputPath,
       environment: 'development',
       env: {
