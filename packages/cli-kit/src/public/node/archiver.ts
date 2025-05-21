@@ -139,7 +139,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
 
     const tarContent = readFileSync(tempTarPath)
     const brotli = await import('brotli')
-    const compressed = brotli.compress(tarContent, {
+    const compressed = brotli.default.compress(tarContent, {
       quality: 7,
       mode: 0,
     })
