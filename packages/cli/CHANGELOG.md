@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.80.5
+
+### Patch Changes
+
+- d103b3f: Updating hydrogen-cli to 11.1.0
+
 ## 3.80.4
 
 ### Patch Changes
