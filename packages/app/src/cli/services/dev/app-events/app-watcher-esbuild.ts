@@ -118,7 +118,7 @@ export class ESBuildContextManager {
 
   private async extensionEsBuildOptions(stdin: StdinOptions, outputPath: string) {
     return getESBuildOptions({
-      minify: false,
+      minify: true,
       outputPath,
       environment: 'development',
       env: {
