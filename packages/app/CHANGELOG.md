@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.80.2
+
+### Patch Changes
+
+- 7b13243: Adjust phrasing in CLI for the Remix templates from Early Access to Release Candidate
+- acdb009: Fix error handling when using brotli
+- 717344a: Update error message when types for the target cannot be found in the installed @shopify/ui-extensions version
+  - @shopify/cli-kit@3.80.2
+  - @shopify/theme@3.80.2
+  - @shopify/plugin-cloudflare@3.80.2
+
 ## 3.80.1
 
 ### Patch Changes
