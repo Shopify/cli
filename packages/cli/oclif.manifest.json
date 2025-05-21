@@ -6338,6 +6338,11 @@
       "hiddenAliases": [
       ],
       "id": "theme:publish",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
