@@ -101,7 +101,7 @@ describe('selectOrganization', () => {
     expect(renderAutocompletePrompt).not.toBeCalled()
   })
 
-  test('displays info banner if user has access to a Business Platform org', async () => {
+  test('displays info banner if there are orgs from both Business Platform and Partners', async () => {
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
     const orgs = [
