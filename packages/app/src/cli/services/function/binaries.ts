@@ -20,7 +20,7 @@ export const PREFERRED_JAVY_PLUGIN_VERSION = 'v2'
 
 const BINARYEN_VERSION = '123.0.0'
 
-export const TRAMPOLINE_VERSION = 'v1.0.0'
+export const TRAMPOLINE_VERSION = 'v1.0.2'
 
 interface DownloadableBinary {
   path: string
