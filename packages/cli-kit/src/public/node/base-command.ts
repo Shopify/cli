@@ -4,7 +4,7 @@ import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {renderInfo, renderWarning} from './ui.js'
-import {outputContent, outputInfo, outputToken} from './output.js'
+import {outputContent, outputResult, outputToken} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
@@ -80,7 +80,7 @@ abstract class BaseCommand extends Command {
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   protected exitWithTimestampWhenEnvVariablePresent() {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
-      outputInfo(`
+      outputResult(`
       SHOPIFY_CLI_TIMESTAMP_START
       { "timestamp": ${Date.now()} }
       SHOPIFY_CLI_TIMESTAMP_END

@@ -11,7 +11,7 @@ import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
@@ -251,7 +251,7 @@ function handleJsonOutput(theme: Theme, session: AdminSession, results: Map<stri
       output.theme.errors = errors
     }
   }
-  outputInfo(JSON.stringify(output))
+  outputResult(JSON.stringify(output))
 }
 
 /**

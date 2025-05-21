@@ -61,7 +61,7 @@ describe('generateSchemaService', () => {
       const stdout = true
       const orgId = '123'
       const mockOutput = vi.fn()
-      vi.spyOn(output, 'outputInfo').mockImplementation(mockOutput)
+      vi.spyOn(output, 'outputResult').mockImplementation(mockOutput)
 
       // When
       await generateSchemaService({

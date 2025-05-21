@@ -1,8 +1,8 @@
-import {consoleWarn, outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 
 export function presentValue(value?: unknown) {
   if (hasJsonError(value)) {
-    consoleWarn(
+    outputInfo(
       "Object can't be printed, but you can access its fields. Read more at https://shopify.dev/docs/api/liquid.",
     )
     return

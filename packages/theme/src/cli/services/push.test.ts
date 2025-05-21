@@ -18,7 +18,7 @@ import {
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
@@ -52,7 +52,7 @@ describe('push', () => {
     })
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
-    vi.mocked(outputInfo).mockReturnValue()
+    vi.mocked(outputResult).mockReturnValue()
   })
 
   test('should call themePublish if publish flag is provided', async () => {
@@ -99,7 +99,7 @@ describe('push', () => {
     await push({...defaultFlags, json: true})
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith(
+    expect(outputResult).toHaveBeenCalledWith(
       JSON.stringify({
         theme: {
           id: 1,

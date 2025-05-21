@@ -7,7 +7,7 @@ import {
   toFormattedAppLogJson,
   parseAppLogPayload,
 } from '../utils.js'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 
 export async function renderJsonLogs({
   pollOptions,
@@ -55,7 +55,7 @@ export async function renderJsonLogs({
         return
       }
 
-      outputInfo(
+      outputResult(
         toFormattedAppLogJson({
           appLog: log,
           appLogPayload: parseAppLogPayload(log.payload, log.log_type),

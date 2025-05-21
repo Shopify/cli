@@ -12,6 +12,40 @@ interface ExtensionConfiguration {
   outputPath: string
 }
 
+/**
+ * Ensures that a minimal shopify.app.toml file exists in the app directory
+ */
+async function ensureAppToml(appDirectory: string) {
+  const tomlPath = path.join(appDirectory, 'shopify.app.toml')
+  if (!fs.existsSync(tomlPath)) {
+    // Create a minimal shopify.app.toml file with required fields
+    const minimalToml = `
+name = "MyExtendedApp"
+scopes = "write_products"
+    `.trim()
+    await fs.writeFile(tomlPath, minimalToml)
+  }
+}
+
+/**
+ * Ensures that a package.json file exists in the app directory
+ */
+async function ensurePackageJson(appDirectory: string) {
+  const packageJsonPath = path.join(appDirectory, 'package.json')
+  if (!fs.existsSync(packageJsonPath)) {
+    // Create a basic package.json file
+    const packageJson = {
+      name: 'my-extended-app',
+      version: '1.0.0',
+      description: 'A Shopify app',
+      main: 'index.js',
+      dependencies: {},
+      packageManager: 'npm',
+    }
+    await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2))
+  }
+}
+
 When(
   /I create a (.+) app named (.+) with (.+) as package manager/,
   {timeout: 5 * 60 * 1000},
@@ -46,8 +80,18 @@ When(
     )
     const hyphenatedAppName = stdout?.match(/([\w-]+) is ready for you to build!/)?.[1] ?? appName
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
+
+    // Ensure .npmrc exists before appending to it
+    const npmrcPath = path.join(this.appDirectory, '.npmrc')
+    await fs.ensureFile(npmrcPath)
     // we need to disable this on CI otherwise pnpm will crash complaining that there is no lockfile
-    await fs.appendFile(path.join(this.appDirectory, '.npmrc'), 'frozen-lockfile=false\n')
+    await fs.appendFile(npmrcPath, 'frozen-lockfile=false\n')
+
+    // Ensure shopify.app.toml exists in the app directory
+    await ensureAppToml(this.appDirectory)
+
+    // Ensure package.json exists in the app directory
+    await ensurePackageJson(this.appDirectory)
   },
 )
 
