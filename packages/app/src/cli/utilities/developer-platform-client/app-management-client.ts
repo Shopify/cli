@@ -19,6 +19,7 @@ import {
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
+  createUnauthorizedHandler,
   DevSessionUpdateOptions,
   DevSessionCreateOptions,
   DevSessionDeleteOptions,
@@ -161,6 +162,7 @@ import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -397,7 +399,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .map((word) => `title:${word}`)
         .join(' '),
     }
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     if (!result.appsConnection) {
       throw new BugError('Server failed to retrieve apps')
     }
@@ -418,7 +428,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(organizationId, query, await this.token())
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      undefined,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -483,7 +501,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = createAppVars(options, apiVersion)
 
     const mutation = CreateApp
-    const result = await appManagementRequestDoc(org.id, mutation, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      org.id,
+      mutation,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     if (!result.appCreate.app || result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -562,7 +588,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return {
       app: {
         id: result.app.id,
@@ -597,7 +631,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
     const variables = {versionTag}
-    const result = await appManagementRequestDoc(organizationId, query, await this.token(), variables)
+    const result = await appManagementRequestDoc(
+      organizationId,
+      query,
+      await this.token(),
+      variables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     const version = result.versionByTag
     if (!version) {
       throw new AbortError(`Version not found for tag: ${versionTag}`)
@@ -661,9 +703,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const variables = {sourceExtension: 'BR' as SourceExtension}
-    const result = await appManagementRequestDoc(organizationId, CreateAssetUrl, await this.token(), variables, {
-      cacheTTL: {minutes: 59},
-    })
+    const result = await appManagementRequestDoc(
+      organizationId,
+      CreateAssetUrl,
+      await this.token(),
+      variables,
+      {cacheTTL: {minutes: 59}},
+      undefined,
+      createUnauthorizedHandler(this),
+    )
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
@@ -722,6 +770,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
       undefined,
       {requestMode: 'slow-request'},
+      createUnauthorizedHandler(this),
     )
     const {version} = result.appVersionCreate
     const userErrors = result.appVersionCreate.userErrors.map(toUserError) ?? []
@@ -755,6 +804,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ReleaseVersion,
       await this.token(),
       releaseVariables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
     )
     if (releaseResult.appReleaseCreate.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
@@ -778,6 +830,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ReleaseVersion,
       await this.token(),
       releaseVariables,
+      undefined,
+      undefined,
+      createUnauthorizedHandler(this),
     )
 
     if (releaseResult.appReleaseCreate.release) {
@@ -1022,6 +1077,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.` +
       ` Create one now \n${url}`
     )
+  }
+
+  private createUnauthorizedHandler(): UnauthorizedHandler {
+    return createUnauthorizedHandler(this)
   }
 
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
