@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.80.4
+
+### Patch Changes
+
+- 951842c: Update cli-hydrogen to 11.0.0 which is for projects using react-router v7 rather than remix
+
 ## 3.80.3
 
 ## 3.80.2
