@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.80.6
+
+### Patch Changes
+
+- 0067c66: Invoke wasm-opt with the --enable-nontrapping-float-to-int flag when building functions
+
 ## 3.80.5
 
 ### Patch Changes
