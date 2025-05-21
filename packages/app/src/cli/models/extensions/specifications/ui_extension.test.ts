@@ -9,6 +9,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {describe, expect, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -1062,7 +1063,10 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // When
         await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
-          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version.',
+          new AbortError(
+            'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version.',
+            'Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example 2025.10.0, in your dependencies.',
+          ),
         )
 
         // No shopify.d.ts file should be created
