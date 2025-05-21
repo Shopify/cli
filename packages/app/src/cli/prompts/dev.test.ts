@@ -13,7 +13,12 @@ import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
 import {ApplicationURLs} from '../services/dev/urls.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderInfo,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -94,6 +99,55 @@ describe('selectOrganization', () => {
     // Then
     expect(got).toEqual(ORG2)
     expect(renderAutocompletePrompt).not.toBeCalled()
+  })
+
+  test('displays info banner if user has access to a Business Platform org', async () => {
+    // Given
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
+    const orgs = [
+      ORG1,
+      {
+        id: '3',
+        businessName: 'org3',
+        source: OrganizationSource.Partners,
+      },
+    ]
+
+    // When
+    await selectOrganizationPrompt(orgs)
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: 'You have early access to the Next-Gen Dev Platform.',
+      body: 'Select a Dev Dashboard organization from the list below to use it.',
+      link: {
+        label: 'See documentation for more information.',
+        url: 'https://shopify.dev/beta/next-gen-dev-platform',
+      },
+    })
+  })
+
+  test('does not display info banner if all orgs are Partners', async () => {
+    // Given
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('1')
+    const orgs = [
+      {
+        id: '3',
+        businessName: 'org3',
+        source: OrganizationSource.Partners,
+      },
+      {
+        id: '4',
+        businessName: 'org4',
+        source: OrganizationSource.Partners,
+      },
+    ]
+
+    // When
+    await selectOrganizationPrompt(orgs)
+
+    // Then
+    expect(renderInfo).not.toHaveBeenCalled()
   })
 })
 
