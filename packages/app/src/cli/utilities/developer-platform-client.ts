@@ -60,6 +60,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -321,4 +322,28 @@ export interface DeveloperPlatformClient {
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (org: Organization) => Promise<string>
+}
+
+const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
+
+export function createUnauthorizedHandler(client: DeveloperPlatformClient): UnauthorizedHandler {
+  return {
+    type: 'token_refresh',
+    handler: async () => {
+      let tokenRefresher = inProgressRefreshes.get(client)
+      if (tokenRefresher) {
+        const token = await tokenRefresher
+        return {token}
+      } else {
+        try {
+          tokenRefresher = client.refreshToken()
+          inProgressRefreshes.set(client, tokenRefresher)
+          const token = await tokenRefresher
+          return {token}
+        } finally {
+          inProgressRefreshes.delete(client)
+        }
+      }
+    },
+  }
 }
