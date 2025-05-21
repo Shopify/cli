@@ -320,5 +320,5 @@ export interface DeveloperPlatformClient {
   devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
-  getCreateDevStoreLink: (input: string) => Promise<string>
+  getCreateDevStoreLink: (org: Organization) => Promise<string>
 }

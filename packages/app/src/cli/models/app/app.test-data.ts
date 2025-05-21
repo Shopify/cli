@@ -1488,9 +1488,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devSessionCreate: (_input: DevSessionCreateOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     devSessionUpdate: (_input: DevSessionUpdateOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
     devSessionDelete: (_input: DevSessionDeleteOptions) => Promise.resolve({devSessionDelete: {userErrors: []}}),
-    getCreateDevStoreLink: (_input: string) =>
+    getCreateDevStoreLink: (org: Organization) =>
       Promise.resolve(
-        `Looks like you don't have a dev store in the Partners org you selected. Keep going — create a dev store on Shopify Partners: https://partners.shopify.com/1234/stores`,
+        `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create one now https://partners.shopify.com/1234/stores`,
       ),
     ...stubs,
   }
