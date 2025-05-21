@@ -25,9 +25,12 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     return organizations[0]!
   }
 
-  if (organizations.some((org) => org.source === OrganizationSource.BusinessPlatform)) {
+  if (
+    organizations.some((org) => org.source === OrganizationSource.BusinessPlatform) &&
+    organizations.some((org) => org.source === OrganizationSource.Partners)
+  ) {
     renderInfo({
-      headline: 'You have early access to the Next-Gen Dev Platform.',
+      headline: 'You have access to the Next-Gen Dev Platform.',
       body: 'Select a Dev Dashboard organization from the list below to use it.',
       link: {
         label: 'See documentation for more information.',
