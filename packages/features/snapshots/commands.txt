@@ -5,6 +5,7 @@
 │  │  └─ use
 │  ├─ deploy
 │  ├─ dev
+│  │  └─ clean
 │  ├─ env
 │  │  ├─ pull
 │  │  └─ show
