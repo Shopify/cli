@@ -117,6 +117,7 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
       role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
     },
     responseOptions: {handleErrors: false},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 
   if (!themeCreate) {
@@ -151,6 +152,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
       session,
       variables: {id: themeGid(id), filenames, after},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
@@ -327,6 +329,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
       session,
       variables: {id: themeGid(id), after},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!response?.theme?.files?.nodes || !response?.theme?.files?.pageInfo) {
