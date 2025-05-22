@@ -16,7 +16,7 @@ import {Writable} from 'stream'
 
 export interface DeveloperPreviewController {
   fetchMode: () => Promise<boolean>
-  enable: () => Promise<void>
+  enable: () => Promise<boolean>
   disable: () => Promise<void>
   update: (state: boolean) => Promise<boolean>
 }
