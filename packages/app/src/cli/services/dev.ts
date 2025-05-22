@@ -444,7 +444,7 @@ async function launchDevProcesses({
   })
 }
 
-export function developerPreviewController(
+function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): DeveloperPreviewController {

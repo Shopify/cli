@@ -262,7 +262,12 @@ export interface DeveloperPlatformClient {
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
   session: () => Promise<PartnersSession>
-  refreshToken: () => Promise<string>
+  /**
+   * This is an unsafe method that should only be used when the session is expired.
+   * It is not safe to use this method in other contexts as it may lead to race conditions.
+   * Use only if you know what you are doing.
+   */
+  unsafeRefreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromIdentifiers: (app: AppApiKeyAndOrgId) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
@@ -336,7 +341,7 @@ export function createUnauthorizedHandler(client: DeveloperPlatformClient): Unau
         return {token}
       } else {
         try {
-          tokenRefresher = client.refreshToken()
+          tokenRefresher = client.unsafeRefreshToken()
           inProgressRefreshes.set(client, tokenRefresher)
           const token = await tokenRefresher
           return {token}
