@@ -1,8 +1,10 @@
 import {DevAppWatcherOptions, ESBuildContextManager} from './app-watcher-esbuild.js'
 import {AppEvent, EventType} from './app-event-watcher.js'
 import {testAppLinked, testUIExtension} from '../../../models/app/app.test-data.js'
+import {environmentVariableNames} from '../../../constants.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as fs from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
   default: {
@@ -152,5 +154,65 @@ describe('app-watcher-esbuild', () => {
     // Then
     expect(spyContext).toHaveBeenCalled()
     expect(spyCopy).toHaveBeenCalledWith('/path/to/output/uid1/dist', '/extensions/ui_extension_1/dist')
+  })
+
+  /**
+   * Creates and builds an extension with a simple JS file
+   * @param tmpDir - The temporary directory to use
+   * @returns The built file content and the manager instance
+   */
+  async function buildExtension(tmpDir: string) {
+    // Create source directory and simple test file
+    const extSrcDir = joinPath(tmpDir, 'src')
+    await fs.mkdir(extSrcDir)
+    const entryFile = joinPath(extSrcDir, 'index.js')
+    const simpleJS = 'function hello(){console.log("hi")};hello();'
+    await fs.writeFile(entryFile, simpleJS)
+
+    // Create test extension
+    const ext = await testUIExtension({
+      directory: extSrcDir,
+      entrySourceFilePath: entryFile,
+    })
+
+    // Configure stdin content
+    ext.getBundleExtensionStdinContent = () => ({main: simpleJS, assets: []})
+
+    // Set up manager and build
+    const outputRoot = joinPath(tmpDir, 'out')
+    const mgr = new ESBuildContextManager({dotEnvVariables: {}, url: 'http://localhost', outputPath: outputRoot})
+
+    await mgr.createContexts([ext])
+    await mgr.rebuildContext(ext)
+
+    // Get the built file
+    const builtFile = joinPath(outputRoot, ext.uid, 'dist', `${ext.handle}.js`)
+    await expect(fs.fileExists(builtFile)).resolves.toBe(true)
+    const content = await fs.readFile(builtFile, {encoding: 'utf8'})
+
+    return content
+  }
+
+  test('minification is enabled by default', async () => {
+    await fs.inTemporaryDirectory(async (tmpDir) => {
+      // Given / When
+      const content = await buildExtension(tmpDir)
+
+      // Then
+      expect(content).not.toContain('hello')
+    })
+  })
+
+  test('minification is disabled when SHOPIFY_CLI_APP_DEV_DISABLE_MINIFICATION is truthy', async () => {
+    await fs.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.stubEnv(environmentVariableNames.disableMinificationOnDev, '1')
+
+      // When
+      const content = await buildExtension(tmpDir)
+
+      // Then
+      expect(content).toContain('hello')
+    })
   })
 })
