@@ -277,7 +277,6 @@ ${result.sanitizedHeaders}
 export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
   requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
-  unauthorizedHandler?: () => Promise<void>,
   retryOptions: {
     limitRetriesTo?: number
     defaultDelayMs?: number
@@ -315,12 +314,7 @@ ${result.sanitizedHeaders}
         throw result.error
       }
     } else if (result.status === 'unauthorized') {
-      if (unauthorizedHandler) {
-        // eslint-disable-next-line no-await-in-loop
-        await unauthorizedHandler()
-      } else {
-        throw result.clientError
-      }
+      throw result.clientError
     }
 
     if (limitRetriesTo <= retriesUsed) {

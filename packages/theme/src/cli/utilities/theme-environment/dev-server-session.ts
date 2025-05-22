@@ -33,6 +33,7 @@ export async function initializeDevServerSession(
     outputDebug('Refreshing theme session...')
     const newSession = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
     Object.assign(session, newSession)
+    return newSession
   }
 
   setInterval(() => {
