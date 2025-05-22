@@ -120,12 +120,10 @@ import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
 import {
   SchemaDefinitionByTarget,
-  SchemaDefinitionByTargetQuery,
   SchemaDefinitionByTargetQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-target.js'
 import {
   SchemaDefinitionByApiType,
-  SchemaDefinitionByApiTypeQuery,
   SchemaDefinitionByApiTypeQueryVariables,
 } from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {WebhooksSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook.js'
@@ -146,23 +144,27 @@ import {
   appManagementRequestDoc,
   appManagementAppLogsUrl,
   appManagementHeaders,
+  AppManagementRequestOptions,
 } from '@shopify/cli-kit/node/api/app-management'
-import {appDevRequest} from '@shopify/cli-kit/node/api/app-dev'
+import {appDevRequestDoc, AppDevRequestOptions} from '@shopify/cli-kit/node/api/app-dev'
 import {
   businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
+  BusinessPlatformOrganizationsRequestOptions,
   businessPlatformRequestDoc,
+  BusinessPlatformRequestOptions,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
-import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
+import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
+import {Variables} from 'graphql-request'
+import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -195,17 +197,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
     input: AppLogsSubscribeMutationVariables,
     organizationId: string,
   ): Promise<AppLogsSubscribeMutation> {
-    const token = await this.token()
-
-    return appManagementRequestDoc<AppLogsSubscribeMutation, AppLogsSubscribeMutationVariables>(
+    return this.appManagementRequest<AppLogsSubscribeMutation, AppLogsSubscribeMutationVariables>({
       organizationId,
-      AppLogsSubscribe,
-      token,
-      {
+      query: AppLogsSubscribe,
+      variables: {
         shopIds: input.shopIds,
         apiKey: input.apiKey,
       },
-    )
+    })
   }
 
   async appLogs(
@@ -263,9 +262,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
-      const userInfoResult = await businessPlatformRequestDoc(UserInfo, businessPlatformToken, undefined, {
-        cacheTTL: {hours: 6},
-        cacheExtraKey: userId,
+      // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
+      const userInfoResult = await businessPlatformRequestDoc({
+        query: UserInfo,
+        cacheOptions: {
+          cacheTTL: {hours: 6},
+          cacheExtraKey: userId,
+        },
+        token: businessPlatformToken,
+        unauthorizedHandler: this.createUnauthorizedHandler(),
       })
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {
@@ -351,7 +356,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async organizations(): Promise<Organization[]> {
-    const organizationsResult = await businessPlatformRequestDoc(ListOrganizations, await this.businessPlatformToken())
+    const organizationsResult = await this.businessPlatformRequest({query: ListOrganizations})
     if (!organizationsResult.currentUserAccount) return []
     return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
@@ -363,12 +368,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async orgFromId(orgId: string): Promise<Organization | undefined> {
     const base64Id = encodedGidFromOrganizationId(orgId)
     const variables = {organizationId: base64Id}
-    const organizationResult = await businessPlatformRequestDoc(
-      FindOrganizations,
-      await this.businessPlatformToken(),
+    const organizationResult = await this.businessPlatformRequest({
+      query: FindOrganizations,
       variables,
-      {cacheTTL: {hours: 6}},
-    )
+      cacheOptions: {cacheTTL: {hours: 6}},
+    })
     const org = organizationResult.currentUserAccount?.organization
     if (!org) {
       return
@@ -399,15 +403,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .map((word) => `title:${word}`)
         .join(' '),
     }
-    const result = await appManagementRequestDoc(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+    const result = await this.appManagementRequest({organizationId, query, variables})
     if (!result.appsConnection) {
       throw new BugError('Server failed to retrieve apps')
     }
@@ -428,15 +424,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await appManagementRequestDoc(
-      organizationId,
-      query,
-      await this.token(),
-      undefined,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+    const result = await this.appManagementRequest({organizationId, query})
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -501,15 +489,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = createAppVars(options, apiVersion)
 
     const mutation = CreateApp
-    const result = await appManagementRequestDoc(
-      org.id,
-      mutation,
-      await this.token(),
+    const result = await this.appManagementRequest({
+      organizationId: org.id,
+      query: mutation,
       variables,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+    })
+
     if (!result.appCreate.app || result.appCreate.userErrors?.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')
       throw new AbortError(errors)
@@ -536,12 +521,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
-    const storesResult = await businessPlatformOrganizationsRequestDoc(
-      ListAppDevStores,
-      await this.businessPlatformToken(),
-      orgId,
-      {searchTerm},
-    )
+    const storesResult = await this.businessPlatformOrganizationsRequest({
+      query: ListAppDevStores,
+      organizationId: orgId,
+      variables: {searchTerm},
+    })
     const organization = storesResult.organization
 
     if (!organization) {
@@ -588,15 +572,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
-    const result = await appManagementRequestDoc(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+    const result = await this.appManagementRequest({organizationId, query, variables})
     return {
       app: {
         id: result.app.id,
@@ -631,15 +607,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
     const variables = {versionTag}
-    const result = await appManagementRequestDoc(
-      organizationId,
-      query,
-      await this.token(),
-      variables,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+    const result = await this.appManagementRequest({organizationId, query, variables})
     const version = result.versionByTag
     if (!version) {
       throw new AbortError(`Version not found for tag: ${versionTag}`)
@@ -662,7 +630,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = {versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
       this.activeAppVersionRawResult(app),
-      appManagementRequestDoc(app.organizationId, AppVersionById, await this.token(), variables),
+      this.appManagementRequest({organizationId: app.organizationId, query: AppVersionById, variables}),
     ])
     const currentModules = currentVersion.app.activeRelease.version.appModules
     const selectedVersionModules = selectedVersion.version.appModules
@@ -703,15 +671,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
     const variables = {sourceExtension: 'BR' as SourceExtension}
-    const result = await appManagementRequestDoc(
+    const result = await this.appManagementRequest({
       organizationId,
-      CreateAssetUrl,
-      await this.token(),
+      query: CreateAssetUrl,
       variables,
-      {cacheTTL: {minutes: 59}},
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+      cacheOptions: {cacheTTL: {minutes: 59}},
+    })
     return {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
@@ -763,15 +728,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       metadata,
     }
 
-    const result = await appManagementRequestDoc(
+    const result = await this.appManagementRequest({
       organizationId,
-      CreateAppVersion,
-      await this.token(),
+      query: CreateAppVersion,
       variables,
-      undefined,
-      {requestMode: 'slow-request'},
-      createUnauthorizedHandler(this),
-    )
+      requestOptions: {requestMode: 'slow-request'},
+    })
     const {version} = result.appVersionCreate
     const userErrors = result.appVersionCreate.userErrors.map(toUserError) ?? []
     if (!version) return {appDeploy: {userErrors}}
@@ -799,15 +761,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     if (noRelease) return versionResult
 
     const releaseVariables = {appId, versionId: version.id}
-    const releaseResult = await appManagementRequestDoc(
+    const releaseResult = await this.appManagementRequest({
       organizationId,
-      ReleaseVersion,
-      await this.token(),
-      releaseVariables,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+      query: ReleaseVersion,
+      variables: releaseVariables,
+    })
     if (releaseResult.appReleaseCreate.userErrors) {
       versionResult.appDeploy.userErrors = (versionResult.appDeploy.userErrors ?? []).concat(
         releaseResult.appReleaseCreate.userErrors.map(toUserError),
@@ -825,15 +783,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     version: AppVersionIdentifiers
   }): Promise<AppReleaseSchema> {
     const releaseVariables = {appId, versionId}
-    const releaseResult = await appManagementRequestDoc(
+    const releaseResult = await this.appManagementRequest({
       organizationId,
-      ReleaseVersion,
-      await this.token(),
-      releaseVariables,
-      undefined,
-      undefined,
-      createUnauthorizedHandler(this),
-    )
+      query: ReleaseVersion,
+      variables: releaseVariables,
+    })
 
     if (releaseResult.appReleaseCreate.release) {
       return {
@@ -870,12 +824,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // from the Partners FindByStoreDomainSchema, we will return this type for now
   async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
-    const storesResult = await businessPlatformOrganizationsRequestDoc(
-      FetchDevStoreByDomain,
-      await this.businessPlatformToken(),
-      orgId,
-      queryVariables,
-    )
+    const storesResult = await this.businessPlatformOrganizationsRequest({
+      query: FetchDevStoreByDomain,
+      organizationId: orgId,
+      variables: queryVariables,
+    })
 
     const organization = storesResult.organization
 
@@ -931,7 +884,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       sharedSecret: input.shared_secret,
       topic: input.topic,
     }
-    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+    const result = await this.webhooksRequest({organizationId, query, variables})
     let sendSampleWebhook: SampleWebhook = {samplePayload: '{}', headers: '{}', success: false, userErrors: []}
     const cliTesting = result.cliTesting
     if (cliTesting) {
@@ -946,7 +899,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async apiVersions(organizationId: string): Promise<PublicApiVersionsSchema> {
-    const result = await webhooksRequest(organizationId, PublicApiVersions, await this.token(), {})
+    const result = await this.webhooksRequest({organizationId, query: PublicApiVersions, variables: {}})
     return {publicApiVersions: result.publicApiVersions.map((version) => version.handle)}
   }
 
@@ -956,7 +909,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<WebhookTopicsSchema> {
     const query = AvailableTopics
     const variables = {apiVersion}
-    const result = await webhooksRequest(organizationId, query, await this.token(), variables)
+    const result = await this.webhooksRequest({organizationId, query, variables})
 
     return {
       webhookTopics: result.availableTopics ?? [],
@@ -988,17 +941,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
     try {
       const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
       const appIdNumber = String(numberFromGid(app.id))
-      const token = await this.token()
-      const result = await functionsRequestDoc<SchemaDefinitionByTargetQuery, SchemaDefinitionByTargetQueryVariables>(
+      const result = await this.functionsRequest({
         organizationId,
-        SchemaDefinitionByTarget,
-        token,
-        appIdNumber,
-        {
+        query: SchemaDefinitionByTarget,
+        appId: appIdNumber,
+        variables: {
           handle: input.handle,
           version: input.version,
         },
-      )
+      })
 
       return result?.target?.api?.schema?.definition ?? null
     } catch (error) {
@@ -1014,14 +965,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     try {
       const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
       const appIdNumber = String(numberFromGid(app.id))
-      const token = await this.token()
-      const result = await functionsRequestDoc<SchemaDefinitionByApiTypeQuery, SchemaDefinitionByApiTypeQueryVariables>(
+      const result = await this.functionsRequest({
         organizationId,
-        SchemaDefinitionByApiType,
-        token,
-        appIdNumber,
-        input,
-      )
+        query: SchemaDefinitionByApiType,
+        appId: appIdNumber,
+        variables: input,
+      })
 
       return result?.api?.schema?.definition ?? null
     } catch (error) {
@@ -1043,9 +992,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionCreate, shopFqdn, await this.token(), {
-      appId: appIdNumber,
-      assetsUrl: assetsUrl ?? '',
+    return this.appDevRequest({
+      query: DevSessionCreate,
+      shopFqdn,
+      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? ''},
     })
   }
 
@@ -1063,12 +1013,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
       manifest: JSON.stringify(manifest),
       inheritedModuleUids,
     }
-    return appDevRequest(DevSessionUpdate, shopFqdn, await this.token(), variables)
+    return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
   }
 
   async devSessionDelete({appId, shopFqdn}: DevSessionDeleteOptions): Promise<DevSessionDeleteMutation> {
     const appIdNumber = String(numberFromGid(appId))
-    return appDevRequest(DevSessionDelete, shopFqdn, await this.token(), {appId: appIdNumber})
+    return this.appDevRequest({query: DevSessionDelete, shopFqdn, variables: {appId: appIdNumber}})
   }
 
   async getCreateDevStoreLink(org: Organization): Promise<string> {
@@ -1079,12 +1029,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  private createUnauthorizedHandler(): UnauthorizedHandler {
-    return createUnauthorizedHandler(this)
-  }
-
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
-    return appManagementRequestDoc(organizationId, ActiveAppReleaseFromApiKey, await this.token(), {apiKey})
+    return this.appManagementRequest({organizationId, query: ActiveAppReleaseFromApiKey, variables: {apiKey}})
   }
 
   private async organizationBetaFlags(
@@ -1094,17 +1040,82 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables: OrganizationBetaFlagsQueryVariables = {
       organizationId: encodedGidFromOrganizationId(organizationId),
     }
-    const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>(
-      organizationBetaFlagsQuery(allBetaFlags),
-      await this.businessPlatformToken(),
+    const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>({
+      query: organizationBetaFlagsQuery(allBetaFlags),
+      token: await this.businessPlatformToken(),
       organizationId,
       variables,
-    )
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
     const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
       result[flag] = Boolean(flagsResult.organization[`flag_${flag}`])
     })
     return result
+  }
+
+  private async appManagementRequest<TResult, TVariables extends Variables>(
+    options: Omit<AppManagementRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
+  ): Promise<TResult> {
+    return appManagementRequestDoc({
+      ...options,
+      token: await this.token(),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+  }
+
+  private async appDevRequest<TResult, TVariables extends Variables>(
+    options: Omit<AppDevRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
+  ): Promise<TResult> {
+    return appDevRequestDoc({
+      ...options,
+      token: await this.token(),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+  }
+
+  private async businessPlatformRequest<TResult, TVariables extends Variables>(
+    options: Omit<BusinessPlatformRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
+  ): Promise<TResult> {
+    return businessPlatformRequestDoc({
+      ...options,
+      token: await this.businessPlatformToken(),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+  }
+
+  private async businessPlatformOrganizationsRequest<TResult, TVariables extends Variables>(
+    options: Omit<BusinessPlatformOrganizationsRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
+  ): Promise<TResult> {
+    return businessPlatformOrganizationsRequestDoc({
+      ...options,
+      token: await this.businessPlatformToken(),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+  }
+
+  private async functionsRequest<TResult, TVariables extends Variables>(
+    options: Omit<FunctionsRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
+  ): Promise<TResult> {
+    return functionsRequestDoc<TResult, TVariables>({
+      ...options,
+      token: await this.token(),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+  }
+
+  private async webhooksRequest<TResult, TVariables extends Variables>(
+    options: Omit<WebhooksRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
+  ): Promise<TResult> {
+    return webhooksRequestDoc<TResult, TVariables>({
+      ...options,
+      token: await this.token(),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+  }
+
+  private createUnauthorizedHandler(): UnauthorizedHandler {
+    return createUnauthorizedHandler(this)
   }
 }
 
