@@ -542,4 +542,62 @@ describe('pushUpdatesForDevSession', () => {
     )
     expect(manifestModules2.length).toBe(2)
   })
+
+  test('retries failed events along with newly received events', async () => {
+    vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
+    vi.mocked(readdir).mockResolvedValue([])
+    // Setup test extensions
+    const extension1 = await testUIExtension()
+    extension1.uid = 'ext1-uid'
+    extension1.handle = 'ext1-handle'
+    extension1.deployConfig = vi.fn().mockResolvedValue({config1: 'val1'})
+
+    const extension2 = await testWebhookExtensions()
+    extension2.uid = 'ext2-uid'
+    extension2.handle = 'ext2-handle'
+    extension2.deployConfig = vi.fn().mockResolvedValue({config2: 'val2'})
+
+    app = testAppLinked({allExtensions: [extension1, extension2]})
+
+    // Mock devSessionUpdate to fail on first call and succeed on second
+    developerPlatformClient.devSessionUpdate = vi
+      .fn()
+      .mockResolvedValueOnce({devSessionUpdate: {userErrors: [{message: 'Simulated failure', category: 'remote'}]}})
+      .mockResolvedValueOnce({devSessionUpdate: {userErrors: []}})
+
+    // Start the dev session
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // First event (will fail)
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension1}]})
+    await flushPromises()
+
+    // Verify the update was attempted and failed
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(1)
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Simulated failure'))
+    expect(devSessionStatusManager.status.statusMessage?.message).toBe('Error updating app preview')
+
+    // Second event (should include retry of first failed event)
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension2}]})
+    await flushPromises()
+
+    // Verify a second update attempt was made
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
+
+    // Verify the second update attempt included both extensions
+    const secondCallPayload = developerPlatformClient.devSessionUpdate.mock.calls[1][0]
+    expect(secondCallPayload.manifest.modules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({uid: 'ext1-uid', handle: 'ext1-handle', config: {config1: 'val1'}}),
+        expect.objectContaining({uid: 'ext2-uid', handle: 'ext2-handle', config: {config2: 'val2'}}),
+      ]),
+    )
+    expect(secondCallPayload.manifest.modules.length).toBe(2)
+
+    // Verify success status was set
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(devSessionStatusManager.status.statusMessage?.message).toBe('Updated')
+  })
 })
