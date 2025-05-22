@@ -41,6 +41,7 @@ export class DevSession {
   private readonly appWatcher: AppEventWatcher
   private readonly bundlePath: string
   private readonly appEventsProcessor: SerialBatchProcessor<AppEvent>
+  private failedEvents: AppEvent[] = []
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -81,7 +82,10 @@ export class DevSession {
    * @param event - The app event to process
    */
   private async processEvents(events: AppEvent[]) {
-    const event = this.consolidateAppEvents(events)
+    // Include any previously failed events to be processed again
+    const allEvents = [...this.failedEvents, ...events]
+    const event = this.consolidateAppEvents(allEvents)
+    this.failedEvents = []
     if (!event) return
 
     this.statusManager.setMessage('CHANGE_DETECTED')
@@ -221,6 +225,7 @@ export class DevSession {
       if (result.error instanceof Error && result.error.cause === 'validation-error') {
         this.statusManager.setMessage('VALIDATION_ERROR')
       } else {
+        if (event) this.failedEvents.push(event)
         this.statusManager.setMessage('REMOTE_ERROR')
       }
     }
