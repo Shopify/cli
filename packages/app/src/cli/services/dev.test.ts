@@ -1,5 +1,4 @@
-import {developerPreviewController, warnIfScopesDifferBeforeDev} from './dev.js'
-import {fetchAppPreviewMode} from './dev/fetch.js'
+import {warnIfScopesDifferBeforeDev} from './dev.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -7,37 +6,6 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 vi.mock('./dev/fetch.js')
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('../utilities/mkcert.js')
-
-describe('developerPreviewController', () => {
-  test('does not refresh the tokens when they are still valid', async () => {
-    // Given
-    const developerPlatformClient = testDeveloperPlatformClient()
-    const controller = developerPreviewController('apiKey', developerPlatformClient)
-    vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce(true)
-
-    // When
-    const got = await controller.fetchMode()
-
-    // Then
-    expect(got).toBe(true)
-    expect(developerPlatformClient.refreshToken).not.toHaveBeenCalled()
-  })
-  test('refreshes the tokens when they expire', async () => {
-    // Given
-    const developerPlatformClient = testDeveloperPlatformClient()
-    const controller = developerPreviewController('apiKey', developerPlatformClient)
-    vi.mocked(fetchAppPreviewMode).mockRejectedValueOnce(new Error('expired token'))
-    vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce(true)
-
-    // When
-    const got = await controller.fetchMode()
-
-    // Then
-    expect(got).toBe(true)
-    expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
-    expect(fetchAppPreviewMode).toHaveBeenCalledTimes(2)
-  })
-})
 
 describe('warnIfScopesDifferBeforeDev', () => {
   const appsWithScopes = (local: string, remote: string) => {

@@ -7,7 +7,6 @@ import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../util
 import {AppManifest} from '../../../../models/app/app.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -378,15 +377,11 @@ export class DevSession {
    * @returns The signed URL
    */
   private async getSignedURLWithRetry() {
-    return performActionWithRetryAfterRecovery(
-      async () =>
-        getUploadURL(this.options.developerPlatformClient, {
-          apiKey: this.options.appId,
-          organizationId: this.options.organizationId,
-          id: this.options.appId,
-        }),
-      () => this.options.developerPlatformClient.refreshToken(),
-    )
+    return getUploadURL(this.options.developerPlatformClient, {
+      apiKey: this.options.appId,
+      organizationId: this.options.organizationId,
+      id: this.options.appId,
+    })
   }
 
   /**
@@ -394,10 +389,7 @@ export class DevSession {
    * @param payload - The payload to update the dev session with
    */
   private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
-    const result = await performActionWithRetryAfterRecovery(
-      async () => this.options.developerPlatformClient.devSessionUpdate(payload),
-      () => this.options.developerPlatformClient.refreshToken(),
-    )
+    const result = await this.options.developerPlatformClient.devSessionUpdate(payload)
     const errors = result.devSessionUpdate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'updated'}
@@ -410,10 +402,7 @@ export class DevSession {
    * @param payload - The payload to create the dev session with
    */
   private async devSessionCreateWithRetry(payload: DevSessionCreateOptions): Promise<DevSessionResult> {
-    const result = await performActionWithRetryAfterRecovery(
-      async () => this.options.developerPlatformClient.devSessionCreate(payload),
-      () => this.options.developerPlatformClient.refreshToken(),
-    )
+    const result = await this.options.developerPlatformClient.devSessionCreate(payload)
     const errors = result.devSessionCreate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'created'}

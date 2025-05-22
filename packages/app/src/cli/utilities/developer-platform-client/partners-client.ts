@@ -273,7 +273,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).token
   }
 
-  async refreshToken(): Promise<string> {
+  async unsafeRefreshToken(): Promise<string> {
     const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true, forceRefresh: true})
     const session = await this.session()
     if (token) {
