@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.80.7
+
+### Patch Changes
+
+- 4db12d4: Retry failed updates during dev
+  - @shopify/cli-kit@3.80.7
+  - @shopify/theme@3.80.7
+  - @shopify/plugin-cloudflare@3.80.7
+
 ## 3.80.6
 
 ### Patch Changes
