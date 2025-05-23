@@ -33,6 +33,20 @@ describe('isValidURL', () => {
     // Then
     expect(got).toBe(false)
   })
+
+  test('throws error if URL constructor throws non-TypeError error', () => {
+    // Given
+    const originalURL = global.URL
+    global.URL = function () {
+      throw new Error('Custom error')
+    } as unknown as typeof URL
+
+    // Then
+    expect(() => isValidURL('https://example.com')).toThrow('Custom error')
+
+    // Clean up
+    global.URL = originalURL
+  })
 })
 
 describe('safeParseURL', () => {
@@ -55,5 +69,22 @@ describe('safeParseURL', () => {
     const result = safeParseURL('')
 
     expect(result).toBeUndefined()
+  })
+
+  test('returns undefined for any error thrown by URL constructor', () => {
+    // Given
+    const originalURL = global.URL
+    global.URL = function () {
+      throw new Error('Custom error that is not TypeError')
+    } as unknown as typeof URL
+
+    // When
+    const result = safeParseURL('https://example.com')
+
+    // Then
+    expect(result).toBeUndefined()
+
+    // Clean up
+    global.URL = originalURL
   })
 })

@@ -2,7 +2,7 @@ import {err, ok} from './result.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {AbortError, BugError} from './error.js'
 import {outputSuccess} from '../../public/node/output.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, beforeEach} from 'vitest'
 
 describe('ok', () => {
   test('create ok with value', () => {
@@ -11,6 +11,14 @@ describe('ok', () => {
 
     // Then
     expect(!result.isErr() && result.value).toEqual(123)
+  })
+
+  test('isErr returns false for Ok results', () => {
+    // When
+    const result = ok('test value')
+
+    // Then
+    expect(result.isErr()).toBe(false)
   })
 })
 
@@ -21,6 +29,14 @@ describe('err', () => {
 
     // Then
     expect(result.isErr() && result.error).toEqual(new Error('Custom error object'))
+  })
+
+  test('isErr returns true for Err results', () => {
+    // When
+    const result = err('error message')
+
+    // Then
+    expect(result.isErr()).toBe(true)
   })
 })
 
@@ -97,19 +113,48 @@ describe('mapError', () => {
     // Then
     expect(() => result.valueOrBug()).toThrow('Mapped error')
   })
+
+  test('when error result is mapped to a different type', () => {
+    // Given
+    const originalError = {type: 'validation', message: 'Invalid input'}
+
+    // When
+    const result = err(originalError).mapError((error) => new Error(`${error.type} error: ${error.message}`))
+
+    // Then
+    expect(result.isErr()).toBe(true)
+    expect(() => result.valueOrBug()).toThrow('validation error: Invalid input')
+  })
 })
 
 describe('doOnOk', () => {
-  test('when ok result should execute the command and continue', () => {
-    // Given
-    const outpuMocker = mockAndCaptureOutput()
+  let outputMocker: ReturnType<typeof mockAndCaptureOutput>
 
+  beforeEach(() => {
+    outputMocker = mockAndCaptureOutput()
+    outputMocker.clear()
+  })
+
+  test('when ok result should execute the command and continue', () => {
     // When
     const result = ok(123).doOnOk((value) => outputSuccess(`result ok ${value}`))
 
     // Then
     expect(!result.isErr() && result.value).toEqual(123)
-    expect(outpuMocker.success()).toMatchInlineSnapshot('"result ok 123"')
+    expect(outputMocker.success()).toEqual('result ok 123')
+  })
+
+  test('when err result should not execute the command and return the error', () => {
+    // Given
+    const errorValue = new Error('Test error')
+
+    // When
+    const result = err(errorValue).doOnOk((value) => outputSuccess(`result ok ${value}`))
+
+    // Then
+    expect(result.isErr()).toBe(true)
+    expect(result.isErr() && result.error).toBe(errorValue)
+    expect(outputMocker.success()).toBe('')
   })
 })
 
@@ -128,5 +173,20 @@ describe('map', () => {
 
     // Then
     expect(() => result.valueOrBug()).toThrow('Original error')
+  })
+
+  test('when ok result is mapped to a transformed value', () => {
+    // Given
+    const original = {count: 5, name: 'test'}
+
+    // When
+    const result = ok(original).map((value) => ({
+      ...value,
+      count: value.count * 2,
+    }))
+
+    // Then
+    expect(result.isErr()).toBe(false)
+    expect(!result.isErr() && result.value).toEqual({count: 10, name: 'test'})
   })
 })
