@@ -310,6 +310,8 @@ describe('terminalSupportsPrompting', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.unstubAllEnvs()
+    // Explicitly set CI environment variable to ensure clean state
+    vi.stubEnv('CI', '0')
     process.stdin.isTTY = true
     process.stdout.isTTY = true
   })
@@ -322,7 +324,7 @@ describe('terminalSupportsPrompting', () => {
 
   test('returns true when stdin and stdout are TTYs and not in CI', () => {
     // Given
-    // No CI environment variable set
+    // CI environment variable explicitly deleted in beforeEach
 
     // When
     const result = system.terminalSupportsPrompting()
@@ -368,8 +370,8 @@ describe('terminalSupportsPrompting', () => {
 describe('isCI', () => {
   beforeEach(() => {
     vi.unstubAllEnvs()
-    // Explicitly delete CI environment variable to ensure clean state
-    delete process.env.CI
+    // Explicitly set CI environment variable to ensure clean state
+    vi.stubEnv('CI', '0')
   })
 
   afterEach(() => {

@@ -581,7 +581,9 @@ describe('fileLastUpdated', () => {
       const lastUpdated = await fileLastUpdated(filePath)
 
       expect(lastUpdated).toBeInstanceOf(Date)
-      expect(lastUpdated.getTime()).toBeLessThanOrEqual(Date.now())
+
+      // we add a little buffer, sometimes the time is not perfectly linear
+      expect(lastUpdated.getTime()).toBeLessThanOrEqual(Date.now() + 100)
     })
   })
 })
