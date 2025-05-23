@@ -1,4 +1,4 @@
-import {appDevRequest} from './app-dev.js'
+import {appDevRequestDoc} from './app-dev.js'
 import {graphqlRequestDoc} from './graphql.js'
 import {serviceEnvironment, Environment} from '../../../private/node/context/service.js'
 import {test, vi, expect, describe} from 'vitest'
@@ -33,7 +33,16 @@ describe('appDevRequest', () => {
     const query = 'query' as unknown as TypedDocumentNode<object, {variables: string}>
 
     // When
-    await appDevRequest(query, shopFqdn, mockedToken, {variables: 'variables'})
+    await appDevRequestDoc({
+      query,
+      shopFqdn,
+      token: mockedToken,
+      variables: {variables: 'variables'},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: vi.fn().mockResolvedValue({token: mockedToken}),
+      },
+    })
 
     // Then
     expect(graphqlRequestDoc).toHaveBeenLastCalledWith({
@@ -42,6 +51,10 @@ describe('appDevRequest', () => {
       url: 'https://test-shop.shop.dev/app_dev/unstable/graphql.json',
       token: mockedToken,
       variables: {variables: 'variables'},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
     })
   })
 
@@ -51,7 +64,16 @@ describe('appDevRequest', () => {
     const query = 'query' as unknown as TypedDocumentNode<object, {variables: string}>
 
     // When
-    await appDevRequest(query, shopFqdn, mockedToken, {variables: 'variables'})
+    await appDevRequestDoc({
+      query,
+      shopFqdn,
+      token: mockedToken,
+      variables: {variables: 'variables'},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: vi.fn().mockResolvedValue({token: mockedToken}),
+      },
+    })
 
     // Then
     expect(graphqlRequestDoc).toHaveBeenLastCalledWith({
@@ -61,6 +83,10 @@ describe('appDevRequest', () => {
       token: mockedToken,
       addedHeaders: {'x-forwarded-host': shopFqdn},
       variables: {variables: 'variables'},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
     })
   })
 })
