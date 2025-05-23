@@ -56,6 +56,9 @@ export default abstract class ThemeCommand extends Command {
     if (!flags.environment) {
       const session = await this.ensureAuthenticated(flags)
 
+      // eslint-disable-next-line no-console
+      console.log('BEFORE FOR SINGLE ENV COMMAND!!!')
+
       await this.beforeCommand(true, flags, session)
       await this.command(flags, session)
 
@@ -96,8 +99,9 @@ export default abstract class ThemeCommand extends Command {
           throw new AbortError(`No session found for environment ${environment}`)
         }
 
+        // eslint-disable-next-line no-console
+        console.log('BEFORE FOR MULTI ENV COMMAND!!!')
         await this.beforeCommand(false, environmentFlags, session)
-
         return this.command(environmentFlags, session)
       }),
     )

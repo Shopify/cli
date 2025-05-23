@@ -112,11 +112,17 @@ export default class Push extends ThemeCommand {
   static multiEnvironmentsFlags = ['store', 'password', 'theme']
 
   async command(flags: PushFlags, adminSession: AdminSession): Promise<void> {
-    await push(flags, adminSession)
+    // eslint-disable-next-line no-console
+    console.log('THE COMMAND!!!')
+
+    await push({...flags, noColor: flags['no-color']}, adminSession)
   }
 
   async beforeCommand(singleEnv: boolean, flags: PushFlags, _: AdminSession): Promise<void> {
     if (singleEnv) return
+
+    // eslint-disable-next-line no-console
+    console.log('BEFORE COMMAND!!!')
 
     outputDebug('Setting no-color=true and force=true flags as they are required in multi-env mode...')
 

@@ -168,6 +168,8 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
+  // eslint-disable-next-line no-console
+  console.log(`PUSHING THE THING !!! ${options.noColor}`)
   if (options.noColor) {
     const {uploadJobPromise, deleteJobPromise} = uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
     await uploadJobPromise
