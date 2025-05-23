@@ -68,7 +68,6 @@ describe('retryAwareRequest', () => {
         maxRetryTimeMs: 10000,
       },
       undefined,
-      undefined,
       {
         defaultDelayMs: 500,
         scheduleDelay: mockScheduleDelayFn,
@@ -118,7 +117,6 @@ describe('retryAwareRequest', () => {
         maxRetryTimeMs: 10000,
       },
       undefined,
-      undefined,
       {
         limitRetriesTo: 7,
         scheduleDelay: mockScheduleDelayFn,
@@ -129,58 +127,6 @@ describe('retryAwareRequest', () => {
 
     expect(mockRequestFn).toHaveBeenCalledTimes(8)
     expect(mockScheduleDelayFn).toHaveBeenCalledTimes(7)
-  })
-
-  test('calls unauthorizedHandler when receiving 401', async () => {
-    const unauthorizedResponse = {
-      status: 401,
-      errors: [
-        {
-          extensions: {
-            code: '401',
-          },
-        } as any,
-      ],
-      headers: new Headers(),
-    }
-
-    const mockRequestFn = vi
-      .fn()
-      .mockImplementationOnce(() => {
-        throw new ClientError(unauthorizedResponse, {query: ''})
-      })
-      .mockImplementationOnce(() => {
-        return Promise.resolve({
-          status: 200,
-          data: {hello: 'world!'},
-          headers: new Headers(),
-        })
-      })
-
-    const mockUnauthorizedHandler = vi.fn()
-    const result = retryAwareRequest(
-      {
-        request: mockRequestFn,
-        url: 'https://example.com',
-        useNetworkLevelRetry: true,
-        maxRetryTimeMs: 10000,
-      },
-      undefined,
-      mockUnauthorizedHandler,
-      {
-        scheduleDelay: vi.fn((fn) => fn()),
-      },
-    )
-    await vi.runAllTimersAsync()
-
-    await expect(result).resolves.toEqual({
-      headers: expect.anything(),
-      status: 200,
-      data: {hello: 'world!'},
-    })
-
-    expect(mockRequestFn).toHaveBeenCalledTimes(2)
-    expect(mockUnauthorizedHandler).toHaveBeenCalledTimes(1)
   })
 
   test('fails on network issue if retries are disabled', async () => {
@@ -225,7 +171,6 @@ describe('retryAwareRequest', () => {
         maxRetryTimeMs: 10000,
       },
       undefined,
-      undefined,
       {
         defaultDelayMs: 500,
         scheduleDelay: mockScheduleDelayFn,
@@ -244,7 +189,6 @@ describe('retryAwareRequest', () => {
         url: 'https://example.com',
         useNetworkLevelRetry: false,
       },
-      undefined,
       undefined,
       {
         defaultDelayMs: 500,
