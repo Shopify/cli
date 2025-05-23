@@ -71,6 +71,8 @@ export function uploadTheme(
   return {
     uploadResults,
     workPromise,
+    uploadJobPromise,
+    deleteJobPromise,
     renderThemeSyncProgress: async () => {
       if (options?.deferPartialWork) return
 

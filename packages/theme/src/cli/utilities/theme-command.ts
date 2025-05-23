@@ -36,6 +36,8 @@ export default abstract class ThemeCommand extends Command {
     return configurationFileName
   }
 
+  async beforeCommand(_singleEnv: boolean, _flags: FlagValues, _session: AdminSession): Promise<void> {}
+
   async command(_flags: FlagValues, _session: AdminSession): Promise<void> {}
 
   async run<
@@ -53,7 +55,10 @@ export default abstract class ThemeCommand extends Command {
     // Single environment
     if (!flags.environment) {
       const session = await this.ensureAuthenticated(flags)
+
+      await this.beforeCommand(true, flags, session)
       await this.command(flags, session)
+
       return
     }
 
@@ -90,6 +95,8 @@ export default abstract class ThemeCommand extends Command {
         if (!session) {
           throw new AbortError(`No session found for environment ${environment}`)
         }
+
+        await this.beforeCommand(false, environmentFlags, session)
 
         return this.command(environmentFlags, session)
       }),

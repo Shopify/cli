@@ -11,7 +11,7 @@ import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
@@ -30,8 +30,10 @@ interface PushOptions {
   json?: boolean
   force?: boolean
   publish?: boolean
+  noColor?: boolean
   ignore?: string[]
   only?: string[]
+  environment?: string
 }
 
 interface JsonOutput {
@@ -98,6 +100,9 @@ export interface PushFlags {
 
   /** Require theme check to pass without errors before pushing. Warnings are allowed. */
   strict?: boolean
+
+  /** The environment to push the theme to. */
+  environment?: string
 }
 
 /**
@@ -105,7 +110,7 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags): Promise<void> {
+export async function push(flags: PushFlags, initialAdminSession?: AdminSession) {
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -128,7 +133,7 @@ export async function push(flags: PushFlags): Promise<void> {
   const force = flags.force ?? false
 
   const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  const adminSession = initialAdminSession ?? (await ensureAuthenticatedThemes(store, flags.password))
 
   const workingDirectory = path ? resolvePath(path) : cwd()
   if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
@@ -145,6 +150,7 @@ export async function push(flags: PushFlags): Promise<void> {
     nodelete: flags.nodelete ?? false,
     publish: flags.publish ?? false,
     json: flags.json ?? false,
+    noColor: flags.noColor ?? false,
     force,
     ignore: flags.ignore ?? [],
     only: flags.only ?? [],
@@ -162,21 +168,27 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
-  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
-    theme,
-    session,
-    themeChecksums,
-    themeFileSystem,
-    options,
-  )
+  if (options.noColor) {
+    const {uploadJobPromise, deleteJobPromise} = uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
+    await uploadJobPromise
+    await deleteJobPromise
 
-  await renderThemeSyncProgress()
+    outputInfo(`Your theme ${theme.name} was pushed successfully in the store ${session.storeFqdn}.`)
+  } else {
+    const {uploadResults, renderThemeSyncProgress} = uploadTheme(
+      theme,
+      session,
+      themeChecksums,
+      themeFileSystem,
+      options,
+    )
+    await renderThemeSyncProgress()
+    await handlePushOutput(uploadResults, theme, session, options)
+  }
 
   if (options.publish) {
     await themePublish(theme.id, session)
   }
-
-  await handlePushOutput(uploadResults, theme, session, options)
 }
 
 /**
