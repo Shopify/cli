@@ -17,6 +17,30 @@ import {
   readFileSync,
   glob,
   detectEOL,
+  touchFileSync,
+  appendFileSync,
+  writeFileSync,
+  mkdirSync,
+  renameFile,
+  removeFileSync,
+  rmdir,
+  mkTmpDir,
+  isDirectory,
+  fileSize,
+  fileSizeSync,
+  unlinkFileSync,
+  unlinkFile,
+  createFileWriteStream,
+  fileLastUpdated,
+  fileLastUpdatedTimestamp,
+  fileExistsSync,
+  pathToFileURL,
+  defaultEOL,
+  findPathUp,
+  matchGlob,
+  readdir,
+  tempDirectory,
+  fileRealPath,
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
@@ -320,5 +344,501 @@ describe('detectEOL', () => {
 
     // Then
     expect(eol).toEqual('\n')
+  })
+})
+
+describe('touchFileSync', () => {
+  test('synchronously creates an empty file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'sync-empty-file')
+
+      touchFileSync(filePath)
+
+      await expect(fileExists(filePath)).resolves.toBe(true)
+      const content = await readFile(filePath)
+      expect(content).toBe('')
+    })
+  })
+})
+
+describe('appendFileSync', () => {
+  test('synchronously appends content to a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'sync-append-file')
+      await writeFile(filePath, 'initial')
+
+      appendFileSync(filePath, ' appended')
+
+      const content = await readFile(filePath)
+      expect(content).toBe('initial appended')
+    })
+  })
+})
+
+describe('writeFileSync', () => {
+  test('synchronously writes content to a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'sync-write-file')
+      const content = 'sync written content'
+
+      writeFileSync(filePath, content)
+
+      const readContent = await readFile(filePath)
+      expect(readContent).toBe(content)
+    })
+  })
+})
+
+describe('mkdirSync', () => {
+  test('synchronously creates a directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const dirPath = joinPath(tmpDir, 'sync-new-dir')
+
+      mkdirSync(dirPath)
+
+      await expect(isDirectory(dirPath)).resolves.toBe(true)
+    })
+  })
+
+  test('synchronously creates nested directories', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const dirPath = joinPath(tmpDir, 'nested', 'sync-dir')
+
+      mkdirSync(dirPath)
+
+      await expect(isDirectory(dirPath)).resolves.toBe(true)
+    })
+  })
+})
+
+describe('renameFile', () => {
+  test('renames a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const oldPath = joinPath(tmpDir, 'old-name.txt')
+      const newPath = joinPath(tmpDir, 'new-name.txt')
+      const content = 'file content'
+      await writeFile(oldPath, content)
+
+      await renameFile(oldPath, newPath)
+
+      await expect(fileExists(oldPath)).resolves.toBe(false)
+      await expect(fileExists(newPath)).resolves.toBe(true)
+      const readContent = await readFile(newPath)
+      expect(readContent).toBe(content)
+    })
+  })
+})
+
+describe('removeFileSync', () => {
+  test('synchronously removes a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'file-to-remove-sync')
+      await writeFile(filePath, 'content')
+      await expect(fileExists(filePath)).resolves.toBe(true)
+
+      removeFileSync(filePath)
+
+      await expect(fileExists(filePath)).resolves.toBe(false)
+    })
+  })
+})
+
+describe('rmdir', () => {
+  test('removes a directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const dirPath = joinPath(tmpDir, 'dir-to-remove')
+      await mkdir(dirPath)
+      await writeFile(joinPath(dirPath, 'file.txt'), 'content')
+      await expect(fileExists(dirPath)).resolves.toBe(true)
+
+      await rmdir(dirPath, {force: true})
+
+      await expect(fileExists(dirPath)).resolves.toBe(false)
+    })
+  })
+
+  test('removes a directory with force option', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const dirPath = joinPath(tmpDir, 'dir-to-force-remove')
+      await mkdir(dirPath)
+      await writeFile(joinPath(dirPath, 'file.txt'), 'content')
+
+      await rmdir(dirPath, {force: true})
+
+      await expect(fileExists(dirPath)).resolves.toBe(false)
+    })
+  })
+})
+
+describe('mkTmpDir', () => {
+  test('creates a temporary directory', async () => {
+    const tmpDir = await mkTmpDir()
+
+    await expect(fileExists(tmpDir)).resolves.toBe(true)
+    await expect(isDirectory(tmpDir)).resolves.toBe(true)
+    expect(tmpDir).toMatch(/tmp-/)
+  })
+})
+
+describe('isDirectory', () => {
+  test('returns true for a directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await expect(isDirectory(tmpDir)).resolves.toBe(true)
+    })
+  })
+
+  test('returns false for a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'test-file')
+      await writeFile(filePath, 'content')
+
+      await expect(isDirectory(filePath)).resolves.toBe(false)
+    })
+  })
+})
+
+describe('fileSize', () => {
+  test('returns the size of a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'test-file')
+      const content = 'hello world'
+      await writeFile(filePath, content)
+
+      const size = await fileSize(filePath)
+
+      expect(size).toBe(Buffer.byteLength(content, 'utf8'))
+    })
+  })
+})
+
+describe('fileSizeSync', () => {
+  test('synchronously returns the size of a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'test-file-sync')
+      const content = 'hello world sync'
+      await writeFile(filePath, content)
+
+      const size = fileSizeSync(filePath)
+
+      expect(size).toBe(Buffer.byteLength(content, 'utf8'))
+    })
+  })
+})
+
+describe('unlinkFileSync', () => {
+  test('synchronously unlinks a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'file-to-unlink-sync')
+      await writeFile(filePath, 'content')
+      await expect(fileExists(filePath)).resolves.toBe(true)
+
+      unlinkFileSync(filePath)
+
+      await expect(fileExists(filePath)).resolves.toBe(false)
+    })
+  })
+})
+
+describe('unlinkFile', () => {
+  test('unlinks a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'file-to-unlink')
+      await writeFile(filePath, 'content')
+      await expect(fileExists(filePath)).resolves.toBe(true)
+
+      await unlinkFile(filePath)
+
+      await expect(fileExists(filePath)).resolves.toBe(false)
+    })
+  })
+})
+
+describe('createFileWriteStream', () => {
+  test('creates a write stream for a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'write-stream-file')
+      const content = 'stream content'
+
+      const writeStream = createFileWriteStream(filePath)
+      writeStream.write(content)
+      writeStream.end()
+
+      // Wait for the stream to finish
+      await new Promise((resolve) => writeStream.on('finish', resolve))
+
+      const readContent = await readFile(filePath)
+      expect(readContent).toBe(content)
+    })
+  })
+})
+
+describe('fileLastUpdated', () => {
+  test('returns the last updated date of a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'test-file')
+      await writeFile(filePath, 'content')
+
+      const lastUpdated = await fileLastUpdated(filePath)
+
+      expect(lastUpdated).toBeInstanceOf(Date)
+      expect(lastUpdated.getTime()).toBeLessThanOrEqual(Date.now())
+    })
+  })
+})
+
+describe('fileLastUpdatedTimestamp', () => {
+  test('returns the last updated timestamp of a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const beforeTime = Date.now()
+      const filePath = joinPath(tmpDir, 'test-file')
+      await writeFile(filePath, 'content')
+
+      const timestamp = await fileLastUpdatedTimestamp(filePath)
+
+      expect(typeof timestamp).toBe('number')
+      // we add a little buffer, sometimes the time is not perfectly linear
+      expect(timestamp).toBeGreaterThanOrEqual(beforeTime - 100)
+    })
+  })
+
+  test('returns undefined for non-existent file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'non-existent-file')
+
+      const timestamp = await fileLastUpdatedTimestamp(filePath)
+
+      expect(timestamp).toBeUndefined()
+    })
+  })
+})
+
+describe('fileExistsSync', () => {
+  test('returns true for existing file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'existing-file')
+      await writeFile(filePath, 'content')
+
+      expect(fileExistsSync(filePath)).toBe(true)
+    })
+  })
+
+  test('returns false for non-existing file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'non-existing-file')
+
+      expect(fileExistsSync(filePath)).toBe(false)
+    })
+  })
+})
+
+describe('pathToFileURL', () => {
+  test('converts a path to a file URL', () => {
+    const path = '/some/path/file.txt'
+
+    const url = pathToFileURL(path)
+
+    expect(url).toBeInstanceOf(URL)
+    expect(url.protocol).toBe('file:')
+    expect(url.pathname.endsWith(path)).toBe(true)
+  })
+
+  test('handles Windows paths', () => {
+    const path = 'C:\\Users\\test\\file.txt'
+
+    const url = pathToFileURL(path)
+
+    expect(url).toBeInstanceOf(URL)
+    expect(url.protocol).toBe('file:')
+  })
+})
+
+describe('defaultEOL', () => {
+  test('returns the default EOL character', () => {
+    vi.mocked(os).EOL = '\n'
+
+    const eol = defaultEOL()
+
+    expect(eol).toBe('\n')
+  })
+
+  test('returns CRLF when os.EOL is CRLF', () => {
+    vi.mocked(os).EOL = '\r\n'
+
+    const eol = defaultEOL()
+
+    expect(eol).toBe('\r\n')
+  })
+})
+
+describe('findPathUp', () => {
+  test('finds a file up the directory tree', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const nestedDir = joinPath(tmpDir, 'nested', 'dir')
+      await mkdir(nestedDir)
+
+      const targetFile = joinPath(tmpDir, 'package.json')
+      await writeFile(targetFile, '{}')
+
+      const found = await findPathUp('package.json', {cwd: nestedDir})
+
+      expect(found).toBe(targetFile)
+    })
+  })
+
+  test('returns undefined when file is not found', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const found = await findPathUp('non-existent-file.txt', {cwd: tmpDir})
+
+      expect(found).toBeUndefined()
+    })
+  })
+})
+
+describe('matchGlob', () => {
+  test('matches simple patterns', () => {
+    expect(matchGlob('file.txt', '*.txt')).toBe(true)
+    expect(matchGlob('file.js', '*.txt')).toBe(false)
+  })
+
+  test('matches with matchBase option', () => {
+    expect(matchGlob('some/deep/path/file.txt', '*.txt', {matchBase: true, noglobstar: false})).toBe(true)
+    expect(matchGlob('some/deep/path/file.js', '*.txt', {matchBase: true, noglobstar: false})).toBe(false)
+  })
+
+  test('respects noglobstar option', () => {
+    expect(matchGlob('a/b/c', 'a/**/c', {matchBase: false, noglobstar: false})).toBe(true)
+    expect(matchGlob('a/b/c', 'a/*/c', {matchBase: false, noglobstar: true})).toBe(true)
+    expect(matchGlob('a/b/c', 'a/**/c', {matchBase: false, noglobstar: true})).toBe(true)
+  })
+})
+
+describe('readdir', () => {
+  test('lists directory contents', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writeFile(joinPath(tmpDir, 'file1.txt'), 'content1')
+      await writeFile(joinPath(tmpDir, 'file2.txt'), 'content2')
+      await mkdir(joinPath(tmpDir, 'subdir'))
+
+      const contents = await readdir(tmpDir)
+
+      expect(contents).toHaveLength(3)
+      expect(contents).toContain('file1.txt')
+      expect(contents).toContain('file2.txt')
+      expect(contents).toContain('subdir')
+    })
+  })
+})
+
+describe('tempDirectory', () => {
+  test('returns a temporary directory path', () => {
+    const tmpDir = tempDirectory()
+
+    expect(typeof tmpDir).toBe('string')
+    expect(tmpDir.length).toBeGreaterThan(0)
+  })
+})
+
+describe('fileRealPath', () => {
+  test('returns the real path of a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'real-file.txt')
+      await writeFile(filePath, 'content')
+
+      const realPath = await fileRealPath(filePath)
+
+      expect(typeof realPath).toBe('string')
+      expect(realPath).toContain('real-file.txt')
+    })
+  })
+})
+
+describe('readFile with different options', () => {
+  test('reads file as buffer when no encoding specified', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'buffer-file.txt')
+      const content = 'buffer content'
+      await writeFile(filePath, content)
+
+      const result = await readFile(filePath, {})
+
+      expect(Buffer.isBuffer(result)).toBe(true)
+      expect(result.toString()).toBe(content)
+    })
+  })
+
+  test('reads file with custom encoding', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'custom-encoding-file.txt')
+      const content = 'custom encoding content'
+      await writeFile(filePath, content)
+
+      const result = await readFile(filePath, {encoding: 'utf8'})
+
+      expect(typeof result).toBe('string')
+      expect(result).toBe(content)
+    })
+  })
+})
+
+describe('writeFile with custom options', () => {
+  test('writes file with custom encoding', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'custom-write-file.txt')
+      const content = 'custom write content'
+
+      await writeFile(filePath, content, {encoding: 'utf8'})
+
+      const readContent = await readFile(filePath)
+      expect(readContent).toBe(content)
+    })
+  })
+
+  test('writes buffer content', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'buffer-write-file.txt')
+      const content = Buffer.from('buffer content')
+
+      await writeFile(filePath, content)
+
+      const readContent = await readFile(filePath)
+      expect(readContent).toBe(content.toString())
+    })
+  })
+})
+
+describe('moveFile with options', () => {
+  test('moves file with overwrite option', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcPath = joinPath(tmpDir, 'source.txt')
+      const destPath = joinPath(tmpDir, 'destination.txt')
+      await writeFile(srcPath, 'source content')
+      await writeFile(destPath, 'existing content')
+
+      await moveFile(srcPath, destPath, {overwrite: true})
+
+      await expect(fileExists(srcPath)).resolves.toBe(false)
+      await expect(fileExists(destPath)).resolves.toBe(true)
+      const content = await readFile(destPath)
+      expect(content).toBe('source content')
+    })
+  })
+})
+
+describe('createFileReadStream with encoding', () => {
+  test('creates a readable stream with encoding', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'encoding-stream-file')
+      const content = 'encoding test content'
+      await writeFile(filePath, content)
+
+      const stream = createFileReadStream(filePath, {encoding: 'utf8'})
+      let data = ''
+      stream.on('data', (chunk) => {
+        data += chunk
+      })
+
+      await new Promise((resolve) => stream.on('end', resolve))
+      expect(data).toBe(content)
+    })
   })
 })
