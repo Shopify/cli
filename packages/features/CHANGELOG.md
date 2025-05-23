@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.13.0
+
+### Minor Changes
+
+- ce3dfdc: Print all log messages to stderr instead of stdout
+
 ## 0.12.0
 
 ### Minor Changes

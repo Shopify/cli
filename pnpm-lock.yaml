@@ -149,13 +149,13 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.27.0
@@ -164,7 +164,7 @@ importers:
         specifier: 8.11.1
         version: 8.11.1(react@18.2.0)
       '@shopify/theme':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../theme
       '@shopify/theme-check-node':
         specifier: 3.17.0
@@ -271,22 +271,22 @@ importers:
         specifier: 5.4.28
         version: 5.4.28
       '@shopify/app':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: 10.0.1
         version: 10.0.1(@graphql-codegen/cli@5.0.4)(graphql@16.10.0)(react-dom@17.0.2)(react@17.0.2)
       '@shopify/cli-kit':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../theme
       '@types/global-agent':
         specifier: 3.0.0
@@ -549,10 +549,10 @@ importers:
         version: 0.25.4
     devDependencies:
       '@shopify/app':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../cli-kit
       '@vitest/coverage-istanbul':
         specifier: ^1.6.0
@@ -652,7 +652,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -665,7 +665,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -681,7 +681,7 @@ importers:
         specifier: 3.26.5
         version: 3.26.5
       '@shopify/cli-kit':
-        specifier: 3.80.0
+        specifier: 3.81.0
         version: link:../cli-kit
       '@shopify/liquid-html-parser':
         specifier: ^2.8.2
