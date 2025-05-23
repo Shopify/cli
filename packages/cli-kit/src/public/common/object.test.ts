@@ -4,6 +4,7 @@ import {
   deepDifference,
   deepMergeObjects,
   getPathValue,
+  isEmpty,
   mapValues,
   pickBy,
   setPathValue,
@@ -438,5 +439,51 @@ describe('unsetPathValue', () => {
     // Then
     expect(result).toBeTruthy()
     expect(obj).toEqual({regular: 'value2'})
+  })
+})
+
+describe('isEmpty', () => {
+  test('returns true for empty objects', () => {
+    // Given
+    const obj = {}
+
+    // When
+    const result = isEmpty(obj)
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('returns false for non-empty objects', () => {
+    // Given
+    const obj = {key: 'value'}
+
+    // When
+    const result = isEmpty(obj)
+
+    // Then
+    expect(result).toBeFalsy()
+  })
+
+  test('returns true for empty arrays', () => {
+    // Given
+    const obj: object = []
+
+    // When
+    const result = isEmpty(obj)
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('returns false for non-empty arrays', () => {
+    // Given
+    const obj: object = ['value']
+
+    // When
+    const result = isEmpty(obj)
+
+    // Then
+    expect(result).toBeFalsy()
   })
 })
