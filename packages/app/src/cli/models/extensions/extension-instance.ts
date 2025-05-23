@@ -170,7 +170,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   get draftMessages() {
     if (this.isAppConfigExtension) return {successMessage: undefined, errorMessage: undefined}
     const successMessage = `Draft updated successfully for extension: ${this.localIdentifier}`
-    const errorMessage = `Error while deploying updated extension draft`
+    const errorMessage = `Error updating extension draft for ${this.localIdentifier}`
     return {successMessage, errorMessage}
   }
 
