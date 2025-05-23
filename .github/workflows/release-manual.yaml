@@ -39,7 +39,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.20.3
+          node-version: 18.20.8
       - name: Creating .npmrc
         run: |
           cat << EOF > "$HOME/.npmrc"
