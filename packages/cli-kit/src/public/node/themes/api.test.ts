@@ -160,6 +160,7 @@ describe('fetchChecksums', () => {
         after: null,
       },
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
     expect(checksum).toHaveLength(3)
     expect(checksum[0]!.key).toEqual('snippets/product-variant-picker.liquid')
@@ -203,6 +204,7 @@ describe('themeCreate', () => {
         role: 'UNPUBLISHED',
       },
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
@@ -237,6 +239,7 @@ describe('themeCreate', () => {
         role: 'UNPUBLISHED',
       },
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
   })
 })
