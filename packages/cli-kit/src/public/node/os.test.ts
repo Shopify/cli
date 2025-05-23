@@ -53,6 +53,33 @@ describe('platformAndArch', () => {
     expect(got.platform).toEqual('windows')
     expect(got.arch).toEqual('arm64')
   })
+
+  test('returns the original architecture when not x64 or ia32', () => {
+    // When
+    const got = os.platformAndArch('linux', 'arm')
+
+    // Then
+    expect(got.platform).toEqual('linux')
+    expect(got.arch).toEqual('arm')
+  })
+
+  test('converts windows platform with win prefix correctly', () => {
+    // When
+    const got = os.platformAndArch('win32', 'x64')
+
+    // Then
+    expect(got.platform).toEqual('windows')
+    expect(got.arch).toEqual('amd64')
+  })
+
+  test('handles win-prefixed platform names', () => {
+    // When
+    const got = os.platformAndArch('win32', 'arm64')
+
+    // Then
+    expect(got.platform).toEqual('windows')
+    expect(got.arch).toEqual('arm64')
+  })
 })
 
 describe('username', () => {
