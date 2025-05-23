@@ -1,4 +1,11 @@
-import {graphqlRequest, GraphQLVariables, GraphQLResponse, graphqlRequestDoc, CacheOptions} from './graphql.js'
+import {
+  graphqlRequest,
+  GraphQLVariables,
+  GraphQLResponse,
+  graphqlRequestDoc,
+  CacheOptions,
+  UnauthorizedHandler,
+} from './graphql.js'
 import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
@@ -44,6 +51,7 @@ async function setupRequest(token: string) {
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options.
  * @param preferredBehaviour - Preferred behaviour for the request.
+ * @param unauthorizedHandler - Optional handler for unauthorized requests.
  * @returns The response of the query of generic type <T>.
  */
 export async function partnersRequest<T>(
@@ -52,6 +60,7 @@ export async function partnersRequest<T>(
   variables?: GraphQLVariables,
   cacheOptions?: CacheOptions,
   preferredBehaviour?: RequestModeInput,
+  unauthorizedHandler?: UnauthorizedHandler,
 ): Promise<T> {
   const opts = await setupRequest(token)
   const result = limiter.schedule(() =>
@@ -61,6 +70,7 @@ export async function partnersRequest<T>(
       variables,
       cacheOptions,
       preferredBehaviour,
+      unauthorizedHandler,
     }),
   )
 
@@ -86,6 +96,7 @@ export const generateFetchAppLogUrl = async (
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
  * @param preferredBehaviour - Preferred behaviour for the request.
+ * @param unauthorizedHandler - Optional handler for unauthorized requests.
  * @returns The response of the query of generic type <TResult>.
  */
 export async function partnersRequestDoc<TResult, TVariables extends Variables>(
@@ -93,6 +104,7 @@ export async function partnersRequestDoc<TResult, TVariables extends Variables>(
   token: string,
   variables?: TVariables,
   preferredBehaviour?: RequestModeInput,
+  unauthorizedHandler?: UnauthorizedHandler,
 ): Promise<TResult> {
   try {
     const opts = await setupRequest(token)
@@ -102,6 +114,7 @@ export async function partnersRequestDoc<TResult, TVariables extends Variables>(
         query,
         variables,
         preferredBehaviour,
+        unauthorizedHandler,
       }),
     )
 
