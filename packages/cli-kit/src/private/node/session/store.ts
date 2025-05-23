@@ -29,6 +29,12 @@ export async function fetch(): Promise<Session | undefined> {
   const contentJson = JSON.parse(content)
   const parsedSession = await SessionSchema.safeParseAsync(contentJson)
   if (parsedSession.success) {
+    // Additional business logic validation: reject empty sessions
+    // Even if an empty object {} passes schema validation, it's not a useful session
+    if (Object.keys(parsedSession.data).length === 0) {
+      await remove()
+      return undefined
+    }
     return parsedSession.data
   } else {
     await remove()
