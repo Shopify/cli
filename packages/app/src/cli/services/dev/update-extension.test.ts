@@ -278,7 +278,7 @@ describe('updateExtensionDraft()', () => {
         bundlePath: tmpDir,
       })
 
-      expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')
+      expect(stderr.write).toHaveBeenCalledWith('Error updating extension draft for test-ui-extension: Error1, Error2')
     })
   })
 })
