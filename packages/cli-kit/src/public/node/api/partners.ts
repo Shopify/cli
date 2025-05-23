@@ -27,6 +27,29 @@ const limiter = new Bottleneck({
 })
 
 /**
+ * Parameters for partnersRequest function.
+ */
+export interface PartnersRequestOptions {
+  query: string
+  token: string
+  variables?: GraphQLVariables
+  cacheOptions?: CacheOptions
+  preferredBehaviour?: RequestModeInput
+  unauthorizedHandler: UnauthorizedHandler
+}
+
+/**
+ * Parameters for partnersRequestDoc function.
+ */
+export interface PartnersRequestDocOptions<TResult, TVariables extends Variables> {
+  query: TypedDocumentNode<TResult, TVariables>
+  token: string
+  variables?: TVariables
+  preferredBehaviour?: RequestModeInput
+  unauthorizedHandler: UnauthorizedHandler
+}
+
+/**
  * Sets up the request to the Partners API.
  *
  * @param token - Partners token.
@@ -46,22 +69,11 @@ async function setupRequest(token: string) {
 /**
  * Executes a GraphQL query against the Partners API.
  *
- * @param query - GraphQL query to execute.
- * @param token - Partners token.
- * @param variables - GraphQL variables to pass to the query.
- * @param cacheOptions - Cache options.
- * @param preferredBehaviour - Preferred behaviour for the request.
- * @param unauthorizedHandler - Optional handler for unauthorized requests.
+ * @param options - Request options containing query, token, variables, cache options, preferred behaviour, and unauthorized handler.
  * @returns The response of the query of generic type <T>.
  */
-export async function partnersRequest<T>(
-  query: string,
-  token: string,
-  variables?: GraphQLVariables,
-  cacheOptions?: CacheOptions,
-  preferredBehaviour?: RequestModeInput,
-  unauthorizedHandler?: UnauthorizedHandler,
-): Promise<T> {
+export async function partnersRequest<T>(options: PartnersRequestOptions): Promise<T> {
+  const {query, token, variables, cacheOptions, preferredBehaviour, unauthorizedHandler} = options
   const opts = await setupRequest(token)
   const result = limiter.schedule(() =>
     graphqlRequest<T>({
@@ -92,21 +104,14 @@ export const generateFetchAppLogUrl = async (
 /**
  * Executes a GraphQL query against the Partners API. Uses typed documents.
  *
- * @param query - GraphQL query to execute.
- * @param token - Partners token.
- * @param variables - GraphQL variables to pass to the query.
- * @param preferredBehaviour - Preferred behaviour for the request.
- * @param unauthorizedHandler - Optional handler for unauthorized requests.
+ * @param options - Request options containing query, token, variables, preferred behaviour, and unauthorized handler.
  * @returns The response of the query of generic type <TResult>.
  */
 export async function partnersRequestDoc<TResult, TVariables extends Variables>(
-  query: TypedDocumentNode<TResult, TVariables>,
-  token: string,
-  variables?: TVariables,
-  preferredBehaviour?: RequestModeInput,
-  unauthorizedHandler?: UnauthorizedHandler,
+  options: PartnersRequestDocOptions<TResult, TVariables>,
 ): Promise<TResult> {
   try {
+    const {query, token, variables, preferredBehaviour, unauthorizedHandler} = options
     const opts = await setupRequest(token)
     const result = limiter.schedule(() =>
       graphqlRequestDoc<TResult, TVariables>({

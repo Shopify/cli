@@ -1,5 +1,5 @@
 import {partnersRequest, handleDeprecations} from './partners.js'
-import {graphqlRequest, GraphQLResponse} from './graphql.js'
+import {graphqlRequest, GraphQLResponse, UnauthorizedHandler} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
@@ -11,8 +11,12 @@ vi.mock('../context/fqdn.js')
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'
 const url = 'https://partners.shopify.com/api/cli/graphql'
-
 const mockedToken = 'token'
+
+const mockUnauthorizedHandler: UnauthorizedHandler = {
+  type: 'token_refresh',
+  handler: () => Promise.resolve({token: mockedToken}),
+}
 
 beforeEach(() => {
   vi.mocked(partnersFqdn).mockResolvedValue(partnersFQDN)
@@ -24,7 +28,12 @@ describe('partnersRequest', () => {
     vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
 
     // When
-    await partnersRequest('query', mockedToken, {variables: 'variables'})
+    await partnersRequest({
+      query: 'query',
+      token: mockedToken,
+      variables: {variables: 'variables'},
+      unauthorizedHandler: mockUnauthorizedHandler,
+    })
 
     // Then
     expect(graphqlRequest).toHaveBeenLastCalledWith({

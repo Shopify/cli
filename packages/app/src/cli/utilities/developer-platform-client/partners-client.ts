@@ -249,21 +249,26 @@ export class PartnersClient implements DeveloperPlatformClient {
     cacheOptions?: CacheOptions,
     preferredBehaviour?: RequestModeInput,
   ): Promise<T> {
-    return partnersRequest(
+    return partnersRequest({
       query,
-      await this.token(),
+      token: await this.token(),
       variables,
       cacheOptions,
       preferredBehaviour,
-      this.createUnauthorizedHandler(),
-    )
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
     document: TypedDocumentNode<TResult, TVariables>,
     variables?: TVariables,
   ): Promise<TResult> {
-    return partnersRequestDoc(document, await this.token(), variables, undefined, this.createUnauthorizedHandler())
+    return partnersRequestDoc({
+      query: document,
+      token: await this.token(),
+      variables,
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
   }
 
   async token(): Promise<string> {

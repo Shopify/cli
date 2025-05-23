@@ -64,21 +64,21 @@ interface GraphQLRequestBaseOptions<TResult> {
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
   variables?: Variables
-  unauthorizedHandler?: UnauthorizedHandler
+  unauthorizedHandler: UnauthorizedHandler
   requestBehaviour?: RequestModeInput
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
-  unauthorizedHandler?: UnauthorizedHandler
+  unauthorizedHandler: UnauthorizedHandler
   requestBehaviour?: RequestModeInput
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
-  unauthorizedHandler?: UnauthorizedHandler
+  unauthorizedHandler: UnauthorizedHandler
   requestBehaviour?: RequestModeInput
 }
 
