@@ -10,6 +10,8 @@ runs:
     - name: Unit tests with coverage
       run: pnpm vitest run --coverage --reporter json --outputFile ./coverage/report.json
       shell: bash
+      env:
+        NODE_OPTIONS: "--max-old-space-size=8192"
     - name: Convert coverage to Jest
       run: ./bin/save-coverage-file.js
       shell: bash
