@@ -1,4 +1,4 @@
-import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
+import {graphqlRequest, graphqlRequestDoc, UnauthorizedHandler} from './graphql.js'
 import * as api from '../../../private/node/api.js'
 import * as debugRequest from '../../../private/node/api/graphql.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
@@ -28,6 +28,10 @@ beforeEach(async () => {
 })
 
 const mockApi = graphql.link('https://shopify.example/graphql')
+const mockUnauthorizedHandler: UnauthorizedHandler = {
+  type: 'token_refresh',
+  handler: () => Promise.resolve({token: mockToken}),
+}
 
 const handlers = [
   mockApi.query('QueryName', ({query}) => {
@@ -136,6 +140,7 @@ describe('graphqlRequest', () => {
       token: mockToken,
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
     expect(debugRequest.debugLogRequestInfo).toHaveBeenCalledOnce()
 
@@ -178,6 +183,7 @@ describe('graphqlRequest', () => {
       token: mockToken,
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
 
     mockedRequestId = 'request-id-456'
@@ -189,6 +195,7 @@ describe('graphqlRequest', () => {
       token: mockToken,
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
 
     // Then
@@ -214,6 +221,7 @@ describe('graphqlRequest', () => {
       responseOptions: {
         onResponse: onResponseHandler,
       },
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
     expect(data).toMatchInlineSnapshot(`
       {
@@ -231,6 +239,7 @@ describe('graphqlRequest', () => {
       api: 'mockApi',
       url: mockedAddress,
       token: mockToken,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
 
     await expect(res).rejects.toThrow('Cannot do the thing')
@@ -249,6 +258,7 @@ describe('graphqlRequest', () => {
       api: 'mockApi',
       url: mockedAddress,
       token: mockToken,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
 
     let requestCount = 0
@@ -346,6 +356,7 @@ describe('graphqlRequestDoc', () => {
       token: mockToken,
       addedHeaders: mockedAddedHeaders,
       variables: mockVariables,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
     expect(res).toMatchInlineSnapshot(`
       {
@@ -485,6 +496,7 @@ describe('graphqlRequest with caching', () => {
           cacheExtraKey: 'extra',
           cacheStore,
         },
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(firstRes).resolves.toEqual({MutationName: {example: 'variables'}})
@@ -502,6 +514,7 @@ describe('graphqlRequest with caching', () => {
           cacheExtraKey: 'extra',
           cacheStore,
         },
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(secondRes).resolves.toEqual({MutationName: {example: 'variables'}})
@@ -519,6 +532,7 @@ describe('graphqlRequest with caching', () => {
           cacheExtraKey: 'extra',
           cacheStore,
         },
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(thirdRes).resolves.toEqual({MutationName: {example: 'new-value'}})
@@ -536,6 +550,7 @@ describe('graphqlRequest with caching', () => {
           cacheExtraKey: 'other-extra',
           cacheStore,
         },
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(fourthRes).resolves.toEqual({MutationName: {example: 'new-value'}})
@@ -554,6 +569,7 @@ describe('graphqlRequest with caching', () => {
           cacheExtraKey: 'other-extra',
           cacheStore,
         },
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(fifthRes).resolves.toEqual({MutationName: {example: 'new-value'}})
@@ -570,6 +586,7 @@ describe('graphqlRequest with caching', () => {
           cacheTTL: {hours: 1},
           cacheStore,
         },
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(sixthRes).resolves.toEqual({MutationName: {example: 'new-value'}})
@@ -582,6 +599,7 @@ describe('graphqlRequest with caching', () => {
         url: mockedAddress,
         token: mockToken,
         variables: {...mockVariables, some: 'new-value'},
+        unauthorizedHandler: mockUnauthorizedHandler,
       })
       await vi.runAllTimersAsync()
       await expect(seventhRes).resolves.toEqual({MutationName: {example: 'new-value'}})
@@ -628,6 +646,7 @@ describe('graphqlRequest with caching', () => {
       url: mockedAddress,
       token: mockToken,
       variables: mockVariables,
+      unauthorizedHandler: mockUnauthorizedHandler,
     })
 
     // Then
