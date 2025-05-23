@@ -1,5 +1,27 @@
 # @shopify/app
 
+## 3.81.0
+
+### Minor Changes
+
+- ce3dfdc: Print all log messages to stderr instead of stdout
+
+### Patch Changes
+
+- 0c2911e: Adjust phrasing in CLI for the Remix templates from Early Access to Release Candidate
+- d192947: Minify JS extensions by default on app dev. To opt-out: SHOPIFY_CLI_DISABLE_MINIFICATION_ON_DEV=1
+- c20381f: Update error message when types for the target cannot be found in the installed @shopify/ui-extensions version
+- Updated dependencies [dc78463]
+- Updated dependencies [23d4b0b]
+- Updated dependencies [16406ae]
+- Updated dependencies [53c2a92]
+- Updated dependencies [642bb3e]
+- Updated dependencies [ce3dfdc]
+- Updated dependencies [9a9e51e]
+  - @shopify/theme@3.81.0
+  - @shopify/cli-kit@3.81.0
+  - @shopify/plugin-cloudflare@3.81.0
+
 ## 3.80.0
 
 ### Minor Changes

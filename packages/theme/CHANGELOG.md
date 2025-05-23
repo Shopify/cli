@@ -1,5 +1,21 @@
 # @shopify/theme
 
+## 3.81.0
+
+### Minor Changes
+
+- ce3dfdc: Print all log messages to stderr instead of stdout
+
+### Patch Changes
+
+- dc78463: Make local compiled assets more resilient to Liquid syntax errors.
+- 53c2a92: Make hot reload events more resilient to Liquid syntax errors.
+- 642bb3e: Change `theme download` progress bar to render percentage
+- Updated dependencies [23d4b0b]
+- Updated dependencies [16406ae]
+- Updated dependencies [9a9e51e]
+  - @shopify/cli-kit@3.81.0
+
 ## 3.80.0
 
 ### Minor Changes
