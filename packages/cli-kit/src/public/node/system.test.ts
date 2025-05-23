@@ -368,6 +368,8 @@ describe('terminalSupportsPrompting', () => {
 describe('isCI', () => {
   beforeEach(() => {
     vi.unstubAllEnvs()
+    // Explicitly delete CI environment variable to ensure clean state
+    delete process.env.CI
   })
 
   afterEach(() => {
@@ -387,7 +389,7 @@ describe('isCI', () => {
 
   test('returns false when CI environment variable is not set', () => {
     // Given
-    // No CI environment variable set
+    // CI environment variable explicitly deleted in beforeEach
 
     // When
     const result = system.isCI()
