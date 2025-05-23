@@ -3,17 +3,22 @@ import {
   fetchNotificationsInBackground,
   filterNotifications,
   showNotificationsIfNeeded,
+  getNotifications,
+  fetchNotifications,
+  stringifyFilters,
 } from './notifications-system.js'
 import {renderError, renderInfo, renderWarning} from './ui.js'
 import {sniffForJson} from './path.js'
 import {exec} from './system.js'
-import {cacheRetrieve} from '../../private/node/conf-store.js'
+import {cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./ui.js')
 vi.mock('../../private/node/conf-store.js')
 vi.mock('./path.js')
 vi.mock('./system.js')
+vi.mock('@shopify/cli-kit/node/http')
 
 const betweenVersins1and2: Notification = {
   id: 'betweenVersins1and2',
@@ -265,6 +270,7 @@ const testCases: TestCase[] = [
 afterEach(() => {
   // Restore Date mock
   vi.useRealTimers()
+  vi.unstubAllEnvs()
 })
 
 describe('filterNotifications', () => {
@@ -454,5 +460,403 @@ describe('fetchNotificationsInBackground', () => {
       ['/path/to/shopify', 'notifications', 'list', '--ignore-errors'],
       expect.anything(),
     )
+  })
+})
+
+describe('getNotifications', () => {
+  test('returns cached notifications when available', async () => {
+    // Given
+    const notifications = {notifications: [infoNotification]}
+    vi.mocked(cacheRetrieve).mockReturnValue({
+      value: JSON.stringify(notifications),
+      timestamp: 0,
+    })
+
+    // When
+    const result = await getNotifications()
+
+    // Then
+    expect(result).toEqual(notifications)
+  })
+
+  test('throws error when cache is empty', async () => {
+    // Given
+    vi.mocked(cacheRetrieve).mockReturnValue(undefined)
+
+    // When / Then
+    await expect(getNotifications()).rejects.toThrow('Cache is empty')
+  })
+
+  test('throws error when cached data is invalid JSON', async () => {
+    // Given
+    vi.mocked(cacheRetrieve).mockReturnValue({
+      value: 'invalid json',
+      timestamp: 0,
+    })
+
+    // When / Then
+    await expect(getNotifications()).rejects.toThrow()
+  })
+
+  test('throws error when cached data does not match schema', async () => {
+    // Given
+    vi.mocked(cacheRetrieve).mockReturnValue({
+      value: JSON.stringify({invalid: 'data'}),
+      timestamp: 0,
+    })
+
+    // When / Then
+    await expect(getNotifications()).rejects.toThrow()
+  })
+})
+
+describe('fetchNotifications', () => {
+  test('fetches and caches notifications successfully', async () => {
+    // Given
+    const notifications = {notifications: [infoNotification]}
+    const mockResponse = {
+      status: 200,
+      text: vi.fn().mockResolvedValue(JSON.stringify(notifications)),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    // When
+    const result = await fetchNotifications()
+
+    // Then
+    expect(result).toEqual(notifications)
+    expect(fetch).toHaveBeenCalledWith('https://cdn.shopify.com/static/cli/notifications.json', undefined, {
+      useNetworkLevelRetry: false,
+      useAbortSignal: true,
+      timeoutMs: 3000,
+    })
+    expect(cacheStore).toHaveBeenCalledWith(
+      'notifications-https://cdn.shopify.com/static/cli/notifications.json',
+      JSON.stringify(notifications),
+    )
+  })
+
+  test('throws error when fetch fails with non-200 status', async () => {
+    // Given
+    const mockResponse = {
+      status: 404,
+      statusText: 'Not Found',
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    // When / Then
+    await expect(fetchNotifications()).rejects.toThrow('Failed to fetch notifications: Not Found')
+  })
+
+  test('throws error when response is invalid JSON', async () => {
+    // Given
+    const mockResponse = {
+      status: 200,
+      text: vi.fn().mockResolvedValue('invalid json'),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    // When / Then
+    await expect(fetchNotifications()).rejects.toThrow()
+  })
+
+  test('throws error when response does not match schema', async () => {
+    // Given
+    const mockResponse = {
+      status: 200,
+      text: vi.fn().mockResolvedValue(JSON.stringify({invalid: 'data'})),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    // When / Then
+    await expect(fetchNotifications()).rejects.toThrow()
+  })
+
+  test('uses custom URL from environment variable', async () => {
+    // Given
+    const customUrl = 'https://custom.url/notifications.json'
+    vi.stubEnv('SHOPIFY_CLI_NOTIFICATIONS_URL', customUrl)
+    const notifications = {notifications: [infoNotification]}
+    const mockResponse = {
+      status: 200,
+      text: vi.fn().mockResolvedValue(JSON.stringify(notifications)),
+    }
+    vi.mocked(fetch).mockResolvedValue(mockResponse as any)
+
+    // When
+    await fetchNotifications()
+
+    // Then
+    expect(fetch).toHaveBeenCalledWith(customUrl, undefined, expect.any(Object))
+
+    vi.unstubAllEnvs()
+  })
+})
+
+describe('stringifyFilters', () => {
+  test('returns empty string for notification with no filters', () => {
+    // Given
+    const notification: Notification = {
+      id: 'simple',
+      message: 'message',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe('')
+  })
+
+  test('formats date filters correctly', () => {
+    // Given
+    const notification: Notification = {
+      id: 'dateFilters',
+      message: 'message',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+      minDate: '2023-01-01',
+      maxDate: '2023-12-31',
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe('from 2023-01-01\nto 2023-12-31')
+  })
+
+  test('formats version filters correctly', () => {
+    // Given
+    const notification: Notification = {
+      id: 'versionFilters',
+      message: 'message',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+      minVersion: '1.0.0',
+      maxVersion: '2.0.0',
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe('from v1.0.0\nto v2.0.0')
+  })
+
+  test('formats frequency filters correctly', () => {
+    // Given
+    const onceNotification: Notification = {
+      id: 'once',
+      message: 'message',
+      type: 'info',
+      frequency: 'once',
+      ownerChannel: 'channel',
+    }
+    const dailyNotification: Notification = {
+      id: 'daily',
+      message: 'message',
+      type: 'info',
+      frequency: 'once_a_day',
+      ownerChannel: 'channel',
+    }
+    const weeklyNotification: Notification = {
+      id: 'weekly',
+      message: 'message',
+      type: 'info',
+      frequency: 'once_a_week',
+      ownerChannel: 'channel',
+    }
+
+    // When / Then
+    expect(stringifyFilters(onceNotification)).toBe('show only once')
+    expect(stringifyFilters(dailyNotification)).toBe('show once a day')
+    expect(stringifyFilters(weeklyNotification)).toBe('show once a week')
+  })
+
+  test('formats surface and command filters correctly', () => {
+    // Given
+    const notification: Notification = {
+      id: 'surfaceCommands',
+      message: 'message',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+      surface: 'theme',
+      commands: ['theme:dev', 'theme:push'],
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe('surface = theme\ncommands = theme:dev, theme:push')
+  })
+
+  test('formats all filters together correctly', () => {
+    // Given
+    const notification: Notification = {
+      id: 'allFilters',
+      message: 'message',
+      type: 'info',
+      frequency: 'once_a_day',
+      ownerChannel: 'channel',
+      minDate: '2023-01-01',
+      maxDate: '2023-12-31',
+      minVersion: '1.0.0',
+      maxVersion: '2.0.0',
+      surface: 'app',
+      commands: ['app:dev'],
+    }
+
+    // When
+    const result = stringifyFilters(notification)
+
+    // Then
+    expect(result).toBe(
+      'from 2023-01-01\nto 2023-12-31\nfrom v1.0.0\nto v2.0.0\nshow once a day\nsurface = app\ncommands = app:dev',
+    )
+  })
+})
+
+describe('showNotificationsIfNeeded - additional error scenarios', () => {
+  test('handles empty cache error gracefully', async () => {
+    // Given
+    vi.mocked(cacheRetrieve).mockReturnValue(undefined)
+
+    // When / Then (should not throw)
+    await expect(showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})).resolves.toBeUndefined()
+  })
+
+  test('handles generic errors and sends to bugsnag', async () => {
+    // Given
+    const error = new Error('Something went wrong')
+    vi.mocked(cacheRetrieve).mockImplementation(() => {
+      throw error
+    })
+
+    // When / Then (should not throw)
+    await expect(showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})).resolves.toBeUndefined()
+  })
+
+  test('limits notifications to first 2', async () => {
+    // Given
+    const notifications = [infoNotification, warningNotification, errorNotification]
+    vi.mocked(cacheRetrieve).mockReturnValue({value: JSON.stringify({notifications}), timestamp: 0})
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledTimes(1)
+    expect(renderWarning).toHaveBeenCalledTimes(1)
+    expect(renderError).not.toHaveBeenCalled()
+    expect(cacheStore).toHaveBeenCalledTimes(2)
+  })
+
+  test('processes notification message with newlines correctly', async () => {
+    // Given
+    const notificationWithNewlines: Notification = {
+      id: 'newlines',
+      message: 'Line 1\\nLine 2\\nLine 3',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+    }
+    vi.mocked(cacheRetrieve).mockReturnValue({
+      value: JSON.stringify({notifications: [notificationWithNewlines]}),
+      timestamp: 0,
+    })
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: undefined,
+      body: 'Line 1\nLine 2\nLine 3',
+      link: undefined,
+    })
+  })
+
+  test('includes CTA link in notification', async () => {
+    // Given
+    const notificationWithCTA: Notification = {
+      id: 'withCTA',
+      message: 'Check this out!',
+      type: 'info',
+      frequency: 'always',
+      ownerChannel: 'channel',
+      title: 'Important Update',
+      cta: {
+        label: 'Learn More',
+        url: 'https://shopify.dev',
+      },
+    }
+    vi.mocked(cacheRetrieve).mockReturnValue({
+      value: JSON.stringify({notifications: [notificationWithCTA]}),
+      timestamp: 0,
+    })
+
+    // When
+    await showNotificationsIfNeeded(undefined, {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: 'Important Update',
+      body: 'Check this out!',
+      link: {
+        label: 'Learn More',
+        url: 'https://shopify.dev',
+      },
+    })
+  })
+})
+
+describe('fetchNotificationsInBackground - additional scenarios', () => {
+  test('does nothing when argv is incomplete', () => {
+    // Given / When
+    fetchNotificationsInBackground('app:dev', [], {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('does nothing when argv[0] is missing', () => {
+    // Given / When
+    fetchNotificationsInBackground('app:dev', [undefined as any, '/path/to/shopify'], {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('does nothing when argv[1] is missing', () => {
+    // Given / When
+    fetchNotificationsInBackground('app:dev', ['/path/to/node'], {SHOPIFY_UNIT_TEST: 'false'})
+
+    // Then
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('skips all commands in COMMANDS_TO_SKIP', () => {
+    const commandsToSkip = [
+      'notifications:list',
+      'notifications:generate',
+      'init',
+      'app:init',
+      'theme:init',
+      'hydrogen:init',
+      'cache:clear',
+    ]
+
+    commandsToSkip.forEach((command) => {
+      fetchNotificationsInBackground(command, ['/path/to/node', '/path/to/shopify'], {SHOPIFY_UNIT_TEST: 'false'})
+      expect(exec).not.toHaveBeenCalled()
+    })
   })
 })
