@@ -11,12 +11,12 @@ on:
       node-version:
         description: 'Node version'
         required: true
-        default: '18.20.3'
+        default: '18.20.8'
         type: choice
         options:
-          - 18.20.3
-          - 20.14.0
-          - 22.2.0
+          - 18.20.8
+          - 20.19.2
+          - 22.16.0
       os:
         description: 'Operating system'
         required: true
@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '18.20.3', '20.14.0', '22.2.0' ]
+        node: [ '18.20.8', '20.19.2', '22.16.0' ]
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -74,20 +74,20 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache  --target=build --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.8' }}
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.8' }}
       - name: Type-check
         run: pnpm nx run-many --all --skip-nx-cache  --target=type-check --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.8' }}
       - name: Bundle
         run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.8' }}
       - name: Unit tests
         run: pnpm vitest run
       - name: Acceptance tests
-        if: ${{ matrix.node == '18.20.3' }}
+        if: ${{ matrix.node == '18.20.8' }}
         env:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
         run: pnpm nx run features:test
@@ -103,7 +103,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.8' }}
         with:
           branch-name: ${{ github.ref_name }}
 
@@ -115,7 +115,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
         target: [ 'build', 'type-check' ]
     steps:
       - uses: actions/checkout@v3
@@ -138,7 +138,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -166,7 +166,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -190,7 +190,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -214,7 +214,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'macos-latest' ] # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -248,7 +248,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.20.3
+          node-version: 18.20.8
       - name: Build
         run: pnpm build --output-style=stream
       - name: Refresh manifests
@@ -276,7 +276,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '18.20.3', '20.14.0', '22.2.0' ]
+        node: [ '18.20.8', '20.19.2', '22.16.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -298,7 +298,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'macos-latest', 'windows-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -322,7 +322,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '18.20.8' ]
     steps:
       - uses: actions/checkout@v3
         with:

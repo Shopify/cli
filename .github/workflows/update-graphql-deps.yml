@@ -28,7 +28,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: '22.11.0'
+          node-version: '22.16.0'
       - name: Get schemas for codegen
         env:
           GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
