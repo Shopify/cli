@@ -222,7 +222,7 @@ export function writeFileSync(path: string, data: string): void {
 }
 
 /**
- * Creates a directory at the given path.
+ * Creates a directory at the given path. Directories are created recursively if needed.
  *
  * @param path - Path to the directory to be created.
  */
@@ -232,7 +232,7 @@ export async function mkdir(path: string): Promise<void> {
 }
 
 /**
- * Synchronously creates a directory at the given path.
+ * Synchronously creates a directory at the given path. Directories are created recursively if needed.
  *
  * @param path - Path to the directory to be created.
  */
