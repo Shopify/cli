@@ -42,7 +42,7 @@ commands:
     run: pnpm run clean
   test:
     desc: 'Runs the tests'
-    run: pnpm run test:affected
+    run: pnpm run test:unit
   build:
     desc: 'Build the project'
     run: pnpm run build:affected
