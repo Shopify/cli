@@ -55,12 +55,6 @@ export interface hydrogenpreview {
   '--inspector-port <value>'?: string
 
   /**
-   * Runs the app in a Node.js sandbox instead of an Oxygen worker.
-   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME
-   */
-  '--legacy-runtime'?: ''
-
-  /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
    * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
