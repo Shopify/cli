@@ -60,7 +60,10 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {environmentVariables} from '../../../../cli-kit/src/private/node/constants.js'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {isAppManagementDisabled} from '@shopify/cli-kit/node/context/local'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -87,7 +90,17 @@ export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
     clients.push(new PartnersClient())
   }
 
-  clients.push(new AppManagementClient())
+  if (!isAppManagementDisabled()) {
+    clients.push(new AppManagementClient())
+  }
+
+  if (clients.length === 0) {
+    throw new AbortError('No developer platform clients available', null, [
+      `Check ${environmentVariables.neverUseAppManagementApi}`,
+      `Check ${environmentVariables.neverUsePartnersApi}`,
+    ])
+  }
+
   return clients
 }
 
