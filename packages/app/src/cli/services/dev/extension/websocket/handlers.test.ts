@@ -268,8 +268,11 @@ describe('handleLogMessage()', () => {
       {outputPrefix: extensionName, stripAnsi: false},
       expect.any(Function),
     )
-    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
-    contextCallback()
+    const mockCalls = (useConcurrentOutputContext as Mock).mock.calls
+    if (mockCalls && mockCalls[0] && mockCalls[0][1]) {
+      const contextCallback = mockCalls[0][1]
+      contextCallback()
+    }
 
     expect(options.stdout.write).toHaveBeenCalledWith(expectedOutput)
   }
