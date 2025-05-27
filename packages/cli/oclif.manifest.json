@@ -6365,6 +6365,21 @@
           "name": "unpublished",
           "type": "boolean"
         },
+        "upsert": {
+          "allowNo": false,
+          "description": "Make pushes to unpublished theme do an update if a theme with the name already exists.",
+          "env": "SHOPIFY_FLAG_UPSERT",
+          "name": "upsert",
+          "relationships": [
+            {
+              "flags": [
+                "unpublished"
+              ],
+              "type": "all"
+            }
+          ],
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",

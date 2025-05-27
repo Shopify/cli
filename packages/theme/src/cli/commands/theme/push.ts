@@ -64,6 +64,16 @@ export default class Push extends ThemeCommand {
       description: 'Create a new unpublished theme and push to it.',
       env: 'SHOPIFY_FLAG_UNPUBLISHED',
     }),
+    upsert: Flags.boolean({
+      description: 'Make pushes to unpublished theme do an update if a theme with the name already exists.',
+      env: 'SHOPIFY_FLAG_UPSERT',
+      relationships: [
+        {
+          type: 'all',
+          flags: ['unpublished'],
+        },
+      ],
+    }),
     nodelete: Flags.boolean({
       char: 'n',
       description: `Prevent deleting remote files that don't exist locally.`,
@@ -114,6 +124,7 @@ export default class Push extends ThemeCommand {
       development: flags.development,
       live: flags.live,
       unpublished: flags.unpublished,
+      upsert: flags.upsert,
       nodelete: flags.nodelete,
       only: flags.only,
       ignore: flags.ignore,
