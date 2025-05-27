@@ -60,6 +60,11 @@ export async function bundleExtension(options: BundleOptions, processEnv = proce
   const result = await context.rebuild()
   onResult(result, options)
   await context.dispose()
+
+  // If there were errors, throw an error so the caller can handle it
+  if (result.errors && result.errors.length > 0) {
+    throw new Error('ESBuild bundling failed')
+  }
 }
 
 export async function bundleThemeExtension(

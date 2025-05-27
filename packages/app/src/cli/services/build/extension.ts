@@ -128,9 +128,11 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       )
     }
   } catch (extensionBundlingError) {
-    // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
+    // The bundleExtension function already wrote formatted errors to stderr
+    // when esbuild errors occurred, so we just need to throw a user-friendly error
     throw new AbortError(
-      `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
+      `Failed to bundle extension ${extension.localIdentifier}.`,
+      'Please check the extension source code for errors.',
     )
   }
 
