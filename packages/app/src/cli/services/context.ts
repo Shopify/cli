@@ -282,14 +282,33 @@ export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): P
   return remoteApp
 }
 
+interface SelectOrgOptions {
+  organization?: string
+  flagName?: string
+}
+
 /**
  * Fetch all orgs the user belongs to and show a prompt to select one of them
  * @param developerPlatformClient - The client to access the platform API
  * @returns The selected organization ID
  */
-export async function selectOrg(): Promise<Organization> {
+export async function selectOrg({organization, flagName}: SelectOrgOptions = {}): Promise<Organization> {
   const orgs = await fetchOrganizations()
-  const org = await selectOrganizationPrompt(orgs)
+  if (organization) {
+    const matchingOrgs = orgs.filter((org) => org.id === organization)
+    if (matchingOrgs.length === 0) {
+      throw new AbortError(`Organization not found: ${organization}`)
+    }
+    if (matchingOrgs.length > 1) {
+      throw new AbortError(`Multiple organizations found with ID: ${organization}`)
+    }
+    return matchingOrgs[0] as Organization
+  }
+  const org = await selectOrganizationPrompt({
+    organizations: orgs,
+    flagName,
+    flagValues: orgs.map((org) => `${org.id} (${org.businessName})`),
+  })
   return org
 }
 

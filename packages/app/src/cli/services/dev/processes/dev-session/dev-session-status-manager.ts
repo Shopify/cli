@@ -11,6 +11,7 @@ const DevSessionStaticMessages = {
   VALIDATION_ERROR: {message: 'Validation error in your app configuration', type: 'error'},
   REMOTE_ERROR: {message: 'Error updating app preview', type: 'error'},
   CHANGE_DETECTED: {message: 'Change detected, updating app preview', type: 'loading'},
+  BUILDING: {message: 'Building extensions', type: 'loading'},
 } as const
 
 export interface DevSessionStatus {
@@ -28,6 +29,9 @@ export class DevSessionStatusManager extends EventEmitter {
     statusMessage: undefined,
   }
 
+  // List of all the logs that occurred in the current dev session.
+  private readonly _logs: {timestamp: number; message: string; prefix?: string}[] = []
+
   constructor(defaultStatus?: DevSessionStatus) {
     super()
     if (defaultStatus) this.currentStatus = defaultStatus
@@ -42,12 +46,33 @@ export class DevSessionStatusManager extends EventEmitter {
     this.emit('dev-session-update', newStatus)
   }
 
+  addLog(log: {timestamp: number; message: string; prefix?: string}) {
+    this._logs.push(log)
+  }
+
   setMessage(message: keyof typeof DevSessionStaticMessages) {
     this.updateStatus({statusMessage: DevSessionStaticMessages[message]})
   }
 
   get status(): DevSessionStatus {
     return this.currentStatus
+  }
+
+  get logs(): {timestamp: number; message: string; prefix?: string}[] {
+    return this._logs
+  }
+
+  setBuildingState(building: boolean) {
+    const currentType = this.currentStatus.statusMessage?.type ?? 'success'
+    const currentMessage = this.currentStatus.statusMessage?.message ?? ''
+
+    if (building) {
+      if (currentType === 'success' || currentType === 'error') {
+        this.updateStatus({statusMessage: DevSessionStaticMessages.BUILDING})
+      }
+    } else if (currentMessage === 'Building extensions') {
+      this.updateStatus({statusMessage: DevSessionStaticMessages.READY})
+    }
   }
 
   reset() {

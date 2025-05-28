@@ -242,6 +242,8 @@ export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalError
 export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>, 'onSubmit'> {
   isConfirmationPrompt?: boolean
   renderOptions?: RenderOptions
+  flagName?: string
+  flagValues?: string[]
 }
 
 /**
@@ -277,10 +279,10 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  */
 // eslint-disable-next-line max-params
 export async function renderSelectPrompt<T>(
-  {renderOptions, isConfirmationPrompt, ...props}: RenderSelectPromptOptions<T>,
+  {renderOptions, isConfirmationPrompt, flagName, flagValues, ...props}: RenderSelectPromptOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<T> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
+  throwInNonTTY({message: props.message, flagName, flagValues, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let selectedValue: T
@@ -365,6 +367,8 @@ export async function renderConfirmationPrompt({
 export interface RenderAutocompleteOptions<T>
   extends PartialBy<Omit<AutocompletePromptProps<T>, 'onSubmit'>, 'search'> {
   renderOptions?: RenderOptions
+  flagName?: string
+  flagValues?: string[]
 }
 
 /**
@@ -407,10 +411,10 @@ export interface RenderAutocompleteOptions<T>
  */
 // eslint-disable-next-line max-params
 export async function renderAutocompletePrompt<T>(
-  {renderOptions, ...props}: RenderAutocompleteOptions<T>,
+  {renderOptions, flagName, flagValues, ...props}: RenderAutocompleteOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<T> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin, flagName, flagValues}, uiDebugOptions)
 
   const newProps = {
     search(term: string) {
@@ -484,6 +488,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {
   renderOptions?: RenderOptions
+  flagName?: string
 }
 
 /**
@@ -496,10 +501,10 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  */
 // eslint-disable-next-line max-params
 export async function renderTextPrompt(
-  {renderOptions, ...props}: RenderTextPromptOptions,
+  {renderOptions, flagName, ...props}: RenderTextPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<string> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin, flagName}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let enteredText = ''
@@ -614,11 +619,26 @@ export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions
 interface ThrowInNonTTYOptions {
   message: TokenItem
   stdin?: NodeJS.ReadStream
+  flagName?: string
+  flagValues?: string[]
 }
 
 // eslint-disable-next-line max-params
-function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
+function throwInNonTTY(
+  {message, flagName, flagValues, stdin = undefined}: ThrowInNonTTYOptions,
+  uiDebugOptions: UIDebugOptions,
+) {
   if (isTTY({stdin, uiDebugOptions})) return
+
+  if (flagName) {
+    throw new AbortError(
+      outputContent`Flag not specified: ${outputToken.cyan(flagName)}
+
+This flag is required in non-interactive terminal environments, such as a CI environment, coding agent, or when piping input from another process.
+
+${flagValues ? `Valid values: ${flagValues.join(', ')}` : ''}`,
+    )
+  }
 
   const promptText = tokenItemToString(message)
   const errorMessage = `Failed to prompt:

@@ -10,7 +10,7 @@ describe('SerialBatchProcessor', () => {
   })
 
   test('should process a single item in a batch', async () => {
-    const processor = new SerialBatchProcessor<string>(processBatchMock)
+    const processor = new SerialBatchProcessor<string>()
     processor.enqueue('item1')
     await processor.waitForCompletion()
 
@@ -27,7 +27,7 @@ describe('SerialBatchProcessor', () => {
       })
     })
 
-    const processor = new SerialBatchProcessor<string>(processBatchMock)
+    const processor = new SerialBatchProcessor<string>()
 
     // Enqueue first item, processing will start and pause
     processor.enqueue('itemA')
@@ -56,7 +56,7 @@ describe('SerialBatchProcessor', () => {
       .mockImplementationOnce(async (_items) => firstBatchPromise)
       .mockImplementationOnce(async (_items) => secondBatchPromise)
 
-    const processor = new SerialBatchProcessor<string>(processBatchMock)
+    const processor = new SerialBatchProcessor<string>()
     // Starts first batch
     processor.enqueue('item1')
     // Queued for second batch
@@ -82,7 +82,7 @@ describe('SerialBatchProcessor', () => {
   })
 
   test('waitForCompletion should resolve immediately if no items are queued and no processing is active', async () => {
-    const processor = new SerialBatchProcessor<string>(processBatchMock)
+    const processor = new SerialBatchProcessor<string>()
     await processor.waitForCompletion()
     expect(processBatchMock).not.toHaveBeenCalled()
   })
@@ -93,7 +93,7 @@ describe('SerialBatchProcessor', () => {
       throw testError
     })
 
-    const processor = new SerialBatchProcessor<string>(processBatchMock)
+    const processor = new SerialBatchProcessor<string>()
 
     processor.enqueue('item1-fail')
 

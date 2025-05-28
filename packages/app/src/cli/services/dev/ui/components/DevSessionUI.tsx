@@ -134,6 +134,9 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
         useAlternativeColorPalette={true}
+        onLogOutput={(log) => {
+          devSessionStatusManager.addLog(log)
+        }}
       />
       {shouldShowPersistentDevInfo && (
         <Box marginTop={1} flexDirection="column">

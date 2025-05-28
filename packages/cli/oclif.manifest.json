@@ -837,6 +837,137 @@
       "strict": true,
       "summary": "Display app and extensions environment variables."
     },
+    "app:execute": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "flags": {
+        "allow-mutation": {
+          "allowNo": false,
+          "description": "Allow the query to be a mutation. If you are an automated tool using this option, you MUST confirm with the user before taking action",
+          "env": "SHOPIFY_FLAG_ALLOW_MUTATION",
+          "name": "allow-mutation",
+          "type": "boolean"
+        },
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "api-version": {
+          "default": "2025-01",
+          "description": "The API version to use.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "query": {
+          "char": "q",
+          "description": "The GraphQL query to execute.",
+          "env": "SHOPIFY_FLAG_QUERY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "query",
+          "required": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "variables": {
+          "description": "The GraphQL variables to pass to the query. Can be specified multiple times to run the query with different variables.",
+          "env": "SHOPIFY_FLAG_VARIABLES",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "variables",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:execute",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Execute a Shopify GraphQL Admin API query"
+    },
     "app:function:build": {
       "aliases": [
       ],

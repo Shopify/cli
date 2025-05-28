@@ -63,10 +63,10 @@ export interface InstallGlobalCLIPromptResult {
  * @returns `true` if the user has installed the global CLI.
  */
 export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
-  if (!terminalSupportsPrompting()) return {install: false, alreadyInstalled: false}
   if (await globalCLIVersion()) {
     return {install: false, alreadyInstalled: true}
   }
+  if (!terminalSupportsPrompting()) return {install: false, alreadyInstalled: false}
   const result = await renderSelectPrompt({
     message: 'We recommend installing Shopify CLI globally in your system. Would you like to install it now?',
     choices: [

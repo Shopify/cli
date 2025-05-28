@@ -8,6 +8,7 @@
 * [`shopify app dev clean`](#shopify-app-dev-clean)
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
+* [`shopify app execute`](#shopify-app-execute)
 * [`shopify app function build`](#shopify-app-function-build)
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
@@ -354,6 +355,31 @@ DESCRIPTION
   Display app and extensions environment variables.
 
   Displays environment variables that can be used to deploy apps and app extensions.
+```
+
+## `shopify app execute`
+
+Execute a Shopify GraphQL Admin API query
+
+```
+USAGE
+  $ shopify app execute -q <value> [--allow-mutation] [--api-version <value>] [--client-id <value> | -c <value>]
+    [--no-color] [--path <value>] [--reset | ] [-s <value>] [--variables <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>        The name of the app configuration.
+  -q, --query=<value>         (required) The GraphQL query to execute.
+  -s, --store=<value>         Store URL. Must be an existing development or Shopify Plus sandbox store.
+      --allow-mutation        Allow the query to be a mutation. If you are an automated tool using this option, you MUST
+                              confirm with the user before taking action
+      --api-version=<value>   [default: 2025-01] The API version to use.
+      --client-id=<value>     The Client ID of your app.
+      --no-color              Disable color output.
+      --path=<value>          The path to your app directory.
+      --reset                 Reset all your settings.
+      --variables=<value>...  The GraphQL variables to pass to the query. Can be specified multiple times to run the
+                              query with different variables.
+      --verbose               Increase the verbosity of the output.
 ```
 
 ## `shopify app function build`

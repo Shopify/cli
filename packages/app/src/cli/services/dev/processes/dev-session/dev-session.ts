@@ -49,7 +49,8 @@ export class DevSession {
     this.options = processOptions
     this.appWatcher = processOptions.appWatcher
     this.bundlePath = processOptions.appWatcher.buildOutputPath
-    this.appEventsProcessor = new SerialBatchProcessor((events: AppEvent[]) => this.processEvents(events))
+    this.appEventsProcessor = processOptions.appEventsProcessor
+    this.appEventsProcessor.processBatch = (events: AppEvent[]) => this.processEvents(events)
   }
 
   private async start() {

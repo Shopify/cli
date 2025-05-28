@@ -17,6 +17,7 @@ import {temporaryDirectory, temporaryDirectoryTask} from 'tempy'
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
 import {minimatch} from 'minimatch'
+import exitHook from 'exit-hook'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -192,6 +193,7 @@ export function appendFileSync(path: string, data: string): void {
 
 export interface WriteOptions {
   encoding: BufferEncoding
+  autoDeleteOnExit?: boolean
 }
 
 /**
@@ -204,10 +206,21 @@ export interface WriteOptions {
 export async function writeFile(
   path: string,
   data: string | Buffer,
-  options: WriteOptions = {encoding: 'utf8'},
+  options: WriteOptions = {encoding: 'utf8', autoDeleteOnExit: false},
 ): Promise<void> {
   outputDebug(outputContent`Writing some content to file at ${outputToken.path(path)}...`)
   await fsWriteFile(path, data, options)
+
+  if (options.autoDeleteOnExit) {
+    exitHook(() => {
+      try {
+        fsUnlinkSync(path)
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        // doesn't matter
+      }
+    })
+  }
 }
 
 /**
