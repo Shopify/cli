@@ -5,6 +5,9 @@ import {
   getSession,
   removeSession,
   setSession,
+  getCurrentSessionId,
+  setCurrentSessionId,
+  removeCurrentSessionId,
   runAtMinimumInterval,
   getConfigStoreForPartnerStatus,
   getCachedPartnerAccountStatus,
@@ -59,6 +62,66 @@ describe('removeSession', () => {
 
       // Then
       expect(config.get('sessionStore')).toEqual(undefined)
+    })
+  })
+})
+
+describe('getCurrentSessionId', () => {
+  test('returns the content of the currentSessionId key', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('currentSessionId', 'user-123')
+
+      // When
+      const got = getCurrentSessionId(config)
+
+      // Then
+      expect(got).toEqual('user-123')
+    })
+  })
+
+  test('returns undefined when currentSessionId is not set', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      const got = getCurrentSessionId(config)
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+  })
+})
+
+describe('setCurrentSessionId', () => {
+  test('saves the desired content in the currentSessionId key', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      setCurrentSessionId('user-456', config)
+
+      // Then
+      expect(config.get('currentSessionId')).toEqual('user-456')
+    })
+  })
+})
+
+describe('removeCurrentSessionId', () => {
+  test('removes the currentSessionId key', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('currentSessionId', 'user-789')
+
+      // When
+      removeCurrentSessionId(config)
+
+      // Then
+      expect(config.get('currentSessionId')).toBeUndefined()
     })
   })
 })

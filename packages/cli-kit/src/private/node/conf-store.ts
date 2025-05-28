@@ -27,6 +27,7 @@ interface Cache {
 
 export interface ConfSchema {
   sessionStore: string
+  currentSessionId?: string
   cache?: Cache
 }
 
@@ -70,6 +71,34 @@ export function setSession(session: string, config: LocalStorage<ConfSchema> = c
 export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing session store...`)
   config.delete('sessionStore')
+}
+
+/**
+ * Get current session ID.
+ *
+ * @returns Current session ID.
+ */
+export function getCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
+  outputDebug(outputContent`Getting current session ID...`)
+  return config.get('currentSessionId')
+}
+
+/**
+ * Set current session ID.
+ *
+ * @param sessionId - Session ID.
+ */
+export function setCurrentSessionId(sessionId: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Setting current session ID...`)
+  config.set('currentSessionId', sessionId)
+}
+
+/**
+ * Remove current session ID.
+ */
+export function removeCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Removing current session ID...`)
+  config.delete('currentSessionId')
 }
 
 type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['value']

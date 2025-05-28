@@ -40,5 +40,6 @@ export async function fetch(): Promise<Session | undefined> {
  * Removes a session from the system.
  */
 export async function remove() {
-  removeSession()
+  removeSessions()
+  removeCurrentSessionId()
 }
