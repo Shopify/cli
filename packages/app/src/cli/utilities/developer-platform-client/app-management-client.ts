@@ -107,6 +107,7 @@ import {
   CreateAppVersionMutation,
 } from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {UploadFileContent} from '../../api/graphql/app-management/generated/upload-file-content.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
 import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
@@ -668,6 +669,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
     }
+  }
+
+  async generateSidekickSchema({
+    organizationId,
+    sourceCode,
+  }: MinimalAppIdentifiers & {sourceCode: string}): Promise<string> {
+    const variables = {sourceCode}
+    const result = await appManagementRequestDoc(organizationId, UploadFileContent, await this.token(), variables, {
+      cacheTTL: {minutes: 59},
+    })
+
+    return result.appRequestSidekickSchema?.schema ?? ''
   }
 
   async updateExtension(_extensionInput: ExtensionUpdateDraftMutationVariables): Promise<ExtensionUpdateDraftMutation> {

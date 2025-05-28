@@ -12,6 +12,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {readFileSync} from 'fs'
 import type {Task} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
@@ -98,9 +99,28 @@ export async function deploy(options: DeployOptions) {
         title: uploadTaskTitle,
         task: async () => {
           const appModules = await Promise.all(
-            app.allExtensions.flatMap((ext) =>
-              ext.bundleConfig({identifiers, developerPlatformClient, apiKey, appConfiguration: app.configuration}),
-            ),
+            app.allExtensions.flatMap(async (ext) => {
+              const sourceCodePath = ext.configuration.extension_points?.[0]?.build_manifest?.assets?.main?.module
+              if (sourceCodePath) {
+                const sourceCode = readFileSync(joinPath(ext.directory, sourceCodePath), 'utf8')
+                const sidekickSchema = await developerPlatformClient.generateSidekickSchema?.({
+                  organizationId: remoteApp.organizationId,
+                  apiKey,
+                  id: remoteApp.id,
+                  sourceCode,
+                })
+
+                // eslint-disable-next-line require-atomic-updates
+                ext.configuration.extension_points[0].sidekick_schema = sidekickSchema
+              }
+
+              return ext.bundleConfig({
+                identifiers,
+                developerPlatformClient,
+                apiKey,
+                appConfiguration: app.configuration,
+              })
+            }),
           )
 
           uploadExtensionsBundleResult = await uploadExtensionsBundle({

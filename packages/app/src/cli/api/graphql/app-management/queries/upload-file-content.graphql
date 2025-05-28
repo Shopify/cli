@@ -1,0 +1,5 @@
+mutation UploadFileContent($sourceCode: String!) {
+  appRequestSidekickSchema(sourceCode: $sourceCode) {
+    schema
+  }
+}
