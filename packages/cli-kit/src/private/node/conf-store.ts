@@ -50,7 +50,7 @@ function cliKitStore() {
  *
  * @returns Session.
  */
-export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
+export function getSessions(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
   outputDebug(outputContent`Getting session store...`)
   return config.get('sessionStore')
 }
@@ -60,7 +60,7 @@ export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): st
  *
  * @param session - Session.
  */
-export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+export function setSessions(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Setting session store...`)
   config.set('sessionStore', session)
 }
@@ -68,7 +68,7 @@ export function setSession(session: string, config: LocalStorage<ConfSchema> = c
 /**
  * Remove session.
  */
-export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+export function removeSessions(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing session store...`)
   config.delete('sessionStore')
 }

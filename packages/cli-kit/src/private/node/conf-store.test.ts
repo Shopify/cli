@@ -2,9 +2,9 @@ import {
   ConfSchema,
   cacheRetrieve,
   cacheRetrieveOrRepopulate,
-  getSession,
-  removeSession,
-  setSession,
+  getSessions,
+  removeSessions,
+  setSessions,
   getCurrentSessionId,
   setCurrentSessionId,
   removeCurrentSessionId,
@@ -26,7 +26,7 @@ describe('getSession', () => {
       config.set('sessionStore', 'my-session')
 
       // When
-      const got = getSession(config)
+      const got = getSessions(config)
 
       // Then
       expect(got).toEqual('my-session')
@@ -42,7 +42,7 @@ describe('setSession', () => {
       config.set('sessionStore', 'my-session')
 
       // When
-      setSession('my-session', config)
+      setSessions('my-session', config)
 
       // Then
       expect(config.get('sessionStore')).toEqual('my-session')
@@ -58,7 +58,7 @@ describe('removeSession', () => {
       config.set('sessionStore', 'my-session')
 
       // When
-      removeSession(config)
+      removeSessions(config)
 
       // Then
       expect(config.get('sessionStore')).toEqual(undefined)

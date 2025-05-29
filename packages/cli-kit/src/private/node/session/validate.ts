@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {applicationId} from './identity.js'
-import {ApplicationToken, IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
+import {ApplicationToken, IdentityToken, Session, validateCachedIdentityTokenStructure} from './schema.js'
 import {sessionConstants} from '../constants.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
@@ -27,10 +27,7 @@ function validateScopes(requestedScopes: string[], identity: IdentityToken) {
 export async function validateSession(
   scopes: string[],
   applications: OAuthApplications,
-  session: {
-    identity: IdentityToken
-    applications: {[x: string]: ApplicationToken}
-  },
+  session: Session | undefined,
 ): Promise<ValidationResult> {
   if (!session) return 'needs_full_auth'
   const scopesAreValid = validateScopes(scopes, session.identity)

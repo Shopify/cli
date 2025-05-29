@@ -23,6 +23,12 @@ const ApplicationTokenSchema = zod.object({
   accessToken: zod.string(),
   expiresAt: DateSchema,
   scopes: zod.array(zod.string()),
+  storeFqdn: zod.string().optional(),
+})
+
+export const SessionSchema = zod.object({
+  identity: IdentityTokenSchema,
+  applications: zod.object({}).catchall(ApplicationTokenSchema),
 })
 
 /**
@@ -33,37 +39,29 @@ const ApplicationTokenSchema = zod.object({
  * @example
  * ```
  * {
- *    "accounts.shopify.com": {
- *      "identity": {...} // IdentityTokenSchema
- *      "applications": {
- *        "${domain}-application-id": {  // Admin APIs includes domain in the key
- *          "accessToken": "...",
- *        },
- *        "$application-id": { // ApplicationTokenSchema
- *          "accessToken": "...",
- *        },
- *      }
- *    },
- *    "identity.spin.com": {...}
+ *   "accounts.shopify.com": {
+ *     "user-123": {
+ *       "identity": { ... }, // IdentityTokenSchema
+ *       "applications": {
+ *         "mystore.myshopify.com-admin": { // ApplicationTokenSchema
+ *           "accessToken": "...",
+ *           "expiresAt": "...",
+ *           "scopes": ["..."],
+ *         },
+ *         "partners": { ... },
+ *       }
+ *     },
+ *     "8765-4321": { ... }
+ *   },
+ *   "identity.spin.com": {
+ *     "user-345": { ... }
+ *   }
  * }
  * ```
  */
-export const SessionSchema = zod.object({}).catchall(
-  zod.object({
-    /**
-     * It contains the identity token. Before usint it, we exchange it
-     * to get a token that we can use with different applications. The exchanged
-     * tokens for the applications are stored under applications.
-     */
-    identity: IdentityTokenSchema,
-    /**
-     * It contains exchanged tokens for the applications the CLI
-     * authenticates with. Tokens are scoped under the fqdn of the applications.
-     */
-    applications: zod.object({}).catchall(ApplicationTokenSchema),
-  }),
-)
+export const SessionsSchema = zod.object({}).catchall(zod.object({}).catchall(SessionSchema))
 
+export type Sessions = zod.infer<typeof SessionsSchema>
 export type Session = zod.infer<typeof SessionSchema>
 export type IdentityToken = zod.infer<typeof IdentityTokenSchema>
 export type ApplicationToken = zod.infer<typeof ApplicationTokenSchema>
