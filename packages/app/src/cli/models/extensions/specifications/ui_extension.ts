@@ -96,7 +96,6 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   deployConfig: async (config, directory) => {
     const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
-
     return {
       api_version: config.api_version,
       extension_points: transformedExtensionPoints,

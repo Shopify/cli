@@ -59,6 +59,24 @@ export async function deploy(options: DeployOptions) {
   const release = !noRelease
   const apiKey = remoteApp.apiKey
 
+  await Promise.all(
+    app.allExtensions.flatMap(async (ext) => {
+      const sourceCodePath = ext.configuration.extension_points?.[0]?.build_manifest?.assets?.main?.module
+      if (sourceCodePath) {
+        const sourceCode = readFileSync(joinPath(ext.directory, sourceCodePath), 'utf8')
+        const sidekickSchema = await developerPlatformClient.generateSidekickSchema?.({
+          organizationId: remoteApp.organizationId,
+          apiKey,
+          id: remoteApp.id,
+          sourceCode,
+        })
+
+        // eslint-disable-next-line require-atomic-updates
+        ext.configuration.extension_points[0].sidekick_schema = sidekickSchema
+      }
+    }),
+  )
+
   outputNewline()
   if (release) {
     outputInfo(`Releasing a new app version as part of ${remoteApp.title}`)
@@ -100,20 +118,6 @@ export async function deploy(options: DeployOptions) {
         task: async () => {
           const appModules = await Promise.all(
             app.allExtensions.flatMap(async (ext) => {
-              const sourceCodePath = ext.configuration.extension_points?.[0]?.build_manifest?.assets?.main?.module
-              if (sourceCodePath) {
-                const sourceCode = readFileSync(joinPath(ext.directory, sourceCodePath), 'utf8')
-                const sidekickSchema = await developerPlatformClient.generateSidekickSchema?.({
-                  organizationId: remoteApp.organizationId,
-                  apiKey,
-                  id: remoteApp.id,
-                  sourceCode,
-                })
-
-                // eslint-disable-next-line require-atomic-updates
-                ext.configuration.extension_points[0].sidekick_schema = sidekickSchema
-              }
-
               return ext.bundleConfig({
                 identifiers,
                 developerPlatformClient,
