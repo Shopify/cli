@@ -72,6 +72,7 @@ describe('pollForDeviceAuthorization', () => {
     expiresAt: new Date(2022, 1, 1, 11),
     scopes: ['scope', 'scope2'],
     userId: '1234-5678',
+    alias: '1234-5678',
   }
 
   test('poll until a valid token is received', async () => {

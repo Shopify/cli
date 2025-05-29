@@ -255,6 +255,7 @@ function buildIdentityToken(result: TokenRequestResult, existingUserId?: string)
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
     scopes: result.scope.split(' '),
     userId,
+    alias: userId,
   }
 }
 

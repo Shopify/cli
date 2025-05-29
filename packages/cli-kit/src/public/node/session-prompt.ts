@@ -13,18 +13,6 @@ interface SessionChoice {
 }
 
 /**
- * Gets a display label for a session based on the userId.
- *
- * @param userId - The user ID for the session.
- * @returns A human-readable label for the session.
- */
-function getSessionDisplayLabel(userId: string): string {
-  // For now, just use the userId as the display label
-  // This can be enhanced later to show email/org name when available
-  return `Session: ${userId}`
-}
-
-/**
  * Builds the choices array from existing sessions.
  *
  * @param sessions - The sessions object from storage.
@@ -36,10 +24,9 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
   const fqdnSessions = sessions[fqdn]
 
   if (fqdnSessions) {
-    for (const userId of Object.keys(fqdnSessions)) {
-      const displayLabel = getSessionDisplayLabel(userId)
+    for (const [userId, session] of Object.entries(fqdnSessions)) {
       choices.push({
-        label: displayLabel,
+        label: session.identity.alias,
         value: userId,
       })
     }
@@ -80,16 +67,19 @@ export async function promptSessionSelect(): Promise<{userId: string}> {
     choices.push(...sessionChoices)
   }
 
-  // Always add option to log in with new account
-  choices.push({
-    label: 'Log in with a new account',
-    value: NEW_LOGIN_VALUE,
-  })
+  let selectedValue = NEW_LOGIN_VALUE
 
-  const selectedValue = await renderSelectPrompt({
-    message: 'Which account would you like to use?',
-    choices,
-  })
+  if (choices.length > 0) {
+    choices.push({
+      label: 'Log in with a new account',
+      value: NEW_LOGIN_VALUE,
+    })
+
+    selectedValue = await renderSelectPrompt({
+      message: 'Which account would you like to use?',
+      choices,
+    })
+  }
 
   if (selectedValue === NEW_LOGIN_VALUE) {
     const result = await ensureAuthenticatedUser({}, {forceNewSession: true})

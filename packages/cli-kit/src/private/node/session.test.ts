@@ -43,6 +43,7 @@ const validIdentityToken: IdentityToken = {
   expiresAt: futureDate,
   scopes: ['scope', 'scope2'],
   userId,
+  alias: userId,
 }
 
 const validTokens: OAuthSession = {

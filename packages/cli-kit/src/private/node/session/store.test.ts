@@ -53,6 +53,7 @@ function testSession(): Sessions {
           expiresAt: new Date(),
           scopes: ['foo'],
           userId: '1234-5678',
+          alias: '1234-5678',
         },
         applications: {
           adminApi: testToken,

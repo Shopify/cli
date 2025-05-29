@@ -232,6 +232,7 @@ ${outputToken.json(applications)}
   }
 
   const completeSession = {...currentSession, ...newSession} as Session
+  completeSession.identity.alias = completeSession.identity.alias ?? completeSession.identity.userId
   const newSessionId = completeSession.identity.userId
   const updatedSessions: Sessions = {
     ...sessions,
@@ -422,5 +423,6 @@ function buildIdentityTokenFromEnv(
     ...identityTokenInformation,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     scopes,
+    alias: identityTokenInformation.userId,
   }
 }
