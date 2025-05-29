@@ -159,18 +159,24 @@ export function setLastSeenAuthMethod(method: AuthMethod) {
   authMethod = method
 }
 
+export interface EnsureAuthenticatedAdditionalOptions {
+  noPrompt?: boolean
+  forceRefresh?: boolean
+  forceNewSession?: boolean
+}
+
 /**
  * This method ensures that we have a valid session to authenticate against the given applications using the provided scopes.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
  * @param _env - Optional environment variables to use.
- * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @param options - Optional extra options to use.
  * @returns An instance with the access tokens organized by application.
  */
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  {forceRefresh = false, noPrompt = false}: {forceRefresh?: boolean; noPrompt?: boolean} = {},
+  {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -183,12 +189,14 @@ export async function ensureAuthenticated(
   }
 
   const sessions = (await sessionStore.fetch()) ?? {}
+
   let currentSessionId = getCurrentSessionId()
   if (!currentSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})
     if (userIds.length > 0) currentSessionId = userIds[0]
   }
-  const currentSession: Session | undefined = currentSessionId ? sessions[fqdn]?.[currentSessionId] : undefined
+  const currentSession: Session | undefined =
+    currentSessionId && !forceNewSession ? sessions[fqdn]?.[currentSessionId] : undefined
   const scopes = getFlattenScopes(applications)
 
   outputDebug(outputContent`Validating existing session against the scopes:
