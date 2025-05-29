@@ -1,15 +1,13 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions} from '../../services/dev.js'
+import {DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
-import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 export default class Dev extends AppCommand {
   static summary = 'Run the app.'
@@ -146,36 +144,49 @@ If you're using the Ruby app template, then you need to complete the following s
       }
     })
 
-    await checkFolderIsValidApp(flags.path)
+    const {devOptions, appContextResult, dev} = await renderSingleTask({
+      title: 'Loading app',
+      taskFn: async () => {
+        const [{checkFolderIsValidApp}, {linkedAppContext}, {storeContext}] = await Promise.all([
+          import('../../models/app/loader.js'),
+          import('../../services/app-context.js'),
+          import('../../services/store-context.js'),
+        ])
 
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'] ?? flags['api-key'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-    })
+        await checkFolderIsValidApp(flags.path)
 
-    const devOptions: DevOptions = {
-      ...appContextResult,
-      store,
-      directory: flags.path,
-      update: !flags['no-update'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig: this.config,
-      subscriptionProductUrl: flags['subscription-product-url'],
-      checkoutCartUrl: flags['checkout-cart-url'],
-      theme: flags.theme,
-      themeExtensionPort: flags['theme-app-extension-port'],
-      notify: flags.notify,
-      graphiqlPort: flags['graphiql-port'],
-      graphiqlKey: flags['graphiql-key'],
-      tunnel: tunnelMode,
-    }
+        const appContextResult = await linkedAppContext({
+          directory: flags.path,
+          clientId: flags['client-id'] ?? flags['api-key'],
+          forceRelink: flags.reset,
+          userProvidedConfigName: flags.config,
+        })
+        const store = await storeContext({
+          appContextResult,
+          storeFqdn: flags.store,
+          forceReselectStore: flags.reset,
+        })
+
+        const devOptions: DevOptions = {
+          ...appContextResult,
+          store,
+          directory: flags.path,
+          update: !flags['no-update'],
+          skipDependenciesInstallation: flags['skip-dependencies-installation'],
+          commandConfig: this.config,
+          subscriptionProductUrl: flags['subscription-product-url'],
+          checkoutCartUrl: flags['checkout-cart-url'],
+          theme: flags.theme,
+          themeExtensionPort: flags['theme-app-extension-port'],
+          notify: flags.notify,
+          graphiqlPort: flags['graphiql-port'],
+          graphiqlKey: flags['graphiql-key'],
+          tunnel: tunnelMode,
+        }
+        const {dev} = await import('../../services/dev.js')
+        return {devOptions, appContextResult, dev}
+      },
+    })
 
     await dev(devOptions)
     return {app: appContextResult.app}

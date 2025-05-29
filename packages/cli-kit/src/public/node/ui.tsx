@@ -30,6 +30,7 @@ import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/Text
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
+import {SingleTask} from '../../private/node/ui/components/SingleTask.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -474,6 +475,22 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
     render(<Tasks tasks={tasks} onComplete={resolve} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
+      .then(() => {})
+      .catch(reject)
+  })
+}
+
+// eslint-disable-next-line max-params
+export async function renderSingleTask<T>(
+  {title, taskFn}: {title: string; taskFn: () => Promise<T>},
+  {renderOptions}: RenderTasksOptions = {},
+) {
+  // eslint-disable-next-line max-params
+  return new Promise<T>((resolve, reject) => {
+    render(<SingleTask title={title} taskFn={taskFn} onComplete={resolve} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
