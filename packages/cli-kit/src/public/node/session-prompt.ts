@@ -26,7 +26,7 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
   if (fqdnSessions) {
     for (const [userId, session] of Object.entries(fqdnSessions)) {
       choices.push({
-        label: session.identity.alias,
+        label: session.identity.alias ?? userId,
         value: userId,
       })
     }

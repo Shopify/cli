@@ -13,7 +13,11 @@ import {
   CreateAppOptions,
   AppLogsResponse,
 } from '../developer-platform-client.js'
-import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {
+  fetchCurrentAccountInformation,
+  getAlias,
+  PartnersSession,
+} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   AppApiKeyAndOrgId,
@@ -159,7 +163,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedPartners, updateSessionAliasIfEmpty} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -241,6 +245,8 @@ export class PartnersClient implements DeveloperPlatformClient {
       }
       const accountInfo = await fetchCurrentAccountInformation(this, userId)
       this._session = {token, businessPlatformToken: '', accountInfo, userId}
+
+      await updateSessionAliasIfEmpty(userId, getAlias(accountInfo))
     }
     return this._session
   }

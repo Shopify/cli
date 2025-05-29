@@ -14,7 +14,7 @@ const IdentityTokenSchema = zod.object({
   expiresAt: DateSchema,
   scopes: zod.array(zod.string()),
   userId: zod.string(),
-  alias: zod.string(),
+  alias: zod.string().optional(),
 })
 
 /**

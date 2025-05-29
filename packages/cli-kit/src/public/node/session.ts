@@ -2,7 +2,7 @@ import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
-import * as secureStore from '../../private/node/session/store.js'
+import * as sessionStore from '../../private/node/session/store.js'
 import {
   exchangeCustomPartnerToken,
   exchangeCliTokenForAppManagementAccessToken,
@@ -237,5 +237,21 @@ ${outputToken.json(scopes)}
  * @returns A promise that resolves when the logout is complete.
  */
 export function logout(): Promise<void> {
-  return secureStore.remove()
+  return sessionStore.remove()
+}
+
+/**
+ * Updates the session alias with a more human-readable display name if available.
+ * Only updates if the current alias is empty.
+ *
+ * @param userId - The user ID of the session to update.
+ * @param alias - The alias to update the session with.
+ * @returns Promise that resolves when the alias update is complete.
+ */
+export async function updateSessionAliasIfEmpty(userId: string, alias: string | undefined): Promise<void> {
+  if (!alias) return
+  const currentAlias = await sessionStore.getSessionAlias(userId)
+  if (!currentAlias) {
+    await sessionStore.updateSessionAlias(userId, alias)
+  }
 }

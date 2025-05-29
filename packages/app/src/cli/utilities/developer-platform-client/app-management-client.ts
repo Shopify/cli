@@ -24,7 +24,7 @@ import {
   DevSessionDeleteOptions,
   UserError,
 } from '../developer-platform-client.js'
-import {PartnersSession} from '../../services/context/partner-account-info.js'
+import {getAlias, PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   AppApiKeyAndOrgId,
@@ -137,7 +137,10 @@ import {
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {
+  ensureAuthenticatedAppManagementAndBusinessPlatform,
+  updateSessionAliasIfEmpty,
+} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
@@ -304,6 +307,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
           userId,
         }
       }
+
+      await updateSessionAliasIfEmpty(userId, getAlias(this._session.accountInfo))
     }
     return this._session
   }
