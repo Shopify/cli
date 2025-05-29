@@ -5,6 +5,7 @@ import {
   createRefreshAction,
   createFocusAction,
   createUnfocusAction,
+  createLogAction,
 } from '../state'
 
 import {ExtensionServerClient} from '../ExtensionServerClient'
@@ -35,6 +36,7 @@ export function ExtensionServerProvider({children, options: defaultOptions}: Ext
       client.on('refresh', (payload) => dispatch(createRefreshAction(payload))),
       client.on('focus', (payload) => dispatch(createFocusAction(payload))),
       client.on('unfocus', (payload) => dispatch(createUnfocusAction(payload))),
+      client.on('log', (payload) => dispatch(createLogAction(payload))),
     ]
 
     return () => listeners.forEach((unsubscribe) => unsubscribe())

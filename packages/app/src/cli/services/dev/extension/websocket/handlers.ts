@@ -6,7 +6,7 @@ import {
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputContent, outputToken, outputInfo} from '@shopify/cli-kit/node/output'
 import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
 
@@ -69,9 +69,24 @@ ${outputToken.json(eventData)}
         options.payloadStore.updateExtensions(eventData.extensions)
       }
     } else if (eventType === 'dispatch') {
-      const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
+      if (eventData.type === 'log') {
+        // todo: color code by level
+        const {level, args, extensionName} = eventData.payload
+        const message = args
+          .map((arg: unknown) => {
+            if (typeof arg === 'string') {
+              return arg
+            }
+            return JSON.stringify(arg, null, 2)
+          })
+          .join(' ')
 
-      notifyClients(wss, outGoingMessage, options)
+        outputInfo(outputContent`${outputToken.heading(extensionName)}: ${message}`, options.stdout)
+      } else {
+        const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
+
+        notifyClients(wss, outGoingMessage, options)
+      }
     }
   }
 }
