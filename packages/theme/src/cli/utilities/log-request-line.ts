@@ -22,7 +22,7 @@ export function logRequestLine(event: H3Event, response: MinimalResponse) {
   const requestDuration = serverTiming?.match(/cfRequestDuration;dur=([\d.]+)/)?.[1]
   const durationString = requestDuration ? `${Math.round(Number(requestDuration))}ms` : ''
 
-  const statusColor = getColorizeStatus(response.status)
+  const statusColorToken = getColorizeStatus(response.status)
 
   const eventMethodAligned = event.method.padStart(6)
 
@@ -33,7 +33,7 @@ export function logRequestLine(event: H3Event, response: MinimalResponse) {
       ' Request » ',
       eventMethodAligned,
       ' ',
-      statusColor(String(response.status)),
+      statusColorToken,
       ' ',
       truncatedPath,
       ' ',

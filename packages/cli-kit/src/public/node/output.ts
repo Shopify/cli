@@ -363,6 +363,8 @@ export function stringifyMessage(message: OutputMessage): string {
         return String(item)
       }).join('')
     }
+    // If body is not an array, fall through to handle as regular object
+    return String((message as any).body)
   } else if (Array.isArray(message)) {
     // Handle direct arrays like those used in version-name validation
     return message.map((item) => {
