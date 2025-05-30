@@ -67,7 +67,7 @@ describe('renderPortWarnings()', () => {
     // Then
     expect(mockOutput.warn()).toContain('A random port will be used for localhost because 1234 is not available.')
     expect(mockOutput.warn()).toContain('If you want to use a specific port, you can choose a different one by')
-    expect(mockOutput.warn()).toContain('setting the  `--localhost-port`  flag.')
+    expect(mockOutput.warn()).toContain('setting the `--localhost-port` flag.')
   })
 
   test('Calls renderWarning once, combining warnings when there are multiple warnings', () => {

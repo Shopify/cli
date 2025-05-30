@@ -60,7 +60,8 @@ describe('upgrade global CLI', () => {
         {stdio: 'inherit'},
       )
       expect(outputMock.info()).toMatchInlineSnapshot(`
-        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nAttempting to upgrade via \`npm install -g @shopify/cli@latest @shopify/theme@latest\`..."
+        "Upgrading CLI from 3.0.0 to 3.10.0...
+        Attempting to upgrade via npm install -g @shopify/cli@latest @shopify/theme@latest..."
       `)
       expect(outputMock.success()).toMatchInlineSnapshot(`
         "Upgraded Shopify CLI to version ${currentCliVersion}"

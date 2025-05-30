@@ -32,5 +32,5 @@ export function cliInstallCommand(): string {
  * @returns The message to remind the user to update the CLI.
  */
 export function getOutputUpdateCLIReminder(version: string): string {
-  return `💡 Version ${version} available! Run ${cliInstallCommand()}`
+  return `💡 Version ${version} available! Run \`${cliInstallCommand()}\``
 }

@@ -348,9 +348,33 @@ export function outputNewline(): void {
 export function stringifyMessage(message: OutputMessage): string {
   if (message instanceof TokenizedString) {
     return message.value
-  } else {
+  } else if (typeof message === 'string') {
     return message
+  } else if (message && typeof message === 'object' && 'body' in message) {
+    // Handle complex token objects like those used in upgrade.ts
+    const body = (message as any).body
+    if (Array.isArray(body)) {
+      return body.map((item) => {
+        if (typeof item === 'string') {
+          return item
+        } else if (item && typeof item === 'object') {
+          return itemToString(item)
+        }
+        return String(item)
+      }).join('')
+    }
+  } else if (Array.isArray(message)) {
+    // Handle direct arrays like those used in version-name validation
+    return message.map((item) => {
+      if (typeof item === 'string') {
+        return item
+      } else if (item && typeof item === 'object') {
+        return itemToString(item)
+      }
+      return String(item)
+    }).join('') // Concatenate array elements directly
   }
+  return String(message)
 }
 
 /**

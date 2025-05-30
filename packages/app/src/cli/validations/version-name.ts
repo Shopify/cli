@@ -3,7 +3,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 export function validateVersion(version: string | undefined) {
   if (typeof version === 'undefined') return
 
-  const errorMessage = ['Invalid version name:', {userInput: version}]
+  const errorMessage = ['Invalid version name: ', {userInput: version}]
 
   const versionMaxLength = 100
   if (version.length > versionMaxLength) {
