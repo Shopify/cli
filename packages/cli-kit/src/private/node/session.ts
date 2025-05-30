@@ -163,6 +163,7 @@ export interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
   forceNewSession?: boolean
+  alias?: string
 }
 
 /**
@@ -176,7 +177,7 @@ export interface EnsureAuthenticatedAdditionalOptions {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
+  {forceRefresh = false, noPrompt = false, forceNewSession = false, alias}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -217,7 +218,7 @@ ${outputToken.json(applications)}
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      newSession = await refreshTokens(currentSession!)
+      newSession = await refreshTokens(currentSession!, applications)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         throwOnNoPrompt(noPrompt)
@@ -232,7 +233,7 @@ ${outputToken.json(applications)}
   }
 
   const completeSession = {...currentSession, ...newSession} as Session
-  completeSession.identity.alias = completeSession.identity.alias ?? completeSession.identity.userId
+  completeSession.identity.alias = alias ?? currentSession?.identity.alias
   const newSessionId = completeSession.identity.userId
   const updatedSessions: Sessions = {
     ...sessions,
@@ -272,7 +273,6 @@ The CLI is currently unable to prompt for reauthentication.`,
  * Execute the full authentication flow.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param identityFqdn - The identity FQDN.
  */
 async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
   const scopes = getFlattenScopes(applications)
@@ -316,15 +316,15 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
  *
  * @param session - The session to refresh.
  */
-async function refreshTokens(session: Session): Promise<Session> {
+async function refreshTokens(session: Session, applications: OAuthApplications): Promise<Session> {
   // Refresh Identity Token
   const identityToken = await refreshAccessToken(session.identity)
   // Exchange new identity token for application tokens
-  const exchangeScopes = getExchangeScopes(session.applications)
+  const exchangeScopes = getExchangeScopes(applications)
   const applicationTokens = await exchangeAccessForApplicationTokens(
     identityToken,
     exchangeScopes,
-    session.applications.adminApi?.storeFqdn,
+    applications.adminApi?.storeFqdn,
   )
 
   return {

@@ -45,6 +45,7 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
  * 4. If an existing session is chosen, calls `setCurrentSessionId(userId)`
  * 5. If new login is chosen, calls `ensureAuthenticatedUser()`.
  *
+ * @param alias - Optional alias to use for the new session if created.
  * @example
  * ```typescript
  * import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
@@ -55,7 +56,7 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
  *
  * @returns Promise that resolves with the user ID of the selected or newly created session.
  */
-export async function promptSessionSelect(): Promise<{userId: string}> {
+export async function promptSessionSelect(alias?: string): Promise<{userId: string}> {
   const sessions = await sessionStore.fetch()
   const fqdn = await identityFqdn()
 
@@ -82,10 +83,13 @@ export async function promptSessionSelect(): Promise<{userId: string}> {
   }
 
   if (selectedValue === NEW_LOGIN_VALUE) {
-    const result = await ensureAuthenticatedUser({}, {forceNewSession: true})
+    const result = await ensureAuthenticatedUser({}, {forceNewSession: true, alias})
     return result
   } else {
     setCurrentSessionId(selectedValue)
+    if (alias) {
+      await sessionStore.updateSessionAlias(selectedValue, alias)
+    }
     return {userId: selectedValue}
   }
 }
