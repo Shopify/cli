@@ -451,3 +451,109 @@ describe('getLastSeenAuthMethod', () => {
     expect(getCurrentSessionId).toHaveBeenCalledOnce()
   })
 })
+
+describe('ensureAuthenticated alias functionality', () => {
+  test('sets alias when provided during full auth flow', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    const expectedSessionWithAlias = {
+      ...validSessions,
+      [fqdn]: {
+        [userId]: {
+          ...validSessions[fqdn]![userId]!,
+          identity: {
+            ...validSessions[fqdn]![userId]!.identity,
+            alias: 'work-account',
+          },
+        },
+      },
+    }
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, {alias: 'work-account'})
+
+    // Then
+    expect(storeSessions).toBeCalledWith(expectedSessionWithAlias)
+    expect(got).toEqual(validTokens)
+  })
+
+  test('preserves existing alias when no alias provided', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications)
+
+    // Then
+    expect(storeSessions).toBeCalledWith(validSessions)
+    expect(got).toEqual(validTokens)
+  })
+
+  test('sets alias during refresh token flow', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    const expectedSessionWithAlias = {
+      ...validSessions,
+      [fqdn]: {
+        [userId]: {
+          ...validSessions[fqdn]![userId]!,
+          identity: {
+            ...validSessions[fqdn]![userId]!.identity,
+            alias: 'updated-alias',
+          },
+        },
+      },
+    }
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, {alias: 'updated-alias'})
+
+    // Then
+    expect(storeSessions).toBeCalledWith(expectedSessionWithAlias)
+    expect(got).toEqual(validTokens)
+  })
+
+  test('sets alias during token refresh error fallback', async () => {
+    // Given
+    const tokenResponseError = new InvalidGrantError()
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+    const expectedSessionWithAlias = {
+      ...validSessions,
+      [fqdn]: {
+        [userId]: {
+          ...validSessions[fqdn]![userId]!,
+          identity: {
+            ...validSessions[fqdn]![userId]!.identity,
+            alias: 'fallback-alias',
+          },
+        },
+      },
+    }
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, {alias: 'fallback-alias'})
+
+    // Then
+    expect(storeSessions).toBeCalledWith(expectedSessionWithAlias)
+    expect(got).toEqual(validTokens)
+  })
+
+  test('preserves current session alias when setting new alias to undefined', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('ok')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications, process.env, {alias: undefined})
+
+    // Then
+    expect(got).toEqual(validTokens)
+    // Verify the session was not stored (no change)
+    expect(storeSessions).not.toHaveBeenCalled()
+  })
+})

@@ -130,7 +130,7 @@ export async function cacheRetrieveOrRepopulate(
 }
 
 export function cacheStore(key: ExportedKey, value: string, config = cliKitStore()): void {
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   cache[key] = {value, timestamp: Date.now()}
   config.set('cache', cache)
 }
@@ -141,7 +141,7 @@ export function cacheStore(key: ExportedKey, value: string, config = cliKitStore
  * @returns The chache element.
  */
 export function cacheRetrieve(key: ExportedKey, config = cliKitStore()): CacheValue<string> | undefined {
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   return cache[key]
 }
 
@@ -175,7 +175,7 @@ export async function runAtMinimumInterval(
   task: () => Promise<void>,
   config = cliKitStore(),
 ): Promise<boolean> {
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   const cacheKey: MostRecentOccurrenceKey = `most-recent-occurrence-${key}`
   const cached = cache[cacheKey]
 
@@ -226,7 +226,7 @@ interface RunWithRateLimitOptions {
  */
 export async function runWithRateLimit(options: RunWithRateLimitOptions, config = cliKitStore()): Promise<boolean> {
   const {key, limit, timeout, task} = options
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   const cacheKey: RateLimitKey = `rate-limited-occurrences-${key}`
   const cached = cache[cacheKey]
   const now = Date.now()

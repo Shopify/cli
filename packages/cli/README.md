@@ -22,6 +22,7 @@
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
+* [`shopify auth login`](#shopify-auth-login)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
@@ -89,8 +90,8 @@ Build the app, including extensions.
 
 ```
 USAGE
-  $ shopify app build [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [--skip-dependencies-installation]
+  $ shopify app build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+    [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>                  The name of the app configuration.
@@ -119,7 +120,7 @@ Fetch your app configuration from the Partner Dashboard.
 
 ```
 USAGE
-  $ shopify app config link [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
+  $ shopify app config link [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -170,8 +171,8 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-f] [--no-release] [--message <value>] [--version <value>] [--source-control-url <value>]
+  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-color] [--no-release]
+    [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              The name of the app configuration.
@@ -207,10 +208,10 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-s <value>] [--skip-dependencies-installation] [--no-update] [--subscription-product-url <value>]
-    [--checkout-cart-url <value>] [--use-localhost | [--tunnel-url <value> | ]] [--localhost-port <value>] [-t <value>]
-    [--theme-app-extension-port <value>] [--notify <value>]
+  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--localhost-port
+    <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
+    [--skip-dependencies-installation] [-s <value>] [--subscription-product-url <value>] [-t <value>]
+    [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
 
 FLAGS
   -c, --config=<value>                    The name of the app configuration.
@@ -285,8 +286,8 @@ Cleans up the app preview from the selected store.
 
 ```
 USAGE
-  $ shopify app dev clean [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-s <value>]
+  $ shopify app dev clean [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [-s
+    <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -313,8 +314,8 @@ Pull app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env pull [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [--env-file <value>]
+  $ shopify app env pull [--client-id <value> | -c <value>] [--env-file <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -340,7 +341,7 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
+  $ shopify app env show [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -362,7 +363,7 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
+  $ shopify app function build [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -384,8 +385,8 @@ Replays a function run from an app log.
 
 ```
 USAGE
-  $ shopify app function replay [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-j] [-l <value>] [-w]
+  $ shopify app function replay [--client-id <value> | -c <value>] [-j] [-l <value>] [--no-color] [--path <value>]
+    [--reset | ] [--verbose] [-w]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -413,8 +414,8 @@ Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-j] [-i <value>] [-e <value>]
+  $ shopify app function run [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -441,8 +442,8 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [--stdout]
+  $ shopify app function schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--stdout]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -469,8 +470,8 @@ Generate GraphQL types for a JavaScript function.
 
 ```
 USAGE
-  $ shopify app function typegen [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset |
-  ]
+  $ shopify app function typegen [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+  [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -493,8 +494,9 @@ Generate a new app Extension.
 
 ```
 USAGE
-  $ shopify app generate extension [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-t <value>] [-t <value>] [-n <value>] [--flavor vanilla-js|react|typescript|typescript-react|wasm|rust]
+  $ shopify app generate extension [--client-id <value> | -c <value>] [--flavor
+    vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
+    <value>] [-t <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -526,8 +528,8 @@ Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-extensions [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset
-  | ]
+  $ shopify app import-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+  [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -547,8 +549,8 @@ Print basic information about your app and extensions.
 
 ```
 USAGE
-  $ shopify app info [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-j] [--web-env]
+  $ shopify app info [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose] [--web-env]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -579,13 +581,13 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--no-color] [--verbose] [-n <value>] [-p <value>] [--template <value>] [--flavor
-    <value>] [-d npm|yarn|pnpm|bun] [--client-id <value> | ]
+  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [-d
+    npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
   -n, --name=<value>
-  -p, --path=<value>              [default: /Users/gonzalo/src/github.com/Shopify/cli/packages/cli]
+  -p, --path=<value>              [default: .]
       --client-id=<value>         The Client ID of your app. Use this to automatically link your new project to an
                                   existing app. Using this flag avoids the app selection prompt.
       --flavor=<value>            Which flavor of the given template to use.
@@ -603,8 +605,8 @@ Stream detailed logs for your Shopify app.
 
 ```
 USAGE
-  $ shopify app logs [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-j] [-s <value>] [--source <value>] [--status success|failure]
+  $ shopify app logs [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--source <value>] [--status success|failure] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -638,7 +640,7 @@ Print out a list of sources that may be used with the logs command.
 
 ```
 USAGE
-  $ shopify app logs sources [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
+  $ shopify app logs sources [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -685,8 +687,8 @@ List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-j]
+  $ shopify app versions list [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
@@ -709,9 +711,9 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify app webhook trigger [--path <value>] [--client-id <value> | -c <value>] [--reset | ] [--help] [--topic
-    <value>] [--api-version <value>] [--delivery-method http|google-pub-sub|event-bridge] [--shared-secret <value>]
-    [--client-secret <value>] [--address <value>]
+  $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--client-id <value> | -c <value>]
+    [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--path <value>] [--reset |
+    ] [--shared-secret <value>] [--topic <value>]
 
 FLAGS
   -c, --config=<value>
@@ -782,6 +784,21 @@ DESCRIPTION
   - You can't use this method to validate your API webhook subscriptions.
 ```
 
+## `shopify auth login`
+
+Logs you in to your Shopify account.
+
+```
+USAGE
+  $ shopify auth login [--alias <value>]
+
+FLAGS
+  --alias=<value>  An alias to identify the session.
+
+DESCRIPTION
+  Logs you in to your Shopify account.
+```
+
 ## `shopify auth logout`
 
 Logs you out of the Shopify account or Partner account and store.
@@ -800,7 +817,7 @@ List all shopify commands.
 
 ```
 USAGE
-  $ shopify commands [--json] [-c id|plugin|summary|type | --tree] [--deprecated] [-x | ] [--hidden]
+  $ shopify commands [-c id|plugin|summary|type | --tree] [--deprecated] [-x | ] [--hidden] [--json]
     [--no-truncate | ] [--sort id|plugin|summary|type | ]
 
 FLAGS
@@ -902,9 +919,8 @@ Builds a Hydrogen storefront for production.
 
 ```
 USAGE
-  $ shopify hydrogen build [--path <value>] [--entry <value>] [--sourcemap] [--lockfile-check]
-    [--disable-route-warning] [--codegen-config-path <value> --codegen] [--watch] [--bundle-stats]
-    [--force-client-sourcemap]
+  $ shopify hydrogen build [--bundle-stats] [--codegen-config-path <value> --codegen] [--disable-route-warning]
+    [--entry <value>] [--force-client-sourcemap] [--lockfile-check] [--path <value>] [--sourcemap] [--watch]
 
 FLAGS
   --[no-]bundle-stats            Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to
@@ -953,7 +969,7 @@ Generate types for the Storefront API queries found in your project.
 
 ```
 USAGE
-  $ shopify hydrogen codegen [--path <value>] [--codegen-config-path <value>] [--watch]
+  $ shopify hydrogen codegen [--codegen-config-path <value>] [--path <value>] [--watch]
 
 FLAGS
   --codegen-config-path=<value>  Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it
@@ -972,8 +988,8 @@ Push project configuration to admin
 
 ```
 USAGE
-  $ shopify hydrogen customer-account-push --dev-origin <value> [--path <value>] [--storefront-id <value>] [--relative-redirect-uri
-    <value>] [--relative-logout-uri <value>]
+  $ shopify hydrogen customer-account-push --dev-origin <value> [--path <value>] [--relative-logout-uri <value>]
+    [--relative-redirect-uri <value>] [--storefront-id <value>]
 
 FLAGS
   --dev-origin=<value>             (required) The development domain of your application.
@@ -996,7 +1012,7 @@ Builds and profiles the server startup time the app.
 
 ```
 USAGE
-  $ shopify hydrogen debug cpu [--path <value>] [--entry <value>] [--output <value>]
+  $ shopify hydrogen debug cpu [--entry <value>] [--output <value>] [--path <value>]
 
 FLAGS
   --entry=<value>   Entry file for the worker. Defaults to `./server`.
@@ -1015,10 +1031,10 @@ Builds and deploys a Hydrogen storefront to Oxygen.
 
 ```
 USAGE
-  $ shopify hydrogen deploy [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [--preview]
-    [-f] [--no-verify] [--auth-bypass-token-duration <value> --auth-bypass-token] [--build-command <value>]
-    [--lockfile-check] [--path <value>] [-s <value>] [--json-output] [-t <value>] [--metadata-description <value>]
-    [--metadata-user <value>]
+  $ shopify hydrogen deploy [--auth-bypass-token-duration <value> --auth-bypass-token] [--build-command <value>]
+    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--json-output]
+    [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path <value>]
+    [--preview] [-s <value>] [-t <value>]
 
 FLAGS
   -f, --force                               Forces a deployment to proceed if there are uncommited changes in its Git
@@ -1064,10 +1080,10 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 
 ```
 USAGE
-  $ shopify hydrogen dev [--path <value>] [--entry <value>] [--port <value>] [--codegen-config-path <value>
-    --codegen] [--disable-virtual-routes] [--debug] [--inspector-port <value>] [--env <value> | --env-branch <value>]
-    [--env-file <value>] [--disable-version-check] [--verbose] [--host] [--disable-deps-optimizer] [--legacy-runtime]
-    [--sourcemap]
+  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
+    [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
+    [--env-file <value>] [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
+    [--sourcemap] [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
@@ -1120,7 +1136,7 @@ Populate your .env with variables from your Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [--path <value>] [-f]
+  $ shopify hydrogen env pull [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--path <value>]
 
 FLAGS
   -f, --force               Overwrites the destination directory and files if they already exist.
@@ -1162,8 +1178,8 @@ Generates a standard Shopify route.
 
 ```
 USAGE
-  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [--typescript] [--locale-param <value>] [-f] [--path
-    <value>]
+  $ shopify hydrogen generate route ROUTENAME [--adapter <value>] [-f] [--locale-param <value>] [--path <value>]
+    [--typescript]
 
 ARGUMENTS
   ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
@@ -1188,7 +1204,7 @@ Generates all supported standard shopify routes.
 
 ```
 USAGE
-  $ shopify hydrogen generate routes [--adapter <value>] [--typescript] [--locale-param <value>] [-f] [--path <value>]
+  $ shopify hydrogen generate routes [--adapter <value>] [-f] [--locale-param <value>] [--path <value>] [--typescript]
 
 FLAGS
   -f, --force                 Overwrites the destination directory and files if they already exist.
@@ -1209,8 +1225,8 @@ Creates a new Hydrogen storefront.
 
 ```
 USAGE
-  $ shopify hydrogen init [-f] [--path <value>] [--language <value>] [--template <value>] [--install-deps]
-    [--mock-shop] [--styling <value>] [--markets <value>] [--shortcut] [--routes] [--git] [--quickstart]
+  $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
+    [--path <value>] [--quickstart] [--routes] [--shortcut] [--styling <value>] [--template <value>]
 
 FLAGS
   -f, --force              Overwrites the destination directory and files if they already exist.
@@ -1309,9 +1325,9 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 
 ```
 USAGE
-  $ shopify hydrogen preview [--path <value>] [--port <value>] [--legacy-runtime] [--env <value> | --env-branch
-    <value>] [--env-file <value>] [--inspector-port <value>] [--debug] [--verbose] [--watch --build] [--entry <value> ]
-    [--codegen-config-path <value> [--codegen ]]
+  $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>]
+    [--port <value>] [--verbose] [--watch ]
 
 FLAGS
   --build                        Builds the app before starting the preview server.
@@ -1344,7 +1360,7 @@ Scaffold routes and core functionality.
 
 ```
 USAGE
-  $ shopify hydrogen setup [--path <value>] [-f] [--markets <value>] [--shortcut] [--install-deps]
+  $ shopify hydrogen setup [-f] [--install-deps] [--markets <value>] [--path <value>] [--shortcut]
 
 FLAGS
   -f, --force              Overwrites the destination directory and files if they already exist.
@@ -1366,7 +1382,7 @@ Setup CSS strategies for your project.
 
 ```
 USAGE
-  $ shopify hydrogen setup css [STRATEGY] [--path <value>] [-f] [--install-deps]
+  $ shopify hydrogen setup css [STRATEGY] [-f] [--install-deps] [--path <value>]
 
 ARGUMENTS
   STRATEGY  (tailwind|vanilla-extract|css-modules|postcss) The CSS strategy to setup. One of
@@ -1452,7 +1468,7 @@ Upgrade Remix and Hydrogen npm dependencies.
 
 ```
 USAGE
-  $ shopify hydrogen upgrade [--path <value>] [-v <value>] [-f]
+  $ shopify hydrogen upgrade [-f] [--path <value>] [-v <value>]
 
 FLAGS
   -f, --force            Ignore warnings and force the upgrade to the target version
@@ -1470,7 +1486,7 @@ Installs a plugin into shopify.
 
 ```
 USAGE
-  $ shopify plugins add PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ shopify plugins add PLUGIN... [-f] [-h] [--json] [-s | -v]
 
 ARGUMENTS
   PLUGIN...  Plugin to install.
@@ -1532,7 +1548,7 @@ Installs a plugin into shopify.
 
 ```
 USAGE
-  $ shopify plugins install PLUGIN... [--json] [-f] [-h] [-s | -v]
+  $ shopify plugins install PLUGIN... [-f] [-h] [--json] [-s | -v]
 
 ARGUMENTS
   PLUGIN...  Plugin to install.
@@ -1725,8 +1741,8 @@ Validate the theme.
 
 ```
 USAGE
-  $ shopify theme check [--no-color] [--verbose] [--path <value>] [-a] [-C <value>] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--list] [-o text|json] [--print] [-v] [-e <value>]
+  $ shopify theme check [-a] [-C <value>] [-e <value>] [--fail-level crash|error|suggestion|style|warning|info]
+    [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print] [--verbose] [-v]
 
 FLAGS
   -C, --config=<value>          Use the config provided, overriding .theme-check.yml if present
@@ -1789,8 +1805,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--no-color] [--verbose] [--password <value>] [-d] [-a] [-f] [-t <value>] [-s <value>]
-    [-e <value>]
+  $ shopify theme delete [-d] [-e <value>] [-f] [--no-color] [--password <value>] [-a] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -a, --show-all                Include others development themes in theme list.
@@ -1822,10 +1838,10 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [--no-color] [--verbose] [--path <value>] [--host <value>] [--live-reload
-    hot-reload|full-page|off] [--error-overlay silent|default] [--theme-editor-sync] [--port <value>] [-s <value>] [-t
-    <value>] [-n] [-o <value>] [-x <value>] [--password <value>] [-e <value>] [--notify <value>] [--open]
-    [--store-password <value>]
+  $ shopify theme dev [-e <value>] [--error-overlay silent|default] [--host <value>] [-x <value>]
+    [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password
+    <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
+    [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -1934,8 +1950,8 @@ Displays information about your theme environment, including your current store.
 
 ```
 USAGE
-  $ shopify theme info [--no-color] [--verbose] [-j] [-s <value>] [--password <value>] [-e <value>] [-d] [-t
-    <value>]
+  $ shopify theme info [-d] [-e <value>] [-j] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -d, --development             Retrieve info from your development theme.
@@ -2008,8 +2024,8 @@ Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
-  $ shopify theme list [--no-color] [--verbose] [-j] [--password <value>] [-s <value>] [--role
-    live|unpublished|development] [--name <value>] [--id <value>] [-e <value>]
+  $ shopify theme list [-e <value>] [--id <value>] [-j] [--name <value>] [--no-color] [--password <value>]
+    [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
@@ -2034,8 +2050,8 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e
-  <value>]
+  $ shopify theme metafields pull [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>]
+  [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
@@ -2060,8 +2076,8 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--no-color] [--verbose] [--password <value>] [-d] [-E] [-l] [-t <value>] [-s <value>]
-    [-e <value>]
+  $ shopify theme open [-d] [-E] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -E, --editor                  Open the theme editor for the specified theme in the browser.
@@ -2095,7 +2111,7 @@ Package your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
-  $ shopify theme package [--no-color] [--verbose] [--path <value>]
+  $ shopify theme package [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   --no-color      Disable color output.
@@ -2150,7 +2166,7 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--no-color] [--verbose] [--password <value>] [-f] [-t <value>] [-s <value>] [-e <value>]
+  $ shopify theme publish [-e <value>] [-f] [--no-color] [--password <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
@@ -2183,8 +2199,8 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e <value>]
-    [-t <value>] [-d] [-l] [-n] [-o <value>] [-x <value>]
+  $ shopify theme pull [-d] [-e <value>] [-x <value>] [-l] [--no-color] [-n] [-o <value>] [--password <value>]
+    [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development             Pull theme files from your remote development theme.
@@ -2281,8 +2297,8 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [--no-color] [--verbose] [-s <value>] [--password <value>] [-e <value>] [-n <value>] [-d]
-    [-t <value>] [-l]
+  $ shopify theme rename [-d] [-e <value>] [-l] [-n <value>] [--no-color] [--password <value>] [-s <value>] [-t
+    <value>] [--verbose]
 
 FLAGS
   -d, --development             Rename your development theme.
@@ -2311,7 +2327,7 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e <value>]
+  $ shopify theme share [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.

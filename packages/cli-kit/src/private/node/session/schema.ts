@@ -27,7 +27,7 @@ const ApplicationTokenSchema = zod.object({
   storeFqdn: zod.string().optional(),
 })
 
-export const SessionSchema = zod.object({
+const SessionSchema = zod.object({
   identity: IdentityTokenSchema,
   applications: zod.object({}).catchall(ApplicationTokenSchema),
 })
