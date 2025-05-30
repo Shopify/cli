@@ -2,14 +2,23 @@ import {
   getConnectionDoneHandler,
   getOnMessageHandler,
   getPayloadUpdateHandler,
+  handleLogMessage,
+  parseLogMessage,
   websocketUpgradeHandler,
 } from './handlers.js'
 import {SetupWebSocketConnectionOptions} from './models.js'
 import {ExtensionsEndpointPayload} from '../payload/models.js'
-import {vi, describe, test, expect} from 'vitest'
+import {vi, describe, test, expect, Mock} from 'vitest'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import WebSocket, {RawData, WebSocketServer} from 'ws'
 import {IncomingMessage} from 'h3'
+import colors from '@shopify/cli-kit/node/colors'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {Duplex} from 'stream'
+
+vi.mock('@shopify/cli-kit/node/ui/components', () => ({
+  useConcurrentOutputContext: vi.fn(),
+}))
 
 function getMockRequest() {
   const request = {
@@ -57,6 +66,9 @@ function getMockSetupWebSocketConnectionOptions() {
       updateExtensions: vi.fn(),
     },
     manifestVersion: '3',
+    stdout: {
+      write: vi.fn(),
+    },
   } as unknown as SetupWebSocketConnectionOptions
 }
 
@@ -182,5 +194,141 @@ describe('getOnMessageHandler()', () => {
       version: '3',
     }) as unknown as RawData
     wss.clients.forEach((ws) => expect(ws.send).toHaveBeenCalledWith(outgoingMessage))
+  })
+
+  test('on an incoming dispatch with log type outputs the log message', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = JSON.stringify({
+      event: 'dispatch',
+      data: {
+        type: 'log',
+        payload: {
+          level: 'info',
+          message: 'Test log message',
+          extensionName: 'test-extension',
+        },
+      },
+    }) as unknown as RawData
+
+    getOnMessageHandler(wss, options)(data)
+
+    // Verify useConcurrentOutputContext was called with correct parameters
+    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: 'test-extension', stripAnsi: false},
+      expect.any(Function),
+    )
+    // The stdout.write() call happens inside the useConcurrentOutputContext callback
+    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
+    contextCallback()
+
+    expect(options.stdout.write).toHaveBeenCalledWith(`INFO: Test log message`)
+
+    // Verify no client messages were sent since this was a log event
+    wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
+})
+
+describe('parseLogMessage()', () => {
+  test('parses and formats JSON array of strings', () => {
+    const message = JSON.stringify(['Hello', 'world', 'test'], null, 2)
+    const result = parseLogMessage(message)
+    expect(result).toBe('Hello world test')
+  })
+
+  test('parses and formats JSON array with mixed types', () => {
+    const message = JSON.stringify(['String', 42, true, null], null, 2)
+    const result = parseLogMessage(message)
+    expect(result).toBe('String 42 true null')
+  })
+
+  test('parses and formats JSON array with objects', () => {
+    const object = {user: 'john', age: 30}
+    const message = JSON.stringify(['Message:', object], null, 2)
+    const result = parseLogMessage(message)
+    expect(result).toBe(outputContent`Message: ${outputToken.json(object)}`.value)
+  })
+
+  test('returns original message when JSON parsing fails', () => {
+    const invalidJson = 'This is not JSON'
+    const result = parseLogMessage(invalidJson)
+    expect(result).toBe('This is not JSON')
+  })
+
+  test('returns original message for JSON that is not an array', () => {
+    const malformedJson = '{"invalid": json}'
+    const result = parseLogMessage(malformedJson)
+    expect(result).toBe('{"invalid": json}')
+  })
+})
+
+describe('handleLogMessage()', () => {
+  test('outputs info level log message with correct formatting', () => {
+    const options = getMockSetupWebSocketConnectionOptions()
+    const eventData = {
+      payload: {
+        level: 'info',
+        message: 'Test info message',
+        extensionName: 'test-extension',
+      },
+    }
+
+    handleLogMessage(eventData, options)
+
+    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: 'test-extension', stripAnsi: false},
+      expect.any(Function),
+    )
+    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
+    contextCallback()
+
+    expect(options.stdout.write).toHaveBeenCalledWith(`INFO: Test info message`)
+  })
+
+  test('outputs log message with parsed JSON array', () => {
+    const options = getMockSetupWebSocketConnectionOptions()
+    const message = JSON.stringify(['Hello', 'world', {user: 'test'}], null, 2)
+    const eventData = {
+      payload: {
+        level: 'info',
+        message,
+        extensionName: 'test-extension',
+      },
+    }
+
+    handleLogMessage(eventData, options)
+
+    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: 'test-extension', stripAnsi: false},
+      expect.any(Function),
+    )
+    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
+    contextCallback()
+
+    expect(options.stdout.write).toHaveBeenCalledWith(
+      outputContent`INFO: Hello world ${outputToken.json({user: 'test'})}`.value,
+    )
+  })
+
+  test('outputs error level log message with error formatting', () => {
+    const options = getMockSetupWebSocketConnectionOptions()
+    const eventData = {
+      payload: {
+        level: 'error',
+        message: 'Test error message',
+        extensionName: 'error-extension',
+      },
+    }
+
+    handleLogMessage(eventData, options)
+
+    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: 'error-extension', stripAnsi: false},
+      expect.any(Function),
+    )
+    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
+    contextCallback()
+
+    expect(options.stdout.write).toHaveBeenCalledWith(`${colors.bold.redBright('ERROR')}: Test error message`)
   })
 })
