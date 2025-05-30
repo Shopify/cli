@@ -203,7 +203,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const response = await fetch(url, {method: 'POST', body, headers}, 'non-blocking')
 
     if (response.status === 200) {
-      outputDebug(`Analytics event sent: ${JSON.stringify(sanitizePayload(payload))}`)
+      outputDebug(`Analytics event sent: ${JSON.stringify(sanitizePayload(payload), null, 2)}`)
       return {type: 'ok'}
     } else {
       outputDebug(`Failed to report usage analytics: ${response.statusText}`)

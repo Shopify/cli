@@ -501,7 +501,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       usedKnownSpecification = true
     } else {
       return this.abortOrReport(
-        stringifyMessage(['Invalid extension type "', type, '" in "', relativizePath(configurationPath), '"']),
+        `Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
         undefined,
         configurationPath,
       )
@@ -621,12 +621,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
-              stringifyMessage([
-                'Missing handle for extension "',
-                mergedConfig.name,
-                '" at ',
-                relativePath(appDirectory, configurationPath),
-              ]),
+              `Missing handle for extension "${mergedConfig.name}" at ${relativePath(appDirectory, configurationPath)}`,
               undefined,
               configurationPath,
             )
@@ -731,7 +726,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           appConfiguration.path,
         )
       } else {
-        outputDebug(stringifyMessage(['Unused keys in app configuration: ', {json: unusedKeys}]))
+        outputDebug(`Unused keys in app configuration: ${JSON.stringify(unusedKeys, null, 2)}`)
       }
     }
     return extensionInstancesWithKeys
@@ -811,12 +806,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           if (targetExtensions.length > 1) {
             const extensionHandles = ['', ...targetExtensions.map((ext) => ext.configuration.handle)].join('\n  · ')
             this.abortOrReport(
-              stringifyMessage([
-                "A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target ",
-                target,
-                ':',
-                extensionHandles,
-              ]),
+              `A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target ${target}:${extensionHandles}`,
               undefined,
               extension.configurationPath,
             )

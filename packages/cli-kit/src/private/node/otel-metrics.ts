@@ -155,7 +155,7 @@ function globalOtelService(options: CreateMetricRecorderOptions): OtelService {
  */
 function recordCommandCounter(recorder: MetricRecorder, labels: Labels) {
   if (recorder === 'console') {
-    outputDebug(`[OTEL] record ${Name.Counter} counter ${JSON.stringify({labels})}`)
+    outputDebug(`[OTEL] record ${Name.Counter} counter ${JSON.stringify({labels}, null, 2)}`)
     return
   }
   recorder.otel.record(Name.Counter, 1, labels)
@@ -169,7 +169,7 @@ function recordCommandTiming(recorder: MetricRecorder, labels: Labels, timing: T
     outputDebug(
       `[OTEL] record ${Name.Duration} histogram ${timing.active.toString()}ms ${JSON.stringify({
         labels,
-      })}`,
+      }, null, 2)}`,
     )
     outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="active" ${timing.active.toString()}ms`)
     outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="network" ${timing.network.toString()}ms`)

@@ -139,7 +139,12 @@ export function tokenItemToString(token: TokenItem): string {
   } else {
     return token
       .map((item, index) => {
-        if (index !== 0 && !(typeof item !== 'string' && 'char' in item)) {
+        const prevItem = index > 0 ? token[index - 1] : null
+        const shouldAddSpace = index !== 0 && 
+          !(typeof item !== 'string' && 'char' in item) &&
+          !(typeof prevItem === 'string' && prevItem.endsWith(' '))
+        
+        if (shouldAddSpace) {
           return ` ${tokenItemToString(item)}`
         } else {
           return tokenItemToString(item)
@@ -172,7 +177,7 @@ const InlineBlocks: React.FC<{blocks: Block[]}> = ({blocks}) => {
     <Text>
       {blocks.map((block, blockIndex) => (
         <Text key={blockIndex}>
-          {blockIndex !== 0 && !(typeof block.value !== 'string' && 'char' in block.value) && <Text> </Text>}
+          {blockIndex !== 0 && !(typeof block.value !== 'string' && 'char' in block.value) && !(typeof blocks[blockIndex - 1]?.value === 'string' && blocks[blockIndex - 1]?.value.endsWith(' ')) && <Text> </Text>}
           <TokenizedText item={block.value} />
         </Text>
       ))}
