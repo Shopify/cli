@@ -129,7 +129,6 @@ function getColorFunction(color: InkColor): ((text: string) => string) | null {
   }
 }
 
-
 export function tokenItemToString(token: TokenItem): string {
   if (typeof token === 'string') {
     return token
@@ -174,30 +173,30 @@ export function tokenItemToString(token: TokenItem): string {
         if (index === 0) {
           return tokenItemToString(item)
         }
-        
+
         const prevItem = token[index - 1]
         const prevItemString = tokenItemToString(prevItem)
-        
+
         // Don't add space if current item is a char token (punctuation)
         if (typeof item !== 'string' && 'char' in item) {
           return tokenItemToString(item)
         }
-        
+
         // Don't add space if previous item ends with whitespace
         if (prevItemString.endsWith(' ') || prevItemString.endsWith('\n') || prevItemString.endsWith('\t')) {
           return tokenItemToString(item)
         }
-        
+
         // Don't add space if current item is a whitespace string or starts with punctuation
         if (typeof item === 'string' && item.match(/^\s/)) {
           return tokenItemToString(item)
         }
-        
+
         const currentItemString = tokenItemToString(item)
         if (currentItemString.match(/^[.,;:!?]/)) {
           return currentItemString
         }
-        
+
         // Add space for normal word boundaries
         return ` ${tokenItemToString(item)}`
       })
@@ -234,33 +233,33 @@ const InlineBlocks: React.FC<{blocks: Block[]}> = ({blocks}) => {
             </Text>
           )
         }
-        
+
         const prevBlock = blocks[blockIndex - 1]
         const prevBlockString = tokenItemToString(prevBlock!.value)
-        
+
         // Determine if we should add a space
         let shouldAddSpace = true
-        
+
         // Don't add space if current item is a char token (punctuation)
         if (typeof block.value !== 'string' && 'char' in block.value) {
           shouldAddSpace = false
         }
-        
+
         // Don't add space if previous item ends with whitespace
         if (prevBlockString.endsWith(' ') || prevBlockString.endsWith('\n') || prevBlockString.endsWith('\t')) {
           shouldAddSpace = false
         }
-        
+
         // Don't add space if current item is a whitespace string or starts with punctuation
         if (typeof block.value === 'string' && block.value.match(/^\s/)) {
           shouldAddSpace = false
         }
-        
+
         const currentBlockString = tokenItemToString(block.value)
         if (currentBlockString.match(/^[.,;:!?]/)) {
           shouldAddSpace = false
         }
-        
+
         return (
           <Text key={blockIndex}>
             {shouldAddSpace && <Text> </Text>}

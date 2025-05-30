@@ -352,29 +352,33 @@ export function stringifyMessage(message: OutputMessage): string {
     return message
   } else if (message && typeof message === 'object' && 'body' in message) {
     // Handle complex token objects like those used in upgrade.ts
-    const body = (message as any).body
+    const body = (message as unknown).body
     if (Array.isArray(body)) {
-      return body.map((item) => {
+      return body
+        .map((item) => {
+          if (typeof item === 'string') {
+            return item
+          } else if (item && typeof item === 'object') {
+            return itemToString(item)
+          }
+          return String(item)
+        })
+        .join('')
+    }
+    // If body is not an array, fall through to handle as regular object
+    return String((message as unknown).body)
+  } else if (Array.isArray(message)) {
+    // Handle direct arrays like those used in version-name validation
+    return message
+      .map((item) => {
         if (typeof item === 'string') {
           return item
         } else if (item && typeof item === 'object') {
           return itemToString(item)
         }
         return String(item)
-      }).join('')
-    }
-    // If body is not an array, fall through to handle as regular object
-    return String((message as any).body)
-  } else if (Array.isArray(message)) {
-    // Handle direct arrays like those used in version-name validation
-    return message.map((item) => {
-      if (typeof item === 'string') {
-        return item
-      } else if (item && typeof item === 'object') {
-        return itemToString(item)
-      }
-      return String(item)
-    }).join('') // Concatenate array elements directly
+      })
+      .join('') // Concatenate array elements directly
   }
   return String(message)
 }

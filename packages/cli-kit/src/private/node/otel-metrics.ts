@@ -167,9 +167,13 @@ function recordCommandCounter(recorder: MetricRecorder, labels: Labels) {
 function recordCommandTiming(recorder: MetricRecorder, labels: Labels, timing: Timing) {
   if (recorder === 'console') {
     outputDebug(
-      `[OTEL] record ${Name.Duration} histogram ${timing.active.toString()}ms ${JSON.stringify({
-        labels,
-      }, null, 2)}`,
+      `[OTEL] record ${Name.Duration} histogram ${timing.active.toString()}ms ${JSON.stringify(
+        {
+          labels,
+        },
+        null,
+        2,
+      )}`,
     )
     outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="active" ${timing.active.toString()}ms`)
     outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="network" ${timing.network.toString()}ms`)
