@@ -49,7 +49,7 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug, OutputMessage, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
@@ -79,7 +79,7 @@ export async function loadConfigurationFileContent(
   decode: (input: string) => JsonMapType = decodeToml,
 ): Promise<JsonMapType> {
   if (!(await fileExists(filepath))) {
-    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, {}, filepath)
+    return abortOrReport(stringifyMessage(["Couldn't find an app toml file at ", {filePath: filepath}]), {}, filepath)
   }
 
   try {
@@ -90,7 +90,7 @@ export async function loadConfigurationFileContent(
     // TOML errors have line, pos and col properties
     if (err.line !== undefined && err.pos !== undefined && err.col !== undefined) {
       return abortOrReport(
-        outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
+        stringifyMessage(['Fix the following error in ', {filePath: filepath}, ':\n', err.message]),
         {},
         filepath,
       )
@@ -145,9 +145,14 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
     return abortOrReport(
-      outputContent`\n${outputToken.errorText('Validation errors')} in ${outputToken.path(
-        filepath,
-      )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
+      stringifyMessage([
+        '\n',
+        {error: 'Validation errors'},
+        ' in ',
+        {filePath: filepath},
+        ':\n\n',
+        parseHumanReadableError(parseResult.error.issues),
+      ]),
       fallbackOutput,
       filepath,
     )
@@ -172,9 +177,12 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
     case 'error': {
       const fallbackOutput = {} as zod.TypeOf<TSchema>
       return abortOrReport(
-        outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
-          filepath,
-        )}:\n\n${parseHumanReadableError(parsed.errors)}`,
+        stringifyMessage([
+          'App configuration is not valid\nValidation errors in ',
+          {filePath: filepath},
+          ':\n\n',
+          parseHumanReadableError(parsed.errors),
+        ]),
         fallbackOutput,
         filepath,
       )
@@ -234,7 +242,7 @@ export async function checkFolderIsValidApp(directory: string) {
   const thereAreConfigFiles = (await findConfigFiles(directory)).length > 0
   if (thereAreConfigFiles) return
   throw new AbortError(
-    outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
+    stringifyMessage(["Couldn't find an app toml file at ", {filePath: directory}, ', is this an app directory?']),
   )
 }
 
@@ -454,7 +462,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
       if (websOfType[1]) {
         this.abortOrReport(
-          outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
+          stringifyMessage([
+            'You can only have one web with the ',
+            {color: {text: webType, color: 'yellow'}},
+            ' role in your app',
+          ]),
           undefined,
 
           joinPath(websOfType[1].directory, configurationFileNames.web),
@@ -489,7 +501,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       usedKnownSpecification = true
     } else {
       return this.abortOrReport(
-        outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
+        stringifyMessage(['Invalid extension type "', type, '" in "', relativizePath(configurationPath), '"']),
         undefined,
         configurationPath,
       )
@@ -526,7 +538,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     if (usedKnownSpecification) {
       const validateResult = await extensionInstance.validate()
       if (validateResult.isErr()) {
-        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+        this.abortOrReport(stringifyMessage(['\n', validateResult.error]), undefined, configurationPath)
       }
     }
     return extensionInstance
@@ -554,10 +566,14 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       if (extension.handle && handles.has(extension.handle)) {
         const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
         const result = joinWithAnd(matchingExtensions.map((ext) => ext.name))
-        const handle = outputToken.cyan(extension.handle)
-
         this.abortOrReport(
-          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
+          stringifyMessage([
+            'Duplicated handle "',
+            {color: {text: extension.handle, color: 'cyan'}},
+            '" in extensions ',
+            result,
+            '. Handle needs to be unique per extension.',
+          ]),
           undefined,
           extension.configurationPath,
         )
@@ -586,7 +602,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       const parseResult = ExtensionsArraySchema.safeParse(obj)
       if (!parseResult.success) {
         this.abortOrReport(
-          outputContent`Invalid extension configuration at ${relativePath(appDirectory, configurationPath)}`,
+          stringifyMessage(['Invalid extension configuration at ', relativePath(appDirectory, configurationPath)]),
           undefined,
           configurationPath,
         )
@@ -605,10 +621,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
             this.abortOrReport(
-              outputContent`Missing handle for extension "${mergedConfig.name}" at ${relativePath(
-                appDirectory,
-                configurationPath,
-              )}`,
+              stringifyMessage([
+                'Missing handle for extension "',
+                mergedConfig.name,
+                '" at ',
+                relativePath(appDirectory, configurationPath),
+              ]),
               undefined,
               configurationPath,
             )
@@ -622,9 +640,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         return this.createExtensionInstance(type, obj, configurationPath, directory)
       } else {
         return this.abortOrReport(
-          outputContent`Invalid extension type at "${outputToken.path(
-            relativePath(appDirectory, configurationPath),
-          )}". Please specify a type.`,
+          stringifyMessage([
+            'Invalid extension type at "',
+            {filePath: relativePath(appDirectory, configurationPath)},
+            '". Please specify a type.',
+          ]),
           undefined,
           configurationPath,
         )
@@ -706,12 +726,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     if (unusedKeys.length > 0) {
       if (failIfUnsupportedConfigProperty) {
         this.abortOrReport(
-          outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
+          stringifyMessage(['Unsupported section(s) in app configuration: ', unusedKeys.sort().join(', ')]),
           undefined,
           appConfiguration.path,
         )
       } else {
-        outputDebug(outputContent`Unused keys in app configuration: ${outputToken.json(unusedKeys)}`)
+        outputDebug(stringifyMessage(['Unused keys in app configuration: ', {json: unusedKeys}]))
       }
     }
     return extensionInstancesWithKeys
@@ -744,9 +764,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       ).find((sourcePath) => sourcePath !== undefined)
       if (!entryPath) {
         this.abortOrReport(
-          outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
-            directory,
-          )} or ${outputToken.path(joinPath(directory, 'src'))}`,
+          stringifyMessage([
+            "Couldn't find an index.{js,jsx,ts,tsx} file in the directories ",
+            {filePath: directory},
+            ' or ',
+            {filePath: joinPath(directory, 'src')},
+          ]),
           undefined,
           directory,
         )
@@ -788,7 +811,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           if (targetExtensions.length > 1) {
             const extensionHandles = ['', ...targetExtensions.map((ext) => ext.configuration.handle)].join('\n  · ')
             this.abortOrReport(
-              outputContent`A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target ${target}:${extensionHandles}`,
+              stringifyMessage([
+                "A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target ",
+                target,
+                ':',
+                extensionHandles,
+              ]),
               undefined,
               extension.configurationPath,
             )
@@ -1043,7 +1071,9 @@ async function getConfigurationPath(appDirectory: string, configName: string | u
   if (await fileExists(configurationPath)) {
     return {configurationPath, configurationFileName}
   } else {
-    throw new AbortError(outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`)
+    throw new AbortError(
+      stringifyMessage(["Couldn't find ", configurationFileName, ' in ', {filePath: appDirectory}, '.']),
+    )
   }
 }
 
@@ -1055,7 +1085,7 @@ async function getConfigurationPath(appDirectory: string, configName: string | u
  */
 async function getAppDirectory(directory: string) {
   if (!(await fileExists(directory))) {
-    throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(directory)}`)
+    throw new AbortError(stringifyMessage(["Couldn't find directory ", {filePath: directory}]))
   }
 
   // In order to find the chosen config for the app, we need to find the directory of the app.
@@ -1078,7 +1108,7 @@ async function getAppDirectory(directory: string) {
     return appDirectory
   } else {
     throw new AbortError(
-      outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
+      stringifyMessage(["Couldn't find an app toml file at ", {filePath: directory}, ', is this an app directory?']),
     )
   }
 }

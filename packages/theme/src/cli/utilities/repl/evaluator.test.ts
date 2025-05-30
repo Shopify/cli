@@ -2,7 +2,7 @@ import {evaluate, EvaluationConfig} from './evaluator.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputInfo, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../theme-environment/storefront-renderer')
@@ -112,7 +112,7 @@ Liquid syntax error (snippets/eval line 1): Unknown tag 'invalid_tag'</div>`,
     expect(result).toBeUndefined()
     expect(outputInfo).toHaveBeenCalledOnce()
     expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText("Unknown object, property, tag, or filter: 'invalid_tag'")}`,
+      stringifyMessage([{error: "Unknown object, property, tag, or filter: 'invalid_tag'"}]),
     )
   })
 
@@ -130,7 +130,7 @@ Liquid syntax error (snippets/eval line 1): Liquid error: undefined method 'unkn
     expect(result).toBeUndefined()
     expect(outputInfo).toHaveBeenCalledOnce()
     expect(outputInfo).toHaveBeenCalledWith(
-      outputContent`${outputToken.errorText("Liquid error: undefined method 'unknown_object' for nil:NilClass")}`,
+      stringifyMessage([{error: "Liquid error: undefined method 'unknown_object' for nil:NilClass"}]),
     )
   })
 

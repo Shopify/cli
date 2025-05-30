@@ -13,7 +13,6 @@ import {
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
@@ -27,7 +26,7 @@ export class NoOrgError extends AbortError {
       identifierMessage = (formattedIdentifier: string) => `the ${formattedIdentifier} user`
     }
 
-    const formattedIdentifier = outputContent`${outputToken.yellow(accountIdentifier)}`.value
+    const formattedIdentifier = accountIdentifier
 
     const nextSteps = [
       [

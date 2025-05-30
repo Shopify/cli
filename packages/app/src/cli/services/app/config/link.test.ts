@@ -18,7 +18,6 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {outputContent} from '@shopify/cli-kit/node/output'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
 vi.mock('./use.js')
@@ -841,8 +840,8 @@ embedded = false
 
   test('throws an error when an invalid api key is is provided', async () => {
     vi.mocked(InvalidApiKeyErrorMessage).mockReturnValue({
-      message: outputContent`Invalid Client ID`,
-      tryMessage: outputContent`You can find the Client ID in the app settings in the Partners Dashboard.`,
+      message: 'Invalid Client ID',
+      tryMessage: 'You can find the Client ID in the app settings in the Partners Dashboard.',
     })
 
     await inTemporaryDirectory(async (tmp) => {

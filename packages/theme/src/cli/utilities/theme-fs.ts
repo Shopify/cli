@@ -7,7 +7,7 @@ import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
@@ -456,9 +456,7 @@ function dirPath(filePath: string) {
 }
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
-  outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
-  )
+  outputInfo(`• ${timestampDateFormat.format(new Date())}  Synced » ${action} ${fileKey}`)
 }
 
 export function inferLocalHotReloadScriptPath() {

@@ -1,6 +1,6 @@
 import {sleep} from './system.js'
 import {AbortError} from './error.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import * as port from 'get-port-please'
 
 interface GetTCPPortOptions {
@@ -19,10 +19,10 @@ const obtainedRandomPorts = new Set<number>()
  */
 export async function getAvailableTCPPort(preferredPort?: number, options?: GetTCPPortOptions): Promise<number> {
   if (preferredPort && (await checkPortAvailability(preferredPort))) {
-    outputDebug(outputContent`Port ${preferredPort.toString()} is free`)
+    outputDebug(`Port ${preferredPort.toString()} is free`)
     return preferredPort
   }
-  outputDebug(outputContent`Getting a random port...`)
+  outputDebug('Getting a random port...')
   let randomPort = await retryOnError(() => port.getRandomPort(host()), options?.maxTries, options?.waitTimeInSeconds)
 
   for (let i = 0; i < (options?.maxTries ?? 5); i++) {
@@ -33,7 +33,7 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
     randomPort = await retryOnError(() => port.getRandomPort(host()), options?.maxTries, options?.waitTimeInSeconds)
   }
 
-  outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
+  outputDebug(`Random port obtained: ${randomPort}`)
   obtainedRandomPorts.add(randomPort)
   return randomPort
 }
@@ -70,7 +70,7 @@ async function retryOnError<T>(execute: () => T, maxTries = 5, waitTimeInSeconds
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (retryCount++ < maxTries) {
-        outputDebug(outputContent`Unknown problem getting a random port: ${error.message}`)
+        outputDebug(`Unknown problem getting a random port: ${error.message}`)
         // eslint-disable-next-line no-await-in-loop
         await sleep(waitTimeInSeconds)
       } else {

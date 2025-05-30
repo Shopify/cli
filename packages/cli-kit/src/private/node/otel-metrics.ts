@@ -1,5 +1,5 @@
 import {MetricInstrumentType, OtelService} from '../../public/node/vendor/otel-js/service/types.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {
   DefaultOtelService,
   DefaultOtelServiceOptions,
@@ -155,7 +155,7 @@ function globalOtelService(options: CreateMetricRecorderOptions): OtelService {
  */
 function recordCommandCounter(recorder: MetricRecorder, labels: Labels) {
   if (recorder === 'console') {
-    outputDebug(outputContent`[OTEL] record ${Name.Counter} counter ${outputToken.json({labels})}`)
+    outputDebug(`[OTEL] record ${Name.Counter} counter ${JSON.stringify({labels})}`)
     return
   }
   recorder.otel.record(Name.Counter, 1, labels)
@@ -167,13 +167,13 @@ function recordCommandCounter(recorder: MetricRecorder, labels: Labels) {
 function recordCommandTiming(recorder: MetricRecorder, labels: Labels, timing: Timing) {
   if (recorder === 'console') {
     outputDebug(
-      outputContent`[OTEL] record ${Name.Duration} histogram ${timing.active.toString()}ms ${outputToken.json({
+      `[OTEL] record ${Name.Duration} histogram ${timing.active.toString()}ms ${JSON.stringify({
         labels,
       })}`,
     )
-    outputDebug(outputContent`[OTEL] record ${Name.Elapsed} histogram stage="active" ${timing.active.toString()}ms`)
-    outputDebug(outputContent`[OTEL] record ${Name.Elapsed} histogram stage="network" ${timing.network.toString()}ms`)
-    outputDebug(outputContent`[OTEL] record ${Name.Elapsed} histogram stage="prompt" ${timing.prompt.toString()}ms`)
+    outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="active" ${timing.active.toString()}ms`)
+    outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="network" ${timing.network.toString()}ms`)
+    outputDebug(`[OTEL] record ${Name.Elapsed} histogram stage="prompt" ${timing.prompt.toString()}ms`)
     return
   }
 

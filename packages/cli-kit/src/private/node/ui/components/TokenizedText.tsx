@@ -5,6 +5,10 @@ import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
+import {ColoredText, InkColor} from './ColoredText.js'
+import {JsonDisplay} from './JsonDisplay.js'
+import {Icon} from './Icon.js'
+import {DebugMessage} from './DebugMessage.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 
@@ -29,6 +33,25 @@ export interface ListToken {
 
 export interface BoldToken {
   bold: string
+}
+
+export interface ColorToken {
+  color: {
+    text: string
+    color: InkColor
+  }
+}
+
+export interface JsonToken {
+  json: unknown
+}
+
+export interface IconToken {
+  icon: 'success' | 'fail' | 'warning' | 'info'
+}
+
+export interface DebugToken {
+  debug: string
 }
 
 export type Token =
@@ -58,6 +81,10 @@ export type Token =
   | {
       error: string
     }
+  | ColorToken
+  | JsonToken
+  | IconToken
+  | DebugToken
 
 export type InlineToken = Exclude<Token, ListToken>
 export type TokenItem<T extends Token = Token> = T | T[]
@@ -100,6 +127,15 @@ export function tokenItemToString(token: TokenItem): string {
     return token.warn
   } else if ('error' in token) {
     return token.error
+  } else if ('color' in token) {
+    return token.color.text
+  } else if ('json' in token) {
+    return JSON.stringify(token.json)
+  } else if ('icon' in token) {
+    const iconMap = {success: '✓', fail: '✗', warning: '⚠', info: 'ℹ'}
+    return iconMap[token.icon]
+  } else if ('debug' in token) {
+    return `[DEBUG] ${token.debug}`
   } else {
     return token
       .map((item, index) => {
@@ -177,6 +213,14 @@ const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
     return <Text color="yellow">{item.warn}</Text>
   } else if ('error' in item) {
     return <Text color="red">{item.error}</Text>
+  } else if ('color' in item) {
+    return <ColoredText text={item.color.text} color={item.color.color} />
+  } else if ('json' in item) {
+    return <JsonDisplay data={item.json} />
+  } else if ('icon' in item) {
+    return <Icon type={item.icon} />
+  } else if ('debug' in item) {
+    return <DebugMessage message={item.debug} />
   } else {
     const groupedItems = item.map(tokenToBlock).reduce(splitByDisplayType, [])
 

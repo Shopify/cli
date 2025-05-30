@@ -11,7 +11,7 @@ import {
   matchGlob,
 } from './fs.js'
 import {joinPath, dirname, relativePath} from './path.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {Liquid} from 'liquidjs'
 
 /**
@@ -37,7 +37,7 @@ export function renderLiquidTemplate(templateContent: string, data: object): Pro
  * @param data - Data to feed the template engine.
  */
 export async function recursiveLiquidTemplateCopy(from: string, to: string, data: object): Promise<void> {
-  outputDebug(outputContent`Copying template from directory ${outputToken.path(from)} to ${outputToken.path(to)}`)
+  outputDebug(`Copying template from directory ${from} to ${to}`)
   const templateFiles: string[] = await glob(joinPath(from, '**/*'), {dot: true})
 
   const bypassPaths = joinPath(from, '.cli-liquid-bypass')

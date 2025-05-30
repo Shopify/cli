@@ -5,7 +5,7 @@ import {runWithTimer} from './metadata.js'
 import {maxRequestTimeForNetworkCallsMs, skipNetworkLevelRetry} from './environment.js'
 import {httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {sanitizeURL} from '../../private/node/api/urls.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {NetworkRetryBehaviour, simpleRequestWithDebugLog} from '../../private/node/api.js'
 import {DEFAULT_MAX_TIME_MS} from '../../private/node/sleep-with-backoff.js'
 import FormData from 'form-data'
@@ -118,7 +118,7 @@ export function abortSignalFromRequestBehaviour(behaviour: RequestBehaviour): Ab
 
 async function innerFetch({url, behaviour, init, logRequest, useHttpsAgent}: FetchOptions): Promise<Response> {
   if (logRequest) {
-    outputDebug(outputContent`Sending ${init?.method ?? 'GET'} request to URL ${sanitizeURL(url.toString())}
+    outputDebug(`Sending ${init?.method ?? 'GET'} request to URL ${sanitizeURL(url.toString())}
 With request headers:
 ${sanitizedHeadersOutput((init?.headers ?? {}) as {[header: string]: string})}
 `)
@@ -238,7 +238,7 @@ export function downloadFile(url: string, to: string): Promise<string> {
           unlinkFileSync(to)
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch (err: unknown) {
-          outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
+          outputDebug(`Failed to remove file ${to}: ${String(err)}`)
         }
       }
 

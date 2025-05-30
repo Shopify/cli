@@ -1,5 +1,5 @@
 import {presentValue} from './presenter.js'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/output')
@@ -28,7 +28,9 @@ describe('presentValue', () => {
     presentValue(value)
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith(outputContent`${outputToken.cyan('null')}`)
+    expect(outputInfo).toHaveBeenCalledWith({
+      body: [{color: {text: 'null', color: 'cyan'}}],
+    })
     expect(outputInfo).not.toHaveBeenCalledWith(cantBePrintedMessage)
   })
 
@@ -40,7 +42,9 @@ describe('presentValue', () => {
     presentValue(value)
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith(outputContent`${outputToken.cyan('null')}`)
+    expect(outputInfo).toHaveBeenCalledWith({
+      body: [{color: {text: 'null', color: 'cyan'}}],
+    })
     expect(outputInfo).not.toHaveBeenCalledWith(cantBePrintedMessage)
   })
 
@@ -53,7 +57,9 @@ describe('presentValue', () => {
     presentValue(value)
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith(outputContent`${outputToken.cyan(formattedOutput)}`)
+    expect(outputInfo).toHaveBeenCalledWith({
+      body: [{color: {text: formattedOutput, color: 'cyan'}}],
+    })
     expect(outputInfo).not.toHaveBeenCalledWith(cantBePrintedMessage)
   })
 })

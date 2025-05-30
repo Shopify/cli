@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rg:*)",
+      "mcp__claudeception__search_agents",
+      "mcp__claudeception__generate_conversation",
+      "mcp__claudeception__append_conversation",
+      "mcp__claudeception__launch_claude_agent",
+      "mcp__claudeception__read_conversation",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm vitest run:*)",
+      "Bash(pnpm lint:fix:*)",
+      "Bash(pnpm eslint:*)",
+      "Bash(pnpm run lint:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npx tsc:*)"
+    ],
+    "deny": []
+  }
+}

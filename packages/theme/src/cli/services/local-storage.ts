@@ -1,6 +1,6 @@
 import {BugError} from '@shopify/cli-kit/node/error'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 type DevelopmentThemeId = string
 
@@ -66,7 +66,7 @@ export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalSto
 export function getDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
-  outputDebug(outputContent`Getting development theme...`)
+  outputDebug('Getting development theme...')
   return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
 }
 
@@ -74,21 +74,21 @@ export function setDevelopmentTheme(
   theme: string,
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
-  outputDebug(outputContent`Setting development theme...`)
+  outputDebug('Setting development theme...')
   developmentThemeLocalStorage().set(assertThemeStoreExists(themeStorage), theme)
 }
 
 export function removeDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
-  outputDebug(outputContent`Removing development theme...`)
+  outputDebug('Removing development theme...')
   developmentThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
 }
 
 export function getREPLTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
-  outputDebug(outputContent`Getting REPL theme...`)
+  outputDebug('Getting REPL theme...')
   return replThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
 }
 
@@ -96,12 +96,12 @@ export function setREPLTheme(
   theme: string,
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
-  outputDebug(outputContent`Setting REPL theme to ${theme}...`)
+  outputDebug(`Setting REPL theme to ${theme}...`)
   replThemeLocalStorage().set(assertThemeStoreExists(themeStorage), theme)
 }
 
 export function removeREPLTheme(themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()): void {
-  outputDebug(outputContent`Removing REPL theme...`)
+  outputDebug('Removing REPL theme...')
   replThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
 }
 
@@ -109,7 +109,7 @@ export function getStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
   const themeStore = assertThemeStoreExists(themeStorage)
-  outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
+  outputDebug(`Getting storefront password for shop ${themeStore}...`)
   return themeStorePasswordStorage().get(themeStore)
 }
 
@@ -118,7 +118,7 @@ export function setStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   const themeStore = assertThemeStoreExists(themeStorage)
-  outputDebug(outputContent`Setting storefront password for shop ${themeStore}...`)
+  outputDebug(`Setting storefront password for shop ${themeStore}...`)
   themeStorePasswordStorage().set(themeStore, password)
 }
 
@@ -126,7 +126,7 @@ export function removeStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   const themeStore = assertThemeStoreExists(themeStorage)
-  outputDebug(outputContent`Removing storefront password for ${themeStore}...`)
+  outputDebug(`Removing storefront password for ${themeStore}...`)
   themeStorePasswordStorage().delete(themeStore)
 }
 

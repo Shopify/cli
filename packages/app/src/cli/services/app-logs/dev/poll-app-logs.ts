@@ -15,7 +15,7 @@ import {
 } from '../utils.js'
 import {AppLogData, FunctionRunLog} from '../types.js'
 import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
@@ -98,11 +98,7 @@ export const pollAppLogs = async ({
             storeName,
           })
           stdout.write(
-            outputContent`${outputToken.gray('└ ')}${outputToken.link(
-              'Open log file',
-              `file://${logFile.fullOutputPath}`,
-              `Log: ${logFile.fullOutputPath}`,
-            )} ${outputToken.gray(`(${logFile.identifier})`)}\n`.value,
+            `\u001b[90m└ \u001b[39m\u001b[4m\u001b[34mOpen log file\u001b[39m\u001b[24m \u001b[90m(${logFile.identifier})\u001b[39m\n`,
           )
         })
       }
@@ -168,7 +164,7 @@ function handleFunctionRunLog(log: AppLogData, payload: {[key: string]: unknown}
       logs
         .split('\n')
         .filter(Boolean)
-        .map((line: string) => outputContent`${outputToken.gray('│ ')}${line}`.value)
+        .map((line: string) => `\u001b[90m│ \u001b[39m${line}`)
         .join('\n'),
     )
   }

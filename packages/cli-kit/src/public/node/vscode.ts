@@ -1,6 +1,6 @@
 import {fileExists, writeFile, readFile, findPathUp} from './fs.js'
 import {joinPath, cwd} from './path.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 
 /**
  * Check if user editor is VS Code.
@@ -9,11 +9,7 @@ import {outputContent, outputToken, outputDebug} from '../../public/node/output.
  * @returns True if user editor is VS Code.
  */
 export async function isVSCode(root = cwd()): Promise<boolean> {
-  outputDebug(
-    outputContent`Checking if the directory ${outputToken.path(
-      root,
-    )} or any of its parents has a .vscode directory... `,
-  )
+  outputDebug(`Checking if the directory ${root} or any of its parents has a .vscode directory...`)
   const config = await findPathUp(joinPath(root, '.vscode'), {type: 'directory'})
 
   if (!config) {
@@ -30,9 +26,7 @@ export async function isVSCode(root = cwd()): Promise<boolean> {
  * @param recommendations - List of VSCode extensions to recommend.
  */
 export async function addRecommendedExtensions(directory: string, recommendations: string[]): Promise<void> {
-  outputDebug(outputContent`Adding VSCode recommended extensions at ${outputToken.path(directory)}:
-${outputToken.json(recommendations)}
-  `)
+  outputDebug(`Adding VSCode recommended extensions at ${directory}: ${JSON.stringify(recommendations, null, 2)}`)
   const extensionsPath = joinPath(directory, '.vscode/extensions.json')
 
   if (await isVSCode(directory)) {

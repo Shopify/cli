@@ -3,7 +3,7 @@ import {batchedRequests} from '../batching.js'
 import {renderThrownError} from '../errors.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -136,11 +136,7 @@ async function syncChangedAssets(
         assets.map(async (asset) => {
           if (asset) {
             await localFileSystem.write(asset)
-            outputInfo(
-              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
-                '»',
-              )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
-            )
+            outputInfo(`• ${timestampDateFormat.format(new Date())} Synced » download ${asset.key} from remote theme`)
           }
         }),
       )
@@ -160,11 +156,7 @@ export async function deleteRemovedAssets(
       assetsDeletedFromRemote.map((file) => {
         if (localFileSystem.files.get(file.key)) {
           return localFileSystem.delete(file.key).then(() => {
-            outputInfo(
-              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
-                '»',
-              )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
-            )
+            outputInfo(`• ${timestampDateFormat.format(new Date())} Synced » remove ${file.key} from local theme`)
           })
         }
       }),

@@ -5,7 +5,6 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 interface UI {
@@ -144,7 +143,12 @@ const functionSpec = createExtensionSpecification({
     const wasmExists = await fileExists(extension.outputPath)
     if (!wasmExists) {
       throw new AbortError(
-        outputContent`The function extension "${extension.handle}" hasn't compiled the wasm in the expected path: ${extension.outputPath}`,
+        [
+          'The function extension "',
+          {color: {text: extension.handle, color: 'cyan'}},
+          '" hasn\'t compiled the wasm in the expected path: ',
+          {color: {text: extension.outputPath, color: 'cyan'}},
+        ],
         `Make sure the build command outputs the wasm in the expected directory.`,
       )
     }

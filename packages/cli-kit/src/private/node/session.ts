@@ -13,7 +13,7 @@ import {IdentityToken, Session} from './session/schema.js'
 import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {isThemeAccessSession} from './api/rest.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -190,10 +190,10 @@ export async function ensureAuthenticated(
   const fqdnSession = currentSession[fqdn]!
   const scopes = getFlattenScopes(applications)
 
-  outputDebug(outputContent`Validating existing session against the scopes:
-${outputToken.json(scopes)}
+  outputDebug(`Validating existing session against the scopes:
+${JSON.stringify(scopes, null, 2)}
 For applications:
-${outputToken.json(applications)}
+${JSON.stringify(applications, null, 2)}
 `)
   const validationResult = await validateSession(scopes, applications, fqdnSession)
 
@@ -211,10 +211,10 @@ The CLI is currently unable to prompt for reauthentication.`,
 
   if (validationResult === 'needs_full_auth') {
     throwOnNoPrompt()
-    outputDebug(outputContent`Initiating the full authentication flow...`)
+    outputDebug('Initiating the full authentication flow...')
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
-    outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
+    outputDebug('The current session is valid but needs refresh. Refreshing...')
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
@@ -258,7 +258,7 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
   if (firstPartyDev()) {
-    outputDebug(outputContent`Authenticating as Shopify Employee...`)
+    outputDebug('Authenticating as Shopify Employee...')
     scopes.push('employee')
   }
 
@@ -268,16 +268,16 @@ async function executeCompleteFlow(applications: OAuthApplications, identityFqdn
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
     // Request a device code to authorize without a browser redirect.
-    outputDebug(outputContent`Requesting device authorization code...`)
+    outputDebug('Requesting device authorization code...')
     const deviceAuth = await requestDeviceAuthorization(scopes)
 
     // Poll for the identity token
-    outputDebug(outputContent`Starting polling for the identity token...`)
+    outputDebug('Starting polling for the identity token...')
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   }
 
   // Exchange identity token for application tokens
-  outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
+  outputDebug('CLI token received. Exchanging it for application tokens...')
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   const session: Session = {

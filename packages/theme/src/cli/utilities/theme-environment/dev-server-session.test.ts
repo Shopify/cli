@@ -8,7 +8,7 @@ import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -49,9 +49,13 @@ describe('getStorefrontSessionCookiesWithVerification', () => {
     // Then
     await expect(cookiesWithVerification).rejects.toThrow(
       new AbortError(
-        outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
-          `shopify theme delete -t ${themeId}`,
-        )} to delete it, then try your command again.`.value,
+        stringifyMessage([
+          'Theme ',
+          {color: {text: themeId, color: 'cyan'}},
+          ' is missing required files. Run ',
+          {color: {text: `shopify theme delete -t ${themeId}`, color: 'cyan'}},
+          ' to delete it, then try your command again.',
+        ]),
       ),
     )
   })

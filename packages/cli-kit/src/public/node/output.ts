@@ -134,6 +134,9 @@ export function formatPackageManagerCommand(
 /**
  * Creates a tokenized string from an array of strings and tokens.
  *
+ * @deprecated This function is deprecated. Use stringifyMessage with token arrays instead.
+ * For example: stringifyMessage([{bold: 'text'}, '\n', body]) instead of outputContent`${outputToken.heading('text')}\n${body}`.value.
+ *
  * @param strings - The strings to join.
  * @param keys - Array of tokens or strings to join.
  * @returns The tokenized string.
@@ -425,5 +428,5 @@ export function shouldDisplayColors(_process = process): boolean {
  */
 export function formatSection(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
-  return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
+  return stringifyMessage([{bold: formattedTitle}, '\n', body])
 }

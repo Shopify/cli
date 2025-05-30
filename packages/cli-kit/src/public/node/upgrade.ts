@@ -1,6 +1,5 @@
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
 import {packageManagerFromUserAgent} from './node-package-manager.js'
-import {outputContent, outputToken} from './output.js'
 
 /**
  * Utility function for generating an install command for the user to run
@@ -33,6 +32,5 @@ export function cliInstallCommand(): string {
  * @returns The message to remind the user to update the CLI.
  */
 export function getOutputUpdateCLIReminder(version: string): string {
-  return outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(cliInstallCommand())}`
-    .value
+  return `💡 Version ${version} available! Run ${cliInstallCommand()}`
 }

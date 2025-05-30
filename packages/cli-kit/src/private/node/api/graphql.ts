@@ -1,6 +1,6 @@
 import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {sanitizeURL} from './urls.js'
-import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
+import {outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, Variables} from 'graphql-request'
 
@@ -11,8 +11,8 @@ export function debugLogRequestInfo(
   variables?: Variables,
   headers: {[key: string]: string} = {},
 ) {
-  outputDebug(outputContent`Sending ${outputToken.json(api)} GraphQL request:
-  ${outputToken.raw(query.toString().trim())}
+  outputDebug(`Sending ${api} GraphQL request:
+  ${query.toString().trim()}
 ${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
 With request headers:
 ${sanitizedHeadersOutput(headers)}\n
@@ -69,13 +69,11 @@ export function errorHandler(api: string): (error: unknown, requestId?: string) 
   return (error: unknown, requestId?: string) => {
     if (error instanceof ClientError) {
       const {status} = error.response
-      let errorMessage = stringifyMessage(outputContent`
-The ${outputToken.raw(api)} GraphQL API responded unsuccessfully with${
-        status === 200 ? '' : ` the HTTP status ${status} and`
-      } errors:
+      let errorMessage = `
+The ${api} GraphQL API responded unsuccessfully with${status === 200 ? '' : ` the HTTP status ${status} and`} errors:
 
-${outputToken.json(error.response.errors)}
-      `)
+${JSON.stringify(error.response.errors, null, 2)}
+      `
       if (requestId) {
         errorMessage += `
 Request ID: ${requestId}

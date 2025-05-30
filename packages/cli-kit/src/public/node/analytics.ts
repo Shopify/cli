@@ -3,7 +3,7 @@ import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
 
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
@@ -50,14 +50,14 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       },
     })
     if (!withinRateLimit) {
-      outputDebug(outputContent`Skipping command analytics due to rate limiting, payload: ${outputToken.json(payload)}`)
+      outputDebug(`Skipping command analytics due to rate limiting, payload: ${JSON.stringify(payload, null, 2)}`)
       return
     }
 
     const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
     const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
     if (skipMonorailAnalytics || skipMetricAnalytics) {
-      outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
+      outputDebug(`Skipping command analytics, payload: ${JSON.stringify(payload, null, 2)}`)
     }
 
     const doMonorail = async () => {

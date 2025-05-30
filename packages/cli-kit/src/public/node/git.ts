@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import {hasGit, isTerminalInteractive} from './context/local.js'
 import {appendFileSync, detectEOL, fileExistsSync, readFileSync, writeFileSync} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 import ignore from 'ignore'
 
@@ -15,7 +14,7 @@ import ignore from 'ignore'
  * @param initialBranch - The name of the initial branch.
  */
 export async function initializeGitRepository(directory: string, initialBranch = 'main'): Promise<void> {
-  outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
+  outputDebug(`Initializing git repository at ${directory}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -52,7 +51,7 @@ export interface GitIgnoreTemplate {
  * @param template - The template to use to create the .gitignore file.
  */
 export function createGitIgnore(directory: string, template: GitIgnoreTemplate): void {
-  outputDebug(outputContent`Creating .gitignore at ${outputToken.path(directory)}...`)
+  outputDebug(`Creating .gitignore at ${directory}...`)
   const filePath = `${directory}/.gitignore`
 
   let fileContent = ''
@@ -127,7 +126,7 @@ export interface GitCloneOptions {
 export async function downloadGitRepository(cloneOptions: GitCloneOptions): Promise<void> {
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
-    outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
+    outputDebug(`Git-cloning repository ${repoUrl} into ${destination}...`)
     await ensureGitIsPresentOrAbort()
     const [repository, branch] = repoUrl.split('#')
     const options: TaskOptions = {'--recurse-submodules': null}
@@ -211,12 +210,11 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
     maxCount: 1,
   })
   if (!logs.latest) {
-    throw new AbortError(
-      'Must have at least one commit to run command',
-      outputContent`Run ${outputToken.genericShellCommand(
-        "git commit -m 'Initial commit'",
-      )} to create your first commit.`,
-    )
+    throw new AbortError('Must have at least one commit to run command', [
+      'Run ',
+      {command: "git commit -m 'Initial commit'"},
+      ' to create your first commit.',
+    ])
   }
   return logs.latest
 }
@@ -268,15 +266,13 @@ export async function getHeadSymbolicRef(directory?: string): Promise<string> {
   // @ts-ignore
   const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
   if (!ref) {
-    throw new AbortError(
-      "Git HEAD can't be detached to run command",
-      outputContent`Run ${outputToken.genericShellCommand(
-        'git checkout [branchName]',
-      )} to reattach HEAD or see git ${outputToken.link(
-        'documentation',
-        'https://git-scm.com/book/en/v2/Git-Internals-Git-References',
-      )} for more details`,
-    )
+    throw new AbortError("Git HEAD can't be detached to run command", [
+      'Run ',
+      {command: 'git checkout [branchName]'},
+      ' to reattach HEAD or see git ',
+      {link: {label: 'documentation', url: 'https://git-scm.com/book/en/v2/Git-Internals-Git-References'}},
+      ' for more details',
+    ])
   }
   return ref.trim()
 }
@@ -287,13 +283,10 @@ export async function getHeadSymbolicRef(directory?: string): Promise<string> {
  */
 export async function ensureGitIsPresentOrAbort(): Promise<void> {
   if (!(await hasGit())) {
-    throw new AbortError(
-      `Git is necessary in the environment to continue`,
-      outputContent`Install ${outputToken.link(
-        'git',
-        'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git',
-      )}`,
-    )
+    throw new AbortError(`Git is necessary in the environment to continue`, [
+      'Install ',
+      {link: {label: 'git', url: 'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git'}},
+    ])
   }
 }
 
@@ -308,7 +301,7 @@ export async function ensureInsideGitDirectory(directory?: string): Promise<void
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   if (!(await insideGitDirectory(directory))) {
-    throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
+    throw new OutsideGitDirectoryError(`${directory || cwd()} is not a Git directory`)
   }
 }
 
@@ -333,7 +326,7 @@ export class GitDirectoryNotCleanError extends AbortError {}
  */
 export async function ensureIsClean(directory?: string): Promise<void> {
   if (!(await isClean(directory))) {
-    throw new GitDirectoryNotCleanError(`${outputToken.path(directory || cwd())} is not a clean Git directory`)
+    throw new GitDirectoryNotCleanError(`${directory || cwd()} is not a clean Git directory`)
   }
 }
 

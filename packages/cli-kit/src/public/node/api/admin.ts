@@ -1,6 +1,6 @@
 import {graphqlRequest, graphqlRequestDoc, GraphQLResponseOptions, GraphQLVariables} from './graphql.js'
 import {AdminSession} from '../session.js'
-import {outputContent, outputToken} from '../../../public/node/output.js'
+import {stringifyMessage} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../error.js'
 import {
   restRequestBody,
@@ -141,11 +141,12 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
     if (error instanceof ClientError && error.response.status === 403) {
       const storeName = session.storeFqdn.replace('.myshopify.com', '')
       throw new AbortError(
-        outputContent`Looks like you don't have access this dev store: (${outputToken.link(
-          storeName,
-          `https://${session.storeFqdn}`,
-        )})`,
-        outputContent`If you're not the owner, create a dev store staff account for yourself`,
+        stringifyMessage([
+          "Looks like you don't have access this dev store: (",
+          {link: {label: storeName, url: `https://${session.storeFqdn}`}},
+          ')',
+        ]),
+        "If you're not the owner, create a dev store staff account for yourself",
       )
     }
     if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {

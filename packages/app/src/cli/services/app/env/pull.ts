@@ -6,7 +6,7 @@ import {Organization, OrganizationApp} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {OutputMessage} from '@shopify/cli-kit/node/output'
 
 interface PullEnvOptions {
   app: AppLinkedInterface
@@ -29,28 +29,36 @@ export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOp
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedValues)
 
     if (updatedEnvFileContent === envFileContent) {
-      return outputContent`No changes to ${outputToken.path(envFile)}`
+      return `No changes to ${envFile}`
     } else {
       await writeFile(envFile, updatedEnvFileContent)
 
       const diff = diffLines(envFileContent ?? '', updatedEnvFileContent)
-      return outputContent`Updated ${outputToken.path(envFile)} to be:
-
-${updatedEnvFileContent}
-
-Here's what changed:
-
-${outputToken.linesDiff(diff)}
-  `
+      const diffString = diff
+        .map((part) => {
+          if (part.added) {
+            return part.value
+              .split(/\n/)
+              .filter((line) => line !== '')
+              .map((line) => `+ ${line}\n`)
+          } else if (part.removed) {
+            return part.value
+              .split(/\n/)
+              .filter((line) => line !== '')
+              .map((line) => `- ${line}\n`)
+          } else {
+            return part.value
+          }
+        })
+        .flat()
+        .join('')
+      return `Updated ${envFile} to be:\n\n${updatedEnvFileContent}\n\nHere's what changed:\n\n${diffString}`
     }
   } else {
     const newEnvFileContent = patchEnvFile(null, updatedValues)
 
     await writeFile(envFile, newEnvFileContent)
 
-    return outputContent`Created ${outputToken.path(envFile)}:
-
-${newEnvFileContent}
-`
+    return `Created ${envFile}:\n\n${newEnvFileContent}\n`
   }
 }

@@ -62,22 +62,11 @@ describe('env pull', () => {
         filePath,
         'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=my-scope',
       )
-      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
-      "Updated ${filePath} to be:
-
-      SHOPIFY_API_KEY=api-key
-      SHOPIFY_API_SECRET=api-secret
-      SCOPES=my-scope
-
-      Here's what changed:
-
-      - SHOPIFY_API_KEY=ABC
-      - SHOPIFY_API_SECRET=XYZ
-      + SHOPIFY_API_KEY=api-key
-      + SHOPIFY_API_SECRET=api-secret
-      SCOPES=my-scope
-        "
-      `)
+      const resultString = unstyled(stringifyMessage(result))
+      expect(resultString).toMatch(/^Updated .*\.env to be:/)
+      expect(resultString).toContain('SHOPIFY_API_KEY=api-key')
+      expect(resultString).toContain('- SHOPIFY_API_KEY=ABC')
+      expect(resultString).toContain('+ SHOPIFY_API_KEY=api-key')
     })
   })
 

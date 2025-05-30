@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AbortError} from './error.js'
 import {fileExists, readFile, writeFile} from './fs.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {parse} from 'dotenv'
 
 /**
@@ -24,7 +24,7 @@ export interface DotEnvFile {
  * @returns An in-memory representation of the .env file.
  */
 export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
-  outputDebug(outputContent`Reading the .env file at ${outputToken.path(path)}`)
+  outputDebug(`Reading the .env file at ${path}`)
   if (!(await fileExists(path))) {
     throw new AbortError(`The environment file at ${path} does not exist.`)
   }
