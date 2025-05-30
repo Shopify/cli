@@ -9,6 +9,8 @@ import {ColoredText, InkColor} from './ColoredText.js'
 import {JsonDisplay} from './JsonDisplay.js'
 import {Icon} from './Icon.js'
 import {DebugMessage} from './DebugMessage.js'
+import {shouldDisplayColors} from '../../../../public/node/output.js'
+import colors from '../../../../public/node/colors.js'
 import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 
@@ -102,6 +104,32 @@ function tokenToBlock(token: Token): Block {
   }
 }
 
+function getColorFunction(color: InkColor): ((text: string) => string) | null {
+  switch (color) {
+    case 'cyan':
+      return colors.cyan
+    case 'yellow':
+      return colors.yellow
+    case 'red':
+      return colors.red
+    case 'green':
+      return colors.green
+    case 'blue':
+      return colors.blue
+    case 'magenta':
+      return colors.magenta
+    case 'gray':
+      return colors.gray
+    case 'white':
+      return colors.white
+    case 'black':
+      return colors.black
+    default:
+      return null
+  }
+}
+
+
 export function tokenItemToString(token: TokenItem): string {
   if (typeof token === 'string') {
     return token
@@ -128,6 +156,10 @@ export function tokenItemToString(token: TokenItem): string {
   } else if ('error' in token) {
     return token.error
   } else if ('color' in token) {
+    if (shouldDisplayColors()) {
+      const colorFunction = getColorFunction(token.color.color)
+      return colorFunction ? colorFunction(token.color.text) : token.color.text
+    }
     return token.color.text
   } else if ('json' in token) {
     return JSON.stringify(token.json)
@@ -139,16 +171,35 @@ export function tokenItemToString(token: TokenItem): string {
   } else {
     return token
       .map((item, index) => {
-        const prevItem = index > 0 ? token[index - 1] : null
-        const shouldAddSpace = index !== 0 && 
-          !(typeof item !== 'string' && 'char' in item) &&
-          !(typeof prevItem === 'string' && prevItem.endsWith(' '))
-        
-        if (shouldAddSpace) {
-          return ` ${tokenItemToString(item)}`
-        } else {
+        if (index === 0) {
           return tokenItemToString(item)
         }
+        
+        const prevItem = token[index - 1]
+        const prevItemString = tokenItemToString(prevItem)
+        
+        // Don't add space if current item is a char token (punctuation)
+        if (typeof item !== 'string' && 'char' in item) {
+          return tokenItemToString(item)
+        }
+        
+        // Don't add space if previous item ends with whitespace
+        if (prevItemString.endsWith(' ') || prevItemString.endsWith('\n') || prevItemString.endsWith('\t')) {
+          return tokenItemToString(item)
+        }
+        
+        // Don't add space if current item is a whitespace string or starts with punctuation
+        if (typeof item === 'string' && item.match(/^\s/)) {
+          return tokenItemToString(item)
+        }
+        
+        const currentItemString = tokenItemToString(item)
+        if (currentItemString.match(/^[.,;:!?]/)) {
+          return currentItemString
+        }
+        
+        // Add space for normal word boundaries
+        return ` ${tokenItemToString(item)}`
       })
       .join('')
   }
@@ -175,12 +226,48 @@ function splitByDisplayType(acc: Block[][], item: Block) {
 const InlineBlocks: React.FC<{blocks: Block[]}> = ({blocks}) => {
   return (
     <Text>
-      {blocks.map((block, blockIndex) => (
-        <Text key={blockIndex}>
-          {blockIndex !== 0 && !(typeof block.value !== 'string' && 'char' in block.value) && !(typeof blocks[blockIndex - 1]?.value === 'string' && blocks[blockIndex - 1]?.value.endsWith(' ')) && <Text> </Text>}
-          <TokenizedText item={block.value} />
-        </Text>
-      ))}
+      {blocks.map((block, blockIndex) => {
+        if (blockIndex === 0) {
+          return (
+            <Text key={blockIndex}>
+              <TokenizedText item={block.value} />
+            </Text>
+          )
+        }
+        
+        const prevBlock = blocks[blockIndex - 1]
+        const prevBlockString = tokenItemToString(prevBlock!.value)
+        
+        // Determine if we should add a space
+        let shouldAddSpace = true
+        
+        // Don't add space if current item is a char token (punctuation)
+        if (typeof block.value !== 'string' && 'char' in block.value) {
+          shouldAddSpace = false
+        }
+        
+        // Don't add space if previous item ends with whitespace
+        if (prevBlockString.endsWith(' ') || prevBlockString.endsWith('\n') || prevBlockString.endsWith('\t')) {
+          shouldAddSpace = false
+        }
+        
+        // Don't add space if current item is a whitespace string or starts with punctuation
+        if (typeof block.value === 'string' && block.value.match(/^\s/)) {
+          shouldAddSpace = false
+        }
+        
+        const currentBlockString = tokenItemToString(block.value)
+        if (currentBlockString.match(/^[.,;:!?]/)) {
+          shouldAddSpace = false
+        }
+        
+        return (
+          <Text key={blockIndex}>
+            {shouldAddSpace && <Text> </Text>}
+            <TokenizedText item={block.value} />
+          </Text>
+        )
+      })}
     </Text>
   )
 }

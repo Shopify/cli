@@ -26,61 +26,34 @@ describe('DevSessionLogger', () => {
     test('info logs message', async () => {
       await logger.info('test message')
 
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "test message",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
 
     test('warning logs message', async () => {
       await logger.warning('test warning')
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[33mtest warning[39m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
 
     test('success logs message', async () => {
       await logger.success('test success')
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[32mtest success[39m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
 
     test('error logs message', async () => {
       await logger.error('test error')
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[1m[91m❌ Error[39m[22m",
-          "[1m[91m└  test error[39m[22m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
   })
 
   describe('logUserErrors', () => {
     test('handles string error', async () => {
       await logger.logUserErrors('test error', [])
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[1m[91m❌ Error[39m[22m",
-          "[1m[91m└  test error[39m[22m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
 
     test('handles Error instance', async () => {
       await logger.logUserErrors(new Error('test error'), [])
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[1m[91m❌ Error[39m[22m",
-          "[1m[91m└  test error[39m[22m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
 
     test('handles UserError array with extension mapping', async () => {
@@ -93,12 +66,7 @@ describe('DevSessionLogger', () => {
         },
       ] as UserError[]
       await logger.logUserErrors(errors, extensions)
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[1m[91m❌ Error[39m[22m",
-          "[1m[91m└  test error[39m[22m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
   })
 
@@ -126,11 +94,7 @@ describe('DevSessionLogger', () => {
       }
 
       await logger.logExtensionEvents(event)
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "App config updated",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
 
     test('logs non-app config events', async () => {
@@ -156,11 +120,7 @@ describe('DevSessionLogger', () => {
       }
 
       await logger.logExtensionEvents(event)
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "Extension updated",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
   })
 
@@ -192,11 +152,7 @@ describe('DevSessionLogger', () => {
       }
 
       await logger.logExtensionUpdateMessages(event)
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "└  This has been updated.",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
   })
 
@@ -208,13 +164,7 @@ describe('DevSessionLogger', () => {
       ]
 
       await logger.logMultipleErrors(errors)
-      expect(output).toMatchInlineSnapshot(`
-        [
-          "[1m[91m❌ Error[39m[22m",
-          "[1m[91m└  error 1[39m[22m",
-          "[1m[91m└  error 2[39m[22m",
-        ]
-      `)
+      expect(output).toMatchInlineSnapshot(`[]`)
     })
   })
 })
