@@ -22,11 +22,7 @@ export async function loadEnvironment(
   fileName: string,
   options?: LoadEnvironmentOptions,
 ): Promise<JsonMap | undefined> {
-  const basePath = options?.from && options.from !== '.' ? options.from : cwd()
-  const filePath = await findPathUp(fileName, {
-    cwd: basePath,
-    type: 'file',
-  })
+  const filePath = await environmentFilePath(fileName, options)
   if (!filePath) {
     renderWarning({body: 'Environment file not found.'})
     return undefined
@@ -50,4 +46,15 @@ export async function loadEnvironment(
   }))
 
   return environment
+}
+
+export async function environmentFilePath(
+  fileName: string,
+  options?: LoadEnvironmentOptions,
+): Promise<string | undefined> {
+  const basePath = options?.from && options.from !== '.' ? options.from : cwd()
+  return findPathUp(fileName, {
+    cwd: basePath,
+    type: 'file',
+  })
 }

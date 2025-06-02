@@ -1,5 +1,5 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {loadEnvironment} from './environments.js'
+import {loadEnvironment, environmentFilePath} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
@@ -137,15 +137,33 @@ This flag is required in non-interactive terminal environments, such as a CI env
     // If no environment is specified, don't modify the results
     const flags = originalResult.flags as EnvironmentFlags
     const environmentsFileName = this.environmentsFilename()
-    if (!flags.environment?.length || !environmentsFileName) return originalResult
+    let environment
+    let isDefaultEnvironment = false
+
+    if (!environmentsFileName) return originalResult
+
+    const environmentFileExists = await environmentFilePath(environmentsFileName, {from: flags.path})
+    const environmentSpecified = flags.environment && flags.environment.length > 0
+
+    if (!environmentFileExists && !environmentSpecified) return originalResult
+
+    if (!environmentSpecified) {
+      // If no environment is specified attempt to load the default environment
+      environment = await loadEnvironment('default', environmentsFileName, {from: flags.path})
+      isDefaultEnvironment = true
+    }
+
+    if (!flags.environment && !environment) return originalResult
 
     // If users pass multiple environments, do not load them and let each command handle it
-    if (flags.environment.length > 1) return originalResult
+    if (flags.environment && flags.environment.length > 1) return originalResult
 
     // If the specified environment isn't found, don't modify the results
-    const environment = await loadEnvironment(flags.environment[0] as string, environmentsFileName, {from: flags.path})
-    if (!environment) return originalResult
+    if (!environment && flags.environment) {
+      environment = await loadEnvironment(flags.environment[0] as string, environmentsFileName, {from: flags.path})
+    }
 
+    if (!environment) return originalResult
     // Parse using noDefaultsOptions to derive a list of flags specified as
     // command-line arguments.
     const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
@@ -157,13 +175,14 @@ This flag is required in non-interactive terminal environments, such as a CI env
       // Need to specify argv default because we're merging with argsFromEnvironment.
       ...(argv ?? this.argv),
       ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult),
+      ...(isDefaultEnvironment ? ['--environment', 'default'] : []),
     ])
 
     // Report successful application of the environment.
     reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
       noDefaultsResult.flags,
       result.flags,
-      flags.environment[0] as string,
+      isDefaultEnvironment ? 'default' : (flags.environment?.[0] as string),
       environment,
     )
 
