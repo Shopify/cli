@@ -10,6 +10,7 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 export default class Dev extends AppLinkedCommand {
   static summary = 'Run the app.'
@@ -148,16 +149,22 @@ If you're using the Ruby app template, then you need to complete the following s
 
     await checkFolderIsValidApp(flags.path)
 
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'] ?? flags['api-key'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
+    const {store, appContextResult} = await renderSingleTask({
+      title: 'Loading app',
+      taskPromise: async () => {
+        const appContextResult = await linkedAppContext({
+          directory: flags.path,
+          clientId: flags['client-id'] ?? flags['api-key'],
+          forceRelink: flags.reset,
+          userProvidedConfigName: flags.config,
+        })
+        const store = await storeContext({
+          appContextResult,
+          storeFqdn: flags.store,
+          forceReselectStore: flags.reset,
+        })
+        return {store, appContextResult}
+      },
     })
 
     const devOptions: DevOptions = {
