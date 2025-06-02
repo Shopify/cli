@@ -31,7 +31,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.20.3
+          node-version: 24.1.0
       - name: Create Release Pull Request
         uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a #  pin@v1
         with:
