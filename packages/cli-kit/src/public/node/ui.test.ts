@@ -6,6 +6,7 @@ import {
   renderSuccess,
   renderTasks,
   renderWarning,
+  renderSingleTask,
 } from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
@@ -417,5 +418,86 @@ describe('keypress', async () => {
       rejected = true
     }
     expect(rejected).toEqual(true)
+  })
+})
+
+describe('renderSingleTask', async () => {
+  test('returns promise result when task resolves successfully', async () => {
+    // Given
+    const expectedResult = {id: 123, name: 'test-result'}
+    const taskPromise = Promise.resolve(expectedResult)
+    const title = 'Processing data'
+
+    // When
+    const result = await renderSingleTask({title, taskPromise})
+
+    // Then
+    expect(result).toEqual(expectedResult)
+  })
+
+  test('returns function result when function resolves successfully', async () => {
+    // Given
+    const expectedResult = {id: 123, name: 'test-result'}
+    const taskPromise = () => Promise.resolve(expectedResult)
+    const title = 'Processing data'
+
+    // When
+    const result = await renderSingleTask({title, taskPromise})
+
+    // Then
+    expect(result).toEqual(expectedResult)
+  })
+
+  test('returns undefined when task resolves with undefined', async () => {
+    // Given
+    const taskPromise = Promise.resolve(undefined)
+    const title = 'Void task'
+
+    // When
+    const result = await renderSingleTask({title, taskPromise})
+
+    // Then
+    expect(result).toBeUndefined()
+  })
+
+  test('throws error when task promise rejects', async () => {
+    // Given
+    const expectedError = new Error('Task failed with error')
+    const taskPromise = Promise.reject(expectedError)
+    const title = 'Failing task'
+
+    // When & Then
+    await expect(renderSingleTask({title, taskPromise})).rejects.toThrow('Task failed with error')
+  })
+
+  test('handles slow promise rejection', async () => {
+    // Given
+    const expectedError = new Error('Delayed failure')
+    const taskPromise = new Promise((resolve, reject) => {
+      setTimeout(() => reject(expectedError), 100)
+    })
+    const title = 'Slow failing task'
+
+    // When & Then
+    await expect(renderSingleTask({title, taskPromise})).rejects.toThrow('Delayed failure')
+  })
+
+  test('handles concurrent single tasks', async () => {
+    // Given
+    const task1Promise = new Promise((resolve) => setTimeout(() => resolve('result1'), 50))
+    const task2Promise = new Promise((resolve) => setTimeout(() => resolve('result2'), 100))
+    const task3Promise = new Promise((resolve) => setTimeout(() => resolve('result3'), 25))
+
+    // When
+    const [result1, result2, result3] = await Promise.all([
+      renderSingleTask({title: 'Task 1', taskPromise: task1Promise}),
+      renderSingleTask({title: 'Task 2', taskPromise: task2Promise}),
+      renderSingleTask({title: 'Task 3', taskPromise: task3Promise}),
+    ])
+
+    // Then
+    expect(result1).toBe('result1')
+    expect(result2).toBe('result2')
+    expect(result3).toBe('result3')
   })
 })
