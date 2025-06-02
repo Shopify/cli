@@ -5863,8 +5863,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
-      "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
+      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+      "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
       "flags": {
         "no-color": {
           "allowNo": false,
