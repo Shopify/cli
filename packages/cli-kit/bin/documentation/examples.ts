@@ -12,6 +12,7 @@ import {
   renderSuccess,
   renderTable,
   renderTasks,
+  renderSingleTask,
   renderTextPrompt,
   renderWarning,
 } from '../../src/public/node/ui.js'
@@ -21,6 +22,7 @@ import {AbortSignal} from '../../src/public/node/abort.js'
 import {Stdout} from '../../src/private/node/ui.js'
 import {Stdin, waitFor} from '../../src/private/node/testing/ui.js'
 import {Writable} from 'node:stream'
+import { sleep } from '../../src/public/node/system.js'
 
 interface Example {
   type: 'static' | 'async' | 'prompt'
@@ -582,6 +584,25 @@ export const examples: {[key in string]: Example} = {
       )
 
       return stdout.lastFrame()!
+    },
+  },
+  renderSingleTask: {
+    type: 'async',
+    basic: async () => {
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+
+      await renderSingleTask({
+        title: 'Loading app',
+        taskPromise: async () => {
+          await sleep(1)
+        },
+      }, {renderOptions: {stdout: stdout as any, debug: true}})
+
+      // Find the last frame that includes mention of "Loading"
+      const loadingFrame = stdout.frames.findLast(frame => frame.includes('Loading'))
+
+      // Gives a frame where the loading bar is visible
+      return loadingFrame ?? stdout.lastFrame()!
     },
   },
   renderTextPrompt: {
