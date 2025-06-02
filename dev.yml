@@ -3,8 +3,8 @@ name: cli
 up:
   - node:
       version: v22.2.0
-      pnpm: 8.15.7
-      package_manager: pnpm@8.15.7
+      pnpm: 10.11.0
+      package_manager: pnpm@10.11.0
       packages: []
   - packages:
     - jq
