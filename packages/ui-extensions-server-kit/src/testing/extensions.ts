@@ -29,7 +29,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         url: `https://secure-link.com/extensions/${uuid}/assets/handle.js?lastUpdated=${lastUpdated}`,
         lastUpdated,
       },
-      ...((obj.assets || {}) as any),
+      ...((obj.assets ?? {}) as any),
     },
     development: {
       hidden: false,
@@ -44,7 +44,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
         name: 'render name',
         version: '1.0.0',
       },
-      ...((obj.development || {}) as any),
+      ...((obj.development ?? {}) as any),
     },
     // this is due to the naive DeepPartial but also more complex ones
     // [see stackoverflow](https://stackoverflow.com/a/68699273) assume that

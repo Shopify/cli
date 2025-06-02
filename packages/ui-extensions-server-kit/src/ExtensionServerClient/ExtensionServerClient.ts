@@ -212,7 +212,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
       const localization = shouldUpdateTranslations
         ? getFlattenedLocalization(extension.localization, this.options.locales)
-        : this.uiExtensionsByUuid[extension.uuid]?.localization || extension.localization
+        : this.uiExtensionsByUuid[extension.uuid]?.localization ?? extension.localization
 
       const parsedTranslation: {[key: string]: string} =
         localization && isFlattenedTranslations(localization) ? JSON.parse(localization.translations) : localization

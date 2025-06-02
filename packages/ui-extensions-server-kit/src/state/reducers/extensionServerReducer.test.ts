@@ -105,7 +105,7 @@ describe('extensionServerReducer()', () => {
     const state1 = extensionServerReducer(previousState, action)
     // eslint-disable-next-line node/no-unsupported-features/node-builtins
     const url1 = new URL(state1.extensions[0].assets.main.url)
-    const timestamp1 = url1.searchParams.get('lastUpdated') || ''
+    const timestamp1 = url1.searchParams.get('lastUpdated') ?? ''
 
     expect(timestamp1.length).toBeGreaterThan(0)
 
@@ -115,7 +115,7 @@ describe('extensionServerReducer()', () => {
     const state2 = extensionServerReducer(state1, action)
     // eslint-disable-next-line node/no-unsupported-features/node-builtins
     const url2 = new URL(state2.extensions[0].assets.main.url)
-    const timestamp2 = url2.searchParams.get('lastUpdated') || ''
+    const timestamp2 = url2.searchParams.get('lastUpdated') ?? ''
 
     expect(timestamp2.length).toBeGreaterThan(0)
     expect(timestamp1).not.toStrictEqual(timestamp2)
