@@ -13,12 +13,6 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['packages/cli-kit/**/*.{ts,tsx}'],
-      rules: {
-        '@nx/enforce-module-boundaries': 'off',
-      },
-    },
-    {
       files: ['**/public/**/*.ts'],
       excludedFiles: [
         '*.test.ts',
