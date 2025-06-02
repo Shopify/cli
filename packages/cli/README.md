@@ -2108,10 +2108,10 @@ DESCRIPTION
   Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 
   Only folders that match the "default Shopify theme folder structure"
-  (https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.
+  (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
-  (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
+  (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.
 ```
 
 ## `shopify theme profile`
