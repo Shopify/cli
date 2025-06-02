@@ -1,6 +1,6 @@
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 type HostThemeId = string
 type StoreFqdn = AdminSession['storeFqdn']
@@ -21,16 +21,16 @@ export function hostThemeLocalStorage(): LocalStorage<HostThemeLocalStorageSchem
 }
 
 export function getHostTheme(storeFqdn: StoreFqdn): string | undefined {
-  outputDebug(outputContent`Getting host theme...`)
+  outputDebug('Getting host theme...')
   return hostThemeLocalStorage().get(storeFqdn)
 }
 
 export function setHostTheme(storeFqdn: StoreFqdn, themeId: HostThemeId): void {
-  outputDebug(outputContent`Setting host theme...`)
+  outputDebug('Setting host theme...')
   hostThemeLocalStorage().set(storeFqdn, themeId)
 }
 
 export function removeHostTheme(storeFqdn: StoreFqdn): void {
-  outputDebug(outputContent`Removing host theme...`)
+  outputDebug('Removing host theme...')
   hostThemeLocalStorage().delete(storeFqdn)
 }

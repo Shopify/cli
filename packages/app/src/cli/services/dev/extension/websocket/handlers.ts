@@ -6,7 +6,7 @@ import {
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
 
@@ -31,7 +31,7 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
       data: options.payloadStore.getConnectedPayload(),
       version: options.manifestVersion,
     }
-    outputDebug(outputContent`Sending connected payload: ${outputToken.json(connectedPayload)}`, options.stdout)
+    outputDebug(`Sending connected payload: ${JSON.stringify(connectedPayload)}`, options.stdout)
     ws.send(JSON.stringify(connectedPayload))
     ws.on('message', getOnMessageHandler(wss, options))
   }
@@ -44,9 +44,8 @@ export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocke
     const {event: eventType, data: eventData} = jsonData
 
     outputDebug(
-      outputContent`Received websocket message with event type ${eventType} and data:
-${outputToken.json(eventData)}
-          `,
+      `Received websocket message with event type ${eventType} and data:
+${JSON.stringify(eventData, null, 2)}`,
       options.stdout,
     )
 
@@ -89,9 +88,8 @@ export function getPayloadUpdateHandler(
       },
     }
     outputDebug(
-      outputContent`Sending websocket update event to the websocket clients:
-  ${outputToken.json(payload)}
-    `,
+      `Sending websocket update event to the websocket clients:
+${JSON.stringify(payload, null, 2)}`,
       options.stdout,
     )
     notifyClients(wss, payload, options)
@@ -100,9 +98,8 @@ export function getPayloadUpdateHandler(
 
 function notifyClients(wss: WebSocketServer, payload: OutgoingMessage, options: SetupWebSocketConnectionOptions) {
   outputDebug(
-    outputContent`Sending websocket with event type ${payload.event} and data:
-${outputToken.json(payload.data)}
-        `,
+    `Sending websocket with event type ${payload.event} and data:
+${JSON.stringify(payload.data, null, 2)}`,
     options.stdout,
   )
 

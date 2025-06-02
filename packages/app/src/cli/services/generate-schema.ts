@@ -5,7 +5,7 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -80,8 +80,8 @@ async function generateSchemaFromTarget({
 
   if (!definition) {
     throw new AbortError(
-      outputContent`A schema could not be generated for ${localIdentifier}`,
-      outputContent`Check that the Function targets and version are valid.`,
+      stringifyMessage(['A schema could not be generated for ', localIdentifier]),
+      stringifyMessage(['Check that the Function targets and version are valid.']),
     )
   }
 
@@ -109,8 +109,8 @@ async function generateSchemaFromApiType({
 
   if (!definition) {
     throw new AbortError(
-      outputContent`A schema could not be generated for ${localIdentifier}`,
-      outputContent`Check that the Function API type and version are valid.`,
+      stringifyMessage(['A schema could not be generated for ', localIdentifier]),
+      stringifyMessage(['Check that the Function API type and version are valid.']),
     )
   }
 

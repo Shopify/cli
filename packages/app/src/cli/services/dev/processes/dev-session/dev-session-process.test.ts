@@ -20,6 +20,7 @@ import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
 import {readdir} from '@shopify/cli-kit/node/fs'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
@@ -79,9 +80,11 @@ describe('pushUpdatesForDevSession', () => {
   let app: AppLinkedInterface
   let abortController: AbortController
   let devSessionStatusManager: DevSessionStatusManager
+  let mockOutput: ReturnType<typeof mockAndCaptureOutput>
 
   beforeEach(() => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
+    mockOutput = mockAndCaptureOutput()
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
     developerPlatformClient = testDeveloperPlatformClient()
@@ -99,6 +102,7 @@ describe('pushUpdatesForDevSession', () => {
       appLocalProxyURL: 'https://test.local.url',
       devSessionStatusManager,
     }
+    mockOutput.clear()
   })
 
   afterEach(() => {
@@ -113,7 +117,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(developerPlatformClient.devSessionCreate).toHaveBeenCalled()
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Ready'))
+    expect(mockOutput.info()).toContain('Ready')
   })
 
   test('updates use the extension handle as the output prefix', async () => {
@@ -129,7 +133,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(mockOutput.info()).toContain('Updated app preview on test.myshopify.com')
     expect(spyContext).toHaveBeenCalledWith({outputPrefix: 'test-ui-extension', stripAnsi: false}, expect.anything())
 
     // In theory this shouldn't be necessary, but vitest doesn't restore spies automatically.
@@ -148,8 +152,8 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Test error'))
+    expect(mockOutput.info()).toContain('Error')
+    expect(mockOutput.info()).toContain('Test error')
   })
 
   test('handles receiving an event before session is ready', async () => {
@@ -159,9 +163,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(
-      expect.stringContaining('Change detected, but app preview is not ready yet.'),
-    )
+    expect(mockOutput.output()).toContain('Change detected, but app preview is not ready yet.')
     expect(developerPlatformClient.devSessionCreate).not.toHaveBeenCalled()
     expect(developerPlatformClient.devSessionUpdate).not.toHaveBeenCalled()
   })
@@ -179,8 +181,8 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Update error'))
+    expect(mockOutput.info()).toContain('Error')
+    expect(mockOutput.info()).toContain('Update error')
   })
 
   test('handles scope changes and displays updated message', async () => {
@@ -198,10 +200,8 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
-    expect(stdout.write).toHaveBeenCalledWith(
-      expect.stringContaining('Access scopes auto-granted: read_products, write_products'),
-    )
+    expect(mockOutput.info()).toContain('Updated app preview on test.myshopify.com')
+    expect(mockOutput.info()).toContain('Access scopes auto-granted: read_products, write_products')
 
     expect(contextSpy).toHaveBeenCalledWith({outputPrefix: 'app-preview', stripAnsi: false}, expect.anything())
     contextSpy.mockRestore()
@@ -292,15 +292,15 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Watcher error'))
+    expect(mockOutput.info()).toContain('Error')
+    expect(mockOutput.info()).toContain('Watcher error')
   })
 
   test('sets correct status messages during dev session lifecycle', async () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
 
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(`Preparing app preview on ${options.storeFqdn}`))
+    expect(mockOutput.info()).toContain(`Preparing app preview on ${options.storeFqdn}`)
 
     const statusSpy = vi.spyOn(devSessionStatusManager, 'setMessage')
 
@@ -576,7 +576,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Verify the update was attempted and failed
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(1)
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Simulated failure'))
+    expect(mockOutput.info()).toContain('Simulated failure')
     expect(devSessionStatusManager.status.statusMessage?.message).toBe('Error updating app preview')
 
     // Second event (should include retry of first failed event)
@@ -597,7 +597,7 @@ describe('pushUpdatesForDevSession', () => {
     expect(secondCallPayload.manifest.modules.length).toBe(2)
 
     // Verify success status was set
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(mockOutput.info()).toContain('Updated app preview on test.myshopify.com')
     expect(devSessionStatusManager.status.statusMessage?.message).toBe('Updated')
   })
 })

@@ -5,7 +5,7 @@ import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
-import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
@@ -70,7 +70,7 @@ export class UnknownPackageManagerError extends AbortError {
  */
 export class PackageJsonNotFoundError extends AbortError {
   constructor(directory: string) {
-    super(outputContent`The directory ${outputToken.path(directory)} doesn't have a package.json.`)
+    super(`The directory ${directory} doesn't have a package.json.`)
   }
 }
 
@@ -82,7 +82,7 @@ export class PackageJsonNotFoundError extends AbortError {
  */
 export class FindUpAndReadPackageJsonNotFoundError extends BugError {
   constructor(directory: string) {
-    super(outputContent`Couldn't find a a package.json traversing directories from ${outputToken.path(directory)}`)
+    super(`Couldn't find a a package.json traversing directories from ${directory}`)
   }
 }
 
@@ -114,7 +114,7 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   let packageJson: string | undefined
   try {
     directory = await captureOutput('npm', ['prefix'], {cwd: fromDirectory})
-    outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
+    outputDebug(`Obtaining the dependency manager in directory ${directory}...`)
     packageJson = joinPath(directory, 'package.json')
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
@@ -275,7 +275,7 @@ export async function checkForNewVersion(
   {cacheExpiryInHours = 0} = {},
 ): Promise<string | undefined> {
   const getLatestVersion = async () => {
-    outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
+    outputDebug(`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
     return getLatestNPMPackageVersion(dependency)
   }
 
@@ -472,10 +472,10 @@ export async function addNPMDependenciesIfNeeded(
   dependencies: DependencyVersion[],
   options: AddNPMDependenciesIfNeededOptions,
 ): Promise<void> {
-  outputDebug(outputContent`Adding the following dependencies if needed:
-${outputToken.json(dependencies)}
+  outputDebug(`Adding the following dependencies if needed:
+${JSON.stringify(dependencies, null, 2)}
 With options:
-${outputToken.json(options)}
+${JSON.stringify(options, null, 2)}
   `)
   const packageJsonPath = joinPath(options.directory, 'package.json')
   if (!(await fileExists(packageJsonPath))) {
@@ -705,7 +705,7 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
  * @returns A promise to get the latest available version of a package.
  */
 async function getLatestNPMPackageVersion(name: string) {
-  outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
+  outputDebug(`Getting the latest version of NPM package: ${name}`)
   return runWithTimer('cmd_all_timing_network_ms')(() => {
     return latestVersion(name)
   })
@@ -718,7 +718,7 @@ async function getLatestNPMPackageVersion(name: string) {
  * @param packageJSON - Package.json file to write.
  */
 export async function writePackageJSON(directory: string, packageJSON: PackageJson): Promise<void> {
-  outputDebug(outputContent`JSON-encoding and writing content to package.json at ${outputToken.path(directory)}...`)
+  outputDebug(`JSON-encoding and writing content to package.json at ${directory}...`)
   const packagePath = joinPath(directory, 'package.json')
   await writeFile(packagePath, JSON.stringify(packageJSON, null, 2))
 }

@@ -1,7 +1,7 @@
 import {AppConfigurationFileName} from '../models/app/loader.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {normalizePath} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface CachedAppInfo {
   directory: string
@@ -34,7 +34,7 @@ export function getCachedAppInfo(
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): CachedAppInfo | undefined {
   const normalized = normalizePath(directory)
-  outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(normalized)}...`)
+  outputDebug(`Reading cached app information for directory ${normalized}...`)
   return config.get(normalized)
 }
 
@@ -43,7 +43,7 @@ export function clearCachedAppInfo(
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): void {
   const normalized = normalizePath(directory)
-  outputDebug(outputContent`Clearing app information for directory ${outputToken.path(normalized)}...`)
+  outputDebug(`Clearing app information for directory ${normalized}...`)
   config.delete(normalized)
 }
 
@@ -52,11 +52,7 @@ export function setCachedAppInfo(
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): void {
   options.directory = normalizePath(options.directory)
-  outputDebug(
-    outputContent`Storing app information for directory ${outputToken.path(options.directory)}:${outputToken.json(
-      options,
-    )}`,
-  )
+  outputDebug(`Storing app information for directory ${options.directory}:${JSON.stringify(options)}`)
   const savedApp = config.get(options.directory)
   if (savedApp) {
     config.set(options.directory, {

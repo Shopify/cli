@@ -4,7 +4,7 @@ import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
-import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {EventEmitter} from 'events'
 
 export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {
@@ -139,10 +139,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
     const index = payloadExtensions.findIndex((extensionPayload) => extensionPayload.uuid === extension.devUUID)
 
     if (index === -1) {
-      outputDebug(
-        outputContent`Could not updateExtension() for extension with uuid: ${extension.devUUID}`,
-        options.stderr,
-      )
+      outputDebug(`Could not updateExtension() for extension with uuid: ${extension.devUUID}`, options.stderr)
       return
     }
 

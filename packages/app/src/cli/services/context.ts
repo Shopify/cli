@@ -28,13 +28,13 @@ import {
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
 import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
-    message: outputContent`Invalid Client ID: ${apiKey}`,
-    tryMessage: outputContent`You can find the Client ID in the app settings in the Partners Dashboard.`,
+    message: stringifyMessage(['Invalid Client ID: ', apiKey]),
+    tryMessage: stringifyMessage(['You can find the Client ID in the app settings in the Partners Dashboard.']),
   }
 }
 

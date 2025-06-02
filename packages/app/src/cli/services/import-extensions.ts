@@ -9,7 +9,6 @@ import {OrganizationApp} from '../models/organization.js'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
-import {outputContent} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 interface ImportOptions {
@@ -83,12 +82,10 @@ export async function importExtensions(options: ImportOptions) {
 }
 
 function renderSuccessMessages(generatedExtensions: {extension: ExtensionRegistration; directory: string}[]) {
+  const extensionLines = generatedExtensions.map((gen) => `• "${gen.extension.title}" at: ${gen.directory}`).join('\n')
+
   renderSuccess({
     headline: ['Imported the following extensions from the dashboard:'],
-    body: generatedExtensions
-      .map((gen) => {
-        return outputContent`• "${gen.extension.title}" at: ${gen.directory}`.value
-      })
-      .join('\n'),
+    body: extensionLines,
   })
 }

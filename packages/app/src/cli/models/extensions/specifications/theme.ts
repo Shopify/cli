@@ -6,7 +6,6 @@ import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 import {dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const themeSpec = createExtensionSpecification({
   identifier: 'theme',
@@ -107,7 +106,10 @@ function validateLiquidBytes(liquidBytesTotal: number): void {
 function validateFile(filepath: string, dirname: string): void {
   if (!SUPPORTED_BUCKETS.includes(dirname)) {
     throw new AbortError(
-      outputContent`Your theme app extension includes files in an unsupported directory, ${outputToken.path(dirname)}`,
+      [
+        'Your theme app extension includes files in an unsupported directory, ',
+        {color: {text: dirname, color: 'cyan'}},
+      ],
       `Make sure all theme app extension files are in the supported directories: ${SUPPORTED_BUCKETS.join(', ')}`,
     )
   }

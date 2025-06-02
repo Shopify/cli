@@ -12,7 +12,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {findPathUp, glob} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputInfo, outputSuccess, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 
@@ -34,11 +34,11 @@ export async function upgrade(
   if (projectDir) {
     newestVersion = await upgradeLocalShopify(projectDir, currentVersion)
   } else if (usingPackageManager({env})) {
-    throw new AbortError(
-      outputContent`Couldn't find an app toml file at ${outputToken.path(
-        directory,
-      )}, is this a Shopify project directory?`,
-    )
+    throw new AbortError("Couldn't find an app toml file, is this a Shopify project directory?", [
+      "Couldn't find an app toml file at ",
+      {filePath: directory},
+      ', is this a Shopify project directory?',
+    ])
   } else {
     newestVersion = await upgradeGlobalShopify(currentVersion, {env})
   }
@@ -105,11 +105,11 @@ async function upgradeGlobalShopify(
   const homebrewPackage = env.SHOPIFY_HOMEBREW_FORMULA as HomebrewPackageName | undefined
   try {
     if (homebrewPackage) {
-      throw new AbortError(
-        outputContent`Upgrade only works for packages managed by a Node package manager (e.g. npm). Run ${outputToken.genericShellCommand(
-          'brew upgrade && brew update',
-        )} instead`,
-      )
+      throw new AbortError('Upgrade only works for packages managed by a Node package manager (e.g. npm)', [
+        'Upgrade only works for packages managed by a Node package manager (e.g. npm). Run ',
+        {command: 'brew upgrade && brew update'},
+        ' instead',
+      ])
     } else {
       await upgradeGlobalViaNpm()
     }
@@ -128,20 +128,28 @@ async function upgradeGlobalViaNpm(): Promise<void> {
     `${await cliDependency()}@latest`,
     ...globalPlugins.map((plugin) => `${plugin}@latest`),
   ]
-  outputInfo(
-    outputContent`Attempting to upgrade via ${outputToken.genericShellCommand([command, ...args].join(' '))}...`,
-  )
+  outputInfo({
+    body: ['Attempting to upgrade via ', {command: [command, ...args].join(' ')}, '...'],
+  })
   await exec(command, args, {stdio: 'inherit'})
 }
 
 function outputWontInstallMessage(currentVersion: string): void {
-  outputInfo(outputContent`You're on the latest version, ${outputToken.yellow(currentVersion)}, no need to upgrade!`)
+  outputInfo({
+    body: ["You're on the latest version, ", {color: {text: currentVersion, color: 'yellow'}}, ', no need to upgrade!'],
+  })
 }
 
 function outputUpgradeMessage(currentVersion: string, newestVersion: string): void {
-  outputInfo(
-    outputContent`Upgrading CLI from ${outputToken.yellow(currentVersion)} to ${outputToken.yellow(newestVersion)}...`,
-  )
+  outputInfo({
+    body: [
+      'Upgrading CLI from ',
+      {color: {text: currentVersion, color: 'yellow'}},
+      ' to ',
+      {color: {text: newestVersion, color: 'yellow'}},
+      '...',
+    ],
+  })
 }
 
 async function installJsonDependencies(

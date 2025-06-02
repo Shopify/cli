@@ -4,7 +4,7 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import colors from '@shopify/cli-kit/node/colors'
-import {outputContent, outputInfo, outputResult, outputToken, unstyled} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
@@ -119,10 +119,10 @@ export default async function versionList(options: VersionListOptions) {
     },
   })
 
-  const link = outputToken.link(
-    developerPlatformClient.webUiName,
-    [await developerPlatformClient.appDeepLink(remoteApp), 'versions'].join('/'),
-  )
+  const link = await developerPlatformClient.appDeepLink(remoteApp)
+  const versionsUrl = [link, 'versions'].join('/')
 
-  outputInfo(outputContent`\nView all ${String(totalResults)} app versions in the ${link}`)
+  outputInfo(
+    `\nView all ${String(totalResults)} app versions in the ${developerPlatformClient.webUiName} ( ${versionsUrl} )`,
+  )
 }

@@ -5,14 +5,14 @@ import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import which from 'which'
 import {RenderAlertOptions, keypress, renderInfo, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 const MKCERT_VERSION = 'v1.4.4'
 const MKCERT_REPO = 'FiloSottile/mkcert'
-const mkcertSnippet = outputToken.genericShellCommand('mkcert')
+const mkcertSnippet = 'mkcert'
 
 /**
  * Gets the path to the mkcert binary.
@@ -41,7 +41,7 @@ async function getMkcertPath(
 
   const mkcertLocation = await which('mkcert', {nothrow: true})
   if (mkcertLocation) {
-    outputDebug(outputContent`Found ${mkcertSnippet} at ${outputToken.path(mkcertLocation)}`)
+    outputDebug(`Found ${mkcertSnippet} at ${mkcertLocation}`)
     return mkcertLocation
   }
 
@@ -74,7 +74,7 @@ async function downloadMkcert(targetPath: string, platform: NodeJS.Platform, arc
 
   await downloadGitHubRelease(MKCERT_REPO, MKCERT_VERSION, assetName, targetPath)
 
-  outputDebug(outputContent`${mkcertSnippet} saved to ${outputToken.path(targetPath)}`)
+  outputDebug(`${mkcertSnippet} saved to ${targetPath}`)
 }
 
 /**
@@ -172,7 +172,7 @@ export async function generateCertificate({
         mkcertPath = await getMkcertPath(dotShopifyPath, env, platform, arch)
         licenseError = await downloadMkcertLicense(dotShopifyPath)
 
-        outputDebug(outputContent`${mkcertSnippet} found at: ${outputToken.path(mkcertPath)}`)
+        outputDebug(`${mkcertSnippet} found at: ${mkcertPath}`)
       },
     },
   ])
@@ -181,9 +181,9 @@ export async function generateCertificate({
     renderInfo(licenseError)
   }
 
-  outputInfo(outputContent`Generating self-signed certificate for localhost. You may be prompted for your password.`)
+  outputInfo('Generating self-signed certificate for localhost. You may be prompted for your password.')
   await exec(mkcertPath, ['-install', '-key-file', keyPath, '-cert-file', certPath, 'localhost'])
-  outputInfo(outputContent`${outputToken.successIcon()} Certificate generated at ${relativeCertPath}\n`)
+  outputInfo(`✓ Certificate generated at ${relativeCertPath}\n`)
 
   const wsl = await isWsl()
   if (wsl) {

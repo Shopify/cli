@@ -6,7 +6,6 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists, findPathUp} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath} from '@shopify/cli-kit/node/path'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {createRequire} from 'module'
@@ -238,11 +237,9 @@ async function validateUIExtensionPointConfig(
     const exists = await fileExists(fullPath)
 
     if (!exists) {
-      const notFoundPath = outputToken.path(joinPath(directory, module))
-
       errors.push(
-        outputContent`Couldn't find ${notFoundPath}
-Please check the module path for ${target}`.value,
+        `Couldn't find ${joinPath(directory, module)}
+Please check the module path for ${target}`,
       )
     }
 

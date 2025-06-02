@@ -1,6 +1,6 @@
 import {relativePath} from './path.js'
 import {glob, removeFile} from './fs.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import archiver from 'archiver'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
@@ -33,7 +33,7 @@ interface ZipOptions {
  */
 export async function zip(options: ZipOptions): Promise<void> {
   const {inputDirectory, outputZipPath, matchFilePattern = '**/*'} = options
-  outputDebug(outputContent`Zipping ${outputToken.path(inputDirectory)} into ${outputToken.path(outputZipPath)}`)
+  outputDebug(`Zipping ${inputDirectory} into ${outputZipPath}`)
   const pathsToZip = await glob(matchFilePattern, {
     cwd: inputDirectory,
     absolute: true,
@@ -154,7 +154,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
       await removeFile(tempTarPath)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      outputDebug(outputContent`Failed to clean up temporary file: ${outputToken.path(tempTarPath)}`)
+      outputDebug(`Failed to clean up temporary file: ${tempTarPath}`)
     }
   }
 }

@@ -1,5 +1,5 @@
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import Server from 'http-proxy'
 import * as http from 'http'
 import * as https from 'https'
@@ -61,10 +61,10 @@ function getProxyServerRequestListener(
       })
     }
 
-    outputDebug(outputContent`
+    outputDebug(`
 Reverse HTTP proxy error - Invalid path: ${req.url ?? ''}
 These are the allowed paths:
-${outputToken.json(JSON.stringify(rules))}
+${JSON.stringify(rules)}
 `)
 
     res.statusCode = 500

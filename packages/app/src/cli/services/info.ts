@@ -9,8 +9,8 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {
   OutputMessage,
+  TokenizedString,
   formatPackageManagerCommand,
-  outputContent,
   shouldDisplayColors,
   stringifyMessage,
 } from '@shopify/cli-kit/node/output'
@@ -76,11 +76,10 @@ async function infoApp(
         }),
       }
     }
-    return outputContent`${JSON.stringify(
-      Object.fromEntries(Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema')),
-      null,
-      2,
-    )}`
+    const filteredApp = Object.fromEntries(
+      Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema'),
+    )
+    return new TokenizedString(JSON.stringify(filteredApp, null, 2))
   } else {
     const appInfo = new AppInfo(app, remoteApp, options)
     return appInfo.output()

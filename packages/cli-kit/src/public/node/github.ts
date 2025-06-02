@@ -5,7 +5,7 @@ import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {AbortError} from './error.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,7 +44,7 @@ export async function getLatestGitHubRelease(
   repo: string,
   options: GetLatestGitHubReleaseOptions = {filter: () => true},
 ): Promise<GithubRelease> {
-  outputDebug(outputContent`Getting the latest release of GitHub repository ${owner}/${repo}...`)
+  outputDebug(`Getting the latest release of GitHub repository ${owner}/${repo}...`)
   const url = `https://api.github.com/repos/${owner}/${repo}/releases`
   const fetchResult = await fetch(url)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -138,7 +138,7 @@ export async function downloadGitHubRelease(
   const url = `https://github.com/${repo}/releases/download/${version}/${assetName}`
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    outputDebug(outputContent`Downloading ${outputToken.link(assetName, url)}`)
+    outputDebug(`Downloading ${assetName} from ${url}`)
     await inTemporaryDirectory(async (tmpDir) => {
       const tempPath = joinPath(tmpDir, assetName)
       let response: Response
@@ -160,6 +160,6 @@ export async function downloadGitHubRelease(
       await mkdir(dirname(targetPath))
       await moveFile(tempPath, targetPath)
     })
-    outputDebug(outputContent`${outputToken.successIcon()} Successfully downloaded ${outputToken.path(targetPath)}`)
+    outputDebug(`✅ Successfully downloaded ${targetPath}`)
   })
 }

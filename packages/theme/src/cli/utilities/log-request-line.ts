@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import {EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX} from './theme-environment/proxy.js'
 import {timestampDateFormat} from '../constants.js'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 
@@ -23,17 +22,24 @@ export function logRequestLine(event: H3Event, response: MinimalResponse) {
   const requestDuration = serverTiming?.match(/cfRequestDuration;dur=([\d.]+)/)?.[1]
   const durationString = requestDuration ? `${Math.round(Number(requestDuration))}ms` : ''
 
-  const statusColor = getColorizeStatus(response.status)
+  const statusColorToken = getColorizeStatus(response.status)
 
   const eventMethodAligned = event.method.padStart(6)
 
-  outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())} Request ${outputToken.raw(
-      '»',
-    )} ${eventMethodAligned} ${statusColor(String(response.status))} ${truncatedPath} ${outputToken.gray(
-      durationString,
-    )}`,
-  )
+  outputInfo({
+    body: [
+      '• ',
+      timestampDateFormat.format(new Date()),
+      ' Request » ',
+      eventMethodAligned,
+      ' ',
+      statusColorToken,
+      ' ',
+      truncatedPath,
+      ' ',
+      {color: {text: durationString, color: 'gray'}},
+    ],
+  })
 }
 
 export function shouldLog(event: H3Event) {
@@ -52,10 +58,10 @@ export function shouldLog(event: H3Event) {
 
 function getColorizeStatus(status: number) {
   if (status < 300) {
-    return outputToken.green
+    return {color: {text: String(status), color: 'green'}}
   } else if (status < 400) {
-    return outputToken.yellow
+    return {color: {text: String(status), color: 'yellow'}}
   } else {
-    return outputToken.errorText
+    return {color: {text: String(status), color: 'red'}}
   }
 }

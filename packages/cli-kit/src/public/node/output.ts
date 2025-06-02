@@ -134,6 +134,9 @@ export function formatPackageManagerCommand(
 /**
  * Creates a tokenized string from an array of strings and tokens.
  *
+ * @deprecated This function is deprecated. Use stringifyMessage with token arrays instead.
+ * For example: stringifyMessage([{bold: 'text'}, '\n', body]) instead of outputContent`${outputToken.heading('text')}\n${body}`.value.
+ *
  * @param strings - The strings to join.
  * @param keys - Array of tokens or strings to join.
  * @returns The tokenized string.
@@ -345,9 +348,39 @@ export function outputNewline(): void {
 export function stringifyMessage(message: OutputMessage): string {
   if (message instanceof TokenizedString) {
     return message.value
-  } else {
+  } else if (typeof message === 'string') {
     return message
+  } else if (message && typeof message === 'object' && 'body' in message) {
+    // Handle complex token objects like those used in upgrade.ts
+    const body = (message as unknown).body
+    if (Array.isArray(body)) {
+      return body
+        .map((item) => {
+          if (typeof item === 'string') {
+            return item
+          } else if (item && typeof item === 'object') {
+            return itemToString(item)
+          }
+          return String(item)
+        })
+        .join('')
+    }
+    // If body is not an array, fall through to handle as regular object
+    return String((message as unknown).body)
+  } else if (Array.isArray(message)) {
+    // Handle direct arrays like those used in version-name validation
+    return message
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item
+        } else if (item && typeof item === 'object') {
+          return itemToString(item)
+        }
+        return String(item)
+      })
+      .join('') // Concatenate array elements directly
   }
+  return String(message)
 }
 
 /**
@@ -425,5 +458,5 @@ export function shouldDisplayColors(_process = process): boolean {
  */
 export function formatSection(title: string, body: string): string {
   const formattedTitle = `${title.toUpperCase()}${' '.repeat(35 - title.length)}`
-  return outputContent`${outputToken.heading(formattedTitle)}\n${body}`.value
+  return stringifyMessage([{bold: formattedTitle}, '\n', body])
 }

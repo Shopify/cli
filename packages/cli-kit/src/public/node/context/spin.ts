@@ -2,18 +2,19 @@ import {isTruthy} from './utilities.js'
 import {fileExists, readFile, readFileSync} from '../fs.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
-import {outputContent, outputToken} from '../output.js'
+import {stringifyMessage} from '../output.js'
 import {getCachedSpinFqdn, setCachedSpinFqdn} from '../../../private/node/context/spin-cache.js'
 import {AbortError} from '../error.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {joinPath} from '../path.js'
 
 const SpinInstanceNotFoundMessages = (spinInstance: string | undefined, error: string) => {
-  const errorMessage = outputContent`${outputToken.genericShellCommand(
-    `spin`,
-  )} yielded the following error trying to obtain the fully qualified domain name of the Spin instance:
-${error}
-  `
+  const errorMessage = stringifyMessage([
+    {color: {text: 'spin', color: 'cyan'}},
+    ' yielded the following error trying to obtain the fully qualified domain name of the Spin instance:\n',
+    error,
+    '\n  ',
+  ])
   let nextSteps: string | undefined
   if (spinInstance) {
     nextSteps = `Make sure ${spinInstance} is the instance name and not a fully qualified domain name`

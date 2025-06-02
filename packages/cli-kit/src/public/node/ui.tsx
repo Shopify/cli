@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable tsdoc/syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
-import {outputContent, outputDebug, outputToken} from './output.js'
+import {outputDebug, stringifyMessage} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
@@ -623,7 +623,7 @@ function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDeb
   const promptText = tokenItemToString(message)
   const errorMessage = `Failed to prompt:
 
-${outputContent`${outputToken.cyan(promptText)}`.value}
+${stringifyMessage([{color: {text: promptText, color: 'cyan'}}])}
 
 This usually happens when running a command non-interactively, for example in a CI environment, or when piping to or from another process.`
   throw new AbortError(

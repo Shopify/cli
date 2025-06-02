@@ -4,7 +4,7 @@ import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {renderInfo, renderWarning} from './ui.js'
-import {outputContent, outputResult, outputToken} from './output.js'
+import {outputResult} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
@@ -114,11 +114,13 @@ abstract class BaseCommand extends Command {
     requiredFlags.forEach((name: string) => {
       if (!(name in flags)) {
         throw new AbortError(
-          outputContent`Flag not specified:
-
-${outputToken.cyan(name)}
-
-This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`,
+          [
+            'Flag not specified:',
+            '\n\n',
+            {color: {text: name, color: 'cyan'}},
+            '\n\n',
+            'This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.',
+          ],
           'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
         )
       }
@@ -275,11 +277,11 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
         if (value) {
           args.push(`--${label}`)
         } else {
-          throw new AbortError(
-            outputContent`Environments can only specify true for boolean flags. Attempted to set ${outputToken.yellow(
-              label,
-            )} to false.`,
-          )
+          throw new AbortError([
+            'Environments can only specify true for boolean flags. Attempted to set ',
+            {color: {text: label, color: 'yellow'}},
+            ' to false.',
+          ])
         }
       } else if (Array.isArray(value)) {
         value.forEach((element) => args.push(`--${label}`, `${element}`))

@@ -13,7 +13,7 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {AppInterface} from '../../models/app/app.js'
 import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
@@ -31,14 +31,22 @@ class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
     super(
       message,
-      outputContent`Make sure you have a compatible version of the ${outputToken.yellow(
-        '@shopify/shopify_function',
-      )} library installed.`,
       [
-        outputContent`Add ${outputToken.green(
-          `"@shopify/shopify_function": "~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0"`,
-        )} to the dependencies section of the package.json file in your function's directory, if not already present.`
-          .value,
+        {text: 'Make sure you have a compatible version of the '},
+        {color: {text: '@shopify/shopify_function', color: 'yellow'}},
+        {text: ' library installed.'},
+      ],
+      [
+        {text: 'Add '},
+        {
+          color: {
+            text: `"@shopify/shopify_function": "~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0"`,
+            color: 'green',
+          },
+        },
+        {
+          text: " to the dependencies section of the package.json file in your function's directory, if not already present.",
+        },
         `Run your package manager's install command to update dependencies.`,
       ],
     )

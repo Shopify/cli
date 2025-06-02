@@ -8,7 +8,7 @@ import {
   exchangeCliTokenForAppManagementAccessToken,
   exchangeCliTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {
   AdminAPIScope,
   AppManagementAPIScope,
@@ -49,8 +49,8 @@ export async function ensureAuthenticatedPartners(
   env = process.env,
   options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<{token: string; userId: string}> {
-  outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
-${outputToken.json(scopes)}
+  outputDebug(`Ensuring that the user is authenticated with the Partners API with the following scopes:
+${JSON.stringify(scopes, null, 2)}
 `)
   const envToken = getPartnersToken()
   if (envToken) {
@@ -79,8 +79,8 @@ export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
   businessPlatformScopes: BusinessPlatformScope[] = [],
   env = process.env,
 ): Promise<{appManagementToken: string; userId: string; businessPlatformToken: string}> {
-  outputDebug(outputContent`Ensuring that the user is authenticated with the App Management API with the following scopes:
-${outputToken.json(appManagementScopes)}
+  outputDebug(`Ensuring that the user is authenticated with the App Management API with the following scopes:
+${JSON.stringify(appManagementScopes, null, 2)}
 `)
 
   const envToken = getPartnersToken()
@@ -132,8 +132,8 @@ export async function ensureAuthenticatedStorefront(
     return password
   }
 
-  outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
-${outputToken.json(scopes)}
+  outputDebug(`Ensuring that the user is authenticated with the Storefront API with the following scopes:
+${JSON.stringify(scopes, null, 2)}
 `)
   const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, {forceRefresh})
   if (!tokens.storefront) {
@@ -157,10 +157,8 @@ export async function ensureAuthenticatedAdmin(
   forceRefresh = false,
   options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<AdminSession> {
-  outputDebug(outputContent`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${outputToken.raw(
-    store,
-  )}:
-${outputToken.json(scopes)}
+  outputDebug(`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${store}:
+${JSON.stringify(scopes, null, 2)}
 `)
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {
     forceRefresh,
@@ -189,8 +187,8 @@ export async function ensureAuthenticatedThemes(
   scopes: AdminAPIScope[] = [],
   forceRefresh = false,
 ): Promise<AdminSession> {
-  outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
-${outputToken.json(scopes)}
+  outputDebug(`Ensuring that the user is authenticated with the Theme API with the following scopes:
+${JSON.stringify(scopes, null, 2)}
 `)
   if (password) {
     const session = {token: password, storeFqdn: await normalizeStoreFqdn(store)}
@@ -209,8 +207,8 @@ ${outputToken.json(scopes)}
  * @returns The access token for the Business Platform API.
  */
 export async function ensureAuthenticatedBusinessPlatform(scopes: BusinessPlatformScope[] = []): Promise<string> {
-  outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
-${outputToken.json(scopes)}
+  outputDebug(`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
+${JSON.stringify(scopes, null, 2)}
 `)
   const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env)
   if (!tokens.businessPlatform) {

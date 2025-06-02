@@ -1,4 +1,4 @@
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export function presentValue(value?: unknown) {
   if (hasJsonError(value)) {
@@ -33,5 +33,7 @@ function hasJsonError(output: unknown): boolean {
 }
 
 function renderValue(value: string) {
-  return outputInfo(outputContent`${outputToken.cyan(value)}`)
+  return outputInfo({
+    body: [{color: {text: value, color: 'cyan'}}],
+  })
 }

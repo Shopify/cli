@@ -3,7 +3,7 @@ import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
-import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
+import {outputDebug, outputInfo} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {isCI, openURL} from '../../../public/node/system.js'
@@ -43,7 +43,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jsonResult: any = await response.json()
 
-  outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
+  outputDebug(`Received device authorization code: ${JSON.stringify(jsonResult, null, 2)}`)
   if (!jsonResult.device_code || !jsonResult.verification_uri_complete) {
     throw new BugError('Failed to start authorization process')
   }
@@ -57,11 +57,11 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     )
   }
 
-  outputInfo(outputContent`User verification code: ${jsonResult.user_code}`)
-  const linkToken = outputToken.link(jsonResult.verification_uri_complete)
+  outputInfo(`User verification code: ${jsonResult.user_code}`)
+  const verificationLink = jsonResult.verification_uri_complete
 
   const cloudMessage = () => {
-    outputInfo(outputContent`👉 Open this link to start the auth process: ${linkToken}`)
+    outputInfo(`👉 Open this link to start the auth process: ${verificationLink}`)
   }
 
   if (isCloudEnvironment() || !isTTY()) {
@@ -71,7 +71,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     await keypress()
     const opened = await openURL(jsonResult.verification_uri_complete)
     if (opened) {
-      outputInfo(outputContent`Opened link to start the auth process: ${linkToken}`)
+      outputInfo(`Opened link to start the auth process: ${verificationLink}`)
     } else {
       cloudMessage()
     }
@@ -111,7 +111,7 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
 
       const error = result.error ?? 'unknown_failure'
 
-      outputDebug(outputContent`Polling for device authorization... status: ${error}`)
+      outputDebug(`Polling for device authorization... status: ${error}`)
       switch (error) {
         case 'authorization_pending': {
           startPolling()

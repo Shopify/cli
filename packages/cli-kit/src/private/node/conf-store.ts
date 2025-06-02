@@ -1,6 +1,6 @@
 import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 interface CacheValue<T> {
   value: T
@@ -50,7 +50,7 @@ function cliKitStore() {
  * @returns Session.
  */
 export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
-  outputDebug(outputContent`Getting session store...`)
+  outputDebug('Getting session store...')
   return config.get('sessionStore')
 }
 
@@ -60,7 +60,7 @@ export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): st
  * @param session - Session.
  */
 export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  outputDebug(outputContent`Setting session store...`)
+  outputDebug('Setting session store...')
   config.set('sessionStore', session)
 }
 
@@ -68,7 +68,7 @@ export function setSession(session: string, config: LocalStorage<ConfSchema> = c
  * Remove session.
  */
 export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()): void {
-  outputDebug(outputContent`Removing session store...`)
+  outputDebug('Removing session store...')
   config.delete('sessionStore')
 }
 

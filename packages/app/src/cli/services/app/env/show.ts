@@ -1,7 +1,7 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../../models/organization.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {OutputMessage} from '@shopify/cli-kit/node/output'
 
 type Format = 'json' | 'text'
 
@@ -22,16 +22,18 @@ export async function outputEnv(
   await logMetadataForLoadedContext(remoteApp, organization.source)
 
   if (format === 'json') {
-    return outputContent`${outputToken.json({
-      SHOPIFY_API_KEY: remoteApp.apiKey,
-      SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0]?.secret,
-      SCOPES: getAppScopes(app.configuration),
-    })}`
+    return JSON.stringify(
+      {
+        SHOPIFY_API_KEY: remoteApp.apiKey,
+        SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0]?.secret,
+        SCOPES: getAppScopes(app.configuration),
+      },
+      null,
+      2,
+    )
   } else {
-    return outputContent`
-    ${outputToken.green('SHOPIFY_API_KEY')}=${remoteApp.apiKey}
-    ${outputToken.green('SHOPIFY_API_SECRET')}=${remoteApp.apiSecretKeys[0]?.secret ?? ''}
-    ${outputToken.green('SCOPES')}=${getAppScopes(app.configuration)}
-  `
+    return `\n    SHOPIFY_API_KEY=${remoteApp.apiKey}\n    SHOPIFY_API_SECRET=${
+      remoteApp.apiSecretKeys[0]?.secret ?? ''
+    }\n    SCOPES=${getAppScopes(app.configuration)}\n  `
   }
 }

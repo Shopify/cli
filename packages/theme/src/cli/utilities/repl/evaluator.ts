@@ -1,7 +1,7 @@
 import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, stringifyMessage} from '@shopify/cli-kit/node/output'
 
 export interface SessionItem {
   type: string
@@ -22,7 +22,7 @@ export async function evaluate(config: EvaluationConfig): Promise<string | numbe
 
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    outputInfo(outputContent`${outputToken.errorText(error.message)}`)
+    outputInfo(stringifyMessage([{error: error.message}]))
     outputDebug(error.stack || 'Error backtrace not found')
   }
 }
@@ -64,7 +64,7 @@ async function evalAssignmentContext(config: EvaluationConfig) {
 
   if (isSmartAssignment(config.snippet)) {
     config.snippet = `assign ${config.snippet}`
-    outputInfo(outputContent`${outputToken.gray(`> ${config.snippet}`)}`)
+    outputInfo(stringifyMessage([{color: {text: `> ${config.snippet}`, color: 'gray'}}]))
     return evalContext(config)
   }
 }
@@ -91,13 +91,13 @@ async function evalSyntaxError(config: EvaluationConfig) {
 
 function printSyntaxError(snippet: string, error: string) {
   if (error.includes('Unknown tag')) {
-    outputInfo(outputContent`${outputToken.errorText(`Unknown object, property, tag, or filter: '${snippet}'`)}`)
+    outputInfo(stringifyMessage([{error: `Unknown object, property, tag, or filter: '${snippet}'`}]))
     return
   }
 
   const resultContent = stripHTMLContent(error)
   if (resultContent) {
-    outputInfo(outputContent`${outputToken.errorText(resultContent)}`)
+    outputInfo(stringifyMessage([{error: resultContent}]))
   }
 }
 

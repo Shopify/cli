@@ -1,7 +1,7 @@
 import {UserError} from './dev-session.js'
 import {AppEvent} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
@@ -18,11 +18,11 @@ export class DevSessionLogger {
   }
 
   async warning(message: string) {
-    await this.log(outputContent`${outputToken.yellow(message)}`.value)
+    await this.log(message, 'warning')
   }
 
   async success(message: string) {
-    await this.log(outputContent`${outputToken.green(message)}`.value)
+    await this.log(message, 'success')
   }
 
   async debug(message: string) {
@@ -30,10 +30,8 @@ export class DevSessionLogger {
   }
 
   async error(message: string, prefix?: string) {
-    const header = outputToken.errorText(`❌ Error`)
-    const content = outputToken.errorText(`└  ${message}`)
-    await this.log(outputContent`${header}`.value, prefix)
-    await this.log(outputContent`${content}`.value, prefix)
+    await this.log(`❌ Error`, prefix, 'error')
+    await this.log(`└  ${message}`, prefix, 'error')
   }
 
   async logUserErrors(errors: UserError[] | Error | string, extensions: ExtensionInstance[]) {
@@ -91,19 +89,29 @@ export class DevSessionLogger {
   }
 
   async logMultipleErrors(errors: {error: string; prefix: string}[]) {
-    const header = outputToken.errorText(`❌ Error`)
-    await this.log(outputContent`${header}`.value, 'app-preview')
+    await this.log(`❌ Error`, 'app-preview', 'error')
     const messages = errors.map((error) => {
-      const content = outputToken.errorText(`└  ${error.error}`)
-      return this.log(outputContent`${content}`.value, error.prefix)
+      return this.log(`└  ${error.error}`, error.prefix, 'error')
     })
     await Promise.all(messages)
   }
 
   // Helper function to print to terminal using output context with stripAnsi disabled.
-  private async log(message: string, prefix?: string) {
+  private async log(message: string, prefix?: string, type: 'info' | 'warning' | 'success' | 'error' = 'info') {
     await useConcurrentOutputContext({outputPrefix: prefix ?? 'app-preview', stripAnsi: false}, () => {
-      this.stdout.write(message)
+      switch (type) {
+        case 'warning':
+          outputWarn(message, this.stdout)
+          break
+        case 'success':
+          outputInfo(`✅ ${message}`, this.stdout)
+          break
+        case 'error':
+          outputInfo(`🔴 ${message}`, this.stdout)
+          break
+        default:
+          outputInfo(message, this.stdout)
+      }
     })
   }
 }

@@ -1,5 +1,5 @@
 import {joinPath, normalizePath} from './path.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputDebug} from '../../public/node/output.js'
 import {getRandomName, RandomNameFamily} from '../common/string.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {
@@ -106,7 +106,7 @@ export async function readFile(path: string, options?: ReadOptions): Promise<Buf
  * @returns A promise that resolves with the content of the file.
  */
 export async function readFile(path: string, options: ReadOptions = {encoding: 'utf8'}): Promise<string | Buffer> {
-  outputDebug(outputContent`Reading the content of file at ${outputToken.path(path)}...`)
+  outputDebug(`Reading the content of file at ${path}...`)
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   return fsReadFile(path, options)
@@ -119,7 +119,7 @@ export async function readFile(path: string, options: ReadOptions = {encoding: '
  * @returns The content of the file.
  */
 export function readFileSync(path: string): Buffer {
-  outputDebug(outputContent`Sync-reading the content of file at ${outputToken.path(path)}...`)
+  outputDebug(`Sync-reading the content of file at ${path}...`)
   return fsReadFileSync(path)
 }
 
@@ -140,7 +140,7 @@ export async function fileRealPath(path: string): Promise<string> {
  * @param to - Destination path.
  */
 export async function copyFile(from: string, to: string): Promise<void> {
-  outputDebug(outputContent`Copying file from ${outputToken.path(from)} to ${outputToken.path(to)}...`)
+  outputDebug(`Copying file from ${from} to ${to}...`)
   await fsCopy(from, to)
 }
 
@@ -150,7 +150,7 @@ export async function copyFile(from: string, to: string): Promise<void> {
  * @param path - Path to the file to be created.
  */
 export async function touchFile(path: string): Promise<void> {
-  outputDebug(outputContent`Creating an empty file at ${outputToken.path(path)}...`)
+  outputDebug(`Creating an empty file at ${path}...`)
   await fsEnsureFile(path)
 }
 
@@ -160,7 +160,7 @@ export async function touchFile(path: string): Promise<void> {
  * @param path - Path to the file to be created.
  */
 export function touchFileSync(path: string): void {
-  outputDebug(outputContent`Creating an empty file at ${outputToken.path(path)}...`)
+  outputDebug(`Creating an empty file at ${path}...`)
   fsEnsureFileSync(path)
 }
 
@@ -171,7 +171,7 @@ export function touchFileSync(path: string): void {
  * @param content - Content to be appended.
  */
 export async function appendFile(path: string, content: string): Promise<void> {
-  outputDebug(outputContent`Appending the following content to ${outputToken.path(path)}:
+  outputDebug(`Appending the following content to ${path}:
     ${content
       .split('\n')
       .map((line) => `  ${line}`)
@@ -206,7 +206,7 @@ export async function writeFile(
   data: string | Buffer,
   options: WriteOptions = {encoding: 'utf8'},
 ): Promise<void> {
-  outputDebug(outputContent`Writing some content to file at ${outputToken.path(path)}...`)
+  outputDebug(`Writing some content to file at ${path}...`)
   await fsWriteFile(path, data, options)
 }
 
@@ -217,7 +217,7 @@ export async function writeFile(
  * @param data - Content to be written.
  */
 export function writeFileSync(path: string, data: string): void {
-  outputDebug(outputContent`File-writing some content to file at ${outputToken.path(path)}...`)
+  outputDebug(`File-writing some content to file at ${path}...`)
   fsWriteFileSync(path, data)
 }
 
@@ -227,7 +227,7 @@ export function writeFileSync(path: string, data: string): void {
  * @param path - Path to the directory to be created.
  */
 export async function mkdir(path: string): Promise<void> {
-  outputDebug(outputContent`Creating directory at ${outputToken.path(path)}...`)
+  outputDebug(`Creating directory at ${path}...`)
   await fsMkdir(path, {recursive: true})
 }
 
@@ -237,7 +237,7 @@ export async function mkdir(path: string): Promise<void> {
  * @param path - Path to the directory to be created.
  */
 export function mkdirSync(path: string): void {
-  outputDebug(outputContent`Sync-creating directory at ${outputToken.path(path)}...`)
+  outputDebug(`Sync-creating directory at ${path}...`)
   fsMkdirSync(path, {recursive: true})
 }
 
@@ -247,7 +247,7 @@ export function mkdirSync(path: string): void {
  * @param path - Path to the file to be removed.
  */
 export async function removeFile(path: string): Promise<void> {
-  outputDebug(outputContent`Removing file at ${outputToken.path(path)}...`)
+  outputDebug(`Removing file at ${path}...`)
   await fsRemove(path)
 }
 
@@ -257,7 +257,7 @@ export async function removeFile(path: string): Promise<void> {
  * @param to - New path for the file.
  */
 export async function renameFile(from: string, to: string): Promise<void> {
-  outputDebug(outputContent`Renaming file from ${outputToken.path(from)} to ${outputToken.path(to)}...`)
+  outputDebug(`Renaming file from ${from} to ${to}...`)
   await fsRename(from, to)
 }
 
@@ -267,7 +267,7 @@ export async function renameFile(from: string, to: string): Promise<void> {
  * @param path - Path to the file to be removed.
  */
 export function removeFileSync(path: string): void {
-  outputDebug(outputContent`Sync-removing file at ${outputToken.path(path)}...`)
+  outputDebug(`Sync-removing file at ${path}...`)
   fsRemoveSync(path)
 }
 
@@ -282,7 +282,7 @@ interface RmDirOptions {
  */
 export async function rmdir(path: string, options: RmDirOptions = {}): Promise<void> {
   const {default: del} = await import('del')
-  outputDebug(outputContent`Removing directory at ${outputToken.path(path)}...`)
+  outputDebug(`Removing directory at ${path}...`)
   await del(path, {force: options.force})
 }
 
@@ -292,7 +292,7 @@ export async function rmdir(path: string, options: RmDirOptions = {}): Promise<v
  * @returns Path to the temporary directory.
  */
 export async function mkTmpDir(): Promise<string> {
-  outputDebug(outputContent`Creating a temporary directory...`)
+  outputDebug('Creating a temporary directory...')
   const directory = await fsMkdtemp(joinPath(os.tmpdir(), 'tmp-'))
   return directory
 }
@@ -304,7 +304,7 @@ export async function mkTmpDir(): Promise<string> {
  * @returns True if the path is a directory, false otherwise.
  */
 export async function isDirectory(path: string): Promise<boolean> {
-  outputDebug(outputContent`Checking if ${outputToken.path(path)} is a directory...`)
+  outputDebug(`Checking if ${path} is a directory...`)
   return (await fsLstat(path)).isDirectory()
 }
 
@@ -315,7 +315,7 @@ export async function isDirectory(path: string): Promise<boolean> {
  * @returns The size of the file in bytes.
  */
 export async function fileSize(path: string): Promise<number> {
-  outputDebug(outputContent`Getting the size of file file at ${outputToken.path(path)}...`)
+  outputDebug(`Getting the size of file file at ${path}...`)
   return (await fsStat(path)).size
 }
 
@@ -326,7 +326,7 @@ export async function fileSize(path: string): Promise<number> {
  * @returns The size of the file in bytes.
  */
 export function fileSizeSync(path: string): number {
-  outputDebug(outputContent`Sync-getting the size of file file at ${outputToken.path(path)}...`)
+  outputDebug(`Sync-getting the size of file file at ${path}...`)
   return fsStatSync(path).size
 }
 
@@ -380,7 +380,7 @@ export function createFileWriteStream(path: string): WriteStream {
  * @returns A unix timestamp.
  */
 export async function fileLastUpdated(path: string): Promise<Date> {
-  outputDebug(outputContent`Getting last updated timestamp for file at ${outputToken.path(path)}...`)
+  outputDebug(`Getting last updated timestamp for file at ${path}...`)
   return (await fsStat(path)).ctime
 }
 
