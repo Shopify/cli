@@ -2,7 +2,7 @@ name: cli
 
 up:
   - node:
-      version: v22.2.0
+      version: 24.1.0
       pnpm: 10.11.1
       package_manager: pnpm@10.11.1
       packages: []
