@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-duplicate-type-constituents */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -24,6 +24,7 @@ export type ListAppDevStoresQuery = {
       }[]
       pageInfo: {hasNextPage: boolean}
     } | null
+    currentUser?: {organizationPermissions: string[]} | {organizationPermissions: string[]} | null
   } | null
 }
 
@@ -126,6 +127,17 @@ export const ListAppDevStores = {
                           ],
                         },
                       },
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'currentUser'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'organizationPermissions'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
