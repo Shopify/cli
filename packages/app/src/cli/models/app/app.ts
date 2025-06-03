@@ -222,6 +222,7 @@ export enum WebType {
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
 const baseWebConfigurationSchema = zod.object({
+  app_url_path: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
   auth_callback_path: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),

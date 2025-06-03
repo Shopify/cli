@@ -677,6 +677,37 @@ describe('generatePartnersURLs', () => {
       },
     })
   })
+
+  test('Returns custom app URL when app_url_path is provided', () => {
+    const baseURL = 'http://my-base-url'
+    const appUrlPath = '/api/shopify'
+
+    const got = generateApplicationURLs(baseURL, undefined, undefined, appUrlPath)
+
+    expect(got).toMatchObject({
+      applicationUrl: `${baseURL}${appUrlPath}`,
+      redirectUrlWhitelist: [
+        `${baseURL}/auth/callback`,
+        `${baseURL}/auth/shopify/callback`,
+        `${baseURL}/api/auth/callback`,
+      ],
+    })
+  })
+
+  test('Uses base URL when app_url_path is not provided', () => {
+    const baseURL = 'http://my-base-url'
+
+    const got = generateApplicationURLs(baseURL, undefined, undefined, undefined)
+
+    expect(got).toMatchObject({
+      applicationUrl: baseURL,
+      redirectUrlWhitelist: [
+        `${baseURL}/auth/callback`,
+        `${baseURL}/auth/shopify/callback`,
+        `${baseURL}/api/auth/callback`,
+      ],
+    })
+  })
 })
 
 describe('validatePartnersURLs', () => {

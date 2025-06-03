@@ -152,6 +152,7 @@ export function generateApplicationURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
   proxyFields?: CurrentAppConfiguration['app_proxy'],
+  appUrlPath?: string,
 ): ApplicationURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
@@ -180,8 +181,10 @@ export function generateApplicationURLs(
       }
     : {}
 
+  const applicationUrl = appUrlPath ? `${baseURL}${appUrlPath}` : baseURL
+
   return {
-    applicationUrl: baseURL,
+    applicationUrl,
     redirectUrlWhitelist,
     ...appProxy,
   }

@@ -294,6 +294,7 @@ async function handleUpdatingOfPartnerUrls(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
         localApp.configuration.app_proxy,
+        webs.map(({configuration}) => configuration.app_url_path).find((path) => path),
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
