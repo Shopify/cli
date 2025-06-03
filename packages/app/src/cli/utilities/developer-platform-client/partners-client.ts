@@ -618,7 +618,7 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async devSessionDelete(_input: unknown): Promise<any> {
-    // Dev Sessions are not supported in partners client.
+    // Dev Sessions are not supported in partners client. TESTCI
     return Promise.resolve()
   }
 
