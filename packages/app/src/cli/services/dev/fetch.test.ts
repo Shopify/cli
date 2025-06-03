@@ -1,6 +1,5 @@
-import {fetchOrganizations, fetchStore, fetchStoreByDomain, NoOrgError} from './fetch.js'
+import {fetchOrganizations, fetchStore, NoOrgError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
-import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {
   testPartnersServiceSession,
   testPartnersUserSession,
@@ -31,17 +30,6 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: false,
   convertableToPartnerTest: false,
-}
-const FETCH_STORE_RESPONSE_VALUE: FindStoreByDomainSchema = {
-  organizations: {
-    nodes: [
-      {
-        id: ORG1.id,
-        businessName: ORG1.businessName,
-        stores: {nodes: [STORE1]},
-      },
-    ],
-  },
 }
 
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -95,27 +83,11 @@ describe('fetchOrganizations', async () => {
   })
 })
 
-describe('fetchStoreByDomain', async () => {
-  test('returns fetched store and organization', async () => {
-    // Given
-    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
-    })
-
-    // When
-    const got = await fetchStoreByDomain(ORG1.id, 'domain1', developerPlatformClient)
-
-    // Then
-    expect(got).toEqual({organization: ORG1, store: STORE1})
-    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
-  })
-})
-
 describe('fetchStore', () => {
   test('returns fetched store', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(FETCH_STORE_RESPONSE_VALUE),
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(STORE1),
     })
 
     // When
@@ -129,7 +101,7 @@ describe('fetchStore', () => {
   test('throws error if store not found', async () => {
     // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
+      storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(undefined),
     })
 
     // When
