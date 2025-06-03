@@ -1,7 +1,7 @@
 {
   "name": "@shopify/app",
   "version": "3.80.0",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.11.1",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "private": true,

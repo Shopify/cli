@@ -1,7 +1,7 @@
 {
   "name": "@shopify/create-app",
   "version": "3.80.0",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A CLI tool to create a new Shopify app.",
   "keywords": [

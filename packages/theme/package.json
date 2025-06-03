@@ -1,7 +1,7 @@
 {
   "name": "@shopify/theme",
   "version": "3.80.0",
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
