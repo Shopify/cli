@@ -1238,3 +1238,48 @@ describe('ensureUserAccessToStore', () => {
     )
   })
 })
+
+describe('ensureUserAccessToStore', () => {
+  test('ensures user access to store', async () => {
+    // Given
+    const orgId = '123'
+    const shopId = '456'
+    const token = 'business-platform-token'
+
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve(token)
+
+    const mockResponse = {
+      organizationUserProvisionShopAccess: {
+        success: true,
+        userErrors: [],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.ensureUserAccessToStore(orgId, shopId)
+
+    // Then
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(expect.anything(), token, orgId, {
+      input: {shopifyShopId: encodedGidFromShopId(shopId)},
+    })
+  })
+
+  test('handles failure', async () => {
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    const mockResponse = {
+      organizationUserProvisionShopAccess: {
+        success: false,
+        userErrors: [{message: 'error1'}, {message: 'error2'}],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    await expect(client.ensureUserAccessToStore('123', '456')).rejects.toThrowError(
+      'Failed to provision user access to store: error1, error2',
+    )
+  })
+})
