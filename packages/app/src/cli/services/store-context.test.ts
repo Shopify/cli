@@ -208,10 +208,7 @@ describe('storeContext', () => {
 
       await storeContext({appContextResult, forceReselectStore: false})
 
-      expect(mockDeveloperPlatformClient.ensureUserAccessToStore).toHaveBeenCalledWith(
-        mockOrganization.id,
-        mockStore.shopId,
-      )
+      expect(mockDeveloperPlatformClient.ensureUserAccessToStore).toHaveBeenCalledWith(mockOrganization.id, mockStore)
     })
   })
 })
