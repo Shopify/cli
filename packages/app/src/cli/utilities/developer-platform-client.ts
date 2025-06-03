@@ -35,7 +35,7 @@ import {
 } from '../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../api/graphql/current_account_info.js'
-import {ExtensionTemplate} from '../models/app/template.js'
+import {ExtensionTemplate, ExtensionTemplatesResult} from '../models/app/template.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {
@@ -269,7 +269,7 @@ export interface DeveloperPlatformClient {
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
-  templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
+  templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplatesResult>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
   storeByDomain: (orgId: string, shopDomain: string) => Promise<OrganizationStore | undefined>

@@ -40,9 +40,9 @@ async function generate(options: GenerateOptions) {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
   const availableSpecifications = specifications.map((spec) => spec.identifier)
-  const extensionTemplates = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
+  const {templates: extensionTemplates, groupOrder} = await fetchExtensionTemplates(developerPlatformClient, remoteApp, availableSpecifications)
 
-  const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
+  const promptOptions = await buildPromptOptions(extensionTemplates, groupOrder, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
   await saveAnalyticsMetadata(promptAnswers, template)
@@ -55,6 +55,7 @@ async function generate(options: GenerateOptions) {
 
 async function buildPromptOptions(
   extensionTemplates: ExtensionTemplate[],
+  groupOrder: string[],
   specifications: ExtensionSpecification[],
   app: AppInterface,
   options: GenerateOptions,
@@ -73,6 +74,7 @@ async function buildPromptOptions(
     extensionTemplates: validTemplates ?? [],
     unavailableExtensions: templatesOverlimit ?? [],
     reset: options.reset,
+    groupOrder,
   }
 }
 

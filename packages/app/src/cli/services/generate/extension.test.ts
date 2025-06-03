@@ -465,32 +465,35 @@ describe('initialize a extension', async () => {
         specifications,
         developerPlatformClient: testDeveloperPlatformClient({
           templateSpecifications: () =>
-            Promise.resolve([
-              {
-                identifier: 'ui_extension',
-                name: 'UI Extension',
-                defaultName: 'ui-extension',
-                group: 'Merchant Admin',
-                supportLinks: [],
-                type: 'ui_extension',
-                url: 'https://github.com/Shopify/extensions-templates',
-                extensionPoints: [],
-                supportedFlavors: [
-                  {
-                    name: 'JavaScript',
-                    value: 'vanilla-js',
-                  },
-                  {
-                    name: 'TypeScript',
-                    value: 'typescript',
-                  },
-                  {
-                    name: 'React',
-                    value: 'react',
-                  },
-                ],
-              },
-            ]),
+            Promise.resolve({
+              templates: [
+                {
+                  identifier: 'ui_extension',
+                  name: 'UI Extension',
+                  defaultName: 'ui-extension',
+                  group: 'Merchant Admin',
+                  supportLinks: [],
+                  type: 'ui_extension',
+                  url: 'https://github.com/Shopify/extensions-templates',
+                  extensionPoints: [],
+                  supportedFlavors: [
+                    {
+                      name: 'JavaScript',
+                      value: 'vanilla-js',
+                    },
+                    {
+                      name: 'TypeScript',
+                      value: 'typescript',
+                    },
+                    {
+                      name: 'React',
+                      value: 'react',
+                    },
+                  ],
+                },
+              ],
+              groupOrder: [],
+            }),
         }),
       })
 
