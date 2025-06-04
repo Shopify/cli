@@ -44,6 +44,9 @@ export interface DeployOptions {
 
   /** The git reference url of the app version */
   commitReference?: string
+
+  /** If true, skip building any elements of the app that require building */
+  skipBuild: boolean
 }
 
 interface TasksContext {
@@ -77,7 +80,7 @@ export async function deploy(options: DeployOptions) {
       bundlePath = joinPath(options.app.directory, '.shopify', `deploy-bundle.${developerPlatformClient.bundleFormat}`)
       await mkdir(dirname(bundlePath))
     }
-    await bundleAndBuildExtensions({app, bundlePath, identifiers})
+    await bundleAndBuildExtensions({app, bundlePath, identifiers, skipBuild: options.skipBuild})
 
     let uploadTaskTitle
 
