@@ -134,36 +134,29 @@ This flag is required in non-interactive terminal environments, such as a CI env
     options?: Input<TFlags, TGlobalFlags, TArgs>,
     argv?: string[],
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs>> {
-    // If no environment is specified, don't modify the results
     const flags = originalResult.flags as EnvironmentFlags
     const environmentsFileName = this.environmentsFilename()
-    let environment
-    let isDefaultEnvironment = false
 
     if (!environmentsFileName) return originalResult
 
     const environmentFileExists = await environmentFilePath(environmentsFileName, {from: flags.path})
-    const environmentSpecified = flags.environment && flags.environment.length > 0
+    const environments = flags.environment ?? []
+    const environmentSpecified = environments.length > 0
 
+    // Noop if no environment file exists and none was specified
     if (!environmentFileExists && !environmentSpecified) return originalResult
 
-    if (!environmentSpecified) {
-      // If no environment is specified attempt to load the default environment
-      environment = await loadEnvironment('default', environmentsFileName, {from: flags.path})
-      isDefaultEnvironment = true
-    }
+    // Noop if multiple environments were specified (let commands handle this)
+    if (environmentSpecified && environments.length > 1) return originalResult
 
-    if (!flags.environment && !environment) return originalResult
-
-    // If users pass multiple environments, do not load them and let each command handle it
-    if (flags.environment && flags.environment.length > 1) return originalResult
-
-    // If the specified environment isn't found, don't modify the results
-    if (!environment && flags.environment) {
-      environment = await loadEnvironment(flags.environment[0] as string, environmentsFileName, {from: flags.path})
-    }
+    const {environment, isDefaultEnvironment} = await this.loadEnvironmentForCommand(
+      flags.path,
+      environmentsFileName,
+      environments[0],
+    )
 
     if (!environment) return originalResult
+
     // Parse using noDefaultsOptions to derive a list of flags specified as
     // command-line arguments.
     const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
@@ -187,6 +180,24 @@ This flag is required in non-interactive terminal environments, such as a CI env
     )
 
     return result
+  }
+
+  /**
+   * Tries to load an environment to forward to the command. If no environment
+   * is specified it will try to load a default environment.
+   */
+  private async loadEnvironmentForCommand(
+    path: string | undefined,
+    environmentsFileName: string,
+    specifiedEnvironment: string | undefined,
+  ): Promise<{environment: JsonMap | undefined; isDefaultEnvironment: boolean}> {
+    if (specifiedEnvironment) {
+      const environment = await loadEnvironment(specifiedEnvironment, environmentsFileName, {from: path})
+      return {environment, isDefaultEnvironment: false}
+    }
+
+    const environment = await loadEnvironment('default', environmentsFileName, {from: path})
+    return {environment, isDefaultEnvironment: true}
   }
 }
 
