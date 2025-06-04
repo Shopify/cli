@@ -99,7 +99,7 @@ import {
   RemoteTemplateSpecificationsSchema,
   RemoteTemplateSpecificationsVariables,
 } from '../../api/graphql/template_specifications.js'
-import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
+import {ExtensionTemplatesResult} from '../../models/app/template.js'
 import {
   TargetSchemaDefinitionQuerySchema,
   TargetSchemaDefinitionQuery,
@@ -358,7 +358,7 @@ export class PartnersClient implements DeveloperPlatformClient {
         ...types[0],
       }
     })
-    
+
     return {
       templates,
       groupOrder: [],

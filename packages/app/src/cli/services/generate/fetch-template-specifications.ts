@@ -1,4 +1,4 @@
-import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
+import {ExtensionTemplatesResult} from '../../models/app/template.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {isPolarisUnifiedEnabled} from '@shopify/cli-kit/node/is-polaris-unified-enabled'

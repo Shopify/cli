@@ -1,7 +1,7 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
 import {ExtensionFlavorValue} from './extension.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {ExtensionTemplate, ExtensionFlavor} from '../../models/app/template.js'
+import {ExtensionFlavor} from '../../models/app/template.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as experimentModule from '@shopify/cli-kit/node/is-polaris-unified-enabled'
 

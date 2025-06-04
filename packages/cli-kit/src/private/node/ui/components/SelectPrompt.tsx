@@ -60,7 +60,9 @@ function SelectPrompt<T>({
       infoTable={infoTable}
       infoMessage={infoMessage}
       abortSignal={abortSignal}
-      input={<SelectInput defaultValue={defaultValue} items={choices} onSubmit={submitAnswer} groupOrder={groupOrder} />}
+      input={
+        <SelectInput defaultValue={defaultValue} items={choices} onSubmit={submitAnswer} groupOrder={groupOrder} />
+      }
     />
   )
 }
