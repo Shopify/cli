@@ -80,8 +80,18 @@ export async function updateExtensionDraft({
     mutationResult = await developerPlatformClient.updateExtension(extensionInput)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error: unknown) {
-    const errorWithDetails = error as {errors?: {message: string}[]; message?: string}
-    errors = errorWithDetails.errors ?? [{message: errorWithDetails.message ?? 'Unknown error'}]
+    errors = [{message: 'Unknown error'}]
+
+    if (error && typeof error === 'object') {
+      const errorObj = error as {errors?: {message: string}[]; message?: string}
+      if (errorObj.errors?.length) {
+        errors = errorObj.errors
+      } else if (errorObj.message) {
+        errors = [{message: errorObj.message}]
+      }
+    } else if (typeof error === 'string') {
+      errors = [{message: error}]
+    }
   }
   const userErrors = mutationResult?.extensionUpdateDraft?.userErrors
   if (userErrors?.length) {

@@ -281,6 +281,178 @@ describe('updateExtensionDraft()', () => {
       expect(stderr.write).toHaveBeenCalledWith('Error updating extension draft for test-ui-extension: Error1, Error2')
     })
   })
+
+  test('handles system error with errors array', async () => {
+    const systemError = {
+      errors: [{message: 'Network error'}, {message: 'Timeout error'}],
+    }
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+    })
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        directory: tmpDir,
+        type: 'web_pixel_extension',
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(stderr.write).toHaveBeenCalledWith(
+        'Error updating extension draft for test-ui-extension: Network error, Timeout error',
+      )
+    })
+  })
+
+  test('handles system error with message string', async () => {
+    const systemError = {message: 'API connection failed'}
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+    })
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        directory: tmpDir,
+        type: 'web_pixel_extension',
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(stderr.write).toHaveBeenCalledWith(
+        'Error updating extension draft for test-ui-extension: API connection failed',
+      )
+    })
+  })
+
+  test('handles string error', async () => {
+    const systemError = 'Connection timeout'
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+    })
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        directory: tmpDir,
+        type: 'web_pixel_extension',
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(stderr.write).toHaveBeenCalledWith(
+        'Error updating extension draft for test-ui-extension: Connection timeout',
+      )
+    })
+  })
+
+  test('handles null/undefined error with fallback message', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(null),
+    })
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        directory: tmpDir,
+        type: 'web_pixel_extension',
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(stderr.write).toHaveBeenCalledWith('Error updating extension draft for test-ui-extension: Unknown error')
+    })
+  })
+
+  test('handles object error without errors or message properties', async () => {
+    const systemError = {status: 500, code: 'INTERNAL_ERROR'}
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+    })
+
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mockExtension = await testUIExtension({
+        devUUID: '1',
+        directory: tmpDir,
+        type: 'web_pixel_extension',
+        uid: 'uid1',
+      })
+
+      await mkdir(joinPath(tmpDir, 'uid1', 'dist'))
+      const outputPath = mockExtension.getOutputPathForDirectory(tmpDir)
+      await writeFile(outputPath, 'test content')
+
+      await updateExtensionDraft({
+        extension: mockExtension,
+        developerPlatformClient,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        appConfiguration: placeholderAppConfiguration,
+        bundlePath: tmpDir,
+      })
+
+      expect(stderr.write).toHaveBeenCalledWith('Error updating extension draft for test-ui-extension: Unknown error')
+    })
+  })
 })
 
 describe('reloadExtensionConfig()', () => {
