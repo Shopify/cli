@@ -1,7 +1,7 @@
 {
   "name": "@shopify/cli-kit",
   "version": "3.80.0",
-  "packageManager": "pnpm@8.15.7",
+  "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -62,6 +62,9 @@
     "extends": [
       "../../.eslintrc.cjs"
     ],
+    "rules": {
+      "@nx/enforce-module-boundaries": "off"
+    },
     "ignorePatterns": [
       "**/vendor/otel-js/**/*.ts",
       "**/vendor/dev_server/**/*.ts"
