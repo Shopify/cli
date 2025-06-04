@@ -71,7 +71,7 @@ export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>
 }
 
-export interface ResourceURL {
+interface ResourceURL {
   url: string
 }
 
@@ -80,7 +80,7 @@ export interface Asset extends ResourceURL {
   lastUpdated: number
 }
 
-export interface Metafield {
+interface Metafield {
   namespace: string
   key: string
 }
@@ -97,7 +97,7 @@ export interface ExtensionPoint {
   assets?: {[name: string]: Asset}
 }
 
-export type ExtensionPoints = string[] | ExtensionPoint[] | null
+type ExtensionPoints = string[] | ExtensionPoint[] | null
 
 interface CollectBuyerConsentCapabilities {
   smsMarketing: boolean
@@ -155,7 +155,6 @@ export interface ExtensionPayload {
 }
 
 export enum Status {
-  Error = 'error',
   Success = 'success',
 }
 
