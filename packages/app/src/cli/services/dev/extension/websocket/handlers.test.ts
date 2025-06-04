@@ -196,7 +196,7 @@ describe('getOnMessageHandler()', () => {
     wss.clients.forEach((ws) => expect(ws.send).toHaveBeenCalledWith(outgoingMessage))
   })
 
-  test('on an incoming dispatch with log type outputs the log message', () => {
+  test('on an incoming dispatch with type log calls handleLogMessage and does not notify clients', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
     const data = JSON.stringify({
@@ -213,16 +213,11 @@ describe('getOnMessageHandler()', () => {
 
     getOnMessageHandler(wss, options)(data)
 
-    // Verify useConcurrentOutputContext was called with correct parameters
+    // Verify useConcurrentOutputContext (any therefore handleLogMessage) was called with correct parameters
     expect(useConcurrentOutputContext).toHaveBeenCalledWith(
       {outputPrefix: 'test-extension', stripAnsi: false},
       expect.any(Function),
     )
-    // The stdout.write() call happens inside the useConcurrentOutputContext callback
-    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
-    contextCallback()
-
-    expect(options.stdout.write).toHaveBeenCalledWith(`INFO: Test log message`)
 
     // Verify no client messages were sent since this was a log event
     wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
@@ -263,6 +258,22 @@ describe('parseLogMessage()', () => {
 })
 
 describe('handleLogMessage()', () => {
+  // Helper function to abstract the common expect pattern
+  function expectLogMessageOutput(
+    extensionName: string,
+    expectedOutput: string,
+    options: SetupWebSocketConnectionOptions,
+  ) {
+    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
+      {outputPrefix: extensionName, stripAnsi: false},
+      expect.any(Function),
+    )
+    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
+    contextCallback()
+
+    expect(options.stdout.write).toHaveBeenCalledWith(expectedOutput)
+  }
+
   test('outputs info level log message with correct formatting', () => {
     const options = getMockSetupWebSocketConnectionOptions()
     const eventData = {
@@ -275,14 +286,7 @@ describe('handleLogMessage()', () => {
 
     handleLogMessage(eventData, options)
 
-    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
-      {outputPrefix: 'test-extension', stripAnsi: false},
-      expect.any(Function),
-    )
-    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
-    contextCallback()
-
-    expect(options.stdout.write).toHaveBeenCalledWith(`INFO: Test info message`)
+    expectLogMessageOutput('test-extension', `INFO: Test info message`, options)
   })
 
   test('outputs log message with parsed JSON array', () => {
@@ -298,15 +302,10 @@ describe('handleLogMessage()', () => {
 
     handleLogMessage(eventData, options)
 
-    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
-      {outputPrefix: 'test-extension', stripAnsi: false},
-      expect.any(Function),
-    )
-    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
-    contextCallback()
-
-    expect(options.stdout.write).toHaveBeenCalledWith(
+    expectLogMessageOutput(
+      'test-extension',
       outputContent`INFO: Hello world ${outputToken.json({user: 'test'})}`.value,
+      options,
     )
   })
 
@@ -322,13 +321,6 @@ describe('handleLogMessage()', () => {
 
     handleLogMessage(eventData, options)
 
-    expect(useConcurrentOutputContext).toHaveBeenCalledWith(
-      {outputPrefix: 'error-extension', stripAnsi: false},
-      expect.any(Function),
-    )
-    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
-    contextCallback()
-
-    expect(options.stdout.write).toHaveBeenCalledWith(`${colors.bold.redBright('ERROR')}: Test error message`)
+    expectLogMessageOutput('error-extension', `${colors.bold.redBright('ERROR')}: Test error message`, options)
   })
 })
