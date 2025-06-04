@@ -68,7 +68,7 @@
     "graphql-codegen-typescript-operation-types": "2.0.1",
     "graphql-tag": "^2.12.6",
     "json-stringify-deterministic": "1.0.12",
-    "knip": "^5.10.0",
+    "knip": "5.11.0",
     "liquidjs": "10.20.1",
     "node-fetch": "^3.3.2",
     "nx": "19.8.14",
