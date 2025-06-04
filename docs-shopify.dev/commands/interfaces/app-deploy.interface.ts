@@ -25,6 +25,12 @@ export interface appdeploy {
   '--message <value>'?: string
 
   /**
+   * Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.
+   * @environment SHOPIFY_FLAG_NO_BUILD
+   */
+  '--no-build'?: ''
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */

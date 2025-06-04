@@ -61,7 +61,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false})
 
       // Then
       expect(extensionBundleMock).toHaveBeenCalledTimes(2)
@@ -95,7 +95,38 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false})
+
+      // Then
+      await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
+    })
+  })
+
+  test('skips building extensions if skipBuild is true', async () => {
+    await file.inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const bundlePath = joinPath(tmpDir, 'bundle.zip')
+
+      const functionExtension = await testFunctionExtension()
+      const extensionCopyIntoBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
+        file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
+      })
+      functionExtension.copyIntoBundle = extensionCopyIntoBundleMock
+      const app = testApp({allExtensions: [functionExtension], directory: tmpDir})
+
+      const extensions: {[key: string]: string} = {}
+      for (const extension of app.allExtensions) {
+        extensions[extension.localIdentifier] = extension.localIdentifier
+      }
+      const identifiers = {
+        app: 'app-id',
+        extensions,
+        extensionIds: {},
+        extensionsNonUuidManaged: {},
+      }
+
+      // When
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true})
 
       // Then
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
