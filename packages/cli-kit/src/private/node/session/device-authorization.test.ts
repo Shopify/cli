@@ -10,9 +10,9 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
+import {isCI} from '../../../public/node/system.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
-import {isCI} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')

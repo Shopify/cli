@@ -200,6 +200,17 @@ describe('storeContext', () => {
       expect(hiddenConfig).toEqual('{\n  "client_id": {\n    "dev_store_url": "test-store.myshopify.com"\n  }\n}')
     })
   })
+
+  test('ensures user access to store', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await prepareAppFolder(mockApp, dir)
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+
+      await storeContext({appContextResult, forceReselectStore: false})
+
+      expect(mockDeveloperPlatformClient.ensureUserAccessToStore).toHaveBeenCalledWith(mockOrganization.id, mockStore)
+    })
+  })
 })
 
 async function prepareAppFolder(app: AppLinkedInterface, directory: string) {

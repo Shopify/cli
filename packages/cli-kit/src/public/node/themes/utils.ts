@@ -1,6 +1,6 @@
+import {Theme} from './types.js'
 import {renderTextPrompt} from '../ui.js'
-import {getRandomName} from '@shopify/cli-kit/common/string'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {getRandomName} from '../../common/string.js'
 
 const GID_REGEXP = /gid:\/\/shopify\/\w*\/(\d+)/
 

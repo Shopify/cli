@@ -1,5 +1,5 @@
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {Theme} from './types.js'
+import {AdminSession} from '../session.js'
 
 export function themePreviewUrl(theme: Theme, session: AdminSession) {
   const store = session.storeFqdn

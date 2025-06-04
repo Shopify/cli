@@ -39,7 +39,6 @@ import {
   ExtensionRegistration,
 } from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema} from '../../api/graphql/app_deploy.js'
-import {FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema as AppVersionsQuerySchemaInterface} from '../../api/graphql/get_versions_list.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {
@@ -96,6 +95,10 @@ import {
   ListAppDevStores,
   ListAppDevStoresQuery,
 } from '../../api/graphql/business-platform-organizations/generated/list_app_dev_stores.js'
+import {
+  ProvisionShopAccess,
+  ProvisionShopAccessMutationVariables,
+} from '../../api/graphql/business-platform-organizations/generated/provision_shop_access.js'
 import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
@@ -523,8 +526,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
+    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
     return {
-      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray),
+      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
       hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
     }
   }
@@ -810,10 +814,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  // we are using FindStoreByDomainSchema type here because we want to keep types consistent btwn
-  // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
-  // from the Partners FindByStoreDomainSchema, we will return this type for now
-  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
     const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
     const storesResult = await businessPlatformOrganizationsRequestDoc(
       FetchDevStoreByDomain,
@@ -829,20 +830,30 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray)
+    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
+    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
+    return storesArray[0]
+  }
 
-    return {
-      organizations: {
-        nodes: [
-          {
-            id: organization.id,
-            businessName: organization.name,
-            stores: {
-              nodes: storesArray,
-            },
-          },
-        ],
-      },
+  async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
+    if (!store.provisionable) {
+      return
+    }
+    const encodedShopId = encodedGidFromShopId(store.shopId)
+    const variables: ProvisionShopAccessMutationVariables = {
+      input: {shopifyShopId: encodedShopId},
+    }
+
+    const fullResult = await businessPlatformOrganizationsRequestDoc(
+      ProvisionShopAccess,
+      await this.businessPlatformToken(),
+      orgId,
+      variables,
+    )
+    const provisionResult = fullResult.organizationUserProvisionShopAccess
+    if (!provisionResult.success) {
+      const errorMessages = provisionResult.userErrors?.map((error) => error.message).join(', ') ?? ''
+      throw new BugError(`Failed to provision user access to store: ${errorMessages}`)
     }
   }
 
@@ -1117,6 +1128,12 @@ export function encodedGidFromOrganizationId(id: string): string {
   return Buffer.from(gid).toString('base64')
 }
 
+// 1234 => gid://organization/ShopifyShop/1234 => base64
+export function encodedGidFromShopId(id: string): string {
+  const gid = `gid://organization/ShopifyShop/${id}`
+  return Buffer.from(gid).toString('base64')
+}
+
 // base64 => gid://organization/Organization/1234 => 1234
 function idFromEncodedGid(gid: string): string {
   const decodedGid = Buffer.from(gid, 'base64').toString('ascii')
@@ -1184,7 +1201,10 @@ function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
 }
 
-function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]): OrganizationStore[] {
+function mapBusinessPlatformStoresToOrganizationStores(
+  storesArray: ShopNode[],
+  provisionable: boolean,
+): OrganizationStore[] {
   return storesArray.map((store: ShopNode) => {
     const {externalId, primaryDomain, name} = store
     return {
@@ -1194,6 +1214,7 @@ function mapBusinessPlatformStoresToOrganizationStores(storesArray: ShopNode[]):
       shopName: name,
       transferDisabled: true,
       convertableToPartnerTest: true,
+      provisionable,
     } as OrganizationStore
   })
 }
@@ -1246,4 +1267,8 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
     details.push({extension_id: extensionId})
   }
   return {...err, details}
+}
+
+function isStoreProvisionable(permissions: string[]) {
+  return permissions.includes('ondemand_access_to_stores')
 }

@@ -1,4 +1,4 @@
-import {sleep} from '@shopify/cli-kit/node/system'
+import {sleep} from '../../public/node/system.js'
 
 const DEFAULT_RETRY_DELAY_MS = 300
 // 10 seconds default

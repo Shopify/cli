@@ -13,6 +13,7 @@ import {
 } from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
 import {abortSignalFromRequestBehaviour, requestMode, RequestModeInput} from '../http.js'
+import {CLI_KIT_VERSION} from '../../common/version.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -22,7 +23,6 @@ import {
   ClientError,
 } from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 // to replace TVariable type when there graphql query has no variables
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}

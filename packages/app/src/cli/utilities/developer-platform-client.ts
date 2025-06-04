@@ -18,7 +18,6 @@ import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
 } from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -273,7 +272,8 @@ export interface DeveloperPlatformClient {
   templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
-  storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
+  storeByDomain: (orgId: string, shopDomain: string) => Promise<OrganizationStore | undefined>
+  ensureUserAccessToStore: (orgId: string, store: OrganizationStore) => Promise<void>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
     activeAppVersion?: AppVersion,

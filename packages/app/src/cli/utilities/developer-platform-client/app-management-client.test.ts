@@ -4,6 +4,7 @@ import {
   allowedTemplates,
   diffAppModules,
   encodedGidFromOrganizationId,
+  encodedGidFromShopId,
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -12,6 +13,7 @@ import {
   testRemoteExtensionTemplates,
   testOrganizationApp,
   testOrganization,
+  testOrganizationStore,
 } from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
@@ -29,7 +31,10 @@ import {SourceExtension} from '../../api/graphql/app-management/generated/types.
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -1187,5 +1192,64 @@ describe('AppManagementClient', () => {
       // Then
       expect(client.bundleFormat).toBe('br')
     })
+  })
+})
+
+describe('ensureUserAccessToStore', () => {
+  test('ensures user access to store', async () => {
+    // Given
+    const orgId = '123'
+    const store = testOrganizationStore({shopId: '456'})
+    const token = 'business-platform-token'
+
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve(token)
+
+    const mockResponse = {
+      organizationUserProvisionShopAccess: {
+        success: true,
+        userErrors: [],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.ensureUserAccessToStore(orgId, store)
+
+    // Then
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(expect.anything(), token, orgId, {
+      input: {shopifyShopId: encodedGidFromShopId(store.shopId)},
+    })
+  })
+
+  test('skips provisioniong when not available', async () => {
+    // Given
+    const store = testOrganizationStore({})
+    store.provisionable = false
+    const client = new AppManagementClient()
+
+    // When
+    await client.ensureUserAccessToStore('123', store)
+
+    // Then
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(0)
+  })
+
+  test('handles failure', async () => {
+    const store = testOrganizationStore({})
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    const mockResponse = {
+      organizationUserProvisionShopAccess: {
+        success: false,
+        userErrors: [{message: 'error1'}, {message: 'error2'}],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    await expect(client.ensureUserAccessToStore('123', store)).rejects.toThrowError(
+      'Failed to provision user access to store: error1, error2',
+    )
   })
 })
