@@ -62,9 +62,6 @@
     "extends": [
       "../../.eslintrc.cjs"
     ],
-    "rules": {
-      "@nx/enforce-module-boundaries": "off"
-    },
     "ignorePatterns": [
       "**/vendor/otel-js/**/*.ts",
       "**/vendor/dev_server/**/*.ts"

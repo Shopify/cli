@@ -1,5 +1,5 @@
 import {RestResponse} from './admin.js'
-import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {tryParseInt} from '../../common/string.js'
 
 const MAX_NUMBER_OF_PARALLEL_REQUESTS = 5
 const MARGIN_TO_RATE_LIMIT = 5

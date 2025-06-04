@@ -4,7 +4,7 @@ import {ApplicationToken, IdentityToken, validateCachedIdentityTokenStructure} f
 import {sessionConstants} from '../constants.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '../../../public/node/output.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 

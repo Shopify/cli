@@ -9,6 +9,7 @@ import {
   readThemeFile,
 } from './theme-fs.js'
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
+import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
@@ -17,7 +18,6 @@ import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {triggerBrowserFullReload} from '@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js'
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 
@@ -31,7 +31,7 @@ vi.mock('./asset-ignore.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js')
+vi.mock('./theme-environment/hot-reload/server.js')
 
 beforeEach(async () => {
   vi.mocked(getPatternsFromShopifyIgnore).mockResolvedValue([])
