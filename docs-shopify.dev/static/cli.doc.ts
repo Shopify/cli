@@ -13,7 +13,7 @@ const data: LandingTemplateSchema = {
       anchorLink: 'requirements',
       title: 'Requirements',
       sectionContent: `
-- [Node.js](https://nodejs.org/en/download/): 18.20+, 20.10 or higher
+- [Node.js](https://nodejs.org/en/download/): 20.10 or higher
 - A Node.js package manager: [npm](https://www.npmjs.com/get-npm), [Yarn 1.x](https://classic.yarnpkg.com/lang/en/docs/install), or [pnpm](https://pnpm.io/installation).
 - [Git](https://git-scm.com/downloads): 2.28.0 or higher
 `,
