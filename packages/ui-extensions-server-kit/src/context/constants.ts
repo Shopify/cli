@@ -5,7 +5,7 @@ import {createContext} from 'react'
 
 import type {ExtensionServerContext} from './types'
 
-const DEFAULT_VALUE: ExtensionServerContext = {
+export const DEFAULT_VALUE: ExtensionServerContext = {
   connect: noop,
   dispatch: noop,
   state: INITIAL_STATE,

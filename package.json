@@ -41,11 +41,8 @@
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.27.12",
-    "@graphql-codegen/add": "^5.0.3",
     "@graphql-codegen/cli": "5.0.4",
     "@graphql-codegen/near-operation-file-preset": "3.0.0",
-    "@graphql-codegen/typed-document-node": "^5.0.11",
-    "@graphql-codegen/typescript-operations": "^4.4.2",
     "@nx/eslint-plugin": "19.8.14",
     "@nx/workspace": "19.8.14",
     "@octokit/rest": "20.1.1",
@@ -54,7 +51,6 @@
     "@types/node": "18.19.70",
     "@types/tmp": "^0.2.3",
     "@typescript-eslint/parser": "7.18.0",
-    "@vitest/coverage-istanbul": "^1.6.0",
     "ansi-colors": "^4.1.3",
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
@@ -129,9 +125,10 @@
     "ignoreDependencies": [
       "eslint-plugin-react",
       "eslint-plugin-react-hooks",
+      "@shopify/cli-hydrogen",
       "@shopify/theme-check-node",
       "@shopify/theme-check-docs-updater",
-      "@graphql-typed-document-node/core"
+      "@shopify/ui-extensions"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
@@ -154,17 +151,17 @@
         "ignoreBinaries": [
           "packages/features/snapshots/regenerate.sh",
           "bin/*",
-          "shopify",
-          "shopify-nightly",
-          "brew",
-          "open",
-          "build"
+          "gh",
+          "istanbul-merge"
         ],
         "ignoreDependencies": [
           "@nx/workspace",
+          "graphql",
           "graphql-tag",
           "pin-github-action",
           "react",
+          "@graphql-codegen/near-operation-file-preset",
+          "graphql-codegen-typescript-operation-types",
           "esbuild"
         ],
         "ignore": [
@@ -286,7 +283,7 @@
       },
       "packages/ui-extensions-server-kit": {
         "entry": [
-          "**/src/index.ts!",
+          "**/src/index.tsx!",
           "**/scripts/*.ts!",
           "**/src/testing/index.ts"
         ],
@@ -308,7 +305,13 @@
           "**/steps/*.ts",
           "**/lib/*.ts"
         ],
-        "project": "**/*.ts"
+        "project": "**/*.ts",
+        "ignoreDependencies": [
+          "@cucumber/messages"
+        ],
+        "ignoreBinaries": [
+          "ts-node/esm"
+        ]
       }
     }
   }

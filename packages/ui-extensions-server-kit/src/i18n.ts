@@ -21,7 +21,7 @@ export interface LocalesOptions {
   shop?: string
 }
 
-interface TranslationDictionary {
+export interface TranslationDictionary {
   [key: string]: string | TranslationDictionary
 }
 
@@ -63,7 +63,7 @@ interface TranslationDictionary {
  * }
  * ```
  */
-interface ExtensionTranslationMap {
+export interface ExtensionTranslationMap {
   [key: string]: string
 }
 
@@ -83,7 +83,7 @@ export const TRANSLATED_KEYS = ['localization', 'name', 'description']
  * Returns a map containing this pair : {'Foo.Bar.fooBar': 'something'}
  * ```
  */
-function dictionaryToFlatMap(dictionary: TranslationDictionary) {
+export function dictionaryToFlatMap(dictionary: TranslationDictionary) {
   const map = new Map<string, string>()
 
   traverseDictionary(dictionary, (key, value) => map.set(key, value))
