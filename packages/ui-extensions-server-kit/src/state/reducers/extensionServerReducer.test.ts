@@ -166,7 +166,7 @@ describe('extensionServerReducer()', () => {
       extensions: [extension],
     }
 
-    const action = createLogAction({level: 'info', args: ['test'], extensionName: extension.name})
+    const action = createLogAction({level: 'info', message: 'test', extensionName: extension.name})
     const state = extensionServerReducer(previousState, action)
 
     expect(state).toStrictEqual(previousState)
