@@ -38,7 +38,7 @@ declare global {
       focus: {uuid: string}[]
       unfocus: void
       navigate: {url: string}
-      log: {level: string; args: unknown[]; extensionName: string}
+      log: {level: string; message: string; extensionName: string}
     }
 
     // API responses
