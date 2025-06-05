@@ -8,6 +8,7 @@ import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
+import {CommandContext} from '../utilities/theme-command.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -34,6 +35,8 @@ interface PushOptions {
   ignore?: string[]
   only?: string[]
   environment?: string
+  context?: CommandContext
+  multiEnvironment?: boolean
 }
 
 interface JsonOutput {
@@ -109,8 +112,10 @@ export interface PushFlags {
  * Initiates the push process based on provided flags.
  *
  * @param flags - The flags for the push operation.
+ * @param initialAdminSession - The initial admin session.
+ * @param context - The command context containing stdout/stderr streams.
  */
-export async function push(flags: PushFlags, initialAdminSession?: AdminSession) {
+export async function push(flags: PushFlags, initialAdminSession?: AdminSession, context?: CommandContext) {
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -154,6 +159,9 @@ export async function push(flags: PushFlags, initialAdminSession?: AdminSession)
     force,
     ignore: flags.ignore ?? [],
     only: flags.only ?? [],
+    environment: flags.environment?.[0],
+    context,
+    multiEnvironment: context?.stdout !== undefined,
   })
 }
 
@@ -168,14 +176,51 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
-  // eslint-disable-next-line no-console
-  console.log(`PUSHING THE THING !!! ${options.noColor}`)
-  if (options.noColor) {
-    const {uploadJobPromise, deleteJobPromise} = uploadTheme(theme, session, themeChecksums, themeFileSystem, options)
-    await uploadJobPromise
-    await deleteJobPromise
+  if (options.multiEnvironment) {
+    const startTime = Date.now()
+    const logProgress = (message: string) => {
+      if (options.context?.stdout) {
+        options.context.stdout.write(`${message}\n`)
+      } else {
+        outputInfo(message)
+      }
+    }
 
-    outputInfo(`Your theme ${theme.name} was pushed successfully in the store ${session.storeFqdn}.`)
+    logProgress(`Starting upload to theme ${theme.name} (#${theme.id})...`)
+
+    const {uploadResults, uploadJobPromise, deleteJobPromise} = uploadTheme(
+      theme,
+      session,
+      themeChecksums,
+      themeFileSystem,
+      options,
+    )
+
+    // Set up periodic progress updates
+    const progressInterval = setInterval(() => {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+      logProgress(`Still uploading... (${elapsed}s elapsed)`)
+    }, 5000)
+
+    try {
+      await uploadJobPromise.then((job) => job.promise)
+      await deleteJobPromise.then((job) => job.promise)
+    } finally {
+      // Always clear the interval
+      clearInterval(progressInterval)
+    }
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+    const hasErrors = hasUploadErrors(uploadResults)
+
+    if (hasErrors) {
+      logProgress(`⚠️  Theme ${theme.name} (#${theme.id}) pushed with errors to ${session.storeFqdn} (${duration}s)`)
+    } else {
+      logProgress(`✅ Theme ${theme.name} (#${theme.id}) pushed successfully to ${session.storeFqdn} (${duration}s)`)
+    }
+
+    logProgress(`   Preview: ${themePreviewUrl(theme, session)}`)
+    logProgress(`   Editor:  ${themeEditorUrl(theme, session)}`)
   } else {
     const {uploadResults, renderThemeSyncProgress} = uploadTheme(
       theme,

@@ -1,11 +1,10 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {CommandContext} from '../../utilities/theme-command.js'
 import {push} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 
 type PushFlags = OutputFlags<typeof Push.flags>
 
@@ -111,22 +110,7 @@ export default class Push extends ThemeCommand {
 
   static multiEnvironmentsFlags = ['store', 'password', 'theme']
 
-  async command(flags: PushFlags, adminSession: AdminSession): Promise<void> {
-    // eslint-disable-next-line no-console
-    console.log('THE COMMAND!!!')
-
-    await push({...flags, noColor: flags['no-color']}, adminSession)
-  }
-
-  async beforeCommand(singleEnv: boolean, flags: PushFlags, _: AdminSession): Promise<void> {
-    if (singleEnv) return
-
-    // eslint-disable-next-line no-console
-    console.log('BEFORE COMMAND!!!')
-
-    outputDebug('Setting no-color=true and force=true flags as they are required in multi-env mode...')
-
-    flags['no-color'] = true
-    flags.force = true
+  async command(flags: PushFlags, adminSession: AdminSession, context?: CommandContext): Promise<void> {
+    await push({...flags}, adminSession, context)
   }
 }
