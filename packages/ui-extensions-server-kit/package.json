@@ -4,6 +4,11 @@
   "packageManager": "pnpm@10.11.1",
   "private": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/ui-extensions-server-kit"
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
