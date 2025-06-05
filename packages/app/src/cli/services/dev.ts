@@ -290,12 +290,11 @@ async function handleUpdatingOfPartnerUrls(
   let shouldUpdateURLs = false
   if (frontendConfig ?? backendConfig) {
     if (commandSpecifiedToUpdate) {
-      const newURLs = generateApplicationURLs(
-        network.proxyUrl,
-        webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        localApp.configuration.app_proxy,
-        webs.map(({configuration}) => configuration.app_url_path).find((path) => path),
-      )
+      const newURLs = generateApplicationURLs(network.proxyUrl, {
+        authCallbackPath: webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+        proxyFields: localApp.configuration.app_proxy,
+        appUrlPath: webs.map(({configuration}) => configuration.app_url_path).find((path) => path),
+      })
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
         appDirectory: localApp.directory,

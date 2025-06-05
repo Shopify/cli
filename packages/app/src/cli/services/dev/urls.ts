@@ -150,10 +150,14 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
 
 export function generateApplicationURLs(
   baseURL: string,
-  authCallbackPath?: string | string[],
-  proxyFields?: CurrentAppConfiguration['app_proxy'],
-  appUrlPath?: string,
+  options?: {
+    authCallbackPath?: string | string[]
+    proxyFields?: CurrentAppConfiguration['app_proxy']
+    appUrlPath?: string
+  },
 ): ApplicationURLs {
+  const {authCallbackPath, proxyFields, appUrlPath} = options || {}
+
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
