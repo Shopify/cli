@@ -13,7 +13,7 @@ describe('createUnauthorizedHandler', () => {
       clearCurrentlyRefreshingToken: () => {
         tokenRefreshPromise = undefined
       },
-      refreshToken: vi.fn().mockResolvedValue(mockToken),
+      unsafeRefreshToken: vi.fn().mockResolvedValue(mockToken),
     } as unknown as DeveloperPlatformClient
   }
 
@@ -24,7 +24,7 @@ describe('createUnauthorizedHandler', () => {
     const result = await handler.handler()
 
     expect(result).toEqual({token: mockToken})
-    expect(mockClient.refreshToken).toHaveBeenCalledTimes(1)
+    expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 
   test('reuses existing token refresh when one is in progress', async () => {
@@ -36,19 +36,19 @@ describe('createUnauthorizedHandler', () => {
     const result = await handler.handler()
 
     expect(result).toEqual({token: mockToken})
-    expect(mockClient.refreshToken).toHaveBeenCalledTimes(1)
+    expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 
   test('handles token refresh failure and cleans up in-progress promise', async () => {
     const mockClient = createMockClient()
     const error = new Error('Token refresh failed')
-    mockClient.refreshToken = vi.fn().mockRejectedValue(error)
+    mockClient.unsafeRefreshToken = vi.fn().mockRejectedValue(error)
     const handler = createUnauthorizedHandler(mockClient)
 
     await expect(handler.handler()).rejects.toThrow(error)
     await expect(handler.handler()).rejects.toThrow(error)
 
     // The following is evidence that the finally block is called correctly
-    expect(mockClient.refreshToken).toHaveBeenCalledTimes(2)
+    expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(2)
   })
 })

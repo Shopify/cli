@@ -1424,7 +1424,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
     session: () => Promise.resolve(testPartnersUserSession),
-    refreshToken: () => Promise.resolve(testPartnersUserSession.token),
+    unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
