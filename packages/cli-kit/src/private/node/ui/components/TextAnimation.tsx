@@ -6,6 +6,7 @@ import gradient from 'gradient-string'
 interface TextAnimationProps {
   text: string
   maxWidth?: number
+  isStatic?: boolean
 }
 
 function rainbow(text: string, frame: number) {
@@ -29,12 +30,12 @@ function truncated(text: string, maxWidth: number | undefined): string {
 /**
  * `TextAnimation` applies a rainbow animation to text.
  */
-const TextAnimation = memo(({text, maxWidth}: TextAnimationProps): JSX.Element => {
+const TextAnimation = memo(({text, maxWidth, isStatic}: TextAnimationProps): JSX.Element => {
   const frame = useRef(0)
-  const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()
   const {stdout} = useStdout()
   const [width, setWidth] = useState(maxWidth ?? Math.floor(stdout.columns * 0.66))
+  const [renderedFrame, setRenderedFrame] = useState(rainbow(truncated(rotated(text, 1), width), 1))
 
   useLayoutEffect(() => {
     const handleResize = () => {
@@ -52,12 +53,14 @@ const TextAnimation = memo(({text, maxWidth}: TextAnimationProps): JSX.Element =
     const newFrame = frame.current + 1
     frame.current = newFrame
 
-    setRenderedFrame(rainbow(truncated(rotated(text, frame.current), width), frame.current))
+    if (!isStatic) {
+      setRenderedFrame(rainbow(truncated(rotated(text, frame.current), width), frame.current))
+    }
 
     timeout.current = setTimeout(() => {
       renderAnimation()
     }, 35)
-  }, [text, width])
+  }, [text, width, isStatic])
 
   useLayoutEffect(() => {
     renderAnimation()
