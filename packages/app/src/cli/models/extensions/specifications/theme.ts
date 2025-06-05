@@ -2,7 +2,6 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 import {dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -14,11 +13,9 @@ const themeSpec = createExtensionSpecification({
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   appModuleFeatures: (_) => {
-    if (useThemebundling()) return ['bundling', 'theme']
-    return ['theme']
+    return ['bundling', 'theme']
   },
   deployConfig: async () => {
-    if (!useThemebundling()) return undefined
     return {theme_extension: {files: {}}}
   },
   preDeployValidation: async (extension) => {

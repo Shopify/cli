@@ -31,7 +31,6 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
@@ -362,7 +361,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     await this.build(options)
-    if (this.isThemeExtension && useThemebundling()) {
+    if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
     }
 
