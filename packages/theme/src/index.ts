@@ -4,6 +4,7 @@ import DeleteCommand from './cli/commands/theme/delete.js'
 import Dev from './cli/commands/theme/dev.js'
 import ThemeInfo from './cli/commands/theme/info.js'
 import Init from './cli/commands/theme/init.js'
+import Generate from './cli/commands/theme/generate.js'
 import LanguageServer from './cli/commands/theme/language-server.js'
 import ListCommnd from './cli/commands/theme/list.js'
 import Open from './cli/commands/theme/open.js'
@@ -23,6 +24,7 @@ const COMMANDS = {
   'theme:console': ConsoleCommand,
   'theme:delete': DeleteCommand,
   'theme:dev': Dev,
+  'theme:generate': Generate,
   'theme:info': ThemeInfo,
   'theme:language-server': LanguageServer,
   'theme:list': ListCommnd,

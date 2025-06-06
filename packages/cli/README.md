@@ -67,6 +67,7 @@
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
+* [`shopify theme generate [flags]`](#shopify-theme-generate-flags)
 * [`shopify theme info`](#shopify-theme-info)
 * [`shopify theme init [name] [flags]`](#shopify-theme-init-name-flags)
 * [`shopify theme language-server`](#shopify-theme-language-server)
@@ -1926,6 +1927,20 @@ DESCRIPTION
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
+```
+
+## `shopify theme generate [flags]`
+
+Fetches and installs Shopify component used for building themes.
+
+```
+USAGE
+  $ shopify theme generate [flags]
+
+FLAGS
+  --no-color      Disable color output.
+  --path=<value>  The path to your theme directory.
+  --verbose       Increase the verbosity of the output.
 ```
 
 ## `shopify theme info`
