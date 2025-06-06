@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.81.0
+
+### Minor Changes
+
+- ce3dfdc: Print all log messages to stderr instead of stdout
+
 ## 3.80.0
 
 ## 3.79.0
