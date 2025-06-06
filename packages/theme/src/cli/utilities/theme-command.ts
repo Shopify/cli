@@ -51,7 +51,7 @@ export default abstract class ThemeCommand extends Command {
     const {flags} = await this.parse(klass)
 
     // Single environment
-    if (!flags.environment) {
+    if (!flags.environment?.length) {
       const session = await this.ensureAuthenticated(flags)
       await this.command(flags, session)
       return
