@@ -50,7 +50,7 @@ export async function promptAndCreateAIFile(destination: string) {
     case 'cursor': {
       const cursorDir = joinPath(destination, '.cursor', 'rules')
       await mkdir(cursorDir)
-      const aiFilePath = joinPath(cursorDir, 'theme-liquid.mdc')
+      const aiFilePath = joinPath(cursorDir, 'liquid.mdc')
       await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
       break
     }

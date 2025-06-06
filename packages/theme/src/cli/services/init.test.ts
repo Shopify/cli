@@ -87,7 +87,7 @@ describe('promptAndCreateAIFile()', () => {
     vi.mocked(renderSelectPrompt).mockResolvedValue('cursor')
     vi.mocked(joinPath)
       .mockReturnValueOnce('/path/to/theme/.cursor/rules')
-      .mockReturnValueOnce('/path/to/theme/.cursor/rules/theme-liquid.mdc')
+      .mockReturnValueOnce('/path/to/theme/.cursor/rules/liquid.mdc')
 
     // When
     await promptAndCreateAIFile(destination)
@@ -103,7 +103,7 @@ describe('promptAndCreateAIFile()', () => {
     })
 
     expect(fetch).toHaveBeenCalledWith(aiFileUrl)
-    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/.cursor/rules/theme-liquid.mdc', mockFileContent)
+    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/.cursor/rules/liquid.mdc', mockFileContent)
   })
 
   test('does not create any AI file when none option is selected', async () => {
