@@ -68,7 +68,7 @@ export default abstract class ThemeCommand extends Command {
     // with authentication happening in parallel.
     for (const environmentName of environments) {
       // eslint-disable-next-line no-await-in-loop
-      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml')
+      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {from: flags.path})
       // eslint-disable-next-line no-await-in-loop
       sessions[environmentName] = await this.ensureAuthenticated(environmentConfig as FlagValues)
     }
@@ -76,7 +76,7 @@ export default abstract class ThemeCommand extends Command {
     // Concurrently run commands
     await Promise.all(
       environments.map(async (environment: string) => {
-        const environmentConfig = await loadEnvironment(environment, 'shopify.theme.toml')
+        const environmentConfig = await loadEnvironment(environment, 'shopify.theme.toml', {from: flags.path})
         const environmentFlags = {
           ...flags,
           ...environmentConfig,
