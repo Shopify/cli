@@ -3,7 +3,8 @@ import {DevSession} from './dev-session.js'
 import {BaseProcess, DevProcessFunction} from '../types.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../../models/app/app.js'
-import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher} from '../../app-events/app-event-watcher.js'
+import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
 
 export interface DevSessionProcessOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -17,6 +18,7 @@ export interface DevSessionProcessOptions {
   appPreviewURL: string
   appLocalProxyURL: string
   devSessionStatusManager: DevSessionStatusManager
+  appEventsProcessor: SerialBatchProcessor<AppEvent>
 }
 
 export interface DevSessionProcess extends BaseProcess<DevSessionProcessOptions> {

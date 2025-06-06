@@ -2,6 +2,7 @@ import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
+import {shopifyFetch} from './http.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {
   exchangeCustomPartnerToken,
@@ -20,6 +21,7 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import {isThemeAccessSession} from '../../private/node/api/rest.js'
+import {encode as queryStringEncode} from 'node:querystring'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -226,4 +228,37 @@ ${outputToken.json(scopes)}
  */
 export function logout(): Promise<void> {
   return secureStore.remove()
+}
+
+/**
+ * Ensure that we have a valid Admin session for the given store, acting on behalf of the app.
+ *
+ * This will fail if the app has not already been installed.
+ *
+ * @param storeFqdn - Store fqdn to request auth for.
+ * @param apiKey - API key for the app.
+ * @param apiSecret - API secret for the app.
+ * @returns The access token for the Admin API.
+ */
+export async function ensureAuthenticatedAdminAsApp(
+  storeFqdn: string,
+  apiKey: string,
+  apiSecret: string,
+): Promise<AdminSession> {
+  const queryString = queryStringEncode({
+    client_id: apiKey,
+    client_secret: apiSecret,
+    grant_type: 'client_credentials',
+  })
+  const normalised = await normalizeStoreFqdn(storeFqdn)
+  const tokenResponse = await shopifyFetch(`https://${normalised}/admin/oauth/access_token?${queryString}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  const tokenJson = (await tokenResponse.json()) as {access_token: string}
+  outputDebug(outputContent`Token: ${outputToken.raw(tokenJson.access_token)}`)
+  const token = tokenJson.access_token
+  return {token, storeFqdn: normalised}
 }

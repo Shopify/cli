@@ -3,7 +3,9 @@ import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface InitOptions {
   template?: string
+  templateFlagName?: string
   flavor?: string
+  flavorFlagName?: string
 }
 
 interface InitOutput {
@@ -92,6 +94,8 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
       }),
       message: 'Get started building your app:',
       defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
+      flagName: options.templateFlagName,
+      flagValues: templateOptionsInOrder.map((option) => option),
     })
   }
 
@@ -118,6 +122,8 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
             value: branch.branch,
             label: branch.label,
           })),
+          flagName: options.flavorFlagName,
+          flagValues: Object.keys(selectedTemplate.branches.options),
         })
       }
     }

@@ -24,8 +24,14 @@ export default class Init extends AppCommand {
   static flags = {
     ...globalFlags,
     name: Flags.string({
+      description: 'The name of the app.',
       char: 'n',
       env: 'SHOPIFY_FLAG_NAME',
+      hidden: false,
+    }),
+    organization: Flags.string({
+      description: 'The ID of the organization to create the app in. You must have access to this organization.',
+      env: 'SHOPIFY_FLAG_ORGANIZATION',
       hidden: false,
     }),
     path: Flags.string({
@@ -62,12 +68,16 @@ export default class Init extends AppCommand {
       description:
         'The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
+      exclusive: ['config', 'organization'],
     }),
   }
 
   async run(): Promise<AppCommandOutput> {
     const {flags} = await this.parse(Init)
+
+    // Allow template and flavor to fail when prompted
+    const requiredNonTTYFlags = ['name']
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     validateTemplateValue(flags.template)
     validateFlavorValue(flags.template, flags.flavor)
@@ -81,7 +91,9 @@ export default class Init extends AppCommand {
 
     const promptAnswers = await initPrompt({
       template: flags.template,
+      templateFlagName: Init.flags.template.name,
       flavor: flags.flavor,
+      flavorFlagName: Init.flags.flavor.name,
     })
 
     let selectAppResult: SelectAppOrNewAppNameResult
@@ -93,10 +105,19 @@ export default class Init extends AppCommand {
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
-      const org = await selectOrg()
-      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
-      const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-      selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
+      const org = await selectOrg({
+        organization: flags.organization,
+        flagName: Init.flags.organization.name,
+      })
+      if (flags.organization && flags.name) {
+        // No client id provided, and organization and name flags are provided
+        // Assume the user wants to create a new app in the given organization
+        selectAppResult = {result: 'new', name, org}
+      } else {
+        developerPlatformClient = selectDeveloperPlatformClient({organization: org})
+        const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
+        selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
+      }
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 

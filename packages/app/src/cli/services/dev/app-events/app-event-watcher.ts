@@ -5,6 +5,7 @@ import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
+import {DevSessionStatusManager} from '../processes/dev-session/dev-session-status-manager.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -98,9 +99,11 @@ export class AppEventWatcher extends EventEmitter {
   private ready = false
   private initialEvents: ExtensionEvent[] = []
   private fileWatcher?: FileWatcher
+  private readonly devSessionStatusManager: DevSessionStatusManager
 
   constructor(
     app: AppLinkedInterface,
+    devSessionStatusManager?: DevSessionStatusManager,
     appURL?: string,
     buildOutputPath?: string,
     esbuildManager?: ESBuildContextManager,
@@ -109,6 +112,7 @@ export class AppEventWatcher extends EventEmitter {
     super()
     this.app = app
     this.appURL = appURL
+    this.devSessionStatusManager = devSessionStatusManager ?? new DevSessionStatusManager()
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'dev-bundle')
     // Default options, to be overwritten by the start method
     this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
@@ -157,9 +161,11 @@ export class AppEventWatcher extends EventEmitter {
           // Find affected created/updated extensions and build them
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
 
+          this.devSessionStatusManager.setBuildingState(true)
           // Build the created/updated extensions and update the extension events with the build result
           await this.buildExtensions(buildableEvents)
 
+          this.devSessionStatusManager.setBuildingState(false)
           // Find deleted extensions and delete their previous build output
           await this.deleteExtensionsBuildOutput(appEvent)
           this.emit('all', appEvent)
@@ -202,6 +208,16 @@ export class AppEventWatcher extends EventEmitter {
       this.once('ready', listener)
     }
     return this
+  }
+
+  /**
+   * Get the current app instance.
+   * This will be the latest version of the app after any reloads due to configuration changes.
+   *
+   * @returns The current app instance
+   */
+  get currentApp(): AppLinkedInterface {
+    return this.app
   }
 
   onError(listener: (error: Error) => Promise<void> | void) {

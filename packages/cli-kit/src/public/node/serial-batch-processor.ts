@@ -4,10 +4,10 @@
  * automatically queued for the next batch.
  */
 export class SerialBatchProcessor<T> {
+  processBatch?: (items: T[]) => Promise<void>
+
   private queue: T[] = []
   private processingPromise: Promise<void> | undefined = undefined
-
-  constructor(private readonly processBatch: (items: T[]) => Promise<void>) {}
 
   enqueue(item: T): void {
     this.queue.push(item)
@@ -32,7 +32,7 @@ export class SerialBatchProcessor<T> {
 
         // Process the current batch
         // eslint-disable-next-line no-await-in-loop
-        await this.processBatch(batch)
+        await this.processBatch?.(batch)
       }
     } finally {
       // Always make sure we reset the processing state
