@@ -25,6 +25,7 @@ export interface AutocompletePromptProps<T> {
   search: (term: string) => Promise<SearchResults<T>>
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
+  groupOrder?: string[]
 }
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
@@ -39,6 +40,7 @@ function AutocompletePrompt<T>({
   hasMorePages: initialHasMorePages = false,
   abortSignal,
   infoMessage,
+  groupOrder,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const {exit: unmountInk} = useApp()
   const [searchTerm, setSearchTerm] = useState('')
@@ -163,6 +165,7 @@ function AutocompletePrompt<T>({
           hasMorePages={hasMorePages}
           morePagesMessage="Find what you're looking for by typing its name."
           onSubmit={submitAnswer}
+          groupOrder={groupOrder}
         />
       }
     />

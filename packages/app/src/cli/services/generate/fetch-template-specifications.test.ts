@@ -1,7 +1,7 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
 import {ExtensionFlavorValue} from './extension.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {ExtensionTemplate, ExtensionFlavor} from '../../models/app/template.js'
+import {ExtensionFlavor} from '../../models/app/template.js'
 import {describe, expect, test, vi} from 'vitest'
 import * as experimentModule from '@shopify/cli-kit/node/is-polaris-unified-enabled'
 
@@ -15,7 +15,7 @@ describe('fetchTemplateSpecifications', () => {
     const enabledSpecifications = ['function']
 
     // When
-    const got: ExtensionTemplate[] = await fetchExtensionTemplates(
+    const {templates: got} = await fetchExtensionTemplates(
       testDeveloperPlatformClient(),
       testOrganizationApp(),
       enabledSpecifications,
@@ -64,22 +64,25 @@ describe('fetchTemplateSpecifications', () => {
     const allFlavors = [...oldFlavors, preactFlavor]
 
     async function getTemplates() {
-      const templates: ExtensionTemplate[] = await fetchExtensionTemplates(
+      const {templates} = await fetchExtensionTemplates(
         testDeveloperPlatformClient({
           templateSpecifications: () =>
-            Promise.resolve([
-              {
-                identifier: 'ui_extension',
-                name: 'UI Extension',
-                defaultName: 'ui-extension',
-                group: 'Merchant Admin',
-                supportLinks: [],
-                type: 'ui_extension',
-                url: 'https://github.com/Shopify/extensions-templates',
-                extensionPoints: [],
-                supportedFlavors: allFlavors,
-              },
-            ]),
+            Promise.resolve({
+              templates: [
+                {
+                  identifier: 'ui_extension',
+                  name: 'UI Extension',
+                  defaultName: 'ui-extension',
+                  group: 'Merchant Admin',
+                  supportLinks: [],
+                  type: 'ui_extension',
+                  url: 'https://github.com/Shopify/extensions-templates',
+                  extensionPoints: [],
+                  supportedFlavors: allFlavors,
+                },
+              ],
+              groupOrder: [],
+            }),
         }),
         testOrganizationApp(),
         ['ui_extension'],
@@ -108,22 +111,25 @@ describe('fetchTemplateSpecifications', () => {
 
     test('filter out templates that have no flavors available by default', async () => {
       // When
-      const templates: ExtensionTemplate[] = await fetchExtensionTemplates(
+      const {templates} = await fetchExtensionTemplates(
         testDeveloperPlatformClient({
           templateSpecifications: () =>
-            Promise.resolve([
-              {
-                identifier: 'ui_extension',
-                name: 'UI Extension',
-                defaultName: 'ui-extension',
-                group: 'Merchant Admin',
-                supportLinks: [],
-                type: 'ui_extension',
-                url: 'https://github.com/Shopify/extensions-templates',
-                extensionPoints: [],
-                supportedFlavors: [preactFlavor],
-              },
-            ]),
+            Promise.resolve({
+              templates: [
+                {
+                  identifier: 'ui_extension',
+                  name: 'UI Extension',
+                  defaultName: 'ui-extension',
+                  group: 'Merchant Admin',
+                  supportLinks: [],
+                  type: 'ui_extension',
+                  url: 'https://github.com/Shopify/extensions-templates',
+                  extensionPoints: [],
+                  supportedFlavors: [preactFlavor],
+                },
+              ],
+              groupOrder: [],
+            }),
         }),
         testOrganizationApp(),
         ['ui_extension'],
@@ -138,22 +144,25 @@ describe('fetchTemplateSpecifications', () => {
       vi.spyOn(experimentModule, 'isPolarisUnifiedEnabled').mockReturnValueOnce(true)
 
       // When
-      const templates: ExtensionTemplate[] = await fetchExtensionTemplates(
+      const {templates} = await fetchExtensionTemplates(
         testDeveloperPlatformClient({
           templateSpecifications: () =>
-            Promise.resolve([
-              {
-                identifier: 'ui_extension',
-                name: 'UI Extension',
-                defaultName: 'ui-extension',
-                group: 'Merchant Admin',
-                supportLinks: [],
-                type: 'ui_extension',
-                url: 'https://github.com/Shopify/extensions-templates',
-                extensionPoints: [],
-                supportedFlavors: oldFlavors,
-              },
-            ]),
+            Promise.resolve({
+              templates: [
+                {
+                  identifier: 'ui_extension',
+                  name: 'UI Extension',
+                  defaultName: 'ui-extension',
+                  group: 'Merchant Admin',
+                  supportLinks: [],
+                  type: 'ui_extension',
+                  url: 'https://github.com/Shopify/extensions-templates',
+                  extensionPoints: [],
+                  supportedFlavors: oldFlavors,
+                },
+              ],
+              groupOrder: [],
+            }),
         }),
         testOrganizationApp(),
         ['ui_extension'],
