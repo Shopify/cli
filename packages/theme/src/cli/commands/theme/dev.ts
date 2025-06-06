@@ -1,15 +1,21 @@
 import {themeFlags} from '../../flags.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand, {FlagValues} from '../../utilities/theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {dev} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
+import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import type {ErrorOverlayMode, LiveReload} from '../../utilities/theme-environment/types.js'
+
+type DevFlags = OutputFlags<typeof Dev.flags>
+interface DevFlagsWithJsonOverwrite extends DevFlags {
+  'overwrite-json'?: boolean
+}
 
 export default class Dev extends ThemeCommand {
   static summary =
@@ -124,55 +130,55 @@ You can run this command only in a directory that matches the [default Shopify t
     }),
   }
 
-  async run(): Promise<void> {
-    const parsed = await this.parse(Dev)
-    let flags = parsed.flags as typeof parsed.flags & FlagValues
+  static multiEnvironmentsFlags = ['store']
+
+  async command(flags: DevFlags, adminSession: AdminSession): Promise<void> {
     const {ignore = [], only = []} = flags
 
     const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     let theme: Theme
+    let devFlags: DevFlagsWithJsonOverwrite = flags
 
     if (flags.theme) {
       const filter = {filter: {theme: flags.theme}}
       theme = await findOrSelectTheme(adminSession, filter)
 
-      flags = {...flags, theme: theme.id.toString()}
+      devFlags = {...flags, theme: theme.id.toString()}
     } else {
       theme = await new DevelopmentThemeManager(adminSession).findOrCreate()
       const overwriteJson = flags['theme-editor-sync'] && theme.createdAtRuntime
 
-      flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
+      devFlags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
     }
 
     await dev({
       adminSession,
-      directory: flags.path,
+      directory: devFlags.path,
       store,
-      password: flags.password,
-      storePassword: flags['store-password'],
+      password: devFlags.password,
+      storePassword: devFlags['store-password'],
       theme,
-      host: flags.host,
-      port: flags.port,
-      'live-reload': flags['live-reload'] as LiveReload,
-      'error-overlay': flags['error-overlay'] as ErrorOverlayMode,
-      force: flags.force,
-      open: flags.open,
-      'theme-editor-sync': flags['theme-editor-sync'],
-      noDelete: flags.nodelete,
+      host: devFlags.host,
+      port: devFlags.port,
+      'live-reload': devFlags['live-reload'] as LiveReload,
+      'error-overlay': devFlags['error-overlay'] as ErrorOverlayMode,
+      force: devFlags.force,
+      open: devFlags.open,
+      'theme-editor-sync': devFlags['theme-editor-sync'],
+      noDelete: devFlags.nodelete,
       ignore,
       only,
-      notify: flags.notify,
+      notify: devFlags.notify,
     })
 
     await metafieldsPull({
-      path: flags.path,
-      password: flags.password,
-      store: flags.store,
-      force: flags.force,
-      verbose: flags.verbose,
-      noColor: flags['no-color'],
+      path: devFlags.path,
+      password: devFlags.password,
+      store: devFlags.store,
+      force: devFlags.force,
+      verbose: devFlags.verbose,
+      noColor: devFlags['no-color'],
       silent: true,
     })
   }
