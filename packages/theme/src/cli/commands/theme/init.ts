@@ -1,11 +1,12 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {cloneRepoAndCheckoutLatestTag, cloneRepo} from '../../services/init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo, promptAndCreateAIFile} from '../../services/init.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme'
 
@@ -58,6 +59,10 @@ export default class Init extends ThemeCommand {
     } else {
       await cloneRepo(repoUrl, destination)
     }
+
+    if (!terminalSupportsPrompting()) return
+
+    await promptAndCreateAIFile(destination)
   }
 
   async promptName(directory: string) {
