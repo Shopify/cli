@@ -9,8 +9,7 @@
     "dev": "nx dev",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "test": "nx run ui-extensions-dev-console:test",
-    "test:watch": "nx test:watch"
+    "vitest": "vitest"
   },
   "eslintConfig": {
     "plugins": [
