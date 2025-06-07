@@ -6,7 +6,7 @@ import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
 import {isUnitTest} from './context/local.js'
 import {execaSync} from 'execa'
-
+import which from 'which'
 let _isGlobal: boolean | undefined
 
 /**
@@ -22,6 +22,12 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
     // Path where the current project is (app/hydrogen)
     const path = sniffForPath() ?? cwd()
+
+    // Check if npm exists before trying to use it
+    const npmPath = which.sync('npm', { nothrow: true })
+    if (!npmPath) {
+      return false
+    }
 
     // Closest parent directory to contain a package.json file or node_modules directory
     // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
