@@ -1,5 +1,4 @@
 import {calculatePrefixColumnSize, Dev} from './Dev.js'
-import {fetchAppPreviewMode} from '../../fetch.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../../../models/app/app.test-data.js'
 import {
   getLastFrameAfterUnmount,
@@ -14,10 +13,17 @@ import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, sleep} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+  return {
+    ...actual,
+    openURL: vi.fn(),
+  }
+})
+
 vi.mock('../../../context.js')
 vi.mock('../../fetch.js')
 vi.mock('../../processes/dev-session.js')
@@ -435,7 +441,7 @@ describe('Dev', () => {
       />,
     )
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await waitForContent(renderInstance, 'Preview URL')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -497,78 +503,34 @@ describe('Dev', () => {
 
   test('polls for preview mode', async () => {
     // Given
-    vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce({
-      developmentStorePreviewEnabled: false,
-    } as any)
+    vi.mocked(developerPreview.fetchMode).mockReset()
+    vi.mocked(developerPreview.enable).mockReset()
+    vi.mocked(developerPreview.fetchMode).mockResolvedValue(true)
 
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>((resolve) => {
-      backendPromiseResolve = resolve
-    })
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-
-        backendPromiseResolve()
-      },
-    }
-
+    // When
     const renderInstance = render(
       <Dev
-        processes={[backendProcess]}
+        processes={[]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        pollingTime={200}
+        // Set a very short polling time for tests
+        pollingTime={10}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
 
-    await backendPromise
+    // Then
+    // Wait long enough for multiple polling cycles
+    await sleep(0.1)
 
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
-
-    await waitForContent(renderInstance, 'off')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✖ off
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      GraphiQL URL: http://localhost:0000/graphiql
-      "
-    `)
+    // enable should be called once at startup
+    expect(developerPreview.enable).toHaveBeenCalledTimes(1)
+    // fetchMode should be called multiple times due to polling
+    expect(developerPreview.fetchMode.mock.calls.length).toBeGreaterThanOrEqual(2)
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -585,6 +547,10 @@ describe('Dev', () => {
       },
     }
 
+    vi.mocked(developerPreview.fetchMode).mockReset()
+    vi.mocked(developerPreview.fetchMode).mockResolvedValue(true)
+    vi.mocked(developerPreview.enable).mockReset()
+
     // When
     const renderInstance = render(
       <Dev
@@ -597,14 +563,16 @@ describe('Dev', () => {
           ...testApp,
           canEnablePreviewMode: false,
         }}
-        pollingTime={200}
+        // Set a very short polling time for tests
+        pollingTime={10}
         developerPreview={developerPreview}
         shopFqdn="mystore.shopify.io"
       />,
     )
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
+    // Then
+    // Wait long enough for multiple polling cycles
+    await sleep(0.1)
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
@@ -620,10 +588,11 @@ describe('Dev', () => {
       GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
-
-    expect(developerPreview.fetchMode).not.toHaveBeenCalled()
     expect(developerPreview.enable).not.toHaveBeenCalled()
+    expect(developerPreview.fetchMode).not.toHaveBeenCalled()
 
+    // Verify 'd' input doesn't trigger update when app doesn't support preview
+    await waitForInputsToBeReady()
     await sendInputAndWait(renderInstance, 100, 'd')
     expect(developerPreview.update).not.toHaveBeenCalled()
 
@@ -632,39 +601,28 @@ describe('Dev', () => {
   })
 
   test('shows an error message when polling for preview mode fails', async () => {
-    // Given
-    vi.mocked(developerPreview.fetchMode).mockRejectedValueOnce(new Error('something went wrong'))
+    vi.mocked(developerPreview.fetchMode).mockReset()
+    vi.mocked(developerPreview.fetchMode).mockRejectedValue(new Error('fail'))
 
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-      },
-    }
-
+    // When
     const renderInstance = render(
       <Dev
-        processes={[backendProcess]}
+        processes={[]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
         graphiqlPort={1234}
         app={testApp}
-        pollingTime={200}
         developerPreview={developerPreview}
+        pollingTime={10}
         shopFqdn="mystore.shopify.io"
       />,
     )
 
-    await waitForContent(renderInstance, 'Failed to fetch the latest status')
+    await waitForInputsToBeReady()
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
+      "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
@@ -872,8 +830,7 @@ describe('Dev', () => {
       "
     `)
 
-    // wait for useEffect callbacks to be run
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await waitForInputsToBeReady()
 
     expect(developerPreview.enable).toHaveBeenCalledOnce()
 

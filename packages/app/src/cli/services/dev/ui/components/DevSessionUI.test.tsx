@@ -239,7 +239,8 @@ describe('DevSessionUI', () => {
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
-      "`)
+      "
+    `)
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
