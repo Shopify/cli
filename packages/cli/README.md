@@ -12,6 +12,7 @@
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
+* [`shopify app function test`](#shopify-app-function-test)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
@@ -461,6 +462,32 @@ DESCRIPTION
 
   This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
+```
+
+## `shopify app function test`
+
+Run function tests.
+
+```
+USAGE
+  $ shopify app function test [--client-id <value> | -c <value>] [-e <value>] [--no-color] [--path <value>] [--reset |
+    ] [-t <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -e, --export=<value>     Default WebAssembly export to invoke (can be overridden per test).
+  -t, --test-file=<value>  Run a specific test file instead of all tests.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Run function tests.
+
+  Runs tests for the function in your current directory. Tests are discovered from JSON files in the `tests` directory
+  within your function. Each test can specify its own export, or you can use the --export flag as a default.
 ```
 
 ## `shopify app function typegen`
