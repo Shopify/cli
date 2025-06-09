@@ -9,6 +9,7 @@
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function generate-test`](#shopify-app-function-generate-test)
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
@@ -377,6 +378,45 @@ DESCRIPTION
   Compile a function to wasm.
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
+```
+
+## `shopify app function generate-test`
+
+Generate a test case from a function run log
+
+```
+USAGE
+  $ shopify app function generate-test [--client-id <value> | -c <value>] [--log <value>] [--no-color] [--path <value>] [--reset
+    | ] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --log=<value>        The log identifier to generate a test from
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Generate a test case from a function run log
+
+  Generates a test case from a function run log. This allows you to create test files from actual function executions to
+  ensure your function behaves consistently.
+
+  The generated test file will be created in the tests/ directory of your function and can be run with the 'shopify app
+  function test' command.
+
+EXAMPLES
+  # Generate a test from a log interactively
+
+  $ shopify app function generate-test
+
+
+
+  # Generate a test from a specific log
+
+  $ shopify app function generate-test --log=abc123
 ```
 
 ## `shopify app function replay`

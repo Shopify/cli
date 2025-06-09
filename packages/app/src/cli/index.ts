@@ -9,6 +9,7 @@ import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import FunctionBuild from './commands/app/function/build.js'
+import FunctionGenerateTest from './commands/app/function/generate-test.js'
 import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
@@ -49,6 +50,7 @@ export const commands: {[key: string]: typeof AppCommand} = {
   'app:env:show': EnvShow,
   'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
+  'app:function:generate-test': FunctionGenerateTest,
   'app:function:replay': FunctionReplay,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,

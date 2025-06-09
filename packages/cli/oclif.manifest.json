@@ -916,6 +916,99 @@
       "strict": true,
       "summary": "Compile a function to wasm."
     },
+    "app:function:generate-test": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Generates a test case from a function run log. This allows you to create test files from actual function executions to ensure your function behaves consistently.\n\nThe generated test file will be created in the tests/ directory of your function and can be run with the 'shopify app function test' command.",
+      "examples": [
+        "# Generate a test from a log interactively",
+        "<%= config.bin %> <%= command.id %>",
+        "",
+        "# Generate a test from a specific log",
+        "<%= config.bin %> <%= command.id %> --log=abc123"
+      ],
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "log": {
+          "description": "The log identifier to generate a test from",
+          "env": "SHOPIFY_FLAG_LOG",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "log",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:generate-test",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Generate a test case from a function run log"
+    },
     "app:function:replay": {
       "aliases": [
       ],
