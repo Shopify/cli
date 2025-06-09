@@ -17,22 +17,36 @@ describe('theme-ext-fs', () => {
       await themeFileSystem.ready()
 
       // Then
-      expect(themeFileSystem).toEqual({
-        root,
-        files: new Map([
-          fsEntry({checksum: 'd8ceb73ce5faa4ac22713071d2f0a6bd', key: 'blocks/star_rating.liquid'}),
-          fsEntry({checksum: '02054e661bbc326a68bf7be83427d7ed', key: 'locales/en.default.json'}),
-          fsEntry({checksum: '8a1dd937b2cfe9e669b26e41dc1de5e8', key: 'assets/thumbs-up.png'}),
-          fsEntry({checksum: '28fa42561b59f04fc32e98feb3b994ac', key: 'snippets/stars.liquid'}),
-        ]),
-        unsyncedFileKeys: new Set(),
-        ready: expect.any(Function),
-        delete: expect.any(Function),
-        write: expect.any(Function),
-        read: expect.any(Function),
-        addEventListener: expect.any(Function),
-        startWatcher: expect.any(Function),
-      })
+      expect(themeFileSystem.root).toBe(root)
+      expect(themeFileSystem.files.size).toBe(4)
+      expect(themeFileSystem.unsyncedFileKeys).toEqual(new Set())
+
+      // Check that all expected files are present with correct checksums
+      const expectedFiles = [
+        {checksum: 'd8ceb73ce5faa4ac22713071d2f0a6bd', key: 'blocks/star_rating.liquid'},
+        {checksum: '02054e661bbc326a68bf7be83427d7ed', key: 'locales/en.default.json'},
+        {checksum: '8a1dd937b2cfe9e669b26e41dc1de5e8', key: 'assets/thumbs-up.png'},
+        {checksum: '28fa42561b59f04fc32e98feb3b994ac', key: 'snippets/stars.liquid'},
+      ]
+
+      for (const expectedFile of expectedFiles) {
+        const file = themeFileSystem.files.get(expectedFile.key)
+        expect(file).toBeDefined()
+        expect(file!.key).toBe(expectedFile.key)
+        expect(file!.checksum).toBe(expectedFile.checksum)
+        expect(typeof file!.value).toBe('string')
+        expect(typeof file!.attachment).toBe('string')
+        expect(typeof file!.stats?.size).toBe('number')
+        expect(typeof file!.stats?.mtime).toBe('number')
+      }
+
+      // Check functions exist
+      expect(typeof themeFileSystem.ready).toBe('function')
+      expect(typeof themeFileSystem.delete).toBe('function')
+      expect(typeof themeFileSystem.write).toBe('function')
+      expect(typeof themeFileSystem.read).toBe('function')
+      expect(typeof themeFileSystem.addEventListener).toBe('function')
+      expect(typeof themeFileSystem.startWatcher).toBe('function')
     })
 
     test('mounts an empty file system when the directory is invalid', async () => {
@@ -136,26 +150,25 @@ describe('theme-ext-fs', () => {
       await themeFileSystem.ready()
       const file = themeFileSystem.files.get(key)
 
-      expect(file).toEqual({
-        key: 'snippets/stars.liquid',
-        checksum: '28fa42561b59f04fc32e98feb3b994ac',
-        value: expect.any(String),
-        attachment: '',
-        stats: {size: expect.any(Number), mtime: expect.any(Number)},
-      })
+      expect(file?.key).toBe('snippets/stars.liquid')
+      expect(file?.checksum).toBe('28fa42561b59f04fc32e98feb3b994ac')
+      expect(file?.attachment).toBe('')
+      expect(typeof file?.value).toBe('string')
+      expect(typeof file?.stats?.size).toBe('number')
+      expect(typeof file?.stats?.mtime).toBe('number')
 
       // When
       delete file?.value
       const content = await themeFileSystem.read(key)
 
       // Then
-      expect(themeFileSystem.files.get(key)).toEqual({
-        key: 'snippets/stars.liquid',
-        checksum: '28fa42561b59f04fc32e98feb3b994ac',
-        value: content,
-        attachment: '',
-        stats: {size: expect.any(Number), mtime: expect.any(Number)},
-      })
+      const updatedFile = themeFileSystem.files.get(key)
+      expect(updatedFile?.key).toBe('snippets/stars.liquid')
+      expect(updatedFile?.checksum).toBe('28fa42561b59f04fc32e98feb3b994ac')
+      expect(updatedFile?.value).toBe(content)
+      expect(updatedFile?.attachment).toBe('')
+      expect(typeof updatedFile?.stats?.size).toBe('number')
+      expect(typeof updatedFile?.stats?.mtime).toBe('number')
     })
   })
 
@@ -165,9 +178,9 @@ describe('theme-ext-fs', () => {
       {
         key,
         checksum,
-        value: expect.any(String),
-        attachment: expect.any(String),
-        stats: {size: expect.any(Number), mtime: expect.any(Number)},
+        value: 'test-value',
+        attachment: 'test-attachment',
+        stats: {size: 100, mtime: 1000},
       },
     ]
   }

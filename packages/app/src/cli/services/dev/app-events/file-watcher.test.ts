@@ -32,7 +32,7 @@ interface TestCaseSingleEvent {
   name: string
   fileSystemEvent: string
   path: string
-  expectedEvent?: WatcherEvent
+  expectedEvent?: Omit<WatcherEvent, 'startTime'> & {startTime?: WatcherEvent['startTime']}
 }
 
 /**
@@ -48,7 +48,7 @@ interface TestCaseSingleEvent {
 interface TestCaseMultiEvent {
   name: string
   fileSystemEvents: {event: string; path: string}[]
-  expectedEvent: WatcherEvent
+  expectedEvent: Omit<WatcherEvent, 'startTime'> & {startTime?: WatcherEvent['startTime']}
 }
 
 const singleEventTestCases: TestCaseSingleEvent[] = [
@@ -60,7 +60,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_updated',
       path: '/extensions/ui_extension_1/index.js',
       extensionPath: '/extensions/ui_extension_1',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -71,7 +70,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -82,7 +80,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extensions_config_updated',
       path: '/shopify.app.toml',
       extensionPath: '/',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -93,7 +90,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_created',
       path: '/extensions/ui_extension_1/new-file.js',
       extensionPath: '/extensions/ui_extension_1',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -104,7 +100,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_deleted',
       path: '/extensions/ui_extension_1/index.js',
       extensionPath: '/extensions/ui_extension_1',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -115,7 +110,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extension_folder_created',
       path: '/extensions/ui_extension_3',
       extensionPath: 'unknown',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -126,7 +120,6 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extension_folder_deleted',
       path: '/extensions/ui_extension_1',
       extensionPath: '/extensions/ui_extension_1',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -152,7 +145,6 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
       type: 'extension_folder_created',
       path: '/extensions/ui_extension_3',
       extensionPath: 'unknown',
-      startTime: expect.any(Array),
     },
   },
   {
@@ -169,7 +161,6 @@ const multiEventTestCases: TestCaseMultiEvent[] = [
       type: 'extension_folder_deleted',
       path: '/extensions/ui_extension_1',
       extensionPath: '/extensions/ui_extension_1',
-      startTime: expect.any(Array),
     },
   },
 ]
@@ -253,7 +244,18 @@ describe('file-watcher events', () => {
       if (expectedEvent) {
         await vi.waitFor(
           () => {
-            expect(onChange).toHaveBeenCalledWith([expectedEvent])
+            expect(onChange).toHaveBeenCalledWith(expect.any(Array))
+            const actualEvents = (onChange as any).mock.calls[0][0]
+            expect(actualEvents).toHaveLength(1)
+            const actualEvent = actualEvents[0]
+
+            expect(actualEvent.type).toBe(expectedEvent.type)
+            expect(actualEvent.path).toBe(expectedEvent.path)
+            expect(actualEvent.extensionPath).toBe(expectedEvent.extensionPath)
+            expect(Array.isArray(actualEvent.startTime)).toBe(true)
+            expect(actualEvent.startTime).toHaveLength(2)
+            expect(typeof actualEvent.startTime[0]).toBe('number')
+            expect(typeof actualEvent.startTime[1]).toBe('number')
           },
           {timeout: 2000, interval: 100},
         )
@@ -289,7 +291,18 @@ describe('file-watcher events', () => {
       await vi.waitFor(
         () => {
           expect(onChange).toHaveBeenCalledOnce()
-          expect(onChange).toHaveBeenCalledWith([expectedEvent])
+          expect(onChange).toHaveBeenCalledWith(expect.any(Array))
+          const actualEvents = (onChange as any).mock.calls[0][0]
+          expect(actualEvents).toHaveLength(1)
+          const actualEvent = actualEvents[0]
+
+          expect(actualEvent.type).toBe(expectedEvent.type)
+          expect(actualEvent.path).toBe(expectedEvent.path)
+          expect(actualEvent.extensionPath).toBe(expectedEvent.extensionPath)
+          expect(Array.isArray(actualEvent.startTime)).toBe(true)
+          expect(actualEvent.startTime).toHaveLength(2)
+          expect(typeof actualEvent.startTime[0]).toBe('number')
+          expect(typeof actualEvent.startTime[1]).toBe('number')
         },
         {timeout: 1000, interval: 100},
       )
