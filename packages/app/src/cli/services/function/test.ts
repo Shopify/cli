@@ -37,10 +37,6 @@ export interface FunctionTestOptions {
   testFile?: string
 }
 
-interface TestContext {
-  results: TestResult[]
-}
-
 export async function functionTest(options: FunctionTestOptions) {
   const functionExport = options.export
 
@@ -208,7 +204,7 @@ async function runSingleTest(
     }
 
     // Extract the actual output from the JSON response
-    const actual = (functionResult as any).output ?? functionResult
+    const actual = (functionResult as {output?: unknown}).output ?? functionResult
 
     const passed = JSON.stringify(actual) === JSON.stringify(testCase.expected)
 
@@ -232,7 +228,6 @@ async function runSingleTest(
   }
 }
 
-/* eslint-disable no-console */
 function displayResults(results: TestResult[], passed: number, total: number, _isIndividualTest?: string): void {
   const failedTests = results.filter((result) => !result.passed)
 
@@ -278,9 +273,7 @@ function displayResults(results: TestResult[], passed: number, total: number, _i
     )
   }
 }
-/* eslint-enable no-console */
 
-/* eslint-disable no-console */
 function generateVitestStyleDiff(expected: unknown, actual: unknown): void {
   const expectedStr = JSON.stringify(expected, null, 2)
   const actualStr = JSON.stringify(actual, null, 2)
@@ -308,7 +301,6 @@ function generateVitestStyleDiff(expected: unknown, actual: unknown): void {
     }
   }
 }
-/* eslint-enable no-console */
 
 function _findFieldDifferences(expected: unknown, actual: unknown, path: string): string[] {
   const differences: string[] = []
