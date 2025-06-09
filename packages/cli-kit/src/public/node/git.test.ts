@@ -13,6 +13,8 @@ const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
 const mockedCheckout = vi.fn(async () => ({}))
 const mockedGitStatus = vi.fn(async (): Promise<{isClean: () => boolean}> => ({isClean: () => false}))
+const mockedRemoveRemote = vi.fn(async () => {})
+const mockedGetRemotes = vi.fn(async () => [] as {name: string; refs: any}[])
 const mockedTags = vi.fn(async () => ({}))
 const simpleGitProperties = {
   clone: mockedClone,
@@ -25,6 +27,8 @@ const simpleGitProperties = {
   checkoutLocalBranch: mockedCheckout,
   status: mockedGitStatus,
   tags: mockedTags,
+  removeRemote: mockedRemoveRemote,
+  getRemotes: mockedGetRemotes,
 }
 
 vi.mock('simple-git')
@@ -504,5 +508,46 @@ describe('addToGitIgnore()', () => {
       const actualContent = readFileSync(gitIgnorePath).toString()
       expect(actualContent).toBe(gitIgnoreContent)
     })
+  })
+})
+
+describe('removeGitRemote()', () => {
+  beforeEach(() => {
+    mockedGetRemotes.mockReset()
+    mockedRemoveRemote.mockReset()
+  })
+
+  test('calls simple-git to remove a remote successfully', async () => {
+    // Given
+    const directory = '/test/directory'
+    const remoteName = 'origin'
+    mockedGetRemotes.mockResolvedValue([{name: 'origin', refs: {}}])
+    mockedRemoveRemote.mockResolvedValue(undefined)
+
+    // When
+    await git.removeGitRemote(directory, remoteName)
+
+    // Then
+    expect(simpleGit).toHaveBeenCalledWith(directory)
+    expect(mockedGetRemotes).toHaveBeenCalled()
+    expect(mockedRemoveRemote).toHaveBeenCalledWith(remoteName)
+  })
+
+  test('does nothing when remote does not exist', async () => {
+    // Given
+    const directory = '/test/directory'
+    const remoteName = 'nonexistent'
+    mockedGetRemotes.mockResolvedValue([
+      {name: 'origin', refs: {}},
+      {name: 'upstream', refs: {}},
+    ])
+
+    // When
+    await git.removeGitRemote(directory, remoteName)
+
+    // Then
+    expect(simpleGit).toHaveBeenCalledWith(directory)
+    expect(mockedGetRemotes).toHaveBeenCalled()
+    expect(mockedRemoveRemote).not.toHaveBeenCalled()
   })
 })

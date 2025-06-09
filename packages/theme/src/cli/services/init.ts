@@ -1,5 +1,5 @@
 import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
-import {downloadGitRepository} from '@shopify/cli-kit/node/git'
+import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -22,6 +22,7 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           destination,
           latestTag,
         })
+        await removeGitRemote(destination)
       },
     },
   ])
