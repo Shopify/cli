@@ -19,7 +19,6 @@ import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {PosSpecIdentifier} from '../models/extensions/specifications/app_config_point_of_sale.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -529,7 +528,6 @@ async function testDeployBundle({
 
   vi.mocked(ensureDeployContext).mockResolvedValue(identifiers)
 
-  vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],
     versionTag,

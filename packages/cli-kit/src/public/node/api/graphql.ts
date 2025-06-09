@@ -46,17 +46,10 @@ interface RefreshedTokenOnAuthorizedResponse {
 
 export type RefreshTokenOnAuthorizedResponse = Promise<RefreshedTokenOnAuthorizedResponse>
 
-interface SimpleUnauthorizedHandler {
-  type: 'simple'
-  handler: () => Promise<void>
-}
-
-interface TokenRefreshHandler {
+export interface UnauthorizedHandler {
   type: 'token_refresh'
   handler: () => RefreshTokenOnAuthorizedResponse
 }
-
-export type UnauthorizedHandler = SimpleUnauthorizedHandler | TokenRefreshHandler
 
 interface GraphQLRequestBaseOptions<TResult> {
   api: string
@@ -149,8 +142,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     }
   }
 
-  const simpleUnauthorizedHandler = unauthorizedHandler?.type === 'simple' ? unauthorizedHandler.handler : undefined
-  const tokenRefreshHandler = unauthorizedHandler?.type === 'token_refresh' ? unauthorizedHandler.handler : undefined
+  const tokenRefreshHandler = unauthorizedHandler?.handler
 
   const tokenRefreshUnauthorizedHandlerFunction = tokenRefreshHandler
     ? async () => {
@@ -174,7 +166,6 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     retryAwareRequest(
       {request: rawGraphQLRequest, url, ...requestBehaviour},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-      simpleUnauthorizedHandler,
     )
 
   const executeWithTimer = () =>

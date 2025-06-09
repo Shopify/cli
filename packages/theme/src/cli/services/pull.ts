@@ -2,7 +2,6 @@ import {downloadTheme} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
-import {showEmbeddedCLIWarning} from '../utilities/embedded-cli-warning.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
@@ -93,7 +92,6 @@ export interface PullFlags {
  */
 export async function pull(flags: PullFlags): Promise<void> {
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
-  showEmbeddedCLIWarning()
 
   const store = ensureThemeStore({store: flags.store})
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)

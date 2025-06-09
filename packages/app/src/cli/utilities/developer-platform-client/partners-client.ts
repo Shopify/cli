@@ -230,10 +230,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
-      const {token, userId} = await ensureAuthenticatedPartners([], process.env, {
-        noPrompt: false,
-        forceRefresh: true,
-      })
+      const {token, userId} = await ensureAuthenticatedPartners()
       this._session = {
         token,
         businessPlatformToken: '',
@@ -273,7 +270,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).token
   }
 
-  async refreshToken(): Promise<string> {
+  async unsafeRefreshToken(): Promise<string> {
     const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true, forceRefresh: true})
     const session = await this.session()
     if (token) {

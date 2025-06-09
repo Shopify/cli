@@ -15,7 +15,7 @@ vi.mock('./ui/components/DevSessionUI.js')
 
 const developerPreview = {
   fetchMode: vi.fn(async () => true),
-  enable: vi.fn(async () => {}),
+  enable: vi.fn(async () => true),
   disable: vi.fn(async () => {}),
   update: vi.fn(async (_state: boolean) => true),
 }
