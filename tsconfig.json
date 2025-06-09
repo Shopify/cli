@@ -1,6 +1,6 @@
 {
     "extends": "./configurations/tsconfig.json",
-    "include": [],
+    "include": ["configurations/**/*"],
     "references": [
       {"path": "./packages/cli"},
       {"path": "./packages/app"},

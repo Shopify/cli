@@ -1,9 +1,8 @@
 import {PollingOptions, pollRemoteJsonChanges, deleteRemovedAssets} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
@@ -14,6 +13,15 @@ describe('pollRemoteJsonChanges', async () => {
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const adminSession = {token: '', storeFqdn: ''}
   const defaultOptions: PollingOptions = {noDelete: false}
+
+  // Save original process.exit
+  const originalExit = process.exit
+
+  // Restore process.exit after tests
+  afterEach(() => {
+    // Ensure process.exit is restored after each test
+    process.exit = originalExit
+  })
 
   test('downloads modified files from the remote theme', async () => {
     // Given
@@ -115,7 +123,11 @@ describe('pollRemoteJsonChanges', async () => {
     const remoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
     const updatedRemoteChecksums = [{checksum: '2', key: 'templates/asset.json'}]
     vi.mocked(fetchChecksums).mockResolvedValue(updatedRemoteChecksums)
-    vi.spyOn(process, 'exit').mockResolvedValue(null as never)
+
+    // Mock process.exit with a function that throws instead of actually exiting
+    vi.spyOn(process, 'exit').mockImplementation((code?: number): never => {
+      throw new Error(`Process exit with code ${code}`)
+    })
 
     const themeFileSystem = fakeThemeFileSystem('tmp', new Map())
     themeFileSystem.read = async (fileKey: string) => {
@@ -123,15 +135,11 @@ describe('pollRemoteJsonChanges', async () => {
       return themeFileSystem.files.get(fileKey)?.value ?? themeFileSystem.files.get(fileKey)?.attachment
     }
 
-    // When
-    // Then
+    // When/Then
+    const message = `Detected changes to the file 'templates/asset.json' on both local and remote sources. Aborting...`
     await expect(() =>
       pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions),
-    ).rejects.toThrow(
-      new AbortError(
-        `Detected changes to the file 'templates/asset.json' on both local and remote sources. Aborting...`,
-      ),
-    )
+    ).rejects.toThrow(message)
   })
 
   test('does nothing when there is a change on local only', async () => {

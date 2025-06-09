@@ -128,8 +128,7 @@
       "eslint-plugin-react-hooks",
       "@shopify/cli-hydrogen",
       "@shopify/theme-check-node",
-      "@shopify/theme-check-docs-updater",
-      "@shopify/ui-extensions"
+      "@shopify/theme-check-docs-updater"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli"
@@ -309,9 +308,6 @@
         "project": "**/*.ts",
         "ignoreDependencies": [
           "@cucumber/messages"
-        ],
-        "ignoreBinaries": [
-          "ts-node/esm"
         ]
       }
     }
