@@ -24,12 +24,13 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
     const latestTag = true
+    const shallow = true
 
     // When
     await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
 
     // Then
-    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, latestTag})
+    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, latestTag, shallow})
   })
 })
 
@@ -38,12 +39,12 @@ describe('cloneRepo()', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
-
+    const shallow = true
     // When
     await cloneRepo(repoUrl, destination)
 
     // Then
-    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination})
+    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, shallow})
   })
 })
 

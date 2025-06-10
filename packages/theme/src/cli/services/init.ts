@@ -21,6 +21,7 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           repoUrl,
           destination,
           latestTag,
+          shallow: true,
         })
         await removeGitRemote(destination)
       },
