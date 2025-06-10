@@ -80,7 +80,7 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml')
+      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {from: undefined})
       expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(1)
       expect(renderConcurrent).not.toHaveBeenCalled()
       expect(command.commandCalls).toHaveLength(1)
@@ -110,8 +110,8 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml')
-      expect(loadEnvironment).toHaveBeenCalledWith('staging', 'shopify.theme.toml')
+      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {from: undefined, silent: true})
+      expect(loadEnvironment).toHaveBeenCalledWith('staging', 'shopify.theme.toml', {from: undefined, silent: true})
       expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(2)
 
       expect(renderConcurrent).toHaveBeenCalledOnce()
