@@ -11,6 +11,7 @@ export interface Environments {
 
 interface LoadEnvironmentOptions {
   from?: string
+  silent?: boolean
 }
 /**
  * Loads environments from a file.
@@ -24,22 +25,31 @@ export async function loadEnvironment(
 ): Promise<JsonMap | undefined> {
   const filePath = await environmentFilePath(fileName, options)
   if (!filePath) {
-    renderWarning({body: 'Environment file not found.'})
+    if (!options?.silent) {
+      renderWarning({body: 'Environment file not found.'})
+    }
     return undefined
   }
   const environmentsJson = decodeToml(await readFile(filePath)) as Environments
   const environments = environmentsJson.environments
   if (!environments) {
-    renderWarning({
-      body: ['No environments found in', {command: filePath}, {char: '.'}],
-    })
+    if (!options?.silent) {
+      renderWarning({
+        body: ['No environments found in', {command: filePath}, {char: '.'}],
+      })
+    }
     return undefined
   }
-  const environment = environments[environmentName] as JsonMap
-  if (!environment)
-    renderWarning({
-      body: ['Environment', {command: environmentName}, 'not found.'],
-    })
+  const environment = environments[environmentName] as JsonMap | undefined
+
+  if (!environment) {
+    if (!options?.silent) {
+      renderWarning({
+        body: ['Environment', {command: environmentName}, 'not found.'],
+      })
+    }
+    return undefined
+  }
 
   await metadata.addSensitiveMetadata(() => ({
     environmentFlags: JSON.stringify(environment),
