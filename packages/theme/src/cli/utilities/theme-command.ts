@@ -72,7 +72,19 @@ export default abstract class ThemeCommand extends Command {
 
     // If only one environment is specified, treat it as single environment mode
     if (environments.length === 1) {
-      const environmentConfig = await loadEnvironment(environments[0], 'shopify.theme.toml', {from: flags.path})
+      const environmentName = environments[0]
+      // If the environment is the default environment, the config is already available.
+      if (environmentName === 'default') {
+        const session = await this.ensureAuthenticated(flags)
+        await this.command(flags, session)
+        return
+      }
+
+      // For non-default environments, we need to load the config
+      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {
+        from: flags.path,
+        silent: true,
+      })
       const environmentFlags = {
         ...flags,
         ...environmentConfig,
@@ -92,7 +104,10 @@ export default abstract class ThemeCommand extends Command {
     // with authentication happening in parallel.
     for (const environmentName of environments) {
       // eslint-disable-next-line no-await-in-loop
-      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {from: flags.path})
+      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {
+        from: flags.path,
+        silent: true,
+      })
       // eslint-disable-next-line no-await-in-loop
       sessions[environmentName] = await this.ensureAuthenticated(environmentConfig as FlagValues)
     }
@@ -104,7 +119,10 @@ export default abstract class ThemeCommand extends Command {
       processes: environments.map((environment: string) => ({
         prefix: environment,
         action: async (stdout: Writable, stderr: Writable, _signal) => {
-          const environmentConfig = await loadEnvironment(environment, 'shopify.theme.toml', {from: flags.path})
+          const environmentConfig = await loadEnvironment(environment, 'shopify.theme.toml', {
+            from: flags.path,
+            silent: true,
+          })
           const environmentFlags = {
             ...flags,
             ...environmentConfig,
