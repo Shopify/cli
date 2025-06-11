@@ -536,7 +536,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
+    const provisionable = false
     return {
       stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
       hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
@@ -838,7 +838,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
+    const provisionable = false
     const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
     return storesArray[0]
   }
@@ -1338,8 +1338,4 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
     details.push({extension_id: extensionId})
   }
   return {...err, details}
-}
-
-function isStoreProvisionable(permissions: string[]) {
-  return permissions.includes('ondemand_access_to_stores')
 }

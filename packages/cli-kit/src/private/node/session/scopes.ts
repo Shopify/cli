@@ -52,7 +52,7 @@ function defaultApiScopes(api: API): string[] {
     case 'partners':
       return ['cli']
     case 'business-platform':
-      return ['destinations', 'store-management', 'on-demand-user-access']
+      return ['destinations', 'store-management']
     case 'app-management':
       return ['app-management']
     default:
