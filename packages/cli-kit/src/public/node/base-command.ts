@@ -196,7 +196,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
       return {environment, isDefaultEnvironment: false}
     }
 
-    const environment = await loadEnvironment('default', environmentsFileName, {from: path})
+    const environment = await loadEnvironment('default', environmentsFileName, {from: path, silent: true})
     return {environment, isDefaultEnvironment: true}
   }
 }
