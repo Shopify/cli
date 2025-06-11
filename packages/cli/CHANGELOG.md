@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 3.81.0
+
+### Minor Changes
+
+- 24aa2dd: Drop support for Node 18
+- ce3dfdc: Print all log messages to stderr instead of stdout
+
+### Patch Changes
+
+- e18c9f6: Shopify/skeleton-theme is the default theme for `theme init`
+
 ## 3.80.0
 
 ## 3.79.0
