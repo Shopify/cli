@@ -4,6 +4,7 @@ import {setDevelopmentTheme} from './local-storage.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
+import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
@@ -23,6 +24,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-selector.js')
+vi.mock('../utilities/theme-selector/fetch.js')
 vi.mock('./local-storage.js')
 vi.mock('@shopify/cli-kit/node/themes/utils')
 vi.mock('@shopify/cli-kit/node/session')
@@ -360,5 +362,103 @@ describe('createOrSelectTheme', async () => {
 
     // Then
     expect(promptThemeName).toHaveBeenCalledWith('Name of the new theme')
+  })
+
+  test('upsert functionality: creates new theme when no existing theme with same name found', async () => {
+    // Given
+    const themeName = 'test-branch-theme'
+    const newTheme = buildTheme({id: 5, name: themeName, role: UNPUBLISHED_THEME_ROLE})!
+
+    vi.mocked(fetchStoreThemes).mockResolvedValue([
+      buildTheme({id: 1, name: 'other-theme', role: UNPUBLISHED_THEME_ROLE})!,
+      buildTheme({id: 2, name: 'another-theme', role: UNPUBLISHED_THEME_ROLE})!,
+    ])
+    vi.mocked(themeCreate).mockResolvedValue(newTheme)
+
+    const flags: PushFlags = {unpublished: true, upsert: true, theme: themeName}
+
+    // When
+    const theme = await createOrSelectTheme(adminSession, flags)
+
+    // Then
+    expect(theme).toEqual(newTheme)
+    expect(themeCreate).toHaveBeenCalledWith({name: themeName, role: UNPUBLISHED_THEME_ROLE}, adminSession)
+  })
+
+  test('upsert functionality: returns existing theme when theme with same name found', async () => {
+    // Given
+    const themeName = 'test-branch-theme'
+    const existingTheme = buildTheme({id: 3, name: themeName, role: UNPUBLISHED_THEME_ROLE})!
+
+    vi.mocked(fetchStoreThemes).mockResolvedValue([
+      buildTheme({id: 1, name: 'other-theme', role: UNPUBLISHED_THEME_ROLE})!,
+      existingTheme,
+      buildTheme({id: 2, name: 'another-theme', role: UNPUBLISHED_THEME_ROLE})!,
+    ])
+
+    const flags: PushFlags = {unpublished: true, upsert: true, theme: themeName}
+
+    // When
+    const theme = await createOrSelectTheme(adminSession, flags)
+
+    // Then
+    expect(theme).toEqual(existingTheme)
+    expect(themeCreate).not.toHaveBeenCalled()
+  })
+
+  test('upsert functionality: case insensitive matching for theme names', async () => {
+    // Given
+    const themeName = 'Test-Branch-Theme'
+    const existingTheme = buildTheme({id: 3, name: 'test-branch-theme', role: UNPUBLISHED_THEME_ROLE})!
+
+    vi.mocked(fetchStoreThemes).mockResolvedValue([existingTheme])
+
+    const flags: PushFlags = {unpublished: true, upsert: true, theme: themeName}
+
+    // When
+    const theme = await createOrSelectTheme(adminSession, flags)
+
+    // Then
+    expect(theme).toEqual(existingTheme)
+    expect(themeCreate).not.toHaveBeenCalled()
+  })
+
+  test('upsert functionality: only matches unpublished themes with same name', async () => {
+    // Given
+    const themeName = 'test-theme'
+    const liveTheme = buildTheme({id: 1, name: themeName, role: LIVE_THEME_ROLE})!
+    const devTheme = buildTheme({id: 2, name: themeName, role: DEVELOPMENT_THEME_ROLE})!
+    const newTheme = buildTheme({id: 3, name: themeName, role: UNPUBLISHED_THEME_ROLE})!
+
+    vi.mocked(fetchStoreThemes).mockResolvedValue([liveTheme, devTheme])
+    vi.mocked(themeCreate).mockResolvedValue(newTheme)
+
+    const flags: PushFlags = {unpublished: true, upsert: true, theme: themeName}
+
+    // When
+    const theme = await createOrSelectTheme(adminSession, flags)
+
+    // Then
+    expect(theme).toEqual(newTheme)
+    expect(themeCreate).toHaveBeenCalledWith({name: themeName, role: UNPUBLISHED_THEME_ROLE}, adminSession)
+  })
+
+  test('upsert functionality: prompts for theme name when not provided', async () => {
+    // Given
+    const themeName = 'prompted-theme-name'
+    const newTheme = buildTheme({id: 5, name: themeName, role: UNPUBLISHED_THEME_ROLE})!
+
+    vi.mocked(promptThemeName).mockResolvedValue(themeName)
+    vi.mocked(fetchStoreThemes).mockResolvedValue([])
+    vi.mocked(themeCreate).mockResolvedValue(newTheme)
+
+    const flags: PushFlags = {unpublished: true, upsert: true}
+
+    // When
+    const theme = await createOrSelectTheme(adminSession, flags)
+
+    // Then
+    expect(promptThemeName).toHaveBeenCalledWith('Name of the theme')
+    expect(theme).toEqual(newTheme)
   })
 })
