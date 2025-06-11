@@ -80,6 +80,11 @@ export default abstract class ThemeCommand extends Command {
     // Multiple environments
     const sessions: {[storeFqdn: string]: AdminSession} = {}
 
+    if (requiredFlags === null) {
+      renderWarning({body: 'This command does not support multiple environments.'})
+      return
+    }
+
     // Authenticate on all environments sequentially to avoid race conditions,
     // with authentication happening in parallel.
     for (const environmentName of environments) {

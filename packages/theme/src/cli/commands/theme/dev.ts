@@ -130,7 +130,8 @@ You can run this command only in a directory that matches the [default Shopify t
     }),
   }
 
-  static multiEnvironmentsFlags = ['store']
+  // Set to null to disable multi-environment support
+  static multiEnvironmentsFlags = null
 
   async command(flags: DevFlags, adminSession: AdminSession): Promise<void> {
     const {ignore = [], only = []} = flags
