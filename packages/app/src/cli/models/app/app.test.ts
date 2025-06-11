@@ -661,14 +661,14 @@ describe('generateExtensionTypes', () => {
       const ext1TypeFilePath = joinPath(ext1Dir, 'shopify.d.ts')
       const ext1FileContent = await readFile(ext1TypeFilePath)
       const normalizedExt1Content = ext1FileContent.toString().replace(/\\/g, '/')
-      expect(normalizedExt1Content).toBe(`import '@shopify/ui-extension';\n
+      expect(normalizedExt1Content).toBe(`import '@shopify/ui-extensions';\n
 declare module './ext1-module-1.jsx' { // mocked ext1 module 1 definition }
 declare module './ext1-module-2.jsx' { // mocked ext1 module 2 definition }`)
 
       const ext2TypeFilePath = joinPath(ext2Dir, 'shopify.d.ts')
       const ext2FileContent = await readFile(ext2TypeFilePath)
       const normalizedExt2Content = ext2FileContent.toString().replace(/\\/g, '/')
-      expect(normalizedExt2Content).toBe(`import '@shopify/ui-extension';\n
+      expect(normalizedExt2Content).toBe(`import '@shopify/ui-extensions';\n
 declare module './ext2-module-1.jsx' { // mocked ext2 module 1 definition }
 declare module './ext2-module-2.jsx' { // mocked ext2 module 2 definition }`)
     })
