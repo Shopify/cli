@@ -1,5 +1,22 @@
 # @shopify/cli-kit
 
+## 3.81.0
+
+### Minor Changes
+
+- 23d4b0b: Deprecated functions:
+  - consoleLog: should be replaced by outputResult (stdout) or outputInfo (stderr)
+  - consoleWarn: should be replaced by outputInfo (stderr)
+  - consoleError: should be replaced by outputInfo (stderr)
+  - renderText: should be replaced by outputResult (stdout) or outputInfo (stderr)
+- eb19684: Removed overrides for SHOPIFY_CLI_NO_THEME_BUNDLING and SHOPIFY_CLI_BUNDLED_THEME_CLI
+- 24aa2dd: Drop support for Node 18
+
+### Patch Changes
+
+- 16406ae: Display richer error messages when apps are misconfigured
+- 9a9e51e: Fix issues with timeouts for theme dev
+
 ## 3.80.0
 
 ### Patch Changes

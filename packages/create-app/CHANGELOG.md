@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 3.81.0
+
+### Minor Changes
+
+- 24aa2dd: Drop support for Node 18
+
 ## 3.80.0
 
 ## 3.79.0

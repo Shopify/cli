@@ -1,5 +1,20 @@
 # @shopify/plugin-did-you-mean
 
+## 3.81.0
+
+### Minor Changes
+
+- 24aa2dd: Drop support for Node 18
+
+### Patch Changes
+
+- Updated dependencies [23d4b0b]
+- Updated dependencies [16406ae]
+- Updated dependencies [eb19684]
+- Updated dependencies [24aa2dd]
+- Updated dependencies [9a9e51e]
+  - @shopify/cli-kit@3.81.0
+
 ## 3.80.0
 
 ### Patch Changes
