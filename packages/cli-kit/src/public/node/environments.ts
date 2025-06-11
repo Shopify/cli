@@ -13,6 +13,18 @@ interface LoadEnvironmentOptions {
   from?: string
   silent?: boolean
 }
+
+/**
+ * Renders a warning message unless silent mode is enabled.
+ * @param message - The warning message to render.
+ * @param silent - Whether to suppress the warning.
+ */
+function renderWarningIfNeeded(message: Parameters<typeof renderWarning>[0], silent?: boolean): void {
+  if (!silent) {
+    renderWarning(message)
+  }
+}
+
 /**
  * Loads environments from a file.
  * @param dir - The file path to load environments from.
@@ -25,29 +37,29 @@ export async function loadEnvironment(
 ): Promise<JsonMap | undefined> {
   const filePath = await environmentFilePath(fileName, options)
   if (!filePath) {
-    if (!options?.silent) {
-      renderWarning({body: 'Environment file not found.'})
-    }
+    renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
     return undefined
   }
   const environmentsJson = decodeToml(await readFile(filePath)) as Environments
   const environments = environmentsJson.environments
   if (!environments) {
-    if (!options?.silent) {
-      renderWarning({
+    renderWarningIfNeeded(
+      {
         body: ['No environments found in', {command: filePath}, {char: '.'}],
-      })
-    }
+      },
+      options?.silent,
+    )
     return undefined
   }
   const environment = environments[environmentName] as JsonMap | undefined
 
   if (!environment) {
-    if (!options?.silent) {
-      renderWarning({
+    renderWarningIfNeeded(
+      {
         body: ['Environment', {command: environmentName}, 'not found.'],
-      })
-    }
+      },
+      options?.silent,
+    )
     return undefined
   }
 
