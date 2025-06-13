@@ -1,12 +1,12 @@
 # @shopify/theme
 
-## 3.82.0
+## 3.81.2
 
 ### Patch Changes
 
 - b7de462: Bugfix: Image files added during dev mode will be synced
 - Updated dependencies [26771bd]
-  - @shopify/cli-kit@3.82.0
+  - @shopify/cli-kit@3.81.2
 
 ## 3.81.0
 
