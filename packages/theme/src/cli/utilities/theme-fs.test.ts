@@ -710,10 +710,10 @@ describe('theme-fs', () => {
     test('returns false if file is not in unsyncedFileKeys', async () => {
       // Given
       unsyncedFileKeys = new Set()
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When
-      const result = await handler('content')
+      const result = await handler({value: 'content'})
 
       // Then
       expect(result).toBe(false)
@@ -721,29 +721,34 @@ describe('theme-fs', () => {
       expect(triggerBrowserFullReload).not.toHaveBeenCalled()
     })
 
-    test('uploads file and returns true on successful sync', async () => {
-      // Given
-      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
-        {
-          key: fileKey,
-          success: true,
-          operation: Operation.Upload,
-        },
-      ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+    Object.entries({
+      text: {value: 'content'},
+      image: {attachment: 'content'},
+    }).forEach(([fileType, fileContent]) => {
+      test(`uploads ${fileType} file and returns true on successful sync`, async () => {
+        // Given
+        vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+          {
+            key: fileKey,
+            success: true,
+            operation: Operation.Upload,
+          },
+        ])
+        const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
-      // When
-      const result = await handler('content')
+        // When
+        const result = await handler(fileContent)
 
-      // Then
-      expect(result).toBe(true)
-      expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
-        Number(themeId),
-        [{key: fileKey, value: 'content'}],
-        adminSession,
-      )
-      expect(unsyncedFileKeys.has(fileKey)).toBe(false)
-      expect(triggerBrowserFullReload).not.toHaveBeenCalled()
+        // Then
+        expect(result).toBe(true)
+        expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
+          Number(themeId),
+          [{key: fileKey, ...fileContent}],
+          adminSession,
+        )
+        expect(unsyncedFileKeys.has(fileKey)).toBe(false)
+        expect(triggerBrowserFullReload).not.toHaveBeenCalled()
+      })
     })
 
     test('throws error and sets uploadErrors on failed sync', async () => {
@@ -757,10 +762,10 @@ describe('theme-fs', () => {
           errors: {asset: errors},
         },
       ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When/Then
-      await expect(handler('content')).rejects.toThrow('{{ broken liquid file')
+      await expect(handler({value: 'content'})).rejects.toThrow('{{ broken liquid file')
       expect(uploadErrors.get(fileKey)).toEqual(errors)
       expect(unsyncedFileKeys.has(fileKey)).toBe(true)
       expect(triggerBrowserFullReload).toHaveBeenCalledWith(themeId, fileKey)
@@ -776,10 +781,10 @@ describe('theme-fs', () => {
           operation: Operation.Upload,
         },
       ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When
-      await handler('content')
+      await handler({value: 'content'})
 
       // Then
       expect(uploadErrors.has(fileKey)).toBe(false)
