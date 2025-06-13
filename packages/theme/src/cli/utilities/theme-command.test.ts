@@ -4,7 +4,7 @@ import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {Writable} from 'stream'
+import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/environments')
@@ -70,7 +70,7 @@ describe('ThemeCommand', () => {
 
     test('single environment provided', async () => {
       // Given
-      const environmentConfig = {store: 'env-store.myshopify.com', theme: '123'}
+      const environmentConfig = {store: 'env-store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
 
       await CommandConfig.load()
@@ -88,7 +88,6 @@ describe('ThemeCommand', () => {
         flags: {
           environment: ['development'],
           store: 'env-store.myshopify.com',
-          theme: '123',
         },
         session: mockSession,
         context: undefined,
@@ -97,7 +96,7 @@ describe('ThemeCommand', () => {
 
     test('multiple environments provided - uses renderConcurrent for parallel execution', async () => {
       // Given
-      const environmentConfig = {store: 'store.myshopify.com', theme: '123'}
+      const environmentConfig = {store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
       vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
 
