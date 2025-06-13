@@ -18,3 +18,8 @@ export interface ExtensionTemplate {
   supportedFlavors: ExtensionFlavor[]
   url: string
 }
+
+export interface ExtensionTemplatesResult {
+  templates: ExtensionTemplate[]
+  groupOrder: string[]
+}

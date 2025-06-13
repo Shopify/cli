@@ -242,6 +242,7 @@ export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalError
 export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>, 'onSubmit'> {
   isConfirmationPrompt?: boolean
   renderOptions?: RenderOptions
+  groupOrder?: string[]
 }
 
 /**
@@ -365,6 +366,7 @@ export async function renderConfirmationPrompt({
 export interface RenderAutocompleteOptions<T>
   extends PartialBy<Omit<AutocompletePromptProps<T>, 'onSubmit'>, 'search'> {
   renderOptions?: RenderOptions
+  groupOrder?: string[]
 }
 
 /**

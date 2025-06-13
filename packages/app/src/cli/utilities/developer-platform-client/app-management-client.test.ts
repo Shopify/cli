@@ -157,7 +157,7 @@ describe('templateSpecifications', () => {
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const got = await client.templateSpecifications(orgApp)
+    const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
     const gotSortPriorities = got.map((template) => template.sortPriority)
 
@@ -185,7 +185,7 @@ describe('templateSpecifications', () => {
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const got = await client.templateSpecifications(orgApp)
+    const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
 
     // Then
