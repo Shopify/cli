@@ -1,17 +1,13 @@
 {
   "commands": {
     "init": {
-      "aliases": [
-      ],
-      "args": {
-      },
+      "aliases": [],
+      "args": {},
       "flags": {
         "client-id": {
           "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
+          "exclusive": ["config"],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
@@ -58,12 +54,7 @@
           "hidden": false,
           "multiple": false,
           "name": "package-manager",
-          "options": [
-            "npm",
-            "yarn",
-            "pnpm",
-            "bun"
-          ],
+          "options": ["npm", "yarn", "pnpm", "bun"],
           "type": "option"
         },
         "path": {
@@ -94,8 +85,7 @@
         }
       },
       "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
+      "hiddenAliases": [],
       "id": "init",
       "pluginAlias": "@shopify/create-app",
       "pluginName": "@shopify/create-app",
@@ -104,5 +94,5 @@
       "summary": "Create a new app project"
     }
   },
-  "version": "3.82.0"
+  "version": "3.81.1"
 }
