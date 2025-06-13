@@ -4,11 +4,12 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import link from './app/config/link.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppConfigurationState, loadAppUsingConfigurationState} from '../models/app/loader.js'
+import {getAppConfigurationState, loadAppUsingConfigurationState, loadApp} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {AppLinkedInterface} from '../models/app/app.js'
+import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
@@ -35,6 +36,20 @@ interface LoadedAppContextOptions {
   forceRelink: boolean
   clientId: string | undefined
   userProvidedConfigName: string | undefined
+  unsafeReportMode?: boolean
+}
+
+/**
+ * Input options for the `localAppContext` function.
+ *
+ * @param directory - The directory containing the app.
+ * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
+ * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
+ * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
+ */
+interface LocalAppContextOptions {
+  directory: string
+  userProvidedConfigName?: string
   unsafeReportMode?: boolean
 }
 
@@ -126,4 +141,27 @@ async function logMetadata(app: {apiKey: string}, organization: Organization, re
     api_key: app.apiKey,
     cmd_app_reset_used: resetUsed,
   }))
+}
+
+/**
+ * This function loads an app locally without making any network calls.
+ * It uses local specifications and doesn't require the app to be linked.
+ *
+ * @returns The local app instance.
+ */
+export async function localAppContext({
+  directory,
+  userProvidedConfigName,
+  unsafeReportMode = false,
+}: LocalAppContextOptions): Promise<AppInterface> {
+  // Load local specifications only
+  const specifications = await loadLocalExtensionsSpecifications()
+
+  // Load the local app using the specifications
+  return loadApp({
+    directory,
+    userProvidedConfigName,
+    specifications,
+    mode: unsafeReportMode ? 'report' : 'strict',
+  })
 }
