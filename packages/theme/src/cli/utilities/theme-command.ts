@@ -7,7 +7,7 @@ import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {renderWarning, renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {Writable} from 'stream'
+import type {Writable} from 'stream'
 
 export interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
@@ -72,28 +72,8 @@ export default abstract class ThemeCommand extends Command {
 
     // If only one environment is specified, treat it as single environment mode
     if (environments.length === 1) {
-      const environmentName = environments[0]
-      // If the environment is the default environment, the config is already available.
-      if (environmentName === 'default') {
-        const session = await this.ensureAuthenticated(flags)
-        await this.command(flags, session)
-        return
-      }
-
-      // For non-default environments, we need to load the config
-      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {
-        from: flags.path,
-        silent: true,
-      })
-      const environmentFlags = {
-        ...flags,
-        ...environmentConfig,
-        environment: environments,
-      }
-
-      const session = await this.ensureAuthenticated(environmentConfig as FlagValues)
-      await this.command(environmentFlags, session)
-
+      const session = await this.ensureAuthenticated(flags)
+      await this.command(flags, session)
       return
     }
 
