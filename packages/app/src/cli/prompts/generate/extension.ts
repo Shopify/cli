@@ -81,10 +81,14 @@ const generateExtensionPrompts = async (
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
+    const choices = buildChoices(extensionTemplates, options.unavailableExtensions)
+
     // eslint-disable-next-line require-atomic-updates
     templateType = await renderAutocompletePrompt({
       message: 'Type of extension?',
-      choices: buildChoices(extensionTemplates, options.unavailableExtensions),
+      choices,
+      flagName: 'template',
+      flagValues: choices.map((choice) => choice.value),
     })
   }
 
@@ -109,6 +113,7 @@ async function promptName(directory: string, defaultName: string, number = 1): P
   return renderTextPrompt({
     message: 'Name your extension:',
     defaultValue: name,
+    flagName: 'name',
   })
 }
 
@@ -130,6 +135,8 @@ async function promptFlavor(extensionTemplate: ExtensionTemplate): Promise<Exten
       }
     }),
     defaultValue: 'react',
+    flagName: 'flavor',
+    flagValues: extensionTemplate.supportedFlavors.map((choice) => choice.value),
   })
 }
 

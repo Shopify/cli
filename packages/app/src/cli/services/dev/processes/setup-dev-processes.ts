@@ -9,6 +9,7 @@ import {DevSessionProcess, setupDevSessionProcess} from './dev-session/dev-sessi
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
 import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
+import {DevLockfileCleanupProcess, DevStatusServerProcess, setupDevStatusServerProcess} from './dev-status-server.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
@@ -18,12 +19,13 @@ import {LocalhostCert, getProxyingWebServer} from '../../../utilities/app/http-r
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AppEventWatcher} from '../app-events/app-event-watcher.js'
+import {AppEvent, AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
 
 interface ProxyServerProcess
   extends BaseProcess<{
@@ -45,6 +47,8 @@ type DevProcessDefinition =
   | DevSessionProcess
   | AppLogsSubscribeProcess
   | AppWatcherProcess
+  | DevStatusServerProcess
+  | DevLockfileCleanupProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -96,7 +100,6 @@ export async function setupDevProcesses({
 
   // At this point, the toml file has changed, we need to reload the app before actually starting dev
   const reloadedApp = await reloadApp(localApp)
-  const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   // Decide on the appropriate preview URL for a session with these processes
   const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
@@ -107,7 +110,15 @@ export async function setupDevProcesses({
     ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
     : undefined
 
-  const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
+  const devSessionStatusManager = new DevSessionStatusManager({
+    isReady: false,
+    previewURL,
+    graphiqlURL,
+  })
+
+  const appWatcher = new AppEventWatcher(reloadedApp, devSessionStatusManager, network.proxyUrl)
+
+  const appEventsProcessor = new SerialBatchProcessor<AppEvent>()
 
   const processes = [
     ...(await setupWebProcesses({
@@ -158,6 +169,7 @@ export async function setupDevProcesses({
           appPreviewURL: appPreviewUrl,
           appLocalProxyURL: devConsoleURL,
           devSessionStatusManager,
+          appEventsProcessor,
         })
       : await setupDraftableExtensionsProcess({
           localApp: reloadedApp,
@@ -198,6 +210,13 @@ export async function setupDevProcesses({
     await setupAppWatcherProcess({
       appWatcher,
     }),
+    ...(await setupDevStatusServerProcess({
+      devSessionStatusManager,
+      localApp: reloadedApp,
+      appWatcher,
+      graphiqlUrl: graphiqlURL,
+      appEventsProcessor,
+    })),
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it

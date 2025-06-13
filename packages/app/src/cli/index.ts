@@ -27,6 +27,7 @@ import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppCommand from './utilities/app-command.js'
 import DevClean from './commands/app/dev/clean.js'
+import Execute from './commands/app/execute.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -57,6 +58,7 @@ export const commands: {[key: string]: typeof AppCommand} = {
   'app:webhook:trigger': WebhookTrigger,
   'webhook:trigger': WebhookTriggerDeprecated,
   'demo:watcher': DemoWatcher,
+  'app:execute': Execute,
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata

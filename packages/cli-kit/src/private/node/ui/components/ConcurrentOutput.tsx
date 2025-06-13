@@ -14,6 +14,7 @@ export interface ConcurrentOutputProps {
   showTimestamps?: boolean
   keepRunningAfterProcessesResolve?: boolean
   useAlternativeColorPalette?: boolean
+  onLogOutput?: (log: {timestamp: number; message: string; prefix?: string}) => void
 }
 
 interface Chunk {
@@ -89,6 +90,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   showTimestamps = true,
   keepRunningAfterProcessesResolve = false,
   useAlternativeColorPalette = false,
+  onLogOutput,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
@@ -149,10 +151,16 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
               lines,
             },
           ])
+          onLogOutput?.({
+            timestamp: new Date().getTime(),
+            message: log,
+            prefix,
+          })
           next()
         },
       })
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [lineColor],
   )
 

@@ -20,7 +20,17 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
-export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
+interface SelectOrganizationPromptOptions {
+  organizations: Organization[]
+  flagName?: string
+  flagValues?: string[]
+}
+
+export async function selectOrganizationPrompt({
+  organizations,
+  flagName,
+  flagValues,
+}: SelectOrganizationPromptOptions): Promise<Organization> {
   if (organizations.length === 1) {
     return organizations[0]!
   }
@@ -43,6 +53,8 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   const id = await renderAutocompletePrompt({
     message: `Which organization is this work for?`,
     choices: orgList,
+    flagName,
+    flagValues,
   })
   return organizations.find((org) => org.id === id)!
 }

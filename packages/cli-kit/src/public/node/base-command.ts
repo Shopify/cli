@@ -111,18 +111,18 @@ abstract class BaseCommand extends Command {
   protected failMissingNonTTYFlags(flags: FlagOutput, requiredFlags: string[]): void {
     if (terminalSupportsPrompting()) return
 
-    requiredFlags.forEach((name: string) => {
-      if (!(name in flags)) {
-        throw new AbortError(
-          outputContent`Flag not specified:
+    const missingFlags = requiredFlags.filter((name: string) => !(name in flags))
+    if (missingFlags.length > 0) {
+      throw new AbortError(
+        outputContent`Flag${missingFlags.length > 1 ? 's' : ''} not specified:
 
-${outputToken.cyan(name)}
+${outputToken.cyan(missingFlags.join(', '))}
 
-This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`,
-          'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
-        )
-      }
-    })
+${
+  missingFlags.length > 1 ? 'These flags are' : 'This flag is'
+} required in non-interactive terminal environments, such as a CI environment, coding agent, or when piping input from another process.`,
+      )
+    }
   }
 
   private async resultWithEnvironment<
