@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.81.1
+
+### Patch Changes
+
+- b838f21: Remove git remote after cloning theme in `theme init` command to prevent accidental pushes to the skeleton theme repository
+- Updated dependencies [b838f21]
+  - @shopify/cli-kit@3.81.1
+
 ## 3.81.0
 
 ### Minor Changes
