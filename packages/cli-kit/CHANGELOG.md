@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.82.0
+
+### Minor Changes
+
+- 26771bd: Improve session stability and recover automatically on expiration
+
 ## 3.81.0
 
 ### Minor Changes

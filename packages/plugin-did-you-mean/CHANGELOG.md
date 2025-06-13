@@ -1,5 +1,12 @@
 # @shopify/plugin-did-you-mean
 
+## 3.82.0
+
+### Patch Changes
+
+- Updated dependencies [26771bd]
+  - @shopify/cli-kit@3.82.0
+
 ## 3.81.0
 
 ### Minor Changes
