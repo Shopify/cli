@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.81.2
+
+### Minor Changes
+
+- 26771bd: Improve session stability and recover automatically on expiration
+
+### Patch Changes
+
+- 8a3977e: Fix client credentials requests
+- Updated dependencies [26771bd]
+- Updated dependencies [b7de462]
+  - @shopify/cli-kit@3.81.2
+  - @shopify/theme@3.81.2
+  - @shopify/plugin-cloudflare@3.81.2
+
 ## 3.81.0
 
 ### Minor Changes
