@@ -1,4 +1,4 @@
-import {getOrGenerateSchemaPath, inFunctionContext} from './common.js'
+import {getOrGenerateSchemaPath, inFunctionContext, chooseFunction} from './common.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -42,59 +42,51 @@ beforeEach(async () => {
   vi.mocked(isTerminalInteractive).mockReturnValue(true)
 })
 
-describe('ensure we are within a function context', () => {
-  test('runs callback when we are inside a function directory', async () => {
+describe('inFunctionContext integration', () => {
+  test('passes correct parameters to callback when function is found', async () => {
     // Given
-    let ranCallback = false
+    const callback = vi.fn().mockResolvedValue(app)
 
     // When
     await inFunctionContext({
       path: joinPath(app.directory, 'extensions/my-function'),
-      callback: async (_app, _fun) => {
-        ranCallback = true
-        return _app
-      },
-    })
-
-    // Then
-    expect(ranCallback).toBe(true)
-    expect(renderFatalError).not.toHaveBeenCalled()
-  })
-
-  test('displays function prompt when we are not inside a function directory', async () => {
-    // Given
-    const callback = vi.fn()
-
-    // When
-    await inFunctionContext({
-      path: 'random/dir',
       callback,
     })
 
     // Then
-    expect(callback).toHaveBeenCalledOnce()
-    expect(renderAutocompletePrompt).toHaveBeenCalledOnce()
-    expect(renderFatalError).not.toHaveBeenCalled()
+    expect(callback).toHaveBeenCalledWith(
+      app,
+      // developerPlatformClient
+      expect.any(Object),
+      ourFunction,
+      // orgId
+      expect.any(String),
+    )
   })
 
-  test('displays an error when terminal is not interactive and we are not inside a function directory', async () => {
+  test('calls linkedAppContext with correct parameters', async () => {
     // Given
-    let ranCallback = false
-    vi.mocked(isTerminalInteractive).mockReturnValue(false)
+    const callback = vi.fn().mockResolvedValue(app)
+    const path = 'some/path'
+    const apiKey = 'test-api-key'
+    const userProvidedConfigName = 'test-config'
 
     // When
-    await expect(
-      inFunctionContext({
-        path: 'random/dir',
-        callback: async (_app, _fun) => {
-          ranCallback = true
-          return _app
-        },
-      }),
-    ).rejects.toThrowError()
+    await inFunctionContext({
+      path,
+      apiKey,
+      userProvidedConfigName,
+      reset: true,
+      callback,
+    })
 
     // Then
-    expect(ranCallback).toBe(false)
+    expect(linkedAppContext).toHaveBeenCalledWith({
+      directory: path,
+      clientId: apiKey,
+      forceRelink: true,
+      userProvidedConfigName,
+    })
   })
 })
 
@@ -138,5 +130,119 @@ describe('getOrGenerateSchemaPath', () => {
     // Then
     expect(result).toBe(expectedPath)
     expect(fileExists).toHaveBeenCalledWith(expectedPath)
+  })
+})
+
+describe('chooseFunction', () => {
+  let app: AppLinkedInterface
+  let functionExtension1: ExtensionInstance
+  let functionExtension2: ExtensionInstance
+  let nonFunctionExtension: ExtensionInstance
+
+  beforeEach(async () => {
+    functionExtension1 = await testFunctionExtension({
+      dir: '/path/to/app/extensions/function-1',
+      config: {
+        name: 'function-1',
+        type: 'product_discounts',
+        description: 'Test function 1',
+        build: {
+          command: 'echo "hello world"',
+          watch: ['src/**/*.rs'],
+          wasm_opt: true,
+        },
+        api_version: '2022-07',
+        configuration_ui: true,
+      },
+    })
+
+    functionExtension2 = await testFunctionExtension({
+      dir: '/path/to/app/extensions/function-2',
+      config: {
+        name: 'function-2',
+        type: 'product_discounts',
+        description: 'Test function 2',
+        build: {
+          command: 'echo "hello world"',
+          watch: ['src/**/*.rs'],
+          wasm_opt: true,
+        },
+        api_version: '2022-07',
+        configuration_ui: true,
+      },
+    })
+
+    nonFunctionExtension = {
+      directory: '/path/to/app/extensions/theme',
+      isFunctionExtension: false,
+      handle: 'theme-extension',
+    } as ExtensionInstance
+  })
+
+  test('returns the function when path matches a function directory', async () => {
+    // Given
+    app = testAppLinked({allExtensions: [functionExtension1, functionExtension2, nonFunctionExtension]})
+
+    // When
+    const result = await chooseFunction(app, '/path/to/app/extensions/function-1')
+
+    // Then
+    expect(result).toBe(functionExtension1)
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
+  })
+
+  test('returns the only function when app has single function and path does not match', async () => {
+    // Given
+    app = testAppLinked({allExtensions: [functionExtension1, nonFunctionExtension]})
+
+    // When
+    const result = await chooseFunction(app, '/some/other/path')
+
+    // Then
+    expect(result).toBe(functionExtension1)
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
+  })
+
+  test('prompts user to select function when multiple functions exist and path does not match', async () => {
+    // Given
+    app = testAppLinked({allExtensions: [functionExtension1, functionExtension2, nonFunctionExtension]})
+    vi.mocked(isTerminalInteractive).mockReturnValue(true)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue(functionExtension2)
+
+    // When
+    const result = await chooseFunction(app, '/some/other/path')
+
+    // Then
+    expect(result).toBe(functionExtension2)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which function?',
+      choices: [
+        {label: functionExtension1.handle, value: functionExtension1},
+        {label: functionExtension2.handle, value: functionExtension2},
+      ],
+    })
+  })
+
+  test('throws error when terminal is not interactive and cannot determine function', async () => {
+    // Given
+    app = testAppLinked({allExtensions: [functionExtension1, functionExtension2]})
+    vi.mocked(isTerminalInteractive).mockReturnValue(false)
+
+    // When/Then
+    await expect(chooseFunction(app, '/some/other/path')).rejects.toThrowError(
+      'Run this command from a function directory or use `--path` to specify a function directory.',
+    )
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
+  })
+
+  test('filters out non-function extensions', async () => {
+    // Given
+    app = testAppLinked({allExtensions: [nonFunctionExtension]})
+    vi.mocked(isTerminalInteractive).mockReturnValue(false)
+
+    // When/Then
+    await expect(chooseFunction(app, '/some/path')).rejects.toThrowError(
+      'Run this command from a function directory or use `--path` to specify a function directory.',
+    )
   })
 })
