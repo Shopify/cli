@@ -1,13 +1,13 @@
 import {appFlags} from '../../../flags.js'
 import {AppEventWatcher, EventType} from '../../../services/dev/app-events/app-event-watcher.js'
-import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import colors from '@shopify/cli-kit/node/colors'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
 
-export default class DemoWatcher extends AppCommand {
+export default class DemoWatcher extends AppLinkedCommand {
   static summary = 'Watch and prints out changes to an app.'
   static hidden = true
 
@@ -16,7 +16,7 @@ export default class DemoWatcher extends AppCommand {
     ...appFlags,
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(DemoWatcher)
 
     const {app} = await linkedAppContext({

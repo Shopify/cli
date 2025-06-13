@@ -6,7 +6,7 @@ import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../../services
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {appFlags} from '../../flags.js'
 import {importExtensions} from '../../services/import-extensions.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {renderSelectPrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -65,7 +65,7 @@ const getMigrationChoices = (): MigrationChoice[] => [
   },
 ]
 
-export default class ImportExtensions extends AppCommand {
+export default class ImportExtensions extends AppLinkedCommand {
   static description = 'Import dashboard-managed extensions into your app.'
 
   static flags = {
@@ -79,7 +79,7 @@ export default class ImportExtensions extends AppCommand {
     }),
   }
 
-  async run(): Promise<AppCommandOutput> {
+  async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(ImportExtensions)
     const appContext = await linkedAppContext({
       directory: flags.path,

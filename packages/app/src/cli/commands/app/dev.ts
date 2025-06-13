@@ -2,7 +2,7 @@ import {appFlags} from '../../flags.js'
 import {dev, DevOptions} from '../../services/dev.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
@@ -11,7 +11,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Dev extends AppCommand {
+export default class Dev extends AppLinkedCommand {
   static summary = 'Run the app.'
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build) and lets you preview it on a [development store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store).
@@ -122,7 +122,7 @@ If you're using the Ruby app template, then you need to complete the following s
     return 'app dev stop'
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
 
     if (!flags['api-key'] && process.env.SHOPIFY_API_KEY) {
