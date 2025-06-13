@@ -1,10 +1,10 @@
 import {FunctionRunData} from '../../../../replay.js'
-import {AppLinkedInterface} from '../../../../../../models/app/app.js'
 import {FunctionConfigType} from '../../../../../../models/extensions/specifications/function.js'
 import {ExtensionInstance} from '../../../../../../models/extensions/extension-instance.js'
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 import {runFunction} from '../../../../runner.js'
 import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
+import {AppInterface} from '../../../../../../models/app/app.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {useEffect, useState} from 'react'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -15,7 +15,7 @@ import {Writable} from 'stream'
 interface WatchFunctionForReplayOptions {
   selectedRun: FunctionRunData
   abortController: AbortController
-  app: AppLinkedInterface
+  app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
   appWatcher: AppEventWatcher
 }

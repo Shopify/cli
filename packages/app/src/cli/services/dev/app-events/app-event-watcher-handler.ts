@@ -1,9 +1,9 @@
 import {OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {AppEvent, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {appDiff} from './app-diffing.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {reloadApp} from '../../../models/app/loader.js'
+import {localAppContext} from '../../app-context.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -17,7 +17,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
  */
 export async function handleWatcherEvents(
   events: WatcherEvent[],
-  app: AppLinkedInterface,
+  app: AppInterface,
   options: OutputContextOptions,
 ): Promise<AppEvent | undefined> {
   if (events[0] === undefined) return undefined
@@ -41,7 +41,7 @@ type Handler = (input: HandlerInput) => AppEvent
 
 interface HandlerInput {
   event: WatcherEvent
-  app: AppLinkedInterface
+  app: AppInterface
   extensions: ExtensionInstance[]
   options: OutputContextOptions
 }
@@ -127,10 +127,13 @@ async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
  * Reload the app and returns it
  * Prints the time to reload the app to stdout
  */
-async function reload(app: AppLinkedInterface): Promise<AppLinkedInterface> {
+async function reload(app: AppInterface): Promise<AppInterface> {
   const start = startHRTime()
   try {
-    const newApp = await reloadApp(app)
+    const newApp = await localAppContext({
+      directory: app.directory,
+      userProvidedConfigName: app.configuration.path,
+    })
     outputDebug(`App reloaded [${endHRTimeInMs(start)}ms]`)
     return newApp
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

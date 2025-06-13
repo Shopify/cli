@@ -1,23 +1,24 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {renderReplay} from './ui.js'
 import {runFunction} from './runner.js'
-import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
+import {AppInterface} from '../../models/app/app.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 
 import {existsSync, readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
 
 interface ReplayOptions {
-  app: AppLinkedInterface
+  app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
   stdout?: boolean
   path: string
@@ -53,8 +54,8 @@ export async function replay(options: ReplayOptions) {
   const abortController = new AbortController()
 
   try {
-    const apiKey = options.app.configuration.client_id
-    const functionRunsDir = joinPath(getLogsDir(), apiKey)
+    const pathHash = hashString(options.path)
+    const functionRunsDir = joinPath(getLogsDir(), pathHash)
 
     const selectedRun = options.log
       ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)

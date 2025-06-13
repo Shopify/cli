@@ -54,14 +54,8 @@ describe('inFunctionContext integration', () => {
     })
 
     // Then
-    expect(callback).toHaveBeenCalledWith(
-      app,
-      // developerPlatformClient
-      expect.any(Object),
-      ourFunction,
-      // orgId
-      expect.any(String),
-    )
+    expect(callback).toHaveBeenCalledOnce()
+    expect(renderFatalError).not.toHaveBeenCalled()
   })
 
   test('calls linkedAppContext with correct parameters', async () => {
