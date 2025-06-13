@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
 import {dirname, isSubpath, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
@@ -50,18 +50,14 @@ export interface OutputContextOptions {
 export class FileWatcher {
   private currentEvents: WatcherEvent[] = []
   private extensionPaths: string[] = []
-  private app: AppLinkedInterface
+  private app: AppInterface
   private readonly options: OutputContextOptions
   private onChangeCallback?: (events: WatcherEvent[]) => void
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
 
-  constructor(
-    app: AppLinkedInterface,
-    options: OutputContextOptions,
-    debounceTime: number = DEFAULT_DEBOUNCE_TIME_IN_MS,
-  ) {
+  constructor(app: AppInterface, options: OutputContextOptions, debounceTime: number = DEFAULT_DEBOUNCE_TIME_IN_MS) {
     this.app = app
     this.options = options
 
@@ -104,7 +100,7 @@ export class FileWatcher {
     this.options.signal.addEventListener('abort', this.close)
   }
 
-  updateApp(app: AppLinkedInterface) {
+  updateApp(app: AppInterface) {
     this.app = app
     this.extensionPaths = this.app.realExtensions
       .map((ext) => normalizePath(ext.directory))

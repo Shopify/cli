@@ -1,4 +1,4 @@
-import {AppLinkedInterface} from '../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
@@ -47,23 +47,28 @@ export async function inFunctionContext({
     userProvidedConfigName,
   })
 
+  const ourFunction = await chooseFunction(app, path)
+  return callback(app, developerPlatformClient, ourFunction, organization.id)
+}
+
+export async function chooseFunction(app: AppInterface, path: string): Promise<ExtensionInstance<FunctionConfigType>> {
   const allFunctions = app.allExtensions.filter(
     (ext) => ext.isFunctionExtension,
   ) as ExtensionInstance<FunctionConfigType>[]
   const ourFunction = allFunctions.find((fun) => fun.directory === path)
+  if (ourFunction) return ourFunction
 
-  if (ourFunction) {
-    return callback(app, developerPlatformClient, ourFunction, organization.id)
-  } else if (isTerminalInteractive()) {
+  if (allFunctions.length === 1 && allFunctions[0]) return allFunctions[0]
+
+  if (isTerminalInteractive()) {
     const selectedFunction = await renderAutocompletePrompt({
       message: 'Which function?',
       choices: allFunctions.map((shopifyFunction) => ({label: shopifyFunction.handle, value: shopifyFunction})),
     })
-
-    return callback(app, developerPlatformClient, selectedFunction, organization.id)
-  } else {
-    throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
+    return selectedFunction
   }
+
+  throw new AbortError('Run this command from a function directory or use `--path` to specify a function directory.')
 }
 
 export async function getOrGenerateSchemaPath(
