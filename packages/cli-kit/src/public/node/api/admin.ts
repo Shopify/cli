@@ -37,7 +37,22 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
   const store = await normalizeStoreFqdn(session.storeFqdn)
   const url = adminUrl(store, version, session)
   const addedHeaders = themeAccessHeaders(session)
-  return graphqlRequest({query, api, addedHeaders, url, token: session.token, variables})
+
+  // PENDING: Add real unauthorized handler
+  const unauthorizedHandler: UnauthorizedHandler = {
+    type: 'token_refresh',
+    handler: () => Promise.resolve({token: session.token}),
+  }
+
+  return graphqlRequest({
+    query,
+    api,
+    addedHeaders,
+    url,
+    token: session.token,
+    variables,
+    unauthorizedHandler,
+  })
 }
 
 export interface AdminRequestOptions<TResult, TVariables extends Variables> {
@@ -78,9 +93,13 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
     token: session.token,
     addedHeaders,
   }
+
+  // PENDING: Add real unauthorized handler
   let unauthorizedHandler: UnauthorizedHandler | undefined
   if ('refresh' in session) {
     unauthorizedHandler = {type: 'token_refresh', handler: session.refresh as () => Promise<{token: string}>}
+  } else {
+    unauthorizedHandler = {type: 'token_refresh', handler: () => Promise.resolve({token: session.token})}
   }
   const result = graphqlRequestDoc<TResult, TVariables>({
     ...opts,
