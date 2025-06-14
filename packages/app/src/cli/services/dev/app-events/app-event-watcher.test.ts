@@ -10,10 +10,11 @@ import {
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {loadApp, reloadApp} from '../../../models/app/loader.js'
+import {loadApp} from '../../../models/app/loader.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
+import {localAppContext} from '../../app-context.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -23,6 +24,7 @@ import {Writable} from 'stream'
 
 vi.mock('../../../models/app/loader.js')
 vi.mock('./app-watcher-esbuild.js')
+vi.mock('../../app-context.js')
 
 // Extensions 1 and 1B simulate extensions defined in the same directory (same toml)
 const extension1 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1'})
@@ -248,12 +250,12 @@ const testCases: TestCase[] = [
 
 describe('app-event-watcher', () => {
   let abortController: AbortController
-  let stdout: any
-  let stderr: any
+  let stdout: Writable
+  let stderr: Writable
 
   beforeEach(() => {
-    stdout = {write: vi.fn()}
-    stderr = {write: vi.fn()}
+    stdout = {write: vi.fn()} as unknown as Writable
+    stderr = {write: vi.fn()} as unknown as Writable
     abortController = new AbortController()
   })
 
@@ -268,7 +270,7 @@ describe('app-event-watcher', () => {
         await inTemporaryDirectory(async (tmpDir) => {
           const mockedApp = testAppLinked({allExtensions: finalExtensions})
           vi.mocked(loadApp).mockResolvedValue(mockedApp)
-          vi.mocked(reloadApp).mockResolvedValue(mockedApp)
+          vi.mocked(localAppContext).mockResolvedValue(mockedApp)
 
           const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
 
@@ -288,21 +290,13 @@ describe('app-event-watcher', () => {
 
           // Wait until emitSpy has been called at least once
           // We need this because there are I/O operations that make the test finish before the event is emitted
-          await new Promise<void>((resolve, reject) => {
-            const initialTime = Date.now()
-            const checkEmitSpy = () => {
-              const allCalled = emitSpy.mock.calls.some((call) => call[0] === 'all')
-              const readyCalled = emitSpy.mock.calls.some((call) => call[0] === 'ready')
-              if (allCalled && readyCalled) {
-                resolve()
-              } else if (Date.now() - initialTime < 3000) {
-                setTimeout(checkEmitSpy, 100)
-              } else {
-                reject(new Error('Timeout waiting for emitSpy to be called'))
-              }
-            }
-            checkEmitSpy()
-          })
+          await vi.waitFor(
+            () => {
+              expect(emitSpy).toHaveBeenCalledWith('ready', expect.anything())
+              expect(emitSpy).toHaveBeenCalledWith('all', expect.anything())
+            },
+            {timeout: 3000},
+          )
 
           expect(emitSpy).toHaveBeenCalledWith('all', {
             app: expect.objectContaining({realExtensions: finalExtensions}),
@@ -323,9 +317,9 @@ describe('app-event-watcher', () => {
           })
 
           if (needsAppReload) {
-            expect(reloadApp).toHaveBeenCalled()
+            expect(localAppContext).toHaveBeenCalled()
           } else {
-            expect(reloadApp).not.toHaveBeenCalled()
+            expect(localAppContext).not.toHaveBeenCalled()
           }
         })
       },
@@ -396,7 +390,7 @@ describe('app-event-watcher', () => {
 
         // Given
         const buildError = {message: 'Build failed'}
-        flowExtension.buildForBundle = vi.fn().mockRejectedValueOnce(buildError)
+        vi.spyOn(flowExtension, 'buildForBundle').mockRejectedValueOnce(buildError)
 
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
@@ -464,19 +458,64 @@ describe('app-event-watcher', () => {
 class MockESBuildContextManager extends ESBuildContextManager {
   contexts = {
     // The keys are the extension handles, the values are the ESBuild contexts mocked
-    uid1: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-    uid1B: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-    uid2: [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
-    'test-ui-extension': [{rebuild: vi.fn(), watch: vi.fn(), serve: vi.fn(), cancel: vi.fn(), dispose: vi.fn()}],
+    uid1: [
+      {
+        rebuild: vi.fn().mockResolvedValue(undefined),
+        watch: vi.fn(),
+        serve: vi.fn(),
+        cancel: vi.fn(),
+        dispose: vi.fn(),
+      },
+    ],
+    uid1B: [
+      {
+        rebuild: vi.fn().mockResolvedValue(undefined),
+        watch: vi.fn(),
+        serve: vi.fn(),
+        cancel: vi.fn(),
+        dispose: vi.fn(),
+      },
+    ],
+    uid2: [
+      {
+        rebuild: vi.fn().mockResolvedValue(undefined),
+        watch: vi.fn(),
+        serve: vi.fn(),
+        cancel: vi.fn(),
+        dispose: vi.fn(),
+      },
+    ],
+    'test-ui-extension': [
+      {
+        rebuild: vi.fn().mockResolvedValue(undefined),
+        watch: vi.fn(),
+        serve: vi.fn(),
+        cancel: vi.fn(),
+        dispose: vi.fn(),
+      },
+    ],
   }
+
+  rebuildContext = vi.fn()
 
   constructor() {
     super({dotEnvVariables: {}, url: 'url', outputPath: 'outputPath'})
   }
 
-  async createContexts(extensions: ExtensionInstance[]) {}
-  async updateContexts(appEvent: AppEvent) {}
-  async deleteContexts(extensions: ExtensionInstance[]) {}
+  async createContexts(extensions: ExtensionInstance[]): Promise<void> {
+    // Mock implementation
+    return Promise.resolve()
+  }
+
+  async updateContexts(appEvent: AppEvent): Promise<void> {
+    // Mock implementation
+    return Promise.resolve()
+  }
+
+  async deleteContexts(extensions: ExtensionInstance[]): Promise<void> {
+    // Mock implementation
+    return Promise.resolve()
+  }
 }
 
 // Mock class for FileWatcher
@@ -491,6 +530,8 @@ class MockFileWatcher extends FileWatcher {
   }
 
   async start(): Promise<void> {
+    // Delay event emission to next tick to ensure listener is registered
+    await new Promise((resolve) => setImmediate(resolve))
     if (this.listener) {
       this.listener(this.events)
     }

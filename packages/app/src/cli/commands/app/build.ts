@@ -2,7 +2,7 @@ import {appFlags} from '../../flags.js'
 import build from '../../services/build.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
+import {localAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -44,10 +44,8 @@ export default class Build extends AppCommand {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const {app} = await linkedAppContext({
+    const app = await localAppContext({
       directory: flags.path,
-      clientId: apiKey,
-      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

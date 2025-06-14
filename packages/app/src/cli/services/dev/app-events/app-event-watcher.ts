@@ -2,7 +2,7 @@
 import {FileWatcher, OutputContextOptions} from './file-watcher.js'
 import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -76,7 +76,7 @@ export interface ExtensionEvent {
  * to determine how long it took to process the event.
  */
 export interface AppEvent {
-  app: AppLinkedInterface
+  app: AppInterface
   extensionEvents: ExtensionEvent[]
   path: string
   startTime: [number, number]
@@ -90,7 +90,7 @@ type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; erro
  */
 export class AppEventWatcher extends EventEmitter {
   buildOutputPath: string
-  private app: AppLinkedInterface
+  private app: AppInterface
   private options: OutputContextOptions
   private readonly appURL?: string
   private readonly esbuildManager: ESBuildContextManager
@@ -100,7 +100,7 @@ export class AppEventWatcher extends EventEmitter {
   private fileWatcher?: FileWatcher
 
   constructor(
-    app: AppLinkedInterface,
+    app: AppInterface,
     appURL?: string,
     buildOutputPath?: string,
     esbuildManager?: ESBuildContextManager,

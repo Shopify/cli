@@ -3,13 +3,13 @@ import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppLogsSubscribeMutationVariables} from '../../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {subscribeToAppLogs} from '../../app-logs/utils.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {AppEventWatcher, AppEvent} from '../app-events/app-event-watcher.js'
 
 import {createLogsDir} from '@shopify/cli-kit/node/logs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-function hasFunctionExtensions(app: AppLinkedInterface): boolean {
+function hasFunctionExtensions(app: AppInterface): boolean {
   return app.allExtensions.some((extension) => extension.isFunctionExtension)
 }
 
@@ -19,7 +19,7 @@ interface SubscribeAndStartPollingOptions {
   storeName: string
   organizationId: string
   appWatcher: AppEventWatcher
-  localApp: AppLinkedInterface
+  localApp: AppInterface
 }
 
 export interface AppLogsSubscribeProcess extends BaseProcess<SubscribeAndStartPollingOptions> {
@@ -35,7 +35,7 @@ interface Props {
   storeName: string
   organizationId: string
   appWatcher: AppEventWatcher
-  localApp: AppLinkedInterface
+  localApp: AppInterface
 }
 
 export async function setupAppLogsPollingProcess({
