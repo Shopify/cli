@@ -95,6 +95,7 @@ const deployOptions = (app: AppLinkedInterface, reset = false, force = false): D
     force,
     noRelease: false,
     developerPlatformClient: buildDeveloperPlatformClient(),
+    skipBuild: false,
   }
 }
 
@@ -528,6 +529,7 @@ describe('ensureDeployContext', () => {
       force: false,
       noRelease: false,
       developerPlatformClient: buildDeveloperPlatformClient({supportsAtomicDeployments: true}),
+      skipBuild: false,
     }
     await ensureDeployContext(options)
 
@@ -573,6 +575,7 @@ describe('ensureDeployContext', () => {
       force: false,
       noRelease: false,
       developerPlatformClient: buildDeveloperPlatformClient({supportsAtomicDeployments: true}),
+      skipBuild: false,
     }
     await ensureDeployContext(options)
 
