@@ -79,7 +79,11 @@ export function setupGraphiQLServer({
         client_secret: apiSecret,
         grant_type: 'client_credentials',
       }
-      const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token`, {
+      const tokenUrl = `https://${storeFqdn}/admin/oauth/access_token`
+      outputDebug(`Token refresh URL: ${tokenUrl}`, stdout)
+      outputDebug(`Token refresh body: ${JSON.stringify({...bodyData, client_secret: '[REDACTED]'})}`, stdout)
+
+      const tokenResponse = await fetch(tokenUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,9 +91,12 @@ export function setupGraphiQLServer({
         body: JSON.stringify(bodyData),
       })
 
+      outputDebug(`Token refresh response status: ${tokenResponse.status}`, stdout)
       const tokenJson = (await tokenResponse.json()) as {access_token: string}
+      outputDebug('Token refresh successful', stdout)
       return tokenJson.access_token
     } catch (_error) {
+      outputDebug(`Token refresh failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`, stdout)
       throw new TokenRefreshError()
     }
   }
@@ -182,8 +189,11 @@ export function setupGraphiQLServer({
     if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
+    outputDebug(`GraphQL endpoint: ${graphqlUrl}`, stdout)
+
     try {
       const reqBody = JSON.stringify(req.body)
+      outputDebug(`Request body: ${reqBody}`, stdout)
 
       const runRequest = async () => {
         const headers = {
@@ -192,12 +202,26 @@ export function setupGraphiQLServer({
           'X-Shopify-Access-Token': await token(),
           'User-Agent': `ShopifyCLIGraphiQL/${CLI_KIT_VERSION}`,
         }
+        outputDebug(`Request headers: ${JSON.stringify({...headers, 'X-Shopify-Access-Token': '[REDACTED]'})}`, stdout)
 
-        return fetch(graphqlUrl, {
+        const startTime = Date.now()
+        const response = fetch(graphqlUrl, {
           method: req.method,
           headers,
           body: reqBody,
         })
+
+        response
+          .then((res) => {
+            const duration = Date.now() - startTime
+            outputDebug(`Response received - Status: ${res.status}, Duration: ${duration}ms`, stdout)
+          })
+          .catch((err) => {
+            const duration = Date.now() - startTime
+            outputDebug(`Request failed - Error: ${err.message}, Duration: ${duration}ms`, stdout)
+          })
+
+        return response
       }
 
       let result = await runRequest()
@@ -210,9 +234,12 @@ export function setupGraphiQLServer({
       res.setHeader('Content-Type', 'application/json')
       res.statusCode = result.status
       const responseBody = await result.json()
+      outputDebug(`Response body: ${JSON.stringify(responseBody)}`, stdout)
+
       res.json(responseBody)
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error: unknown) {
+      outputDebug(`GraphQL request error: ${error instanceof Error ? error.message : 'Unknown error'}`, stdout)
       res.statusCode = 500
       if (error instanceof Error) {
         res.json({errors: [error.message]})
