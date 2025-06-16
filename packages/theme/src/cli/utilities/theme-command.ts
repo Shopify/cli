@@ -72,6 +72,22 @@ export default abstract class ThemeCommand extends Command {
 
     // If only one environment is specified, treat it as single environment mode
     if (environments.length === 1) {
+      // For commands with multiEnvironmentsFlags = null, we still need to load the environment config
+      if (requiredFlags === null) {
+        const environmentConfig = await loadEnvironment(environments[0], 'shopify.theme.toml', {
+          from: flags.path,
+          silent: true,
+        })
+
+        if (environmentConfig) {
+          // Merge environment config with flags
+          const mergedFlags = {...environmentConfig, ...flags, environment: environments}
+          const session = await this.ensureAuthenticated(mergedFlags as FlagValues)
+          await this.command(mergedFlags, session)
+          return
+        }
+      }
+
       const session = await this.ensureAuthenticated(flags)
       await this.command(flags, session)
       return
