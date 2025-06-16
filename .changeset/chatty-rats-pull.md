@@ -3,4 +3,4 @@
 '@shopify/app': minor
 ---
 
-Add support for displaying POS dev logs
+Add support for displaying UI Extension dev logs
