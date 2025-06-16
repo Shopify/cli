@@ -67,6 +67,12 @@ export function parseLogMessage(message: string): string {
   }
 }
 
+const consoleTypeColors = {
+  debug: (text: string) => outputToken.gray(text),
+  warn: (text: string) => outputToken.yellow(text),
+  error: (text: string) => outputToken.errorText(text),
+} as const
+
 export function handleLogEvent(
   eventData: {type: string; message: string; extensionName: string},
   options: SetupWebSocketConnectionOptions,
@@ -74,17 +80,11 @@ export function handleLogEvent(
   const {type, message, extensionName} = eventData
   const formattedMessage = parseLogMessage(message)
 
-  const levelColors = {
-    debug: (text: string) => outputToken.gray(text),
-    warn: (text: string) => outputToken.yellow(text),
-    error: (text: string) => outputToken.errorText(text),
-  } as const
-
-  const uppercaseLevel = type.toUpperCase()
-  const colouredLevel = levelColors[type as keyof typeof levelColors]?.(uppercaseLevel) ?? uppercaseLevel
+  const uppercaseType = type.toUpperCase()
+  const colouredType = consoleTypeColors[type as keyof typeof consoleTypeColors]?.(uppercaseType) ?? uppercaseType
 
   useConcurrentOutputContext({outputPrefix: extensionName, stripAnsi: false}, () => {
-    options.stdout.write(outputContent`${colouredLevel}: ${formattedMessage}`.value)
+    options.stdout.write(outputContent`${colouredType}: ${formattedMessage}`.value)
   })
 }
 

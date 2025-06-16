@@ -278,7 +278,6 @@ describe('handleLogEvent()', () => {
       message: 'Test info message',
       extensionName: 'test-extension',
     }
-
     handleLogEvent(eventData, options)
 
     expectLogMessageOutput('test-extension', `INFO: Test info message`, options)
@@ -313,5 +312,17 @@ describe('handleLogEvent()', () => {
     handleLogEvent(eventData, options)
 
     expectLogMessageOutput('error-extension', `${colors.bold.redBright('ERROR')}: Test error message`, options)
+  })
+
+  test('handles unknown log type without erroring', () => {
+    const options = getMockSetupWebSocketConnectionOptions()
+    const eventData = {
+      type: 'unknown-type',
+      message: 'Message with unknown log type',
+      extensionName: 'test-extension',
+    }
+    handleLogEvent(eventData, options)
+
+    expectLogMessageOutput('test-extension', 'UNKNOWN-TYPE: Message with unknown log type', options)
   })
 })
