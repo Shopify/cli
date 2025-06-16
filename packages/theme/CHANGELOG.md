@@ -1,5 +1,43 @@
 # @shopify/theme
 
+## 3.81.1
+
+### Patch Changes
+
+- b838f21: Remove git remote after cloning theme in `theme init` command to prevent accidental pushes to the skeleton theme repository
+- Updated dependencies [b838f21]
+  - @shopify/cli-kit@3.81.1
+
+## 3.81.0
+
+### Minor Changes
+
+- c39ba5e: Add default environment functionality
+
+  You may now optionally define a default environment in your environment config
+  file (e.g. `shopify.theme.toml`) that will be automatically injected into the
+  running command without needing to specify it. The name of the environment must
+  be `[environments.default]`.
+
+- eb19684: Removed overrides for SHOPIFY_CLI_NO_THEME_BUNDLING and SHOPIFY_CLI_BUNDLED_THEME_CLI
+- 24aa2dd: Drop support for Node 18
+- ce3dfdc: Print all log messages to stderr instead of stdout
+- 219e6d1: Prompt users who run `shopify theme init` to create their AI file
+
+### Patch Changes
+
+- e18c9f6: Shopify/skeleton-theme is the default theme for `theme init`
+- dc78463: Make local compiled assets more resilient to Liquid syntax errors.
+- 451a3a8: Update links to shopify dev docs
+- 53c2a92: Make hot reload events more resilient to Liquid syntax errors.
+- 642bb3e: Change `theme download` progress bar to render percentage
+- Updated dependencies [23d4b0b]
+- Updated dependencies [16406ae]
+- Updated dependencies [eb19684]
+- Updated dependencies [24aa2dd]
+- Updated dependencies [9a9e51e]
+  - @shopify/cli-kit@3.81.0
+
 ## 3.80.0
 
 ### Minor Changes

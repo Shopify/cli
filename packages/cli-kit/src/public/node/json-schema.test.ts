@@ -1,7 +1,7 @@
 import {jsonSchemaValidate, normaliseJsonSchema} from './json-schema.js'
 import {decodeToml} from './toml.js'
+import {zod} from './schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const COMPLEX_SCHEMA = {
   type: 'object',

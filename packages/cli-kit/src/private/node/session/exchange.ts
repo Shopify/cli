@@ -7,8 +7,8 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
+import {nonRandomUUID} from '../../../public/node/crypto.js'
 import * as jose from 'jose'
-import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}

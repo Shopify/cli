@@ -1,3 +1,10 @@
 packages:
   - packages/*
   - workspace
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+  - msw
+  - nx
+  - protobufjs
+  - yarn

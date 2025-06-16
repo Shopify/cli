@@ -8,9 +8,9 @@ import {inTemporaryDirectory} from '../fs.js'
 import {LocalStorage} from '../local-storage.js'
 import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
 import {nonRandomUUID} from '../crypto.js'
+import {CLI_KIT_VERSION} from '../../common/version.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {setupServer} from 'msw/node'
 import {graphql, HttpResponse} from 'msw'
 
@@ -54,6 +54,40 @@ const handlers = [
         ],
       },
       {
+        headers: {
+          'x-request-id': 'failed-request-id',
+        },
+      },
+    )
+  }),
+  mockApi.query('FailsWithUnauthorized', () => {
+    return HttpResponse.json(
+      {
+        errors: [
+          {
+            message: `not authorized`,
+          },
+        ],
+      },
+      {
+        status: 401,
+        headers: {
+          'x-request-id': 'failed-request-id',
+        },
+      },
+    )
+  }),
+  mockApi.query('FailsWithBadRequest', () => {
+    return HttpResponse.json(
+      {
+        errors: [
+          {
+            message: `bad request`,
+          },
+        ],
+      },
+      {
+        status: 400,
         headers: {
           'x-request-id': 'failed-request-id',
         },
@@ -207,6 +241,77 @@ describe('graphqlRequest', () => {
         "cmd_all_last_graphql_request_id": "failed-request-id",
       }
     `)
+  })
+
+  test('Fails without retry when unauthorized and no token refresh function is provided', async () => {
+    const res = graphqlRequest({
+      query: 'query FailsWithUnauthorized { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+    })
+
+    let requestCount = 0
+    server.events.on('request:start', () => {
+      requestCount++
+    })
+
+    await expect(res).rejects.toThrow('not authorized')
+    expect(requestCount).toBe(1)
+  })
+
+  test('Fails without retry when unauthorized and a token refresh function cannot refresh the token', async () => {
+    const res = graphqlRequest({
+      query: 'query FailsWithUnauthorized { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: undefined})},
+    })
+
+    let requestCount = 0
+    server.events.on('request:start', () => {
+      requestCount++
+    })
+
+    await expect(res).rejects.toThrow('not authorized')
+    expect(requestCount).toBe(1)
+  })
+
+  test('Retries once with refreshed token when unauthorized and refresh succeeds', async () => {
+    const res = graphqlRequest({
+      query: 'query FailsWithUnauthorized { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+    })
+
+    let requestCount = 0
+    server.events.on('request:start', () => {
+      requestCount++
+    })
+
+    await expect(res).rejects.toThrow('not authorized')
+    expect(requestCount).toBe(2)
+  })
+
+  test('Fails without retry when bad request when unauthorized handler is provided', async () => {
+    const res = graphqlRequest({
+      query: 'query FailsWithBadRequest { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      responseOptions: {handleErrors: false},
+      unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+    })
+    let requestCount = 0
+    server.events.on('request:start', () => {
+      requestCount++
+    })
+
+    await expect(res).rejects.toThrow('bad request')
+    expect(requestCount).toBe(1)
   })
 })
 

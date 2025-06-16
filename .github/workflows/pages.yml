@@ -26,7 +26,7 @@ env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  PNPM_VERSION: '8.15.7'
+  PNPM_VERSION: '10.11.1'
 
 jobs:
   build:

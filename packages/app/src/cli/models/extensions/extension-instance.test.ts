@@ -414,7 +414,7 @@ describe('draftMessages', async () => {
     const result = extensionInstance.draftMessages.errorMessage
 
     // Then
-    expect(result).toEqual('Error while deploying updated extension draft')
+    expect(result).toEqual('Error updating extension draft for test-ui-extension')
   })
 
   test('returns no error message when the extension is draftable but configuration', async () => {

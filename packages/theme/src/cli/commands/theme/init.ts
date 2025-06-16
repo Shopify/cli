@@ -1,24 +1,21 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {
-  cloneRepoAndCheckoutLatestTag,
-  cloneRepo,
-  getSkeletonThemeLatestTag,
-  SKELETON_THEME_URL,
-  DAWN_URL,
-} from '../../services/init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo, promptAndCreateAIFile} from '../../services/init.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+
+const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme'
 
 export default class Init extends ThemeCommand {
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
 
   static descriptionWithMarkdown = `Clones a Git repository to your local machine to use as the starting point for building a theme.
 
-  If no Git repository is specified, then this command creates a copy of Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.
+  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](${SKELETON_THEME_URL}), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
   `
@@ -40,9 +37,9 @@ export default class Init extends ThemeCommand {
     path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
-      description: `The Git URL to clone from. Defaults to Shopify's example theme.`,
+      default: SKELETON_THEME_URL,
+      description: `The Git URL to clone from. Defaults to Shopify's Skeleton theme.`,
       env: 'SHOPIFY_FLAG_CLONE_URL',
-      required: false,
     }),
     latest: Flags.boolean({
       char: 'l',
@@ -54,18 +51,7 @@ export default class Init extends ThemeCommand {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Init)
     const name = args.name || (await this.promptName(flags.path))
-    let repoUrl = flags['clone-url']
-
-    if (!repoUrl) {
-      const skeletonThemeLatestTag = await getSkeletonThemeLatestTag()
-
-      if (skeletonThemeLatestTag) {
-        repoUrl = SKELETON_THEME_URL
-      } else {
-        repoUrl = DAWN_URL
-      }
-    }
-
+    const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)
 
     if (flags.latest) {
@@ -73,6 +59,10 @@ export default class Init extends ThemeCommand {
     } else {
       await cloneRepo(repoUrl, destination)
     }
+
+    if (!terminalSupportsPrompting()) return
+
+    await promptAndCreateAIFile(destination)
   }
 
   async promptName(directory: string) {

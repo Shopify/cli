@@ -1,4 +1,4 @@
-import {Checksum, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {Checksum, Theme, ThemeAsset} from './types.js'
 
 interface RemoteThemeResponse {
   id: number

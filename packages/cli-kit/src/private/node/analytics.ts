@@ -5,11 +5,11 @@ import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../public/node/metadata.js'
 import {platformAndArch} from '../../public/node/os.js'
+import {ciPlatform, cloudEnvironment, macAddress} from '../../public/node/context/local.js'
+import {cwd} from '../../public/node/path.js'
+import {currentProcessIsGlobal} from '../../public/node/is-global.js'
+import {isWsl} from '../../public/node/system.js'
 import {Command, Interfaces} from '@oclif/core'
-import {ciPlatform, cloudEnvironment, macAddress} from '@shopify/cli-kit/node/context/local'
-import {cwd} from '@shopify/cli-kit/node/path'
-import {currentProcessIsGlobal} from '@shopify/cli-kit/node/is-global'
-import {isWsl} from '@shopify/cli-kit/node/system'
 
 interface StartOptions {
   commandContent: CommandContent

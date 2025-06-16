@@ -538,7 +538,7 @@ export class App<
       const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
       // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
       // This is needed to enable file-specific global type declarations.
-      const typeContent = [`import '@shopify/ui-extension';\n`, ...Array.from(types)].join('\n')
+      const typeContent = [`import '@shopify/ui-extensions';\n`, ...Array.from(types)].join('\n')
       if (originalContent === typeContent) {
         return
       }

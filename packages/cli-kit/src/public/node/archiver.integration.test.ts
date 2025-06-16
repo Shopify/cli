@@ -1,10 +1,10 @@
 import {zip, brotliCompress} from './archiver.js'
 import {fileExists, inTemporaryDirectory, mkdir, touchFile} from './fs.js'
 import {joinPath, dirname} from './path.js'
+import {exec} from './system.js'
 import {describe, expect, test} from 'vitest'
 import StreamZip from 'node-stream-zip'
 import brotli from 'brotli'
-import {exec} from '@shopify/cli-kit/node/system'
 import fs from 'fs'
 
 describe('zip', () => {

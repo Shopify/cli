@@ -1,5 +1,5 @@
 import {recordMetrics} from './otel-metrics.js'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput} from '../../public/node/testing/output.js'
 import {describe, expect, test, vi} from 'vitest'
 
 describe('otel-metrics', () => {
