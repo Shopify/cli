@@ -265,7 +265,7 @@ describe('handleLogEvent()', () => {
       {outputPrefix: extensionName, stripAnsi: false},
       expect.any(Function),
     )
-    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0][1]
+    const contextCallback = (useConcurrentOutputContext as Mock).mock.calls[0]?.[1]
     contextCallback()
 
     expect(options.stdout.write).toHaveBeenCalledWith(expectedOutput)
