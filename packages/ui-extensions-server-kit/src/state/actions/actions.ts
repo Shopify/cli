@@ -1,4 +1,4 @@
-import type {ConnectedAction, UpdateAction, RefreshAction, FocusAction, UnfocusAction, LogAction} from './types'
+import type {ConnectedAction, UpdateAction, RefreshAction, FocusAction, UnfocusAction} from './types'
 
 export function createConnectedAction(payload: ConnectedAction['payload']): ConnectedAction {
   return {
@@ -31,13 +31,6 @@ export function createFocusAction(payload: FocusAction['payload']): FocusAction 
 export function createUnfocusAction(payload: UnfocusAction['payload']): UnfocusAction {
   return {
     type: 'unfocus',
-    payload,
-  }
-}
-
-export function createLogAction(payload: LogAction['payload']): LogAction {
-  return {
-    type: 'log',
     payload,
   }
 }

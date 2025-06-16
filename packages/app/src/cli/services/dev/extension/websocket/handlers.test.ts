@@ -2,7 +2,7 @@ import {
   getConnectionDoneHandler,
   getOnMessageHandler,
   getPayloadUpdateHandler,
-  handleLogMessage,
+  handleLogEvent,
   parseLogMessage,
   websocketUpgradeHandler,
 } from './handlers.js'
@@ -196,18 +196,15 @@ describe('getOnMessageHandler()', () => {
     wss.clients.forEach((ws) => expect(ws.send).toHaveBeenCalledWith(outgoingMessage))
   })
 
-  test('on an incoming dispatch with type log calls handleLogMessage and does not notify clients', () => {
+  test('on an incoming log event calls handleLogMessage and does not notify clients', () => {
     const wss = getMockWebsocketServer()
     const options = getMockSetupWebSocketConnectionOptions()
     const data = JSON.stringify({
-      event: 'dispatch',
+      event: 'log',
       data: {
-        type: 'log',
-        payload: {
-          level: 'info',
-          message: 'Test log message',
-          extensionName: 'test-extension',
-        },
+        type: 'info',
+        message: 'Test log message',
+        extensionName: 'test-extension',
       },
     }) as unknown as RawData
 
@@ -257,7 +254,7 @@ describe('parseLogMessage()', () => {
   })
 })
 
-describe('handleLogMessage()', () => {
+describe('handleLogEvent()', () => {
   // Helper function to abstract the common expect pattern
   function expectLogMessageOutput(
     extensionName: string,
@@ -277,14 +274,12 @@ describe('handleLogMessage()', () => {
   test('outputs info level log message with correct formatting', () => {
     const options = getMockSetupWebSocketConnectionOptions()
     const eventData = {
-      payload: {
-        level: 'info',
-        message: 'Test info message',
-        extensionName: 'test-extension',
-      },
+      type: 'info',
+      message: 'Test info message',
+      extensionName: 'test-extension',
     }
 
-    handleLogMessage(eventData, options)
+    handleLogEvent(eventData, options)
 
     expectLogMessageOutput('test-extension', `INFO: Test info message`, options)
   })
@@ -293,14 +288,12 @@ describe('handleLogMessage()', () => {
     const options = getMockSetupWebSocketConnectionOptions()
     const message = JSON.stringify(['Hello', 'world', {user: 'test'}], null, 2)
     const eventData = {
-      payload: {
-        level: 'info',
-        message,
-        extensionName: 'test-extension',
-      },
+      type: 'info',
+      message,
+      extensionName: 'test-extension',
     }
 
-    handleLogMessage(eventData, options)
+    handleLogEvent(eventData, options)
 
     expectLogMessageOutput(
       'test-extension',
@@ -312,14 +305,12 @@ describe('handleLogMessage()', () => {
   test('outputs error level log message with error formatting', () => {
     const options = getMockSetupWebSocketConnectionOptions()
     const eventData = {
-      payload: {
-        level: 'error',
-        message: 'Test error message',
-        extensionName: 'error-extension',
-      },
+      type: 'error',
+      message: 'Test error message',
+      extensionName: 'error-extension',
     }
 
-    handleLogMessage(eventData, options)
+    handleLogEvent(eventData, options)
 
     expectLogMessageOutput('error-extension', `${colors.bold.redBright('ERROR')}: Test error message`, options)
   })

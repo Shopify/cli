@@ -7,7 +7,6 @@ import {
   createRefreshAction,
   createFocusAction,
   createUnfocusAction,
-  createLogAction,
 } from '../actions'
 
 import type {ExtensionServerState} from './types'
@@ -157,18 +156,5 @@ describe('extensionServerReducer()', () => {
 
       expect(state.extensions[0].development.focused).toBe(false)
     })
-  })
-
-  test('does not mutate the state when receiving log events', () => {
-    const extension = mockExtension()
-    const previousState: ExtensionServerState = {
-      store: 'test-store.com',
-      extensions: [extension],
-    }
-
-    const action = createLogAction({level: 'info', message: 'test', extensionName: extension.name})
-    const state = extensionServerReducer(previousState, action)
-
-    expect(state).toStrictEqual(previousState)
   })
 })

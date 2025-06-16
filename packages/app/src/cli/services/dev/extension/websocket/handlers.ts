@@ -67,11 +67,11 @@ export function parseLogMessage(message: string): string {
   }
 }
 
-export function handleLogMessage(
-  eventData: {payload: {level: string; message: string; extensionName: string}},
+export function handleLogEvent(
+  eventData: {type: string; message: string; extensionName: string},
   options: SetupWebSocketConnectionOptions,
 ) {
-  const {level, message, extensionName} = eventData.payload
+  const {type, message, extensionName} = eventData
   const formattedMessage = parseLogMessage(message)
 
   const levelColors = {
@@ -80,8 +80,8 @@ export function handleLogMessage(
     error: (text: string) => outputToken.errorText(text),
   } as const
 
-  const uppercaseLevel = level.toUpperCase()
-  const colouredLevel = levelColors[level as keyof typeof levelColors]?.(uppercaseLevel) ?? uppercaseLevel
+  const uppercaseLevel = type.toUpperCase()
+  const colouredLevel = levelColors[type as keyof typeof levelColors]?.(uppercaseLevel) ?? uppercaseLevel
 
   useConcurrentOutputContext({outputPrefix: extensionName, stripAnsi: false}, () => {
     options.stdout.write(outputContent`${colouredLevel}: ${formattedMessage}`.value)
@@ -120,13 +120,11 @@ ${outputToken.json(eventData)}
         options.payloadStore.updateExtensions(eventData.extensions)
       }
     } else if (eventType === 'dispatch') {
-      if (eventData.type === 'log') {
-        handleLogMessage(eventData, options)
-      } else {
-        const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
+      const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
 
-        notifyClients(wss, outGoingMessage, options)
-      }
+      notifyClients(wss, outGoingMessage, options)
+    } else if (eventType === 'log') {
+      handleLogEvent(eventData, options)
     }
   }
 }
