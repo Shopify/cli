@@ -23,15 +23,4 @@ export interface UnfocusAction {
   payload: ExtensionServer.InboundEvents['unfocus']
 }
 
-export interface LogAction {
-  type: 'log'
-  payload: ExtensionServer.InboundEvents['log']
-}
-
-export type ExtensionServerActions =
-  | ConnectedAction
-  | UpdateAction
-  | RefreshAction
-  | FocusAction
-  | UnfocusAction
-  | LogAction
+export type ExtensionServerActions = ConnectedAction | UpdateAction | RefreshAction | FocusAction | UnfocusAction
