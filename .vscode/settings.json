@@ -41,6 +41,5 @@
   "vitest.nodeEnv": {
     "npm_config_user_agent": "pnpm",
     "VITEST_SKIP_TIMEOUT": "1"
-  },
-  "nxConsole.generateAiAgentRules": true
+  }
 }
