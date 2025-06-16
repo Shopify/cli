@@ -63,6 +63,32 @@ describe('requestDeviceAuthorization', () => {
     })
     expect(got).toEqual(dataExpected)
   })
+
+  test('when the response is not valid JSON, throw an error', async () => {
+    // Given
+    const response = new Response('not valid JSON')
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When/Then
+    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrow(
+      'Received unexpected response. This may be a service outage. Please try again later.',
+    )
+  })
+
+  test('when the response is empty, throw an error', async () => {
+    // Given
+    const response = new Response('')
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When/Then
+    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrow(
+      'Received unexpected response. This may be a service outage. Please try again later.',
+    )
+  })
 })
 
 describe('pollForDeviceAuthorization', () => {
