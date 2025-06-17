@@ -280,7 +280,7 @@ describe('handleLogEvent()', () => {
     }
     handleLogEvent(eventData, options)
 
-    expectLogMessageOutput('test-extension', `INFO: Test info message`, options)
+    expectLogMessageOutput('test-extension', `Test info message`, options)
   })
 
   test('outputs log message with parsed JSON array', () => {
@@ -296,7 +296,7 @@ describe('handleLogEvent()', () => {
 
     expectLogMessageOutput(
       'test-extension',
-      outputContent`INFO: Hello world ${outputToken.json({user: 'test'})}`.value,
+      outputContent`Hello world ${outputToken.json({user: 'test'})}`.value,
       options,
     )
   })

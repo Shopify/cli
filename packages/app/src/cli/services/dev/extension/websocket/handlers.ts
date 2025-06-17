@@ -73,6 +73,8 @@ const consoleTypeColors = {
   error: (text: string) => outputToken.errorText(text),
 } as const
 
+const typesToIgnore: ReadonlyArray<string> = ['log', 'info'] as const
+
 export function handleLogEvent(
   eventData: {type: string; message: string; extensionName: string},
   options: SetupWebSocketConnectionOptions,
@@ -81,10 +83,14 @@ export function handleLogEvent(
   const formattedMessage = parseLogMessage(message)
 
   const uppercaseType = type.toUpperCase()
-  const colouredType = consoleTypeColors[type as keyof typeof consoleTypeColors]?.(uppercaseType) ?? uppercaseType
+  const coloredType = consoleTypeColors[type as keyof typeof consoleTypeColors]?.(uppercaseType) ?? uppercaseType
+
+  const completeMessage = typesToIgnore.includes(type)
+    ? formattedMessage
+    : outputContent`${coloredType}: ${formattedMessage}`.value
 
   useConcurrentOutputContext({outputPrefix: extensionName, stripAnsi: false}, () => {
-    options.stdout.write(outputContent`${colouredType}: ${formattedMessage}`.value)
+    options.stdout.write(completeMessage)
   })
 }
 
