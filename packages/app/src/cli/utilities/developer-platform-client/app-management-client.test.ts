@@ -212,7 +212,8 @@ describe('templateSpecifications', () => {
     const templates: GatedExtensionTemplate[] = [
       {...templateWithoutRules, group: 'GroupA'},
       {...allowedTemplate, group: 'GroupB'},
-      {...templateWithoutRules, identifier: 'template3', group: 'GroupA'}, // Same group as first
+      // Same group as first
+      {...templateWithoutRules, identifier: 'template3', group: 'GroupA'},
       {...allowedTemplate, identifier: 'template4', group: 'GroupC'},
     ]
     const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
