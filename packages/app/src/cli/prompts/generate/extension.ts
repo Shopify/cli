@@ -54,10 +54,6 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailabl
     }),
   ]
 
-  // Log unique groups before sorting to help with debugging
-  const uniqueGroups = Array.from(new Set(templateSpecChoices.map((item) => item.group))).sort()
-  outputDebug(`Unique groups in templates: ${JSON.stringify(uniqueGroups)}`)
-
   const compareChoices = (c1: ArrElement<typeof templateSpecChoices>, c2: ArrElement<typeof templateSpecChoices>) => {
     if (c1.sortPriority === c2.sortPriority) {
       return c1.label.localeCompare(c2.label)
