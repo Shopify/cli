@@ -62,20 +62,7 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailabl
     }
   }
 
-  const sortedChoices = templateSpecChoices.sort(compareChoices)
-
-  // Log the sorted order of groups
-  const groupsAfterSort = []
-  let lastGroup = null
-  for (const choice of sortedChoices) {
-    if (choice.group !== lastGroup) {
-      groupsAfterSort.push(choice.group)
-      lastGroup = choice.group
-    }
-  }
-  outputDebug(`Groups after sorting: ${JSON.stringify(groupsAfterSort)}`)
-
-  return sortedChoices
+  return templateSpecChoices.sort(compareChoices)
 }
 
 const generateExtensionPrompts = async (
