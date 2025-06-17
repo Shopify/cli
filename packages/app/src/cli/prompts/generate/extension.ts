@@ -6,7 +6,6 @@ import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@s
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface GenerateExtensionPromptOptions {
   name?: string
@@ -54,10 +53,6 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailabl
     }),
   ]
 
-  // Log unique groups before sorting to help with debugging
-  const uniqueGroups = Array.from(new Set(templateSpecChoices.map((item) => item.group))).sort()
-  outputDebug(`Unique groups in templates: ${JSON.stringify(uniqueGroups)}`)
-
   const compareChoices = (c1: ArrElement<typeof templateSpecChoices>, c2: ArrElement<typeof templateSpecChoices>) => {
     if (c1.sortPriority === c2.sortPriority) {
       return c1.label.localeCompare(c2.label)
@@ -77,7 +72,6 @@ export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailabl
       lastGroup = choice.group
     }
   }
-  outputDebug(`Groups after sorting: ${JSON.stringify(groupsAfterSort)}`)
 
   return sortedChoices
 }

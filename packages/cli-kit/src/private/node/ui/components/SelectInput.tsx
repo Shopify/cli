@@ -163,14 +163,11 @@ function SelectInputInner<T>(
   }
 
   const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
-  const items = sortBy(rawItems, [
-    (item) => {
-      if (!groupOrder || !item.group) return Number.MAX_SAFE_INTEGER
-      const index = groupOrder.indexOf(item.group)
-      return index === -1 ? Number.MAX_SAFE_INTEGER : index
-    },
-    'group',
-  ])
+  const items = sortBy(rawItems, (item) => {
+    if (!groupOrder || !item.group) return Number.MAX_SAFE_INTEGER
+    const index = groupOrder.indexOf(item.group)
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index
+  })
   const itemsHaveKeys = items.some((item) => typeof item.key !== 'undefined' && item.key.length > 0)
 
   if (itemsHaveKeys) validateKeys(items)
