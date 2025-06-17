@@ -230,6 +230,41 @@ describe('SelectInput', async () => {
     expect(onChange).toHaveBeenLastCalledWith(items[2])
   })
 
+  test.skipIf(runningOnWindows)('respects groupOrder for custom group ordering', async () => {
+    const onChange = vi.fn()
+
+    const items = [
+      {label: 'first', value: 'first', group: 'GroupA'},
+      {label: 'second', value: 'second', group: 'GroupA'},
+      {label: 'third', value: 'third', group: 'GroupB'},
+      {label: 'fourth', value: 'fourth', group: 'GroupB'},
+      {label: 'fifth', value: 'fifth', group: 'GroupC'},
+      {label: 'sixth', value: 'sixth', group: 'GroupC'},
+    ]
+
+    // Custom order: GroupC first, then GroupB, then GroupA
+    const groupOrder = ['GroupC', 'GroupB', 'GroupA']
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} groupOrder={groupOrder} />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   [1mGroupC[22m
+         [36m>[39m  [36mfifth[39m
+            sixth
+
+         [1mGroupB[22m
+            third
+            fourth
+
+         [1mGroupA[22m
+            first
+            second
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+    `)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   test('allows disabling shortcuts', async () => {
     const onChange = vi.fn()
     const items = [

@@ -473,10 +473,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       )
     ).map((template) => ({...template, sortPriority: counter++}))
 
-    // Extract group order from the original template order
+    // Extract group order from the original template order (before filtering)
     const groupOrder: string[] = []
-    for (const template of filteredTemplates) {
-      if (!groupOrder.includes(template.group)) {
+    for (const template of templates) {
+      if (template.group && !groupOrder.includes(template.group)) {
         groupOrder.push(template.group)
       }
     }

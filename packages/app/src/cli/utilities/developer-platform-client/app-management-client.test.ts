@@ -206,6 +206,34 @@ describe('templateSpecifications', () => {
     expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
   })
 
+  test('extracts groupOrder correctly from template order', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templates: GatedExtensionTemplate[] = [
+      {...templateWithoutRules, group: 'GroupA'},
+      {...allowedTemplate, group: 'GroupB'},
+      {...templateWithoutRules, identifier: 'template3', group: 'GroupA'}, // Same group as first
+      {...allowedTemplate, identifier: 'template4', group: 'GroupC'},
+    ]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        flag_allowedFlag: true,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const {groupOrder} = await client.templateSpecifications(orgApp)
+
+    // Then
+    expect(groupOrder).toEqual(['GroupA', 'GroupB', 'GroupC'])
+  })
+
   test('fails with an error message when fetching the specifications list fails', async () => {
     // Given
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Failed to fetch'))

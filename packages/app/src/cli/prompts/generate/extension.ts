@@ -6,7 +6,6 @@ import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@s
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface GenerateExtensionPromptOptions {
   name?: string
