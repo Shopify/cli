@@ -9,7 +9,7 @@ export function ensureThemeStore(flags: {store: string | undefined}): string {
     throw new AbortError(
       'A store is required',
       `Specify the store passing ${
-        outputContent`${outputToken.genericShellCommand(`--${themeFlags.store.name}={your_store_url}`)}`.value
+        outputContent`${outputToken.genericShellCommand(`--${themeFlags.store.name}=example.myshopify.com`)}`.value
       } or set the ${
         outputContent`${outputToken.genericShellCommand(themeFlags.store.env as string)}`.value
       } environment variable.`,
