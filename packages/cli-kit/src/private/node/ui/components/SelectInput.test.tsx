@@ -230,6 +230,79 @@ describe('SelectInput', async () => {
     expect(onChange).toHaveBeenLastCalledWith(items[2])
   })
 
+  test.skipIf(runningOnWindows)('respects groupOrder for custom group ordering', async () => {
+    const onChange = vi.fn()
+
+    const items = [
+      {label: 'first', value: 'first', group: 'GroupA'},
+      {label: 'second', value: 'second', group: 'GroupA'},
+      {label: 'third', value: 'third', group: 'GroupB'},
+      {label: 'fourth', value: 'fourth', group: 'GroupB'},
+      {label: 'fifth', value: 'fifth', group: 'GroupC'},
+      {label: 'sixth', value: 'sixth', group: 'GroupC'},
+    ]
+
+    // Custom order: GroupC first, then GroupB, then GroupA
+    const groupOrder = ['GroupC', 'GroupB', 'GroupA']
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} groupOrder={groupOrder} />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   [1mGroupC[22m
+         [36m>[39m  [36mfifth[39m
+            sixth
+
+         [1mGroupB[22m
+            third
+            fourth
+
+         [1mGroupA[22m
+            first
+            second
+
+
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+    `)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  test.skipIf(runningOnWindows)('ensures "Other" group always appears last with groupOrder', async () => {
+    const onChange = vi.fn()
+
+    const items = [
+      {label: 'item1', value: '1', group: 'GroupA'},
+      {label: 'item2', value: '2', group: 'GroupC'},
+      {label: 'item3', value: '3'},
+      {label: 'item4', value: '4', group: 'GroupX'},
+      {label: 'item5', value: '5'},
+    ]
+
+    // GroupOrder specifies: GroupC first, then GroupA
+    // GroupX is not specified, so should come before "Other" but after specified groups
+    const groupOrder = ['GroupC', 'GroupA']
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} groupOrder={groupOrder} />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "   [1mGroupC[22m
+         [36m>[39m  [36mitem2[39m
+
+         [1mGroupA[22m
+            item1
+
+         [1mGroupX[22m
+            item4
+
+         [1mOther[22m
+            item3
+            item5
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+    `)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   test('allows disabling shortcuts', async () => {
     const onChange = vi.fn()
     const items = [

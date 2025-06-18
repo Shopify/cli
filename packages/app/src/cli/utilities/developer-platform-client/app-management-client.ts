@@ -66,7 +66,7 @@ import {
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
 import {
   MigrateToUiExtensionVariables,
   MigrateToUiExtensionSchema,
@@ -446,7 +446,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     )
   }
 
-  async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
+  async templateSpecifications({organizationId}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
     let templates: GatedExtensionTemplate[]
     const {templatesJsonPath} = environmentVariableNames
     const overrideFile = process.env[templatesJsonPath]
@@ -473,11 +473,23 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // in the static JSON file. This can be removed once PartnersClient, which
     // uses sortPriority, is gone.
     let counter = 0
-    return (
+    const filteredTemplates = (
       await allowedTemplates(templates, async (betaFlags: string[]) =>
         this.organizationBetaFlags(organizationId, betaFlags),
       )
     ).map((template) => ({...template, sortPriority: counter++}))
+
+    // Extract group order from the original template order (before filtering)
+    const groupOrder: string[] = []
+    for (const template of templates) {
+      if (template.group && !groupOrder.includes(template.group)) {
+        groupOrder.push(template.group)
+      }
+    }
+    return {
+      templates: filteredTemplates,
+      groupOrder,
+    }
   }
 
   async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
