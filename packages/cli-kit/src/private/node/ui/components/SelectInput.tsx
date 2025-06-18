@@ -164,7 +164,13 @@ function SelectInputInner<T>(
 
   const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
   const items = sortBy(rawItems, (item) => {
-    if (!groupOrder || !item.group) return Number.MAX_SAFE_INTEGER
+    // Items without groups ("Other") always go last
+    if (!item.group) return Number.MAX_SAFE_INTEGER + 1
+    
+    // If no groupOrder specified, use default behavior
+    if (!groupOrder) return Number.MAX_SAFE_INTEGER
+    
+    // Items with groups get their position from groupOrder, or MAX_SAFE_INTEGER if not specified
     const index = groupOrder.indexOf(item.group)
     return index === -1 ? Number.MAX_SAFE_INTEGER : index
   })
