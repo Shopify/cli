@@ -273,9 +273,9 @@ describe('SelectInput', async () => {
     const items = [
       {label: 'item1', value: '1', group: 'GroupA'},
       {label: 'item2', value: '2', group: 'GroupC'},
-      {label: 'item3', value: '3'}, // no group - should be "Other"
-      {label: 'item4', value: '4', group: 'GroupX'}, // not in groupOrder
-      {label: 'item5', value: '5'}, // no group - should be "Other"
+      {label: 'item3', value: '3'},
+      {label: 'item4', value: '4', group: 'GroupX'},
+      {label: 'item5', value: '5'},
     ]
 
     // GroupOrder specifies: GroupC first, then GroupA
