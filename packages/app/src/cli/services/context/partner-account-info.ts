@@ -1,6 +1,7 @@
 import {getCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
 import {getCachedAccountInfo, setCachedAccountInfo} from '../../utilities/app-conf-store.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export interface PartnersSession {
@@ -8,6 +9,7 @@ export interface PartnersSession {
   businessPlatformToken: string
   accountInfo: AccountInfo
   userId: string
+  adminSession?: AdminSession
 }
 
 export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountInfo

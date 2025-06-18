@@ -59,6 +59,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {FindProductVariantSchema} from '../api/graphql/get_variant_id.js'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
@@ -327,6 +328,7 @@ export interface DeveloperPlatformClient {
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (org: Organization) => Promise<string>
+  getProductVariant: (store: string) => Promise<FindProductVariantSchema | undefined>
 }
 
 const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()

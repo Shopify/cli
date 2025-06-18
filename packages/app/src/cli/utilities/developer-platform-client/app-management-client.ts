@@ -138,8 +138,9 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {FindProductVariantQuery, FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAppManagement} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
@@ -168,6 +169,7 @@ import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {Variables} from 'graphql-request'
 import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
+import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -256,65 +258,77 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async session(): Promise<PartnersSession> {
-    if (!this._session) {
+  async session(store?: string): Promise<PartnersSession> {
+    if (!this._session || (store && !this._session?.adminSession)) {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
 
-      const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
-      const {appManagementToken, businessPlatformToken, userId} = tokenResult
+      const tokenResult = await ensureAuthenticatedAppManagement({store})
+      const {appManagementToken, businessPlatformToken, userId, adminSession} = tokenResult
 
-      // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
-      const userInfoResult = await businessPlatformRequestDoc({
-        query: UserInfo,
-        cacheOptions: {
-          cacheTTL: {hours: 6},
-          cacheExtraKey: userId,
-        },
-        token: businessPlatformToken,
-        unauthorizedHandler: this.createUnauthorizedHandler(),
-      })
-
-      if (getPartnersToken() && userInfoResult.currentUserAccount) {
-        const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
-          name: org.name,
-        }))
-
-        if (organizations.length > 1) {
-          throw new BugError('Multiple organizations found for the CLI token')
-        }
-
-        this._session = {
-          token: appManagementToken,
-          businessPlatformToken,
-          accountInfo: {
-            type: 'ServiceAccount',
-            orgName: organizations[0]?.name ?? 'Unknown organization',
-          },
-          userId,
-        }
-      } else if (userInfoResult.currentUserAccount) {
-        this._session = {
-          token: appManagementToken,
-          businessPlatformToken,
-          accountInfo: {
-            type: 'UserAccount',
-            email: userInfoResult.currentUserAccount.email,
-          },
-          userId,
-        }
+      if (this._session) {
+        // Update tokens if we're just refreshing
+        this._session.token = appManagementToken
+        this._session.businessPlatformToken = businessPlatformToken
       } else {
-        this._session = {
-          token: appManagementToken,
-          businessPlatformToken,
-          accountInfo: {
-            type: 'UnknownAccount',
+        // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
+        const userInfoResult = await businessPlatformRequestDoc({
+          query: UserInfo,
+          cacheOptions: {
+            cacheTTL: {hours: 6},
+            cacheExtraKey: userId,
           },
-          userId,
+          token: businessPlatformToken,
+          unauthorizedHandler: this.createUnauthorizedHandler(),
+        })
+
+        if (getPartnersToken() && userInfoResult.currentUserAccount) {
+          const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
+            name: org.name,
+          }))
+
+          if (organizations.length > 1) {
+            throw new BugError('Multiple organizations found for the CLI token')
+          }
+
+          this._session = {
+            token: appManagementToken,
+            businessPlatformToken,
+            accountInfo: {
+              type: 'ServiceAccount',
+              orgName: organizations[0]?.name ?? 'Unknown organization',
+            },
+            userId,
+          }
+        } else if (userInfoResult.currentUserAccount) {
+          this._session = {
+            token: appManagementToken,
+            businessPlatformToken,
+            accountInfo: {
+              type: 'UserAccount',
+              email: userInfoResult.currentUserAccount.email,
+            },
+            userId,
+          }
+        } else {
+          this._session = {
+            token: appManagementToken,
+            businessPlatformToken,
+            accountInfo: {
+              type: 'UnknownAccount',
+            },
+            userId,
+          }
         }
       }
+
+      // Add admin session if provided
+      if (adminSession) {
+        this._session.adminSession = adminSession
+      }
     }
+
     return this._session
   }
 
@@ -327,10 +341,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async unsafeRefreshToken(): Promise<string> {
-    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true, forceRefresh: true})
     const session = await this.session()
+    const store = session.adminSession?.storeFqdn
+
+    const result = await ensureAuthenticatedAppManagement({
+      store,
+      options: {noPrompt: true, forceRefresh: true},
+    })
+
     session.token = result.appManagementToken
     session.businessPlatformToken = result.businessPlatformToken
+
+    if (result.adminSession) {
+      session.adminSession = result.adminSession
+    }
 
     return session.token
   }
@@ -1039,6 +1063,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.` +
       ` Create one now \n${url}`
     )
+  }
+
+  async getProductVariant(store: string): Promise<FindProductVariantSchema | undefined> {
+    // Get an updated session with AdminSession
+    const session = await this.session(store)
+
+    if (!session.adminSession) {
+      throw new BugError('Unable to get admin session')
+    }
+
+    const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, session.adminSession)
+    return result
   }
 
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {

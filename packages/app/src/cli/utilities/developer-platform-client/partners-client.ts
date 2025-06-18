@@ -155,15 +155,17 @@ import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functio
 import {AppLogData} from '../../services/app-logs/types.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {FindProductVariantQuery, FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -646,6 +648,13 @@ export class PartnersClient implements DeveloperPlatformClient {
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard.` +
       ` Create one now \n${url}`
     )
+  }
+
+  async getProductVariant(store: string): Promise<FindProductVariantSchema | undefined> {
+    const adminSession = (await this.session()).adminSession
+    if (!adminSession) throw new BugError('Unable to get admin session')
+    const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, adminSession)
+    return result
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {

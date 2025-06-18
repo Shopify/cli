@@ -245,6 +245,11 @@ function buildIdentityToken(result: TokenRequestResult, existingUserId?: string)
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
 
+  if (result.id_token) {
+    console.log(JSON.stringify(result, null, 2))
+    console.log(JSON.stringify(jose.decodeJwt(result.id_token), null, 2))
+  }
+
   if (!userId) {
     throw new BugError('Error setting userId for session. No id_token or pre-existing user ID provided.')
   }

@@ -13,6 +13,7 @@ import {
   AdminAPIScope,
   AppManagementAPIScope,
   BusinessPlatformScope,
+  OAuthApplications,
   PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
@@ -217,6 +218,90 @@ ${outputToken.json(scopes)}
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
   return tokens.businessPlatform
+}
+
+export interface AppManagementAuthResult {
+  appManagementToken: string
+  businessPlatformToken: string
+  userId: string
+  adminSession?: AdminSession
+}
+
+export interface AppManagementAuthOptions {
+  store?: string
+  appManagementScopes?: AppManagementAPIScope[]
+  businessPlatformScopes?: BusinessPlatformScope[]
+  adminScopes?: AdminAPIScope[]
+  options?: EnsureAuthenticatedAdditionalOptions
+  env?: NodeJS.ProcessEnv
+}
+
+/**
+ * Ensures authentication for App Management client with all required tokens.
+ * Handles both CLI token and regular authentication scenarios, optionally including Admin API.
+ *
+ * @param input - Authentication parameters object.
+ * @returns The access tokens for all requested APIs.
+ */
+export async function ensureAuthenticatedAppManagement(
+  input: AppManagementAuthOptions = {},
+): Promise<AppManagementAuthResult> {
+  const {
+    store,
+    appManagementScopes = [],
+    businessPlatformScopes = [],
+    adminScopes = [],
+    options = {},
+    env = process.env,
+  } = input
+  outputDebug(outputContent`App Management authentication with Business Platform${store ? ' and Admin' : ''} APIs`)
+
+  const envToken = getPartnersToken()
+  if (envToken) {
+    // Handle CLI token scenario
+    const appManagmentToken = await exchangeCliTokenForAppManagementAccessToken(envToken)
+    const businessPlatformToken = await exchangeCliTokenForBusinessPlatformAccessToken(envToken)
+
+    const result: AppManagementAuthResult = {
+      appManagementToken: appManagmentToken.accessToken,
+      userId: appManagmentToken.userId,
+      businessPlatformToken: businessPlatformToken.accessToken,
+    }
+
+    if (store) {
+      result.adminSession = await ensureAuthenticatedAdmin(store, adminScopes, false, options)
+    }
+
+    return result
+  }
+
+  // Handle regular authentication scenario
+  const authRequests: OAuthApplications = {
+    appManagementApi: {scopes: appManagementScopes},
+    businessPlatformApi: {scopes: businessPlatformScopes},
+  }
+
+  if (store) {
+    authRequests.adminApi = {scopes: adminScopes, storeFqdn: store}
+  }
+
+  const tokens = await ensureAuthenticated(authRequests, env, options)
+
+  if (!tokens.appManagement || !tokens.businessPlatform) {
+    throw new BugError('No App Management or Business Platform token found after ensuring authenticated')
+  }
+
+  const result: AppManagementAuthResult = {
+    appManagementToken: tokens.appManagement,
+    userId: tokens.userId,
+    businessPlatformToken: tokens.businessPlatform,
+  }
+
+  if (store && tokens.admin) {
+    result.adminSession = tokens.admin
+  }
+
+  return result
 }
 
 /**

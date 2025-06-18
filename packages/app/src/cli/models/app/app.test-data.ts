@@ -80,6 +80,7 @@ import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_ap
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -1413,6 +1414,12 @@ const appLogsSubscribeResponse: AppLogsSubscribeResponse = {
   },
 }
 
+const getProductVariantResponse: FindProductVariantSchema = {
+  products: {
+    edges: [],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   const clientStub: DeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
@@ -1494,6 +1501,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       Promise.resolve(
         `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard. Create one now https://partners.shopify.com/1234/stores`,
       ),
+    getProductVariant: (_store: string) => Promise.resolve(getProductVariantResponse),
     ...stubs,
   }
   const retVal: Partial<DeveloperPlatformClient> = clientStub
