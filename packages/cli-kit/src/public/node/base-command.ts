@@ -140,7 +140,13 @@ This flag is required in non-interactive terminal environments, such as a CI env
     if (!environmentsFileName) return originalResult
 
     const environmentFileExists = await environmentFilePath(environmentsFileName, {from: flags.path})
-    const environments = flags.environment ?? []
+
+    // Handle both string and array cases for environment flag
+    let environments: string[] = []
+    if (flags.environment) {
+      environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
+    }
+
     const environmentSpecified = environments.length > 0
 
     // Noop if no environment file exists and none was specified
@@ -175,7 +181,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
     reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
       noDefaultsResult.flags,
       result.flags,
-      isDefaultEnvironment ? 'default' : (flags.environment?.[0] as string),
+      isDefaultEnvironment ? 'default' : (environments[0] as string),
       environment,
     )
 
