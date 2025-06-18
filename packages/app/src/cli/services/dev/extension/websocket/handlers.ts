@@ -1,6 +1,7 @@
 import {
   EventType,
   IncomingDispatchMessage,
+  LogPayload,
   OutgoingDispatchMessage,
   OutgoingMessage,
   SetupWebSocketConnectionOptions,
@@ -73,24 +74,25 @@ const consoleTypeColors = {
   error: (text: string) => outputToken.errorText(text),
 } as const
 
-const typesToIgnore: ReadonlyArray<string> = ['log', 'info'] as const
-
-export function handleLogEvent(
-  eventData: {type: string; message: string; extensionName: string},
-  options: SetupWebSocketConnectionOptions,
-) {
-  const {type, message, extensionName} = eventData
+function getOutput({type, message}: LogPayload) {
   const formattedMessage = parseLogMessage(message)
 
-  const uppercaseType = type.toUpperCase()
-  const coloredType = consoleTypeColors[type as keyof typeof consoleTypeColors]?.(uppercaseType) ?? uppercaseType
+  switch (type) {
+    case 'debug':
+    case 'warn':
+    case 'error':
+      return outputContent`${consoleTypeColors[type](type.toUpperCase())}: ${formattedMessage}`.value
+    case 'log':
+    case 'info':
+      return formattedMessage
+    default:
+      return `${type.toUpperCase()}: ${formattedMessage}`
+  }
+}
 
-  const completeMessage = typesToIgnore.includes(type)
-    ? formattedMessage
-    : outputContent`${coloredType}: ${formattedMessage}`.value
-
-  useConcurrentOutputContext({outputPrefix: extensionName, stripAnsi: false}, () => {
-    options.stdout.write(completeMessage)
+export function handleLogEvent(eventData: LogPayload, options: SetupWebSocketConnectionOptions) {
+  useConcurrentOutputContext({outputPrefix: eventData.extensionName, stripAnsi: false}, () => {
+    options.stdout.write(getOutput(eventData))
   })
 }
 
@@ -107,7 +109,7 @@ ${outputToken.json(eventData)}
       options.stdout,
     )
 
-    if (eventType === 'update') {
+    if (eventType === EventType.Update) {
       const payloadStoreApiKey = options.payloadStore.getRawPayload().app.apiKey
       const eventAppApiKey = eventData.app?.apiKey
 
@@ -125,11 +127,11 @@ ${outputToken.json(eventData)}
       if (eventData.extensions) {
         options.payloadStore.updateExtensions(eventData.extensions)
       }
-    } else if (eventType === 'dispatch') {
+    } else if (eventType === EventType.Dispatch) {
       const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
 
       notifyClients(wss, outGoingMessage, options)
-    } else if (eventType === 'log') {
+    } else if (eventType === EventType.Log) {
       handleLogEvent(eventData, options)
     }
   }
