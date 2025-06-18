@@ -73,7 +73,7 @@ describe('requestDeviceAuthorization', () => {
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrow(
-      'Received unexpected response. This may be a service outage. Please try again later.',
+      'Received unexpected response from the authorization service. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
 
@@ -86,7 +86,7 @@ describe('requestDeviceAuthorization', () => {
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrow(
-      'Received unexpected response. This may be a service outage. Please try again later.',
+      'Received unexpected response from the authorization service. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
 })

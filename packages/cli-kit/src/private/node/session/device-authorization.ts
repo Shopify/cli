@@ -45,7 +45,9 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   try {
     jsonResult = await response.json()
   } catch (error) {
-    throw new BugError('Received unexpected response. This may be a service outage. Please try again later.')
+    throw new BugError(
+      'Received unexpected response from the authorization service. If this issue persists, please contact support at https://help.shopify.com',
+    )
   }
 
   outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
