@@ -256,21 +256,21 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    ┃  • integrated-demand-ext
  *    ┃  • order-discount
  *
- *    Other
- *    >  first
- *       second
- *       third (limit reached)
- *       fourth
- *
  *    Automations
- *       fifth
+ *    >  fifth
  *       sixth
- *
- *    Other
- *       seventh
  *
  *    Merchant Admin
  *       eighth
+ *       ninth
+ *
+ *    Other
+ *       first
+ *       second
+ *       third (limit reached)
+ *       fourth
+ *       seventh
+ *       tenth
  *
  *    Press ↑↓ arrows to select, enter to confirm.
  *
