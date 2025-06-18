@@ -2,7 +2,7 @@ import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
@@ -18,7 +18,7 @@ import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export default class Init extends AppCommand {
+export default class Init extends AppLinkedCommand {
   static summary?: string | undefined = 'Create a new app project'
 
   static flags = {
@@ -66,7 +66,7 @@ export default class Init extends AppCommand {
     }),
   }
 
-  async run(): Promise<AppCommandOutput> {
+  async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Init)
 
     validateTemplateValue(flags.template)

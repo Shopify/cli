@@ -1,11 +1,11 @@
-import {AppCommandOutput} from '../../../utilities/app-command.js'
+import {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import AppGenerateExtension from '../generate/extension.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 class AppScaffoldExtension extends AppGenerateExtension {
   static description = 'Scaffold an Extension.'
   static hidden = true
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     renderWarning({
       headline: [
         'The command',

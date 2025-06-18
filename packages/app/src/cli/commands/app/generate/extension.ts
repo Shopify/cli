@@ -3,13 +3,13 @@ import metadata from '../../../metadata.js'
 import generate from '../../../services/generate.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
-import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class AppGenerateExtension extends AppCommand {
+export default class AppGenerateExtension extends AppLinkedCommand {
   static summary = 'Generate a new app Extension.'
 
   static descriptionWithMarkdown = `Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/structure/app-extensions/list).
@@ -65,7 +65,7 @@ export default class AppGenerateExtension extends AppCommand {
     return 'app scaffold extension'
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppGenerateExtension)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
