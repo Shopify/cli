@@ -56,22 +56,10 @@ export default abstract class ThemeCommand extends Command {
     const requiredFlags = klass.multiEnvironmentsFlags
     const {flags} = await this.parse(klass)
 
-    // No environment provided
-    if (!flags.environment?.length) {
-      const session = await this.ensureAuthenticated(flags)
+    const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
 
-      await this.command(flags, session)
-
-      return
-    }
-
-    // OCLIF parses flags.environment as an array when using the --environment & -e flag but
-    // as a string when using the direct environment variable SHOPIFY_FLAG_ENVIRONMENT
-    // This handles both cases
-    const environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
-
-    // If only one environment is specified, treat it as single environment mode
-    if (environments.length === 1) {
+    // Single environment or no environment
+    if (environments.length <= 1) {
       const session = await this.ensureAuthenticated(flags)
       await this.command(flags, session)
       return
