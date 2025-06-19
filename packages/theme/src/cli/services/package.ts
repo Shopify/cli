@@ -10,6 +10,7 @@ const themeFilesPattern = [
   'blocks/**',
   'config/**',
   'layout/**',
+  'listings/**',
   'locales/**',
   'sections/**',
   'snippets/**',
