@@ -29,6 +29,7 @@ import {ApplicationURLs} from '../../services/dev/urls.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   path: '',
@@ -229,6 +230,134 @@ describe('getAppScopesArray', () => {
   test('returns the access_scopes.scopes key when schema is current', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+  })
+})
+
+describe('preDeployValidation', () => {
+  test('throws an error when app-specific webhooks are used with legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            topics: ['orders/create'],
+            uri: 'webhooks',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).rejects.toThrow(
+      new AbortError(
+        'App-specific webhook subscriptions are not supported when use_legacy_install_flow is enabled.',
+        `To use app-specific webhooks, you need to:
+1. Remove 'use_legacy_install_flow = true' from your configuration
+2. Run 'shopify app deploy' to sync your scopes with the Partner Dashboard
+
+Alternatively, continue using shop-specific webhooks with the legacy install flow.
+
+Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
+      ),
+    )
+  })
+
+  test('does not throw an error when app-specific webhooks are used without legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: false,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            topics: ['orders/create'],
+            uri: 'webhooks',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('does not throw an error when legacy install flow is enabled without app-specific webhooks', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('does not throw an error when neither app-specific webhooks nor legacy install flow are used', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+      },
+      webhooks: {
+        api_version: '2024-07',
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('does not throw an error for legacy schema apps', async () => {
+    // Given
+    const configuration: LegacyAppConfiguration = {
+      ...CORRECT_LEGACY_APP_SCHEMA,
+      scopes: 'read_orders',
+    }
+    const app = testApp({configuration, schemaType: 'legacy'})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('handles null/undefined subscriptions safely', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        // Testing edge case
+        subscriptions: null as any,
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
   })
 })
 
