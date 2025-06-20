@@ -18,6 +18,8 @@ describe('packageTheme', () => {
         'assets/base.css',
         'layout/theme.liquid',
         'config/settings_schema.json',
+        'listings/canine-gourmand/sections/header-group.json',
+        'listings/dawn/templates/index.json',
         'release-notes.md',
         'update_extension.json',
       ]
