@@ -1319,6 +1319,136 @@
       "strict": true,
       "summary": "Generate GraphQL types for a JavaScript function."
     },
+    "app:generate:apps": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Creates multiple apps programmatically in your organization. This is useful for testing scenarios that require a large number of apps.\n\n  Each app will be created with:\n  - A name following the pattern `app-test-{number}` (customizable with --prefix)\n  - Basic configuration suitable for testing\n  - No extensions or additional modules",
+      "descriptionWithMarkdown": "Creates multiple apps programmatically in your organization. This is useful for testing scenarios that require a large number of apps.\n\n  Each app will be created with:\n  - A name following the pattern `app-test-{number}` (customizable with --prefix)\n  - Basic configuration suitable for testing\n  - No extensions or additional modules",
+      "flags": {
+        "batch-size": {
+          "default": 5,
+          "description": "Number of apps to create in parallel",
+          "env": "SHOPIFY_FLAG_GENERATE_APPS_BATCH_SIZE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "batch-size",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "count": {
+          "char": "c",
+          "default": 1000,
+          "description": "Number of apps to create",
+          "env": "SHOPIFY_FLAG_GENERATE_APPS_COUNT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "count",
+          "type": "option"
+        },
+        "dry-run": {
+          "allowNo": false,
+          "description": "Show what would be created without actually creating apps",
+          "env": "SHOPIFY_FLAG_GENERATE_APPS_DRY_RUN",
+          "name": "dry-run",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "prefix": {
+          "char": "p",
+          "default": "app-test",
+          "description": "Prefix for app names (apps will be named {prefix}-{number})",
+          "env": "SHOPIFY_FLAG_GENERATE_APPS_PREFIX",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "prefix",
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "start-from": {
+          "default": 1,
+          "description": "Starting number for app naming",
+          "env": "SHOPIFY_FLAG_GENERATE_APPS_START_FROM",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "start-from",
+          "type": "option"
+        },
+        "stop-on-error": {
+          "allowNo": false,
+          "description": "Stop creating apps if an error occurs",
+          "env": "SHOPIFY_FLAG_GENERATE_APPS_STOP_ON_ERROR",
+          "name": "stop-on-error",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:generate:apps",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Generate multiple test apps in bulk for an organization."
+    },
     "app:generate:extension": {
       "aliases": [
       ],

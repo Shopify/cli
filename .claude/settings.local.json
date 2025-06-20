@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm lint:*)"
+    ],
+    "deny": []
+  }
+}

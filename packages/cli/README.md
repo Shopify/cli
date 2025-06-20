@@ -13,6 +13,7 @@
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
+* [`shopify app generate apps`](#shopify-app-generate-apps)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -485,6 +486,41 @@ DESCRIPTION
 
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function written in JavaScript.
+```
+
+## `shopify app generate apps`
+
+Generate multiple test apps in bulk for an organization.
+
+```
+USAGE
+  $ shopify app generate apps [--batch-size <value>] [--client-id <value> | -c <value>] [-c <value>] [--dry-run]
+    [--no-color] [--path <value>] [-p <value>] [--reset | ] [--start-from <value>] [--stop-on-error] [--verbose]
+
+FLAGS
+  -c, --config=<value>      The name of the app configuration.
+  -c, --count=<value>       [default: 1000] Number of apps to create
+  -p, --prefix=<value>      [default: app-test] Prefix for app names (apps will be named {prefix}-{number})
+      --batch-size=<value>  [default: 5] Number of apps to create in parallel
+      --client-id=<value>   The Client ID of your app.
+      --dry-run             Show what would be created without actually creating apps
+      --no-color            Disable color output.
+      --path=<value>        The path to your app directory.
+      --reset               Reset all your settings.
+      --start-from=<value>  [default: 1] Starting number for app naming
+      --stop-on-error       Stop creating apps if an error occurs
+      --verbose             Increase the verbosity of the output.
+
+DESCRIPTION
+  Generate multiple test apps in bulk for an organization.
+
+  Creates multiple apps programmatically in your organization. This is useful for testing scenarios that require a large
+  number of apps.
+
+  Each app will be created with:
+  - A name following the pattern `app-test-{number}` (customizable with --prefix)
+  - Basic configuration suitable for testing
+  - No extensions or additional modules
 ```
 
 ## `shopify app generate extension`
