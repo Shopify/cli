@@ -1,12 +1,14 @@
 import {
   EventType,
   IncomingDispatchMessage,
+  LogPayload,
   OutgoingDispatchMessage,
   OutgoingMessage,
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
 
@@ -37,6 +39,63 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
   }
 }
 
+export function parseLogMessage(message: string): string {
+  try {
+    const parsed = JSON.parse(message)
+
+    // it is expected that the message is an array of console arguments
+    if (!Array.isArray(parsed)) {
+      return message
+    }
+
+    const formatted = parsed
+      .map((arg) => {
+        if (typeof arg === 'object' && arg !== null) {
+          return outputToken.json(arg).output()
+        } else {
+          return String(arg)
+        }
+      })
+      .join(' ')
+
+    return outputContent`${formatted}`.value
+  } catch (error) {
+    // If parsing fails, return the original message
+    if (error instanceof SyntaxError) {
+      return message
+    }
+    throw error
+  }
+}
+
+const consoleTypeColors = {
+  debug: (text: string) => outputToken.gray(text),
+  warn: (text: string) => outputToken.yellow(text),
+  error: (text: string) => outputToken.errorText(text),
+} as const
+
+function getOutput({type, message}: LogPayload) {
+  const formattedMessage = parseLogMessage(message)
+
+  switch (type) {
+    case 'debug':
+    case 'warn':
+    case 'error':
+      return outputContent`${consoleTypeColors[type](type.toUpperCase())}: ${formattedMessage}`.value
+    case 'log':
+    case 'info':
+      return formattedMessage
+    default:
+      return `${type.toUpperCase()}: ${formattedMessage}`
+  }
+}
+
+export function handleLogEvent(eventData: LogPayload, options: SetupWebSocketConnectionOptions) {
+  useConcurrentOutputContext({outputPrefix: eventData.extensionName, stripAnsi: false}, () => {
+    options.stdout.write(getOutput(eventData))
+  })
+}
+
 export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocketConnectionOptions) {
   return (data: RawData) => {
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -50,7 +109,7 @@ ${outputToken.json(eventData)}
       options.stdout,
     )
 
-    if (eventType === 'update') {
+    if (eventType === EventType.Update) {
       const payloadStoreApiKey = options.payloadStore.getRawPayload().app.apiKey
       const eventAppApiKey = eventData.app?.apiKey
 
@@ -68,10 +127,12 @@ ${outputToken.json(eventData)}
       if (eventData.extensions) {
         options.payloadStore.updateExtensions(eventData.extensions)
       }
-    } else if (eventType === 'dispatch') {
+    } else if (eventType === EventType.Dispatch) {
       const outGoingMessage = getOutgoingDispatchMessage(jsonData, options)
 
       notifyClients(wss, outGoingMessage, options)
+    } else if (eventType === EventType.Log) {
+      handleLogEvent(eventData, options)
     }
   }
 }
