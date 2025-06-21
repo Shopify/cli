@@ -548,5 +548,6 @@ async function testDeployBundle({
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
     developerPlatformClient,
+    skipBuild: false,
   })
 }

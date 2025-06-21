@@ -44,6 +44,12 @@ export default class Deploy extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_NO_RELEASE',
       default: false,
     }),
+    'no-build': Flags.boolean({
+      description:
+        'Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.',
+      env: 'SHOPIFY_FLAG_NO_BUILD',
+      default: false,
+    }),
     message: Flags.string({
       hidden: false,
       description:
@@ -111,6 +117,7 @@ export default class Deploy extends AppLinkedCommand {
       message: flags.message,
       version: flags.version,
       commitReference: flags['source-control-url'],
+      skipBuild: flags['no-build'],
     })
 
     return {app: result.app}
