@@ -1804,8 +1804,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
-    [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...] [--open] [--password
+  $ shopify theme dev [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...] [--listing
+    <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...] [--open] [--password
     <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
     [--theme-editor-sync] [--verbose]
 
@@ -1839,6 +1839,10 @@ FLAGS
 
   --host=<value>
       Set which network interface the web server listens on. The default value is 127.0.0.1.
+
+  --listing=<value>
+      The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name]
+      directory.
 
   --live-reload=<option>
       [default: hot-reload] The live reload mode switches the server behavior when a file is modified:
@@ -2289,6 +2293,8 @@ FLAGS
   -u, --unpublished             Create a new unpublished theme and push to it.
   -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed). Wrap the value in double
                                 quotes if you're using wildcards.
+      --listing=<value>         The listing preset to use for multi-preset themes. Applies preset files from
+                                listings/[preset-name] directory.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
@@ -2369,13 +2375,15 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [-e <value>...] [--no-color] [--password <value>] [--path <value>] [-s <value>]
+  $ shopify theme share [-e <value>...] [--listing <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>]
     [--verbose]
 
 FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
+      --listing=<value>         The listing preset to use for multi-preset themes. Applies preset files from
+                                listings/[preset-name] directory.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
