@@ -33,9 +33,7 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
       required_error: 'supports_moto is required',
       invalid_type_error: 'Value must be Boolean',
     }),
-    encryption_certificate_fingerprint: zod
-      .string()
-      .min(1, {message: "Encryption certificate fingerprint can't be blank"}),
+    encryption_certificate_fingerprint: zod.string(),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
