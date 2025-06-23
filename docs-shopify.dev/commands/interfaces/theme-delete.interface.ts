@@ -31,6 +31,12 @@ export interface themedelete {
   '--password <value>'?: string
 
   /**
+   * The path to your theme directory.
+   * @environment SHOPIFY_FLAG_PATH
+   */
+  '--path <value>'?: string
+
+  /**
    * Include others development themes in theme list.
    * @environment SHOPIFY_FLAG_SHOW_ALL
    */

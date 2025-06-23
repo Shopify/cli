@@ -5045,6 +5045,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -5142,6 +5151,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "show-all": {
@@ -5435,6 +5453,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -5638,6 +5665,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "role": {
           "description": "Only list themes with the given role.",
           "env": "SHOPIFY_FLAG_ROLE",
@@ -5820,6 +5856,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -5945,6 +5990,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -6043,6 +6097,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
@@ -6446,6 +6509,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
