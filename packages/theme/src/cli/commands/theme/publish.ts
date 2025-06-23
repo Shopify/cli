@@ -24,7 +24,7 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
 
   static flags = {
     ...globalFlags,
-    password: themeFlags.password,
+    ...themeFlags,
     force: Flags.boolean({
       char: 'f',
       description: 'Skip confirmation.',
@@ -35,8 +35,6 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
-    store: themeFlags.store,
-    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

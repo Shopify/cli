@@ -22,8 +22,7 @@ export default class Profile extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
-    store: themeFlags.store,
-    password: themeFlags.password,
+    ...themeFlags,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -38,7 +37,6 @@ export default class Profile extends ThemeCommand {
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
-    environment: themeFlags.environment,
     ...jsonFlag,
   }
 
