@@ -81,6 +81,11 @@ export default class Push extends ThemeCommand {
       multiple: true,
       env: 'SHOPIFY_FLAG_IGNORE',
     }),
+    listing: Flags.string({
+      description:
+        'The listing preset to use for multi-preset theme pushing. Applies preset files from listings/[preset-name] directory.',
+      env: 'SHOPIFY_FLAG_LISTING',
+    }),
     'allow-live': Flags.boolean({
       char: 'a',
       description: 'Allow push to a live theme.',
@@ -117,6 +122,7 @@ export default class Push extends ThemeCommand {
       nodelete: flags.nodelete,
       only: flags.only,
       ignore: flags.ignore,
+      listing: flags.listing,
       json: flags.json,
       allowLive: flags['allow-live'],
       publish: flags.publish,

@@ -31,6 +31,12 @@ export interface themepush {
   '-j, --json'?: ''
 
   /**
+   * The listing preset to use for multi-preset theme pushing. Applies preset files from listings/[preset-name] directory.
+   * @environment SHOPIFY_FLAG_LISTING
+   */
+  '--listing <value>'?: string
+
+  /**
    * Push theme files from your remote live theme.
    * @environment SHOPIFY_FLAG_LIVE
    */

@@ -23,6 +23,11 @@ export default class Share extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    listing: Flags.string({
+      description:
+        'The listing preset to use for multi-preset theme sharing. Applies preset files from listings/[preset-name] directory.',
+      env: 'SHOPIFY_FLAG_LISTING',
+    }),
   }
 
   static cli2Flags = ['force']
@@ -37,6 +42,7 @@ export default class Share extends ThemeCommand {
       store: flags.store,
       unpublished: true,
       theme: getRandomName('creative'),
+      listing: flags.listing,
     }
 
     await push(pushFlags)

@@ -46,6 +46,7 @@
     "@shopify/cli-kit": "3.81.1",
     "@shopify/theme-check-node": "3.17.0",
     "@shopify/theme-language-server-node": "2.15.2",
+    "change-case": "4.1.2",
     "chokidar": "3.6.0",
     "h3": "1.13.0",
     "yaml": "2.7.0"

@@ -32,6 +32,7 @@ interface PushOptions {
   publish?: boolean
   ignore?: string[]
   only?: string[]
+  listing?: string
 }
 
 interface JsonOutput {
@@ -98,6 +99,9 @@ export interface PushFlags {
 
   /** Require theme check to pass without errors before pushing. Warnings are allowed. */
   strict?: boolean
+
+  /** The listing preset to use for multi-preset theme pushing. */
+  listing?: string
 }
 
 /**
@@ -148,6 +152,7 @@ export async function push(flags: PushFlags): Promise<void> {
     force,
     ignore: flags.ignore ?? [],
     only: flags.only ?? [],
+    listing: flags.listing,
   })
 }
 
@@ -160,7 +165,10 @@ export async function push(flags: PushFlags): Promise<void> {
  */
 async function executePush(theme: Theme, session: AdminSession, options: PushOptions) {
   const themeChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
+  const themeFileSystem = mountThemeFileSystem(options.path, {
+    filters: options,
+    listing: options.listing,
+  })
 
   const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
     theme,

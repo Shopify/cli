@@ -5246,6 +5246,14 @@
           "name": "ignore",
           "type": "option"
         },
+        "listing": {
+          "description": "The listing preset to use for multi-preset theme development. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "listing",
+          "type": "option"
+        },
         "live-reload": {
           "default": "hot-reload",
           "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
@@ -6274,6 +6282,14 @@
           "name": "json",
           "type": "boolean"
         },
+        "listing": {
+          "description": "The listing preset to use for multi-preset theme pushing. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "listing",
+          "type": "option"
+        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -6542,6 +6558,14 @@
           "name": "ignore",
           "type": "option"
         },
+        "listing": {
+          "description": "The listing preset to use for multi-preset theme development. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "listing",
+          "type": "option"
+        },
         "live-reload": {
           "default": "hot-reload",
           "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
@@ -6710,6 +6734,14 @@
           "hidden": true,
           "name": "force",
           "type": "boolean"
+        },
+        "listing": {
+          "description": "The listing preset to use for multi-preset theme sharing. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "listing",
+          "type": "option"
         },
         "no-color": {
           "allowNo": false,

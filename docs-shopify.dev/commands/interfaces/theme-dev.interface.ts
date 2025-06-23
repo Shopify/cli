@@ -28,6 +28,12 @@ export interface themedev {
   '-x, --ignore <value>'?: string
 
   /**
+   * The listing preset to use for multi-preset theme development. Applies preset files from listings/[preset-name] directory.
+   * @environment SHOPIFY_FLAG_LISTING
+   */
+  '--listing <value>'?: string
+
+  /**
    * The live reload mode switches the server behavior when a file is modified:
 - hot-reload Hot reloads local changes to CSS and sections (default)
 - full-page  Always refreshes the entire page

@@ -707,6 +707,9 @@ importers:
       '@shopify/theme-language-server-node':
         specifier: 2.15.2
         version: 2.15.2
+      change-case:
+        specifier: 4.1.2
+        version: 4.1.2
       chokidar:
         specifier: 3.6.0
         version: 3.6.0

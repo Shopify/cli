@@ -3,6 +3,7 @@ import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.j
 import {Notifier} from './notifier.js'
 import {createSyncingCatchError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
+import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
@@ -62,7 +63,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const notifier = options?.notify ? new Notifier(options.notify) : undefined
 
   const read = async (fileKey: string) => {
-    const fileContent = await readThemeFile(root, fileKey)
+    const fileContent = options?.listing
+      ? await readThemeFileWithListing(root, fileKey, options.listing)
+      : await readThemeFile(root, fileKey)
     const fileChecksum = calculateChecksum(fileKey, fileContent)
 
     files.set(
@@ -104,7 +107,18 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       return
     }
 
-    const fileKey = getKey(filePath)
+    let fileKey = getKey(filePath)
+
+    // Handle listing file changes by treating them as base theme file changes
+    if (options?.listing && fileKey.startsWith(`listings/${options.listing}/`)) {
+      const listingPath = fileKey.replace(`listings/${options.listing}/`, '')
+
+      if (listingPath.startsWith('templates/') || listingPath.startsWith('sections/')) {
+        fileKey = listingPath
+      } else {
+        return
+      }
+    }
 
     notifyFileChange(fileKey)
       .then(() => {
@@ -227,6 +241,10 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
   )
 
+  if (options?.listing) {
+    directoriesToWatch.add(joinPath(root, 'listings', options.listing))
+  }
+
   if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD) {
     // Watch the local hot reload script to trigger full browser reloads on change.
     directoriesToWatch.add(inferLocalHotReloadScriptPath())
@@ -335,6 +353,27 @@ export async function readThemeFile(root: string, path: Key): Promise<string | B
   }
 
   return readFile(absolutePath, options)
+}
+
+async function readThemeFileWithListing(
+  root: string,
+  path: Key,
+  listing: string,
+): Promise<string | Buffer | undefined> {
+  // Update "current" preset based on listing
+  if (path === 'config/settings_data.json') {
+    return updateSettingsDataForListing(root, listing)
+  }
+
+  // Check for listing file first
+  const listingFilePath = await getListingFilePath(root, listing, path)
+  if (listingFilePath) {
+    const options: ReadOptions = isTextFile(path) ? {encoding: 'utf8'} : {}
+    return readFile(listingFilePath, options)
+  }
+
+  // Fall back to base theme file
+  return readThemeFile(root, path)
 }
 
 async function removeThemeFile(root: string, path: Key) {

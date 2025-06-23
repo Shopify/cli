@@ -7,6 +7,12 @@ export interface themeshare {
   '-e, --environment <value>'?: string
 
   /**
+   * The listing preset to use for multi-preset theme sharing. Applies preset files from listings/[preset-name] directory.
+   * @environment SHOPIFY_FLAG_LISTING
+   */
+  '--listing <value>'?: string
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */

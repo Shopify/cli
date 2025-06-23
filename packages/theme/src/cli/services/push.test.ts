@@ -5,6 +5,7 @@ import {uploadTheme} from '../utilities/theme-uploader.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {runThemeCheck} from '../commands/theme/check.js'
+import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
 import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
@@ -12,24 +13,26 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
   DEVELOPMENT_THEME_ROLE,
   LIVE_THEME_ROLE,
-  promptThemeName,
   UNPUBLISHED_THEME_ROLE,
+  promptThemeName,
 } from '@shopify/cli-kit/node/themes/utils'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-selector.js')
 vi.mock('./local-storage.js')
+vi.mock('../utilities/theme-listing.js')
 vi.mock('@shopify/cli-kit/node/themes/utils')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../commands/theme/check.js')
 vi.mock('@shopify/cli-kit/node/output')
+vi.mock('../utilities/theme-fs.js')
 
 const path = '/my-theme'
 const defaultFlags: PullFlags = {
@@ -239,6 +242,23 @@ describe('push', () => {
       await push({...defaultFlags, strict: true, json: true})
       expect(runThemeCheck).toHaveBeenCalledWith(path, 'json')
     })
+  })
+
+  test('passes listing flag to file system when provided', async () => {
+    // Given
+    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+    // When
+    await push({...defaultFlags, listing: 'my-preset'})
+
+    // Then
+    expect(mountThemeFileSystem).toHaveBeenCalledWith(
+      path,
+      expect.objectContaining({
+        listing: 'my-preset',
+      }),
+    )
   })
 })
 

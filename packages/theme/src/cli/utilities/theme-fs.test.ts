@@ -116,6 +116,38 @@ describe('theme-fs', () => {
       })
     })
 
+    test('includes listing directory in watched directories when listing is specified', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      expect(watchSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([joinPath(root, 'listings', 'modern')]),
+        expect.any(Object),
+      )
+    })
+
+    test('does not include listing directory when no listing is specified', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      const watchedPaths = watchSpy.mock.calls[0]?.[0] as string[]
+      expect(watchedPaths.some((path) => path.includes('listings'))).toBe(false)
+    })
+
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       // Given
       const root = joinPath(locationOfThisFile, 'fixtures/theme')
@@ -523,6 +555,43 @@ describe('theme-fs', () => {
 
       // Then
       expect(result).toBeFalsy()
+    })
+  })
+
+  describe('listing functionality', () => {
+    const themeId = '123'
+    const adminSession = {token: 'token'} as AdminSession
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    test('handles listing file changes as base theme file changes', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+
+      const changeEventPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('change', (event) => {
+          if (event.fileKey === 'templates/index.json') {
+            setImmediate(resolve)
+          }
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // When
+      const listingFilePath = joinPath(root, 'listings', 'modern', 'templates', 'index.json')
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('change', listingFilePath)
+
+      // Then
+      await changeEventPromise
     })
   })
 
