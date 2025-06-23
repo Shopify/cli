@@ -73,7 +73,7 @@ export default abstract class ThemeCommand extends Command {
   >(_opts?: Input<TFlags, TGlobalFlags, TArgs>): Promise<void> {
     // Parse command flags using the current command class definitions
     const klass = this.constructor as unknown as Input<TFlags, TGlobalFlags, TArgs> & {
-      multiEnvironmentsFlags: RequiredFlags
+      multiEnvironmentsFlags: string[] | null
       flags: FlagOutput
     }
     const requiredFlags = klass.multiEnvironmentsFlags
