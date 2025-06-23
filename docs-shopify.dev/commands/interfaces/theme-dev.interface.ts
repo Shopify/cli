@@ -16,7 +16,7 @@ export interface themedev {
    * Controls the visibility of the error overlay when an theme asset upload fails:
 - silent Prevents the error overlay from appearing.
 - default Displays the error overlay.
-      
+
    * @environment SHOPIFY_FLAG_ERROR_OVERLAY
    */
   '--error-overlay <value>'?: string
@@ -32,6 +32,12 @@ export interface themedev {
    * @environment SHOPIFY_FLAG_IGNORE
    */
   '-x, --ignore <value>'?: string
+
+  /**
+   * The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.
+   * @environment SHOPIFY_FLAG_LISTING
+   */
+  '--listing <value>'?: string
 
   /**
    * The live reload mode switches the server behavior when a file is modified:

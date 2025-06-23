@@ -38,6 +38,7 @@ interface PushOptions {
   allowLive?: boolean
   environment?: string
   multiEnvironment?: boolean
+  listing?: string
 }
 
 interface JsonOutput {
@@ -108,6 +109,9 @@ export interface PushFlags {
 
   /** The environment to push the theme to. */
   environment?: string[]
+
+  /** The listing preset to use for multi-preset themes. */
+  listing?: string
 }
 
 /**
@@ -182,6 +186,7 @@ export async function push(
       only: flags.only ?? [],
       path: workingDirectory,
       publish: flags.publish ?? false,
+      listing: flags.listing,
     },
     context,
   )
@@ -202,7 +207,10 @@ async function executePush(
 ) {
   recordTiming('theme-service:push:file-system')
   const themeChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
+  const themeFileSystem = mountThemeFileSystem(options.path, {
+    filters: options,
+    listing: options.listing,
+  })
   recordTiming('theme-service:push:file-system')
 
   const {uploadResults, renderThemeSyncProgress} = uploadTheme(

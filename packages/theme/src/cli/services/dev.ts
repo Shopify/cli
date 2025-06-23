@@ -37,6 +37,7 @@ interface DevOptions {
   ignore: string[]
   only: string[]
   notify?: string
+  listing?: string
 }
 
 export async function dev(options: DevOptions) {
@@ -73,8 +74,9 @@ export async function dev(options: DevOptions) {
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
     filters: options,
-    notify: options.notify,
+    listing: options.listing,
     noDelete: options.noDelete,
+    notify: options.notify,
   })
 
   const host = options.host ?? DEFAULT_HOST

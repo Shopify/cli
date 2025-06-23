@@ -5504,6 +5504,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--listing <value>",
+                "value": "string",
+                "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_LISTING"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--live-reload <value>",
                 "value": "string",
                 "description": "The live reload mode switches the server behavior when a file is modified: - hot-reload Hot reloads local changes to CSS and sections (default) - full-page  Always refreshes the entire page - off        Deactivate live reload",
@@ -6869,6 +6878,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--listing <value>",
+                "value": "string",
+                "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_LISTING"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -7185,6 +7203,15 @@
             "name": "themeshare",
             "description": "",
             "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--listing <value>",
+                "value": "string",
+                "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_LISTING"
+              },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
