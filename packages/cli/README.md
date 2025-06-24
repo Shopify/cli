@@ -1743,7 +1743,7 @@ FLAGS
       --init                    Generate a .theme-check.yml file
       --list                    List enabled checks
       --no-color                Disable color output.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --print                   Output active config to STDOUT
       --verbose                 Increase the verbosity of the output.
 
@@ -1770,7 +1770,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
@@ -1803,7 +1803,7 @@ FLAGS
   -t, --theme=<value>...        Theme ID or name of the remote theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -1881,7 +1881,7 @@ FLAGS
       Password generated from the Theme Access app.
 
   --path=<value>
-      The path to your theme directory.
+      The path where you want to run the command. Defaults to the current working directory.
 
   --port=<value>
       Local port to serve theme preview from.
@@ -1948,7 +1948,7 @@ FLAGS
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -1972,7 +1972,7 @@ FLAGS
   -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme] The Git URL to clone from. Defaults to
                            Shopify's Skeleton theme.
       --no-color           Disable color output.
-      --path=<value>       The path to your theme directory.
+      --path=<value>       The path where you want to run the command. Defaults to the current working directory.
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2025,7 +2025,7 @@ FLAGS
       --name=<value>            Only list themes that contain the given name.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --role=<option>           Only list themes with the given role.
                                 <options: live|unpublished|development>
       --verbose                 Increase the verbosity of the output.
@@ -2049,7 +2049,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2079,7 +2079,7 @@ FLAGS
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2106,7 +2106,7 @@ USAGE
 
 FLAGS
   --no-color      Disable color output.
-  --path=<value>  The path to your theme directory.
+  --path=<value>  The path where you want to run the command. Defaults to the current working directory.
   --verbose       Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2142,7 +2142,7 @@ FLAGS
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
       --verbose                 Increase the verbosity of the output.
@@ -2173,7 +2173,7 @@ FLAGS
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2212,7 +2212,7 @@ FLAGS
   -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2248,7 +2248,7 @@ FLAGS
   -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --strict                  Require theme check to pass without errors before pushing. Warnings are allowed.
       --verbose                 Increase the verbosity of the output.
 
@@ -2308,7 +2308,7 @@ FLAGS
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2334,7 +2334,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
-      --path=<value>            The path to your theme directory.
+      --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
