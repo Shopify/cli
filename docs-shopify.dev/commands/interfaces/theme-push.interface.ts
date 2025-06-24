@@ -91,10 +91,10 @@ export interface themepush {
   '-t, --theme <value>'?: string
 
   /**
-   * Create a new unpublished theme and push to it.
+   * Pass the value "create" to always create a new theme. Pass the value "upsert" to update an existing if it exists. A new theme will be created if no theme by that name exists or the name is same as the live theme.
    * @environment SHOPIFY_FLAG_UNPUBLISHED
    */
-  '-u, --unpublished'?: ''
+  '-u, --unpublished <value>'?: string
 
   /**
    * Increase the verbosity of the output.
