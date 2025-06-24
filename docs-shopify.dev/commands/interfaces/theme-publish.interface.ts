@@ -25,7 +25,7 @@ export interface themepublish {
   '--password <value>'?: string
 
   /**
-   * The path to your theme directory.
+   * The path where you want to run the command. Defaults to the current working directory.
    * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
