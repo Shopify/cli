@@ -15,8 +15,7 @@ export default class List extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    password: themeFlags.password,
-    store: themeFlags.store,
+    ...themeFlags,
     role: Flags.custom<Role>({
       description: 'Only list themes with the given role.',
       options: ALLOWED_ROLES,
@@ -30,7 +29,6 @@ export default class List extends ThemeCommand {
       description: 'Only list theme with the given ID.',
       env: 'SHOPIFY_FLAG_ID',
     }),
-    environment: themeFlags.environment,
   }
 
   static multiEnvironmentsFlags = ['store', 'password']

@@ -37,6 +37,12 @@ export interface themelist {
   '--password <value>'?: string
 
   /**
+   * The path where you want to run the command. Defaults to the current working directory.
+   * @environment SHOPIFY_FLAG_PATH
+   */
+  '--path <value>'?: string
+
+  /**
    * Only list themes with the given role.
    * @environment SHOPIFY_FLAG_ROLE
    */

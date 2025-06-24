@@ -25,6 +25,12 @@ export interface themeprofile {
   '--password <value>'?: string
 
   /**
+   * The path where you want to run the command. Defaults to the current working directory.
+   * @environment SHOPIFY_FLAG_PATH
+   */
+  '--path <value>'?: string
+
+  /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
    * @environment SHOPIFY_FLAG_STORE
    */

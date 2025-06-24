@@ -19,9 +19,7 @@ export default class Console extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
-    store: themeFlags.store,
-    password: themeFlags.password,
-    environment: themeFlags.environment,
+    ...themeFlags,
     url: Flags.string({
       description: 'The url to be used as context',
       env: 'SHOPIFY_FLAG_URL',

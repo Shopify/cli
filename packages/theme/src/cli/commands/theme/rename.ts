@@ -19,9 +19,7 @@ export default class Rename extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
-    store: themeFlags.store,
-    password: themeFlags.password,
-    environment: themeFlags.environment,
+    ...themeFlags,
     name: Flags.string({
       char: 'n',
       description: 'The new name for the theme.',
