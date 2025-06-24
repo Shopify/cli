@@ -2232,7 +2232,8 @@ FLAGS
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
-  -u, --unpublished             Create a new unpublished theme and push to it.
+  -u, --unpublished=<option>    [default: create] Create a new unpublished theme and push to it.
+                                <options: create|upsert>
   -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed).
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
@@ -2275,6 +2276,13 @@ DESCRIPTION
   }
   }
   ```
+
+
+FLAG DESCRIPTIONS
+  -u, --unpublished=create|upsert  Create a new unpublished theme and push to it.
+
+    Pass the value "create" to always create a new theme. Pass the value "upsert" to update an existing if it exists. A
+    new theme will be created if no theme by that name exists or the name is same as the live theme.
 ```
 
 ## `shopify theme rename`
