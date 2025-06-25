@@ -5,6 +5,7 @@
   "packages/plugin-cloudflare",
   "packages/plugin-did-you-mean",
   "packages/theme",
+  "packages/store",
   "packages/ui-extensions-dev-console",
   "packages/ui-extensions-server-kit",
   "packages/ui-extensions-test-utils"

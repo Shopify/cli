@@ -246,6 +246,18 @@
           ]
         }
       },
+      "packages/store": {
+        "project": "**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
       "packages/theme": {
         "project": "**/*.ts!",
         "entry": [
