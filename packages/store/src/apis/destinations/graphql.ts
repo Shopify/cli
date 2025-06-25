@@ -1,4 +1,7 @@
-export const CurrentUserAccountQuery = `#graphql
+import {gql} from 'graphql-request'
+
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
+export const CurrentUserAccountQuery = gql`
   query currentUserAccount {
     currentUserAccount {
       email

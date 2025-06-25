@@ -31,7 +31,7 @@ export default class Copy extends BaseBDCommand {
     const {sourceShop, targetShop} = this.shopsFromFlags(this.flags.from as string, this.flags.to as string, orgs)
 
     if (!this.flags.skipConfirmation) {
-      if ((await confirmCopyPrompt(sourceShop.domain, targetShop.domain)) === false) {
+      if (!(await confirmCopyPrompt(sourceShop.domain, targetShop.domain))) {
         this.handleExit()
       }
     }

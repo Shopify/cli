@@ -24,7 +24,22 @@ vi.mock('../../apis/organizations/index.js', async () => {
 })
 
 vi.mock('../../prompts/confirm_copy.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui', async () => {
+  const actual = (await vi.importActual('@shopify/cli-kit/node/ui')) as any
+  return {
+    ...actual,
+    renderText: vi.fn(),
+    renderSuccess: vi.fn(),
+    renderWarning: vi.fn(),
+    renderTasks: vi.fn(async (tasks: any) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        await task.task(ctx)
+      }
+      return ctx
+    }),
+  }
+})
 vi.mock('@shopify/cli-kit/node/session')
 
 describe('Copy command', () => {
@@ -158,8 +173,7 @@ describe('Copy command', () => {
     const sourceShop = mockOrg.shops.find((shop) => shop.domain === sourceShopDomain)!
     const targetShop = mockOrg.shops.find((shop) => shop.domain === targetShopDomain)!
 
-    // eslint-disable-next-line dot-notation
-    return copy['executeCopyOperation'](orgId, sourceShop, targetShop, mockSession)
+    return copy.executeCopyOperation(orgId, sourceShop, targetShop, mockSession)
   }
 
   describe('when copying between shops in the same organization', () => {
