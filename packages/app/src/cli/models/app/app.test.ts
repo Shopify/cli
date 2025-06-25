@@ -334,7 +334,7 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
       ...CORRECT_LEGACY_APP_SCHEMA,
       scopes: 'read_orders',
     }
-    const app = testApp({configuration, schemaType: 'legacy'})
+    const app = testApp(configuration, 'legacy')
 
     // When/Then
     await expect(app.preDeployValidation()).resolves.not.toThrow()
