@@ -7,8 +7,9 @@ import {commonFlags, shopSelectionFlags, resourceConfigFlags} from '../../lib/fl
 import {parseResourceConfigFlags} from '../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../prompts/confirm_copy.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess, Task, renderTasks, renderWarning, Token, renderText} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy data from one store to another'
@@ -82,7 +83,7 @@ export default class Copy extends BaseBDCommand {
     sourceShop: Shop,
     targetShop: Shop,
   ): Promise<BulkDataOperationByIdResponse> {
-    renderText({text: `Copying from ${sourceShop.domain} to ${targetShop.domain}`})
+    outputInfo(`Copying from ${sourceShop.domain} to ${targetShop.domain}`)
 
     const copyResponse: BulkDataStoreCopyStartResponse = await startBulkDataStoreCopy(
       organizationId,

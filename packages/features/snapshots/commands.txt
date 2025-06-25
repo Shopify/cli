@@ -76,6 +76,8 @@
 │  ├─ unlink
 │  └─ update
 ├─ search
+├─ store
+│  └─ copy
 ├─ theme
 │  ├─ check
 │  ├─ console

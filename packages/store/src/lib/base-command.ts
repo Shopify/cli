@@ -1,6 +1,7 @@
 import {FlagOptions} from './types.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {renderText, renderError} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 export abstract class BaseBDCommand extends Command {
   abstract runCommand(): Promise<void>
@@ -23,7 +24,7 @@ export abstract class BaseBDCommand extends Command {
   }
 
   handleExit() {
-    renderText({text: 'Exiting.'})
+    outputInfo('Exiting.')
     process.exit(0)
   }
 }
