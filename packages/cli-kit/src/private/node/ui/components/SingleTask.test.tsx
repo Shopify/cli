@@ -71,6 +71,7 @@ describe('SingleTask', () => {
     const renderInstance = render(<SingleTask title={title} taskPromise={taskPromise} />)
 
     // Then - should exit with error
+    await expect(taskPromise).rejects.toThrow('Immediate error')
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('Immediate error')
   })
 
@@ -147,6 +148,7 @@ describe('SingleTask', () => {
     const renderInstance = render(<SingleTask title="Custom error task" taskPromise={taskPromise} />)
 
     // Then - should preserve the exact error
+    await expect(taskPromise).rejects.toThrow('Custom error message')
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('Custom error message')
   })
 
