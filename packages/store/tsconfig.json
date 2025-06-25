@@ -1,13 +1,11 @@
 {
   "extends": "../../configurations/tsconfig.json",
-  "include": ["./src/**/*.ts"],
+  "include": ["./src/**/*.ts", "./src/**/*.js"],
   "exclude": ["./dist"],
   "compilerOptions": {
     "outDir": "dist",
+    "allowJs": true,
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
-  },
-  "references": [
-    {"path": "../cli-kit"}
-  ]
+  }
 }
