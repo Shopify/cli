@@ -10,6 +10,8 @@ export default class Package extends ThemeCommand {
 
   Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.
 
+  The package includes the \`listings\` directory if present (required for multi-preset themes per [Theme Store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).
+
   The ZIP file uses the name \`theme_name-theme_version.zip\`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.`
 
   static description = this.descriptionWithoutMarkdown()
