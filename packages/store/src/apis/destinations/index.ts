@@ -8,7 +8,9 @@ export const fetchOrgs = async (session: string): Promise<Organization[]> => {
 
   const orgs: Organization[] = []
   for (const org of resp.currentUserAccount.organizations.edges) {
-    const shops = org.node.categories[0]!.destinations.edges.map((edge) => {
+    const categories = org.node.categories[0]
+    if (!categories) continue
+    const shops = categories.destinations.edges.map((edge) => {
       const shop = {
         ...edge.node,
         organizationId: org.node.id,

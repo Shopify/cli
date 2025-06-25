@@ -53,15 +53,24 @@ export function parseResourceConfigFlags(flags: string[]): ResourceConfigs {
     const parts = flag.split(':')
     validateFlagFormat(flag, parts)
 
-    const resource = parts[0]!
-    const secondPart = parts[1]!
+    const resource = parts[0]
+    const secondPart = parts[1]
+
+    if (!resource || !secondPart) {
+      throw new Error(`Invalid flag format: ${flag}`)
+    }
 
     if (secondPart === METAFIELD_KEYWORD) {
       validateMetafieldFormat(flag, parts)
       validateMetafieldResource(resource)
 
-      const namespace = parts[2]!
-      const key = parts[3]!
+      const namespace = parts[2]
+      const key = parts[3]
+
+      if (!namespace || !key) {
+        throw new Error(`Invalid metafield format: ${flag}`)
+      }
+
       resourceConfigs[resource] = createMetafieldBasedConfig(namespace, key)
     } else {
       resourceConfigs[resource] = createFieldBasedConfig(secondPart)

@@ -7,13 +7,14 @@ import {commonFlags, shopSelectionFlags, resourceConfigFlags} from '../../lib/fl
 import {parseResourceConfigFlags} from '../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../prompts/confirm_copy.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess, Task, renderTasks, renderWarning, Token, renderText} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy data from one store to another'
   static description = 'Copy data from one store to another'
-
+  static hidden = true
   static flags = {
     ...shopSelectionFlags,
     ...resourceConfigFlags,
@@ -31,7 +32,7 @@ export default class Copy extends BaseBDCommand {
     const {sourceShop, targetShop} = this.shopsFromFlags(this.flags.from as string, this.flags.to as string, orgs)
 
     if (!this.flags.skipConfirmation) {
-      if ((await confirmCopyPrompt(sourceShop.domain, targetShop.domain)) === false) {
+      if (!(await confirmCopyPrompt(sourceShop.domain, targetShop.domain))) {
         this.handleExit()
       }
     }
@@ -82,7 +83,7 @@ export default class Copy extends BaseBDCommand {
     sourceShop: Shop,
     targetShop: Shop,
   ): Promise<BulkDataOperationByIdResponse> {
-    renderText({text: `Copying from ${sourceShop.domain} to ${targetShop.domain}`})
+    outputInfo(`Copying from ${sourceShop.domain} to ${targetShop.domain}`)
 
     const copyResponse: BulkDataStoreCopyStartResponse = await startBulkDataStoreCopy(
       organizationId,

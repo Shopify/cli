@@ -1,18 +1,21 @@
-export const bulkDataStoreCopyStartMutation = `#graphql
+import {gql} from 'graphql-request'
+
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
+export const bulkDataStoreCopyStartMutation = gql`
   mutation BulkDataStoreCopyStart($input: BulkDataStoreCopyStartInput!) {
-  bulkDataStoreCopyStart(input: $input) {
-    success
-    operation {
-      id
-      operationType
-      status
-    }
-    userErrors {
-      field
-      message
+    bulkDataStoreCopyStart(input: $input) {
+      success
+      operation {
+        id
+        operationType
+        status
+      }
+      userErrors {
+        field
+        message
+      }
     }
   }
-}
 `
 
 export const bulkDataOperationByIdQuery = `#graphql
