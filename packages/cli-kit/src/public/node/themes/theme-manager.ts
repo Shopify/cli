@@ -4,6 +4,7 @@ import {DEVELOPMENT_THEME_ROLE, Role} from './utils.js'
 import {generateThemeName} from '../../../private/node/themes/generate-theme-name.js'
 import {AdminSession} from '../session.js'
 import {BugError} from '../error.js'
+import {outputDebug, outputContent} from '../output.js'
 
 export abstract class ThemeManager {
   protected themeId: string | undefined
@@ -22,11 +23,16 @@ export abstract class ThemeManager {
   }
 
   async fetch() {
+    outputDebug(outputContent`ThemeManager.fetch() called with themeId: ${this.themeId || 'undefined'}`)
     if (!this.themeId) {
+      outputDebug(outputContent`No theme ID set, returning undefined`)
       return
     }
+    outputDebug(outputContent`Calling fetchTheme API with ID: ${this.themeId}`)
     const theme = await fetchTheme(parseInt(this.themeId, 10), this.adminSession)
+    outputDebug(outputContent`fetchTheme returned: ${theme ? `theme ${theme.id}` : 'null'}`)
     if (!theme) {
+      outputDebug(outputContent`Theme not found, removing from storage`)
       this.removeTheme()
     }
     return theme

@@ -39,15 +39,19 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
 }
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
+  outputDebug(`fetchTheme API called with ID: ${id}`)
   const gid = composeThemeGid(id)
+  outputDebug(`Composed GID: ${gid}`)
 
   try {
+    outputDebug(`Making GraphQL request to fetch theme...`)
     const {theme} = await adminRequestDoc({
       query: GetTheme,
       session,
       variables: {id: gid},
       responseOptions: {handleErrors: false},
     })
+    outputDebug(`GraphQL response received: ${theme ? 'theme found' : 'no theme'}`)
 
     if (theme) {
       return buildTheme({
@@ -59,7 +63,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     }
 
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_error) {
+  } catch (error) {
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -67,7 +71,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
      * Error handlers should not inspect GraphQL error messages directly, as
      * they are internationalized.
      */
-    outputDebug(`Error fetching theme with ID: ${id}`)
+    outputDebug(`Error fetching theme with ID ${id}: ${error}`)
   }
 }
 

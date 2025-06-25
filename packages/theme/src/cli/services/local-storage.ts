@@ -67,7 +67,11 @@ export function getDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
+  const themeStore = assertThemeStoreExists(themeStorage)
+  outputDebug(outputContent`Theme store: ${themeStore}`)
+  const developmentThemeId = developmentThemeLocalStorage().get(themeStore)
+  outputDebug(outputContent`Development theme ID: ${developmentThemeId || 'undefined'}`)
+  return developmentThemeId
 }
 
 export function setDevelopmentTheme(

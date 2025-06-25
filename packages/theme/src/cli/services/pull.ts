@@ -13,6 +13,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
+import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 
 interface PullOptions {
   path: string
@@ -96,8 +97,11 @@ export async function pull(flags: PullFlags): Promise<void> {
   const store = ensureThemeStore({store: flags.store})
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
+  outputDebug(outputContent`Creating DevelopmentThemeManager...`)
   const developmentThemeManager = new DevelopmentThemeManager(adminSession)
+  outputDebug(outputContent`Fetching development theme (development flag: ${flags.development ? 'true' : 'false'})...`)
   const developmentTheme = await (flags.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
+  outputDebug(outputContent`Development theme fetched: ${developmentTheme ? `theme ${developmentTheme.id}` : 'null'}`)
 
   const {path, nodelete, live, development, only, ignore, force} = flags
 
@@ -105,6 +109,7 @@ export async function pull(flags: PullFlags): Promise<void> {
     return
   }
 
+  outputDebug(outputContent`Finding or selecting theme...`)
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to open',
     filter: {
@@ -112,6 +117,7 @@ export async function pull(flags: PullFlags): Promise<void> {
       theme: development ? `${developmentTheme?.id}` : flags.theme,
     },
   })
+  outputDebug(outputContent`Theme selected: ${theme.id.toString()} - ${theme.name}`)
 
   await executePull(theme, adminSession, {
     path: path ?? cwd(),
@@ -130,8 +136,11 @@ export async function pull(flags: PullFlags): Promise<void> {
  * @param options - the options that modify how the theme gets downloaded
  */
 async function executePull(theme: Theme, session: AdminSession, options: PullOptions) {
+  outputDebug(outputContent`Executing pull for theme ${theme.id.toString()}...`)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
+  outputDebug(outputContent`Fetching checksums and waiting for file system...`)
   const [remoteChecksums] = await Promise.all([fetchChecksums(theme.id, session), themeFileSystem.ready()])
+  outputDebug(outputContent`Checksums fetched, ${remoteChecksums.length.toString()} files found`)
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
 
   const store = session.storeFqdn
