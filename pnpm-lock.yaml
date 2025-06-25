@@ -300,6 +300,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 3.82.0
         version: link:../plugin-did-you-mean
+      '@shopify/store':
+        specifier: 3.81.1
+        version: link:../store
       '@shopify/theme':
         specifier: 3.82.0
         version: link:../theme
@@ -689,6 +692,15 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
         version: 3.2.1(vitest@3.2.1(@types/node@22.15.29)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.8.7(@types/node@22.15.29)(typescript@5.8.3))(sass@1.89.1)(yaml@2.7.0))
+
+  packages/store:
+    dependencies:
+      '@oclif/core':
+        specifier: 3.26.5
+        version: 3.26.5
+      '@shopify/cli-kit':
+        specifier: 3.81.1
+        version: link:../cli-kit
 
   packages/theme:
     dependencies:

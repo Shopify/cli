@@ -4872,6 +4872,26 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "store:copy": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "This command allows you to copy a theme from one Shopify store to another.",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:copy",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Copy a theme to another store."
+    },
     "theme:check": {
       "aliases": [
       ],
