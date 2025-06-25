@@ -41,14 +41,17 @@ export async function startBulkDataStoreCopy(
     targetStoreIdentifier: {
       domain: targetShopDomain,
     },
-    resourceConfigs: Object.entries(resourceConfigs).reduce((acc, [resource, config]) => {
-      acc[resource] = {
-        identifier: {
-          field: config.identifier.field || 'HANDLE',
-        },
-      }
-      return acc
-    }, {} as {[key: string]: {identifier: {field: string}}}),
+    resourceConfigs: Object.entries(resourceConfigs).reduce<{[key: string]: {identifier: {field: string}}}>(
+      (acc, [resource, config]) => {
+        acc[resource] = {
+          identifier: {
+            field: config.identifier.field ?? 'HANDLE',
+          },
+        }
+        return acc
+      },
+      {},
+    ),
   }
 
   return organizationsRequest<BulkDataStoreCopyStartResponse>(organizationId, bulkDataStoreCopyStartMutation, token, {
