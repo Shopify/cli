@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push, PushFlags} from '../../services/push.js'
+import {push, PushFlags, UnpublishedOption} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {getRandomName} from '@shopify/cli-kit/common/string'
@@ -35,7 +35,7 @@ export default class Share extends ThemeCommand {
       path: flags.path,
       password: flags.password,
       store: flags.store,
-      unpublished: true,
+      unpublished: UnpublishedOption.Create,
       theme: getRandomName('creative'),
     }
 

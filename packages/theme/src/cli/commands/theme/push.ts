@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push, PushFlags} from '../../services/push.js'
+import {push, PushFlags, UnpublishedOption} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
@@ -59,9 +59,13 @@ export default class Push extends ThemeCommand {
       description: 'Push theme files from your remote live theme.',
       env: 'SHOPIFY_FLAG_LIVE',
     }),
-    unpublished: Flags.boolean({
+    unpublished: Flags.string({
       char: 'u',
-      description: 'Create a new unpublished theme and push to it.',
+      summary: 'Create a new unpublished theme and push to it.',
+      description:
+        'Pass the value "create" to always create a new theme. Pass the value "upsert" to update an existing if it exists. A new theme will be created if no theme by that name exists or the name is same as the live theme.',
+      options: Object.values(UnpublishedOption),
+      default: UnpublishedOption.Create,
       env: 'SHOPIFY_FLAG_UNPUBLISHED',
     }),
     nodelete: Flags.boolean({
@@ -113,7 +117,7 @@ export default class Push extends ThemeCommand {
       theme: flags.theme,
       development: flags.development,
       live: flags.live,
-      unpublished: flags.unpublished,
+      unpublished: flags.unpublished as UnpublishedOption,
       nodelete: flags.nodelete,
       only: flags.only,
       ignore: flags.ignore,

@@ -5,7 +5,7 @@ import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {Role} from '../utilities/theme-selector/fetch.js'
+import {Role, fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -47,6 +47,11 @@ interface JsonOutput {
   }
 }
 
+export enum UnpublishedOption {
+  Create = 'create',
+  Upsert = 'upsert',
+}
+
 export interface PushFlags {
   /** The path to your theme directory. */
   path?: string
@@ -66,8 +71,8 @@ export interface PushFlags {
   /** Push theme files from your remote live theme. */
   live?: boolean
 
-  /** Create a new unpublished theme and push to it. */
-  unpublished?: boolean
+  /** Create a new unpublished theme and push to it. Can be 'create' (default) or 'upsert'. */
+  unpublished?: UnpublishedOption
 
   /** Runs the push command without deleting local files. */
   nodelete?: boolean
@@ -316,8 +321,38 @@ export async function createOrSelectTheme(adminSession: AdminSession, flags: Pus
   if (development) {
     const themeManager = new DevelopmentThemeManager(adminSession)
     return themeManager.findOrCreate()
-  } else if (unpublished) {
+  } else if (unpublished && unpublished !== UnpublishedOption.Upsert) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
+    return themeCreate(
+      {
+        name: themeName,
+        role: UNPUBLISHED_THEME_ROLE,
+      },
+      adminSession,
+    )
+  } else if (unpublished === UnpublishedOption.Upsert) {
+    const themeName = theme ?? (await promptThemeName('Name of the theme'))
+
+    // Find existing unpublished theme with matching name using filter logic
+    const allThemes = await fetchStoreThemes(adminSession)
+
+    // Filter themes using the same case-insensitive logic as theme selector
+    const matchingTheme = allThemes.find((t) => {
+      // Must be unpublished role (don't update live or development themes)
+      if (t.role !== UNPUBLISHED_THEME_ROLE) return false
+
+      // Use same case-insensitive name matching as filterByTheme
+      if (t.name.toLowerCase() === themeName.toLowerCase()) return true
+
+      // Could also check partial matches like filterByTheme, but exact match is sufficient for upsert
+      return false
+    })
+
+    if (matchingTheme) {
+      return matchingTheme
+    }
+
+    // Create new theme if not found
     return themeCreate(
       {
         name: themeName,
