@@ -11,9 +11,15 @@ import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/c
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
+enum OperationMode {
+  STORE_COPY = 'STORE_COPY',
+  STORE_EXPORT = 'STORE_EXPORT',
+  STORE_IMPORT = 'STORE_IMPORT',
+}
+
 export default class Copy extends BaseBDCommand {
-  static summary = 'Copy data from one store to another'
-  static description = 'Copy data from one store to another'
+  static summary = 'Copy, export, or import store data'
+  static description = 'Copy data between stores, export store data to SQLite, or import data from SQLite to a store'
   static hidden = true
   static flags = {
     ...shopSelectionFlags,
@@ -25,11 +31,59 @@ export default class Copy extends BaseBDCommand {
   async runCommand(): Promise<void> {
     this.flags = (await this.parse(Copy)).flags
 
+    const from = this.flags.from as string
+    const to = this.flags.to as string
+
+    if (!from && !to) {
+      throw new Error('You must specify at least one of --from or --to flags')
+    }
+
+    const operationMode = this.determineOperationMode(from, to)
+
+    switch (operationMode) {
+      case OperationMode.STORE_COPY:
+        await this.handleStoreCopy(from, to)
+        break
+      case OperationMode.STORE_EXPORT:
+        await this.handleStoreExport(from, to)
+        break
+      case OperationMode.STORE_IMPORT:
+        await this.handleStoreImport(from, to)
+        break
+    }
+  }
+
+  private determineOperationMode(from: string, to: string | undefined): OperationMode {
+    const isFromStore = from ? this.isStoreIdentifier(from) : false
+    const isFromFile = from ? this.isFileIdentifier(from) : false
+    const isToStore = to ? this.isStoreIdentifier(to) : false
+    const isToFile = to ? this.isFileIdentifier(to) : false
+
+    if (isFromStore && isToStore) {
+      return OperationMode.STORE_COPY
+    } else if (isFromStore && isToFile) {
+      return OperationMode.STORE_EXPORT
+    } else if (isFromFile && isToStore) {
+      return OperationMode.STORE_IMPORT
+    }
+
+    throw new Error('Invalid combination of --from and --to flags')
+  }
+
+  private isStoreIdentifier(value: string): boolean {
+    return value.endsWith('.myshopify.com')
+  }
+
+  private isFileIdentifier(value: string): boolean {
+    return value.endsWith('.sqlite') || value === '<sqlite>'
+  }
+
+  private async handleStoreCopy(from: string, to: string): Promise<void> {
     const bpSession = await ensureAuthenticatedBusinessPlatform()
 
     const orgs = await this.fetchOrgs(bpSession)
 
-    const {sourceShop, targetShop} = this.shopsFromFlags(this.flags.from as string, this.flags.to as string, orgs)
+    const {sourceShop, targetShop} = this.shopsFromFlags(from, to, orgs)
 
     if (!this.flags.skipConfirmation) {
       if (!(await confirmCopyPrompt(sourceShop.domain, targetShop.domain))) {
@@ -47,15 +101,19 @@ export default class Copy extends BaseBDCommand {
     this.renderCopyResult(sourceShop, targetShop, copyOperation)
   }
 
+  private async handleStoreExport(from: string, to: string | undefined): Promise<void> {
+    throw new Error('Store export functionality is not implemented yet')
+  }
+
+  private async handleStoreImport(from: string, to: string): Promise<void> {
+    throw new Error('Store import functionality is not implemented yet')
+  }
+
   private async fetchOrgs(bpSession: string): Promise<Organization[]> {
     return (await fetchOrgs(bpSession)).filter((org) => org.shops.length > 1)
   }
 
   private shopsFromFlags(from: string, to: string, orgs: Organization[]): {sourceShop: Shop; targetShop: Shop} {
-    if (!from || !to) {
-      throw new Error('Both from and to flags must be provided')
-    }
-
     const allShops = orgs.flatMap((org) => org.shops)
     const sourceShop = allShops.find((shop) => shop.domain === from)
     const targetShop = allShops.find((shop) => shop.domain === to)

@@ -200,21 +200,37 @@ describe('Copy', () => {
       })
     })
 
-    test('should throw error when from flag is missing', async () => {
-      await run(['--to=target.myshopify.com'])
-
+    test('should throw error when to flag is missing', async () => {
+      await run(['--from=target.myshopify.com'])
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: expect.stringContaining('Missing required flag from'),
+        body: expect.stringContaining('required flag to'),
       })
     })
 
-    test('should throw error when to flag is missing', async () => {
-      await run(['--from=source.myshopify.com'])
+    test('should throw error when from flag is missing', async () => {
+      await run(['--to=target.myshopify.com'])
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: expect.stringContaining('required flag from'),
+      })
+    })
+
+    test('should throw error export not implemented', async () => {
+      await run(['--from=source.myshopify.com', '--to=foo.sqlite'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: expect.stringContaining('Missing required flag to'),
+        body: 'Store export functionality is not implemented yet',
+      })
+    })
+
+    test('should throw error export not implemented when --to is <sqlite>', async () => {
+      await run(['--from=source.myshopify.com', '--to=<sqlite>'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Store export functionality is not implemented yet',
       })
     })
 
@@ -472,6 +488,24 @@ describe('Copy', () => {
       expect(pollBulkDataOperation).toHaveBeenCalledTimes(3)
       expect(pollBulkDataOperation).toHaveBeenCalledWith('org1', 'operation-123', mockBpSession)
       expect(renderSuccess).toHaveBeenCalled()
+    })
+
+    test('should throw error for export mode (not implemented)', async () => {
+      await run(['--from=source.myshopify.com', '--to=output.sqlite'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Store export functionality is not implemented yet',
+      })
+    })
+
+    test('should throw error for import mode (not implemented)', async () => {
+      await run(['--from=input.sqlite', '--to=target.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Store import functionality is not implemented yet',
+      })
     })
 
     test('should throw error when polling returns FAILED status', async () => {
