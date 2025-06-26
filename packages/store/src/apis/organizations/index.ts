@@ -45,7 +45,7 @@ export async function startBulkDataStoreCopy(
       (acc, [resource, config]) => {
         acc[resource] = {
           identifier: {
-            field: config.identifier.field || 'HANDLE',
+            field: config.identifier.field ?? 'HANDLE',
           },
         }
         return acc

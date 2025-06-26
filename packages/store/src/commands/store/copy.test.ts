@@ -1,233 +1,531 @@
 import Copy from './copy.js'
 import {fetchOrgs} from '../../apis/destinations/index.js'
 import {startBulkDataStoreCopy, pollBulkDataOperation} from '../../apis/organizations/index.js'
-import {describe, expect, vi, test} from 'vitest'
+import {confirmCopyPrompt} from '../../prompts/confirm_copy.js'
+import {parseResourceConfigFlags} from '../../lib/resource-config.js'
+import {Shop, Organization} from '../../apis/destinations/types.js'
+import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../apis/organizations/types.js'
+import {describe, vi, expect, test, beforeEach} from 'vitest'
+import {Config} from '@oclif/core'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
-import type {Organization} from '../../apis/destinations/types.js'
-import type {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../apis/organizations/types.js'
+import {renderSuccess, renderTasks, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
-vi.mock('../../apis/destinations/index.js', async () => {
-  const actual = (await vi.importActual('../../apis/destinations/index.js')) as any
-  return {
-    ...actual,
-    fetchOrgs: vi.fn(),
-  }
-})
-
-vi.mock('../../apis/organizations/index.js', async () => {
-  const actual = (await vi.importActual('../../apis/organizations/index.js')) as any
-  return {
-    ...actual,
-    startBulkDataStoreCopy: vi.fn(),
-    pollBulkDataOperation: vi.fn(),
-  }
-})
-
-vi.mock('../../prompts/confirm_copy.js')
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = (await vi.importActual('@shopify/cli-kit/node/ui')) as any
-  return {
-    ...actual,
-    renderText: vi.fn(),
-    renderSuccess: vi.fn(),
-    renderWarning: vi.fn(),
-    renderTasks: vi.fn(async (tasks: any) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        await task.task(ctx)
-      }
-      return ctx
-    }),
-  }
-})
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/output')
+vi.mock('../../apis/destinations/index.js')
+vi.mock('../../apis/organizations/index.js')
+vi.mock('../../prompts/confirm_copy.js')
+vi.mock('../../lib/resource-config.js')
 
-describe('Copy command', () => {
-  const mockSession = 'test-session-token'
-  const orgId = 'gid://Organization/123'
-  const sourceShopDomain = 'source-shop.myshopify.com'
-  const targetShopDomain = 'target-shop.myshopify.com'
+const CommandConfig = new Config({root: __dirname})
 
-  const createMockOrganization = (): Organization => ({
-    id: orgId,
+describe('Copy', () => {
+  const mockBpSession = 'mock-bp-session-token'
+  const mockSourceShop: Shop = {
+    id: 'shop1',
+    name: 'Source Shop',
+    webUrl: 'https://source.myshopify.com',
+    handle: 'source',
+    publicId: 'gid://shopify/Shop/1',
+    shortName: 'source',
+    domain: 'source.myshopify.com',
+    organizationId: 'org1',
+  }
+  const mockTargetShop: Shop = {
+    id: 'shop2',
+    name: 'Target Shop',
+    webUrl: 'https://target.myshopify.com',
+    handle: 'target',
+    publicId: 'gid://shopify/Shop/2',
+    shortName: 'target',
+    domain: 'target.myshopify.com',
+    organizationId: 'org1',
+  }
+  const mockOrganization: Organization = {
+    id: 'org1',
     name: 'Test Organization',
-    shops: [
-      {
-        id: 'shop-1',
-        name: 'Source Shop',
-        domain: sourceShopDomain,
-        organizationId: orgId,
-        webUrl: `https://${sourceShopDomain}`,
-        storeType: 'development',
-        handle: 'source-shop',
-        publicId: 'pub-1',
-        shortName: 'source',
-      },
-      {
-        id: 'shop-2',
-        name: 'Target Shop',
-        domain: targetShopDomain,
-        organizationId: orgId,
-        webUrl: `https://${targetShopDomain}`,
-        storeType: 'development',
-        handle: 'target-shop',
-        publicId: 'pub-2',
-        shortName: 'target',
-      },
-    ],
-  })
+    shops: [mockSourceShop, mockTargetShop],
+  }
 
-  const createMockCopyResponse = (): BulkDataStoreCopyStartResponse => ({
+  const mockCopyStartResponse: BulkDataStoreCopyStartResponse = {
     bulkDataStoreCopyStart: {
       success: true,
+      userErrors: [],
       operation: {
         id: 'operation-123',
-        operationType: 'COPY',
-        status: 'RUNNING',
+        operationType: 'STORE_COPY',
+        status: 'IN_PROGRESS',
       },
-      userErrors: [],
     },
-  })
+  }
 
-  const createMockOperationResponse = (status: 'RUNNING' | 'COMPLETED'): BulkDataOperationByIdResponse => ({
+  const mockCompletedOperation: BulkDataOperationByIdResponse = {
     organization: {
       name: 'Test Organization',
       bulkData: {
         operation: {
           id: 'operation-123',
           operationType: 'STORE_COPY',
-          status,
+          status: 'COMPLETED',
           sourceStore: {
-            id: 'shop-1',
+            id: 'shop1',
             name: 'Source Shop',
           },
           targetStore: {
-            id: 'shop-2',
+            id: 'shop2',
             name: 'Target Shop',
           },
           storeOperations: [
             {
-              id: 'source-shop-export-operation',
+              id: 'store-op-1',
               store: {
-                id: 'shop-1',
-                name: 'Source Shop',
+                id: 'shop2',
+                name: 'Target Shop',
               },
-              remoteOperationType: 'export',
+              remoteOperationType: 'COPY',
               remoteOperationStatus: 'COMPLETED',
               totalObjectCount: 100,
               completedObjectCount: 100,
-              url: 'https://example.com/export-operation',
-            },
-            {
-              id: 'target-shop-import-operation',
-              store: {
-                id: 'shop-2',
-                name: 'Target Shop',
-              },
-              remoteOperationType: 'import',
-              remoteOperationStatus: status,
-              totalObjectCount: 100,
-              completedObjectCount: status === 'COMPLETED' ? 100 : 48,
-              url: 'https://example.com/import-operation',
+              url: 'https://target.myshopify.com',
             },
           ],
         },
       },
     },
+  }
+
+  beforeEach(() => {
+    vi.spyOn(process, 'exit').mockImplementation(() => {
+      throw new Error('Process exit called')
+    })
   })
 
-  const setupMocks = () => {
-    const mockOrg = createMockOrganization()
-    const mockCopyResponse = createMockCopyResponse()
-    const mockRunningOperation = createMockOperationResponse('RUNNING')
+  describe('run', () => {
+    async function run(argv: string[]) {
+      await CommandConfig.load()
+      const copy = new Copy(argv, CommandConfig)
+      await copy.run()
+    }
 
-    vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue(mockSession)
-    vi.mocked(fetchOrgs).mockResolvedValue([mockOrg])
-    vi.mocked(startBulkDataStoreCopy).mockResolvedValue(mockCopyResponse)
-    vi.mocked(pollBulkDataOperation).mockResolvedValue(mockRunningOperation)
-
-    return {mockOrg, mockCopyResponse, mockRunningOperation}
-  }
-
-  const runCopyCommand = async (flags: any) => {
-    const {mockOrg} = setupMocks()
-
-    const mockRunningOperation = createMockOperationResponse('RUNNING')
-    const mockCompletedOperation = createMockOperationResponse('COMPLETED')
-
-    vi.mocked(pollBulkDataOperation)
-      .mockResolvedValueOnce(mockRunningOperation)
-      .mockResolvedValueOnce(mockRunningOperation)
-      .mockResolvedValueOnce(mockRunningOperation)
-      .mockResolvedValueOnce(mockRunningOperation)
-      .mockResolvedValueOnce(mockCompletedOperation)
-
-    const copy = new Copy([], {} as any)
-    copy.flags = flags
-
-    vi.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
-      callback()
-      return {} as any
+    beforeEach(() => {
+      vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue(mockBpSession)
+      vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization])
+      vi.mocked(confirmCopyPrompt).mockResolvedValue(true)
+      vi.mocked(parseResourceConfigFlags).mockReturnValue({})
+      vi.mocked(startBulkDataStoreCopy).mockResolvedValue(mockCopyStartResponse)
+      vi.mocked(pollBulkDataOperation).mockResolvedValue(mockCompletedOperation)
+      vi.mocked(renderTasks).mockImplementation(async (tasks) => {
+        const ctx = {}
+        // Process tasks sequentially
+        const processTask = async (index: number): Promise<void> => {
+          if (index < tasks.length) {
+            await tasks[index]!.task(ctx, tasks[index]!)
+            await processTask(index + 1)
+          }
+        }
+        await processTask(0)
+        return ctx
+      })
     })
 
-    const sourceShop = mockOrg.shops.find((shop) => shop.domain === sourceShopDomain)!
-    const targetShop = mockOrg.shops.find((shop) => shop.domain === targetShopDomain)!
+    test('should successfully copy data from source to target shop', async () => {
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
 
-    return copy.executeCopyOperation(orgId, sourceShop, targetShop, mockSession)
-  }
-
-  describe('when copying between shops in the same organization', () => {
-    test('calls startBulkDataStoreCopy with the correct arguments', async () => {
-      await runCopyCommand({
-        from: sourceShopDomain,
-        to: targetShopDomain,
+      expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
+      expect(fetchOrgs).toHaveBeenCalledWith(mockBpSession)
+      expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
+      expect(outputInfo).toHaveBeenCalledWith('Copying from source.myshopify.com to target.myshopify.com')
+      expect(startBulkDataStoreCopy).toHaveBeenCalledWith(
+        'org1',
+        'source.myshopify.com',
+        'target.myshopify.com',
+        {},
+        mockBpSession,
+      )
+      expect(renderSuccess).toHaveBeenCalledWith({
+        body: ['Copy operation from', {info: 'source.myshopify.com'}, 'to', {info: 'target.myshopify.com'}, 'complete'],
       })
-
-      expect(startBulkDataStoreCopy).toHaveBeenCalledWith(orgId, sourceShopDomain, targetShopDomain, {}, mockSession)
     })
 
-    test('polls the operation until it is completed', async () => {
-      const result = await runCopyCommand({
-        from: sourceShopDomain,
-        to: targetShopDomain,
+    test('should skip confirmation when --skip-confirmation flag is provided', async () => {
+      vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue(mockBpSession)
+      vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization])
+      vi.mocked(parseResourceConfigFlags).mockReturnValue({})
+      vi.mocked(outputInfo).mockImplementation(() => {})
+      vi.mocked(startBulkDataStoreCopy).mockResolvedValue(mockCopyStartResponse)
+      vi.mocked(pollBulkDataOperation).mockResolvedValue(mockCompletedOperation)
+      vi.mocked(renderTasks).mockImplementation(async (tasks) => {
+        const ctx = {}
+        // Process tasks sequentially
+        const processTask = async (index: number): Promise<void> => {
+          if (index < tasks.length) {
+            await tasks[index]!.task(ctx, tasks[index]!)
+            await processTask(index + 1)
+          }
+        }
+        await processTask(0)
+        return ctx
       })
+      vi.mocked(renderSuccess).mockReturnValue(undefined)
 
-      expect(pollBulkDataOperation).toHaveBeenCalledTimes(5)
-      expect(result.organization.bulkData.operation.status).toBe('COMPLETED')
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com', '--skipConfirmation'])
+
+      expect(confirmCopyPrompt).not.toHaveBeenCalled()
+      expect(renderError).not.toHaveBeenCalled()
+      expect(startBulkDataStoreCopy).toHaveBeenCalledWith(
+        'org1',
+        'source.myshopify.com',
+        'target.myshopify.com',
+        {},
+        mockBpSession,
+      )
     })
 
-    // eslint-disable-next-line vitest/max-nested-describe
-    describe('when there are resource configs specified', () => {
-      test('transforms field resource config into correct format', async () => {
-        await runCopyCommand({
-          from: sourceShopDomain,
-          to: targetShopDomain,
-          key: ['products:handle'],
-        })
+    test('should exit when user cancels confirmation', async () => {
+      vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue(mockBpSession)
+      vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization])
+      vi.mocked(confirmCopyPrompt).mockResolvedValue(false)
+      vi.mocked(outputInfo).mockImplementation(() => {})
 
-        expect(startBulkDataStoreCopy).toHaveBeenCalledWith(
-          orgId,
-          sourceShopDomain,
-          targetShopDomain,
-          {products: {identifier: {field: 'HANDLE', customId: undefined}}},
-          mockSession,
-        )
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(outputInfo).toHaveBeenCalledWith('Exiting.')
+      expect(process.exit).toHaveBeenCalledWith(0)
+      expect(startBulkDataStoreCopy).not.toHaveBeenCalled()
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Process exit called',
       })
+    })
 
-      test('transforms unique metafield resource config into correct format', async () => {
-        await runCopyCommand({
-          from: sourceShopDomain,
-          to: targetShopDomain,
-          key: ['products:metafield:custom:salesforce_id'],
-        })
+    test('should throw error when from flag is missing', async () => {
+      await run(['--to=target.myshopify.com'])
 
-        expect(startBulkDataStoreCopy).toHaveBeenCalledWith(
-          orgId,
-          sourceShopDomain,
-          targetShopDomain,
-          {products: {identifier: {field: undefined, customId: {namespace: 'custom', key: 'salesforce_id'}}}},
-          mockSession,
-        )
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: expect.stringContaining('Missing required flag from'),
+      })
+    })
+
+    test('should throw error when to flag is missing', async () => {
+      await run(['--from=source.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: expect.stringContaining('Missing required flag to'),
+      })
+    })
+
+    test('should throw error when source shop is not found', async () => {
+      await run(['--from=nonexistent.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Source shop nonexistent.myshopify.com not found',
+      })
+    })
+
+    test('should throw error when target shop is not found', async () => {
+      await run(['--from=source.myshopify.com', '--to=nonexistent.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Target shop nonexistent.myshopify.com not found',
+      })
+    })
+
+    test('should throw error when source and target shops are the same', async () => {
+      await run(['--from=source.myshopify.com', '--to=source.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Source and target shops are the same',
+      })
+    })
+
+    test('should throw error when shops are in different organizations', async () => {
+      const differentOrgShop: Shop = {
+        id: 'shop3',
+        name: 'Different Shop',
+        webUrl: 'https://different.myshopify.com',
+        handle: 'different',
+        publicId: 'gid://shopify/Shop/3',
+        shortName: 'different',
+        domain: 'different.myshopify.com',
+        organizationId: 'org2',
+      }
+      const differentOrg: Organization = {
+        id: 'org2',
+        name: 'Different Organization',
+        // Include source shop to pass the filter
+        shops: [mockSourceShop, differentOrgShop],
+      }
+      vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization, differentOrg])
+
+      await run(['--from=source.myshopify.com', '--to=different.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Source and target shops are not in the same organization',
+      })
+    })
+
+    test('should filter out organizations with single shop', async () => {
+      const singleShopOrg: Organization = {
+        id: 'org3',
+        name: 'Single Shop Org',
+        shops: [
+          {
+            id: 'shop4',
+            name: 'Single Shop',
+            webUrl: 'https://single.myshopify.com',
+            handle: 'single',
+            publicId: 'gid://shopify/Shop/4',
+            shortName: 'single',
+            domain: 'single.myshopify.com',
+            organizationId: 'org3',
+          },
+        ],
+      }
+      vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization, singleShopOrg])
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(startBulkDataStoreCopy).toHaveBeenCalled()
+    })
+
+    test('should pass resource config flags when provided', async () => {
+      const mockResourceConfig = {
+        products: {
+          identifier: {
+            field: 'HANDLE',
+          },
+        },
+      }
+      vi.mocked(parseResourceConfigFlags).mockReturnValue(mockResourceConfig)
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com', '--key=products:handle'])
+
+      expect(parseResourceConfigFlags).toHaveBeenCalledWith(['products:handle'])
+      expect(startBulkDataStoreCopy).toHaveBeenCalledWith(
+        'org1',
+        'source.myshopify.com',
+        'target.myshopify.com',
+        mockResourceConfig,
+        mockBpSession,
+      )
+    })
+
+    test('should throw error when copy operation fails to start', async () => {
+      const failedResponse: BulkDataStoreCopyStartResponse = {
+        bulkDataStoreCopyStart: {
+          success: false,
+          userErrors: [
+            {field: 'configuration', message: 'Invalid configuration'},
+            {field: 'permissions', message: 'Insufficient permissions'},
+          ],
+          operation: {
+            id: '',
+            operationType: '',
+            status: 'FAILED',
+          },
+        },
+      }
+      vi.mocked(startBulkDataStoreCopy).mockResolvedValue(failedResponse)
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Failed to start copy operation: Invalid configuration, Insufficient permissions',
+      })
+    })
+
+    test('should throw error when copy operation status is FAILED', async () => {
+      const failedOperation: BulkDataOperationByIdResponse = {
+        organization: {
+          name: 'Test Organization',
+          bulkData: {
+            operation: {
+              id: 'operation-123',
+              operationType: 'STORE_COPY',
+              status: 'FAILED',
+              sourceStore: {
+                id: 'shop1',
+                name: 'Source Shop',
+              },
+              targetStore: {
+                id: 'shop2',
+                name: 'Target Shop',
+              },
+              storeOperations: [],
+            },
+          },
+        },
+      }
+      vi.mocked(pollBulkDataOperation).mockResolvedValue(failedOperation)
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Copy operation failed',
+      })
+    })
+
+    test('should render warning when copy completes with errors', async () => {
+      const operationWithErrors: BulkDataOperationByIdResponse = {
+        organization: {
+          name: 'Test Organization',
+          bulkData: {
+            operation: {
+              id: 'operation-123',
+              operationType: 'STORE_COPY',
+              status: 'COMPLETED',
+              sourceStore: {
+                id: 'shop1',
+                name: 'Source Shop',
+              },
+              targetStore: {
+                id: 'shop2',
+                name: 'Target Shop',
+              },
+              storeOperations: [
+                {
+                  id: 'store-op-1',
+                  store: {
+                    id: 'shop2',
+                    name: 'Target Shop',
+                  },
+                  remoteOperationType: 'COPY',
+                  remoteOperationStatus: 'COMPLETED',
+                  totalObjectCount: 100,
+                  completedObjectCount: 100,
+                  url: 'https://target.myshopify.com',
+                },
+                {
+                  id: 'store-op-2',
+                  store: {
+                    id: 'shop2',
+                    name: 'Target Shop',
+                  },
+                  remoteOperationType: 'COPY',
+                  remoteOperationStatus: 'FAILED',
+                  totalObjectCount: 50,
+                  completedObjectCount: 0,
+                  url: 'https://target.myshopify.com',
+                },
+              ],
+            },
+          },
+        },
+      }
+      vi.mocked(pollBulkDataOperation).mockResolvedValue(operationWithErrors)
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(renderWarning).toHaveBeenCalledWith({
+        body: [
+          'Copy operation from',
+          {info: 'source.myshopify.com'},
+          'to',
+          {info: 'target.myshopify.com'},
+          'completed with',
+          {error: 'errors'},
+        ],
+      })
+      expect(renderSuccess).not.toHaveBeenCalled()
+    })
+
+    test('should poll until operation is completed', async () => {
+      const inProgressOperation: BulkDataOperationByIdResponse = {
+        organization: {
+          name: 'Test Organization',
+          bulkData: {
+            operation: {
+              id: 'operation-123',
+              operationType: 'STORE_COPY',
+              status: 'IN_PROGRESS',
+              sourceStore: {
+                id: 'shop1',
+                name: 'Source Shop',
+              },
+              targetStore: {
+                id: 'shop2',
+                name: 'Target Shop',
+              },
+              storeOperations: [],
+            },
+          },
+        },
+      }
+
+      vi.mocked(pollBulkDataOperation)
+        .mockResolvedValueOnce(inProgressOperation)
+        .mockResolvedValueOnce(inProgressOperation)
+        .mockResolvedValueOnce(mockCompletedOperation)
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(pollBulkDataOperation).toHaveBeenCalledTimes(3)
+      expect(pollBulkDataOperation).toHaveBeenCalledWith('org1', 'operation-123', mockBpSession)
+      expect(renderSuccess).toHaveBeenCalled()
+    })
+
+    test('should throw error when polling returns FAILED status', async () => {
+      const inProgressOperation: BulkDataOperationByIdResponse = {
+        organization: {
+          name: 'Test Organization',
+          bulkData: {
+            operation: {
+              id: 'operation-123',
+              operationType: 'STORE_COPY',
+              status: 'IN_PROGRESS',
+              sourceStore: {
+                id: 'shop1',
+                name: 'Source Shop',
+              },
+              targetStore: {
+                id: 'shop2',
+                name: 'Target Shop',
+              },
+              storeOperations: [],
+            },
+          },
+        },
+      }
+
+      const failedOperation: BulkDataOperationByIdResponse = {
+        organization: {
+          name: 'Test Organization',
+          bulkData: {
+            operation: {
+              id: 'operation-123',
+              operationType: 'STORE_COPY',
+              status: 'FAILED',
+              sourceStore: {
+                id: 'shop1',
+                name: 'Source Shop',
+              },
+              targetStore: {
+                id: 'shop2',
+                name: 'Target Shop',
+              },
+              storeOperations: [],
+            },
+          },
+        },
+      }
+
+      vi.mocked(pollBulkDataOperation).mockResolvedValueOnce(inProgressOperation).mockResolvedValueOnce(failedOperation)
+
+      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Copy operation failed',
       })
     })
   })
