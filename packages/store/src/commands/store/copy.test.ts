@@ -239,7 +239,7 @@ describe('Copy', () => {
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Source shop nonexistent.myshopify.com not found',
+        body: 'Source shop (nonexistent.myshopify.com) not found.',
       })
     })
 
@@ -248,7 +248,7 @@ describe('Copy', () => {
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Target shop nonexistent.myshopify.com not found',
+        body: 'Target shop (nonexistent.myshopify.com) not found.',
       })
     })
 
@@ -257,7 +257,7 @@ describe('Copy', () => {
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Source and target shops are the same',
+        body: 'Source and target shops must not be the same.',
       })
     })
 
@@ -284,7 +284,7 @@ describe('Copy', () => {
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Source and target shops are not in the same organization',
+        body: 'Source and target shops must be in the same organization.',
       })
     })
 
