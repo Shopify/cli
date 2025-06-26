@@ -28,13 +28,13 @@ export default class Copy extends BaseBDCommand {
     const operation = this.getOperation(operationMode)
 
     switch (operationMode) {
-      case OperationMode.STORE_COPY:
+      case OperationMode.StoreCopy:
         await operation.execute(fromStore as string, toStore as string, this.flags)
         break
-      case OperationMode.STORE_EXPORT:
+      case OperationMode.StoreExport:
         await operation.execute(fromStore as string, toFile as string, this.flags)
         break
-      case OperationMode.STORE_IMPORT:
+      case OperationMode.StoreImport:
         await operation.execute(fromFile as string, toStore as string, this.flags)
         break
     }
@@ -42,11 +42,11 @@ export default class Copy extends BaseBDCommand {
 
   private getOperation(mode: OperationMode) {
     switch (mode) {
-      case OperationMode.STORE_COPY:
+      case OperationMode.StoreCopy:
         return new StoreCopyOperation()
-      case OperationMode.STORE_EXPORT:
+      case OperationMode.StoreExport:
         return new StoreExportOperation()
-      case OperationMode.STORE_IMPORT:
+      case OperationMode.StoreImport:
         return new StoreImportOperation()
       default:
         throw new Error(`Unknown operation mode: ${mode}`)
@@ -60,15 +60,15 @@ export default class Copy extends BaseBDCommand {
     toFile: unknown,
   ): OperationMode {
     if (fromStore && toStore && !fromFile && !toFile) {
-      return OperationMode.STORE_COPY
+      return OperationMode.StoreCopy
     }
 
     if (fromStore && toFile && !fromFile && !toStore) {
-      return OperationMode.STORE_EXPORT
+      return OperationMode.StoreExport
     }
 
     if (fromFile && toStore && !fromStore && !toFile) {
-      return OperationMode.STORE_IMPORT
+      return OperationMode.StoreImport
     }
 
     throw new Error(

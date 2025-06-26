@@ -1,5 +1,10 @@
 import {Organization} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse} from '../../../apis/organizations/types.js'
+import {
+  BulkDataStoreCopyStartResponse,
+  BulkDataOperationByIdResponse,
+  BulkDataStoreExportStartResponse,
+  BulkDataStoreImportStartResponse,
+} from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 
 export interface ApiClientInterface {

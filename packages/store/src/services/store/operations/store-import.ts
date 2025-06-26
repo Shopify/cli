@@ -10,7 +10,14 @@ import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderSuccess, Task, renderTasks, renderWarning, Token, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  renderSuccess,
+  Task,
+  renderTasks,
+  renderWarning,
+  Token,
+  renderConfirmationPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 
 export class StoreImportOperation implements StoreOperation {
@@ -18,10 +25,10 @@ export class StoreImportOperation implements StoreOperation {
   toArg: string | undefined
   private apiClient: ApiClient
   private fileUploader: FileUploader | MockFileUploader
-  private resultFileHandler: ResultFileHandler
+  private readonly resultFileHandler: ResultFileHandler
 
   constructor(apiClient?: ApiClient) {
-    this.apiClient = apiClient || new ApiClient()
+    this.apiClient = apiClient ?? new ApiClient()
     this.fileUploader = new FileUploader()
     this.resultFileHandler = new ResultFileHandler()
   }
@@ -133,7 +140,9 @@ export class StoreImportOperation implements StoreOperation {
         throw new Error(`Import operation failed`)
       }
 
+      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 1000))
+      // eslint-disable-next-line no-await-in-loop
       currentOperation = await this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
     }
   }
@@ -171,7 +180,14 @@ export class StoreImportOperation implements StoreOperation {
       {
         title: `Starting import to ${targetShop.domain}`,
         task: async (ctx: Context) => {
-          ctx.importOperation = await this.executeImportOperation(organizationId, targetShop, ctx.importUrl, bpSession, flags)
+          // eslint-disable-next-line require-atomic-updates
+          ctx.importOperation = await this.executeImportOperation(
+            organizationId,
+            targetShop,
+            ctx.importUrl,
+            bpSession,
+            flags,
+          )
         },
       },
     ]

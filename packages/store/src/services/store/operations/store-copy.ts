@@ -16,7 +16,7 @@ export class StoreCopyOperation implements StoreOperation {
   private apiClient: ApiClient
 
   constructor(apiClient?: ApiClient) {
-    this.apiClient = apiClient || new ApiClient()
+    this.apiClient = apiClient ?? new ApiClient()
   }
 
   async execute(fromStore: string, toStore: string, flags: FlagOptions): Promise<void> {

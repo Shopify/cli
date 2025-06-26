@@ -1,5 +1,18 @@
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse, BulkDataStoreCopyStartInput, BulkDataStoreExportStartResponse, BulkDataStoreExportStartInput, BulkDataStoreImportStartResponse, BulkDataStoreImportStartInput} from './types.js'
-import {bulkDataStoreCopyStartMutation, bulkDataOperationByIdQuery, bulkDataStoreExportStartMutation, bulkDataStoreImportStartMutation} from './graphql.js'
+import {
+  BulkDataStoreCopyStartResponse,
+  BulkDataOperationByIdResponse,
+  BulkDataStoreCopyStartInput,
+  BulkDataStoreExportStartResponse,
+  BulkDataStoreExportStartInput,
+  BulkDataStoreImportStartResponse,
+  BulkDataStoreImportStartInput,
+} from './types.js'
+import {
+  bulkDataStoreCopyStartMutation,
+  bulkDataOperationByIdQuery,
+  bulkDataStoreExportStartMutation,
+  bulkDataStoreImportStartMutation,
+} from './graphql.js'
 import {ResourceConfigs} from '../../lib/types.js'
 import {GraphQLVariables, graphqlRequest, CacheOptions} from '@shopify/cli-kit/node/api/graphql'
 import {businessPlatformFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -70,9 +83,14 @@ export async function startBulkDataStoreExport(
     },
   }
 
-  return organizationsRequest<BulkDataStoreExportStartResponse>(organizationId, bulkDataStoreExportStartMutation, token, {
-    input,
-  })
+  return organizationsRequest<BulkDataStoreExportStartResponse>(
+    organizationId,
+    bulkDataStoreExportStartMutation,
+    token,
+    {
+      input,
+    },
+  )
 }
 
 export async function startBulkDataStoreImport(
@@ -100,9 +118,14 @@ export async function startBulkDataStoreImport(
     ),
   }
 
-  return organizationsRequest<BulkDataStoreImportStartResponse>(organizationId, bulkDataStoreImportStartMutation, token, {
-    input,
-  })
+  return organizationsRequest<BulkDataStoreImportStartResponse>(
+    organizationId,
+    bulkDataStoreImportStartMutation,
+    token,
+    {
+      input,
+    },
+  )
 }
 
 export async function pollBulkDataOperation(

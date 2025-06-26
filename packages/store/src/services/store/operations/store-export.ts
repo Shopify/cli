@@ -12,14 +12,14 @@ import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/c
 export class StoreExportOperation implements StoreOperation {
   fromArg: string | undefined
   private apiClient: ApiClient
-  private resultFileHandler: ResultFileHandler
+  private readonly resultFileHandler: ResultFileHandler
 
   constructor(apiClient?: ApiClient) {
-    this.apiClient = apiClient || new ApiClient()
+    this.apiClient = apiClient ?? new ApiClient()
     this.resultFileHandler = new ResultFileHandler()
   }
 
-  async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
+  async execute(fromStore: string, _toFile: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
 
     if (flags.mock) {
@@ -32,11 +32,7 @@ export class StoreExportOperation implements StoreOperation {
     const sourceShop = findShop(fromStore, orgs)
     this.validateShop(sourceShop)
 
-    const exportOperation = await this.exportDataWithProgress(
-      sourceShop.organizationId,
-      sourceShop,
-      bpSession,
-    )
+    const exportOperation = await this.exportDataWithProgress(sourceShop.organizationId, sourceShop, bpSession)
 
     const status = exportOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
@@ -95,7 +91,9 @@ export class StoreExportOperation implements StoreOperation {
         throw new Error(`Export operation failed`)
       }
 
+      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 1000))
+      // eslint-disable-next-line no-await-in-loop
       currentOperation = await this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
     }
   }

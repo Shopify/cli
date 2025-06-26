@@ -1,5 +1,5 @@
+import {dirname} from '@shopify/cli-kit/node/path'
 import {access, constants} from 'fs/promises'
-import {dirname} from 'path'
 
 export async function validateFileExists(filePath: string): Promise<void> {
   try {

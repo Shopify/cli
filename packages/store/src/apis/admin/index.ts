@@ -8,7 +8,7 @@ export async function createStagedUploadAdmin(
   input: StagedUploadInput[],
 ): Promise<StagedUploadResponse> {
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-  
+
   return adminRequest<StagedUploadResponse>(stagedUploadsCreateMutation, adminSession, {
     input,
   })

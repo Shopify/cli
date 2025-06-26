@@ -2,7 +2,12 @@ import {TEST_MOCK_DATA, TEST_COPY_START_RESPONSE, TEST_COMPLETED_OPERATION} from
 import {MOCK_CONFIG} from './mock-config.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {Organization} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse} from '../../../apis/organizations/types.js'
+import {
+  BulkDataStoreCopyStartResponse,
+  BulkDataOperationByIdResponse,
+  BulkDataStoreExportStartResponse,
+  BulkDataStoreImportStartResponse,
+} from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 

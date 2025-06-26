@@ -1,9 +1,9 @@
 import {FlagOptions} from '../../../lib/types.js'
 
 export enum OperationMode {
-  STORE_COPY = 'STORE_COPY',
-  STORE_EXPORT = 'STORE_EXPORT',
-  STORE_IMPORT = 'STORE_IMPORT',
+  StoreCopy = 'STORE_COPY',
+  StoreExport = 'STORE_EXPORT',
+  StoreImport = 'STORE_IMPORT',
 }
 
 export interface StoreOperation {

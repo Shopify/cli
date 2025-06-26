@@ -1,9 +1,19 @@
 import {ApiClientInterface} from '../types/api-client.js'
 import {Organization} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse} from '../../../apis/organizations/types.js'
+import {
+  BulkDataStoreCopyStartResponse,
+  BulkDataOperationByIdResponse,
+  BulkDataStoreExportStartResponse,
+  BulkDataStoreImportStartResponse,
+} from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 import {fetchOrgs} from '../../../apis/destinations/index.js'
-import {startBulkDataStoreCopy, startBulkDataStoreExport, startBulkDataStoreImport, pollBulkDataOperation} from '../../../apis/organizations/index.js'
+import {
+  startBulkDataStoreCopy,
+  startBulkDataStoreExport,
+  startBulkDataStoreImport,
+  pollBulkDataOperation,
+} from '../../../apis/organizations/index.js'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 
 export class ApiClient implements ApiClientInterface {
