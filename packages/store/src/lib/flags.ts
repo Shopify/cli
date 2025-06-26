@@ -51,4 +51,10 @@ export const commonFlags = {
     default: false,
     env: 'SHOPIFY_FLAG_OPEN',
   }),
+  mock: Flags.boolean({
+    description: 'Use mock data instead of real API calls (for development).',
+    required: false,
+    default: false,
+    env: 'SHOPIFY_FLAG_MOCK',
+  }),
 }

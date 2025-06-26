@@ -4,7 +4,6 @@ import {generateExportFilename} from '../utils/file-utils.js'
 
 export class StoreExportOperation implements StoreOperation {
   async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
-    // TODO: Implement actual export logic
     throw new Error('Store export functionality is not implemented yet')
   }
 

@@ -2,24 +2,33 @@ import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {Shop} from '../../../apis/destinations/types.js'
-import {startBulkDataStoreCopy, pollBulkDataOperation} from '../../../apis/organizations/index.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
-import {fetchOrganizations, findShop} from '../utils/store-utils.js'
-import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {findShop} from '../utils/store-utils.js'
+import {ApiClient} from '../api/api-client.js'
+import {MockApiClient} from '../mock/mock-api-client.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 
 export class StoreCopyOperation implements StoreOperation {
   fromArg: string | undefined
   toArg: string | undefined
+  private apiClient: ApiClient
+
+  constructor(apiClient?: ApiClient) {
+    this.apiClient = apiClient || new ApiClient()
+  }
 
   async execute(fromStore: string, toStore: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
     this.toArg = toStore
 
-    const bpSession = await ensureAuthenticatedBusinessPlatform()
-    const orgs = await fetchOrganizations(bpSession)
+    if (flags.mock) {
+      this.apiClient = new MockApiClient()
+    }
+
+    const bpSession = await this.apiClient.ensureAuthenticatedBusinessPlatform()
+    const orgs = await this.apiClient.fetchOrganizations(bpSession)
 
     const sourceShop = findShop(fromStore, orgs)
     const targetShop = findShop(toStore, orgs)
@@ -79,7 +88,7 @@ export class StoreCopyOperation implements StoreOperation {
   ): Promise<BulkDataOperationByIdResponse> {
     outputInfo(`Copying from ${sourceShop.domain} to ${targetShop.domain}`)
 
-    const copyResponse: BulkDataStoreCopyStartResponse = await startBulkDataStoreCopy(
+    const copyResponse: BulkDataStoreCopyStartResponse = await this.apiClient.startBulkDataStoreCopy(
       organizationId,
       sourceShop.domain,
       targetShop.domain,
@@ -93,7 +102,7 @@ export class StoreCopyOperation implements StoreOperation {
     }
 
     const operationId = copyResponse.bulkDataStoreCopyStart.operation.id
-    return pollBulkDataOperation(organizationId, operationId, bpSession)
+    return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
   }
 
   private async waitForCopyCompletion(
@@ -116,7 +125,7 @@ export class StoreCopyOperation implements StoreOperation {
       // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 1000))
       // eslint-disable-next-line no-await-in-loop
-      currentOperation = await pollBulkDataOperation(organizationId, operationId, bpSession)
+      currentOperation = await this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
     }
   }
 

@@ -1,0 +1,162 @@
+import {Shop} from '../../../apis/destinations/types.js'
+import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
+}
+
+export const TEST_MOCK_DATA = {
+  sourceShop: {
+    id: 'shop1',
+    name: 'Source Shop',
+    webUrl: 'https://source.myshopify.com',
+    handle: 'source',
+    publicId: 'gid://shopify/Shop/1',
+    shortName: 'source',
+    domain: 'source.myshopify.com',
+    organizationId: 'org1',
+  },
+  targetShop: {
+    id: 'shop2',
+    name: 'Target Shop',
+    webUrl: 'https://target.myshopify.com',
+    handle: 'target',
+    publicId: 'gid://shopify/Shop/2',
+    shortName: 'target',
+    domain: 'target.myshopify.com',
+    organizationId: 'org1',
+  },
+  organization: {
+    id: 'org1',
+    name: 'Test Organization',
+    shops: [] as Shop[],
+  },
+  differentOrgShop: {
+    id: 'shop3',
+    name: 'Different Shop',
+    webUrl: 'https://different.myshopify.com',
+    handle: 'different',
+    publicId: 'gid://shopify/Shop/3',
+    shortName: 'different',
+    domain: 'different.myshopify.com',
+    organizationId: 'org2',
+  },
+  differentOrganization: {
+    id: 'org2',
+    name: 'Different Organization',
+    shops: [] as Shop[],
+  },
+  singleShop: {
+    id: 'shop4',
+    name: 'Single Shop',
+    webUrl: 'https://single.myshopify.com',
+    handle: 'single',
+    publicId: 'gid://shopify/Shop/4',
+    shortName: 'single',
+    domain: 'single.myshopify.com',
+    organizationId: 'org3',
+  },
+  singleShopOrganization: {
+    id: 'org3',
+    name: 'Single Shop Org',
+    shops: [] as Shop[],
+  },
+}
+
+TEST_MOCK_DATA.organization.shops = [TEST_MOCK_DATA.sourceShop, TEST_MOCK_DATA.targetShop]
+TEST_MOCK_DATA.differentOrganization.shops = [TEST_MOCK_DATA.sourceShop, TEST_MOCK_DATA.differentOrgShop]
+TEST_MOCK_DATA.singleShopOrganization.shops = [TEST_MOCK_DATA.singleShop]
+
+export const TEST_COPY_START_RESPONSE: BulkDataStoreCopyStartResponse = {
+  bulkDataStoreCopyStart: {
+    success: true,
+    userErrors: [],
+    operation: {
+      id: 'operation-123',
+      operationType: 'STORE_COPY',
+      status: 'IN_PROGRESS',
+    },
+  },
+}
+
+export const TEST_COMPLETED_OPERATION: BulkDataOperationByIdResponse = {
+  organization: {
+    name: 'Test Organization',
+    bulkData: {
+      operation: {
+        id: 'operation-123',
+        operationType: 'STORE_COPY',
+        status: 'COMPLETED',
+        sourceStore: {
+          id: 'shop1',
+          name: 'Source Shop',
+        },
+        targetStore: {
+          id: 'shop2',
+          name: 'Target Shop',
+        },
+        storeOperations: [
+          {
+            id: 'store-op-1',
+            store: {
+              id: 'shop2',
+              name: 'Target Shop',
+            },
+            remoteOperationType: 'COPY',
+            remoteOperationStatus: 'COMPLETED',
+            totalObjectCount: 100,
+            completedObjectCount: 100,
+            url: 'https://target.myshopify.com',
+          },
+        ],
+      },
+    },
+  },
+}
+
+export function generateTestOperationResponse(
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED',
+): BulkDataOperationByIdResponse {
+  const cloned = deepClone(TEST_COMPLETED_OPERATION)
+  cloned.organization.bulkData.operation.status = status
+
+  if (status === 'FAILED') {
+    cloned.organization.bulkData.operation.storeOperations = []
+  }
+
+  return cloned
+}
+
+export function generateTestOperationWithErrors(): BulkDataOperationByIdResponse {
+  const cloned = deepClone(TEST_COMPLETED_OPERATION)
+
+  cloned.organization.bulkData.operation.storeOperations.push({
+    id: 'store-op-2',
+    store: {
+      id: 'shop2',
+      name: 'Target Shop',
+    },
+    remoteOperationType: 'COPY',
+    remoteOperationStatus: 'FAILED',
+    totalObjectCount: 50,
+    completedObjectCount: 0,
+    url: 'https://target.myshopify.com',
+  })
+
+  return cloned
+}
+
+export function generateTestFailedStartResponse(): BulkDataStoreCopyStartResponse {
+  const cloned = deepClone(TEST_COPY_START_RESPONSE)
+
+  cloned.bulkDataStoreCopyStart.success = false
+  cloned.bulkDataStoreCopyStart.userErrors = [
+    {field: 'configuration', message: 'Invalid configuration'},
+    {field: 'permissions', message: 'Insufficient permissions'},
+  ]
+  cloned.bulkDataStoreCopyStart.operation.id = ''
+  cloned.bulkDataStoreCopyStart.operation.operationType = ''
+  cloned.bulkDataStoreCopyStart.operation.status = 'FAILED'
+
+  return cloned
+}

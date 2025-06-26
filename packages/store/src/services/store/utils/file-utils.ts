@@ -26,7 +26,6 @@ export async function validateFileDoesNotExist(filePath: string): Promise<void> 
     if (error instanceof Error && error.message.startsWith('File already exists')) {
       throw error
     }
-    // File doesn't exist, which is what we want
   }
 }
 
