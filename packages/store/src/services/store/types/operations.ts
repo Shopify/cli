@@ -7,5 +7,5 @@ export enum OperationMode {
 }
 
 export interface StoreOperation {
-  execute(from: string, to: string | undefined, flags: FlagOptions): Promise<void>
+  execute(source: string, target: string, flags: FlagOptions): Promise<void>
 }

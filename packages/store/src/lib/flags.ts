@@ -1,16 +1,28 @@
 import {Flags} from '@oclif/core'
 
-export const shopSelectionFlags = {
-  from: Flags.string({
-    description: 'The store domain or SQLite file to copy/export data from.',
-    required: true,
-    env: 'SHOPIFY_FLAG_COPY_STORE_FROM',
+export const storeFlags = {
+  fromStore: Flags.string({
+    description: 'The source store domain to copy/export data from (e.g., source.myshopify.com).',
+    required: false,
+    env: 'SHOPIFY_FLAG_FROM_STORE',
   }),
-  to: Flags.string({
-    description:
-      'The store domain or SQLite file path to copy/import data to. Leave empty to auto-generate filename for exports.',
-    required: true,
-    env: 'SHOPIFY_FLAG_COPY_STORE_TO',
+  toStore: Flags.string({
+    description: 'The target store domain to copy/import data to (e.g., target.myshopify.com).',
+    required: false,
+    env: 'SHOPIFY_FLAG_TO_STORE',
+  }),
+}
+
+export const fileFlags = {
+  fromFile: Flags.string({
+    description: 'The SQLite file to import data from.',
+    required: false,
+    env: 'SHOPIFY_FLAG_FROM_FILE',
+  }),
+  toFile: Flags.string({
+    description: 'The SQLite file path to export data to. Use <sqlite> to auto-generate filename.',
+    required: false,
+    env: 'SHOPIFY_FLAG_TO_FILE',
   }),
 }
 

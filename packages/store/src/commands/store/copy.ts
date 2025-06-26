@@ -1,7 +1,6 @@
 import {BaseBDCommand} from '../../lib/base-command.js'
-import {commonFlags, shopSelectionFlags, resourceConfigFlags} from '../../lib/flags.js'
+import {commonFlags, storeFlags, fileFlags, resourceConfigFlags} from '../../lib/flags.js'
 import {OperationMode} from '../../services/store/types/operations.js'
-import {isStoreIdentifier, isFileIdentifier} from '../../services/store/utils/validation.js'
 import {StoreCopyOperation} from '../../services/store/operations/store-copy.js'
 import {StoreExportOperation} from '../../services/store/operations/store-export.js'
 import {StoreImportOperation} from '../../services/store/operations/store-import.js'
@@ -12,7 +11,8 @@ export default class Copy extends BaseBDCommand {
   static description = 'Copy data between stores, export store data to SQLite, or import data from SQLite to a store'
   static hidden = true
   static flags = {
-    ...shopSelectionFlags,
+    ...storeFlags,
+    ...fileFlags,
     ...resourceConfigFlags,
     ...commonFlags,
     ...globalFlags,
@@ -21,17 +21,23 @@ export default class Copy extends BaseBDCommand {
   async runCommand(): Promise<void> {
     this.flags = (await this.parse(Copy)).flags
 
-    const from = this.flags.from as string
-    const to = this.flags.to as string
+    const {fromStore, toStore, fromFile, toFile} = this.flags
 
-    if (!from && !to) {
-      throw new Error('You must specify at least one of --from or --to flags')
-    }
-
-    const operationMode = this.determineOperationMode(from, to)
+    const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
 
     const operation = this.getOperation(operationMode)
-    await operation.execute(from, to, this.flags)
+
+    switch (operationMode) {
+      case OperationMode.STORE_COPY:
+        await operation.execute(fromStore as string, toStore as string, this.flags)
+        break
+      case OperationMode.STORE_EXPORT:
+        await operation.execute(fromStore as string, toFile as string, this.flags)
+        break
+      case OperationMode.STORE_IMPORT:
+        await operation.execute(fromFile as string, toStore as string, this.flags)
+        break
+    }
   }
 
   private getOperation(mode: OperationMode) {
@@ -47,20 +53,26 @@ export default class Copy extends BaseBDCommand {
     }
   }
 
-  private determineOperationMode(from: string, to: string | undefined): OperationMode {
-    const isFromStore = from ? isStoreIdentifier(from) : false
-    const isFromFile = from ? isFileIdentifier(from) : false
-    const isToStore = to ? isStoreIdentifier(to) : false
-    const isToFile = to ? isFileIdentifier(to) : false
-
-    if (isFromStore && isToStore) {
+  private determineOperationMode(
+    fromStore: unknown,
+    toStore: unknown,
+    fromFile: unknown,
+    toFile: unknown,
+  ): OperationMode {
+    if (fromStore && toStore && !fromFile && !toFile) {
       return OperationMode.STORE_COPY
-    } else if (isFromStore && isToFile) {
+    }
+
+    if (fromStore && toFile && !fromFile && !toStore) {
       return OperationMode.STORE_EXPORT
-    } else if (isFromFile && isToStore) {
+    }
+
+    if (fromFile && toStore && !fromStore && !toFile) {
       return OperationMode.STORE_IMPORT
     }
 
-    throw new Error('Invalid combination of --from and --to flags')
+    throw new Error(
+      'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
+    )
   }
 }

@@ -131,7 +131,7 @@ describe('Copy', () => {
     })
 
     test('should successfully copy data from source to target shop', async () => {
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
       expect(fetchOrgs).toHaveBeenCalledWith(mockBpSession)
@@ -170,7 +170,7 @@ describe('Copy', () => {
       })
       vi.mocked(renderSuccess).mockReturnValue(undefined)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com', '--skipConfirmation'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com', '--skipConfirmation'])
 
       expect(confirmCopyPrompt).not.toHaveBeenCalled()
       expect(renderError).not.toHaveBeenCalled()
@@ -189,7 +189,7 @@ describe('Copy', () => {
       vi.mocked(confirmCopyPrompt).mockResolvedValue(false)
       vi.mocked(outputInfo).mockImplementation(() => {})
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(outputInfo).toHaveBeenCalledWith('Exiting.')
       expect(process.exit).toHaveBeenCalledWith(0)
@@ -200,24 +200,32 @@ describe('Copy', () => {
       })
     })
 
-    test('should throw error when to flag is missing', async () => {
-      await run(['--from=target.myshopify.com'])
+    test('should throw error when invalid flag combination', async () => {
+      await run(['--fromStore=source.myshopify.com'])
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: expect.stringContaining('required flag to'),
+        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
       })
     })
 
-    test('should throw error when from flag is missing', async () => {
-      await run(['--to=target.myshopify.com'])
+    test('should throw error when no flags provided', async () => {
+      await run([])
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: expect.stringContaining('required flag from'),
+        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
+      })
+    })
+
+    test('should throw error when mixing store and file flags', async () => {
+      await run(['--fromStore=source.myshopify.com', '--fromFile=input.sqlite', '--toStore=target.myshopify.com'])
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
       })
     })
 
     test('should throw error export not implemented', async () => {
-      await run(['--from=source.myshopify.com', '--to=foo.sqlite'])
+      await run(['--fromStore=source.myshopify.com', '--toFile=foo.sqlite'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -225,8 +233,8 @@ describe('Copy', () => {
       })
     })
 
-    test('should throw error export not implemented when --to is <sqlite>', async () => {
-      await run(['--from=source.myshopify.com', '--to=<sqlite>'])
+    test('should throw error export not implemented when --toFile is <sqlite>', async () => {
+      await run(['--fromStore=source.myshopify.com', '--toFile=<sqlite>'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -235,7 +243,7 @@ describe('Copy', () => {
     })
 
     test('should throw error when source shop is not found', async () => {
-      await run(['--from=nonexistent.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=nonexistent.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -244,7 +252,7 @@ describe('Copy', () => {
     })
 
     test('should throw error when target shop is not found', async () => {
-      await run(['--from=source.myshopify.com', '--to=nonexistent.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=nonexistent.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -253,7 +261,7 @@ describe('Copy', () => {
     })
 
     test('should throw error when source and target shops are the same', async () => {
-      await run(['--from=source.myshopify.com', '--to=source.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=source.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -280,7 +288,7 @@ describe('Copy', () => {
       }
       vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization, differentOrg])
 
-      await run(['--from=source.myshopify.com', '--to=different.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=different.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -307,7 +315,7 @@ describe('Copy', () => {
       }
       vi.mocked(fetchOrgs).mockResolvedValue([mockOrganization, singleShopOrg])
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(startBulkDataStoreCopy).toHaveBeenCalled()
     })
@@ -322,7 +330,7 @@ describe('Copy', () => {
       }
       vi.mocked(parseResourceConfigFlags).mockReturnValue(mockResourceConfig)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com', '--key=products:handle'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com', '--key=products:handle'])
 
       expect(parseResourceConfigFlags).toHaveBeenCalledWith(['products:handle'])
       expect(startBulkDataStoreCopy).toHaveBeenCalledWith(
@@ -351,7 +359,7 @@ describe('Copy', () => {
       }
       vi.mocked(startBulkDataStoreCopy).mockResolvedValue(failedResponse)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -383,7 +391,7 @@ describe('Copy', () => {
       }
       vi.mocked(pollBulkDataOperation).mockResolvedValue(failedOperation)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -440,7 +448,7 @@ describe('Copy', () => {
       }
       vi.mocked(pollBulkDataOperation).mockResolvedValue(operationWithErrors)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(renderWarning).toHaveBeenCalledWith({
         body: [
@@ -483,7 +491,7 @@ describe('Copy', () => {
         .mockResolvedValueOnce(inProgressOperation)
         .mockResolvedValueOnce(mockCompletedOperation)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(pollBulkDataOperation).toHaveBeenCalledTimes(3)
       expect(pollBulkDataOperation).toHaveBeenCalledWith('org1', 'operation-123', mockBpSession)
@@ -491,7 +499,7 @@ describe('Copy', () => {
     })
 
     test('should throw error for export mode (not implemented)', async () => {
-      await run(['--from=source.myshopify.com', '--to=output.sqlite'])
+      await run(['--fromStore=source.myshopify.com', '--toFile=output.sqlite'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -500,7 +508,7 @@ describe('Copy', () => {
     })
 
     test('should throw error for import mode (not implemented)', async () => {
-      await run(['--from=input.sqlite', '--to=target.myshopify.com'])
+      await run(['--fromFile=input.sqlite', '--toStore=target.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
@@ -555,7 +563,7 @@ describe('Copy', () => {
 
       vi.mocked(pollBulkDataOperation).mockResolvedValueOnce(inProgressOperation).mockResolvedValueOnce(failedOperation)
 
-      await run(['--from=source.myshopify.com', '--to=target.myshopify.com'])
+      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
 
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',

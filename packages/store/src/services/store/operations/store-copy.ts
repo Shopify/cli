@@ -14,15 +14,15 @@ export class StoreCopyOperation implements StoreOperation {
   fromArg: string | undefined
   toArg: string | undefined
 
-  async execute(from: string, to: string, flags: FlagOptions): Promise<void> {
-    this.fromArg = from
-    this.toArg = to
+  async execute(fromStore: string, toStore: string, flags: FlagOptions): Promise<void> {
+    this.fromArg = fromStore
+    this.toArg = toStore
 
     const bpSession = await ensureAuthenticatedBusinessPlatform()
     const orgs = await fetchOrganizations(bpSession)
 
-    const sourceShop = findShop(from, orgs)
-    const targetShop = findShop(to, orgs)
+    const sourceShop = findShop(fromStore, orgs)
+    const targetShop = findShop(toStore, orgs)
 
     this.validateShops(sourceShop, targetShop)
 
