@@ -1722,16 +1722,25 @@ EXAMPLES
 
 ## `shopify store copy`
 
-Copy a theme to another store.
+Copy data from one store to another
 
 ```
 USAGE
-  $ shopify store copy
+  $ shopify store copy --from <value> --to <value> [--key <value>] [--no-color] [-o] [-y] [--verbose]
+
+FLAGS
+  -o, --open              Open the sqlite db in a sqlite browser.
+  -y, --skipConfirmation  Skip confirmation prompt.
+      --from=<value>      (required) The store to copy data from.
+      --key=<value>...    [default: products:handle] The identity key to use to match resources
+      --no-color          Disable color output.
+      --to=<value>        (required) The store to copy data to.
+      --verbose           Increase the verbosity of the output.
 
 DESCRIPTION
-  Copy a theme to another store.
+  Copy data from one store to another
 
-  This command allows you to copy a theme from one Shopify store to another.
+  Copy data from one store to another
 ```
 
 ## `shopify theme check`

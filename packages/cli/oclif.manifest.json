@@ -4878,9 +4878,72 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "This command allows you to copy a theme from one Shopify store to another.",
-      "enableJsonFlag": false,
+      "description": "Copy data from one store to another",
       "flags": {
+        "from": {
+          "description": "The store to copy data from.",
+          "env": "SHOPIFY_FLAG_COPY_STORE_FROM",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "from",
+          "required": true,
+          "type": "option"
+        },
+        "key": {
+          "default": [
+            "products:handle"
+          ],
+          "description": "The identity key to use to match resources",
+          "env": "SHOPIFY_FLAG_IDENTITY_KEY",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "key",
+          "required": false,
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "open": {
+          "allowNo": false,
+          "char": "o",
+          "description": "Open the sqlite db in a sqlite browser.",
+          "env": "SHOPIFY_FLAG_OPEN",
+          "name": "open",
+          "required": false,
+          "type": "boolean"
+        },
+        "skipConfirmation": {
+          "allowNo": false,
+          "char": "y",
+          "description": "Skip confirmation prompt.",
+          "env": "SHOPIFY_FLAG_YES",
+          "name": "skipConfirmation",
+          "required": false,
+          "type": "boolean"
+        },
+        "to": {
+          "description": "The store to copy data to.",
+          "env": "SHOPIFY_FLAG_COPY_STORE_TO",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "to",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4890,7 +4953,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Copy a theme to another store."
+      "summary": "Copy data from one store to another"
     },
     "theme:check": {
       "aliases": [
