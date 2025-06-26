@@ -14,7 +14,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy data from one store to another'
   static description = 'Copy data from one store to another'
-
+  static hidden = true
   static flags = {
     ...shopSelectionFlags,
     ...resourceConfigFlags,

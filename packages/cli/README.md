@@ -63,7 +63,6 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
-* [`shopify store copy`](#shopify-store-copy)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -1718,29 +1717,6 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
-```
-
-## `shopify store copy`
-
-Copy data from one store to another
-
-```
-USAGE
-  $ shopify store copy --from <value> --to <value> [--key <value>] [--no-color] [-o] [-y] [--verbose]
-
-FLAGS
-  -o, --open              Open the sqlite db in a sqlite browser.
-  -y, --skipConfirmation  Skip confirmation prompt.
-      --from=<value>      (required) The store to copy data from.
-      --key=<value>...    [default: products:handle] The identity key to use to match resources
-      --no-color          Disable color output.
-      --to=<value>        (required) The store to copy data to.
-      --verbose           Increase the verbosity of the output.
-
-DESCRIPTION
-  Copy data from one store to another
-
-  Copy data from one store to another
 ```
 
 ## `shopify theme check`
