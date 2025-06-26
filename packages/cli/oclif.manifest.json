@@ -4878,15 +4878,24 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Copy data from one store to another",
+      "description": "Copy data between stores, export store data to SQLite, or import data from SQLite to a store",
       "flags": {
-        "from": {
-          "description": "The store to copy data from.",
-          "env": "SHOPIFY_FLAG_COPY_STORE_FROM",
+        "fromFile": {
+          "description": "The SQLite file to import data from.",
+          "env": "SHOPIFY_FLAG_FROM_FILE",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "from",
-          "required": true,
+          "name": "fromFile",
+          "required": false,
+          "type": "option"
+        },
+        "fromStore": {
+          "description": "The source store domain to copy/export data from (e.g., source.myshopify.com).",
+          "env": "SHOPIFY_FLAG_FROM_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "fromStore",
+          "required": false,
           "type": "option"
         },
         "key": {
@@ -4927,13 +4936,22 @@
           "required": false,
           "type": "boolean"
         },
-        "to": {
-          "description": "The store to copy data to.",
-          "env": "SHOPIFY_FLAG_COPY_STORE_TO",
+        "toFile": {
+          "description": "The SQLite file path to export data to. Use <sqlite> to auto-generate filename.",
+          "env": "SHOPIFY_FLAG_TO_FILE",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "to",
-          "required": true,
+          "name": "toFile",
+          "required": false,
+          "type": "option"
+        },
+        "toStore": {
+          "description": "The target store domain to copy/import data to (e.g., target.myshopify.com).",
+          "env": "SHOPIFY_FLAG_TO_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "toStore",
+          "required": false,
           "type": "option"
         },
         "verbose": {
@@ -4954,7 +4972,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Copy data from one store to another"
+      "summary": "Copy, export, or import store data"
     },
     "theme:check": {
       "aliases": [
