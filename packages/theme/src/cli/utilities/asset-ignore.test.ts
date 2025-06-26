@@ -1,3 +1,4 @@
+import os from 'os'
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
 import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
@@ -50,8 +51,9 @@ describe('asset-ignore', () => {
       await expect(getPatternsFromShopifyIgnore('tmp')).resolves.toEqual([])
     })
 
-    test('returns an empty array when the .shopifyignore file does not exist', async () => {
-      vi.mocked(fileExists).mockResolvedValue(true)
+    test('returns patterns from the local .shopifyignore file', async () => {
+      // Local exists, global does not
+      vi.mocked(fileExists).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
       vi.mocked(readFileFn).mockResolvedValue(`
         # assets/basic.css
         assets/complex.css
@@ -72,6 +74,70 @@ describe('asset-ignore', () => {
       ])
 
       expect(readFileFn).toHaveBeenLastCalledWith('tmp/.shopifyignore', {encoding: 'utf8'})
+    })
+
+    test('returns patterns from the global .shopifyignore file', async () => {
+      // Local does not exist, global does
+      vi.mocked(fileExists).mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+      vi.mocked(readFileFn).mockResolvedValue(`
+        # assets/basic.css
+        assets/complex.css
+        assets/*.png
+        sections/*
+        templates/*
+        config/*_data.json
+        .*settings_schema.json
+      `)
+
+      await expect(getPatternsFromShopifyIgnore('tmp')).resolves.toEqual([
+        'assets/complex.css',
+        'assets/*.png',
+        'sections/*',
+        'templates/*',
+        'config/*_data.json',
+        '.*settings_schema.json',
+      ])
+
+      expect(readFileFn).toHaveBeenLastCalledWith(os.homedir() + '/.shopifyignore', {encoding: 'utf8'})
+    })
+
+    test('returns unique patterns from the local and global .shopifyignore files', async () => {
+      // Local and global exist
+      vi.mocked(fileExists).mockResolvedValueOnce(true).mockResolvedValueOnce(true)
+
+      // Local
+      vi.mocked(readFileFn).mockResolvedValueOnce(`
+        # assets/basic.css
+        assets/complex.css
+        assets/*.png
+        sections/*
+        templates/*
+        config/*_data.json
+        .*settings_schema.json
+        assets/*.png
+      `)
+
+      // Global
+      vi.mocked(readFileFn).mockResolvedValueOnce(`
+        .DS_Store
+        # Emacs
+        *~
+        .DS_Store
+      `)
+
+      await expect(getPatternsFromShopifyIgnore('tmp')).resolves.toEqual([
+        'assets/complex.css',
+        'assets/*.png',
+        'sections/*',
+        'templates/*',
+        'config/*_data.json',
+        '.*settings_schema.json',
+        '.DS_Store',
+        '*~',
+      ])
+
+      expect(readFileFn).toHaveBeenCalledWith('tmp/.shopifyignore', {encoding: 'utf8'})
+      expect(readFileFn).toHaveBeenCalledWith(os.homedir() + '/.shopifyignore', {encoding: 'utf8'})
     })
   })
 

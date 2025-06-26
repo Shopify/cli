@@ -1,3 +1,4 @@
+import os from 'os'
 import {uniqBy} from '@shopify/cli-kit/common/array'
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -57,13 +58,25 @@ function filterBy(patterns: string[], type: string, invertMatch = false) {
 }
 
 export async function getPatternsFromShopifyIgnore(root: string) {
-  const shopifyIgnorePath = joinPath(root, SHOPIFY_IGNORE)
+  const localIgnore = joinPath(root, SHOPIFY_IGNORE)
+  const localPatterns = await readIgnoreFile(localIgnore)
 
-  const shopifyIgnoreExists = await fileExists(shopifyIgnorePath)
+  const globalIgnore = joinPath(os.homedir(), SHOPIFY_IGNORE)
+  const globalPatterns = await readIgnoreFile(globalIgnore)
+
+  // When converting a Set into an array the order elements were added is preserved
+  const uniquePatterns = new Set(localPatterns)
+
+  globalPatterns.forEach(pattern => uniquePatterns.add(pattern))
+
+  return Array.from(uniquePatterns)
+}
+
+async function readIgnoreFile(path: string) {
+  const shopifyIgnoreExists = await fileExists(path)
   if (!shopifyIgnoreExists) return []
 
-  const content = await readFile(shopifyIgnorePath, {encoding: 'utf8'})
-
+  const content = await readFile(path, {encoding: 'utf8'})
   return content
     .split(/(\r\n|\r|\n)/)
     .map((line) => line.trim())
