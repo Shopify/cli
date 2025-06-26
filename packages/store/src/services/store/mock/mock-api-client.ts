@@ -2,7 +2,7 @@ import {TEST_MOCK_DATA, TEST_COPY_START_RESPONSE, TEST_COMPLETED_OPERATION} from
 import {MOCK_CONFIG} from './mock-config.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {Organization} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse} from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -26,6 +26,50 @@ export class MockApiClient implements ApiClientInterface {
     await this.delay(MOCK_CONFIG.API_DELAY)
     this.pollCount = 0
     return TEST_COPY_START_RESPONSE
+  }
+
+  async startBulkDataStoreExport(
+    _organizationId: string,
+    sourceShopDomain: string,
+    _token: string,
+  ): Promise<BulkDataStoreExportStartResponse> {
+    outputInfo(`[MOCK] Starting bulk data export from ${sourceShopDomain}...`)
+    await this.delay(MOCK_CONFIG.API_DELAY)
+    this.pollCount = 0
+    return {
+      bulkDataStoreExportStart: {
+        success: true,
+        operation: {
+          id: 'mock-export-operation-id',
+          operationType: 'EXPORT',
+          status: 'IN_PROGRESS',
+        },
+        userErrors: [],
+      },
+    }
+  }
+
+  async startBulkDataStoreImport(
+    _organizationId: string,
+    targetShopDomain: string,
+    importUrl: string,
+    _resourceConfigs: ResourceConfigs,
+    _token: string,
+  ): Promise<BulkDataStoreImportStartResponse> {
+    outputInfo(`[MOCK] Starting bulk data import to ${targetShopDomain} from ${importUrl}...`)
+    await this.delay(MOCK_CONFIG.API_DELAY)
+    this.pollCount = 0
+    return {
+      bulkDataStoreImportStart: {
+        success: true,
+        operation: {
+          id: 'mock-import-operation-id',
+          operationType: 'IMPORT',
+          status: 'IN_PROGRESS',
+        },
+        userErrors: [],
+      },
+    }
   }
 
   async pollBulkDataOperation(

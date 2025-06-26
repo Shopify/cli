@@ -40,7 +40,6 @@ export interface OrganizationsSchema {
   organization: Organization | null
 }
 
-// Organizations API specific types
 export interface BulkDataStoreCopyStartInput {
   sourceStoreIdentifier: {
     domain: string
@@ -59,6 +58,56 @@ export interface BulkDataStoreCopyStartInput {
 
 export interface BulkDataStoreCopyStartResponse {
   bulkDataStoreCopyStart: {
+    success: boolean
+    operation: {
+      id: string
+      operationType: string
+      status: string
+    }
+    userErrors: {
+      field: string
+      message: string
+    }[]
+  }
+}
+
+export interface BulkDataStoreExportStartInput {
+  sourceStoreIdentifier: {
+    domain: string
+  }
+}
+
+export interface BulkDataStoreExportStartResponse {
+  bulkDataStoreExportStart: {
+    success: boolean
+    operation: {
+      id: string
+      operationType: string
+      status: string
+    }
+    userErrors: {
+      field: string
+      message: string
+    }[]
+  }
+}
+
+export interface BulkDataStoreImportStartInput {
+  targetStoreIdentifier: {
+    domain: string
+  }
+  importUrl: string
+  resourceConfigs?: {
+    [key: string]: {
+      identifier: {
+        field: string
+      }
+    }
+  }
+}
+
+export interface BulkDataStoreImportStartResponse {
+  bulkDataStoreImportStart: {
     success: boolean
     operation: {
       id: string

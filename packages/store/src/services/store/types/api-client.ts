@@ -1,5 +1,5 @@
 import {Organization} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse} from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 
 export interface ApiClientInterface {
@@ -12,6 +12,20 @@ export interface ApiClientInterface {
     resourceConfigs: ResourceConfigs,
     token: string,
   ): Promise<BulkDataStoreCopyStartResponse>
+
+  startBulkDataStoreExport(
+    organizationId: string,
+    sourceShopDomain: string,
+    token: string,
+  ): Promise<BulkDataStoreExportStartResponse>
+
+  startBulkDataStoreImport(
+    organizationId: string,
+    targetShopDomain: string,
+    importUrl: string,
+    resourceConfigs: ResourceConfigs,
+    token: string,
+  ): Promise<BulkDataStoreImportStartResponse>
 
   pollBulkDataOperation(
     organizationId: string,

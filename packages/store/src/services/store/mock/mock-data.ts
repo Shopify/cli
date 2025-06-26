@@ -106,7 +106,7 @@ export const TEST_COMPLETED_OPERATION: BulkDataOperationByIdResponse = {
             remoteOperationStatus: 'COMPLETED',
             totalObjectCount: 100,
             completedObjectCount: 100,
-            url: 'https://target.myshopify.com',
+            url: 'https://target.myshopify.com/exported_data.sqlite',
           },
         ],
       },

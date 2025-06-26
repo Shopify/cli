@@ -18,6 +18,42 @@ export const bulkDataStoreCopyStartMutation = gql`
   }
 `
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
+export const bulkDataStoreExportStartMutation = gql`
+  mutation BulkDataStoreExportStart($input: BulkDataStoreExportStartInput!) {
+    bulkDataStoreExportStart(input: $input) {
+      success
+      operation {
+        id
+        operationType
+        status
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`
+
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
+export const bulkDataStoreImportStartMutation = gql`
+  mutation BulkDataStoreImportStart($input: BulkDataStoreImportStartInput!) {
+    bulkDataStoreImportStart(input: $input) {
+      success
+      operation {
+        id
+        operationType
+        status
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`
+
 export const bulkDataOperationByIdQuery = `#graphql
   query BulkDataOperationById($id: BulkDataOperationID!) {
     organization {
