@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.82.0
+
+### Patch Changes
+
+- 0edf793: Fix issue where SHOPIFY_FLAG_ENVIRONMENT was not being used correctly when passed as an environment variable
+- eee4978: Add error handling when the authorization service is not reachable
+
 ## 3.81.1
 
 ### Patch Changes
