@@ -170,8 +170,8 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-color] [--no-release]
-    [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
+  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
+    [--no-release] [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              The name of the app configuration.
@@ -179,6 +179,9 @@ FLAGS
       --client-id=<value>           The Client ID of your app.
       --message=<value>             Optional message that will be associated with this version. This is for internal use
                                     only and won't be available externally.
+      --no-build                    Use with caution: Skips building any elements of the app that require building. You
+                                    should ensure your app has been prepared in advance, such as by running `shopify app
+                                    build` or by caching build artifacts.
       --no-color                    Disable color output.
       --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
       --path=<value>                The path to your app directory.
