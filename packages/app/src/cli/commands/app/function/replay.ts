@@ -1,8 +1,9 @@
-import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
+import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
@@ -45,25 +46,25 @@ export default class FunctionReplay extends AppLinkedCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] ?? flags['api-key']
 
-    const app = await inFunctionContext({
-      path: flags.path,
-      apiKey,
+    const {app} = await linkedAppContext({
+      directory: flags.path,
+      clientId: flags['client-id'] ?? flags['api-key'],
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
-      reset: flags.reset,
-      callback: async (app, _, ourFunction) => {
-        await replay({
-          app,
-          extension: ourFunction,
-          path: flags.path,
-          log: flags.log,
-          json: flags.json,
-          watch: flags.watch,
-        })
-        return app
-      },
     })
+
+    const ourFunction = await chooseFunction(app, flags.path)
+
+    await replay({
+      app,
+      extension: ourFunction,
+      path: flags.path,
+      log: flags.log,
+      json: flags.json,
+      watch: flags.watch,
+    })
+
     return {app}
   }
 }
