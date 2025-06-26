@@ -63,6 +63,7 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify store copy`](#shopify-store-copy)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -1717,6 +1718,20 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify store copy`
+
+Copy a theme to another store.
+
+```
+USAGE
+  $ shopify store copy
+
+DESCRIPTION
+  Copy a theme to another store.
+
+  This command allows you to copy a theme from one Shopify store to another.
 ```
 
 ## `shopify theme check`
