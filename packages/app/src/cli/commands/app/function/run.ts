@@ -1,7 +1,7 @@
 import {functionFlags, inFunctionContext, getOrGenerateSchemaPath} from '../../../services/function/common.js'
 import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
-import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
@@ -9,7 +9,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'
 
-export default class FunctionRun extends AppLinkedCommand {
+export default class FunctionRun extends AppUnlinkedCommand {
   static summary = 'Run a function locally for testing.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
@@ -34,14 +34,13 @@ export default class FunctionRun extends AppLinkedCommand {
     }),
   }
 
-  public async run(): Promise<AppLinkedCommandOutput> {
+  public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FunctionRun)
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
       apiKey: flags['client-id'],
-      reset: flags.reset,
-      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
+      callback: async (app, ourFunction) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
         if (flags.export !== undefined) {
@@ -77,7 +76,7 @@ export default class FunctionRun extends AppLinkedCommand {
 
         const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
         const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
-        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, developerPlatformClient, orgId)
+        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, orgId)
 
         await runFunction({
           functionExtension: ourFunction,

@@ -2,11 +2,11 @@ import {functionFlags, inFunctionContext} from '../../../services/function/commo
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
-export default class FunctionReplay extends AppLinkedCommand {
+export default class FunctionReplay extends AppUnlinkedCommand {
   static summary = 'Replays a function run from an app log.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
@@ -40,7 +40,7 @@ export default class FunctionReplay extends AppLinkedCommand {
     }),
   }
 
-  public async run(): Promise<AppLinkedCommandOutput> {
+  public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FunctionReplay)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
@@ -51,8 +51,7 @@ export default class FunctionReplay extends AppLinkedCommand {
       path: flags.path,
       apiKey,
       userProvidedConfigName: flags.config,
-      reset: flags.reset,
-      callback: async (app, _, ourFunction) => {
+      callback: async (app, ourFunction) => {
         await replay({
           app,
           extension: ourFunction,

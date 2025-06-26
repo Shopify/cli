@@ -44,13 +44,11 @@ export default class FetchSchema extends AppLinkedCommand {
     const app = await inFunctionContext({
       path: flags.path,
       apiKey,
-      reset: flags.reset,
       userProvidedConfigName: flags.config,
-      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
+      callback: async (app, ourFunction) => {
         await generateSchemaService({
           app,
           extension: ourFunction,
-          developerPlatformClient,
           stdout: flags.stdout,
           path: flags.path,
           orgId,

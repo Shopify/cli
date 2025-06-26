@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {renderReplay} from './ui.js'
 import {runFunction} from './runner.js'
-import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
+import {AppInterface} from '../../models/app/app.js'
+import {ensureConnectedAppFunctionContext} from '../generate-schema.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
@@ -17,8 +18,9 @@ import {existsSync, readdirSync} from 'fs'
 const LOG_SELECTOR_LIMIT = 100
 
 interface ReplayOptions {
-  app: AppLinkedInterface
+  app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
+  apiKey?: string
   stdout?: boolean
   path: string
   json: boolean
@@ -53,7 +55,7 @@ export async function replay(options: ReplayOptions) {
   const abortController = new AbortController()
 
   try {
-    const apiKey = options.app.configuration.client_id
+    const {apiKey} = await ensureConnectedAppFunctionContext(options)
     const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
     const selectedRun = options.log
