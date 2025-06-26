@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.3.0
+
+### Minor Changes
+
+- 386bf0e: Add support for displaying UI Extension dev logs
+
 ## 5.2.1
 
 ### Patch Changes
