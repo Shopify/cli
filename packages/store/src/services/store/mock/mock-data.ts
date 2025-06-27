@@ -217,6 +217,10 @@ export const TEST_COMPLETED_EXPORT_OPERATION: BulkDataOperationByIdResponse = {
           id: 'shop1',
           name: 'Source Shop',
         },
+        targetStore: {
+          id: 'shop1',
+          name: 'Source Shop',
+        },
         storeOperations: [
           {
             id: 'store-op-1',
@@ -259,6 +263,10 @@ export const TEST_COMPLETED_IMPORT_OPERATION: BulkDataOperationByIdResponse = {
         id: 'import-operation-123',
         operationType: 'IMPORT',
         status: 'COMPLETED',
+        sourceStore: {
+          id: 'shop2',
+          name: 'Target Shop',
+        },
         targetStore: {
           id: 'shop2',
           name: 'Target Shop',
