@@ -21,7 +21,6 @@ describe('Copy', () => {
       throw new Error('Process exit called')
     })
 
-    // Mock all operations with the same execute function
     vi.mocked(StoreCopyOperation).mockImplementation(
       () =>
         ({

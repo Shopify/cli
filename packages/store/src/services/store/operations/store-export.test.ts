@@ -33,7 +33,6 @@ describe('StoreExportOperation', () => {
       throw new Error('Process exit called')
     })
 
-    // Create a mock API client with spy methods
     mockApiClient = {
       ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue(mockBpSession),
       fetchOrganizations: vi.fn().mockResolvedValue([mockOrganization]),
@@ -41,7 +40,6 @@ describe('StoreExportOperation', () => {
       pollBulkDataOperation: vi.fn().mockResolvedValue(mockCompletedOperation),
     }
 
-    // Mock ResultFileHandler
     mockResultFileHandler = {
       promptAndHandleResultFile: vi.fn().mockResolvedValue(undefined),
     }
@@ -51,7 +49,6 @@ describe('StoreExportOperation', () => {
 
     vi.mocked(renderTasks).mockImplementation(async (tasks) => {
       const ctx = {}
-      // Process tasks sequentially
       const processTask = async (index: number): Promise<void> => {
         if (index < tasks.length) {
           await tasks[index]!.task(ctx, tasks[index]!)
@@ -290,7 +287,6 @@ describe('StoreExportOperation', () => {
   test('should use MockApiClient when mock flag is set', async () => {
     const operation = new StoreExportOperation()
 
-    // Set up a shorter polling time for the test
     const originalTimeout = setTimeout
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any, delay: any) => {
       return originalTimeout(fn, Math.min(delay, 100))
@@ -298,17 +294,13 @@ describe('StoreExportOperation', () => {
 
     await operation.execute('source.myshopify.com', 'output.sqlite', {mock: true})
 
-    // The operation should complete successfully with mock data
     expect(renderSuccess).toHaveBeenCalled()
   }, 10000)
 
   test('should ignore the toFile parameter', async () => {
-    // The toFile parameter is prefixed with _ in the execute method, indicating it's not used
-    // This test verifies the operation works regardless of the toFile value
     await operation.execute('source.myshopify.com', 'any-value-here.sqlite', {})
 
     expect(renderSuccess).toHaveBeenCalled()
-    // The toFile parameter should not affect the operation
   })
 
   test('should call renderTasks with correct task configuration', async () => {

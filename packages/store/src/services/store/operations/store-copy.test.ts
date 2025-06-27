@@ -37,7 +37,6 @@ describe('StoreCopyOperation', () => {
       throw new Error('Process exit called')
     })
 
-    // Create a mock API client with spy methods
     mockApiClient = {
       ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue(mockBpSession),
       fetchOrganizations: vi.fn().mockResolvedValue([mockOrganization]),
@@ -51,7 +50,6 @@ describe('StoreCopyOperation', () => {
     vi.mocked(parseResourceConfigFlags).mockReturnValue({})
     vi.mocked(renderTasks).mockImplementation(async (tasks) => {
       const ctx = {}
-      // Process tasks sequentially
       const processTask = async (index: number): Promise<void> => {
         if (index < tasks.length) {
           await tasks[index]!.task(ctx, tasks[index]!)
@@ -119,7 +117,6 @@ describe('StoreCopyOperation', () => {
     mockApiClient.fetchOrganizations.mockResolvedValue([
       {
         ...mockOrganization,
-        // Only target shop exists
         shops: [mockTargetShop],
       },
     ])
@@ -133,7 +130,6 @@ describe('StoreCopyOperation', () => {
     mockApiClient.fetchOrganizations.mockResolvedValue([
       {
         ...mockOrganization,
-        // Only source shop exists
         shops: [mockSourceShop],
       },
     ])
@@ -258,7 +254,6 @@ describe('StoreCopyOperation', () => {
   test('should use MockApiClient when mock flag is set', async () => {
     const operation = new StoreCopyOperation()
 
-    // Set up a shorter polling time for the test
     const originalTimeout = setTimeout
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any, delay: any) => {
       return originalTimeout(fn, Math.min(delay, 100))
@@ -266,7 +261,6 @@ describe('StoreCopyOperation', () => {
 
     await operation.execute('source.myshopify.com', 'target.myshopify.com', {mock: true})
 
-    // The operation should complete successfully with mock data
     expect(renderSuccess).toHaveBeenCalled()
   }, 10000)
 })

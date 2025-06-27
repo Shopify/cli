@@ -35,7 +35,6 @@ export class StoreCopyOperation implements StoreOperation {
 
     this.validateShops(sourceShop, targetShop)
 
-    // sanity check and to make typescript happy about non-null assertion
     if (!sourceShop || !targetShop) {
       throw new Error('Source or target shop not found.')
     }

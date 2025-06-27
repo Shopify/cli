@@ -43,7 +43,6 @@ describe('StoreImportOperation', () => {
       throw new Error('Process exit called')
     })
 
-    // Create a mock API client with spy methods
     mockApiClient = {
       ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue(mockBpSession),
       fetchOrganizations: vi.fn().mockResolvedValue([mockOrganization]),
@@ -51,13 +50,11 @@ describe('StoreImportOperation', () => {
       pollBulkDataOperation: vi.fn().mockResolvedValue(mockCompletedOperation),
     }
 
-    // Mock FileUploader
     mockFileUploader = {
       uploadSqliteFile: vi.fn().mockResolvedValue(mockUploadUrl),
     }
     vi.mocked(FileUploader).mockImplementation(() => mockFileUploader)
 
-    // Mock ResultFileHandler
     mockResultFileHandler = {
       promptAndHandleResultFile: vi.fn().mockResolvedValue(undefined),
     }
@@ -70,7 +67,6 @@ describe('StoreImportOperation', () => {
     vi.mocked(fileExists).mockResolvedValue(true)
     vi.mocked(renderTasks).mockImplementation(async (tasks) => {
       const ctx = {}
-      // Process tasks sequentially
       const processTask = async (index: number): Promise<void> => {
         if (index < tasks.length) {
           await tasks[index]!.task(ctx, tasks[index]!)
@@ -356,13 +352,11 @@ describe('StoreImportOperation', () => {
   test('should use MockApiClient and MockFileUploader when mock flag is set', async () => {
     const operation = new StoreImportOperation()
 
-    // Mock the MockFileUploader
     const mockMockFileUploader = {
       uploadSqliteFile: vi.fn().mockResolvedValue('https://mock-url.com/file.sqlite'),
     }
     vi.mocked(MockFileUploader).mockImplementation(() => mockMockFileUploader)
 
-    // Set up a shorter polling time for the test
     const originalTimeout = setTimeout
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any, delay: any) => {
       return originalTimeout(fn, Math.min(delay, 100))
@@ -370,7 +364,6 @@ describe('StoreImportOperation', () => {
 
     await operation.execute('input.sqlite', 'target.myshopify.com', {mock: true})
 
-    // The operation should complete successfully with mock data
     expect(renderSuccess).toHaveBeenCalled()
     expect(MockFileUploader).toHaveBeenCalled()
   }, 10000)
@@ -442,7 +435,6 @@ describe('StoreImportOperation', () => {
       'File not found: nonexistent.sqlite',
     )
 
-    // Ensure file validation happens before authentication
     expect(fileExists).toHaveBeenCalled()
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
   })
@@ -456,7 +448,6 @@ describe('StoreImportOperation', () => {
     expect(mockApiClient.startBulkDataStoreImport).toHaveBeenCalledWith(
       'org1',
       'target.myshopify.com',
-      // Should use the URL returned from upload
       customUploadUrl,
       {},
       mockBpSession,
