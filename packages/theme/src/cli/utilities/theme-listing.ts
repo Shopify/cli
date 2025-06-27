@@ -1,6 +1,6 @@
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {capitalCase} from 'change-case'
+import {capitalizeWords} from '@shopify/cli-kit/common/string'
 
 function isListingFile(fileKey: string): boolean {
   return (fileKey.startsWith('templates/') || fileKey.startsWith('sections/')) && fileKey.endsWith('.json')
@@ -28,7 +28,7 @@ export async function updateSettingsDataForListing(themeDirectory: string, listi
 
   try {
     const settingsData = JSON.parse(settingsContent)
-    settingsData.current = capitalCase(listingName)
+    settingsData.current = capitalizeWords(listingName)
 
     return JSON.stringify(settingsData, null, 2)
   } catch (error) {
