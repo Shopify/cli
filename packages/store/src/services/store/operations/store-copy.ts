@@ -105,41 +105,6 @@ export class StoreCopyOperation implements StoreOperation {
     return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
   }
 
-  private async waitForCopyCompletion(
-    bpSession: string,
-    organizationId: string,
-    initialOperation: BulkDataOperationByIdResponse,
-  ): Promise<BulkDataOperationByIdResponse> {
-    let currentOperation = initialOperation
-    const operationId = currentOperation.organization.bulkData.operation.id
-
-    while (true) {
-      const status = currentOperation.organization.bulkData.operation.status
-
-      if (status === 'COMPLETED') {
-        return currentOperation
-      } else if (status === 'FAILED') {
-        throw new Error(`Copy operation failed`)
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // eslint-disable-next-line no-await-in-loop
-      currentOperation = await this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
-    }
-  }
-
-  private async executeCopyOperation(
-    organizationId: string,
-    sourceShop: Shop,
-    targetShop: Shop,
-    bpSession: string,
-    flags: FlagOptions,
-  ): Promise<BulkDataOperationByIdResponse> {
-    const initialOperation = await this.startCopyOperation(bpSession, organizationId, sourceShop, targetShop, flags)
-    return this.waitForCopyCompletion(bpSession, organizationId, initialOperation)
-  }
-
   private async copyDataWithProgress(
     organizationId: string,
     sourceShop: Shop,
@@ -149,36 +114,65 @@ export class StoreCopyOperation implements StoreOperation {
   ): Promise<BulkDataOperationByIdResponse> {
     interface Context {
       copyOperation: BulkDataOperationByIdResponse
+      organizationId: string
+      bpSession: string
+      isComplete: boolean
+    }
+
+    const pollingTaskCount = 1800
+
+    const pollingTasks: Task<Context>[] = []
+    for (let i = 0; i < pollingTaskCount; i++) {
+      const emojis = ['🚀', '✨', '🔥', '💫', '🌟']
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)]
+      pollingTasks.push({
+        title: `Copying data ${emoji}`,
+        skip: (ctx: Context) => ctx.isComplete,
+        task: async (ctx: Context) => {
+          const operationId = ctx.copyOperation.organization.bulkData.operation.id
+          // eslint-disable-next-line require-atomic-updates
+          ctx.copyOperation = await this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+          const status = ctx.copyOperation.organization.bulkData.operation.status
+          if (status === 'COMPLETED' || status === 'FAILED') {
+            ctx.isComplete = true
+          }
+          return [
+            {
+              title: `Copying data ${emoji}`,
+              task: async () => {
+                await new Promise((resolve) => setTimeout(resolve, 3000))
+              },
+            },
+          ]
+        },
+      })
     }
 
     const tasks: Task<Context>[] = [
       {
-        title: `Starting copy from ${sourceShop.domain} to ${targetShop.domain}`,
+        title: 'Starting copy operation',
         task: async (ctx: Context) => {
-          // Suppress console output during API calls to prevent interference with Ink
-          const originalWrite = process.stdout.write
-          const originalError = process.stderr.write
+          ctx.copyOperation = await this.startCopyOperation(bpSession, organizationId, sourceShop, targetShop, flags)
+          ctx.organizationId = organizationId
+          ctx.bpSession = bpSession
+          ctx.isComplete = false
 
-          try {
-            // Temporarily redirect stdout/stderr to prevent interference
-            // process.stdout.write = () => true
-            // process.stderr.write = () => true
-
-            ctx.copyOperation = await this.executeCopyOperation(
-              organizationId,
-              sourceShop,
-              targetShop,
-              bpSession,
-              flags,
-            )
-          } finally {
-            // Restore original write functions
-            process.stdout.write = originalWrite
-            // process.stderr.write = originalError
+          const status = ctx.copyOperation.organization.bulkData.operation.status
+          if (status === 'COMPLETED' || status === 'FAILED') {
+            ctx.isComplete = true
           }
+          await new Promise((resolve) => setTimeout(resolve, 3000))
+        },
+      },
+      ...pollingTasks,
+      {
+        title: 'Finalizing operation',
+        task: async () => {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
         },
       },
     ]
+
     const ctx: Context = await renderTasks(tasks)
     return ctx.copyOperation
   }
