@@ -64,9 +64,9 @@ export class BulkOperationTaskGenerator {
 
     for (let i = 0; i < this.config.pollingTaskCount; i++) {
       const emoji = this.config.emojis[Math.floor(Math.random() * this.config.emojis.length)]
-
+      const title = `${this.config.operationName} operation in progress ${emoji}`
       pollingTasks.push({
-        title: `${this.capitalize(this.config.operationName)} data ${emoji}`,
+        title,
         skip: (ctx: TContext) => ctx.isComplete,
         task: async (ctx: TContext) => {
           // eslint-disable-next-line require-atomic-updates
@@ -82,7 +82,7 @@ export class BulkOperationTaskGenerator {
 
           return [
             {
-              title: `${this.capitalize(this.config.operationName)} data ${emoji}`,
+              title,
               task: async () => {
                 await new Promise((resolve) => setTimeout(resolve, this.config.pollingInterval))
               },
@@ -97,7 +97,7 @@ export class BulkOperationTaskGenerator {
 
   private createFinalizingTask<TContext extends BulkOperationContext>(): Task<TContext> {
     return {
-      title: 'Finalizing operation',
+      title: `Finalizing ${this.config.operationName} operation`,
       task: async () => {
         await new Promise((resolve) => setTimeout(resolve, 1000))
       },
