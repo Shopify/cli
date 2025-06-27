@@ -508,6 +508,7 @@ export async function parseThemeFileContent(
         return {attachment: Buffer.from(arrayBuffer).toString('base64')}
       } catch (error) {
         // Raise error if we can't download the file
+        outputDebug(`Error downloading content from URL: ${body.url}`)
         throw new AbortError(`Error downloading content from URL: ${body.url}`)
       }
   }
