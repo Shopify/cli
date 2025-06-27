@@ -45,17 +45,11 @@ export const commonFlags = {
     default: false,
     env: 'SHOPIFY_FLAG_YES',
   }),
-  open: Flags.boolean({
-    description: 'Open the sqlite db in a sqlite browser.',
-    char: 'o',
-    required: false,
-    default: false,
-    env: 'SHOPIFY_FLAG_OPEN',
-  }),
   mock: Flags.boolean({
     description: 'Use mock data instead of real API calls (for development).',
     required: false,
     default: false,
+    hidden: true,
     env: 'SHOPIFY_FLAG_MOCK',
   }),
 }

@@ -4914,6 +4914,7 @@
           "allowNo": false,
           "description": "Use mock data instead of real API calls (for development).",
           "env": "SHOPIFY_FLAG_MOCK",
+          "hidden": true,
           "name": "mock",
           "required": false,
           "type": "boolean"
@@ -4924,15 +4925,6 @@
           "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
           "name": "no-color",
-          "type": "boolean"
-        },
-        "open": {
-          "allowNo": false,
-          "char": "o",
-          "description": "Open the sqlite db in a sqlite browser.",
-          "env": "SHOPIFY_FLAG_OPEN",
-          "name": "open",
-          "required": false,
           "type": "boolean"
         },
         "skipConfirmation": {
