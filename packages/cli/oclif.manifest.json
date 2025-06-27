@@ -4910,6 +4910,14 @@
           "required": false,
           "type": "option"
         },
+        "mock": {
+          "allowNo": false,
+          "description": "Use mock data instead of real API calls (for development).",
+          "env": "SHOPIFY_FLAG_MOCK",
+          "name": "mock",
+          "required": false,
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
