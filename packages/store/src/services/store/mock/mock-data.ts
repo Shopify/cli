@@ -1,5 +1,5 @@
 import {Shop} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {BulkDataStoreCopyStartResponse, BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 
 function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj))
@@ -74,6 +74,18 @@ export const TEST_COPY_START_RESPONSE: BulkDataStoreCopyStartResponse = {
     operation: {
       id: 'operation-123',
       operationType: 'STORE_COPY',
+      status: 'IN_PROGRESS',
+    },
+  },
+}
+
+export const TEST_EXPORT_START_RESPONSE: BulkDataStoreExportStartResponse = {
+  bulkDataStoreExportStart: {
+    success: true,
+    userErrors: [],
+    operation: {
+      id: 'export-operation-123',
+      operationType: 'EXPORT',
       status: 'IN_PROGRESS',
     },
   },
@@ -159,4 +171,50 @@ export function generateTestFailedStartResponse(): BulkDataStoreCopyStartRespons
   cloned.bulkDataStoreCopyStart.operation.status = 'FAILED'
 
   return cloned
+}
+
+export function generateTestFailedExportStartResponse(): BulkDataStoreExportStartResponse {
+  const cloned = deepClone(TEST_EXPORT_START_RESPONSE)
+
+  cloned.bulkDataStoreExportStart.success = false
+  cloned.bulkDataStoreExportStart.userErrors = [
+    {field: 'configuration', message: 'Invalid export configuration'},
+    {field: 'permissions', message: 'Export not allowed'},
+  ]
+  cloned.bulkDataStoreExportStart.operation.id = ''
+  cloned.bulkDataStoreExportStart.operation.operationType = ''
+  cloned.bulkDataStoreExportStart.operation.status = 'FAILED'
+
+  return cloned
+}
+
+export const TEST_COMPLETED_EXPORT_OPERATION: BulkDataOperationByIdResponse = {
+  organization: {
+    name: 'Test Organization',
+    bulkData: {
+      operation: {
+        id: 'export-operation-123',
+        operationType: 'EXPORT',
+        status: 'COMPLETED',
+        sourceStore: {
+          id: 'shop1',
+          name: 'Source Shop',
+        },
+        storeOperations: [
+          {
+            id: 'store-op-1',
+            store: {
+              id: 'shop1',
+              name: 'Source Shop',
+            },
+            remoteOperationType: 'EXPORT',
+            remoteOperationStatus: 'COMPLETED',
+            totalObjectCount: 100,
+            completedObjectCount: 100,
+            url: 'https://source.myshopify.com/export_data.sqlite',
+          },
+        ],
+      },
+    },
+  },
 }
