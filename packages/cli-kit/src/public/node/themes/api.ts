@@ -3,6 +3,7 @@ import {buildTheme} from './factories.js'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {ThemeCreate} from '../../../cli/api/graphql/admin/generated/theme_create.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
@@ -444,6 +445,73 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
   }
 
   return true
+}
+
+export interface ThemeDuplicateResult {
+  theme?: Theme
+  userErrors: {field?: string[] | null; message: string}[]
+  requestId?: string
+}
+
+export async function themeDuplicate(
+  id: number,
+  name: string | undefined,
+  session: AdminSession,
+): Promise<ThemeDuplicateResult> {
+  let requestId: string | undefined
+
+  const {themeDuplicate} = await adminRequestDoc({
+    query: ThemeDuplicate,
+    session,
+    variables: {id: composeThemeGid(id), name},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    version: '2025-10',
+    responseOptions: {
+      onResponse: (response) => {
+        requestId = response.headers.get('x-request-id') ?? undefined
+      },
+    },
+  })
+
+  if (!themeDuplicate) {
+    // An unexpected error occurred during the GraphQL request execution
+    return {
+      theme: undefined,
+      userErrors: [{message: 'Failed to duplicate theme'}],
+      requestId,
+    }
+  }
+
+  const {newTheme, userErrors} = themeDuplicate
+
+  if (userErrors.length > 0) {
+    return {
+      theme: undefined,
+      userErrors,
+      requestId,
+    }
+  }
+
+  if (!newTheme) {
+    // An unexpected error if neither theme nor userErrors are returned
+    return {
+      theme: undefined,
+      userErrors: [{message: 'Failed to duplicate theme'}],
+      requestId,
+    }
+  }
+
+  const theme = buildTheme({
+    id: parseGid(newTheme.id),
+    name: newTheme.name,
+    role: newTheme.role.toLowerCase(),
+  })
+
+  return {
+    theme,
+    userErrors: [],
+    requestId,
+  }
 }
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
