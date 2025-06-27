@@ -34,12 +34,7 @@ vi.stubGlobal('fetch', vi.fn())
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com', refresh: async () => {}}
 const themeAccessSession = {...session, token: 'shptka_token'}
 const sessions = {CLI: session, 'Theme Access': themeAccessSession}
-const expectedApiOptions = expect.objectContaining({
-  maxRetryTimeMs: 90000,
-  timeoutMs: 90000,
-  useAbortSignal: true,
-  useNetworkLevelRetry: true,
-})
+const expectedApiOptions = 'slow-request'
 
 describe('fetchTheme', () => {
   test('returns a store theme', async () => {
@@ -56,6 +51,7 @@ describe('fetchTheme', () => {
       session,
       variables: {id: 'gid://shopify/OnlineStoreTheme/123'},
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
 
     expect(theme).not.toBeNull()
@@ -81,6 +77,7 @@ describe('fetchTheme', () => {
       session,
       variables: {id: 'gid://shopify/OnlineStoreTheme/123'},
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
   })
 })
@@ -107,6 +104,7 @@ describe('fetchThemes', () => {
       session,
       variables: {after: null},
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
     expect(themes).toHaveLength(2)
 
@@ -501,12 +499,7 @@ describe('bulkUploadThemeAssets', async () => {
           },
         ],
       },
-      requestBehaviour: expect.objectContaining({
-        maxRetryTimeMs: 90000,
-        timeoutMs: 90000,
-        useAbortSignal: true,
-        useNetworkLevelRetry: true,
-      }),
+      requestBehaviour: expectedApiOptions,
     })
 
     expect(bulkUploadresults).toEqual([
@@ -563,12 +556,7 @@ describe('bulkUploadThemeAssets', async () => {
           },
         ],
       },
-      requestBehaviour: expect.objectContaining({
-        maxRetryTimeMs: 90000,
-        timeoutMs: 90000,
-        useAbortSignal: true,
-        useNetworkLevelRetry: true,
-      }),
+      requestBehaviour: expectedApiOptions,
     })
 
     expect(bulkUploadresults).toEqual([
