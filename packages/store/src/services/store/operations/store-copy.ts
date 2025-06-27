@@ -46,6 +46,7 @@ export class StoreCopyOperation implements StoreOperation {
       }
     }
 
+    outputInfo(`Copying data from ${sourceShop.domain} to ${targetShop.domain}`)
     const copyOperation = await this.copyDataWithProgress(
       sourceShop.organizationId,
       sourceShop,
@@ -85,7 +86,7 @@ export class StoreCopyOperation implements StoreOperation {
     targetShop: Shop,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
-    outputInfo(`Copying from ${sourceShop.domain} to ${targetShop.domain}`)
+    // outputInfo(`Copying from ${sourceShop.domain} to ${targetShop.domain}`)
 
     const copyResponse: BulkDataStoreCopyStartResponse = await this.apiClient.startBulkDataStoreCopy(
       organizationId,
@@ -154,11 +155,30 @@ export class StoreCopyOperation implements StoreOperation {
       {
         title: `Starting copy from ${sourceShop.domain} to ${targetShop.domain}`,
         task: async (ctx: Context) => {
-          ctx.copyOperation = await this.executeCopyOperation(organizationId, sourceShop, targetShop, bpSession, flags)
+          // Suppress console output during API calls to prevent interference with Ink
+          const originalWrite = process.stdout.write
+          const originalError = process.stderr.write
+
+          try {
+            // Temporarily redirect stdout/stderr to prevent interference
+            // process.stdout.write = () => true
+            // process.stderr.write = () => true
+
+            ctx.copyOperation = await this.executeCopyOperation(
+              organizationId,
+              sourceShop,
+              targetShop,
+              bpSession,
+              flags,
+            )
+          } finally {
+            // Restore original write functions
+            process.stdout.write = originalWrite
+            // process.stderr.write = originalError
+          }
         },
       },
     ]
-
     const ctx: Context = await renderTasks(tasks)
     return ctx.copyOperation
   }

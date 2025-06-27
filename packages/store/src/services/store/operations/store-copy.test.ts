@@ -72,7 +72,7 @@ describe('StoreCopyOperation', () => {
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
     expect(mockApiClient.fetchOrganizations).toHaveBeenCalledWith(mockBpSession)
     expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
-    expect(outputInfo).toHaveBeenCalledWith('Copying from source.myshopify.com to target.myshopify.com')
+    expect(outputInfo).toHaveBeenCalledWith('Copying data from source.myshopify.com to target.myshopify.com')
     expect(mockApiClient.startBulkDataStoreCopy).toHaveBeenCalledWith(
       'org1',
       'source.myshopify.com',

@@ -9,13 +9,11 @@ import {
   BulkDataStoreImportStartResponse,
 } from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export class MockApiClient implements ApiClientInterface {
   private pollCount = 0
 
   async fetchOrganizations(_session: string): Promise<Organization[]> {
-    outputInfo('[MOCK] Fetching organizations...')
     await this.delay(MOCK_CONFIG.API_DELAY)
     return [TEST_MOCK_DATA.organization]
   }
@@ -27,7 +25,6 @@ export class MockApiClient implements ApiClientInterface {
     _resourceConfigs: ResourceConfigs,
     _token: string,
   ): Promise<BulkDataStoreCopyStartResponse> {
-    outputInfo(`[MOCK] Starting bulk data copy from ${sourceShopDomain} to ${targetShopDomain}...`)
     await this.delay(MOCK_CONFIG.API_DELAY)
     this.pollCount = 0
     return TEST_COPY_START_RESPONSE
@@ -38,7 +35,6 @@ export class MockApiClient implements ApiClientInterface {
     sourceShopDomain: string,
     _token: string,
   ): Promise<BulkDataStoreExportStartResponse> {
-    outputInfo(`[MOCK] Starting bulk data export from ${sourceShopDomain}...`)
     await this.delay(MOCK_CONFIG.API_DELAY)
     this.pollCount = 0
     return {
@@ -61,7 +57,6 @@ export class MockApiClient implements ApiClientInterface {
     _resourceConfigs: ResourceConfigs,
     _token: string,
   ): Promise<BulkDataStoreImportStartResponse> {
-    outputInfo(`[MOCK] Starting bulk data import to ${targetShopDomain} from ${importUrl}...`)
     await this.delay(MOCK_CONFIG.API_DELAY)
     this.pollCount = 0
     return {
@@ -86,11 +81,6 @@ export class MockApiClient implements ApiClientInterface {
     const isComplete = this.pollCount > MOCK_CONFIG.POLLING_ITERATIONS_BEFORE_COMPLETE
     const status = isComplete ? 'COMPLETED' : 'IN_PROGRESS'
 
-    outputInfo(
-      `[MOCK] Polling operation ${operationId}... (${this.pollCount}/${
-        MOCK_CONFIG.POLLING_ITERATIONS_BEFORE_COMPLETE + 1
-      }) - Status: ${status}`,
-    )
     await this.delay(MOCK_CONFIG.API_DELAY)
 
     if (isComplete) {
@@ -118,7 +108,6 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {
-    outputInfo('[MOCK] Authenticating with business platform...')
     await this.delay(MOCK_CONFIG.API_DELAY)
     return 'mock-session-token'
   }
