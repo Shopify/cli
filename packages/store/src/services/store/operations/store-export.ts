@@ -44,7 +44,12 @@ export class StoreExportOperation implements StoreOperation {
     this.renderExportResult(sourceShop, exportOperation)
 
     if (status === 'COMPLETED') {
-      await this.resultFileHandler.promptAndHandleResultFile(exportOperation, 'export', sourceShop.domain)
+      await this.resultFileHandler.promptAndHandleResultFile(
+        exportOperation,
+        'export',
+        sourceShop.domain,
+        flags.skipConfirmation as boolean,
+      )
     }
   }
 

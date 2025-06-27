@@ -11,6 +11,7 @@ export class ResultFileHandler {
     operation: BulkDataOperationByIdResponse,
     operationType: 'export' | 'import',
     storeName?: string,
+    skipConfirmation?: boolean,
   ): Promise<void> {
     const storeOperations = operation.organization.bulkData.operation.storeOperations
     const downloadUrl = storeOperations.find((op) => op.url)?.url
@@ -20,11 +21,13 @@ export class ResultFileHandler {
       return
     }
 
-    const shouldDownload = await renderConfirmationPrompt({
-      message: `Press Enter to download the ${operationType} result file.`,
-      confirmationMessage: 'Download',
-      cancellationMessage: 'Skip',
-    })
+    const shouldDownload =
+      skipConfirmation ??
+      (await renderConfirmationPrompt({
+        message: `Press Enter to download the ${operationType} result file.`,
+        confirmationMessage: 'Download',
+        cancellationMessage: 'Skip',
+      }))
 
     if (shouldDownload) {
       await this.downloadAndProcessResultFile(downloadUrl, operationType, storeName)

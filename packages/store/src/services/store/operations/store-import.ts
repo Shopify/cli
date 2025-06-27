@@ -77,7 +77,12 @@ export class StoreImportOperation implements StoreOperation {
     this.renderImportResult(targetShop, importOperation)
 
     if (status === 'COMPLETED') {
-      await this.resultFileHandler.promptAndHandleResultFile(importOperation, 'import', targetShop.domain)
+      await this.resultFileHandler.promptAndHandleResultFile(
+        importOperation,
+        'import',
+        targetShop.domain,
+        flags.skipConfirmation as boolean,
+      )
     }
   }
 
