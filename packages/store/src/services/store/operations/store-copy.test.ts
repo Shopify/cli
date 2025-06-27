@@ -1,5 +1,4 @@
 import {StoreCopyOperation} from './store-copy.js'
-import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {
   TEST_MOCK_DATA,
@@ -34,7 +33,6 @@ describe('StoreCopyOperation', () => {
   let operation: StoreCopyOperation
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
@@ -68,7 +66,7 @@ describe('StoreCopyOperation', () => {
   test('should instantiate with a mock API client', () => {
     const mockApiClient = new MockApiClient()
     const operation = new StoreCopyOperation(mockApiClient)
-    
+
     expect(operation).toBeDefined()
     expect(operation).toBeInstanceOf(StoreCopyOperation)
   })
@@ -93,7 +91,7 @@ describe('StoreCopyOperation', () => {
   })
 
   test('should skip confirmation when --skip-confirmation flag is provided', async () => {
-    await operation.execute('source.myshopify.com', 'target.myshopify.com', { skipConfirmation: true })
+    await operation.execute('source.myshopify.com', 'target.myshopify.com', {skipConfirmation: true})
 
     expect(confirmCopyPrompt).not.toHaveBeenCalled()
     expect(mockApiClient.startBulkDataStoreCopy).toHaveBeenCalledWith(
@@ -107,8 +105,10 @@ describe('StoreCopyOperation', () => {
 
   test('should exit when user cancels confirmation', async () => {
     vi.mocked(confirmCopyPrompt).mockResolvedValue(false)
-    
-    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow('Process exit called')
+
+    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
+      'Process exit called',
+    )
 
     expect(outputInfo).toHaveBeenCalledWith('Exiting.')
     expect(process.exit).toHaveBeenCalledWith(0)
@@ -116,28 +116,37 @@ describe('StoreCopyOperation', () => {
   })
 
   test('should throw error when source shop is not found', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([{
-      ...mockOrganization,
-      shops: [mockTargetShop], // Only target shop exists
-    }])
+    mockApiClient.fetchOrganizations.mockResolvedValue([
+      {
+        ...mockOrganization,
+        // Only target shop exists
+        shops: [mockTargetShop],
+      },
+    ])
 
-    await expect(operation.execute('nonexistent.myshopify.com', 'target.myshopify.com', {}))
-      .rejects.toThrow('Source shop (nonexistent.myshopify.com) not found.')
+    await expect(operation.execute('nonexistent.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
+      'Source shop (nonexistent.myshopify.com) not found.',
+    )
   })
 
   test('should throw error when target shop is not found', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([{
-      ...mockOrganization,
-      shops: [mockSourceShop], // Only source shop exists
-    }])
+    mockApiClient.fetchOrganizations.mockResolvedValue([
+      {
+        ...mockOrganization,
+        // Only source shop exists
+        shops: [mockSourceShop],
+      },
+    ])
 
-    await expect(operation.execute('source.myshopify.com', 'nonexistent.myshopify.com', {}))
-      .rejects.toThrow('Target shop (nonexistent.myshopify.com) not found.')
+    await expect(operation.execute('source.myshopify.com', 'nonexistent.myshopify.com', {})).rejects.toThrow(
+      'Target shop (nonexistent.myshopify.com) not found.',
+    )
   })
 
   test('should throw error when source and target shops are the same', async () => {
-    await expect(operation.execute('source.myshopify.com', 'source.myshopify.com', {}))
-      .rejects.toThrow('Source and target shops must not be the same.')
+    await expect(operation.execute('source.myshopify.com', 'source.myshopify.com', {})).rejects.toThrow(
+      'Source and target shops must not be the same.',
+    )
   })
 
   test('should throw error when shops are in different organizations', async () => {
@@ -145,8 +154,9 @@ describe('StoreCopyOperation', () => {
     const differentOrg: Organization = TEST_MOCK_DATA.differentOrganization
     mockApiClient.fetchOrganizations.mockResolvedValue([mockOrganization, differentOrg])
 
-    await expect(operation.execute('source.myshopify.com', 'different.myshopify.com', {}))
-      .rejects.toThrow('Source and target shops must be in the same organization.')
+    await expect(operation.execute('source.myshopify.com', 'different.myshopify.com', {})).rejects.toThrow(
+      'Source and target shops must be in the same organization.',
+    )
   })
 
   test('should filter out organizations with single shop', async () => {
@@ -168,7 +178,7 @@ describe('StoreCopyOperation', () => {
     }
     vi.mocked(parseResourceConfigFlags).mockReturnValue(mockResourceConfig)
 
-    await operation.execute('source.myshopify.com', 'target.myshopify.com', { key: ['products:handle'] })
+    await operation.execute('source.myshopify.com', 'target.myshopify.com', {key: ['products:handle']})
 
     expect(parseResourceConfigFlags).toHaveBeenCalledWith(['products:handle'])
     expect(mockApiClient.startBulkDataStoreCopy).toHaveBeenCalledWith(
@@ -184,16 +194,18 @@ describe('StoreCopyOperation', () => {
     const failedResponse: BulkDataStoreCopyStartResponse = generateTestFailedStartResponse()
     mockApiClient.startBulkDataStoreCopy.mockResolvedValue(failedResponse)
 
-    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {}))
-      .rejects.toThrow('Failed to start copy operation: Invalid configuration, Insufficient permissions')
+    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
+      'Failed to start copy operation: Invalid configuration, Insufficient permissions',
+    )
   })
 
   test('should throw error when copy operation status is FAILED', async () => {
     const failedOperation: BulkDataOperationByIdResponse = generateTestOperationResponse('FAILED')
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {}))
-      .rejects.toThrow('Copy operation failed')
+    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
+      'Copy operation failed',
+    )
   })
 
   test('should render warning when copy completes with errors', async () => {
@@ -238,20 +250,21 @@ describe('StoreCopyOperation', () => {
       .mockResolvedValueOnce(inProgressOperation)
       .mockResolvedValueOnce(failedOperation)
 
-    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {}))
-      .rejects.toThrow('Copy operation failed')
+    await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
+      'Copy operation failed',
+    )
   })
 
   test('should use MockApiClient when mock flag is set', async () => {
     const operation = new StoreCopyOperation()
-    
+
     // Set up a shorter polling time for the test
     const originalTimeout = setTimeout
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any, delay: any) => {
       return originalTimeout(fn, Math.min(delay, 100))
     })
-    
-    await operation.execute('source.myshopify.com', 'target.myshopify.com', { mock: true })
+
+    await operation.execute('source.myshopify.com', 'target.myshopify.com', {mock: true})
 
     // The operation should complete successfully with mock data
     expect(renderSuccess).toHaveBeenCalled()

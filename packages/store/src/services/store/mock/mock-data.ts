@@ -1,5 +1,10 @@
 import {Shop} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {
+  BulkDataStoreCopyStartResponse,
+  BulkDataStoreExportStartResponse,
+  BulkDataStoreImportStartResponse,
+  BulkDataOperationByIdResponse,
+} from '../../../apis/organizations/types.js'
 
 function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj))

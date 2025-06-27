@@ -1,13 +1,10 @@
 import {StoreExportOperation} from './store-export.js'
-import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {
   TEST_MOCK_DATA,
   TEST_EXPORT_START_RESPONSE,
   TEST_COMPLETED_EXPORT_OPERATION,
-  generateTestOperationResponse,
-  generateTestOperationWithErrors,
   generateTestFailedExportStartResponse,
 } from '../mock/mock-data.js'
 import {Shop, Organization} from '../../../apis/destinations/types.js'
@@ -32,7 +29,6 @@ describe('StoreExportOperation', () => {
   let operation: StoreExportOperation
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
@@ -70,14 +66,14 @@ describe('StoreExportOperation', () => {
   test('should instantiate with a mock API client', () => {
     const mockApiClient = new MockApiClient()
     const operation = new StoreExportOperation(mockApiClient)
-    
+
     expect(operation).toBeDefined()
     expect(operation).toBeInstanceOf(StoreExportOperation)
   })
 
   test('should instantiate without API client (uses default)', () => {
     const operation = new StoreExportOperation()
-    
+
     expect(operation).toBeDefined()
     expect(operation).toBeInstanceOf(StoreExportOperation)
   })
@@ -88,39 +84,43 @@ describe('StoreExportOperation', () => {
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
     expect(mockApiClient.fetchOrganizations).toHaveBeenCalledWith(mockBpSession)
     expect(outputInfo).toHaveBeenCalledWith('Exporting data from source.myshopify.com')
-    expect(mockApiClient.startBulkDataStoreExport).toHaveBeenCalledWith(
-      'org1',
-      'source.myshopify.com',
-      mockBpSession,
-    )
+    expect(mockApiClient.startBulkDataStoreExport).toHaveBeenCalledWith('org1', 'source.myshopify.com', mockBpSession)
     expect(renderSuccess).toHaveBeenCalledWith({
       body: ['Export operation from', {info: 'source.myshopify.com'}, 'complete'],
     })
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
       mockCompletedOperation,
       'export',
-      'source.myshopify.com'
+      'source.myshopify.com',
     )
   })
 
   test('should throw error when source shop is not found', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([{
-      ...mockOrganization,
-      shops: [mockSourceShop.id === 'shop1' ? {...mockSourceShop, domain: 'different.myshopify.com'} : mockSourceShop],
-    }])
+    mockApiClient.fetchOrganizations.mockResolvedValue([
+      {
+        ...mockOrganization,
+        shops: [
+          mockSourceShop.id === 'shop1' ? {...mockSourceShop, domain: 'different.myshopify.com'} : mockSourceShop,
+        ],
+      },
+    ])
 
-    await expect(operation.execute('nonexistent.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Source shop (nonexistent.myshopify.com) not found.')
+    await expect(operation.execute('nonexistent.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Source shop (nonexistent.myshopify.com) not found.',
+    )
   })
 
   test('should throw error when organization has no shops', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([{
-      ...mockOrganization,
-      shops: [],
-    }])
+    mockApiClient.fetchOrganizations.mockResolvedValue([
+      {
+        ...mockOrganization,
+        shops: [],
+      },
+    ])
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Source shop (source.myshopify.com) not found.')
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Source shop (source.myshopify.com) not found.',
+    )
   })
 
   test('should filter out organizations with single shop', async () => {
@@ -136,8 +136,9 @@ describe('StoreExportOperation', () => {
     const failedResponse: BulkDataStoreExportStartResponse = generateTestFailedExportStartResponse()
     mockApiClient.startBulkDataStoreExport.mockResolvedValue(failedResponse)
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Failed to start export operation: Invalid export configuration, Export not allowed')
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Failed to start export operation: Invalid export configuration, Export not allowed',
+    )
   })
 
   test('should throw error when export operation status is FAILED', async () => {
@@ -156,8 +157,9 @@ describe('StoreExportOperation', () => {
     }
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Export operation failed')
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Export operation failed',
+    )
   })
 
   test('should render warning when export completes with errors', async () => {
@@ -193,12 +195,7 @@ describe('StoreExportOperation', () => {
     await operation.execute('source.myshopify.com', 'output.sqlite', {})
 
     expect(renderWarning).toHaveBeenCalledWith({
-      body: [
-        'Export operation from',
-        {info: 'source.myshopify.com'},
-        'completed with',
-        {error: 'errors'},
-      ],
+      body: ['Export operation from', {info: 'source.myshopify.com'}, 'completed with', {error: 'errors'}],
     })
     expect(renderSuccess).not.toHaveBeenCalled()
   })
@@ -262,8 +259,9 @@ describe('StoreExportOperation', () => {
       .mockResolvedValueOnce(inProgressOperation)
       .mockResolvedValueOnce(failedOperation)
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Export operation failed')
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Export operation failed',
+    )
   })
 
   test('should NOT call ResultFileHandler when export fails', async () => {
@@ -282,22 +280,23 @@ describe('StoreExportOperation', () => {
     }
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Export operation failed')
-    
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Export operation failed',
+    )
+
     expect(mockResultFileHandler.promptAndHandleResultFile).not.toHaveBeenCalled()
   })
 
   test('should use MockApiClient when mock flag is set', async () => {
     const operation = new StoreExportOperation()
-    
+
     // Set up a shorter polling time for the test
     const originalTimeout = setTimeout
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any, delay: any) => {
       return originalTimeout(fn, Math.min(delay, 100))
     })
-    
-    await operation.execute('source.myshopify.com', 'output.sqlite', { mock: true })
+
+    await operation.execute('source.myshopify.com', 'output.sqlite', {mock: true})
 
     // The operation should complete successfully with mock data
     expect(renderSuccess).toHaveBeenCalled()
@@ -307,7 +306,7 @@ describe('StoreExportOperation', () => {
     // The toFile parameter is prefixed with _ in the execute method, indicating it's not used
     // This test verifies the operation works regardless of the toFile value
     await operation.execute('source.myshopify.com', 'any-value-here.sqlite', {})
-    
+
     expect(renderSuccess).toHaveBeenCalled()
     // The toFile parameter should not affect the operation
   })
@@ -341,7 +340,8 @@ describe('StoreExportOperation', () => {
     }
     mockApiClient.startBulkDataStoreExport.mockResolvedValue(failedResponse)
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {}))
-      .rejects.toThrow('Failed to start export operation: Error 1, Error 2, Error 3')
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
+      'Failed to start export operation: Error 1, Error 2, Error 3',
+    )
   })
 })

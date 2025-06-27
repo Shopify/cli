@@ -1,5 +1,4 @@
 import {StoreImportOperation} from './store-import.js'
-import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
@@ -8,8 +7,6 @@ import {
   TEST_MOCK_DATA,
   TEST_IMPORT_START_RESPONSE,
   TEST_COMPLETED_IMPORT_OPERATION,
-  generateTestOperationResponse,
-  generateTestOperationWithErrors,
   generateTestFailedImportStartResponse,
 } from '../mock/mock-data.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
@@ -42,7 +39,6 @@ describe('StoreImportOperation', () => {
   let operation: StoreImportOperation
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
@@ -89,14 +85,14 @@ describe('StoreImportOperation', () => {
   test('should instantiate with a mock API client', () => {
     const mockApiClient = new MockApiClient()
     const operation = new StoreImportOperation(mockApiClient)
-    
+
     expect(operation).toBeDefined()
     expect(operation).toBeInstanceOf(StoreImportOperation)
   })
 
   test('should instantiate without API client (uses default)', () => {
     const operation = new StoreImportOperation()
-    
+
     expect(operation).toBeDefined()
     expect(operation).toBeInstanceOf(StoreImportOperation)
   })
@@ -127,37 +123,46 @@ describe('StoreImportOperation', () => {
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
       mockCompletedOperation,
       'import',
-      'target.myshopify.com'
+      'target.myshopify.com',
     )
   })
 
   test('should throw error when input file does not exist', async () => {
     vi.mocked(fileExists).mockResolvedValue(false)
 
-    await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('File not found: nonexistent.sqlite')
+    await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'File not found: nonexistent.sqlite',
+    )
 
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
   })
 
   test('should throw error when target shop is not found', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([{
-      ...mockOrganization,
-      shops: [mockTargetShop.id === 'shop2' ? {...mockTargetShop, domain: 'different.myshopify.com'} : mockTargetShop],
-    }])
+    mockApiClient.fetchOrganizations.mockResolvedValue([
+      {
+        ...mockOrganization,
+        shops: [
+          mockTargetShop.id === 'shop2' ? {...mockTargetShop, domain: 'different.myshopify.com'} : mockTargetShop,
+        ],
+      },
+    ])
 
-    await expect(operation.execute('input.sqlite', 'nonexistent.myshopify.com', {}))
-      .rejects.toThrow('Target shop (nonexistent.myshopify.com) not found.')
+    await expect(operation.execute('input.sqlite', 'nonexistent.myshopify.com', {})).rejects.toThrow(
+      'Target shop (nonexistent.myshopify.com) not found.',
+    )
   })
 
   test('should throw error when organization has no shops', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([{
-      ...mockOrganization,
-      shops: [],
-    }])
+    mockApiClient.fetchOrganizations.mockResolvedValue([
+      {
+        ...mockOrganization,
+        shops: [],
+      },
+    ])
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('Target shop (target.myshopify.com) not found.')
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'Target shop (target.myshopify.com) not found.',
+    )
   })
 
   test('should filter out organizations with single shop', async () => {
@@ -170,7 +175,7 @@ describe('StoreImportOperation', () => {
   })
 
   test('should skip confirmation when --skip-confirmation flag is provided', async () => {
-    await operation.execute('input.sqlite', 'target.myshopify.com', { skipConfirmation: true })
+    await operation.execute('input.sqlite', 'target.myshopify.com', {skipConfirmation: true})
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(mockApiClient.startBulkDataStoreImport).toHaveBeenCalledWith(
@@ -184,7 +189,7 @@ describe('StoreImportOperation', () => {
 
   test('should exit when user cancels confirmation', async () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
-    
+
     await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow('Process exit called')
 
     expect(outputInfo).toHaveBeenCalledWith('Exiting.')
@@ -197,8 +202,9 @@ describe('StoreImportOperation', () => {
     const failedResponse: BulkDataStoreImportStartResponse = generateTestFailedImportStartResponse()
     mockApiClient.startBulkDataStoreImport.mockResolvedValue(failedResponse)
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('Failed to start import operation: Invalid file format, Import not allowed for this store')
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'Failed to start import operation: Invalid file format, Import not allowed for this store',
+    )
   })
 
   test('should throw error when import operation status is FAILED', async () => {
@@ -217,8 +223,9 @@ describe('StoreImportOperation', () => {
     }
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('Import operation failed')
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'Import operation failed',
+    )
   })
 
   test('should render warning when import completes with errors', async () => {
@@ -254,12 +261,7 @@ describe('StoreImportOperation', () => {
     await operation.execute('input.sqlite', 'target.myshopify.com', {})
 
     expect(renderWarning).toHaveBeenCalledWith({
-      body: [
-        'Import operation to',
-        {info: 'target.myshopify.com'},
-        'completed with',
-        {error: 'errors'},
-      ],
+      body: ['Import operation to', {info: 'target.myshopify.com'}, 'completed with', {error: 'errors'}],
     })
     expect(renderSuccess).not.toHaveBeenCalled()
   })
@@ -323,8 +325,9 @@ describe('StoreImportOperation', () => {
       .mockResolvedValueOnce(inProgressOperation)
       .mockResolvedValueOnce(failedOperation)
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('Import operation failed')
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'Import operation failed',
+    )
   })
 
   test('should NOT call ResultFileHandler when import fails', async () => {
@@ -343,28 +346,29 @@ describe('StoreImportOperation', () => {
     }
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('Import operation failed')
-    
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'Import operation failed',
+    )
+
     expect(mockResultFileHandler.promptAndHandleResultFile).not.toHaveBeenCalled()
   })
 
   test('should use MockApiClient and MockFileUploader when mock flag is set', async () => {
     const operation = new StoreImportOperation()
-    
+
     // Mock the MockFileUploader
     const mockMockFileUploader = {
       uploadSqliteFile: vi.fn().mockResolvedValue('https://mock-url.com/file.sqlite'),
     }
     vi.mocked(MockFileUploader).mockImplementation(() => mockMockFileUploader)
-    
+
     // Set up a shorter polling time for the test
     const originalTimeout = setTimeout
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any, delay: any) => {
       return originalTimeout(fn, Math.min(delay, 100))
     })
-    
-    await operation.execute('input.sqlite', 'target.myshopify.com', { mock: true })
+
+    await operation.execute('input.sqlite', 'target.myshopify.com', {mock: true})
 
     // The operation should complete successfully with mock data
     expect(renderSuccess).toHaveBeenCalled()
@@ -396,7 +400,7 @@ describe('StoreImportOperation', () => {
     }
     vi.mocked(parseResourceConfigFlags).mockReturnValue(mockResourceConfig)
 
-    await operation.execute('input.sqlite', 'target.myshopify.com', { key: ['products:handle'] })
+    await operation.execute('input.sqlite', 'target.myshopify.com', {key: ['products:handle']})
 
     expect(parseResourceConfigFlags).toHaveBeenCalledWith(['products:handle'])
     expect(mockApiClient.startBulkDataStoreImport).toHaveBeenCalledWith(
@@ -426,15 +430,17 @@ describe('StoreImportOperation', () => {
     }
     mockApiClient.startBulkDataStoreImport.mockResolvedValue(failedResponse)
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('Failed to start import operation: Error 1, Error 2, Error 3')
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'Failed to start import operation: Error 1, Error 2, Error 3',
+    )
   })
 
   test('should validate file before authenticating', async () => {
     vi.mocked(fileExists).mockResolvedValue(false)
 
-    await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {}))
-      .rejects.toThrow('File not found: nonexistent.sqlite')
+    await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
+      'File not found: nonexistent.sqlite',
+    )
 
     // Ensure file validation happens before authentication
     expect(fileExists).toHaveBeenCalled()
@@ -450,7 +456,8 @@ describe('StoreImportOperation', () => {
     expect(mockApiClient.startBulkDataStoreImport).toHaveBeenCalledWith(
       'org1',
       'target.myshopify.com',
-      customUploadUrl, // Should use the URL returned from upload
+      // Should use the URL returned from upload
+      customUploadUrl,
       {},
       mockBpSession,
     )

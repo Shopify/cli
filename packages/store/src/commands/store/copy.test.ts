@@ -17,28 +17,36 @@ describe('Copy', () => {
   const mockExecute = vi.fn()
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
-    
+
     // Mock all operations with the same execute function
-    vi.mocked(StoreCopyOperation).mockImplementation(() => ({
-      execute: mockExecute,
-      fromArg: undefined,
-      toArg: undefined,
-    }) as any)
-    
-    vi.mocked(StoreExportOperation).mockImplementation(() => ({
-      execute: mockExecute,
-      fromArg: undefined,
-    }) as any)
-    
-    vi.mocked(StoreImportOperation).mockImplementation(() => ({
-      execute: mockExecute,
-      fromArg: undefined,
-      toArg: undefined,
-    }) as any)
+    vi.mocked(StoreCopyOperation).mockImplementation(
+      () =>
+        ({
+          execute: mockExecute,
+          fromArg: undefined,
+          toArg: undefined,
+        } as any),
+    )
+
+    vi.mocked(StoreExportOperation).mockImplementation(
+      () =>
+        ({
+          execute: mockExecute,
+          fromArg: undefined,
+        } as any),
+    )
+
+    vi.mocked(StoreImportOperation).mockImplementation(
+      () =>
+        ({
+          execute: mockExecute,
+          fromArg: undefined,
+          toArg: undefined,
+        } as any),
+    )
   })
 
   describe('run', () => {
@@ -97,12 +105,12 @@ describe('Copy', () => {
       await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com', '--skipConfirmation', '--mock'])
 
       expect(mockExecute).toHaveBeenCalledWith(
-        'source.myshopify.com', 
-        'target.myshopify.com', 
+        'source.myshopify.com',
+        'target.myshopify.com',
         expect.objectContaining({
           skipConfirmation: true,
           mock: true,
-        })
+        }),
       )
     })
   })
