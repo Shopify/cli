@@ -1,5 +1,5 @@
 import {Shop} from '../../../apis/destinations/types.js'
-import {BulkDataStoreCopyStartResponse, BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {BulkDataStoreCopyStartResponse, BulkDataStoreExportStartResponse, BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 
 function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj))
@@ -86,6 +86,18 @@ export const TEST_EXPORT_START_RESPONSE: BulkDataStoreExportStartResponse = {
     operation: {
       id: 'export-operation-123',
       operationType: 'EXPORT',
+      status: 'IN_PROGRESS',
+    },
+  },
+}
+
+export const TEST_IMPORT_START_RESPONSE: BulkDataStoreImportStartResponse = {
+  bulkDataStoreImportStart: {
+    success: true,
+    userErrors: [],
+    operation: {
+      id: 'import-operation-123',
+      operationType: 'IMPORT',
       status: 'IN_PROGRESS',
     },
   },
@@ -212,6 +224,52 @@ export const TEST_COMPLETED_EXPORT_OPERATION: BulkDataOperationByIdResponse = {
             totalObjectCount: 100,
             completedObjectCount: 100,
             url: 'https://source.myshopify.com/export_data.sqlite',
+          },
+        ],
+      },
+    },
+  },
+}
+
+export function generateTestFailedImportStartResponse(): BulkDataStoreImportStartResponse {
+  const cloned = deepClone(TEST_IMPORT_START_RESPONSE)
+
+  cloned.bulkDataStoreImportStart.success = false
+  cloned.bulkDataStoreImportStart.userErrors = [
+    {field: 'file', message: 'Invalid file format'},
+    {field: 'permissions', message: 'Import not allowed for this store'},
+  ]
+  cloned.bulkDataStoreImportStart.operation.id = ''
+  cloned.bulkDataStoreImportStart.operation.operationType = ''
+  cloned.bulkDataStoreImportStart.operation.status = 'FAILED'
+
+  return cloned
+}
+
+export const TEST_COMPLETED_IMPORT_OPERATION: BulkDataOperationByIdResponse = {
+  organization: {
+    name: 'Test Organization',
+    bulkData: {
+      operation: {
+        id: 'import-operation-123',
+        operationType: 'IMPORT',
+        status: 'COMPLETED',
+        targetStore: {
+          id: 'shop2',
+          name: 'Target Shop',
+        },
+        storeOperations: [
+          {
+            id: 'store-op-1',
+            store: {
+              id: 'shop2',
+              name: 'Target Shop',
+            },
+            remoteOperationType: 'IMPORT',
+            remoteOperationStatus: 'COMPLETED',
+            totalObjectCount: 100,
+            completedObjectCount: 100,
+            url: 'https://target.myshopify.com/import_result.sqlite',
           },
         ],
       },
