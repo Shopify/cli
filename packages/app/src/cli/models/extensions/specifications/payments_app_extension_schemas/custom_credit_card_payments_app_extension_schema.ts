@@ -30,9 +30,7 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
     ui_extension_handle: zod.string().optional(),
-    encryption_certificate_fingerprint: zod
-      .string()
-      .min(1, {message: "Encryption certificate fingerprint can't be blank"}),
+    encryption_certificate_fingerprint: zod.string(),
     checkout_payment_method_fields: zod
       .array(
         zod.object({

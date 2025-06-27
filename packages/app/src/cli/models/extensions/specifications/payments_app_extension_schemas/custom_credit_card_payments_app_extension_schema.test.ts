@@ -70,28 +70,6 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
     )
   })
 
-  test('returns an error if encryption certificate fingerprint is blank', async () => {
-    // When/Then
-    expect(() =>
-      CustomCreditCardPaymentsAppExtensionSchema.parse({
-        ...config,
-        encryption_certificate_fingerprint: '',
-      }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.too_small,
-          minimum: 1,
-          type: 'string',
-          inclusive: true,
-          exact: false,
-          message: "Encryption certificate fingerprint can't be blank",
-          path: ['encryption_certificate_fingerprint'],
-        },
-      ]),
-    )
-  })
-
   test('returns an error if buyer_label_translations has invalid format', async () => {
     // When/Then
     expect(() =>
