@@ -10,7 +10,7 @@ import {
 import {Shop, Organization} from '../../../apis/destinations/types.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
-import {renderSuccess, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderTasks, renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 vi.mock('../utils/result-file-handler.js')
@@ -47,15 +47,12 @@ describe('StoreExportOperation', () => {
 
     operation = new StoreExportOperation(mockApiClient)
 
-    vi.mocked(renderTasks).mockImplementation(async (tasks) => {
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       const ctx = {}
-      const processTask = async (index: number): Promise<void> => {
-        if (index < tasks.length) {
-          await tasks[index]!.task(ctx, tasks[index]!)
-          await processTask(index + 1)
-        }
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
       }
-      await processTask(0)
       return ctx
     })
   })

@@ -13,7 +13,7 @@ import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {Shop, Organization} from '../../../apis/destinations/types.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
-import {renderSuccess, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderTasks, renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 vi.mock('../../../prompts/confirm_copy.js')
@@ -48,15 +48,12 @@ describe('StoreCopyOperation', () => {
 
     vi.mocked(confirmCopyPrompt).mockResolvedValue(true)
     vi.mocked(parseResourceConfigFlags).mockReturnValue({})
-    vi.mocked(renderTasks).mockImplementation(async (tasks) => {
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       const ctx = {}
-      const processTask = async (index: number): Promise<void> => {
-        if (index < tasks.length) {
-          await tasks[index]!.task(ctx, tasks[index]!)
-          await processTask(index + 1)
-        }
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
       }
-      await processTask(0)
       return ctx
     })
   })
