@@ -27,8 +27,8 @@ export class BulkOperationTaskGenerator {
   constructor(config: BulkOperationConfig) {
     this.config = {
       operationName: config.operationName,
-      pollingTaskCount: config.pollingTaskCount ?? 1800,
-      pollingInterval: config.pollingInterval ?? 3000,
+      pollingTaskCount: config.pollingTaskCount ?? 5000,
+      pollingInterval: config.pollingInterval ?? 500,
       emojis: config.emojis ?? ['🚀', '✨', '🔥', '💫', '🌟'],
     }
   }
@@ -41,7 +41,7 @@ export class BulkOperationTaskGenerator {
     callbacks: BulkOperationCallbacks<TContext>,
   ): Task<TContext> {
     return {
-      title: `Starting ${this.config.operationName} operation`,
+      title: `starting ${this.config.operationName} operation`,
       task: async (ctx: TContext) => {
         // eslint-disable-next-line require-atomic-updates
         ctx.operation = await callbacks.startOperation(ctx)

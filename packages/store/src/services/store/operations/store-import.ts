@@ -10,6 +10,7 @@ import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
+import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
   renderSuccess,
@@ -57,6 +58,8 @@ export class StoreImportOperation implements StoreOperation {
         process.exit(0)
       }
     }
+
+    renderCopyInfo('Import Operation', fromFile, targetShop.domain)
 
     const importOperation = await this.importDataWithProgress(
       targetShop.organizationId,
@@ -137,9 +140,6 @@ export class StoreImportOperation implements StoreOperation {
 
     const taskGenerator = new BulkOperationTaskGenerator({
       operationName: 'import',
-      pollingTaskCount: 1800,
-      pollingInterval: 3000,
-      emojis: ['📥', '⬆️', '📲', '🔄', '✅'],
     })
 
     const bulkTasks = taskGenerator.generateTasks<ImportContext>({
@@ -155,7 +155,7 @@ export class StoreImportOperation implements StoreOperation {
     // Create all tasks including upload
     const allTasks: Task<ImportContext>[] = [
       {
-        title: 'Initializing',
+        title: 'initializing',
         task: async (ctx: ImportContext) => {
           ctx.organizationId = organizationId
           ctx.bpSession = bpSession
@@ -165,7 +165,7 @@ export class StoreImportOperation implements StoreOperation {
         },
       },
       {
-        title: `Uploading SQLite file`,
+        title: `uploading SQLite file`,
         task: async (ctx: ImportContext) => {
           ctx.importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShop.domain)
         },

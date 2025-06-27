@@ -8,6 +8,7 @@ import {findShop} from '../utils/store-utils.js'
 import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
+import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 
@@ -47,7 +48,8 @@ export class StoreCopyOperation implements StoreOperation {
       }
     }
 
-    outputInfo(`Copying data from ${sourceShop.domain} to ${targetShop.domain}`)
+    renderCopyInfo('Copy Operation', sourceShop.domain, targetShop.domain)
+
     const copyOperation = await this.copyDataWithProgress(
       sourceShop.organizationId,
       sourceShop,
@@ -121,9 +123,6 @@ export class StoreCopyOperation implements StoreOperation {
 
     const taskGenerator = new BulkOperationTaskGenerator({
       operationName: 'copy',
-      pollingTaskCount: 1800,
-      pollingInterval: 3000,
-      emojis: ['🚀', '✨', '🔥', '💫', '🌟'],
     })
 
     const tasks = taskGenerator.generateTasks<CopyContext>({
