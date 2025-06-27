@@ -1,6 +1,5 @@
 import {StagedUploadInput, createStagedUploadAdmin} from '../../../apis/admin/index.js'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 import {readFileSync, statSync} from 'node:fs'
 
 export class FileUploader {
@@ -9,8 +8,6 @@ export class FileUploader {
 
     const fileStats = statSync(filePath)
     const fileBuffer = readFileSync(filePath)
-
-    outputInfo(`Preparing to upload SQLite file: ${filePath} (${fileStats.size} bytes)`)
 
     const uploadInput: StagedUploadInput = {
       resource: 'FILE',
@@ -31,8 +28,6 @@ export class FileUploader {
       throw new Error('No staged target returned from upload response')
     }
     const {url, resourceUrl, parameters} = stagedTarget
-
-    outputInfo(`Uploading file to staged location...`)
 
     const formData = new FormData()
 

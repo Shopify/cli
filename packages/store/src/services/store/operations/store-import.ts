@@ -75,16 +75,6 @@ export class StoreImportOperation implements StoreOperation {
     }
 
     this.renderImportResult(targetShop, importOperation)
-    const filePath = `${targetShop.domain.replace(/[^a-zA-Z0-9.-]/g, '_')}-import-${Date.now()}.sqlite`
-    if (status === 'COMPLETED') {
-      await this.resultFileHandler.promptAndHandleResultFile(
-        importOperation,
-        'import',
-        targetShop.domain,
-        flags,
-        filePath,
-      )
-    }
   }
 
   private async validateInputFile(filePath: string): Promise<void> {
@@ -188,15 +178,18 @@ export class StoreImportOperation implements StoreOperation {
 
     const storeOperations = importOperation.organization.bulkData.operation.storeOperations
     const hasErrors = storeOperations.some((op) => op.remoteOperationStatus === 'FAILED')
-
+    const url = storeOperations[0]!.url
+    const link = {link: {label: 'results file can be downloaded for more details', url}}
     if (hasErrors) {
       msg.push(`completed with`)
       msg.push({error: `errors`})
+      msg.push(link)
       renderWarning({
         body: msg,
       })
     } else {
       msg.push('complete')
+      msg.push(link)
       renderSuccess({
         body: msg,
       })
