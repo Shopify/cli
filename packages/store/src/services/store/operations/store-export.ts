@@ -6,7 +6,7 @@ import {findShop} from '../utils/store-utils.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 
 export class StoreExportOperation implements StoreOperation {
@@ -57,8 +57,6 @@ export class StoreExportOperation implements StoreOperation {
     organizationId: string,
     sourceShop: Shop,
   ): Promise<BulkDataOperationByIdResponse> {
-    outputInfo(`Exporting data from ${sourceShop.domain}`)
-
     const exportResponse: BulkDataStoreExportStartResponse = await this.apiClient.startBulkDataStoreExport(
       organizationId,
       sourceShop.domain,
@@ -74,59 +72,48 @@ export class StoreExportOperation implements StoreOperation {
     return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
   }
 
-  private async waitForExportCompletion(
-    bpSession: string,
-    organizationId: string,
-    initialOperation: BulkDataOperationByIdResponse,
-  ): Promise<BulkDataOperationByIdResponse> {
-    let currentOperation = initialOperation
-    const operationId = currentOperation.organization.bulkData.operation.id
-
-    while (true) {
-      const status = currentOperation.organization.bulkData.operation.status
-
-      if (status === 'COMPLETED') {
-        return currentOperation
-      } else if (status === 'FAILED') {
-        throw new Error(`Export operation failed`)
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // eslint-disable-next-line no-await-in-loop
-      currentOperation = await this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
-    }
-  }
-
-  private async executeExportOperation(
-    organizationId: string,
-    sourceShop: Shop,
-    bpSession: string,
-  ): Promise<BulkDataOperationByIdResponse> {
-    const initialOperation = await this.startExportOperation(bpSession, organizationId, sourceShop)
-    return this.waitForExportCompletion(bpSession, organizationId, initialOperation)
-  }
-
   private async exportDataWithProgress(
     organizationId: string,
     sourceShop: Shop,
     bpSession: string,
   ): Promise<BulkDataOperationByIdResponse> {
-    interface Context {
-      exportOperation: BulkDataOperationByIdResponse
+    interface ExportContext extends BulkOperationContext {
+      sourceShop: Shop
     }
 
-    const tasks: Task<Context>[] = [
+    const taskGenerator = new BulkOperationTaskGenerator({
+      operationName: 'export',
+      pollingTaskCount: 1800,
+      pollingInterval: 3000,
+      emojis: ['📤', '💾', '📦', '🗂️', '📋'],
+    })
+
+    const tasks = taskGenerator.generateTasks<ExportContext>({
+      startOperation: async (ctx: ExportContext) => {
+        return this.startExportOperation(ctx.bpSession, ctx.organizationId, ctx.sourceShop)
+      },
+      pollOperation: async (ctx: ExportContext) => {
+        const operationId = ctx.operation.organization.bulkData.operation.id
+        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+      },
+    })
+
+    // Add initial context setup task
+    const allTasks: Task<ExportContext>[] = [
       {
-        title: `Starting export from ${sourceShop.domain}`,
-        task: async (ctx: Context) => {
-          ctx.exportOperation = await this.executeExportOperation(organizationId, sourceShop, bpSession)
+        title: 'Initializing',
+        task: async (ctx: ExportContext) => {
+          ctx.organizationId = organizationId
+          ctx.bpSession = bpSession
+          ctx.sourceShop = sourceShop
+          ctx.isComplete = false
         },
       },
+      ...tasks,
     ]
 
-    const ctx: Context = await renderTasks(tasks)
-    return ctx.exportOperation
+    const ctx: ExportContext = await renderTasks(allTasks)
+    return ctx.operation
   }
 
   private renderExportResult(sourceShop: Shop, exportOperation: BulkDataOperationByIdResponse): void {

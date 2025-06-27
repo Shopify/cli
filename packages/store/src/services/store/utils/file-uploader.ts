@@ -53,8 +53,6 @@ export class FileUploader {
       throw new Error(`File upload failed: ${uploadResponse.status} ${uploadResponse.statusText}. ${errorText}`)
     }
 
-    outputInfo(`File uploaded successfully`)
-
     return resourceUrl
   }
 

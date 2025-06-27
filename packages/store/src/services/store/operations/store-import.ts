@@ -9,6 +9,7 @@ import {MockFileUploader} from '../utils/mock-file-uploader.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
+import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {
   renderSuccess,
@@ -104,8 +105,6 @@ export class StoreImportOperation implements StoreOperation {
     importUrl: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
-    outputInfo(`Importing data to ${targetShop.domain}`)
-
     const importResponse: BulkDataStoreImportStartResponse = await this.apiClient.startBulkDataStoreImport(
       organizationId,
       targetShop.domain,
@@ -123,41 +122,6 @@ export class StoreImportOperation implements StoreOperation {
     return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
   }
 
-  private async waitForImportCompletion(
-    bpSession: string,
-    organizationId: string,
-    initialOperation: BulkDataOperationByIdResponse,
-  ): Promise<BulkDataOperationByIdResponse> {
-    let currentOperation = initialOperation
-    const operationId = currentOperation.organization.bulkData.operation.id
-
-    while (true) {
-      const status = currentOperation.organization.bulkData.operation.status
-
-      if (status === 'COMPLETED') {
-        return currentOperation
-      } else if (status === 'FAILED') {
-        throw new Error(`Import operation failed`)
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      // eslint-disable-next-line no-await-in-loop
-      currentOperation = await this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
-    }
-  }
-
-  private async executeImportOperation(
-    organizationId: string,
-    targetShop: Shop,
-    importUrl: string,
-    bpSession: string,
-    flags: FlagOptions,
-  ): Promise<BulkDataOperationByIdResponse> {
-    const initialOperation = await this.startImportOperation(bpSession, organizationId, targetShop, importUrl, flags)
-    return this.waitForImportCompletion(bpSession, organizationId, initialOperation)
-  }
-
   private async importDataWithProgress(
     organizationId: string,
     targetShop: Shop,
@@ -165,35 +129,52 @@ export class StoreImportOperation implements StoreOperation {
     bpSession: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
-    interface Context {
+    interface ImportContext extends BulkOperationContext {
+      targetShop: Shop
       importUrl: string
-      importOperation: BulkDataOperationByIdResponse
+      flags: FlagOptions
     }
 
-    const tasks: Task<Context>[] = [
+    const taskGenerator = new BulkOperationTaskGenerator({
+      operationName: 'import',
+      pollingTaskCount: 1800,
+      pollingInterval: 3000,
+      emojis: ['📥', '⬆️', '📲', '🔄', '✅'],
+    })
+
+    const bulkTasks = taskGenerator.generateTasks<ImportContext>({
+      startOperation: async (ctx: ImportContext) => {
+        return this.startImportOperation(ctx.bpSession, ctx.organizationId, ctx.targetShop, ctx.importUrl, ctx.flags)
+      },
+      pollOperation: async (ctx: ImportContext) => {
+        const operationId = ctx.operation.organization.bulkData.operation.id
+        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+      },
+    })
+
+    // Create all tasks including upload
+    const allTasks: Task<ImportContext>[] = [
+      {
+        title: 'Initializing',
+        task: async (ctx: ImportContext) => {
+          ctx.organizationId = organizationId
+          ctx.bpSession = bpSession
+          ctx.targetShop = targetShop
+          ctx.flags = flags
+          ctx.isComplete = false
+        },
+      },
       {
         title: `Uploading SQLite file`,
-        task: async (ctx: Context) => {
+        task: async (ctx: ImportContext) => {
           ctx.importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShop.domain)
         },
       },
-      {
-        title: `Starting import to ${targetShop.domain}`,
-        task: async (ctx: Context) => {
-          // eslint-disable-next-line require-atomic-updates
-          ctx.importOperation = await this.executeImportOperation(
-            organizationId,
-            targetShop,
-            ctx.importUrl,
-            bpSession,
-            flags,
-          )
-        },
-      },
+      ...bulkTasks,
     ]
 
-    const ctx: Context = await renderTasks(tasks)
-    return ctx.importOperation
+    const ctx: ImportContext = await renderTasks(allTasks)
+    return ctx.operation
   }
 
   private renderImportResult(targetShop: Shop, importOperation: BulkDataOperationByIdResponse): void {

@@ -7,6 +7,7 @@ import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
 import {findShop} from '../utils/store-utils.js'
 import {ApiClient} from '../api/api-client.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
+import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderSuccess, Task, renderTasks, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 
@@ -112,69 +113,47 @@ export class StoreCopyOperation implements StoreOperation {
     bpSession: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
-    interface Context {
-      copyOperation: BulkDataOperationByIdResponse
-      organizationId: string
-      bpSession: string
-      isComplete: boolean
+    interface CopyContext extends BulkOperationContext {
+      sourceShop: Shop
+      targetShop: Shop
+      flags: FlagOptions
     }
 
-    const pollingTaskCount = 1800
+    const taskGenerator = new BulkOperationTaskGenerator({
+      operationName: 'copy',
+      pollingTaskCount: 1800,
+      pollingInterval: 3000,
+      emojis: ['🚀', '✨', '🔥', '💫', '🌟'],
+    })
 
-    const pollingTasks: Task<Context>[] = []
-    for (let i = 0; i < pollingTaskCount; i++) {
-      const emojis = ['🚀', '✨', '🔥', '💫', '🌟']
-      const emoji = emojis[Math.floor(Math.random() * emojis.length)]
-      pollingTasks.push({
-        title: `Copying data ${emoji}`,
-        skip: (ctx: Context) => ctx.isComplete,
-        task: async (ctx: Context) => {
-          const operationId = ctx.copyOperation.organization.bulkData.operation.id
-          // eslint-disable-next-line require-atomic-updates
-          ctx.copyOperation = await this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
-          const status = ctx.copyOperation.organization.bulkData.operation.status
-          if (status === 'COMPLETED' || status === 'FAILED') {
-            ctx.isComplete = true
-          }
-          return [
-            {
-              title: `Copying data ${emoji}`,
-              task: async () => {
-                await new Promise((resolve) => setTimeout(resolve, 3000))
-              },
-            },
-          ]
-        },
-      })
-    }
+    const tasks = taskGenerator.generateTasks<CopyContext>({
+      startOperation: async (ctx: CopyContext) => {
+        return this.startCopyOperation(ctx.bpSession, ctx.organizationId, ctx.sourceShop, ctx.targetShop, ctx.flags)
+      },
+      pollOperation: async (ctx: CopyContext) => {
+        const operationId = ctx.operation.organization.bulkData.operation.id
+        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+      },
+    })
 
-    const tasks: Task<Context>[] = [
+    // Add initial context setup task
+    const allTasks: Task<CopyContext>[] = [
       {
-        title: 'Starting copy operation',
-        task: async (ctx: Context) => {
-          ctx.copyOperation = await this.startCopyOperation(bpSession, organizationId, sourceShop, targetShop, flags)
+        title: 'Initializing',
+        task: async (ctx: CopyContext) => {
           ctx.organizationId = organizationId
           ctx.bpSession = bpSession
+          ctx.sourceShop = sourceShop
+          ctx.targetShop = targetShop
+          ctx.flags = flags
           ctx.isComplete = false
-
-          const status = ctx.copyOperation.organization.bulkData.operation.status
-          if (status === 'COMPLETED' || status === 'FAILED') {
-            ctx.isComplete = true
-          }
-          await new Promise((resolve) => setTimeout(resolve, 3000))
         },
       },
-      ...pollingTasks,
-      {
-        title: 'Finalizing operation',
-        task: async () => {
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-        },
-      },
+      ...tasks,
     ]
 
-    const ctx: Context = await renderTasks(tasks)
-    return ctx.copyOperation
+    const ctx: CopyContext = await renderTasks(allTasks)
+    return ctx.operation
   }
 
   private renderCopyResult(sourceShop: Shop, targetShop: Shop, copyOperation: BulkDataOperationByIdResponse): void {
