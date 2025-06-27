@@ -701,6 +701,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.81.1
         version: link:../cli-kit
+      graphql-request:
+        specifier: 6.1.0
+        version: 6.1.0(graphql@16.10.0)
 
   packages/theme:
     dependencies:

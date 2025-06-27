@@ -1,7 +1,7 @@
-import CopyCommand from './cli/commands/store/copy.js'
+import Copy from './commands/store/copy.js'
 
 const COMMANDS = {
-  'store:copy': CopyCommand,
+  'store:copy': Copy,
 }
 
 export default COMMANDS
