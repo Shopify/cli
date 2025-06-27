@@ -4945,7 +4945,7 @@
           "type": "boolean"
         },
         "toFile": {
-          "description": "The SQLite file path to export data to. Use <sqlite> to auto-generate filename.",
+          "description": "The SQLite file path to export data to. Omit to auto-generate filename.",
           "env": "SHOPIFY_FLAG_TO_FILE",
           "hasDynamicHelp": false,
           "multiple": false,
