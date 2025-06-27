@@ -1,5 +1,5 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
-import {findOrSelectTheme, findThemes, newThemeOption} from './theme-selector.js'
+import {findOrSelectTheme, findThemeById, findThemes, newThemeOption} from './theme-selector.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {test, describe, vi, expect} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
@@ -104,6 +104,32 @@ describe('findOrSelectTheme', () => {
     // Then
     expect(themeCreate).toBeCalledWith({name: 'my new theme', role: 'unpublished'}, session)
     expect(actualTheme).toBe(expectedTheme)
+  })
+})
+
+describe('findThemeById', () => {
+  test('returns theme when found by ID', async () => {
+    // Given
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
+
+    // When
+    const theme = await findThemeById(session, '3')
+
+    // Then
+    expect(theme).toBe(storeThemes[2])
+    expect(theme?.id).toBe(3)
+    expect(theme?.name).toBe('theme 3')
+  })
+
+  test('returns undefined when theme not found', async () => {
+    // Given
+    vi.mocked(fetchStoreThemes).mockResolvedValue(storeThemes)
+
+    // When
+    const theme = await findThemeById(session, '1000')
+
+    // Then
+    expect(theme).toBeUndefined()
   })
 })
 

@@ -68,6 +68,18 @@ export async function findOrSelectTheme(session: AdminSession, options: FindOrSe
 }
 
 /**
+ * Finds a theme by its ID.
+ *
+ * @param session - Current Admin session
+ * @param themeId - The ID of the theme to find
+ * @returns the {@link Theme} with the given ID
+ */
+export async function findThemeById(session: AdminSession, themeId: string): Promise<Theme | undefined> {
+  const themes = await fetchStoreThemes(session)
+  return themes.find((theme) => theme.id.toString() === themeId)
+}
+
+/**
  * Finds themes in the store.
  *
  * @param session - Current Admin session
