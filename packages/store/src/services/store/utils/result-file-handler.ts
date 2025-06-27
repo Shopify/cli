@@ -1,8 +1,8 @@
 import {BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {FlagOptions} from '../../../lib/types.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderConfirmationPrompt, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadFile} from '@shopify/cli-kit/node/http'
-import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {exec} from '@shopify/cli-kit/node/system'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 
@@ -10,8 +10,9 @@ export class ResultFileHandler {
   async promptAndHandleResultFile(
     operation: BulkDataOperationByIdResponse,
     operationType: 'export' | 'import',
-    storeName?: string,
-    skipConfirmation?: boolean,
+    storeName: string,
+    flags: FlagOptions,
+    customFilePath: string,
   ): Promise<void> {
     const storeOperations = operation.organization.bulkData.operation.storeOperations
     const downloadUrl = storeOperations.find((op) => op.url)?.url
@@ -22,7 +23,7 @@ export class ResultFileHandler {
     }
 
     const shouldDownload =
-      skipConfirmation ??
+      flags.skipConfirmation ||
       (await renderConfirmationPrompt({
         message: `Press Enter to download the ${operationType} result file.`,
         confirmationMessage: 'Download',
@@ -30,29 +31,35 @@ export class ResultFileHandler {
       }))
 
     if (shouldDownload) {
-      await this.downloadAndProcessResultFile(downloadUrl, operationType, storeName)
+      await this.downloadAndProcessResultFile(downloadUrl, operationType, customFilePath)
     }
   }
 
-  private async downloadAndProcessResultFile(url: string, operationType: string, storeName?: string): Promise<void> {
+  private async downloadAndProcessResultFile(url: string, operationType: string, filePath: string): Promise<void> {
     const isCompressed = url.includes('.gz')
-    const extension = isCompressed ? '.sqlite.gz' : '.sqlite'
-    const storePrefix = storeName ? `${storeName}-` : ''
-    const filename = `${storePrefix}${operationType}-result-${Date.now()}${extension}`
-    const filepath = joinPath(cwd(), filename)
+    const downloadedFilepath = isCompressed && !filePath.endsWith('.gz') ? `${filePath}.gz` : filePath
 
     const tasks = [
       {
         title: `downloading ${operationType} result file`,
         task: async () => {
           await new Promise((resolve) => setTimeout(resolve, 3000))
-          await downloadFile(url, filepath)
+          await downloadFile(url, downloadedFilepath)
+        },
+      },
+      {
+        title: `processing ${operationType} result file`,
+        task: async () => {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          if (isCompressed) {
+            await this.gunzipFile(downloadedFilepath)
+          }
         },
       },
     ]
     await renderTasks(tasks)
     renderSuccess({
-      body: [{subdued: `${operationType} result file downloaded to:`}, {filePath: filepath}],
+      body: [{subdued: `${operationType} result file downloaded to:`}, {filePath}],
     })
   }
 
@@ -72,7 +79,7 @@ export class ResultFileHandler {
     const uncompressedFilepath = compressedFilepath.replace('.gz', '')
 
     outputInfo(`Extracting ${compressedFilepath}...`)
-    await exec('gunzip', [compressedFilepath])
+    await exec('gunzip', ['-f', compressedFilepath])
 
     if (await fileExists(uncompressedFilepath)) {
       outputInfo(`Extracted to: ${uncompressedFilepath}`)

@@ -5,6 +5,7 @@ import {StoreCopyOperation} from '../../services/store/operations/store-copy.js'
 import {StoreExportOperation} from '../../services/store/operations/store-export.js'
 import {StoreImportOperation} from '../../services/store/operations/store-import.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy, export, or import store data'
@@ -21,9 +22,15 @@ export default class Copy extends BaseBDCommand {
   async runCommand(): Promise<void> {
     this.flags = (await this.parse(Copy)).flags
 
-    const {fromStore, toStore, fromFile, toFile} = this.flags
+    let {fromStore, toStore, fromFile, toFile} = this.flags
 
     const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
+
+    // Auto-generate toFile path for export if not provided
+    if (operationMode === OperationMode.StoreExport && !toFile) {
+      const storeDomain = (fromStore as string).replace(/[^a-zA-Z0-9.-]/g, '_')
+      toFile = joinPath(cwd(), `${storeDomain}-export-${Date.now()}.sqlite`)
+    }
 
     const operation = this.getOperation(operationMode)
 
@@ -63,7 +70,7 @@ export default class Copy extends BaseBDCommand {
       return OperationMode.StoreCopy
     }
 
-    if (fromStore && toFile && !fromFile && !toStore) {
+    if (fromStore && !toStore && !fromFile) {
       return OperationMode.StoreExport
     }
 

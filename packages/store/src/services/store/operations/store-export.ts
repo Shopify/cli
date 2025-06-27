@@ -48,7 +48,8 @@ export class StoreExportOperation implements StoreOperation {
         exportOperation,
         'export',
         sourceShop.domain,
-        flags.skipConfirmation as boolean,
+        flags,
+        toFile,
       )
     }
   }

@@ -75,13 +75,14 @@ export class StoreImportOperation implements StoreOperation {
     }
 
     this.renderImportResult(targetShop, importOperation)
-
+    const filePath = `${targetShop.domain.replace(/[^a-zA-Z0-9.-]/g, '_')}-import-${Date.now()}.sqlite`
     if (status === 'COMPLETED') {
       await this.resultFileHandler.promptAndHandleResultFile(
         importOperation,
         'import',
         targetShop.domain,
-        flags.skipConfirmation as boolean,
+        flags,
+        filePath,
       )
     }
   }

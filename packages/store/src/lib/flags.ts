@@ -20,9 +20,10 @@ export const fileFlags = {
     env: 'SHOPIFY_FLAG_FROM_FILE',
   }),
   toFile: Flags.string({
-    description: 'The SQLite file path to export data to. Use <sqlite> to auto-generate filename.',
+    description: 'The SQLite file path to export data to. Use --toFile= to auto-generate filename.',
     required: false,
     env: 'SHOPIFY_FLAG_TO_FILE',
+    default: undefined,
   }),
 }
 
