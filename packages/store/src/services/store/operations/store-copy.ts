@@ -136,7 +136,6 @@ export class StoreCopyOperation implements StoreOperation {
       },
     })
 
-    // Add initial context setup task
     const allTasks: Task<CopyContext>[] = [
       {
         title: 'Initializing',

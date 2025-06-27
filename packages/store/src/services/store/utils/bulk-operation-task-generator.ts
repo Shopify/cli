@@ -33,14 +33,8 @@ export class BulkOperationTaskGenerator {
     }
   }
 
-  generateTasks<TContext extends BulkOperationContext>(
-    callbacks: BulkOperationCallbacks<TContext>,
-  ): Task<TContext>[] {
-    return [
-      this.createStartTask(callbacks),
-      ...this.createPollingTasks(callbacks),
-      this.createFinalizingTask(),
-    ]
+  generateTasks<TContext extends BulkOperationContext>(callbacks: BulkOperationCallbacks<TContext>): Task<TContext>[] {
+    return [this.createStartTask(callbacks), ...this.createPollingTasks(callbacks), this.createFinalizingTask()]
   }
 
   private createStartTask<TContext extends BulkOperationContext>(
@@ -49,9 +43,8 @@ export class BulkOperationTaskGenerator {
     return {
       title: `Starting ${this.config.operationName} operation`,
       task: async (ctx: TContext) => {
+        // eslint-disable-next-line require-atomic-updates
         ctx.operation = await callbacks.startOperation(ctx)
-        
-        // Check initial status
         const status = ctx.operation.organization.bulkData.operation.status
         if (status === 'COMPLETED' || status === 'FAILED') {
           ctx.isComplete = true
@@ -59,7 +52,6 @@ export class BulkOperationTaskGenerator {
             await callbacks.onComplete(ctx)
           }
         }
-        
         await new Promise((resolve) => setTimeout(resolve, this.config.pollingInterval))
       },
     }
@@ -69,26 +61,25 @@ export class BulkOperationTaskGenerator {
     callbacks: BulkOperationCallbacks<TContext>,
   ): Task<TContext>[] {
     const pollingTasks: Task<TContext>[] = []
-    
+
     for (let i = 0; i < this.config.pollingTaskCount; i++) {
       const emoji = this.config.emojis[Math.floor(Math.random() * this.config.emojis.length)]
-      
+
       pollingTasks.push({
         title: `${this.capitalize(this.config.operationName)} data ${emoji}`,
         skip: (ctx: TContext) => ctx.isComplete,
         task: async (ctx: TContext) => {
-          // Poll for the current status
+          // eslint-disable-next-line require-atomic-updates
           ctx.operation = await callbacks.pollOperation(ctx)
           const status = ctx.operation.organization.bulkData.operation.status
-          
+
           if (status === 'COMPLETED' || status === 'FAILED') {
             ctx.isComplete = true
             if (callbacks.onComplete) {
               await callbacks.onComplete(ctx)
             }
           }
-          
-          // Return a subtask that shows operation is running
+
           return [
             {
               title: `${this.capitalize(this.config.operationName)} data ${emoji}`,
@@ -100,7 +91,7 @@ export class BulkOperationTaskGenerator {
         },
       })
     }
-    
+
     return pollingTasks
   }
 
