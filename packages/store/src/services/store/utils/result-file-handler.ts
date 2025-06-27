@@ -1,6 +1,6 @@
 import {BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadFile} from '@shopify/cli-kit/node/http'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -38,14 +38,19 @@ export class ResultFileHandler {
     const filename = `${storePrefix}${operationType}-result-${Date.now()}${extension}`
     const filepath = joinPath(cwd(), filename)
 
-    outputInfo(`Downloading ${operationType} result file to ${filename}...`)
-    await downloadFile(url, filepath)
-    outputInfo(`${operationType} result file saved to: ${filepath}`)
-
-    const sqliteFilepath = await this.processSqliteFile(filepath)
-    if (sqliteFilepath) {
-      await this.promptToOpenInSqlite(sqliteFilepath)
-    }
+    const tasks = [
+      {
+        title: `downloading ${operationType} result file`,
+        task: async () => {
+          await new Promise((resolve) => setTimeout(resolve, 3000))
+          await downloadFile(url, filepath)
+        },
+      },
+    ]
+    await renderTasks(tasks)
+    renderSuccess({
+      body: [{subdued: `${operationType} result file downloaded to:`}, {filePath: filepath}],
+    })
   }
 
   private async processSqliteFile(filepath: string): Promise<string | null> {
@@ -72,22 +77,5 @@ export class ResultFileHandler {
     }
 
     return null
-  }
-
-  private async promptToOpenInSqlite(filepath: string): Promise<void> {
-    const shouldOpen = await renderConfirmationPrompt({
-      message: 'Would you like to open the database file in SQLite?',
-      confirmationMessage: 'Open in SQLite',
-      cancellationMessage: 'Skip',
-    })
-
-    if (shouldOpen) {
-      await this.openInSqlite(filepath)
-    }
-  }
-
-  private async openInSqlite(filepath: string): Promise<void> {
-    outputInfo(`Opening ${filepath} in SQLite...`)
-    await exec('open', [filepath])
   }
 }

@@ -97,7 +97,7 @@ export class BulkOperationTaskGenerator {
 
   private createFinalizingTask<TContext extends BulkOperationContext>(): Task<TContext> {
     return {
-      title: `Finalizing ${this.config.operationName} operation`,
+      title: `finalizing ${this.config.operationName} operation`,
       task: async () => {
         await new Promise((resolve) => setTimeout(resolve, 1000))
       },

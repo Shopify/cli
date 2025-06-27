@@ -100,7 +100,7 @@ export class StoreExportOperation implements StoreOperation {
     // Add initial context setup task
     const allTasks: Task<ExportContext>[] = [
       {
-        title: 'Initializing',
+        title: 'initializing',
         task: async (ctx: ExportContext) => {
           ctx.organizationId = organizationId
           ctx.bpSession = bpSession
