@@ -1,7 +1,7 @@
 import {takeRandomFromArray} from './array.js'
 import {unstyled} from '../../public/node/output.js'
 import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
-import {camelCase, constantCase, paramCase, snakeCase, pascalCase} from 'change-case'
+import {camelCase, capitalCase, constantCase, paramCase, snakeCase, pascalCase} from 'change-case'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
@@ -305,6 +305,16 @@ export function escapeRegExp(str: string): string {
  */
 export function camelize(input: string): string {
   return camelCase(input)
+}
+
+/**
+ * Transform a string to capitalCase.
+ *
+ * @param input - String to transform.
+ * @returns The transformed string.
+ */
+export function capitalizeWords(input: string): string {
+  return capitalCase(input)
 }
 
 /**
