@@ -45,7 +45,7 @@ describe('bundleExtension()', () => {
     })
     const esbuildWatch = vi.fn()
     const esbuildDispose = vi.fn()
-    const esbuildRebuild = vi.fn(esbuildResultFixture)
+    const esbuildRebuild = vi.fn(esbuildSuccessResultFixture)
 
     vi.mocked(esContext).mockResolvedValue({
       rebuild: esbuildRebuild,
@@ -139,7 +139,7 @@ describe('bundleExtension()', () => {
     })
     const esbuildWatch = vi.fn()
     const esbuildDispose = vi.fn()
-    const esbuildRebuild = vi.fn(esbuildResultFixture)
+    const esbuildRebuild = vi.fn(esbuildSuccessResultFixture)
 
     vi.mocked(esContext).mockResolvedValue({
       rebuild: esbuildRebuild,
@@ -179,7 +179,76 @@ describe('bundleExtension()', () => {
     expect(plugins).not.toContain('shopify:deduplicate-react')
   })
 
-  async function esbuildResultFixture() {
+  test('throws error when bundling fails and displays formatted errors', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const stdout: any = {
+      write: vi.fn(),
+    }
+    const stderr: any = {
+      write: vi.fn(),
+    }
+    const app = testApp({
+      directory: '/project',
+      allExtensions: [extension],
+    })
+    const esbuildWatch = vi.fn()
+    const esbuildDispose = vi.fn()
+    const esbuildRebuild = vi.fn(esbuildErrorResultFixture)
+
+    vi.mocked(esContext).mockResolvedValue({
+      rebuild: esbuildRebuild,
+      watch: esbuildWatch,
+      dispose: esbuildDispose,
+      cancel: vi.fn(),
+      serve: vi.fn(),
+    })
+
+    // When/Then
+    await expect(
+      bundleExtension({
+        env: {},
+        outputPath: extension.outputPath,
+        minify: true,
+        environment: 'production',
+        stdin: {
+          contents: 'console.log("mock stdin content")',
+          resolveDir: 'mock/resolve/dir',
+          loader: 'tsx',
+        },
+        stdout,
+        stderr,
+      }),
+    ).rejects.toThrow('ESBuild bundling failed')
+
+    // Verify errors were written to stderr
+    const errorOutput = vi.mocked(stderr.write).mock.calls[0][0] as string
+    expect(errorOutput).toMatch(/[✘X] \[ERROR\] error text \[plugin plugin\]/)
+  })
+
+  async function esbuildSuccessResultFixture() {
+    return {
+      errors: [],
+      warnings: [
+        {
+          id: 'warning',
+          pluginName: 'plugin',
+          text: 'warning text',
+          location: null,
+          notes: [],
+          detail: {},
+        },
+      ],
+      outputFiles: [],
+      metafile: {
+        inputs: {},
+        outputs: {},
+      },
+      mangleCache: {},
+    }
+  }
+
+  async function esbuildErrorResultFixture() {
     return {
       errors: [
         {
@@ -191,16 +260,7 @@ describe('bundleExtension()', () => {
           detail: {},
         },
       ],
-      warnings: [
-        {
-          id: 'warning',
-          pluginName: 'plugin',
-          text: 'warning text',
-          location: null,
-          notes: [],
-          detail: {},
-        },
-      ],
+      warnings: [],
       outputFiles: [],
       metafile: {
         inputs: {},
