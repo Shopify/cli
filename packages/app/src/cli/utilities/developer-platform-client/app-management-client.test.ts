@@ -157,7 +157,7 @@ describe('templateSpecifications', () => {
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const got = await client.templateSpecifications(orgApp)
+    const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
     const gotSortPriorities = got.map((template) => template.sortPriority)
 
@@ -185,7 +185,7 @@ describe('templateSpecifications', () => {
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const got = await client.templateSpecifications(orgApp)
+    const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
 
     // Then
@@ -208,6 +208,35 @@ describe('templateSpecifications', () => {
     })
     const expectedAllowedTemplates = [templateWithoutRules, allowedTemplate]
     expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
+  })
+
+  test('extracts groupOrder correctly from template order', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templates: GatedExtensionTemplate[] = [
+      {...templateWithoutRules, group: 'GroupA'},
+      {...allowedTemplate, group: 'GroupB'},
+      // Same group as first
+      {...templateWithoutRules, identifier: 'template3', group: 'GroupA'},
+      {...allowedTemplate, identifier: 'template4', group: 'GroupC'},
+    ]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        flag_allowedFlag: true,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const {groupOrder} = await client.templateSpecifications(orgApp)
+
+    // Then
+    expect(groupOrder).toEqual(['GroupA', 'GroupB', 'GroupC'])
   })
 
   test('fails with an error message when fetching the specifications list fails', async () => {

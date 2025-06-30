@@ -5,13 +5,13 @@ import {validateVersion} from '../../validations/version-name.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Deploy extends AppCommand {
+export default class Deploy extends AppLinkedCommand {
   static summary = 'Deploy your Shopify app.'
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.
@@ -63,7 +63,7 @@ export default class Deploy extends AppCommand {
     }),
   }
 
-  async run(): Promise<AppCommandOutput> {
+  async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Deploy)
 
     await metadata.addPublicMetadata(() => ({

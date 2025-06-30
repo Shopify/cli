@@ -15,6 +15,7 @@ export interface SelectPromptProps<T> {
   defaultValue?: T
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
+  groupOrder?: string[]
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -26,6 +27,7 @@ function SelectPrompt<T>({
   onSubmit,
   defaultValue,
   abortSignal,
+  groupOrder,
 }: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
@@ -58,7 +60,9 @@ function SelectPrompt<T>({
       infoTable={infoTable}
       infoMessage={infoMessage}
       abortSignal={abortSignal}
-      input={<SelectInput defaultValue={defaultValue} items={choices} onSubmit={submitAnswer} />}
+      input={
+        <SelectInput defaultValue={defaultValue} items={choices} onSubmit={submitAnswer} groupOrder={groupOrder} />
+      }
     />
   )
 }

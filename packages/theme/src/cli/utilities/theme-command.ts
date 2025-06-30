@@ -4,8 +4,10 @@ import {ArgOutput, FlagOutput, Input} from '@oclif/core/lib/interfaces/parser.js
 import Command from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning, renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortController} from '@shopify/cli-kit/node/abort'
+import type {Writable} from 'stream'
 
 export interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
@@ -36,7 +38,11 @@ export default abstract class ThemeCommand extends Command {
     return configurationFileName
   }
 
-  async command(_flags: FlagValues, _session: AdminSession): Promise<void> {}
+  async command(
+    _flags: FlagValues,
+    _session: AdminSession,
+    _context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {}
 
   async run<
     TFlags extends FlagOutput & {path?: string; verbose?: boolean},
@@ -50,50 +56,73 @@ export default abstract class ThemeCommand extends Command {
     const requiredFlags = klass.multiEnvironmentsFlags
     const {flags} = await this.parse(klass)
 
-    // Single environment
-    if (!flags.environment) {
+    // No environment provided
+    if (!flags.environment?.length) {
       const session = await this.ensureAuthenticated(flags)
+
       await this.command(flags, session)
+
       return
     }
 
-    // Synchronously authenticate all environments
-    const sessions: {[storeFqdn: string]: AdminSession} = {}
     // OCLIF parses flags.environment as an array when using the --environment & -e flag but
     // as a string when using the direct environment variable SHOPIFY_FLAG_ENVIRONMENT
     // This handles both cases
     const environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
 
+    // If only one environment is specified, treat it as single environment mode
+    if (environments.length === 1) {
+      const session = await this.ensureAuthenticated(flags)
+      await this.command(flags, session)
+      return
+    }
+
+    // Multiple environments
+    const sessions: {[storeFqdn: string]: AdminSession} = {}
+
     // Authenticate on all environments sequentially to avoid race conditions,
     // with authentication happening in parallel.
     for (const environmentName of environments) {
       // eslint-disable-next-line no-await-in-loop
-      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {from: flags.path})
+      const environmentConfig = await loadEnvironment(environmentName, 'shopify.theme.toml', {
+        from: flags.path,
+        silent: true,
+      })
       // eslint-disable-next-line no-await-in-loop
       sessions[environmentName] = await this.ensureAuthenticated(environmentConfig as FlagValues)
     }
 
-    // Concurrently run commands
-    await Promise.all(
-      environments.map(async (environment: string) => {
-        const environmentConfig = await loadEnvironment(environment, 'shopify.theme.toml', {from: flags.path})
-        const environmentFlags = {
-          ...flags,
-          ...environmentConfig,
-          environment: [environment],
-        }
+    // Use renderConcurrent for multi-environment execution
+    const abortController = new AbortController()
 
-        if (!this.validConfig(environmentConfig as FlagValues, requiredFlags, environment)) return
+    await renderConcurrent({
+      processes: environments.map((environment: string) => ({
+        prefix: environment,
+        action: async (stdout: Writable, stderr: Writable, _signal) => {
+          const environmentConfig = await loadEnvironment(environment, 'shopify.theme.toml', {
+            from: flags.path,
+            silent: true,
+          })
+          const environmentFlags = {
+            ...flags,
+            ...environmentConfig,
+            environment: [environment],
+          }
 
-        const session = sessions[environment]
+          if (!this.validConfig(environmentConfig as FlagValues, requiredFlags, environment)) return
 
-        if (!session) {
-          throw new AbortError(`No session found for environment ${environment}`)
-        }
+          const session = sessions[environment]
 
-        return this.command(environmentFlags, session)
-      }),
-    )
+          if (!session) {
+            throw new AbortError(`No session found for environment ${environment}`)
+          }
+
+          await this.command(environmentFlags, session, {stdout, stderr})
+        },
+      })),
+      abortSignal: abortController.signal,
+      showTimestamps: true,
+    })
   }
 
   private async ensureAuthenticated(flags: FlagValues) {

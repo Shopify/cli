@@ -100,7 +100,7 @@ import {
   RemoteTemplateSpecificationsSchema,
   RemoteTemplateSpecificationsVariables,
 } from '../../api/graphql/template_specifications.js'
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionTemplatesResult} from '../../models/app/template.js'
 import {
   TargetSchemaDefinitionQuerySchema,
   TargetSchemaDefinitionQuery,
@@ -353,16 +353,21 @@ export class PartnersClient implements DeveloperPlatformClient {
     }))
   }
 
-  async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
+  async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
     const variables: RemoteTemplateSpecificationsVariables = {apiKey}
     const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
-    return result.templateSpecifications.map((template) => {
+    const templates = result.templateSpecifications.map((template) => {
       const {types, ...rest} = template
       return {
         ...rest,
         ...types[0],
       }
     })
+
+    return {
+      templates,
+      groupOrder: [],
+    }
   }
 
   async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {

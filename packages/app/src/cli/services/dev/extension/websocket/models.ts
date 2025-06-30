@@ -4,6 +4,7 @@ import {Server} from 'http'
 export enum EventType {
   Update = 'update',
   Dispatch = 'dispatch',
+  Log = 'log',
 }
 
 type DataType = 'focus' | 'unfocus'
@@ -41,4 +42,10 @@ export interface OutgoingMessage {
   event: EventType
   version: string
   data: {[key: string]: unknown}
+}
+
+export interface LogPayload {
+  type: string
+  message: string
+  extensionName: string
 }

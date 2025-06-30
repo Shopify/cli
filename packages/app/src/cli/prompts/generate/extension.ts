@@ -16,6 +16,7 @@ export interface GenerateExtensionPromptOptions {
   extensionTemplates: ExtensionTemplate[]
   unavailableExtensions: ExtensionTemplate[]
   reset: boolean
+  groupOrder?: string[]
 }
 
 export interface GenerateExtensionPromptOutput {
@@ -85,6 +86,7 @@ const generateExtensionPrompts = async (
     templateType = await renderAutocompletePrompt({
       message: 'Type of extension?',
       choices: buildChoices(extensionTemplates, options.unavailableExtensions),
+      groupOrder: options.groupOrder,
     })
   }
 

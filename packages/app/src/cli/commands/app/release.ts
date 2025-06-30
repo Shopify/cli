@@ -1,14 +1,14 @@
 import {appFlags} from '../../flags.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {getAppConfigurationState} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Release extends AppCommand {
+export default class Release extends AppLinkedCommand {
   static summary = 'Release an app version.'
 
   static usage = `app release --version <version>`
@@ -40,7 +40,7 @@ export default class Release extends AppCommand {
     }),
   }
 
-  async run(): Promise<AppCommandOutput> {
+  async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Release)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()

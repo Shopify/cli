@@ -5,6 +5,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
+import {sleep} from '@shopify/cli-kit/node/system'
 
 export class ShopifyEssentialError extends Error {}
 
@@ -83,7 +84,12 @@ export async function getStorefrontSessionCookies(
   return cookieRecord
 }
 
-async function sessionEssentialCookie(storeUrl: string, themeId: string, headers: {[key: string]: string}) {
+async function sessionEssentialCookie(
+  storeUrl: string,
+  themeId: string,
+  headers: {[key: string]: string},
+  retries = 1,
+) {
   const params = new URLSearchParams({
     preview_theme_id: themeId,
     _fd: '0',
@@ -112,11 +118,20 @@ async function sessionEssentialCookie(storeUrl: string, themeId: string, headers
     outputDebug(
       `Failed to obtain _shopify_essential cookie.\n
        -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
-       -Body: ${await response.text()}`,
+       -Body: ${await response.text()}\n
+       -Status: ${response.status}\n`,
     )
-    throw new ShopifyEssentialError(
-      'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
-    )
+
+    if (retries > 3) {
+      throw new ShopifyEssentialError(
+        'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+      )
+    }
+
+    outputDebug('Retrying to obtain the _shopify_essential cookie...')
+    await sleep(retries)
+
+    return sessionEssentialCookie(storeUrl, themeId, headers, retries + 1)
   }
 
   return shopifyEssential

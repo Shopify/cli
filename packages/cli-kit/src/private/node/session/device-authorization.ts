@@ -41,7 +41,14 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jsonResult: any = await response.json()
+  let jsonResult: any
+  try {
+    jsonResult = await response.json()
+  } catch (error) {
+    throw new BugError(
+      'Received unexpected response from the authorization service. If this issue persists, please contact support at https://help.shopify.com',
+    )
+  }
 
   outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
   if (!jsonResult.device_code || !jsonResult.verification_uri_complete) {
