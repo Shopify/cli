@@ -161,6 +161,7 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
@@ -1045,12 +1046,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return this.appDevRequest({query: DevSessionDelete, shopFqdn, variables: {appId: appIdNumber}})
   }
 
-  async getCreateDevStoreLink(org: Organization): Promise<string> {
+  async getCreateDevStoreLink(org: Organization): Promise<TokenItem> {
     const url = `https://${await developerDashboardFqdn()}/dashboard/${org.id}/stores`
-    return (
-      `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.` +
-      ` Create one now \n${url}`
-    )
+    return [
+      `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create one now`,
+      '\n',
+      {link: {url, label: url}},
+    ]
   }
 
   private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
