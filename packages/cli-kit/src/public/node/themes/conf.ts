@@ -1,6 +1,6 @@
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {LocalStorage} from '../local-storage.js'
+import {AdminSession} from '../session.js'
+import {outputDebug, outputContent} from '../output.js'
 
 type HostThemeId = string
 type StoreFqdn = AdminSession['storeFqdn']

@@ -22,9 +22,9 @@ import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_f
 import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
+import {AbortError} from '../error.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
-import {adminRequestDoc, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {ClientError} from 'graphql-request'
 
 vi.mock('@shopify/cli-kit/node/api/admin')

@@ -14,5 +14,8 @@
           }
         }
       }
+      currentUser {
+        organizationPermissions
+      }
     }
   }

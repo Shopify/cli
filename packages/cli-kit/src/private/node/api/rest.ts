@@ -1,6 +1,6 @@
 import {buildHeaders} from './headers.js'
 import {themeKitAccessDomain} from '../constants.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '../../../public/node/session.js'
 
 export function restRequestBody<T>(requestBody?: T) {
   if (!requestBody) {

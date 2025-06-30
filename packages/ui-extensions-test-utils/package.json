@@ -1,7 +1,7 @@
 {
   "name": "@shopify/ui-extensions-test-utils",
   "version": "3.26.0",
-  "packageManager": "pnpm@8.15.7",
+  "packageManager": "pnpm@10.11.1",
   "private": true,
   "license": "MIT",
   "main": "dist/index",

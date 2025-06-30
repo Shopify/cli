@@ -2547,8 +2547,7 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(AbortError)
   })
 
-  test('loads the app with an unsupported config property, under failure mode', async () => {
-    vi.stubEnv('SHOPIFY_CLI_ENABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS', '1')
+  test('loads the app with an unsupported config property, under failure mode (default)', async () => {
     const linkedAppConfigurationWithExtraConfig = `
     name = "for-testing"
     client_id = "1234567890"
@@ -2575,7 +2574,6 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(
       'Unsupported section(s) in app configuration: and_another, something_else',
     )
-    vi.unstubAllEnvs()
   })
 
   test('loads the app with an unsupported config property, under passthrough mode', async () => {

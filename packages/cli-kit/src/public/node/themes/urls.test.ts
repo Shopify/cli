@@ -1,5 +1,5 @@
 import {codeEditorUrl, storeAdminUrl, storePasswordPage, themeEditorUrl, themePreviewUrl} from './urls.js'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {Theme} from './types.js'
 import {test, describe, expect} from 'vitest'
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}

@@ -1,12 +1,12 @@
 import {appFlags} from '../../../flags.js'
 import versionList from '../../../services/versions-list.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
-import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
-export default class VersionsList extends AppCommand {
+export default class VersionsList extends AppLinkedCommand {
   static summary = 'List deployed versions of your app.'
 
   static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
@@ -25,7 +25,7 @@ export default class VersionsList extends AppCommand {
     }),
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(VersionsList)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()

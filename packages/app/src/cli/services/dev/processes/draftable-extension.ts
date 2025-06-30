@@ -7,7 +7,6 @@ import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEvent, AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 
@@ -35,10 +34,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 
   const draftableExtensions = app.draftableExtensions.map((ext) => ext.handle)
 
-  async function refreshToken() {
-    await developerPlatformClient.refreshToken()
-  }
-
   const handleAppEvent = async (event: AppEvent) => {
     const extensionEvents = event.extensionEvents
       .filter((ev) => ev.type === EventType.Updated)
@@ -50,20 +45,16 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
       await useConcurrentOutputContext({outputPrefix: extension.outputPrefix}, async () => {
-        return performActionWithRetryAfterRecovery(
-          async () =>
-            updateExtensionDraft({
-              extension,
-              developerPlatformClient,
-              apiKey,
-              registrationId,
-              stdout,
-              stderr,
-              appConfiguration: app.configuration,
-              bundlePath: appWatcher.buildOutputPath,
-            }),
-          refreshToken,
-        )
+        await updateExtensionDraft({
+          extension,
+          developerPlatformClient,
+          apiKey,
+          registrationId,
+          stdout,
+          stderr,
+          appConfiguration: app.configuration,
+          bundlePath: appWatcher.buildOutputPath,
+        })
       })
     })
     await Promise.all(promises)

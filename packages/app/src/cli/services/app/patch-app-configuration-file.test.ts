@@ -120,9 +120,9 @@ describe('patchAppHiddenConfigFile', () => {
   })
 })
 
-describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+describe.each([false, true])('setAppConfigValue (disableWasmTomlPatch: %s)', (disableWasmTomlPatch) => {
   beforeEach(() => {
-    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+    vi.stubEnv(environmentVariableNames.disableWasmTomlPatch, disableWasmTomlPatch.toString())
   })
 
   afterEach(() => {
@@ -165,9 +165,9 @@ describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useW
   })
 })
 
-describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+describe.each([false, true])('unsetAppConfigValue (disableWasmTomlPatch: %s)', (disableWasmTomlPatch) => {
   beforeEach(() => {
-    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+    vi.stubEnv(environmentVariableNames.disableWasmTomlPatch, disableWasmTomlPatch.toString())
   })
 
   afterEach(() => {
@@ -202,9 +202,9 @@ describe.each([false, true])('unsetAppConfigValue (useWasmTomlPatch: %s)', (useW
   })
 })
 
-describe.each([false, true])('setManyAppConfigValues (useWasmTomlPatch: %s)', (useWasmTomlPatch) => {
+describe.each([false, true])('setManyAppConfigValues (disableWasmTomlPatch: %s)', (disableWasmTomlPatch) => {
   beforeEach(() => {
-    vi.stubEnv(environmentVariableNames.useWasmTomlPatch, useWasmTomlPatch.toString())
+    vi.stubEnv(environmentVariableNames.disableWasmTomlPatch, disableWasmTomlPatch.toString())
   })
 
   afterEach(() => {

@@ -1,4 +1,7 @@
-import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
+import {
+  ExtensionUpdateDraftMutation,
+  ExtensionUpdateDraftMutationVariables,
+} from '../../api/graphql/partners/generated/update-draft.js'
 import {AppConfigurationWithoutPath} from '../../models/app/app.js'
 import {
   loadConfigurationFileContent,
@@ -71,10 +74,32 @@ export async function updateExtensionDraft({
     registrationId,
   }
 
-  const mutationResult = await developerPlatformClient.updateExtension(extensionInput)
-  if (mutationResult.extensionUpdateDraft?.userErrors && mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
-    const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
-    stderr.write(`Error while updating drafts: ${errors}`)
+  let mutationResult: ExtensionUpdateDraftMutation | undefined
+  let errors: {message: string}[] = []
+  try {
+    mutationResult = await developerPlatformClient.updateExtension(extensionInput)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error: unknown) {
+    errors = [{message: 'Unknown error'}]
+
+    if (error && typeof error === 'object') {
+      const errorObj = error as {errors?: {message: string}[]; message?: string}
+      if (errorObj.errors?.length) {
+        errors = errorObj.errors
+      } else if (errorObj.message) {
+        errors = [{message: errorObj.message}]
+      }
+    } else if (typeof error === 'string') {
+      errors = [{message: error}]
+    }
+  }
+  const userErrors = mutationResult?.extensionUpdateDraft?.userErrors
+  if (userErrors?.length) {
+    errors.push(...userErrors)
+  }
+  if (errors.length > 0) {
+    const errorMessages = errors.map((error: {message: string}) => error.message).join(', ')
+    stderr.write(`${extension.draftMessages.errorMessage}: ${errorMessages}`)
   } else {
     const draftUpdateSuccesMessage = extension.draftMessages.successMessage
     if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)

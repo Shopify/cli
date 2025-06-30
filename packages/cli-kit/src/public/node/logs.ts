@@ -1,6 +1,6 @@
+import {joinPath} from './path.js'
+import {mkdir, writeFile} from './fs.js'
 import {logsFolder} from '../../private/node/constants.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 
 export const getLogsDir = (): string => {
   return logsFolder()

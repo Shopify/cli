@@ -5,9 +5,11 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'theme package',
   description: `Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 
-  Only folders that match the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure) are included in the package.
+  Only folders that match the [default Shopify theme folder structure](/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.
 
-  The ZIP file uses the name \`theme_name-theme_version.zip\`, based on parameters in your [settings_schema.json](/docs/themes/architecture/config/settings-schema-json) file.`,
+  The package includes the \`listings\` directory if present (required for multi-preset themes per [Theme Store requirements](/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).
+
+  The ZIP file uses the name \`theme_name-theme_version.zip\`, based on parameters in your [settings_schema.json](/docs/storefronts/themes/architecture/config/settings-schema-json) file.`,
   overviewPreviewDescription: `Package your theme into a .zip file, ready to upload to the Online Store.`,
   type: 'command',
   isVisualComponent: false,

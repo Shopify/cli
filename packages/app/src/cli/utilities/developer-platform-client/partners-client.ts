@@ -12,6 +12,7 @@ import {
   AppVersionWithContext,
   CreateAppOptions,
   AppLogsResponse,
+  createUnauthorizedHandler,
 } from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
@@ -99,7 +100,7 @@ import {
   RemoteTemplateSpecificationsSchema,
   RemoteTemplateSpecificationsVariables,
 } from '../../api/graphql/template_specifications.js'
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionTemplatesResult} from '../../models/app/template.js'
 import {
   TargetSchemaDefinitionQuerySchema,
   TargetSchemaDefinitionQuery,
@@ -158,7 +159,7 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
-import {CacheOptions, GraphQLVariables} from '@shopify/cli-kit/node/api/graphql'
+import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -229,10 +230,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
-      const {token, userId} = await ensureAuthenticatedPartners([], process.env, {
-        noPrompt: false,
-        forceRefresh: true,
-      })
+      const {token, userId} = await ensureAuthenticatedPartners()
       this._session = {
         token,
         businessPlatformToken: '',
@@ -251,21 +249,28 @@ export class PartnersClient implements DeveloperPlatformClient {
     cacheOptions?: CacheOptions,
     preferredBehaviour?: RequestModeInput,
   ): Promise<T> {
-    return partnersRequest(query, await this.token(), variables, cacheOptions, preferredBehaviour)
+    return partnersRequest(
+      query,
+      await this.token(),
+      variables,
+      cacheOptions,
+      preferredBehaviour,
+      this.createUnauthorizedHandler(),
+    )
   }
 
   async requestDoc<TResult, TVariables extends {[key: string]: unknown}>(
     document: TypedDocumentNode<TResult, TVariables>,
     variables?: TVariables,
   ): Promise<TResult> {
-    return partnersRequestDoc(document, await this.token(), variables)
+    return partnersRequestDoc(document, await this.token(), variables, undefined, this.createUnauthorizedHandler())
   }
 
   async token(): Promise<string> {
     return (await this.session()).token
   }
 
-  async refreshToken(): Promise<string> {
+  async unsafeRefreshToken(): Promise<string> {
     const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true, forceRefresh: true})
     const session = await this.session()
     if (token) {
@@ -348,16 +353,21 @@ export class PartnersClient implements DeveloperPlatformClient {
     }))
   }
 
-  async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplate[]> {
+  async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
     const variables: RemoteTemplateSpecificationsVariables = {apiKey}
     const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
-    return result.templateSpecifications.map((template) => {
+    const templates = result.templateSpecifications.map((template) => {
       const {types, ...rest} = template
       return {
         ...rest,
         ...types[0],
       }
     })
+
+    return {
+      templates,
+      groupOrder: [],
+    }
   }
 
   async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
@@ -477,9 +487,22 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
-    return this.request(FindStoreByDomainQuery, variables)
+    const result: FindStoreByDomainSchema = await this.request(FindStoreByDomainQuery, variables)
+
+    const node = result.organizations.nodes[0]?.stores.nodes[0]
+    if (!node) {
+      return undefined
+    }
+    return {
+      ...node,
+      provisionable: false,
+    }
+  }
+
+  async ensureUserAccessToStore(_orgId: string, _store: OrganizationStore): Promise<void> {
+    // This is a no-op for partners
   }
 
   async updateDeveloperPreview(
@@ -642,6 +665,10 @@ export class PartnersClient implements DeveloperPlatformClient {
     const parsedOrg = {id: org.id, businessName: org.businessName, source: this.organizationSource}
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
     return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
+  }
+
+  private createUnauthorizedHandler(): UnauthorizedHandler {
+    return createUnauthorizedHandler(this)
   }
 }
 

@@ -1,4 +1,4 @@
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionTemplatesResult} from '../../models/app/template.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {isPolarisUnifiedEnabled} from '@shopify/cli-kit/node/is-polaris-unified-enabled'
@@ -7,11 +7,11 @@ export async function fetchExtensionTemplates(
   developerPlatformClient: DeveloperPlatformClient,
   app: MinimalAppIdentifiers,
   availableSpecifications: string[],
-): Promise<ExtensionTemplate[]> {
-  const remoteTemplates: ExtensionTemplate[] = await developerPlatformClient.templateSpecifications(app)
+): Promise<ExtensionTemplatesResult> {
+  const {templates: remoteTemplates, groupOrder} = await developerPlatformClient.templateSpecifications(app)
   const polarisUnifiedEnabled = isPolarisUnifiedEnabled()
 
-  return remoteTemplates
+  const filteredTemplates = remoteTemplates
     .filter(
       (template) =>
         availableSpecifications.includes(template.identifier) || availableSpecifications.includes(template.type),
@@ -28,4 +28,9 @@ export async function fetchExtensionTemplates(
       return template
     })
     .filter((template) => template.supportedFlavors.length > 0)
+
+  return {
+    templates: filteredTemplates,
+    groupOrder,
+  }
 }

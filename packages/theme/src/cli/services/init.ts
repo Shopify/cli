@@ -1,9 +1,8 @@
-import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {downloadGitRepository, getLatestTag} from '@shopify/cli-kit/node/git'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-
-export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
-export const DAWN_URL = 'https://github.com/Shopify/dawn.git'
+import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
+import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {fetch} from '@shopify/cli-kit/node/http'
 
 export async function cloneRepo(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination)
@@ -22,19 +21,49 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           repoUrl,
           destination,
           latestTag,
+          shallow: true,
         })
+        await removeGitRemote(destination)
       },
     },
   ])
 }
 
-export async function getSkeletonThemeLatestTag() {
-  return inTemporaryDirectory(async (tempDir) => {
-    await downloadGitRepository({
-      repoUrl: SKELETON_THEME_URL,
-      destination: tempDir,
-    })
-
-    return getLatestTag(tempDir)
+export async function promptAndCreateAIFile(destination: string) {
+  const aiChoice = await renderSelectPrompt({
+    message: 'Set up AI dev support?',
+    choices: [
+      {label: 'VSCode (GitHub Copilot)', value: 'vscode'},
+      {label: 'Cursor', value: 'cursor'},
+      {label: 'Skip', value: 'none'},
+    ],
   })
+
+  const aiFileUrl = 'https://raw.githubusercontent.com/Shopify/theme-liquid-docs/main/ai/liquid.mdc'
+
+  switch (aiChoice) {
+    case 'vscode': {
+      const githubDir = joinPath(destination, '.github')
+      await mkdir(githubDir)
+      const aiFilePath = joinPath(githubDir, 'copilot-instructions.md')
+      await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
+      break
+    }
+    case 'cursor': {
+      const cursorDir = joinPath(destination, '.cursor', 'rules')
+      await mkdir(cursorDir)
+      const aiFilePath = joinPath(cursorDir, 'liquid.mdc')
+      await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
+      break
+    }
+    case 'none':
+      // No action required
+      break
+  }
+}
+
+async function downloadAndSaveAIFile(url: string, filePath: string) {
+  const response = await fetch(url)
+  const content = await response.text()
+  await writeFile(filePath, content)
 }
