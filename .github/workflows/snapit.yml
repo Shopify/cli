@@ -26,7 +26,7 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@938148c6c89d82cf32e0a377f8f7c0bff39bc989 # pin@main
+        uses: Shopify/snapit@8ff75631e13281a35f85b373bcadfa2fa12bb21e # pin@v0.0.14
         with:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
