@@ -1,5 +1,5 @@
 import {getNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '../ui.js'
 import {Command} from '@oclif/core'
 
 /**

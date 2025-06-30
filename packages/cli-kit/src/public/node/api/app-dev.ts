@@ -1,4 +1,4 @@
-import {graphqlRequestDoc} from './graphql.js'
+import {graphqlRequestDoc, UnauthorizedHandler} from './graphql.js'
 import {appDevFqdn, normalizeStoreFqdn} from '../context/fqdn.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import Bottleneck from 'bottleneck'
@@ -14,23 +14,31 @@ const limiter = new Bottleneck({
 })
 
 /**
- * Executes an org-scoped GraphQL query against the App Management API.
- * Uses typed documents.
- *
  * @param query - GraphQL query to execute.
  * @param shopFqdn - The shop fqdn.
  * @param token - Partners token.
  * @param variables - GraphQL variables to pass to the query.
+ * @param unauthorizedHandler - Unauthorized handler to use.
+ */
+export interface AppDevRequestOptions<TResult, TVariables extends Variables> {
+  query: TypedDocumentNode<TResult, TVariables>
+  shopFqdn: string
+  token: string
+  unauthorizedHandler: UnauthorizedHandler
+  variables?: TVariables
+}
+/**
+ * Executes an org-scoped GraphQL query against the App Management API.
+ * Uses typed documents.
+ *
+ * @param options - The options for the request.
  * @returns The response of the query of generic type <T>.
  */
-export async function appDevRequest<TResult, TVariables extends Variables>(
-  query: TypedDocumentNode<TResult, TVariables>,
-  shopFqdn: string,
-  token: string,
-  variables?: TVariables,
+export async function appDevRequestDoc<TResult, TVariables extends Variables>(
+  options: AppDevRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   const api = 'App Dev'
-  const normalizedShopFqdn = await normalizeStoreFqdn(shopFqdn)
+  const normalizedShopFqdn = await normalizeStoreFqdn(options.shopFqdn)
   const fqdn = await appDevFqdn(normalizedShopFqdn)
   const url = `https://${fqdn}/app_dev/unstable/graphql.json`
 
@@ -38,12 +46,13 @@ export async function appDevRequest<TResult, TVariables extends Variables>(
 
   const result = limiter.schedule<TResult>(() =>
     graphqlRequestDoc<TResult, TVariables>({
-      query,
+      query: options.query,
       api,
       url,
-      token,
+      token: options.token,
       addedHeaders,
-      variables,
+      variables: options.variables,
+      unauthorizedHandler: options.unauthorizedHandler,
     }),
   )
 

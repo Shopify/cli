@@ -1,4 +1,6 @@
 import {composeThemeGid, parseGid, DEVELOPMENT_THEME_ROLE} from './utils.js'
+import {buildTheme} from './factories.js'
+import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
@@ -21,12 +23,10 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {adminRequestDoc} from '../api/admin.js'
+import {AdminSession} from '../session.js'
+import {AbortError} from '../error.js'
+import {outputDebug} from '../output.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>

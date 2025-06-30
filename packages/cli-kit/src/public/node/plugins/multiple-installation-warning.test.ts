@@ -3,8 +3,8 @@ import {currentProcessIsGlobal} from '../is-global.js'
 import {showMultipleCLIWarningIfNeeded} from '../multiple-installation-warning.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
 import {globalCLIVersion, localCLIVersion} from '../version.js'
+import {CLI_KIT_VERSION} from '../../common/version.js'
 import {describe, beforeEach, test, vi, expect} from 'vitest'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
 vi.mock('../version.js')
 vi.mock('../is-global.js')

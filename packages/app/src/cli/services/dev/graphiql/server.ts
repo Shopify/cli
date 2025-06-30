@@ -9,7 +9,6 @@ import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
@@ -75,17 +74,19 @@ export function setupGraphiQLServer({
     try {
       outputDebug('refreshing token', stdout)
       _token = undefined
-      const queryString = queryStringEncode({
+      const bodyData = {
         client_id: apiKey,
         client_secret: apiSecret,
         grant_type: 'client_credentials',
-      })
-      const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token?${queryString}`, {
+      }
+      const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(bodyData),
       })
+
       const tokenJson = (await tokenResponse.json()) as {access_token: string}
       return tokenJson.access_token
     } catch (_error) {

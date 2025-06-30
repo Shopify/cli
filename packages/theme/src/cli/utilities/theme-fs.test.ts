@@ -9,6 +9,7 @@ import {
   readThemeFile,
 } from './theme-fs.js'
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
+import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
@@ -17,7 +18,6 @@ import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {triggerBrowserFullReload} from '@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js'
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 
@@ -31,7 +31,7 @@ vi.mock('./asset-ignore.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/theme/cli/utilities/theme-environment/hot-reload/server.js')
+vi.mock('./theme-environment/hot-reload/server.js')
 
 beforeEach(async () => {
   vi.mocked(getPatternsFromShopifyIgnore).mockResolvedValue([])
@@ -52,30 +52,44 @@ describe('theme-fs', () => {
       await themeFileSystem.ready()
 
       // Then
-      expect(themeFileSystem).toEqual({
-        root,
-        files: new Map([
-          fsEntry({checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'}),
-          fsEntry({checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'}),
-          fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
-          fsEntry({checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'}),
-          fsEntry({checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'}),
-          fsEntry({checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'}),
-          fsEntry({checksum: '0b2f0aa705a4eb2b4740e2ed68bc043f', key: 'locales/en.default.json'}),
-          fsEntry({checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'}),
-          fsEntry({checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'}),
-          fsEntry({checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'}),
-        ]),
-        unsyncedFileKeys: new Set(),
-        uploadErrors: new Map(),
-        ready: expect.any(Function),
-        delete: expect.any(Function),
-        write: expect.any(Function),
-        read: expect.any(Function),
-        applyIgnoreFilters: expect.any(Function),
-        addEventListener: expect.any(Function),
-        startWatcher: expect.any(Function),
-      })
+      expect(themeFileSystem.root).toBe(root)
+      expect(themeFileSystem.files.size).toBe(10)
+      expect(themeFileSystem.unsyncedFileKeys).toEqual(new Set())
+      expect(themeFileSystem.uploadErrors).toEqual(new Map())
+
+      // Check that all expected files are present with correct checksums
+      const expectedFiles = [
+        {checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'},
+        {checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'},
+        {checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'},
+        {checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'},
+        {checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'},
+        {checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'},
+        {checksum: '0b2f0aa705a4eb2b4740e2ed68bc043f', key: 'locales/en.default.json'},
+        {checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'},
+        {checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'},
+        {checksum: '64caf742bd427adcf497bffab63df30c', key: 'templates/404.json'},
+      ]
+
+      for (const expectedFile of expectedFiles) {
+        const file = themeFileSystem.files.get(expectedFile.key)
+        expect(file).toBeDefined()
+        expect(file!.key).toBe(expectedFile.key)
+        expect(file!.checksum).toBe(expectedFile.checksum)
+        expect(typeof file!.value).toBe('string')
+        expect(typeof file!.attachment).toBe('string')
+        expect(typeof file!.stats?.size).toBe('number')
+        expect(typeof file!.stats?.mtime).toBe('number')
+      }
+
+      // Check functions exist
+      expect(typeof themeFileSystem.ready).toBe('function')
+      expect(typeof themeFileSystem.delete).toBe('function')
+      expect(typeof themeFileSystem.write).toBe('function')
+      expect(typeof themeFileSystem.read).toBe('function')
+      expect(typeof themeFileSystem.applyIgnoreFilters).toBe('function')
+      expect(typeof themeFileSystem.addEventListener).toBe('function')
+      expect(typeof themeFileSystem.startWatcher).toBe('function')
     })
 
     test('mounts an empty file system when the directory is invalid', async () => {
@@ -253,26 +267,25 @@ describe('theme-fs', () => {
       const themeFileSystem = mountThemeFileSystem(root)
       await themeFileSystem.ready()
       const file = themeFileSystem.files.get(key)
-      expect(file).toEqual({
-        key: 'templates/404.json',
-        checksum: '64caf742bd427adcf497bffab63df30c',
-        value: expect.any(String),
-        attachment: '',
-        stats: {size: expect.any(Number), mtime: expect.any(Number)},
-      })
+      expect(file?.key).toBe('templates/404.json')
+      expect(file?.checksum).toBe('64caf742bd427adcf497bffab63df30c')
+      expect(file?.attachment).toBe('')
+      expect(typeof file?.value).toBe('string')
+      expect(typeof file?.stats?.size).toBe('number')
+      expect(typeof file?.stats?.mtime).toBe('number')
 
       // When
       delete file?.value
       const content = await themeFileSystem.read(key)
 
       // Then
-      expect(themeFileSystem.files.get(key)).toEqual({
-        key: 'templates/404.json',
-        checksum: '64caf742bd427adcf497bffab63df30c',
-        value: content,
-        attachment: '',
-        stats: {size: content?.length, mtime: expect.any(Number)},
-      })
+      const updatedFile = themeFileSystem.files.get(key)
+      expect(updatedFile?.key).toBe('templates/404.json')
+      expect(updatedFile?.checksum).toBe('64caf742bd427adcf497bffab63df30c')
+      expect(updatedFile?.value).toBe(content)
+      expect(updatedFile?.attachment).toBe('')
+      expect(updatedFile?.stats?.size).toBe(content?.length)
+      expect(typeof updatedFile?.stats?.mtime).toBe('number')
     })
   })
 
@@ -697,10 +710,10 @@ describe('theme-fs', () => {
     test('returns false if file is not in unsyncedFileKeys', async () => {
       // Given
       unsyncedFileKeys = new Set()
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When
-      const result = await handler('content')
+      const result = await handler({value: 'content'})
 
       // Then
       expect(result).toBe(false)
@@ -708,29 +721,34 @@ describe('theme-fs', () => {
       expect(triggerBrowserFullReload).not.toHaveBeenCalled()
     })
 
-    test('uploads file and returns true on successful sync', async () => {
-      // Given
-      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
-        {
-          key: fileKey,
-          success: true,
-          operation: Operation.Upload,
-        },
-      ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+    Object.entries({
+      text: {value: 'content'},
+      image: {attachment: 'content'},
+    }).forEach(([fileType, fileContent]) => {
+      test(`uploads ${fileType} file and returns true on successful sync`, async () => {
+        // Given
+        vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+          {
+            key: fileKey,
+            success: true,
+            operation: Operation.Upload,
+          },
+        ])
+        const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
-      // When
-      const result = await handler('content')
+        // When
+        const result = await handler(fileContent)
 
-      // Then
-      expect(result).toBe(true)
-      expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
-        Number(themeId),
-        [{key: fileKey, value: 'content'}],
-        adminSession,
-      )
-      expect(unsyncedFileKeys.has(fileKey)).toBe(false)
-      expect(triggerBrowserFullReload).not.toHaveBeenCalled()
+        // Then
+        expect(result).toBe(true)
+        expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
+          Number(themeId),
+          [{key: fileKey, ...fileContent}],
+          adminSession,
+        )
+        expect(unsyncedFileKeys.has(fileKey)).toBe(false)
+        expect(triggerBrowserFullReload).not.toHaveBeenCalled()
+      })
     })
 
     test('throws error and sets uploadErrors on failed sync', async () => {
@@ -744,10 +762,10 @@ describe('theme-fs', () => {
           errors: {asset: errors},
         },
       ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When/Then
-      await expect(handler('content')).rejects.toThrow('{{ broken liquid file')
+      await expect(handler({value: 'content'})).rejects.toThrow('{{ broken liquid file')
       expect(uploadErrors.get(fileKey)).toEqual(errors)
       expect(unsyncedFileKeys.has(fileKey)).toBe(true)
       expect(triggerBrowserFullReload).toHaveBeenCalledWith(themeId, fileKey)
@@ -763,10 +781,10 @@ describe('theme-fs', () => {
           operation: Operation.Upload,
         },
       ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)!
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When
-      await handler('content')
+      await handler({value: 'content'})
 
       // Then
       expect(uploadErrors.has(fileKey)).toBe(false)
@@ -780,9 +798,9 @@ describe('theme-fs', () => {
       {
         key,
         checksum,
-        value: expect.any(String),
-        attachment: expect.any(String),
-        stats: {size: expect.any(Number), mtime: expect.any(Number)},
+        value: 'test-value',
+        attachment: 'test-attachment',
+        stats: {size: 100, mtime: 1000},
       },
     ]
   }

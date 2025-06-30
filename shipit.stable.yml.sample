@@ -7,7 +7,7 @@ dependencies:
     # 404 issues like the one described in this comment:
     # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
     - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc .yarnrc
-    - curl -fsSL https://get.pnpm.io/install.sh | PNPM_VERSION=8.15.7 SHELL=`which bash` bash -
+    - curl -fsSL https://get.pnpm.io/install.sh | PNPM_VERSION=10.11.1 SHELL=`which bash` bash -
     - bash -i -c "pnpm install"
 deploy:
   override:

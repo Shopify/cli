@@ -1966,7 +1966,8 @@ ARGUMENTS
 
 FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
-  -u, --clone-url=<value>  The Git URL to clone from. Defaults to Shopify's example theme.
+  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme] The Git URL to clone from. Defaults to
+                           Shopify's Skeleton theme.
       --no-color           Disable color output.
       --path=<value>       The path to your theme directory.
       --verbose            Increase the verbosity of the output.
@@ -1976,8 +1977,9 @@ DESCRIPTION
 
   Clones a Git repository to your local machine to use as the starting point for building a theme.
 
-  If no Git repository is specified, then this command creates a copy of Shopify's example theme, with the specified
-  name in the current folder. If no name is provided, then you're prompted to enter one.
+  If no Git repository is specified, then this command creates a copy of Shopify's "Skeleton theme"
+  (https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided,
+  then you're prompted to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
   point. However, the theme that you submit needs to be "substantively different from existing themes"
@@ -2108,10 +2110,14 @@ DESCRIPTION
   Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 
   Only folders that match the "default Shopify theme folder structure"
-  (https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.
+  (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.
+
+  The package includes the `listings` directory if present (required for multi-preset themes per "Theme Store
+  requirements"
+  (https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
-  (https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
+  (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.
 ```
 
 ## `shopify theme profile`

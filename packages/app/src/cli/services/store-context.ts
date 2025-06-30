@@ -63,6 +63,9 @@ export async function storeContext({
     await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
   }
 
+  // Ensure that the user is able to login to the store and install apps
+  await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
+
   return selectedStore
 }
 

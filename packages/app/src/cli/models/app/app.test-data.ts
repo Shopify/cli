@@ -668,6 +668,7 @@ export function testOrganizationStore({shopId, shopDomain}: {shopId?: string; sh
     shopName: 'store1',
     transferDisabled: false,
     convertableToPartnerTest: false,
+    provisionable: true,
   }
 }
 
@@ -1423,19 +1424,21 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
     session: () => Promise.resolve(testPartnersUserSession),
-    refreshToken: () => Promise.resolve(testPartnersUserSession.token),
+    unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
-    templateSpecifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteExtensionTemplates),
+    templateSpecifications: (_app: MinimalAppIdentifiers) =>
+      Promise.resolve({templates: testRemoteExtensionTemplates, groupOrder: []}),
     orgAndApps: (_orgId: string) =>
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _options: CreateAppOptions) => Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve({stores: [], hasMorePages: false}),
-    storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
+    storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(undefined),
+    ensureUserAccessToStore: (_orgId: string, _store: OrganizationStore) => Promise.resolve(),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),
     activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyActiveAppVersion),

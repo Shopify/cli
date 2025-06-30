@@ -1,13 +1,13 @@
 import {appFlags} from '../../flags.js'
 import {Format, info} from '../../services/info.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
-export default class AppInfo extends AppCommand {
+export default class AppInfo extends AppLinkedCommand {
   static summary = 'Print basic information about your app and extensions.'
 
   static descriptionWithMarkdown = `The information returned includes the following:
@@ -31,7 +31,7 @@ export default class AppInfo extends AppCommand {
     }),
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppInfo)
 
     const {app, remoteApp, organization, developerPlatformClient} = await linkedAppContext({

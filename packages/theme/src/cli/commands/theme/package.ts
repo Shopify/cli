@@ -8,9 +8,11 @@ export default class Package extends ThemeCommand {
 
   static descriptionWithMarkdown = `Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 
-  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.
+  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.
 
-  The ZIP file uses the name \`theme_name-theme_version.zip\`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.`
+  The package includes the \`listings\` directory if present (required for multi-preset themes per [Theme Store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).
+
+  The ZIP file uses the name \`theme_name-theme_version.zip\`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.`
 
   static description = this.descriptionWithoutMarkdown()
 

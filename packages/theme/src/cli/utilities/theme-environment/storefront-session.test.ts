@@ -12,6 +12,7 @@ import {type AdminSession} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {
@@ -86,6 +87,20 @@ describe('Storefront API', () => {
         .mockResolvedValueOnce(
           response({
             status: 200,
+            headers: {'set-cookie': ''},
+            text: () => Promise.resolve(''),
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': ''},
+            text: () => Promise.resolve(''),
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
             headers: {'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly'},
             text: () => Promise.resolve(''),
           }),
@@ -128,6 +143,39 @@ describe('Storefront API', () => {
           'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
         ),
       )
+    })
+
+    test('retries to obtain _shopify_essential cookie and succeeds', async () => {
+      // Given: first 2 calls return no cookie, 3rd returns the cookie
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': ''},
+            text: () => Promise.resolve(''),
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': ''},
+            text: () => Promise.resolve(''),
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==RETRYCOOKIE:; path=/; HttpOnly'},
+            text: () => Promise.resolve(''),
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456')
+
+      // Then
+      expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==RETRYCOOKIE:'})
+      expect(shopifyFetch).toHaveBeenCalledTimes(3)
     })
   })
 

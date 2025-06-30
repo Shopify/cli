@@ -11,12 +11,12 @@ on:
       node-version:
         description: 'Node version'
         required: true
-        default: '18.20.3'
+        default: '24.1.0'
         type: choice
         options:
-          - 18.20.3
           - 20.14.0
           - 22.2.0
+          - 24.1.0
       os:
         description: 'Operating system'
         required: true
@@ -47,7 +47,7 @@ env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  PNPM_VERSION: '8.15.7'
+  PNPM_VERSION: '10.11.1'
   BUNDLE_WITHOUT: 'test:development'
   SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
   GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '18.20.3', '20.14.0', '22.2.0' ]
+        node: [ '20.14.0', '22.2.0', '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -74,20 +74,23 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache  --target=build --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
       - name: Lint
         run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
       - name: Type-check
         run: pnpm nx run-many --all --skip-nx-cache  --target=type-check --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
       - name: Bundle
         run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
       - name: Unit tests
         run: pnpm vitest run
+        env:
+          VITEST_MIN_THREADS: "1"
+          VITEST_MAX_THREADS: "4"
       - name: Acceptance tests
-        if: ${{ matrix.node == '18.20.3' }}
+        if: ${{ matrix.node == '24.1.0' }}
         env:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
         run: pnpm nx run features:test
@@ -103,7 +106,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.20.3' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
         with:
           branch-name: ${{ github.ref_name }}
 
@@ -115,7 +118,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
         target: [ 'build', 'type-check' ]
     steps:
       - uses: actions/checkout@v3
@@ -138,7 +141,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -166,7 +169,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -190,7 +193,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -214,7 +217,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'macos-latest' ] # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -248,7 +251,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.20.3
+          node-version: 24.1.0
       - name: Build
         run: pnpm build --output-style=stream
       - name: Refresh manifests
@@ -276,7 +279,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '18.20.3', '20.14.0', '22.2.0' ]
+        node: [ '20.14.0', '22.2.0', '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -289,6 +292,9 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Unit tests
         run: pnpm vitest run
+        env:
+          VITEST_MIN_THREADS: "1"
+          VITEST_MAX_THREADS: "4"
 
   pr-acceptance-tests:
     name: '[PR] Accept. Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
@@ -298,7 +304,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'macos-latest', 'windows-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -322,7 +328,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:

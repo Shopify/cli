@@ -207,25 +207,6 @@ describe('pushUpdatesForDevSession', () => {
     contextSpy.mockRestore()
   })
 
-  test('update is retried if there is an error', async () => {
-    // Given
-    developerPlatformClient.devSessionUpdate = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('Test error'))
-      .mockResolvedValueOnce({devSessionUpdate: {userErrors: []}})
-
-    // When
-    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
-    await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
-    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
-
-    // Then
-    expect(developerPlatformClient.refreshToken).toHaveBeenCalledOnce()
-    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
-  })
-
   test('updates preview URL when extension is previewable', async () => {
     // Given
     const extension = await testUIExtension({type: 'ui_extension'})

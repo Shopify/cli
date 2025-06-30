@@ -2,7 +2,7 @@ import {SerialBatchProcessor} from './serial-batch-processor.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 describe('SerialBatchProcessor', () => {
-  let processBatchMock: ReturnType<typeof vi.fn<[items: string[]], Promise<void>>>
+  let processBatchMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     // Default mock that resolves immediately
@@ -21,7 +21,7 @@ describe('SerialBatchProcessor', () => {
   test('should process items in separate batches if enqueued after processing of a batch starts', async () => {
     let resolveFirstBatch: () => void = () => {}
 
-    processBatchMock.mockImplementationOnce(async (_items) => {
+    processBatchMock.mockImplementationOnce(async (_items: string[]) => {
       await new Promise<void>((resolve) => {
         resolveFirstBatch = resolve
       })
@@ -53,8 +53,8 @@ describe('SerialBatchProcessor', () => {
     const secondBatchPromise = new Promise<void>((resolve) => (resolveSecondBatch = resolve))
 
     processBatchMock
-      .mockImplementationOnce(async (_items) => firstBatchPromise)
-      .mockImplementationOnce(async (_items) => secondBatchPromise)
+      .mockImplementationOnce(async (_items: string[]) => firstBatchPromise)
+      .mockImplementationOnce(async (_items: string[]) => secondBatchPromise)
 
     const processor = new SerialBatchProcessor<string>(processBatchMock)
     // Starts first batch
@@ -100,7 +100,7 @@ describe('SerialBatchProcessor', () => {
     await expect(processor.waitForCompletion()).rejects.toThrow(testError)
 
     // Reset mock for the next successful attempt
-    processBatchMock.mockImplementationOnce(async (_items) => Promise.resolve())
+    processBatchMock.mockImplementationOnce(async (_items: string[]) => Promise.resolve())
 
     // Enqueue another item, should start new processing
     processor.enqueue('item2-success')

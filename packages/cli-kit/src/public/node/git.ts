@@ -361,3 +361,30 @@ export async function getLatestTag(directory?: string): Promise<string | undefin
   const tags = await git({baseDir: directory}).tags()
   return tags.latest
 }
+
+/**
+ * Remove a git remote from the given directory.
+ *
+ * @param directory - The directory where the git repository is located.
+ * @param remoteName - The name of the remote to remove (defaults to 'origin').
+ * @returns A promise that resolves when the remote is removed.
+ */
+export async function removeGitRemote(directory: string, remoteName = 'origin'): Promise<void> {
+  outputDebug(outputContent`Removing git remote ${remoteName} from ${outputToken.path(directory)}...`)
+  await ensureGitIsPresentOrAbort()
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const repo = git(directory)
+
+  // Check if remote exists first
+  const remotes = await repo.getRemotes()
+  const remoteExists = remotes.some((remote: {name: string}) => remote.name === remoteName)
+
+  if (!remoteExists) {
+    outputDebug(outputContent`Remote ${remoteName} does not exist, no action needed`)
+    return
+  }
+
+  await repo.removeRemote(remoteName)
+}
