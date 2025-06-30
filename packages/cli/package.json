@@ -108,9 +108,9 @@
     "global-agent": "3.0.0"
   },
   "devDependencies": {
-    "@oclif/core": "3.26.5",
-    "@oclif/plugin-commands": "4.1.18",
-    "@oclif/plugin-plugins": "5.4.28",
+    "@oclif/core": "4.4.0",
+    "@oclif/plugin-commands": "4.1.26",
+    "@oclif/plugin-plugins": "5.4.43",
     "@shopify/app": "3.82.0",
     "@shopify/cli-kit": "3.82.0",
     "@shopify/plugin-cloudflare": "3.82.0",

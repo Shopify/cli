@@ -2,7 +2,7 @@ import {fileExistsSync} from './fs.js'
 import {cwd, joinPath, sniffForPath} from './path.js'
 import {execaSync} from 'execa'
 import {Command, Config} from '@oclif/core'
-import {Options} from '@oclif/core/lib/interfaces/plugin.js'
+import {Options} from '@oclif/core/interfaces'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
