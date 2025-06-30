@@ -1,5 +1,27 @@
 # @shopify/app
 
+## 3.82.0
+
+### Minor Changes
+
+- 386bf0e: Add support for displaying UI Extension dev logs
+- d691457: Unsupported sections in your app.toml file will present a validation error. Opt-out with SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS.
+
+### Patch Changes
+
+- c487f84: Fixes the `Encryption certificate fingerprint can't be blank` error when generating a custom credit card payments extension with the `shopify app generate extension` command.
+- b9683e0: Adds a validation to prevent app-specific webhooks and legacy install flow
+- Updated dependencies [02b417b]
+- Updated dependencies [0edf793]
+- Updated dependencies [9b52391]
+- Updated dependencies [5188073]
+- Updated dependencies [4176bf5]
+- Updated dependencies [c9c07b5]
+- Updated dependencies [eee4978]
+  - @shopify/theme@3.82.0
+  - @shopify/cli-kit@3.82.0
+  - @shopify/plugin-cloudflare@3.82.0
+
 ## 3.81.1
 
 ### Patch Changes

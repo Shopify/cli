@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.82.0
+
+### Patch Changes
+
+- 02b417b: Ensure all theme commands accept the --path flag
+- 9b52391: Add /listings folder to theme package command
+- 5188073: Improvement and fixes when handling multi-environment commands
+
+  - Fixes a bug where passing a single environment to multi-env commands would cause it to fail if the environment didn't have all of the required attributes for multi-env
+  - Updates output when running multi-env commands to ensure the results from each command don't overlap one another
+
+- 4176bf5: Add clarity to helper text when a store is missing
+- c9c07b5: Fix `_shopify_essential` issues related to data replication and unstable connections
+- Updated dependencies [0edf793]
+- Updated dependencies [eee4978]
+  - @shopify/cli-kit@3.82.0
+
 ## 3.81.1
 
 ### Patch Changes
