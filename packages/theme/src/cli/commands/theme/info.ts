@@ -18,9 +18,7 @@ export default class Info extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    store: themeFlags.store,
-    password: themeFlags.password,
-    environment: themeFlags.environment,
+    ...themeFlags,
     development: Flags.boolean({
       char: 'd',
       description: 'Retrieve info from your development theme.',

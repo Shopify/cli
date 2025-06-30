@@ -8,7 +8,7 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
  */
 export const themeFlags = {
   path: Flags.string({
-    description: 'The path to your theme directory.',
+    description: 'The path where you want to run the command. Defaults to the current working directory.',
     env: 'SHOPIFY_FLAG_PATH',
     parse: async (input) => resolvePath(input),
     default: async () => cwd(),
