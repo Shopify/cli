@@ -24,6 +24,7 @@ interface DevSesionUIProps {
   abortController: AbortController
   devSessionStatusManager: DevSessionStatusManager
   shopFqdn: string
+  appURL?: string
   onAbort: () => Promise<void>
 }
 
@@ -32,6 +33,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   processes,
   devSessionStatusManager,
   shopFqdn,
+  appURL,
   onAbort,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -192,6 +194,11 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               <>
                 {status.isReady && (
                   <>
+                    {appURL ? (
+                      <Text>
+                        App URL: <Link url={appURL} />
+                      </Text>
+                    ) : null}
                     {status.previewURL ? (
                       <Text>
                         Preview URL: <Link url={status.previewURL} />
