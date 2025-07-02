@@ -12,9 +12,7 @@ import {
   startBulkDataStoreExport,
   startBulkDataStoreImport,
   pollBulkDataOperation,
-  organizationsRequest,
 } from '../../../apis/organizations/index.js'
-import {bulkDataOperationByIdQuery} from '../../../apis/organizations/graphql.js'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
@@ -76,33 +74,6 @@ export class ApiClient implements ApiClientInterface {
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {
     return ensureAuthenticatedBusinessPlatform()
-  }
-
-  async ensureUserHasBulkDataAccess(organizationId: string, token: string): Promise<boolean> {
-    try {
-      const fakeOperationId = 'Z2lkOi8vb3JnYW5pemF0aW9uL0J1bGtEYXRhT3BlcmF0aW9uLzg5'
-      await organizationsRequest<BulkDataOperationByIdResponse>(
-        organizationId,
-        bulkDataOperationByIdQuery,
-        token,
-        {id: fakeOperationId},
-        undefined,
-        this.createUnauthorizedHandler(),
-      )
-
-      return true
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        (error.message.includes('does not exist on type') || error.message.includes('BulkDataOperationById'))
-      ) {
-        return false
-      }
-      if (error instanceof Error && error.message.includes('BulkDataOperation not found')) {
-        return true
-      }
-      throw error
-    }
   }
 
   private createUnauthorizedHandler(): UnauthorizedHandler {
