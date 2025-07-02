@@ -441,6 +441,7 @@ async function launchDevProcesses({
     developerPreview: developerPreviewController(apiKey, developerPlatformClient),
     shopFqdn: config.storeFqdn,
     devSessionStatusManager,
+    appURL: config.localApp.devApplicationURLs?.applicationUrl,
   })
 }
 
