@@ -37,7 +37,7 @@ describe('MockFileUploader', () => {
       vi.mocked(fileExists).mockResolvedValue(false)
 
       await expect(mockFileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `File not found: ${mockFilePath}`,
+        `File ${mockFilePath} not found.`,
       )
     })
 

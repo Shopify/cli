@@ -74,7 +74,7 @@ export class StoreImportOperation implements StoreOperation {
 
   private async validateInputFile(filePath: string): Promise<void> {
     if (!(await fileExists(filePath))) {
-      throw new Error(`File not found: ${filePath}`)
+      throw new Error(`File ${filePath} not found.`)
     }
   }
 

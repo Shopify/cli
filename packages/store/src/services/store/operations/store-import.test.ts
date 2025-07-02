@@ -102,7 +102,7 @@ describe('StoreImportOperation', () => {
     vi.mocked(fileExists).mockResolvedValue(false)
 
     await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'File not found: nonexistent.sqlite',
+      'File nonexistent.sqlite not found.',
     )
 
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
@@ -279,7 +279,7 @@ describe('StoreImportOperation', () => {
     vi.mocked(fileExists).mockResolvedValue(false)
 
     await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'File not found: nonexistent.sqlite',
+      'File nonexistent.sqlite not found.',
     )
 
     expect(fileExists).toHaveBeenCalled()

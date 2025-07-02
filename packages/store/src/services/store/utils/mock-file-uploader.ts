@@ -3,7 +3,7 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 export class MockFileUploader {
   async uploadSqliteFile(filePath: string, _storeFqdn: string): Promise<string> {
     if (!(await fileExists(filePath))) {
-      throw new Error(`File not found: ${filePath}`)
+      throw new Error(`File ${filePath} not found.`)
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000))
