@@ -1,14 +1,13 @@
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
-import {Shop} from '../../../apis/destinations/index.js'
+import {Organization, Shop} from '../../../apis/destinations/index.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {findShop} from '../utils/store-utils.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
-import {MockApiClient} from '../mock/mock-api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
@@ -20,14 +19,18 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 export class StoreImportOperation implements StoreOperation {
   fromArg: string | undefined
   toArg: string | undefined
-  private apiClient: ApiClientInterface
+  private readonly apiClient: ApiClientInterface
   private fileUploader: FileUploader | MockFileUploader
   private readonly resultFileHandler: ResultFileHandler
+  private readonly orgs: Organization[]
+  private readonly bpSession: string
 
-  constructor(apiClient?: ApiClientInterface) {
+  constructor(bpSession: string, apiClient?: ApiClientInterface, orgs?: Organization[]) {
     this.apiClient = apiClient ?? new ApiClient()
     this.fileUploader = new FileUploader()
     this.resultFileHandler = new ResultFileHandler()
+    this.orgs = orgs ?? []
+    this.bpSession = bpSession
   }
 
   async execute(fromFile: string, toStore: string, flags: FlagOptions): Promise<void> {
@@ -35,16 +38,12 @@ export class StoreImportOperation implements StoreOperation {
     this.toArg = toStore
 
     if (flags.mock) {
-      this.apiClient = new MockApiClient()
       this.fileUploader = new MockFileUploader()
     }
 
     await this.validateInputFile(fromFile)
 
-    const bpSession = await this.apiClient.ensureAuthenticatedBusinessPlatform()
-    const orgs = await this.apiClient.fetchOrganizations(bpSession)
-
-    const targetShop = findShop(toStore, orgs)
+    const targetShop = findShop(toStore, this.orgs)
     this.validateShop(targetShop)
 
     if (!flags['no-prompt']) {
@@ -60,7 +59,7 @@ export class StoreImportOperation implements StoreOperation {
       targetShop.organizationId,
       targetShop,
       fromFile,
-      bpSession,
+      this.bpSession,
       flags,
     )
 

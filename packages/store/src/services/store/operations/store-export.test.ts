@@ -1,5 +1,4 @@
 import {StoreExportOperation} from './store-export.js'
-import {MockApiClient} from '../mock/mock-api-client.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {
   TEST_MOCK_DATA,
@@ -47,7 +46,7 @@ describe('StoreExportOperation', () => {
     }
     vi.mocked(ResultFileHandler).mockImplementation(() => mockResultFileHandler)
 
-    operation = new StoreExportOperation(mockApiClient)
+    operation = new StoreExportOperation(mockBpSession, mockApiClient, [mockOrganization])
 
     vi.mocked(renderTasks).mockResolvedValue({
       operation: mockCompletedOperation,
@@ -55,26 +54,9 @@ describe('StoreExportOperation', () => {
     })
   })
 
-  test('should instantiate with a mock API client', () => {
-    const mockApiClient = new MockApiClient()
-    const operation = new StoreExportOperation(mockApiClient)
-
-    expect(operation).toBeDefined()
-    expect(operation).toBeInstanceOf(StoreExportOperation)
-  })
-
-  test('should instantiate without API client (uses default)', () => {
-    const operation = new StoreExportOperation()
-
-    expect(operation).toBeDefined()
-    expect(operation).toBeInstanceOf(StoreExportOperation)
-  })
-
   test('should successfully export data from source shop', async () => {
     await operation.execute('source.myshopify.com', 'output.sqlite', {})
 
-    expect(mockApiClient.ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
-    expect(mockApiClient.fetchOrganizations).toHaveBeenCalledWith(mockBpSession)
     expect(renderCopyInfo).toHaveBeenCalledWith('Export Operation', 'source.myshopify.com', 'output.sqlite')
     expect(renderExportResult).toHaveBeenCalledWith(mockSourceShop, mockCompletedOperation)
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
@@ -104,13 +86,12 @@ describe('StoreExportOperation', () => {
   })
 
   test('should throw error when organization has no shops', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([
+    operation = new StoreExportOperation(mockBpSession, mockApiClient, [
       {
         ...mockOrganization,
         shops: [],
       },
     ])
-
     await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
       'Source shop (source.myshopify.com) not found.',
     )
@@ -189,14 +170,6 @@ describe('StoreExportOperation', () => {
     await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow('Export failed')
 
     expect(mockResultFileHandler.promptAndHandleResultFile).not.toHaveBeenCalled()
-  })
-
-  test('should use MockApiClient when mock flag is set', async () => {
-    const operation = new StoreExportOperation()
-
-    await operation.execute('source.myshopify.com', 'output.sqlite', {mock: true})
-
-    expect(renderExportResult).toHaveBeenCalled()
   })
 
   test('should handle multiple user errors correctly', async () => {

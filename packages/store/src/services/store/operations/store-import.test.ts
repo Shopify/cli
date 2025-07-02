@@ -1,5 +1,4 @@
 import {StoreImportOperation} from './store-import.js'
-import {MockApiClient} from '../mock/mock-api-client.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {
   TEST_MOCK_DATA,
@@ -55,7 +54,7 @@ describe('StoreImportOperation', () => {
     }
     vi.mocked(FileUploader).mockImplementation(() => mockFileUploader)
 
-    operation = new StoreImportOperation(mockApiClient)
+    operation = new StoreImportOperation(mockBpSession, mockApiClient, [mockOrganization])
 
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(parseResourceConfigFlags).mockReturnValue({})
@@ -68,27 +67,10 @@ describe('StoreImportOperation', () => {
     })
   })
 
-  test('should instantiate with a mock API client', () => {
-    const mockApiClient = new MockApiClient()
-    const operation = new StoreImportOperation(mockApiClient)
-
-    expect(operation).toBeDefined()
-    expect(operation).toBeInstanceOf(StoreImportOperation)
-  })
-
-  test('should instantiate without API client (uses default)', () => {
-    const operation = new StoreImportOperation()
-
-    expect(operation).toBeDefined()
-    expect(operation).toBeInstanceOf(StoreImportOperation)
-  })
-
   test('should successfully import data to target shop', async () => {
     await operation.execute('input.sqlite', 'target.myshopify.com', {})
 
     expect(fileExists).toHaveBeenCalledWith('input.sqlite')
-    expect(mockApiClient.ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
-    expect(mockApiClient.fetchOrganizations).toHaveBeenCalledWith(mockBpSession)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message: 'Import data from input.sqlite to target.myshopify.com?',
       confirmationMessage: 'Yes, import',
@@ -127,13 +109,12 @@ describe('StoreImportOperation', () => {
   })
 
   test('should throw error when organization has no shops', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([
+    operation = new StoreImportOperation(mockBpSession, mockApiClient, [
       {
         ...mockOrganization,
         shops: [],
       },
     ])
-
     await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
       'Target shop (target.myshopify.com) not found.',
     )
@@ -206,14 +187,6 @@ describe('StoreImportOperation', () => {
     })
 
     await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow('Import failed')
-  })
-
-  test('should use MockApiClient and MockFileUploader when mock flag is set', async () => {
-    const operation = new StoreImportOperation()
-
-    await operation.execute('input.sqlite', 'target.myshopify.com', {mock: true})
-
-    expect(renderImportResult).toHaveBeenCalled()
   })
 
   test('should pass resource config flags when provided', async () => {
