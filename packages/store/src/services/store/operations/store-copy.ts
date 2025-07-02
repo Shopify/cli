@@ -1,12 +1,11 @@
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
-import {Shop} from '../../../apis/destinations/index.js'
+import {Organization, Shop} from '../../../apis/destinations/index.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
 import {findShop} from '../utils/store-utils.js'
 import {ApiClient} from '../api/api-client.js'
-import {MockApiClient} from '../mock/mock-api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
@@ -17,25 +16,22 @@ import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 export class StoreCopyOperation implements StoreOperation {
   fromArg: string | undefined
   toArg: string | undefined
-  private apiClient: ApiClientInterface
+  private readonly apiClient: ApiClientInterface
+  private readonly orgs: Organization[]
+  private readonly bpSession: string
 
-  constructor(apiClient?: ApiClientInterface) {
+  constructor(bpSession: string, apiClient?: ApiClientInterface, orgs?: Organization[]) {
     this.apiClient = apiClient ?? new ApiClient()
+    this.orgs = orgs ?? []
+    this.bpSession = bpSession
   }
 
   async execute(fromStore: string, toStore: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
     this.toArg = toStore
 
-    if (flags.mock) {
-      this.apiClient = new MockApiClient()
-    }
-
-    const bpSession = await this.apiClient.ensureAuthenticatedBusinessPlatform()
-    const orgs = await this.apiClient.fetchOrganizations(bpSession)
-
-    const sourceShop = findShop(fromStore, orgs)
-    const targetShop = findShop(toStore, orgs)
+    const sourceShop = findShop(fromStore, this.orgs)
+    const targetShop = findShop(toStore, this.orgs)
 
     this.validateShops(sourceShop, targetShop)
 
@@ -56,7 +52,7 @@ export class StoreCopyOperation implements StoreOperation {
       sourceShop.organizationId,
       sourceShop,
       targetShop,
-      bpSession,
+      this.bpSession,
       flags,
     )
 

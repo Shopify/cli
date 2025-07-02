@@ -2,6 +2,8 @@ import Copy from './copy.js'
 import {StoreCopyOperation} from '../../services/store/operations/store-copy.js'
 import {StoreExportOperation} from '../../services/store/operations/store-export.js'
 import {StoreImportOperation} from '../../services/store/operations/store-import.js'
+import {ApiClient} from '../../services/store/api/api-client.js'
+import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {renderError} from '@shopify/cli-kit/node/ui'
@@ -10,16 +12,47 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../services/store/operations/store-copy.js')
 vi.mock('../../services/store/operations/store-export.js')
 vi.mock('../../services/store/operations/store-import.js')
+vi.mock('../../services/store/api/api-client.js')
+vi.mock('../../services/store/mock/mock-api-client.js')
 
 const CommandConfig = new Config({root: __dirname})
 
 describe('Copy', () => {
   const mockExecute = vi.fn()
+  const mockOrganizations = [
+    {
+      id: 'gid://organization/1',
+      name: 'Test Organization',
+      shops: [
+        {id: 'gid://shop/1', domain: 'source.myshopify.com', organizationId: 'gid://organization/1'},
+        {id: 'gid://shop/2', domain: 'target.myshopify.com', organizationId: 'gid://organization/1'},
+      ],
+    },
+  ]
 
   beforeEach(() => {
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
+
+    // Mock API Client
+    vi.mocked(ApiClient).mockImplementation(
+      () =>
+        ({
+          ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue('mock-session'),
+          fetchOrganizations: vi.fn().mockResolvedValue(mockOrganizations),
+          ensureUserHasBulkDataAccess: vi.fn().mockResolvedValue(true),
+        } as any),
+    )
+
+    vi.mocked(MockApiClient).mockImplementation(
+      () =>
+        ({
+          ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue('mock-session'),
+          fetchOrganizations: vi.fn().mockResolvedValue(mockOrganizations),
+          ensureUserHasBulkDataAccess: vi.fn().mockResolvedValue(true),
+        } as any),
+    )
 
     vi.mocked(StoreCopyOperation).mockImplementation(
       () =>
@@ -115,6 +148,26 @@ describe('Copy', () => {
       )
     })
 
+    test('should throw error when no organizations have access to bulk data operations', async () => {
+      vi.mocked(ApiClient).mockImplementation(
+        () =>
+          ({
+            ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue('mock-session'),
+            fetchOrganizations: vi.fn().mockResolvedValue(mockOrganizations),
+            ensureUserHasBulkDataAccess: vi.fn().mockResolvedValue(false),
+          } as any),
+      )
+
+      await expect(run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])).rejects.toThrow(
+        'Process exit called',
+      )
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Operation failed',
+        body: `This command is only available to Early Access Program members.`,
+      })
+      expect(process.exit).toHaveBeenCalledWith(1)
+    })
+
     test('should throw error when invalid flag combination', async () => {
       await expect(run(['--toFile=output.sqlite'])).rejects.toThrow('Process exit called')
       expect(renderError).toHaveBeenCalledWith({
@@ -152,32 +205,6 @@ describe('Copy', () => {
         'target.myshopify.com',
         expect.objectContaining({
           'no-prompt': true,
-          mock: true,
-        }),
-      )
-    })
-
-    test('should pass mock flag to export operation', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toFile=output.sqlite', '--mock'])
-
-      expect(StoreExportOperation).toHaveBeenCalledTimes(1)
-      expect(mockExecute).toHaveBeenCalledWith(
-        'source.myshopify.com',
-        'output.sqlite',
-        expect.objectContaining({
-          mock: true,
-        }),
-      )
-    })
-
-    test('should pass mock flag to import operation', async () => {
-      await run(['--fromFile=input.sqlite', '--toStore=target.myshopify.com', '--mock'])
-
-      expect(StoreImportOperation).toHaveBeenCalledTimes(1)
-      expect(mockExecute).toHaveBeenCalledWith(
-        'input.sqlite',
-        'target.myshopify.com',
-        expect.objectContaining({
           mock: true,
         }),
       )
