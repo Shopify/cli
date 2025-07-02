@@ -7,6 +7,7 @@ import {StoreImportOperation} from '../../services/store/operations/store-import
 import {ApiClient} from '../../services/store/api/api-client.js'
 import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {Organization} from '../../apis/destinations/index.js'
+import {ensureOrgHasBulkDataAccess} from '../../services/store/utils/store-utils.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 
@@ -30,13 +31,13 @@ export default class Copy extends BaseBDCommand {
     const bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
     const allOrgs = await apiClient.fetchOrganizations(bpSession)
 
-    // Filter organizations based on bulk data access
     const accessChecks = await Promise.all(
       allOrgs.map(async (org) => ({
         org,
-        hasAccess: await apiClient.ensureUserHasBulkDataAccess(org.id, bpSession),
+        hasAccess: await ensureOrgHasBulkDataAccess(org.id, bpSession, apiClient),
       })),
     )
+
     const orgsWithAccess = accessChecks.filter(({hasAccess}) => hasAccess).map(({org}) => org)
     if (orgsWithAccess.length === 0) {
       throw new Error(`This command is only available to Early Access Program members.`)
