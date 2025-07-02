@@ -65,6 +65,7 @@ interface EnvironmentData {
   env_is_global: boolean
   env_auth_method: string
   env_is_wsl: boolean
+  env_build_repository: string
 }
 
 export async function getEnvironmentData(config: Interfaces.Config): Promise<EnvironmentData> {
@@ -89,6 +90,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_is_global: currentProcessIsGlobal(),
     env_auth_method: await getLastSeenAuthMethod(),
     env_is_wsl: await isWsl(),
+    env_build_repository: process.env.SHOPIFY_CLI_BUILD_REPO ?? 'unknown',
   }
 }
 
