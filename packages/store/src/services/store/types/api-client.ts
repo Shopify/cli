@@ -39,6 +39,4 @@ export interface ApiClientInterface {
   ): Promise<BulkDataOperationByIdResponse>
 
   ensureAuthenticatedBusinessPlatform(): Promise<string>
-
-  ensureUserHasBulkDataAccess(organizationId: string, token: string): Promise<boolean>
 }
