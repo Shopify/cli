@@ -4,6 +4,9 @@ import {OperationMode} from '../../services/store/types/operations.js'
 import {StoreCopyOperation} from '../../services/store/operations/store-copy.js'
 import {StoreExportOperation} from '../../services/store/operations/store-export.js'
 import {StoreImportOperation} from '../../services/store/operations/store-import.js'
+import {ApiClient} from '../../services/store/api/api-client.js'
+import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
+import {Organization} from '../../apis/destinations/index.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 
@@ -22,6 +25,23 @@ export default class Copy extends BaseBDCommand {
   async runCommand(): Promise<void> {
     this.flags = (await this.parse(Copy)).flags
 
+    // Check access for all organizations first
+    const apiClient = this.flags.mock ? new MockApiClient() : new ApiClient()
+    const bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
+    const allOrgs = await apiClient.fetchOrganizations(bpSession)
+
+    // Filter organizations based on bulk data access
+    const accessChecks = await Promise.all(
+      allOrgs.map(async (org) => ({
+        org,
+        hasAccess: await apiClient.ensureUserHasBulkDataAccess(org.id, bpSession),
+      })),
+    )
+    const orgsWithAccess = accessChecks.filter(({hasAccess}) => hasAccess).map(({org}) => org)
+    if (orgsWithAccess.length === 0) {
+      throw new Error(`This command is only available to Early Access Program members.`)
+    }
+
     const {fromStore, toStore, fromFile, _} = this.flags
     let {toFile} = this.flags
     const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
@@ -31,7 +51,7 @@ export default class Copy extends BaseBDCommand {
       toFile = joinPath(cwd(), `${storeDomain}-export-${Date.now()}.sqlite`)
     }
 
-    const operation = this.getOperation(operationMode)
+    const operation = this.getOperation(operationMode, bpSession, apiClient, orgsWithAccess)
 
     switch (operationMode) {
       case OperationMode.StoreCopy:
@@ -46,14 +66,19 @@ export default class Copy extends BaseBDCommand {
     }
   }
 
-  private getOperation(mode: OperationMode) {
+  private getOperation(
+    mode: OperationMode,
+    bpSession: string,
+    apiClient: ApiClient | MockApiClient,
+    orgs: Organization[],
+  ) {
     switch (mode) {
       case OperationMode.StoreCopy:
-        return new StoreCopyOperation()
+        return new StoreCopyOperation(bpSession, apiClient, orgs)
       case OperationMode.StoreExport:
-        return new StoreExportOperation()
+        return new StoreExportOperation(bpSession, apiClient, orgs)
       case OperationMode.StoreImport:
-        return new StoreImportOperation()
+        return new StoreImportOperation(bpSession, apiClient, orgs)
       default:
         throw new Error(`Unknown operation mode: ${mode}`)
     }
