@@ -1049,9 +1049,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async getCreateDevStoreLink(org: Organization): Promise<TokenItem> {
     const url = `https://${await developerDashboardFqdn()}/dashboard/${org.id}/stores`
     return [
-      `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard. Create one now`,
+      `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.`,
       '\n',
-      {link: {url, label: url}},
+      {link: {url, label: 'Create one now'}},
     ]
   }
 
