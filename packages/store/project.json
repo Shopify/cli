@@ -79,10 +79,10 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint './packages/store/src/cli/api/graphql/admin/generated/**/*.ts' --fix",
-          "pnpm eslint './packages/store/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts' --fix"
+          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.ts' --fix",
+          "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.ts' --fix"
         ],
-        "cwd": "{workspaceRoot}"
+        "cwd": "packages/store"
       }
     },
     "graphql-codegen:generate:admin": {
