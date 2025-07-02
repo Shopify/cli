@@ -111,11 +111,6 @@ export class MockApiClient implements ApiClientInterface {
     return 'mock-session-token'
   }
 
-  async ensureUserHasBulkDataAccess(_organizationId: string, _token: string): Promise<boolean> {
-    await this.delay(MOCK_CONFIG.API_DELAY)
-    return true
-  }
-
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
