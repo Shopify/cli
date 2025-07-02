@@ -35,6 +35,7 @@ describe('StoreCopyOperation', () => {
 
     let mockApiClient: any
     let operation: StoreCopyOperation
+    const mockToken = ''
 
     beforeEach(() => {
       vi.spyOn(process, 'exit').mockImplementation(() => {
@@ -48,7 +49,7 @@ describe('StoreCopyOperation', () => {
         pollBulkDataOperation: vi.fn().mockResolvedValue(mockCompletedOperation),
       }
 
-      operation = new StoreCopyOperation(mockApiClient)
+      operation = new StoreCopyOperation(mockToken, mockApiClient, [mockOrganization])
 
       vi.mocked(confirmCopyPrompt).mockResolvedValue(true)
       vi.mocked(parseResourceConfigFlags).mockReturnValue({})
@@ -62,14 +63,14 @@ describe('StoreCopyOperation', () => {
 
     test('should instantiate with a mock API client', () => {
       const mockApiClient = new MockApiClient()
-      const operation = new StoreCopyOperation(mockApiClient)
+      const operation = new StoreCopyOperation(mockToken, mockApiClient)
 
       expect(operation).toBeDefined()
       expect(operation).toBeInstanceOf(StoreCopyOperation)
     })
 
     test('should instantiate without API client (uses default)', () => {
-      const operation = new StoreCopyOperation()
+      const operation = new StoreCopyOperation(mockToken)
 
       expect(operation).toBeDefined()
       expect(operation).toBeInstanceOf(StoreCopyOperation)
@@ -78,8 +79,6 @@ describe('StoreCopyOperation', () => {
     test('should successfully copy data from source to target shop', async () => {
       await operation.execute('source.myshopify.com', 'target.myshopify.com', {})
 
-      expect(mockApiClient.ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
-      expect(mockApiClient.fetchOrganizations).toHaveBeenCalledWith(mockBpSession)
       expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
       expect(renderCopyInfo).toHaveBeenCalledWith('Copy Operation', 'source.myshopify.com', 'target.myshopify.com')
       expect(renderCopyResult).toHaveBeenCalledWith(mockSourceShop, mockTargetShop, mockCompletedOperation)
@@ -139,8 +138,7 @@ describe('StoreCopyOperation', () => {
     test('should throw error when shops are in different organizations', async () => {
       const differentOrgShop: Shop = TEST_MOCK_DATA.differentOrgShop
       const differentOrg: Organization = TEST_MOCK_DATA.differentOrganization
-      mockApiClient.fetchOrganizations.mockResolvedValue([mockOrganization, differentOrg])
-
+      operation = new StoreCopyOperation(mockToken, mockApiClient, [mockOrganization, differentOrg])
       await expect(operation.execute('source.myshopify.com', 'other-org.myshopify.com', {})).rejects.toThrow(
         'Source and target shops must be in the same organization.',
       )
@@ -210,14 +208,6 @@ describe('StoreCopyOperation', () => {
       })
 
       await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow('Copy failed')
-    })
-
-    test('should use MockApiClient when mock flag is set', async () => {
-      const operation = new StoreCopyOperation()
-
-      await operation.execute('source.myshopify.com', 'target.myshopify.com', {mock: true})
-
-      expect(renderCopyResult).toHaveBeenCalled()
     })
   })
 })
