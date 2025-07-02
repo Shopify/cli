@@ -69,6 +69,32 @@ class MockCommandWithRequiredFlagInNonTTY extends MockCommand {
   }
 }
 
+class MockCommandWithoutEnvironmentFlag extends Command {
+  /* eslint-disable @shopify/cli/command-flags-with-env */
+  static flags = {
+    ...globalFlags,
+    path: Flags.string({
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
+    }),
+    someString: Flags.string({}),
+  }
+  /* eslint-enable @shopify/cli/command-flags-with-env */
+
+  async run(): Promise<void> {
+    const {flags} = await this.parse(MockCommandWithoutEnvironmentFlag)
+    testResult = flags
+  }
+
+  async catch(error: Error): Promise<void> {
+    testError = error
+  }
+
+  environmentsFilename(): string {
+    return 'shopify.environments.toml'
+  }
+}
+
 const validEnvironment = {
   someString: 'stringy',
   someBoolean: true,
@@ -231,6 +257,23 @@ describe('applying environments', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+
+  describe('when the command does not support the environment flag', () => {
+    runTestInTmpDir('does not apply default environment', async (tmpDir: string) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await MockCommandWithoutEnvironmentFlag.run(['--path', tmpDir])
+
+      // Then
+      expect(testResult).toMatchObject({
+        path: resolvePath(tmpDir),
+      })
+      expect(testResult.environment).toBeUndefined()
+    })
   })
 
   runTestInTmpDir(
