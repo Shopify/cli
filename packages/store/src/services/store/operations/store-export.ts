@@ -1,11 +1,10 @@
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
-import {Shop} from '../../../apis/destinations/index.js'
+import {Organization, Shop} from '../../../apis/destinations/index.js'
 import {findShop} from '../utils/store-utils.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
-import {MockApiClient} from '../mock/mock-api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
@@ -14,29 +13,26 @@ import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 
 export class StoreExportOperation implements StoreOperation {
   fromArg: string | undefined
-  private apiClient: ApiClientInterface
+  private readonly apiClient: ApiClientInterface
   private readonly resultFileHandler: ResultFileHandler
+  private readonly orgs: Organization[]
+  private readonly bpSession: string
 
-  constructor(apiClient?: ApiClientInterface) {
+  constructor(bpSession: string, apiClient?: ApiClientInterface, orgs?: Organization[]) {
     this.apiClient = apiClient ?? new ApiClient()
     this.resultFileHandler = new ResultFileHandler()
+    this.orgs = orgs ?? []
+    this.bpSession = bpSession
   }
 
   async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
 
-    if (flags.mock) {
-      this.apiClient = new MockApiClient()
-    }
-
-    const bpSession = await this.apiClient.ensureAuthenticatedBusinessPlatform()
-    const orgs = await this.apiClient.fetchOrganizations(bpSession)
-
-    const sourceShop = findShop(fromStore, orgs)
+    const sourceShop = findShop(fromStore, this.orgs)
     this.validateShop(sourceShop)
 
     renderCopyInfo('Export Operation', sourceShop.domain, toFile)
-    const exportOperation = await this.exportDataWithProgress(sourceShop.organizationId, sourceShop, bpSession)
+    const exportOperation = await this.exportDataWithProgress(sourceShop.organizationId, sourceShop, this.bpSession)
 
     const status = exportOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
