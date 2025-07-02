@@ -81,6 +81,11 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
+    listing: Flags.string({
+      description:
+        'The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.',
+      env: 'SHOPIFY_FLAG_LISTING',
+    }),
     nodelete: Flags.boolean({
       char: 'n',
       description:
@@ -150,6 +155,7 @@ You can run this command only in a directory that matches the [default Shopify t
       password: flags.password,
       storePassword: flags['store-password'],
       theme,
+      listing: flags.listing,
       host: flags.host,
       port: flags.port,
       'live-reload': flags['live-reload'] as LiveReload,
