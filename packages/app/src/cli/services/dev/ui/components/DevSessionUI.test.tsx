@@ -97,6 +97,7 @@ describe('DevSessionUI', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press g │ open GraphiQL (Admin API) in your browser
+      › Press i │ display app information
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -299,6 +300,7 @@ describe('DevSessionUI', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press g │ open GraphiQL (Admin API) in your browser
+      › Press i │ display app information
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -433,6 +435,196 @@ describe('DevSessionUI', () => {
 
     // Then
     expect(abort).toHaveBeenCalledWith(new Error('Test error'))
+
+    renderInstance.unmount()
+  })
+
+  test('shows app info modal when i is pressed', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        appName="My Test App"
+        organizationName="My Organization"
+        configPath="/path/to/shopify.app.toml"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 100, 'i')
+
+    // Then
+    const output = renderInstance.lastFrame()!
+    expect(output).toContain('App Information')
+    expect(output).toContain('My Test App')
+    expect(output).toContain('https://my-app.ngrok.io')
+    expect(output).toContain('shopify.app.toml')
+    expect(output).toContain('mystore.myshopify.com')
+    expect(output).toContain('My Organization')
+    expect(output).toContain("Press 'i' or 'escape' to close")
+
+    renderInstance.unmount()
+  })
+
+  test('hides app info modal when escape is pressed', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        appName="My Test App"
+        organizationName="My Organization"
+        configPath="/path/to/shopify.app.toml"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Show modal first
+    await sendInputAndWait(renderInstance, 100, 'i')
+    expect(renderInstance.lastFrame()!).toContain('App Information')
+
+    // When - send escape key
+    renderInstance.stdin.write('\u001b') // ESC key
+    await waitForInputsToBeReady()
+
+    // Then
+    const output = renderInstance.lastFrame()!
+    expect(output).not.toContain('App Information')
+    expect(output).toContain('Preview URL: https://shopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('toggles app info modal when i is pressed multiple times', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When - press i to show modal
+    await sendInputAndWait(renderInstance, 100, 'i')
+    expect(renderInstance.lastFrame()!).toContain('App Information')
+
+    // When - press i again to hide modal
+    await sendInputAndWait(renderInstance, 100, 'i')
+    expect(renderInstance.lastFrame()!).not.toContain('App Information')
+
+    // When - press i again to show modal again
+    await sendInputAndWait(renderInstance, 100, 'i')
+    expect(renderInstance.lastFrame()!).toContain('App Information')
+
+    renderInstance.unmount()
+  })
+
+  test('hides preview and graphiql URLs when app info modal is shown', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Initially URLs should be visible
+    expect(renderInstance.lastFrame()!).toContain('Preview URL: https://shopify.com')
+    expect(renderInstance.lastFrame()!).toContain('GraphiQL URL: https://graphiql.shopify.com')
+
+    // When - show modal
+    await sendInputAndWait(renderInstance, 100, 'i')
+
+    // Then - URLs should be hidden
+    const output = renderInstance.lastFrame()!
+    expect(output).toContain('App Information')
+    expect(output).not.toContain('Preview URL: https://shopify.com')
+    expect(output).not.toContain('GraphiQL URL: https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('only shows app info option when app is ready', async () => {
+    // Given - app not ready
+    devSessionStatusManager.updateStatus({isReady: false})
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - should not show app info option
+    expect(renderInstance.lastFrame()!).not.toContain('display app information')
+
+    // When - app becomes ready
+    devSessionStatusManager.updateStatus({isReady: true})
+    await waitForInputsToBeReady()
+
+    // Then - should show app info option
+    expect(renderInstance.lastFrame()!).toContain('display app information')
+
+    renderInstance.unmount()
+  })
+
+  test('shows minimal app info when only required fields are provided', async () => {
+    // Given - provide at least one optional field so modal appears
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appName="Basic App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 100, 'i')
+
+    // Then
+    const output = renderInstance.lastFrame()!
+    expect(output).toContain('App Information')
+    expect(output).toContain('mystore.myshopify.com')
+    expect(output).toContain('Basic App')
+    expect(output).toContain("Press 'i' or 'escape' to close")
 
     renderInstance.unmount()
   })

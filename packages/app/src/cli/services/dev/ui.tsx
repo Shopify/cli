@@ -18,7 +18,16 @@ export async function renderDev({
   shopFqdn,
   devSessionStatusManager,
   appURL,
-}: DevProps & {devSessionStatusManager: DevSessionStatusManager; appURL?: string}) {
+  appName,
+  organizationName,
+  configPath,
+}: DevProps & {
+  devSessionStatusManager: DevSessionStatusManager
+  appURL?: string
+  appName?: string
+  organizationName?: string
+  configPath?: string
+}) {
   if (!terminalSupportsPrompting()) {
     await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
   } else if (app.developerPlatformClient.supportsDevSessions) {
@@ -29,6 +38,9 @@ export async function renderDev({
         devSessionStatusManager={devSessionStatusManager}
         shopFqdn={shopFqdn}
         appURL={appURL}
+        appName={appName}
+        organizationName={organizationName}
+        configPath={configPath}
         onAbort={async () => {
           await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
         }}
