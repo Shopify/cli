@@ -1,4 +1,5 @@
 import {StagedUploadInput, createStagedUploadAdmin} from '../../../apis/admin/index.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {readFileSync, statSync} from 'node:fs'
 
@@ -20,17 +21,23 @@ export class FileUploader {
     const stagedUploadResponse = await createStagedUploadAdmin(storeFqdn, [uploadInput])
 
     if (!stagedUploadResponse.stagedUploadsCreate?.stagedTargets?.length) {
-      throw new Error('Failed to create staged upload location')
+      throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED, {
+        reason: 'Failed to create staged upload location',
+      })
     }
 
     const stagedTarget = stagedUploadResponse.stagedUploadsCreate.stagedTargets[0]
     if (!stagedTarget) {
-      throw new Error('No staged target returned from upload response')
+      throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED, {
+        reason: 'No staged target returned from upload response',
+      })
     }
     const {url, resourceUrl, parameters} = stagedTarget
 
     if (!url || !resourceUrl) {
-      throw new Error('Missing required fields in staged target')
+      throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED, {
+        reason: 'Missing required fields in staged target',
+      })
     }
 
     const formData = new FormData()
@@ -49,7 +56,9 @@ export class FileUploader {
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text()
-      throw new Error(`File upload failed: ${uploadResponse.status} ${uploadResponse.statusText}. ${errorText}`)
+      throw new OperationError('upload', ErrorCodes.FILE_UPLOAD_FAILED, {
+        details: `${uploadResponse.status} ${uploadResponse.statusText}. ${errorText}`,
+      })
     }
 
     return resourceUrl
@@ -60,28 +69,33 @@ export class FileUploader {
       const stats = statSync(filePath)
 
       if (!stats.isFile()) {
-        throw new Error(`Path is not a file: ${filePath}`)
+        throw new ValidationError(ErrorCodes.NOT_A_FILE, {filePath})
       }
 
       if (stats.size === 0) {
-        throw new Error(`File is empty: ${filePath}`)
+        throw new ValidationError(ErrorCodes.EMPTY_FILE, {filePath})
       }
 
       if (stats.size > 5 * 1024 * 1024 * 1024) {
-        throw new Error(`File is too large (${Math.round(stats.size / 1024 / 1024 / 1024)}GB). Maximum size is 5GB.`)
+        throw new ValidationError(ErrorCodes.FILE_TOO_LARGE, {
+          sizeGB: Math.round(stats.size / 1024 / 1024 / 1024),
+        })
       }
 
       const buffer = readFileSync(filePath)
       const header = buffer.subarray(0, 15).toString('utf8')
 
       if (!header.startsWith('SQLite format 3')) {
-        throw new Error(`File does not appear to be a valid SQLite database: ${filePath}`)
+        throw new ValidationError(ErrorCodes.INVALID_FILE_FORMAT, {filePath})
       }
     } catch (error) {
-      if (error instanceof Error) {
+      if (error instanceof ValidationError) {
         throw error
       }
-      throw new Error(`Failed to validate file: ${filePath}`)
+      if (error instanceof Error && error.message.includes('ENOENT')) {
+        throw new ValidationError(ErrorCodes.FILE_NOT_FOUND, {filePath})
+      }
+      throw new ValidationError(ErrorCodes.INVALID_FILE_FORMAT, {filePath})
     }
   }
 }

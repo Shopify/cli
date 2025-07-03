@@ -8,6 +8,7 @@ import {findStore} from '../utils/store-utils.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -36,7 +37,7 @@ export class StoreCopyOperation implements StoreOperation {
     this.validateShops(sourceShop, targetShop)
 
     if (!sourceShop || !targetShop) {
-      throw new Error('Source or target shop not found.')
+      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND)
     }
 
     if (!flags['no-prompt']) {
@@ -58,7 +59,7 @@ export class StoreCopyOperation implements StoreOperation {
 
     const status = copyOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
-      throw new Error(`Copy failed`)
+      throw new OperationError('copy', ErrorCodes.COPY_FAILED)
     }
 
     renderCopyResult(sourceShop, targetShop, copyOperation)
@@ -66,20 +67,16 @@ export class StoreCopyOperation implements StoreOperation {
 
   private validateShops(sourceShop: Shop | undefined, targetShop: Shop | undefined): void {
     if (!sourceShop) {
-      throw new Error(
-        `Source shop (${this.fromArg}) not found in any of the Early Access enabled organizations you have access to.`,
-      )
+      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.fromArg ?? 'source'})
     }
     if (!targetShop) {
-      throw new Error(
-        `Target shop (${this.toArg}) not found in any of the Early Access enabled organizations you have access to.`,
-      )
+      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.toArg ?? 'target'})
     }
     if (sourceShop.id === targetShop.id) {
-      throw new Error('Source and target shops must not be the same.')
+      throw new ValidationError(ErrorCodes.SAME_SHOP)
     }
     if (sourceShop.organizationId !== targetShop.organizationId) {
-      throw new Error('Source and target shops must be in the same organization.')
+      throw new ValidationError(ErrorCodes.DIFFERENT_ORG)
     }
   }
 
@@ -100,7 +97,10 @@ export class StoreCopyOperation implements StoreOperation {
 
     if (!copyResponse.bulkDataStoreCopyStart.success) {
       const errors = copyResponse.bulkDataStoreCopyStart.userErrors.map((error) => error.message).join(', ')
-      throw new Error(`Failed to start copy operation: ${errors}`)
+      throw new OperationError('copy', ErrorCodes.BULK_OPERATION_FAILED, {
+        errors,
+        operationType: 'copy',
+      })
     }
 
     const operationId = copyResponse.bulkDataStoreCopyStart.operation.id

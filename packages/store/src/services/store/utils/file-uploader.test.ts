@@ -1,5 +1,6 @@
 import {FileUploader} from './file-uploader.js'
 import {createStagedUploadAdmin} from '../../../apis/admin/index.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {readFileSync, statSync} from 'node:fs'
@@ -75,9 +76,12 @@ describe('FileUploader', () => {
         throw new Error('ENOENT: no such file or directory')
       })
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        'ENOENT: no such file or directory',
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.FILE_NOT_FOUND,
+        params: {filePath: mockFilePath},
+      })
     })
 
     test('should throw error when path is not a file', async () => {
@@ -86,9 +90,12 @@ describe('FileUploader', () => {
         size: 1024,
       } as any)
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `Path is not a file: ${mockFilePath}`,
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.NOT_A_FILE,
+        params: {filePath: mockFilePath},
+      })
     })
 
     test('should throw error when file is empty', async () => {
@@ -97,9 +104,12 @@ describe('FileUploader', () => {
         size: 0,
       } as any)
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `File is empty: ${mockFilePath}`,
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.EMPTY_FILE,
+        params: {filePath: mockFilePath},
+      })
     })
 
     test('should throw error when file is too large', async () => {
@@ -110,17 +120,23 @@ describe('FileUploader', () => {
         size: largeSize,
       } as any)
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `File is too large (6GB). Maximum size is 5GB.`,
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.FILE_TOO_LARGE,
+        params: {sizeGB: 6},
+      })
     })
 
     test('should throw error when file is not a valid SQLite database', async () => {
       vi.mocked(readFileSync).mockReturnValue(Buffer.from('Not a SQLite file'))
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `File does not appear to be a valid SQLite database: ${mockFilePath}`,
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.INVALID_FILE_FORMAT,
+        params: {filePath: mockFilePath},
+      })
     })
 
     test('should throw error when staged upload creation fails with no targets', async () => {
@@ -131,9 +147,12 @@ describe('FileUploader', () => {
         },
       })
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        'Failed to create staged upload location',
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'upload',
+        code: ErrorCodes.STAGED_UPLOAD_FAILED,
+      })
     })
 
     test('should throw error when staged target is null', async () => {
@@ -144,9 +163,12 @@ describe('FileUploader', () => {
         },
       })
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        'No staged target returned from upload response',
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'upload',
+        code: ErrorCodes.STAGED_UPLOAD_FAILED,
+      })
     })
 
     test('should throw error when HTTP upload fails', async () => {
@@ -157,9 +179,13 @@ describe('FileUploader', () => {
         text: vi.fn().mockResolvedValue('Access denied'),
       } as any)
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        'File upload failed: 403 Forbidden. Access denied',
-      )
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'upload',
+        code: ErrorCodes.FILE_UPLOAD_FAILED,
+        params: {details: '403 Forbidden. Access denied'},
+      })
     })
 
     test('should handle non-Error exceptions in validateSqliteFile', async () => {
@@ -168,9 +194,7 @@ describe('FileUploader', () => {
         throw 'string error'
       })
 
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `Failed to validate file: ${mockFilePath}`,
-      )
+      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(ValidationError)
     })
   })
 })

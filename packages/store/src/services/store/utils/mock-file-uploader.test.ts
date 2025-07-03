@@ -1,4 +1,5 @@
 import {MockFileUploader} from './mock-file-uploader.js'
+import {ValidationError} from '../errors/errors.js'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
@@ -36,9 +37,7 @@ describe('MockFileUploader', () => {
     test('should throw error when file does not exist', async () => {
       vi.mocked(fileExists).mockResolvedValue(false)
 
-      await expect(mockFileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(
-        `File not found: ${mockFilePath}`,
-      )
+      await expect(mockFileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(ValidationError)
     })
 
     test('should generate different URLs for different timestamps', async () => {
