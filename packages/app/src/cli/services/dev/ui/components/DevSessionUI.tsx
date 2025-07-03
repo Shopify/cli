@@ -6,9 +6,8 @@ import {
   DevSessionStatusMessageType,
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
-import {formatAppInfoBody} from '../../../format-app-info-body.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {Alert, ConcurrentOutput, Link} from '@shopify/cli-kit/node/ui/components'
+import {Alert, ConcurrentOutput, Link, TabularData} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -49,7 +48,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const [error, setError] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
   const [shouldShowPersistentDevInfo, setShouldShowPersistentDevInfo] = useState<boolean>(false)
-  const [showInfoModal, setShowInfoModal] = useState<boolean>(false)
+  const [activeTab, setActiveTab] = useState<'status' | 'info'>('status')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const {isAborted} = useAbortSignal(abortController.signal, async (err: any) => {
@@ -100,18 +99,20 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         try {
           setError('')
 
-          if (input === 'p' && status.previewURL && status.isReady) {
+          if (input === 'p' && status.previewURL && status.isReady && activeTab === 'status') {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_preview_url_opened: true,
             }))
             await openURL(status.previewURL)
-          } else if (input === 'g' && status.graphiqlURL && status.isReady) {
+          } else if (input === 'g' && status.graphiqlURL && status.isReady && activeTab === 'status') {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
             }))
             await openURL(status.graphiqlURL)
-          } else if (input === 'i') {
-            setShowInfoModal(!showInfoModal)
+          } else if (input === 'i' && status.isReady) {
+            setActiveTab('info')
+          } else if (input === 's') {
+            setActiveTab('status')
           } else if (input === 'q') {
             abortController.abort()
           }
@@ -121,9 +122,9 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         }
       }
 
-      // Handle escape key separately
+      // Handle escape key to return to status tab
       if (key.escape) {
-        setShowInfoModal(false)
+        setActiveTab('status')
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -168,31 +169,39 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
         <Box
-          marginY={1}
           paddingTop={0}
           flexDirection="column"
           flexGrow={1}
-          borderStyle="single"
+          borderStyle="double"
           borderBottom={false}
           borderLeft={false}
           borderRight={false}
           borderTop
         >
-          {showInfoModal ? (
-            <Box marginTop={1} flexDirection="column">
-              <Alert
-                type="info"
-                headline="App Information"
-                body={formatAppInfoBody({
-                  appName,
-                  appURL,
-                  configPath,
-                  shopFqdn,
-                  organizationName,
-                })}
-              />
+          {status.isReady && (
+            <Box
+              flexDirection="row"
+              justifyContent="flex-start"
+              borderStyle="single"
+              borderTop={false}
+              borderLeft={false}
+              borderRight={false}
+            >
+              <Text>| </Text>
+              <Text color={activeTab === 'status' ? 'cyan' : 'white'} bold>
+                (s) Status
+              </Text>
+              <Text> | </Text>
+              <Text color={activeTab === 'info' ? 'cyan' : 'white'} bold>
+                (i) App Info
+              </Text>
+              <Text> | </Text>
+              <Text color="white">(q) Quit</Text>
+              <Text> |</Text>
             </Box>
-          ) : (
+          )}
+          {/* Tab Content Area */}
+          {activeTab === 'status' ? (
             <>
               {status.statusMessage && (
                 <Text>
@@ -209,17 +218,9 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
                   ) : null}
                   {status.isReady ? (
                     <Text>
-                      {figures.pointerSmall} Press <Text bold>i</Text> {figures.lineVertical} display app information
-                    </Text>
-                  ) : null}
-                  {status.isReady ? (
-                    <Text>
                       {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
                     </Text>
                   ) : null}
-                  <Text>
-                    {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
-                  </Text>
                 </Box>
               )}
               <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
@@ -245,6 +246,18 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
                 )}
               </Box>
             </>
+          ) : (
+            <Box flexDirection="column">
+              <TabularData
+                tabularData={[
+                  ['App:', appName ?? ''],
+                  ['App URL:', appURL ?? ''],
+                  ['Config Path:', configPath?.split('/').pop() ?? ''],
+                  ['Dev Store:', shopFqdn],
+                  ['Org:', organizationName ?? ''],
+                ]}
+              />
+            </Box>
           )}
         </Box>
       ) : null}
