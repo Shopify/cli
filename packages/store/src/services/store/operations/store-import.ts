@@ -3,7 +3,7 @@ import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {Organization, Shop} from '../../../apis/destinations/index.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
-import {findShop} from '../utils/store-utils.js'
+import {findStore} from '../utils/store-utils.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
@@ -43,7 +43,7 @@ export class StoreImportOperation implements StoreOperation {
 
     await this.validateInputFile(fromFile)
 
-    const targetShop = findShop(toStore, this.orgs)
+    const targetShop = findStore(toStore, this.orgs)
     this.validateShop(targetShop)
 
     if (!flags['no-prompt']) {
