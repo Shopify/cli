@@ -29,7 +29,6 @@ export async function inFunctionContext({
 }: {
   path: string
   userProvidedConfigName?: string
-  apiKey?: string
   callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<AppInterface>
 }) {
   const specifications = await loadLocalExtensionsSpecifications()
@@ -62,7 +61,10 @@ export async function chooseFunction(app: AppInterface, path: string): Promise<E
 export async function getOrGenerateSchemaPath(
   extension: ExtensionInstance<FunctionConfigType>,
   app: AppInterface,
-  orgId: string,
+  appDirectory: string,
+  clientId: string | undefined,
+  forceRelink: boolean,
+  userProvidedConfigName: string | undefined,
 ): Promise<string | undefined> {
   const path = joinPath(extension.directory, 'schema.graphql')
   if (await fileExists(path)) {
@@ -74,7 +76,10 @@ export async function getOrGenerateSchemaPath(
     extension,
     stdout: false,
     path: extension.directory,
-    orgId,
+    appDirectory,
+    clientId,
+    forceRelink,
+    userProvidedConfigName,
   })
 
   return (await fileExists(path)) ? path : undefined

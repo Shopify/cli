@@ -1,12 +1,10 @@
-import {fetchOrCreateOrganizationApp} from './context.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {linkedAppContext} from './app-context.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {AppInterface} from '../models/app/app.js'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {writeFile} from '@shopify/cli-kit/node/fs'
@@ -19,53 +17,41 @@ interface GenerateSchemaOptions {
   stdout: boolean
   path: string
   developerPlatformClient?: DeveloperPlatformClient
-  orgId?: string
-}
-
-export async function ensureConnectedAppFunctionContext(
-  options: Pick<GenerateSchemaOptions, 'developerPlatformClient' | 'app' | 'apiKey'>,
-): Promise<{apiKey: string; developerPlatformClient: DeveloperPlatformClient}> {
-  const {app} = options
-  const developerPlatformClient =
-    options.developerPlatformClient ?? selectDeveloperPlatformClient({configuration: options.app.configuration})
-  let apiKey = options.apiKey || getAppIdentifiers({app}, developerPlatformClient).app
-
-  if (!apiKey) {
-    if (!isTerminalInteractive()) {
-      throw new AbortError(
-        outputContent`No Client ID was provided.`,
-        outputContent`Provide a Client ID with the --client-id flag.`,
-      )
-    }
-
-    const remoteApp = await fetchOrCreateOrganizationApp(app.creationDefaultOptions())
-    apiKey = remoteApp.apiKey
-  }
-  return {apiKey, developerPlatformClient}
+  appDirectory: string
+  clientId: string | undefined
+  forceRelink: boolean
+  userProvidedConfigName: string | undefined
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, stdout, orgId} = options
-  const {apiKey, developerPlatformClient} = await ensureConnectedAppFunctionContext(options)
+  const {extension, stdout, appDirectory, clientId, forceRelink, userProvidedConfigName} = options
+
+  const {remoteApp, developerPlatformClient} = await linkedAppContext({
+    directory: appDirectory,
+    clientId,
+    forceRelink,
+    userProvidedConfigName,
+  })
+
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
   const definition = await (usingTargets
     ? generateSchemaFromTarget({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
-        apiKey,
+        apiKey: remoteApp.apiKey,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         target: targeting![0]!.target,
         version,
-        orgId,
+        orgId: remoteApp.organizationId,
       })
     : generateSchemaFromApiType({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
-        apiKey,
+        apiKey: remoteApp.apiKey,
         type,
         version,
-        orgId,
+        orgId: remoteApp.organizationId,
       }))
 
   if (stdout) {

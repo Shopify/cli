@@ -45,11 +45,9 @@ export default class FunctionReplay extends AppUnlinkedCommand {
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
-    const apiKey = flags['client-id'] ?? flags['api-key']
 
     const app = await inFunctionContext({
       path: flags.path,
-      apiKey,
       userProvidedConfigName: flags.config,
       callback: async (app, ourFunction) => {
         await replay({

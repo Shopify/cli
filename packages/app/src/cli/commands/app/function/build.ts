@@ -22,6 +22,7 @@ export default class FunctionBuild extends AppUnlinkedCommand {
   public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FunctionBuild)
 
+    // TODO: use inFunctionContext
     const app = await localAppContext({
       directory: flags.path,
       userProvidedConfigName: flags.config,

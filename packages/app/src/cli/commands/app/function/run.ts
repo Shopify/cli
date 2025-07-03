@@ -39,7 +39,6 @@ export default class FunctionRun extends AppUnlinkedCommand {
     const app = await inFunctionContext({
       path: flags.path,
       userProvidedConfigName: flags.config,
-      apiKey: flags['client-id'],
       callback: async (app, ourFunction) => {
         let functionExport = DEFAULT_FUNCTION_EXPORT
 
@@ -76,7 +75,14 @@ export default class FunctionRun extends AppUnlinkedCommand {
 
         const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
         const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
-        const schemaPath = await getOrGenerateSchemaPath(ourFunction, app, orgId)
+        const schemaPath = await getOrGenerateSchemaPath(
+          ourFunction,
+          app,
+          flags.path,
+          flags['client-id'],
+          flags.reset,
+          flags.config,
+        )
 
         await runFunction({
           functionExtension: ourFunction,
