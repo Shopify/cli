@@ -8,3 +8,11 @@ onlyBuiltDependencies:
   - nx
   - protobufjs
   - yarn
+strictPeerDependencies: false
+autoInstallPeers: true
+linkWorkspacePackages: true
+publicHoistPattern:
+  - '*vitest*'
+  - '*vite*'
+  - '*eslint*'
+  - '*prettier*'
