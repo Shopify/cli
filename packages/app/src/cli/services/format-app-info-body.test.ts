@@ -29,7 +29,7 @@ describe('formatAppInfoBody', () => {
         },
       },
       '\n',
-      "Press 'i' or 'escape' to close",
+      '› Press Esc to close',
     ])
   })
 
@@ -50,7 +50,7 @@ describe('formatAppInfoBody', () => {
         },
       },
       '\n',
-      "Press 'i' or 'escape' to close",
+      '› Press Esc to close',
     ])
   })
 
@@ -77,7 +77,7 @@ describe('formatAppInfoBody', () => {
         },
       },
       '\n',
-      "Press 'i' or 'escape' to close",
+      '› Press Esc to close',
     ])
   })
 
@@ -99,7 +99,7 @@ describe('formatAppInfoBody', () => {
         },
       },
       '\n',
-      "Press 'i' or 'escape' to close",
+      '› Press Esc to close',
     ])
   })
 
@@ -124,7 +124,7 @@ describe('formatAppInfoBody', () => {
         },
       },
       '\n',
-      "Press 'i' or 'escape' to close",
+      '› Press Esc to close',
     ])
   })
 })

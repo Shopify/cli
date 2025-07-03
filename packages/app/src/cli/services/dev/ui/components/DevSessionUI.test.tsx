@@ -227,8 +227,7 @@ describe('DevSessionUI', () => {
     await promise
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  A preview of your development changes is still available on                 │
       │  mystore.myshopify.com.                                                      │
@@ -282,7 +281,6 @@ describe('DevSessionUI', () => {
       "00:00:00 │                   backend │ first backend message
       00:00:00 │                   backend │ second backend message
       00:00:00 │                   backend │ third backend message
-
       ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  A preview of your development changes is still available on                 │
@@ -317,7 +315,6 @@ describe('DevSessionUI', () => {
       "00:00:00 │                   backend │ first backend message
       00:00:00 │                   backend │ second backend message
       00:00:00 │                   backend │ third backend message
-
       ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  A preview of your development changes is still available on                 │
@@ -440,7 +437,17 @@ describe('DevSessionUI', () => {
   })
 
   test('shows app info modal when i is pressed', async () => {
-    // Given
+    // Given - setup with a status message to verify it gets replaced
+    devSessionStatusManager.updateStatus({
+      isReady: true,
+      previewURL: 'https://shopify.com',
+      graphiqlURL: 'https://graphiql.shopify.com',
+      statusMessage: {
+        type: 'success',
+        message: 'App is ready for development',
+      },
+    })
+
     const renderInstance = render(
       <DevSessionUI
         processes={[]}
@@ -457,10 +464,13 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
+    // Initially should show status message
+    expect(renderInstance.lastFrame()!).toContain('App is ready for development')
+
     // When
     await sendInputAndWait(renderInstance, 100, 'i')
 
-    // Then
+    // Then - modal should be shown and replace status indicator
     const output = renderInstance.lastFrame()!
     expect(output).toContain('App Information')
     expect(output).toContain('My Test App')
@@ -468,7 +478,8 @@ describe('DevSessionUI', () => {
     expect(output).toContain('shopify.app.toml')
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('My Organization')
-    expect(output).toContain("Press 'i' or 'escape' to close")
+    expect(output).toContain('to close')
+    expect(output).not.toContain('App is ready for development') // Status indicator should be replaced
 
     renderInstance.unmount()
   })
@@ -624,8 +635,9 @@ describe('DevSessionUI', () => {
     expect(output).toContain('App Information')
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('Basic App')
-    expect(output).toContain("Press 'i' or 'escape' to close")
+    expect(output).toContain('to close')
 
     renderInstance.unmount()
   })
+
 })
