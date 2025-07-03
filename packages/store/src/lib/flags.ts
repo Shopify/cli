@@ -1,12 +1,12 @@
 import {Flags} from '@oclif/core'
 
 export const storeFlags = {
-  fromStore: Flags.string({
+  'from-store': Flags.string({
     description: 'The source store domain to copy/export data from (e.g., source.myshopify.com).',
     required: false,
     env: 'SHOPIFY_FLAG_FROM_STORE',
   }),
-  toStore: Flags.string({
+  'to-store': Flags.string({
     description: 'The target store domain to copy/import data to (e.g., target.myshopify.com).',
     required: false,
     env: 'SHOPIFY_FLAG_TO_STORE',
@@ -14,12 +14,12 @@ export const storeFlags = {
 }
 
 export const fileFlags = {
-  fromFile: Flags.string({
+  'from-file': Flags.string({
     description: 'The SQLite file to import data from.',
     required: false,
     env: 'SHOPIFY_FLAG_FROM_FILE',
   }),
-  toFile: Flags.string({
+  'to-file': Flags.string({
     description: 'The SQLite file path to export data to. Omit to auto-generate filename.',
     required: false,
     env: 'SHOPIFY_FLAG_TO_FILE',

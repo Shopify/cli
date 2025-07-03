@@ -4880,21 +4880,21 @@
       "customPluginName": "@shopify/store",
       "description": "Copy data between stores, export store data to SQLite, or import data from SQLite to a store",
       "flags": {
-        "fromFile": {
+        "from-file": {
           "description": "The SQLite file to import data from.",
           "env": "SHOPIFY_FLAG_FROM_FILE",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "fromFile",
+          "name": "from-file",
           "required": false,
           "type": "option"
         },
-        "fromStore": {
+        "from-store": {
           "description": "The source store domain to copy/export data from (e.g., source.myshopify.com).",
           "env": "SHOPIFY_FLAG_FROM_STORE",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "fromStore",
+          "name": "from-store",
           "required": false,
           "type": "option"
         },
@@ -4937,21 +4937,21 @@
           "required": false,
           "type": "boolean"
         },
-        "toFile": {
+        "to-file": {
           "description": "The SQLite file path to export data to. Omit to auto-generate filename.",
           "env": "SHOPIFY_FLAG_TO_FILE",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "toFile",
+          "name": "to-file",
           "required": false,
           "type": "option"
         },
-        "toStore": {
+        "to-store": {
           "description": "The target store domain to copy/import data to (e.g., target.myshopify.com).",
           "env": "SHOPIFY_FLAG_TO_STORE",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "toStore",
+          "name": "to-store",
           "required": false,
           "type": "option"
         },

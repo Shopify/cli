@@ -43,8 +43,8 @@ export default class Copy extends BaseBDCommand {
       throw new Error(`This command is only available to Early Access Program members.`)
     }
 
-    const {fromStore, toStore, fromFile, _} = this.flags
-    let {toFile} = this.flags
+    const {'from-store': fromStore, 'to-store': toStore, 'from-file': fromFile, _} = this.flags
+    let {'to-file': toFile} = this.flags
     const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
 
     if (operationMode === OperationMode.StoreExport && !toFile) {
@@ -104,7 +104,7 @@ export default class Copy extends BaseBDCommand {
     }
 
     throw new Error(
-      'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
+      'Invalid flag combination. Valid operations are: copy (--from-store --to-store), export (--from-store --to-file), or import (--from-file --to-store)',
     )
   }
 }
