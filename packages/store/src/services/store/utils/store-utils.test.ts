@@ -82,6 +82,19 @@ describe('store-utils', () => {
       })
     })
 
+    test('should find shop by prefix', () => {
+      const result = findShop('shop3', mockOrganizations)
+      expect(result).toEqual({
+        id: 'gid://shop/3',
+        domain: 'shop3.myshopify.com',
+        organizationId: 'gid://organization/2',
+        name: 'Shop 3',
+        status: 'active',
+        publicId: 'shop3',
+        webUrl: 'https://shop3.myshopify.com',
+      })
+    })
+
     test('should return undefined when shop does not exist', () => {
       const result = findShop('nonexistent.myshopify.com', mockOrganizations)
       expect(result).toBeUndefined()
