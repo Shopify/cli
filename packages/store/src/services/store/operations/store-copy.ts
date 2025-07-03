@@ -4,7 +4,7 @@ import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../
 import {Organization, Shop} from '../../../apis/destinations/index.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
-import {findShop} from '../utils/store-utils.js'
+import {findStore} from '../utils/store-utils.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
@@ -30,8 +30,8 @@ export class StoreCopyOperation implements StoreOperation {
     this.fromArg = fromStore
     this.toArg = toStore
 
-    const sourceShop = findShop(fromStore, this.orgs)
-    const targetShop = findShop(toStore, this.orgs)
+    const sourceShop = findStore(fromStore, this.orgs)
+    const targetShop = findStore(toStore, this.orgs)
 
     this.validateShops(sourceShop, targetShop)
 

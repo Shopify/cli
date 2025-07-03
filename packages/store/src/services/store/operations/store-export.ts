@@ -2,7 +2,7 @@ import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {Organization, Shop} from '../../../apis/destinations/index.js'
-import {findShop} from '../utils/store-utils.js'
+import {findStore} from '../utils/store-utils.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
@@ -28,7 +28,7 @@ export class StoreExportOperation implements StoreOperation {
   async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
 
-    const sourceShop = findShop(fromStore, this.orgs)
+    const sourceShop = findStore(fromStore, this.orgs)
     this.validateShop(sourceShop)
 
     renderCopyInfo('Export Operation', sourceShop.domain, toFile)
