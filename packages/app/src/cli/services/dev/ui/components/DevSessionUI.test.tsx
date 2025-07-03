@@ -227,7 +227,8 @@ describe('DevSessionUI', () => {
     await promise
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      "
+      ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  A preview of your development changes is still available on                 │
       │  mystore.myshopify.com.                                                      │
@@ -281,6 +282,7 @@ describe('DevSessionUI', () => {
       "00:00:00 │                   backend │ first backend message
       00:00:00 │                   backend │ second backend message
       00:00:00 │                   backend │ third backend message
+
       ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  A preview of your development changes is still available on                 │
@@ -315,6 +317,7 @@ describe('DevSessionUI', () => {
       "00:00:00 │                   backend │ first backend message
       00:00:00 │                   backend │ second backend message
       00:00:00 │                   backend │ third backend message
+
       ╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  A preview of your development changes is still available on                 │
