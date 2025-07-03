@@ -112,7 +112,7 @@ describe('StoreCopyOperation', () => {
       ])
 
       await expect(operation.execute('nonexistent.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
-        'Source shop (nonexistent.myshopify.com) not found.',
+        'Source shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
       )
     })
 
@@ -125,7 +125,7 @@ describe('StoreCopyOperation', () => {
       ])
 
       await expect(operation.execute('source.myshopify.com', 'nonexistent.myshopify.com', {})).rejects.toThrow(
-        'Target shop (nonexistent.myshopify.com) not found.',
+        'Target shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
       )
     })
 
