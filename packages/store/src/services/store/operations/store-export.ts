@@ -48,7 +48,8 @@ export class StoreExportOperation implements StoreOperation {
 
   private validateShop(sourceShop: Shop | undefined): asserts sourceShop is Shop {
     if (!sourceShop) {
-      throw new Error(`Source shop (${this.fromArg}) not found.`)
+      const message = `Source shop (${this.fromArg}) not found in any of the Early Access enabled organizations you have access to.`
+      throw new Error(message)
     }
   }
 
