@@ -13,7 +13,12 @@ import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Errors} from '@oclif/core'
-import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ArgOutput = OutputArgs<any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FlagOutput = OutputFlags<any>
 
 interface EnvironmentFlags {
   environment?: string[]
@@ -44,8 +49,7 @@ abstract class BaseCommand extends Command {
     return Errors.handle(error)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected async init(): Promise<any> {
+  protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
     if (!isDevelopment()) {

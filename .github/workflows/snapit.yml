@@ -43,7 +43,7 @@ jobs:
             > If the versions don't match, you might have multiple global instances installed.
 
             > Use `which shopify` to find out which one you are running and uninstall it."
-          build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream"
+          build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
