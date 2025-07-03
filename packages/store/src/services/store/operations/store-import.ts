@@ -8,6 +8,7 @@ import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
@@ -65,7 +66,7 @@ export class StoreImportOperation implements StoreOperation {
 
     const status = importOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
-      throw new Error(`Import failed`)
+      throw new OperationError('import', ErrorCodes.IMPORT_FAILED)
     }
 
     renderImportResult(targetShop, importOperation)
@@ -73,15 +74,13 @@ export class StoreImportOperation implements StoreOperation {
 
   private async validateInputFile(filePath: string): Promise<void> {
     if (!(await fileExists(filePath))) {
-      throw new Error(`File not found: ${filePath}`)
+      throw new ValidationError(ErrorCodes.FILE_NOT_FOUND, {filePath})
     }
   }
 
   private validateShop(targetShop: Shop | undefined): asserts targetShop is Shop {
     if (!targetShop) {
-      throw new Error(
-        `Target shop (${this.toArg}) not found in any of the Early Access enabled organizations you have access to.`,
-      )
+      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.toArg ?? 'target'})
     }
   }
 
@@ -110,7 +109,10 @@ export class StoreImportOperation implements StoreOperation {
 
     if (!importResponse.bulkDataStoreImportStart.success) {
       const errors = importResponse.bulkDataStoreImportStart.userErrors.map((error) => error.message).join(', ')
-      throw new Error(`Failed to start import operation: ${errors}`)
+      throw new OperationError('import', ErrorCodes.BULK_OPERATION_FAILED, {
+        errors,
+        operationType: 'import',
+      })
     }
 
     const operationId = importResponse.bulkDataStoreImportStart.operation.id

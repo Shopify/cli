@@ -1,6 +1,7 @@
 import {ResultFileHandler} from './result-file-handler.js'
 import {BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {FlagOptions} from '../../../lib/types.js'
+import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderConfirmationPrompt, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -235,9 +236,12 @@ describe('ResultFileHandler', () => {
         body: null,
       } as any)
 
-      await expect(
-        resultFileHandler.promptAndHandleResultFile(mockOperation, 'export', mockFlags, mockFilePath),
-      ).rejects.toThrow('No response body received')
+      const promise = resultFileHandler.promptAndHandleResultFile(mockOperation, 'export', mockFlags, mockFilePath)
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'download',
+        code: ErrorCodes.FILE_DOWNLOAD_FAILED,
+      })
     })
   })
 })

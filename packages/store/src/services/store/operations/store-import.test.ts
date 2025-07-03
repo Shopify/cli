@@ -11,6 +11,7 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderImportResult} from '../../../prompts/import_result.js'
 import {Shop, Organization} from '../../../apis/destinations/index.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -83,9 +84,12 @@ describe('StoreImportOperation', () => {
   test('should throw error when input file does not exist', async () => {
     vi.mocked(fileExists).mockResolvedValue(false)
 
-    await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'File not found: nonexistent.sqlite',
-    )
+    const promise = operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})
+    await expect(promise).rejects.toThrow(ValidationError)
+    await expect(promise).rejects.toMatchObject({
+      code: ErrorCodes.FILE_NOT_FOUND,
+      params: {filePath: 'nonexistent.sqlite'},
+    })
 
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
   })
@@ -103,9 +107,12 @@ describe('StoreImportOperation', () => {
       },
     ])
 
-    await expect(operation.execute('input.sqlite', 'nonexistent.myshopify.com', {})).rejects.toThrow(
-      'Target shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
-    )
+    const promise = operation.execute('input.sqlite', 'nonexistent.myshopify.com', {})
+    await expect(promise).rejects.toThrow(ValidationError)
+    await expect(promise).rejects.toMatchObject({
+      code: ErrorCodes.SHOP_NOT_FOUND,
+      params: {shop: 'nonexistent.myshopify.com'},
+    })
   })
 
   test('should throw error when organization has no shops', async () => {
@@ -115,9 +122,7 @@ describe('StoreImportOperation', () => {
         shops: [],
       },
     ])
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'Target shop (target.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
-    )
+    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(ValidationError)
   })
 
   test('should filter out organizations with single shop', async () => {
@@ -160,9 +165,16 @@ describe('StoreImportOperation', () => {
       return ctx
     })
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'Failed to start import operation: Invalid file format, Import not allowed for this store',
-    )
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'import',
+      code: ErrorCodes.BULK_OPERATION_FAILED,
+      params: {
+        errors: 'Invalid file format, Import not allowed for this store',
+        operationType: 'import',
+      },
+    })
   })
 
   test('should throw error when import operation status is FAILED', async () => {
@@ -186,7 +198,12 @@ describe('StoreImportOperation', () => {
       importUrl: mockUploadUrl,
     })
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow('Import failed')
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'import',
+      code: ErrorCodes.IMPORT_FAILED,
+    })
   })
 
   test('should pass resource config flags when provided', async () => {
@@ -243,17 +260,27 @@ describe('StoreImportOperation', () => {
       return ctx
     })
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'Failed to start import operation: Error 1, Error 2, Error 3',
-    )
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'import',
+      code: ErrorCodes.BULK_OPERATION_FAILED,
+      params: {
+        errors: 'Error 1, Error 2, Error 3',
+        operationType: 'import',
+      },
+    })
   })
 
   test('should validate file before authenticating', async () => {
     vi.mocked(fileExists).mockResolvedValue(false)
 
-    await expect(operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'File not found: nonexistent.sqlite',
-    )
+    const promise = operation.execute('nonexistent.sqlite', 'target.myshopify.com', {})
+    await expect(promise).rejects.toThrow(ValidationError)
+    await expect(promise).rejects.toMatchObject({
+      code: ErrorCodes.FILE_NOT_FOUND,
+      params: {filePath: 'nonexistent.sqlite'},
+    })
 
     expect(fileExists).toHaveBeenCalled()
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
