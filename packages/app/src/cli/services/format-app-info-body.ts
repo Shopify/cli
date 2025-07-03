@@ -42,7 +42,7 @@ export function formatAppInfoBody({
   items.push(`Dev store:       ${shopFqdn}`)
   if (organizationName) items.push(`Org:             ${organizationName}`)
 
-  const body: Token[] = [{list: {items}}, '\n', "Press 'i' or 'escape' to close"]
+  const body: Token[] = [{list: {items}}, '\n', '› Press Esc to close']
 
   return body
 }

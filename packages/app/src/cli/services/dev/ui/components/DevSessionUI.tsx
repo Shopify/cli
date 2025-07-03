@@ -153,17 +153,15 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         useAlternativeColorPalette={true}
       />
       {shouldShowPersistentDevInfo && (
-        <Box marginTop={1} flexDirection="column">
-          <Alert
-            type={'info'}
-            headline={`A preview of your development changes is still available on ${shopFqdn}.`}
-            body={['Run', {command: 'shopify app dev clean'}, 'to restore the latest released version of your app.']}
-            link={{
-              label: 'Learn more about app previews',
-              url: 'https://shopify.dev/beta/developer-dashboard/shopify-app-dev',
-            }}
-          />
-        </Box>
+        <Alert
+          type={'info'}
+          headline={`A preview of your development changes is still available on ${shopFqdn}.`}
+          body={['Run', {command: 'shopify app dev clean'}, 'to restore the latest released version of your app.']}
+          link={{
+            label: 'Learn more about app previews',
+            url: 'https://shopify.dev/beta/developer-dashboard/shopify-app-dev',
+          }}
+        />
       )}
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
@@ -178,12 +176,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           borderRight={false}
           borderTop
         >
-          {status.statusMessage ? (
-            <Text>
-              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
-            </Text>
-          ) : null}
-          {showInfoModal && (appURL ?? appName ?? organizationName ?? configPath) && (
+          {showInfoModal ? (
             <Box marginTop={1} flexDirection="column">
               <Alert
                 type="info"
@@ -197,54 +190,59 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
                 })}
               />
             </Box>
-          )}
-          {!showInfoModal && canUseShortcuts && (
-            <Box marginTop={1} flexDirection="column">
-              {status.graphiqlURL && status.isReady ? (
+          ) : (
+            <>
+              {status.statusMessage && (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
-                  your browser
+                  {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
                 </Text>
-              ) : null}
-              {status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} Press <Text bold>i</Text> {figures.lineVertical} display app information
-                </Text>
-              ) : null}
-              {status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-                </Text>
-              ) : null}
-              <Text>
-                {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
-              </Text>
-            </Box>
-          )}
-
-          {!showInfoModal && (
-            <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
-              {isShuttingDownMessage ? (
-                <Text>{isShuttingDownMessage}</Text>
-              ) : (
-                <>
-                  {status.isReady && (
-                    <>
-                      {status.previewURL ? (
-                        <Text>
-                          Preview URL: <Link url={status.previewURL} />
-                        </Text>
-                      ) : null}
-                      {status.graphiqlURL ? (
-                        <Text>
-                          GraphiQL URL: <Link url={status.graphiqlURL} />
-                        </Text>
-                      ) : null}
-                    </>
-                  )}
-                </>
               )}
-            </Box>
+              {canUseShortcuts && (
+                <Box marginTop={1} flexDirection="column">
+                  {status.graphiqlURL && status.isReady ? (
+                    <Text>
+                      {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API)
+                      in your browser
+                    </Text>
+                  ) : null}
+                  {status.isReady ? (
+                    <Text>
+                      {figures.pointerSmall} Press <Text bold>i</Text> {figures.lineVertical} display app information
+                    </Text>
+                  ) : null}
+                  {status.isReady ? (
+                    <Text>
+                      {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                    </Text>
+                  ) : null}
+                  <Text>
+                    {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
+                  </Text>
+                </Box>
+              )}
+              <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+                {isShuttingDownMessage ? (
+                  <Text>{isShuttingDownMessage}</Text>
+                ) : (
+                  <>
+                    {status.isReady && (
+                      <>
+                        {status.previewURL ? (
+                          <Text>
+                            Preview URL: <Link url={status.previewURL} />
+                          </Text>
+                        ) : null}
+                        {status.graphiqlURL ? (
+                          <Text>
+                            GraphiQL URL: <Link url={status.graphiqlURL} />
+                          </Text>
+                        ) : null}
+                      </>
+                    )}
+                  </>
+                )}
+              </Box>
+            </>
           )}
         </Box>
       ) : null}
