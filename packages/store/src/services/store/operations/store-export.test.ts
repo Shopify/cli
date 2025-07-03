@@ -81,7 +81,7 @@ describe('StoreExportOperation', () => {
     ])
 
     await expect(operation.execute('nonexistent.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
-      'Source shop (nonexistent.myshopify.com) not found.',
+      'Source shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
     )
   })
 
@@ -93,7 +93,7 @@ describe('StoreExportOperation', () => {
       },
     ])
     await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
-      'Source shop (source.myshopify.com) not found.',
+      'Source shop (source.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
     )
   })
 
