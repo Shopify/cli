@@ -96,13 +96,19 @@ describe('DevSessionUI', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press i │ display app information
-      › Press p │ preview in your browser
-      › Press q │ quit
 
-      Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+
+       › Press g │ open GraphiQL (Admin API) in your browser
+       › Press p │ preview in your browser
+       › Press q │ quit
+
+       Preview URL: https://shopify.com
+       GraphiQL URL: https://graphiql.shopify.com
+
+       ┌────────────┐  ┌──────────────┐
+       │ (s) Status │  │ (i) App Info │
+       └────────────┘  └──────────────┘
+
       "
     `)
 
@@ -299,13 +305,19 @@ describe('DevSessionUI', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press i │ display app information
-      › Press p │ preview in your browser
-      › Press q │ quit
 
-      Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+
+       › Press g │ open GraphiQL (Admin API) in your browser
+       › Press p │ preview in your browser
+       › Press q │ quit
+
+       Preview URL: https://shopify.com
+       GraphiQL URL: https://graphiql.shopify.com
+
+       ┌────────────┐  ┌──────────────┐
+       │ (s) Status │  │ (i) App Info │
+       └────────────┘  └──────────────┘
+
 
 
       something went wrong"
@@ -522,7 +534,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('toggles app info modal when i is pressed multiple times', async () => {
+  test('switches between status and info tabs when s and i are pressed', async () => {
     // Given
     const renderInstance = render(
       <DevSessionUI
@@ -538,17 +550,18 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // When - press i to show modal
+    // Initially should be on status tab
+    expect(renderInstance.lastFrame()!).toContain('Preview URL:')
+
+    // When - press i to switch to info tab
     await sendInputAndWait(renderInstance, 100, 'i')
     expect(renderInstance.lastFrame()!).toContain('App Information')
+    expect(renderInstance.lastFrame()!).not.toContain('Preview URL:')
 
-    // When - press i again to hide modal
-    await sendInputAndWait(renderInstance, 100, 'i')
+    // When - press s to switch back to status tab
+    await sendInputAndWait(renderInstance, 100, 's')
     expect(renderInstance.lastFrame()!).not.toContain('App Information')
-
-    // When - press i again to show modal again
-    await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('App Information')
+    expect(renderInstance.lastFrame()!).toContain('Preview URL:')
 
     renderInstance.unmount()
   })
@@ -603,15 +616,15 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Then - should not show app info option
-    expect(renderInstance.lastFrame()!).not.toContain('display app information')
+    // Then - should not show (i) App Info tab
+    expect(renderInstance.lastFrame()!).not.toContain('(i) App Info')
 
     // When - app becomes ready
     devSessionStatusManager.updateStatus({isReady: true})
     await waitForInputsToBeReady()
 
-    // Then - should show app info option
-    expect(renderInstance.lastFrame()!).toContain('display app information')
+    // Then - should show (i) App Info tab
+    expect(renderInstance.lastFrame()!).toContain('(i) App Info')
 
     renderInstance.unmount()
   })
