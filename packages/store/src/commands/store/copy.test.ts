@@ -94,24 +94,24 @@ describe('Copy', () => {
     }
 
     test('should instantiate StoreCopyOperation for store-to-store copy', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
+      await run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com'])
 
       expect(StoreCopyOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com', expect.any(Object))
     })
 
     test('should instantiate StoreExportOperation for store-to-file export', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toFile=output.sqlite'])
+      await run(['--from-store=source.myshopify.com', '--to-file=output.sqlite'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite', expect.any(Object))
     })
 
-    test('should auto-generate toFile path when exporting without toFile parameter', async () => {
+    test('should auto-generate to-file path when exporting without to-file parameter', async () => {
       const mockDate = new Date('2024-01-01T12:00:00Z')
       vi.spyOn(Date, 'now').mockReturnValue(mockDate.getTime())
 
-      await run(['--fromStore=source.myshopify.com'])
+      await run(['--from-store=source.myshopify.com'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith(
@@ -121,11 +121,11 @@ describe('Copy', () => {
       )
     })
 
-    test('should sanitize domain name when auto-generating toFile path', async () => {
+    test('should sanitize domain name when auto-generating to-file path', async () => {
       const mockDate = new Date('2024-01-01T12:00:00Z')
       vi.spyOn(Date, 'now').mockReturnValue(mockDate.getTime())
 
-      await run(['--fromStore=test@store!.myshopify.com'])
+      await run(['--from-store=test@store!.myshopify.com'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith(
@@ -136,14 +136,14 @@ describe('Copy', () => {
     })
 
     test('should instantiate StoreImportOperation for file-to-store import', async () => {
-      await run(['--fromFile=input.sqlite', '--toStore=target.myshopify.com'])
+      await run(['--from-file=input.sqlite', '--to-store=target.myshopify.com'])
 
       expect(StoreImportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith('input.sqlite', 'target.myshopify.com', expect.any(Object))
     })
 
-    test('should auto-generate toFile for export when only fromStore is provided', async () => {
-      await run(['--fromStore=source.myshopify.com'])
+    test('should auto-generate to-file for export when only from-store is provided', async () => {
+      await run(['--from-store=source.myshopify.com'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith(
@@ -156,7 +156,7 @@ describe('Copy', () => {
     test('should throw error when no organizations have access to bulk data operations', async () => {
       vi.mocked(ensureOrgHasBulkDataAccess).mockResolvedValue(false)
 
-      await expect(run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])).rejects.toThrow(
+      await expect(run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com'])).rejects.toThrow(
         'Process exit called',
       )
       expect(renderError).toHaveBeenCalledWith({
@@ -167,10 +167,10 @@ describe('Copy', () => {
     })
 
     test('should throw error when invalid flag combination', async () => {
-      await expect(run(['--toFile=output.sqlite'])).rejects.toThrow('Process exit called')
+      await expect(run(['--to-file=output.sqlite'])).rejects.toThrow('Process exit called')
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
+        body: 'Invalid flag combination. Valid operations are: copy (--from-store --to-store), export (--from-store --to-file), or import (--from-file --to-store)',
       })
       expect(process.exit).toHaveBeenCalledWith(1)
     })
@@ -179,24 +179,24 @@ describe('Copy', () => {
       await expect(run([])).rejects.toThrow('Process exit called')
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
+        body: 'Invalid flag combination. Valid operations are: copy (--from-store --to-store), export (--from-store --to-file), or import (--from-file --to-store)',
       })
       expect(process.exit).toHaveBeenCalledWith(1)
     })
 
     test('should throw error when mixing store and file flags', async () => {
       await expect(
-        run(['--fromStore=source.myshopify.com', '--fromFile=input.sqlite', '--toStore=target.myshopify.com']),
+        run(['--from-store=source.myshopify.com', '--from-file=input.sqlite', '--to-store=target.myshopify.com']),
       ).rejects.toThrow('Process exit called')
       expect(renderError).toHaveBeenCalledWith({
         headline: 'Operation failed',
-        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
+        body: 'Invalid flag combination. Valid operations are: copy (--from-store --to-store), export (--from-store --to-file), or import (--from-file --to-store)',
       })
       expect(process.exit).toHaveBeenCalledWith(1)
     })
 
     test('should pass flags to the operation', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com', '--no-prompt', '--mock'])
+      await run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com', '--no-prompt', '--mock'])
 
       expect(mockExecute).toHaveBeenCalledWith(
         'source.myshopify.com',
