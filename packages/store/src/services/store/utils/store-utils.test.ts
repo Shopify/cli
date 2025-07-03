@@ -1,10 +1,10 @@
-import {findShop, ensureOrgHasBulkDataAccess} from './store-utils.js'
+import {findStore, ensureOrgHasBulkDataAccess} from './store-utils.js'
 import {Organization} from '../../../apis/destinations/index.js'
 import {MockApiClient} from '../mock/mock-api-client.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 
 describe('store-utils', () => {
-  describe('findShop', () => {
+  describe('findStore', () => {
     const mockOrganizations: Organization[] = [
       {
         id: 'gid://organization/1',
@@ -57,7 +57,7 @@ describe('store-utils', () => {
     ]
 
     test('should find shop by domain when it exists', () => {
-      const result = findShop('shop2.myshopify.com', mockOrganizations)
+      const result = findStore('shop2.myshopify.com', mockOrganizations)
       expect(result).toEqual({
         id: 'gid://shop/2',
         domain: 'shop2.myshopify.com',
@@ -70,7 +70,7 @@ describe('store-utils', () => {
     })
 
     test('should find shop from second organization', () => {
-      const result = findShop('shop3.myshopify.com', mockOrganizations)
+      const result = findStore('shop3.myshopify.com', mockOrganizations)
       expect(result).toEqual({
         id: 'gid://shop/3',
         domain: 'shop3.myshopify.com',
@@ -83,7 +83,7 @@ describe('store-utils', () => {
     })
 
     test('should find shop by prefix', () => {
-      const result = findShop('shop3', mockOrganizations)
+      const result = findStore('shop3', mockOrganizations)
       expect(result).toEqual({
         id: 'gid://shop/3',
         domain: 'shop3.myshopify.com',
@@ -96,12 +96,12 @@ describe('store-utils', () => {
     })
 
     test('should return undefined when shop does not exist', () => {
-      const result = findShop('nonexistent.myshopify.com', mockOrganizations)
+      const result = findStore('nonexistent.myshopify.com', mockOrganizations)
       expect(result).toBeUndefined()
     })
 
     test('should return undefined when organizations array is empty', () => {
-      const result = findShop('shop1.myshopify.com', [])
+      const result = findStore('shop1.myshopify.com', [])
       expect(result).toBeUndefined()
     })
 
@@ -113,7 +113,7 @@ describe('store-utils', () => {
           shops: [],
         },
       ]
-      const result = findShop('shop1.myshopify.com', orgsWithNoShops)
+      const result = findStore('shop1.myshopify.com', orgsWithNoShops)
       expect(result).toBeUndefined()
     })
   })
