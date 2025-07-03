@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
-    "@oclif/core": "3.26.5",
+    "@oclif/core": "4.4.0",
     "@shopify/cli-kit": "3.82.0",
     "graphql-request": "6.1.0"
   },
