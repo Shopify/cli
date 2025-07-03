@@ -13,6 +13,7 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
 import {Shop, Organization} from '../../../apis/destinations/index.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -111,9 +112,12 @@ describe('StoreCopyOperation', () => {
         },
       ])
 
-      await expect(operation.execute('nonexistent.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
-        'Source shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
-      )
+      const promise = operation.execute('nonexistent.myshopify.com', 'target.myshopify.com', {})
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.SHOP_NOT_FOUND,
+        params: {shop: 'nonexistent.myshopify.com'},
+      })
     })
 
     test('should throw error when target shop is not found', async () => {
@@ -124,24 +128,31 @@ describe('StoreCopyOperation', () => {
         },
       ])
 
-      await expect(operation.execute('source.myshopify.com', 'nonexistent.myshopify.com', {})).rejects.toThrow(
-        'Target shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
-      )
+      const promise = operation.execute('source.myshopify.com', 'nonexistent.myshopify.com', {})
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.SHOP_NOT_FOUND,
+        params: {shop: 'nonexistent.myshopify.com'},
+      })
     })
 
     test('should throw error when source and target shops are the same', async () => {
-      await expect(operation.execute('source.myshopify.com', 'source.myshopify.com', {})).rejects.toThrow(
-        'Source and target shops must not be the same.',
-      )
+      const promise = operation.execute('source.myshopify.com', 'source.myshopify.com', {})
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.SAME_SHOP,
+      })
     })
 
     test('should throw error when shops are in different organizations', async () => {
       const differentOrgShop: Shop = TEST_MOCK_DATA.differentOrgShop
       const differentOrg: Organization = TEST_MOCK_DATA.differentOrganization
       operation = new StoreCopyOperation(mockToken, mockApiClient, [mockOrganization, differentOrg])
-      await expect(operation.execute('source.myshopify.com', 'other-org.myshopify.com', {})).rejects.toThrow(
-        'Source and target shops must be in the same organization.',
-      )
+      const promise = operation.execute('source.myshopify.com', 'other-org.myshopify.com', {})
+      await expect(promise).rejects.toThrow(ValidationError)
+      await expect(promise).rejects.toMatchObject({
+        code: ErrorCodes.DIFFERENT_ORG,
+      })
     })
 
     test('should filter out organizations with single shop', async () => {
@@ -194,9 +205,16 @@ describe('StoreCopyOperation', () => {
         return ctx
       })
 
-      await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
-        'Failed to start copy operation: Invalid configuration, Insufficient permissions',
-      )
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'copy',
+        code: ErrorCodes.BULK_OPERATION_FAILED,
+        params: {
+          errors: 'Invalid configuration, Insufficient permissions',
+          operationType: 'copy',
+        },
+      })
     })
 
     test('should throw error when copy operation status is FAILED', async () => {
@@ -207,7 +225,12 @@ describe('StoreCopyOperation', () => {
         isComplete: true,
       })
 
-      await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow('Copy failed')
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'copy',
+        code: ErrorCodes.COPY_FAILED,
+      })
     })
   })
 })
