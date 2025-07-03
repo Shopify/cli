@@ -66,12 +66,15 @@ export class StoreCopyOperation implements StoreOperation {
 
   private validateShops(sourceShop: Shop | undefined, targetShop: Shop | undefined): void {
     if (!sourceShop) {
-      throw new Error(`Source shop (${this.fromArg}) not found.`)
+      throw new Error(
+        `Source shop (${this.fromArg}) not found in any of the Early Access enabled organizations you have access to.`,
+      )
     }
     if (!targetShop) {
-      throw new Error(`Target shop (${this.toArg}) not found.`)
+      throw new Error(
+        `Target shop (${this.toArg}) not found in any of the Early Access enabled organizations you have access to.`,
+      )
     }
-
     if (sourceShop.id === targetShop.id) {
       throw new Error('Source and target shops must not be the same.')
     }

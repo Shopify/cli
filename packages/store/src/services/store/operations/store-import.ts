@@ -79,7 +79,9 @@ export class StoreImportOperation implements StoreOperation {
 
   private validateShop(targetShop: Shop | undefined): asserts targetShop is Shop {
     if (!targetShop) {
-      throw new Error(`Target shop (${this.toArg}) not found.`)
+      throw new Error(
+        `Target shop (${this.toArg}) not found in any of the Early Access enabled organizations you have access to.`,
+      )
     }
   }
 

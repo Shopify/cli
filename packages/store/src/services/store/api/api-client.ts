@@ -19,7 +19,7 @@ import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 export class ApiClient implements ApiClientInterface {
   async fetchOrganizations(session: string): Promise<Organization[]> {
     const orgs = await fetchOrgs(session, this.createUnauthorizedHandler())
-    return orgs.filter((org) => org.shops.length > 1)
+    return orgs
   }
 
   async startBulkDataStoreCopy(
