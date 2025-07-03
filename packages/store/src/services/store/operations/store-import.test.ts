@@ -104,7 +104,7 @@ describe('StoreImportOperation', () => {
     ])
 
     await expect(operation.execute('input.sqlite', 'nonexistent.myshopify.com', {})).rejects.toThrow(
-      'Target shop (nonexistent.myshopify.com) not found.',
+      'Target shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
     )
   })
 
@@ -116,7 +116,7 @@ describe('StoreImportOperation', () => {
       },
     ])
     await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(
-      'Target shop (target.myshopify.com) not found.',
+      'Target shop (target.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
     )
   })
 
