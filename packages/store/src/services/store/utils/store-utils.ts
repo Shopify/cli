@@ -3,7 +3,9 @@ import {ApiClientInterface} from '../types/api-client.js'
 
 export function findShop(shopDomain: string, orgs: Organization[]): Shop | undefined {
   const allShops = orgs.flatMap((org) => org.shops)
-  return allShops.find((shop) => shop.domain === shopDomain)
+  const byDomain = allShops.find((shop) => shop.domain === shopDomain)
+  const byPrefix = allShops.find((shop) => shop.domain === `${shopDomain}.myshopify.com`)
+  return byDomain ?? byPrefix
 }
 
 export async function ensureOrgHasBulkDataAccess(
