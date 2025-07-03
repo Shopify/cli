@@ -10,6 +10,7 @@ import {Shop, Organization} from '../../../apis/destinations/index.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
@@ -80,9 +81,12 @@ describe('StoreExportOperation', () => {
       },
     ])
 
-    await expect(operation.execute('nonexistent.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
-      'Source shop (nonexistent.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
-    )
+    const promise = operation.execute('nonexistent.myshopify.com', 'output.sqlite', {})
+    await expect(promise).rejects.toThrow(ValidationError)
+    await expect(promise).rejects.toMatchObject({
+      code: ErrorCodes.SHOP_NOT_FOUND,
+      params: {shop: 'nonexistent.myshopify.com'},
+    })
   })
 
   test('should throw error when organization has no shops', async () => {
@@ -92,9 +96,7 @@ describe('StoreExportOperation', () => {
         shops: [],
       },
     ])
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
-      'Source shop (source.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
-    )
+    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(ValidationError)
   })
 
   test('should filter out organizations with single shop', async () => {
@@ -119,9 +121,16 @@ describe('StoreExportOperation', () => {
       return ctx
     })
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
-      'Failed to start export operation: Invalid export configuration, Export not allowed',
-    )
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'export',
+      code: ErrorCodes.BULK_OPERATION_FAILED,
+      params: {
+        errors: 'Invalid export configuration, Export not allowed',
+        operationType: 'export',
+      },
+    })
   })
 
   test('should throw error when export operation status is FAILED', async () => {
@@ -144,7 +153,12 @@ describe('StoreExportOperation', () => {
       isComplete: true,
     })
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow('Export failed')
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'export',
+      code: ErrorCodes.EXPORT_FAILED,
+    })
   })
 
   test('should NOT call ResultFileHandler when export fails', async () => {
@@ -167,7 +181,12 @@ describe('StoreExportOperation', () => {
       isComplete: true,
     })
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow('Export failed')
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'export',
+      code: ErrorCodes.EXPORT_FAILED,
+    })
 
     expect(mockResultFileHandler.promptAndHandleResultFile).not.toHaveBeenCalled()
   })
@@ -199,8 +218,15 @@ describe('StoreExportOperation', () => {
       return ctx
     })
 
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(
-      'Failed to start export operation: Error 1, Error 2, Error 3',
-    )
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'export',
+      code: ErrorCodes.BULK_OPERATION_FAILED,
+      params: {
+        errors: 'Error 1, Error 2, Error 3',
+        operationType: 'export',
+      },
+    })
   })
 })

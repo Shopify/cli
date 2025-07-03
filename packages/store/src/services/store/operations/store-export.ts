@@ -8,6 +8,7 @@ import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
+import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 
@@ -36,7 +37,7 @@ export class StoreExportOperation implements StoreOperation {
 
     const status = exportOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
-      throw new Error(`Export failed`)
+      throw new OperationError('export', ErrorCodes.EXPORT_FAILED)
     }
 
     renderExportResult(sourceShop, exportOperation)
@@ -48,8 +49,7 @@ export class StoreExportOperation implements StoreOperation {
 
   private validateShop(sourceShop: Shop | undefined): asserts sourceShop is Shop {
     if (!sourceShop) {
-      const message = `Source shop (${this.fromArg}) not found in any of the Early Access enabled organizations you have access to.`
-      throw new Error(message)
+      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.fromArg ?? 'source'})
     }
   }
 
@@ -66,7 +66,10 @@ export class StoreExportOperation implements StoreOperation {
 
     if (!exportResponse.bulkDataStoreExportStart.success) {
       const errors = exportResponse.bulkDataStoreExportStart.userErrors.map((error) => error.message).join(', ')
-      throw new Error(`Failed to start export operation: ${errors}`)
+      throw new OperationError('export', ErrorCodes.BULK_OPERATION_FAILED, {
+        errors,
+        operationType: 'export',
+      })
     }
 
     const operationId = exportResponse.bulkDataStoreExportStart.operation.id

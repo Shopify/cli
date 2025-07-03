@@ -1,5 +1,6 @@
 import {BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {FlagOptions} from '../../../lib/types.js'
+import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderConfirmationPrompt, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -44,7 +45,7 @@ export class ResultFileHandler {
         task: async () => {
           const response = await fetch(url)
           if (!response.body) {
-            throw new Error('No response body received')
+            throw new OperationError('download', ErrorCodes.FILE_DOWNLOAD_FAILED)
           }
 
           const writeStream = createFileWriteStream(filePath)
