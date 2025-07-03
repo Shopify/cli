@@ -73,7 +73,7 @@ When(
   {timeout: 60 * 1000},
   async function (source: string, destination: string) {
     try {
-      const args = ['store', 'copy', '--fromStore', source, '--toStore', destination, '--mock', '--no-prompt']
+      const args = ['store', 'copy', '--from-store', source, '--to-store', destination, '--mock', '--no-prompt']
       const result = await this.execCLI(args)
       const context = storeContext
       context.operationResult = result
