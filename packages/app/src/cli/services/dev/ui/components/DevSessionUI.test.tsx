@@ -479,7 +479,8 @@ describe('DevSessionUI', () => {
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('My Organization')
     expect(output).toContain('to close')
-    expect(output).not.toContain('App is ready for development') // Status indicator should be replaced
+    // Status indicator should be replaced
+    expect(output).not.toContain('App is ready for development')
 
     renderInstance.unmount()
   })
@@ -507,7 +508,7 @@ describe('DevSessionUI', () => {
     expect(renderInstance.lastFrame()!).toContain('App Information')
 
     // When - send escape key
-    renderInstance.stdin.write('\u001b') // ESC key
+    renderInstance.stdin.write('\u001b')
     await waitForInputsToBeReady()
 
     // Then
@@ -639,5 +640,4 @@ describe('DevSessionUI', () => {
 
     renderInstance.unmount()
   })
-
 })
