@@ -61,11 +61,16 @@ export function uploadTheme(
 
   if (options?.backgroundWorkCatch) {
     // Aggregate all backgorund work in a single promise and handle errors
+    outputDebug('[Theme Uploader] Setting up background work error handler')
+    const backgroundWorkCatch = options.backgroundWorkCatch
     Promise.all([
       themeCreationPromise,
       uploadJobPromise.then((result) => result.promise),
       deleteJobPromise.then((result) => result.promise),
-    ]).catch(options.backgroundWorkCatch)
+    ]).catch((error) => {
+      outputDebug(`[Theme Uploader] Background work failed: ${error.message}`)
+      return backgroundWorkCatch(error)
+    })
   }
 
   return {

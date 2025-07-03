@@ -8,6 +8,7 @@ import {renderTasksToStdErr} from '../theme-ui.js'
 import {createAbortCatchError} from '../errors.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {createServer} from 'node:http'
 import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
@@ -31,25 +32,52 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
 function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
   const abort = createAbortCatchError('Failed to perform the initial theme synchronization.')
 
-  const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session).catch(abort)
+  outputDebug('[Theme Environment] Starting theme environment setup')
+  outputDebug(`[Theme Environment] Fetching checksums for theme ${theme.id}`)
+  const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session).catch((error) => {
+    outputDebug(`[Theme Environment] Failed to fetch checksums: ${error.message}`)
+    return abort(error)
+  })
 
+  outputDebug('[Theme Environment] Setting up reconcile promise')
   const reconcilePromise = remoteChecksumsPromise
-    .then((remoteChecksums) => handleThemeEditorSync(theme, ctx, remoteChecksums))
-    .catch(abort)
+    .then((remoteChecksums) => {
+      outputDebug(`[Theme Environment] Successfully fetched ${remoteChecksums.length} checksums`)
+      outputDebug('[Theme Environment] Starting theme editor sync')
+      return handleThemeEditorSync(theme, ctx, remoteChecksums)
+    })
+    .catch((error) => {
+      outputDebug(`[Theme Environment] Failed during theme editor sync: ${error.message}`)
+      return abort(error)
+    })
 
+  outputDebug('[Theme Environment] Setting up upload promise')
   const uploadPromise = reconcilePromise
     .then(async ({updatedRemoteChecksumsPromise}) => {
+      outputDebug('[Theme Environment] Reconciliation complete, starting upload')
       const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+      outputDebug(`[Theme Environment] Got ${updatedRemoteChecksums.length} updated checksums`)
       return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
         nodelete: ctx.options.noDelete,
         deferPartialWork: true,
         backgroundWorkCatch: abort,
       })
     })
-    .catch(abort)
+    .catch((error) => {
+      outputDebug(`[Theme Environment] Failed during theme upload: ${error.message}`)
+      return abort(error)
+    })
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise).catch(abort),
+    workPromise: uploadPromise
+      .then((result) => {
+        outputDebug('[Theme Environment] Upload complete, extracting work promise')
+        return result.workPromise
+      })
+      .catch((error) => {
+        outputDebug(`[Theme Environment] Failed to extract work promise: ${error.message}`)
+        return abort(error)
+      }),
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise
