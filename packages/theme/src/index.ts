@@ -2,6 +2,7 @@ import CheckCommand from './cli/commands/theme/check.js'
 import ConsoleCommand from './cli/commands/theme/console.js'
 import DeleteCommand from './cli/commands/theme/delete.js'
 import Dev from './cli/commands/theme/dev.js'
+import Duplicate from './cli/commands/theme/duplicate.js'
 import ThemeInfo from './cli/commands/theme/info.js'
 import Init from './cli/commands/theme/init.js'
 import LanguageServer from './cli/commands/theme/language-server.js'
@@ -23,6 +24,7 @@ const COMMANDS = {
   'theme:console': ConsoleCommand,
   'theme:delete': DeleteCommand,
   'theme:dev': Dev,
+  'theme:duplicate': Duplicate,
   'theme:info': ThemeInfo,
   'theme:language-server': LanguageServer,
   'theme:list': ListCommnd,
