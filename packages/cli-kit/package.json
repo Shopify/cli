@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.82.0",
+  "version": "3.82.1",
   "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
