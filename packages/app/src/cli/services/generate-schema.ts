@@ -11,35 +11,34 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface GenerateSchemaOptions {
   app: AppLinkedInterface
+  organizationId: string
   extension: ExtensionInstance<FunctionConfigType>
   stdout: boolean
-  path: string
   developerPlatformClient: DeveloperPlatformClient
-  orgId: string
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, stdout, developerPlatformClient, app, orgId} = options
-  const apiKey = app.configuration.client_id
+  const {extension, stdout, app, developerPlatformClient, organizationId} = options
+
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
   const definition = await (usingTargets
     ? generateSchemaFromTarget({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
-        apiKey,
+        apiKey: app.configuration.client_id,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         target: targeting![0]!.target,
         version,
-        orgId,
+        orgId: organizationId,
       })
     : generateSchemaFromApiType({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
-        apiKey,
+        apiKey: app.configuration.client_id,
         type,
         version,
-        orgId,
+        orgId: organizationId,
       }))
 
   if (stdout) {
