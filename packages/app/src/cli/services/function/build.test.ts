@@ -61,11 +61,24 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
-      cwd: ourFunction.directory,
-      stderr,
-      signal,
-    })
+    expect(exec).toHaveBeenCalledWith(
+      'npm',
+      [
+        'exec',
+        '--package',
+        expect.stringMatching(/@graphql-codegen\/cli@.+/),
+        '--no',
+        '--',
+        'graphql-code-generator',
+        '--config',
+        'package.json',
+      ],
+      {
+        cwd: ourFunction.directory,
+        stderr,
+        signal,
+      },
+    )
   })
 
   test('errors if function is not a JS function', async () => {
@@ -78,6 +91,30 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).rejects.toThrow(/GraphQL types can only be built for JavaScript functions/)
+  })
+
+  test('rethrows with a helpful message if dependencies are missing', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+    vi.mocked(exec).mockRejectedValue(new Error('foo bar npx canceled due to missing packages baz'))
+
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    // Then
+    await expect(got).rejects.toThrow(/Unable to generate function GraphQL types/)
+  })
+
+  test('does not rethrow for other errors', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+    vi.mocked(exec).mockRejectedValue(new Error('foo bar baz'))
+
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    // Then
+    await expect(got).rejects.toThrow(/foo bar baz/)
   })
 })
 
