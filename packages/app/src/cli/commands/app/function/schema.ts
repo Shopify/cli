@@ -1,13 +1,12 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
-import {chooseFunction, functionFlags} from '../../../services/function/common.js'
+import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {appFlags} from '../../../flags.js'
-import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../../services/app-context.js'
+import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
-export default class FetchSchema extends AppLinkedCommand {
+export default class FetchSchema extends AppUnlinkedCommand {
   static summary = 'Fetch the latest GraphQL schema for a function.'
 
   static descriptionWithMarkdown = `Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.
@@ -35,31 +34,29 @@ export default class FetchSchema extends AppLinkedCommand {
     }),
   }
 
-  public async run(): Promise<AppLinkedCommandOutput> {
+  public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FetchSchema)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] ?? flags['api-key']
 
-    const {app} = await linkedAppContext({
-      directory: flags.path,
-      clientId: apiKey,
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-
-    const ourFunction = await chooseFunction(app, flags.path)
-
-    await generateSchemaService({
-      app,
-      extension: ourFunction,
-      stdout: flags.stdout,
+    const app = await inFunctionContext({
       path: flags.path,
-      appDirectory: flags.path,
-      clientId: apiKey,
-      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
+      callback: async (app, ourFunction) => {
+        await generateSchemaService({
+          app,
+          extension: ourFunction,
+          stdout: flags.stdout,
+          path: flags.path,
+          appDirectory: flags.path,
+          clientId: apiKey,
+          forceRelink: flags.reset,
+          userProvidedConfigName: flags.config,
+        })
+        return app
+      },
     })
 
     return {app}

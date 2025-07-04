@@ -1,8 +1,7 @@
-import {chooseFunction, functionFlags} from '../../../services/function/common.js'
+import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
-import {localAppContext} from '../../../services/app-context.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
@@ -22,22 +21,21 @@ export default class FunctionBuild extends AppUnlinkedCommand {
   public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FunctionBuild)
 
-    // TODO: use inFunctionContext
-    const app = await localAppContext({
-      directory: flags.path,
+    const app = await inFunctionContext({
+      path: flags.path,
       userProvidedConfigName: flags.config,
+      callback: async (app, ourFunction) => {
+        await buildFunctionExtension(ourFunction, {
+          app,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          useTasks: true,
+          environment: 'production',
+        })
+        renderSuccess({headline: 'Function built successfully.'})
+        return app
+      },
     })
-
-    const ourFunction = await chooseFunction(app, flags.path)
-
-    await buildFunctionExtension(ourFunction, {
-      app,
-      stdout: process.stdout,
-      stderr: process.stderr,
-      useTasks: true,
-      environment: 'production',
-    })
-    renderSuccess({headline: 'Function built successfully.'})
 
     return {app}
   }
