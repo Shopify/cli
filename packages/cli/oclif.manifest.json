@@ -4872,6 +4872,109 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "store:copy": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Copy data between stores, export store data to SQLite, or import data from SQLite to a store",
+      "flags": {
+        "fromFile": {
+          "description": "The SQLite file to import data from.",
+          "env": "SHOPIFY_FLAG_FROM_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "fromFile",
+          "required": false,
+          "type": "option"
+        },
+        "fromStore": {
+          "description": "The source store domain to copy/export data from (e.g., source.myshopify.com).",
+          "env": "SHOPIFY_FLAG_FROM_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "fromStore",
+          "required": false,
+          "type": "option"
+        },
+        "key": {
+          "default": [
+            "products:handle"
+          ],
+          "description": "The identity key to use to match resources",
+          "env": "SHOPIFY_FLAG_IDENTITY_KEY",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "key",
+          "required": false,
+          "type": "option"
+        },
+        "mock": {
+          "allowNo": false,
+          "char": "m",
+          "description": "Use mock data instead of real API calls (for development).",
+          "env": "SHOPIFY_FLAG_MOCK",
+          "hidden": true,
+          "name": "mock",
+          "required": false,
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-prompt": {
+          "allowNo": false,
+          "char": "y",
+          "description": "Skip confirmation prompts.",
+          "env": "SHOPIFY_FLAG_YES",
+          "name": "no-prompt",
+          "required": false,
+          "type": "boolean"
+        },
+        "toFile": {
+          "description": "The SQLite file path to export data to. Omit to auto-generate filename.",
+          "env": "SHOPIFY_FLAG_TO_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "toFile",
+          "required": false,
+          "type": "option"
+        },
+        "toStore": {
+          "description": "The target store domain to copy/import data to (e.g., target.myshopify.com).",
+          "env": "SHOPIFY_FLAG_TO_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "toStore",
+          "required": false,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "store:copy",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Copy, export, or import store data"
+    },
     "theme:check": {
       "aliases": [
       ],

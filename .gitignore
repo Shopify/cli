@@ -196,5 +196,8 @@ packages/ui-extensions-dev-console/.eslintrc.js
 packages/ui-extensions-dev-console/css-transform.js
 packages/ui-extensions-dev-console/dist
 packages/cli-kit/src/cli/api/graphql/*/*_schema.graphql
-
-.claude
+packages/store/src/cli/api/graphql/*/*_schema.graphql
+# bulk data management/store copy
+*-shm
+*-wal
+*.sqlite
