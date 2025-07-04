@@ -1,4 +1,4 @@
-import {getOrGenerateSchemaPath, inFunctionContext, chooseFunction} from './common.js'
+import {getOrGenerateSchemaPath, chooseFunction} from './common.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -40,54 +40,6 @@ beforeEach(async () => {
   vi.mocked(renderFatalError).mockReturnValue('')
   vi.mocked(renderAutocompletePrompt).mockResolvedValue(ourFunction)
   vi.mocked(isTerminalInteractive).mockReturnValue(true)
-})
-
-describe('inFunctionContext integration', () => {
-  test('passes correct parameters to callback when function is found', async () => {
-    // Given
-    const callback = vi.fn().mockResolvedValue(app)
-
-    // When
-    await inFunctionContext({
-      path: joinPath(app.directory, 'extensions/my-function'),
-      callback,
-    })
-
-    // Then
-    expect(callback).toHaveBeenCalledWith(
-      app,
-      // developerPlatformClient
-      expect.any(Object),
-      ourFunction,
-      // orgId
-      expect.any(String),
-    )
-  })
-
-  test('calls linkedAppContext with correct parameters', async () => {
-    // Given
-    const callback = vi.fn().mockResolvedValue(app)
-    const path = 'some/path'
-    const apiKey = 'test-api-key'
-    const userProvidedConfigName = 'test-config'
-
-    // When
-    await inFunctionContext({
-      path,
-      apiKey,
-      userProvidedConfigName,
-      reset: true,
-      callback,
-    })
-
-    // Then
-    expect(linkedAppContext).toHaveBeenCalledWith({
-      directory: path,
-      clientId: apiKey,
-      forceRelink: true,
-      userProvidedConfigName,
-    })
-  })
 })
 
 describe('getOrGenerateSchemaPath', () => {

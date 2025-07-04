@@ -1,9 +1,8 @@
 import {AppInterface} from '../../models/app/app.js'
-import {loadApp} from '../../models/app/loader.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
+import {linkedAppContext} from '../app-context.js'
 import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
@@ -20,22 +19,6 @@ export const functionFlags = {
     noCacheDefault: true,
     env: 'SHOPIFY_FLAG_PATH',
   }),
-}
-
-export async function inFunctionContext({
-  path,
-  userProvidedConfigName,
-  callback,
-}: {
-  path: string
-  userProvidedConfigName?: string
-  callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<AppInterface>
-}) {
-  const specifications = await loadLocalExtensionsSpecifications()
-  const app: AppInterface = await loadApp({specifications, directory: path, userProvidedConfigName})
-
-  const ourFunction = await chooseFunction(app, path)
-  return callback(app, ourFunction)
 }
 
 export async function chooseFunction(app: AppInterface, path: string): Promise<ExtensionInstance<FunctionConfigType>> {
@@ -60,7 +43,6 @@ export async function chooseFunction(app: AppInterface, path: string): Promise<E
 
 export async function getOrGenerateSchemaPath(
   extension: ExtensionInstance<FunctionConfigType>,
-  app: AppInterface,
   appDirectory: string,
   clientId: string | undefined,
   forceRelink: boolean,
@@ -71,15 +53,19 @@ export async function getOrGenerateSchemaPath(
     return path
   }
 
-  await generateSchemaService({
-    app,
-    extension,
-    stdout: false,
-    path: extension.directory,
-    appDirectory,
+  const {app, developerPlatformClient, organization} = await linkedAppContext({
+    directory: appDirectory,
     clientId,
     forceRelink,
     userProvidedConfigName,
+  })
+
+  await generateSchemaService({
+    app,
+    organizationId: organization.id,
+    extension,
+    stdout: false,
+    developerPlatformClient,
   })
 
   return (await fileExists(path)) ? path : undefined

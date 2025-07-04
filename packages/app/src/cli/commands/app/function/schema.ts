@@ -1,8 +1,10 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
-import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
+import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {appFlags} from '../../../flags.js'
-import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
+import AppUnlinkedCommand from '../../../utilities/app-unlinked-command.js'
+import {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -34,29 +36,28 @@ export default class FetchSchema extends AppUnlinkedCommand {
     }),
   }
 
-  public async run(): Promise<AppUnlinkedCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(FetchSchema)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] ?? flags['api-key']
 
-    const app = await inFunctionContext({
-      path: flags.path,
+    const {app, developerPlatformClient, organization} = await linkedAppContext({
+      directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
-      callback: async (app, ourFunction) => {
-        await generateSchemaService({
-          app,
-          extension: ourFunction,
-          stdout: flags.stdout,
-          path: flags.path,
-          appDirectory: flags.path,
-          clientId: apiKey,
-          forceRelink: flags.reset,
-          userProvidedConfigName: flags.config,
-        })
-        return app
-      },
+    })
+
+    const ourFunction = await chooseFunction(app, flags.path)
+
+    await generateSchemaService({
+      app,
+      extension: ourFunction,
+      stdout: flags.stdout,
+      developerPlatformClient,
+      organizationId: organization.id,
     })
 
     return {app}
