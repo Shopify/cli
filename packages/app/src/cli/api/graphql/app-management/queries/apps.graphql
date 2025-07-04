@@ -8,9 +8,6 @@ query listApps($query: String) {
           id
             version {
               name
-                appModules {
-                  ...ReleasedAppModule
-                }
             }
         }
       }
