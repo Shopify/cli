@@ -46,6 +46,8 @@ esBuild({
     // Necessary for theme-check-node to work
     'process.env.WEBPACK_MODE': 'true',
     'import.meta.vitest': 'false',
+    // Injected during build to detect fork vs original repo
+    'process.env.SHOPIFY_CLI_BUILD_REPO': JSON.stringify(process.env.SHOPIFY_CLI_BUILD_REPO || 'unknown'),
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
