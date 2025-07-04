@@ -26,6 +26,7 @@ async function setupRequest(token: string) {
  *
  * @param query - GraphQL query to execute.
  * @param token - Business Platform token.
+ * @param unauthorizedHandler - Unauthorized handler for the request.
  * @param variables - GraphQL variables to pass to the query.
  * @param cacheOptions - Cache options for the request. If not present, the request will not be cached.
  * @returns The response of the query of generic type <T>.
@@ -33,6 +34,7 @@ async function setupRequest(token: string) {
 export async function businessPlatformRequest<T>(
   query: string,
   token: string,
+  unauthorizedHandler: UnauthorizedHandler,
   variables?: GraphQLVariables,
   cacheOptions?: CacheOptions,
 ): Promise<T> {
@@ -41,6 +43,7 @@ export async function businessPlatformRequest<T>(
     query,
     variables,
     cacheOptions,
+    unauthorizedHandler,
   })
 }
 
