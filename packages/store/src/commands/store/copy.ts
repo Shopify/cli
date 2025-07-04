@@ -1,5 +1,6 @@
 import {BaseBDCommand} from '../../lib/base-command.js'
 import {commonFlags, storeFlags, fileFlags, resourceConfigFlags} from '../../lib/flags.js'
+import {parseResourceConfigFlags} from '../../lib/resource-config.js'
 import {OperationMode} from '../../services/store/types/operations.js'
 import {StoreCopyOperation} from '../../services/store/operations/store-copy.js'
 import {StoreExportOperation} from '../../services/store/operations/store-export.js'
@@ -25,6 +26,10 @@ export default class Copy extends BaseBDCommand {
 
   async runCommand(): Promise<void> {
     this.flags = (await this.parse(Copy)).flags
+
+    if (this.flags.key) {
+      parseResourceConfigFlags(this.flags.key as string[])
+    }
 
     // Check access for all organizations first
     const apiClient = this.flags.mock ? new MockApiClient() : new ApiClient()
