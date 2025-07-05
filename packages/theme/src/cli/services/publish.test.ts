@@ -33,7 +33,7 @@ describe('publish', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
-    await publish(session, '1', options)
+    await publish(session, options)
 
     // Then
     expect(renderConfirmationPrompt).toBeCalledWith({
@@ -66,7 +66,7 @@ describe('publish', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When
-    await publish(session, '1', options)
+    await publish(session, options)
 
     // Then
     expect(renderConfirmationPrompt).toBeCalledWith({
@@ -84,7 +84,7 @@ describe('publish', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When
-    await publish(session, '1', {...options, force: true})
+    await publish(session, {...options, force: true})
 
     // Then
     expect(renderConfirmationPrompt).not.toBeCalled()
