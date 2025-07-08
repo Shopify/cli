@@ -20,9 +20,9 @@ async function loadParsers(): Promise<void> {
   const [js, ts, tsxModule, rustModule] = await Promise.all([
     import('tree-sitter-javascript'),
     // @ts-expect-error - tree-sitter-typescript doesn't provide type declarations for subpath imports
-    import('tree-sitter-typescript/typescript'),
+    import('tree-sitter-typescript/bindings/node/typescript.js'),
     // @ts-expect-error - tree-sitter-typescript doesn't provide type declarations for subpath imports
-    import('tree-sitter-typescript/tsx'),
+    import('tree-sitter-typescript/bindings/node/tsx.js'),
     import('tree-sitter-rust'),
   ])
   javascript = js.default
