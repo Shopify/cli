@@ -33,14 +33,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\"",
+        "command": "pnpm eslint \"src/**/*.ts\" --ignore-pattern \"src/cli/api/graphql/*/generated/**\"",
         "cwd": "packages/store"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "command": "pnpm eslint 'src/**/*.ts' --fix --ignore-pattern \"src/cli/api/graphql/*/generated/**\"",
         "cwd": "packages/store"
       }
     },
@@ -79,8 +79,8 @@
       ],
       "options": {
         "commands": [
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.ts' --fix",
-          "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.ts' --fix"
+          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.ts' --fix --rule '@typescript-eslint/ban-ts-comment: off' --rule 'eslint-comments/no-unused-disable: off'",
+          "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.ts' --fix --rule '@typescript-eslint/ban-ts-comment: off' --rule 'eslint-comments/no-unused-disable: off'"
         ],
         "cwd": "packages/store"
       }
