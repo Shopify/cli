@@ -93,23 +93,16 @@ describe('DevSessionUI', () => {
       00:00:00 │                  frontend │ first frontend message
       00:00:00 │                  frontend │ second frontend message
       00:00:00 │                  frontend │ third frontend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-
-
-       › Press g │ open GraphiQL (Admin API) in your browser
-       › Press p │ preview in your browser
-       › Press q │ quit
-
-       Preview URL: https://shopify.com
-       GraphiQL URL: https://graphiql.shopify.com
-
-       ┌────────────┐  ┌──────────────┐
-       │ (s) Status │  │ (i) App Info │
-       └────────────┘  └──────────────┘
-
-      "
+      ════════════════════╤═══════════════════════════════════════════════════════════════════════════════
+      ═════════════════════
+       (s) Status         │
+      ────────────────────┤ › Press g │ open GraphiQL (Admin API) in your browser
+       (i) App Details    │ › Press p │ preview in your browser
+      ────────────────────┤
+       (q) Quit           │
+      ────────────────────┤ Preview URL: https://shopify.com
+                          │ GraphiQL URL: https://graphiql.shopify.com
+                          │"
     `)
 
     renderInstance.unmount()
@@ -302,23 +295,16 @@ describe('DevSessionUI', () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
 
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-
-
-       › Press g │ open GraphiQL (Admin API) in your browser
-       › Press p │ preview in your browser
-       › Press q │ quit
-
-       Preview URL: https://shopify.com
-       GraphiQL URL: https://graphiql.shopify.com
-
-       ┌────────────┐  ┌──────────────┐
-       │ (s) Status │  │ (i) App Info │
-       └────────────┘  └──────────────┘
-
-
+      ════════════════════╤═══════════════════════════════════════════════════════════════════════════════
+      ═════════════════════
+       (s) Status         │
+      ────────────────────┤ › Press g │ open GraphiQL (Admin API) in your browser
+       (i) App Details    │ › Press p │ preview in your browser
+      ────────────────────┤
+       (q) Quit           │
+      ────────────────────┤ Preview URL: https://shopify.com
+                          │ GraphiQL URL: https://graphiql.shopify.com
+                          │
 
       something went wrong"
     `)
@@ -485,15 +471,13 @@ describe('DevSessionUI', () => {
     // When
     await sendInputAndWait(renderInstance, 100, 'i')
 
-    // Then - modal should be shown and replace status indicator
+    // Then - info tab should be shown with app data
     const output = renderInstance.lastFrame()!
-    expect(output).toContain('App Information')
     expect(output).toContain('My Test App')
     expect(output).toContain('https://my-app.ngrok.io')
     expect(output).toContain('shopify.app.toml')
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('My Organization')
-    expect(output).toContain('to close')
     // Status indicator should be replaced
     expect(output).not.toContain('App is ready for development')
 
@@ -520,7 +504,7 @@ describe('DevSessionUI', () => {
 
     // Show modal first
     await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('App Information')
+    expect(renderInstance.lastFrame()!).toContain('My Test App')
 
     // When - send escape key
     renderInstance.stdin.write('\u001b')
@@ -528,7 +512,7 @@ describe('DevSessionUI', () => {
 
     // Then
     const output = renderInstance.lastFrame()!
-    expect(output).not.toContain('App Information')
+    expect(output).not.toContain('My Test App')
     expect(output).toContain('Preview URL: https://shopify.com')
 
     renderInstance.unmount()
@@ -555,12 +539,12 @@ describe('DevSessionUI', () => {
 
     // When - press i to switch to info tab
     await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('App Information')
+    expect(renderInstance.lastFrame()!).toContain('My Test App')
     expect(renderInstance.lastFrame()!).not.toContain('Preview URL:')
 
     // When - press s to switch back to status tab
     await sendInputAndWait(renderInstance, 100, 's')
-    expect(renderInstance.lastFrame()!).not.toContain('App Information')
+    expect(renderInstance.lastFrame()!).not.toContain('My Test App')
     expect(renderInstance.lastFrame()!).toContain('Preview URL:')
 
     renderInstance.unmount()
@@ -591,40 +575,9 @@ describe('DevSessionUI', () => {
 
     // Then - URLs should be hidden
     const output = renderInstance.lastFrame()!
-    expect(output).toContain('App Information')
+    expect(output).toContain('My Test App')
     expect(output).not.toContain('Preview URL: https://shopify.com')
     expect(output).not.toContain('GraphiQL URL: https://graphiql.shopify.com')
-
-    renderInstance.unmount()
-  })
-
-  test('only shows app info option when app is ready', async () => {
-    // Given - app not ready
-    devSessionStatusManager.updateStatus({isReady: false})
-
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[]}
-        abortController={new AbortController()}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        appURL="https://my-app.ngrok.io"
-        appName="My Test App"
-        onAbort={onAbort}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-
-    // Then - should not show (i) App Info tab
-    expect(renderInstance.lastFrame()!).not.toContain('(i) App Info')
-
-    // When - app becomes ready
-    devSessionStatusManager.updateStatus({isReady: true})
-    await waitForInputsToBeReady()
-
-    // Then - should show (i) App Info tab
-    expect(renderInstance.lastFrame()!).toContain('(i) App Info')
 
     renderInstance.unmount()
   })
@@ -649,10 +602,8 @@ describe('DevSessionUI', () => {
 
     // Then
     const output = renderInstance.lastFrame()!
-    expect(output).toContain('App Information')
-    expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('Basic App')
-    expect(output).toContain('to close')
+    expect(output).toContain('mystore.myshopify.com')
 
     renderInstance.unmount()
   })

@@ -109,7 +109,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               cmd_dev_graphiql_opened: true,
             }))
             await openURL(status.graphiqlURL)
-          } else if (input === 'i' && status.isReady) {
+          } else if (input === 'i') {
             setActiveTab('info')
           } else if (input === 's') {
             setActiveTab('status')
@@ -168,97 +168,103 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       )}
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
-        <Box
-          paddingTop={0}
-          flexDirection="column"
-          flexGrow={1}
-          borderStyle="double"
-          borderBottom={false}
-          borderLeft={false}
-          borderRight={false}
-          borderTop
-        >
-          {status.isReady && (
-            <Box
-              flexDirection="row"
-              justifyContent="flex-start"
-              borderStyle="single"
-              borderTop={false}
-              borderLeft={false}
-              borderRight={false}
-            >
-              <Text>| </Text>
-              <Text color={activeTab === 'status' ? 'cyan' : 'white'} bold>
-                (s) Status
-              </Text>
-              <Text> | </Text>
-              <Text color={activeTab === 'info' ? 'cyan' : 'white'} bold>
-                (i) App Info
-              </Text>
-              <Text> | </Text>
-              <Text color="white">(q) Quit</Text>
-              <Text> |</Text>
+        <Box paddingTop={0} flexDirection="column" flexGrow={1}>
+          {/* Top border with connection */}
+          <Text>{`${'═'.repeat(20)}╤${'═'.repeat(process.stdout.columns ? process.stdout.columns - 21 : 100)}`}</Text>
+          {/* Footer with left sidebar tabs and right content */}
+          <Box flexDirection="row">
+            {/* Left sidebar with vertical tabs */}
+
+            <Box flexDirection="column" width={20} paddingX={0} paddingY={0}>
+              <Box paddingLeft={1} paddingY={0}>
+                <Text color={activeTab === 'status' ? 'cyan' : 'white'}>(s) Status</Text>
+              </Box>
+              <Box paddingX={0} paddingY={0}>
+                <Text>{'─'.repeat(20)}</Text>
+              </Box>
+              <Box paddingLeft={1} paddingY={0}>
+                <Text color={activeTab === 'info' ? 'cyan' : 'white'}>(i) App Details</Text>
+              </Box>
+              <Box paddingX={0} paddingY={0}>
+                <Text>{'─'.repeat(20)}</Text>
+              </Box>
+              <Box paddingLeft={1} paddingY={0}>
+                <Text color="white">(q) Quit</Text>
+              </Box>
+              <Box paddingX={0} paddingY={0}>
+                <Text>{'─'.repeat(20)}</Text>
+              </Box>
             </Box>
-          )}
-          {/* Tab Content Area */}
-          {activeTab === 'status' ? (
-            <>
-              {status.statusMessage && (
-                <Text>
-                  {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
-                </Text>
-              )}
-              {canUseShortcuts && (
-                <Box marginTop={1} flexDirection="column">
-                  {status.graphiqlURL && status.isReady ? (
+            <Box flexDirection="column" width={1} paddingX={0} paddingY={0}>
+              <Text>│┤│┤│┤││</Text>
+            </Box>
+            {/* Right content area */}
+            <Box flexDirection="column" flexGrow={1} paddingX={1}>
+              {activeTab === 'status' ? (
+                <>
+                  {status.statusMessage && (
                     <Text>
-                      {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API)
-                      in your browser
+                      {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
                     </Text>
-                  ) : null}
-                  {status.isReady ? (
-                    <Text>
-                      {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-                    </Text>
-                  ) : null}
-                </Box>
-              )}
-              <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
-                {isShuttingDownMessage ? (
-                  <Text>{isShuttingDownMessage}</Text>
-                ) : (
-                  <>
-                    {status.isReady && (
+                  )}
+                  {canUseShortcuts && (
+                    <Box marginTop={1} flexDirection="column">
+                      {status.graphiqlURL && status.isReady ? (
+                        <Text>
+                          {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin
+                          API) in your browser
+                        </Text>
+                      ) : null}
+                      {status.isReady ? (
+                        <Text>
+                          {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your
+                          browser
+                        </Text>
+                      ) : null}
+                    </Box>
+                  )}
+                  <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+                    {isShuttingDownMessage ? (
+                      <Text>{isShuttingDownMessage}</Text>
+                    ) : (
                       <>
-                        {status.previewURL ? (
-                          <Text>
-                            Preview URL: <Link url={status.previewURL} />
-                          </Text>
-                        ) : null}
-                        {status.graphiqlURL ? (
-                          <Text>
-                            GraphiQL URL: <Link url={status.graphiqlURL} />
-                          </Text>
-                        ) : null}
+                        <Text> </Text>
+                        {status.isReady && (
+                          <>
+                            {status.previewURL ? (
+                              <Text>
+                                Preview URL: <Link url={status.previewURL} />
+                              </Text>
+                            ) : null}
+                            {status.graphiqlURL ? (
+                              <Text>
+                                GraphiQL URL: <Link url={status.graphiqlURL} />
+                              </Text>
+                            ) : null}
+                          </>
+                        )}
                       </>
                     )}
-                  </>
-                )}
-              </Box>
-            </>
-          ) : (
-            <Box flexDirection="column">
-              <TabularData
-                tabularData={[
-                  ['App:', appName ?? ''],
-                  ['App URL:', appURL ?? ''],
-                  ['Config Path:', configPath?.split('/').pop() ?? ''],
-                  ['Dev Store:', shopFqdn],
-                  ['Org:', organizationName ?? ''],
-                ]}
-              />
+                  </Box>
+                </>
+              ) : (
+                <Box flexDirection="column">
+                  <Text bold>App Details</Text>
+                  <Box marginTop={1}>
+                    <TabularData
+                      tabularData={[
+                        ['App:', appName ?? ''],
+                        ['App URL:', appURL ?? ''],
+                        ['Config Path:', configPath?.split('/').pop() ?? ''],
+                        ['Dev Store:', shopFqdn],
+                        ['Org:', organizationName ?? ''],
+                      ]}
+                    />
+                  </Box>
+                </Box>
+              )}
             </Box>
-          )}
+          </Box>
         </Box>
       ) : null}
       {error ? (
