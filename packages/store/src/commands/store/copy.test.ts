@@ -6,7 +6,7 @@ import {ApiClient} from '../../services/store/api/api-client.js'
 import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {ensureOrgHasBulkDataAccess} from '../../services/store/utils/store-utils.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
-import {Config} from '@oclif/core'
+import {Config, loadHelpClass} from '@oclif/core'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -18,11 +18,19 @@ vi.mock('../../services/store/mock/mock-api-client.js')
 vi.mock('../../services/store/utils/store-utils.js', () => ({
   ensureOrgHasBulkDataAccess: vi.fn().mockResolvedValue(true),
 }))
+vi.mock('@oclif/core', async () => {
+  const actual = await vi.importActual('@oclif/core')
+  return {
+    ...actual,
+    loadHelpClass: vi.fn(),
+  }
+})
 
 const CommandConfig = new Config({root: __dirname})
 
 describe('Copy', () => {
   const mockExecute = vi.fn()
+  const mockShowHelp = vi.fn()
   const mockOrganizations = [
     {
       id: 'gid://organization/1',
@@ -38,6 +46,13 @@ describe('Copy', () => {
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
+
+    // Mock loadHelpClass
+    vi.mocked(loadHelpClass).mockResolvedValue(
+      class MockHelp {
+        showHelp = mockShowHelp
+      } as any,
+    )
 
     // Mock API Client
     vi.mocked(ApiClient).mockImplementation(
@@ -166,33 +181,34 @@ describe('Copy', () => {
       expect(process.exit).toHaveBeenCalledWith(1)
     })
 
-    test('should throw error when invalid flag combination', async () => {
-      await expect(run(['--toFile=output.sqlite'])).rejects.toThrow('Process exit called')
-      expect(renderError).toHaveBeenCalledWith({
-        headline: 'Operation failed',
-        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
-      })
-      expect(process.exit).toHaveBeenCalledWith(1)
+    test('should show help when invalid flag combination', async () => {
+      await run(['--toFile=output.sqlite'])
+
+      expect(loadHelpClass).toHaveBeenCalledWith(expect.any(Object))
+      expect(mockShowHelp).toHaveBeenCalledWith(['store:copy'])
+      expect(StoreCopyOperation).not.toHaveBeenCalled()
+      expect(StoreExportOperation).not.toHaveBeenCalled()
+      expect(StoreImportOperation).not.toHaveBeenCalled()
     })
 
-    test('should throw error when no flags provided', async () => {
-      await expect(run([])).rejects.toThrow('Process exit called')
-      expect(renderError).toHaveBeenCalledWith({
-        headline: 'Operation failed',
-        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
-      })
-      expect(process.exit).toHaveBeenCalledWith(1)
+    test('should show help when no flags provided', async () => {
+      await run([])
+
+      expect(loadHelpClass).toHaveBeenCalledWith(expect.any(Object))
+      expect(mockShowHelp).toHaveBeenCalledWith(['store:copy'])
+      expect(StoreCopyOperation).not.toHaveBeenCalled()
+      expect(StoreExportOperation).not.toHaveBeenCalled()
+      expect(StoreImportOperation).not.toHaveBeenCalled()
     })
 
-    test('should throw error when mixing store and file flags', async () => {
-      await expect(
-        run(['--fromStore=source.myshopify.com', '--fromFile=input.sqlite', '--toStore=target.myshopify.com']),
-      ).rejects.toThrow('Process exit called')
-      expect(renderError).toHaveBeenCalledWith({
-        headline: 'Operation failed',
-        body: 'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
-      })
-      expect(process.exit).toHaveBeenCalledWith(1)
+    test('should show help when mixing store and file flags', async () => {
+      await run(['--fromStore=source.myshopify.com', '--fromFile=input.sqlite', '--toStore=target.myshopify.com'])
+
+      expect(loadHelpClass).toHaveBeenCalledWith(expect.any(Object))
+      expect(mockShowHelp).toHaveBeenCalledWith(['store:copy'])
+      expect(StoreCopyOperation).not.toHaveBeenCalled()
+      expect(StoreExportOperation).not.toHaveBeenCalled()
+      expect(StoreImportOperation).not.toHaveBeenCalled()
     })
 
     test('should pass flags to the operation', async () => {
