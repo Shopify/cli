@@ -10,6 +10,7 @@ import {Organization} from '../../apis/destinations/index.js'
 import {ensureOrgHasBulkDataAccess} from '../../services/store/utils/store-utils.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
+import {loadHelpClass} from '@oclif/core'
 
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy, export, or import store data'
@@ -47,6 +48,11 @@ export default class Copy extends BaseBDCommand {
     let {toFile} = this.flags
     const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
 
+    if (!operationMode) {
+      const Help = await loadHelpClass(this.config)
+      await new Help(this.config).showHelp(['store:copy'])
+      return
+    }
     if (operationMode === OperationMode.StoreExport && !toFile) {
       const storeDomain = (fromStore as string).replace(/[^a-zA-Z0-9.-]/g, '_')
       toFile = joinPath(cwd(), `${storeDomain}-export-${Date.now()}.sqlite`)
@@ -90,7 +96,7 @@ export default class Copy extends BaseBDCommand {
     toStore: unknown,
     fromFile: unknown,
     toFile: unknown,
-  ): OperationMode {
+  ): OperationMode | undefined {
     if (fromStore && toStore && !fromFile && !toFile) {
       return OperationMode.StoreCopy
     }
@@ -102,9 +108,5 @@ export default class Copy extends BaseBDCommand {
     if (fromFile && toStore && !fromStore && !toFile) {
       return OperationMode.StoreImport
     }
-
-    throw new Error(
-      'Invalid flag combination. Valid operations are: copy (--fromStore --toStore), export (--fromStore --toFile), or import (--fromFile --toStore)',
-    )
   }
 }
