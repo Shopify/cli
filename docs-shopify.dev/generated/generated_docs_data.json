@@ -5269,6 +5269,125 @@
     "related": []
   },
   {
+    "name": "theme duplicate",
+    "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+    "overviewPreviewDescription": "Duplicates a theme from your theme library.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme duplicate",
+            "code": "shopify theme duplicate\n\nshopify theme duplicate --theme 10 --name 'New Theme'",
+            "language": "bash"
+          }
+        ],
+        "title": "theme duplicate"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme duplicate` command:",
+        "type": "themeduplicate",
+        "typeDefinitions": {
+          "themeduplicate": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+            "name": "themeduplicate",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_ENVIRONMENT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Force the duplicate operation to run without prompts or confirmations.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_FORCE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Output the result as JSON.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "Name of the newly duplicated theme.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NAME"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_THEME_ID"
+              }
+            ],
+            "value": "export interface themeduplicate {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Force the duplicate operation to run without prompts or confirmations.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Name of the newly duplicated theme.\n   * @environment SHOPIFY_FLAG_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
     "name": "theme info",
     "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
     "overviewPreviewDescription": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
