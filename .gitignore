@@ -201,3 +201,5 @@ packages/store/src/cli/api/graphql/*/*_schema.graphql
 *-shm
 *-wal
 *.sqlite
+
+.claude
