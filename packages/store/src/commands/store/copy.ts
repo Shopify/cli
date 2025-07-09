@@ -1,5 +1,6 @@
 import {BaseBDCommand} from '../../lib/base-command.js'
 import {commonFlags, storeFlags, fileFlags, resourceConfigFlags} from '../../lib/flags.js'
+import {FlagOptions} from '../../lib/types.js'
 import {OperationMode} from '../../services/store/types/operations.js'
 import {StoreCopyOperation} from '../../services/store/operations/store-copy.js'
 import {StoreExportOperation} from '../../services/store/operations/store-export.js'
@@ -25,7 +26,7 @@ export default class Copy extends BaseBDCommand {
   }
 
   async runCommand(): Promise<void> {
-    this.flags = (await this.parse(Copy)).flags
+    this.flags = (await this.parse(Copy)).flags as FlagOptions
 
     // Check access for all organizations first
     const apiClient = this.flags.mock ? new MockApiClient() : new ApiClient()
@@ -59,18 +60,9 @@ export default class Copy extends BaseBDCommand {
     }
 
     const operation = this.getOperation(operationMode, bpSession, apiClient, orgsWithAccess)
-
-    switch (operationMode) {
-      case OperationMode.StoreCopy:
-        await operation.execute(fromStore as string, toStore as string, this.flags)
-        break
-      case OperationMode.StoreExport:
-        await operation.execute(fromStore as string, toFile as string, this.flags)
-        break
-      case OperationMode.StoreImport:
-        await operation.execute(fromFile as string, toStore as string, this.flags)
-        break
-    }
+    const source = fromStore ?? fromFile
+    const destination = toStore ?? toFile
+    await operation.execute(source as string, destination as string, this.flags)
   }
 
   private getOperation(
