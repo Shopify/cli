@@ -14,7 +14,7 @@ describe('renderCopyInfo', () => {
 
     expect(renderInfo).toHaveBeenCalledWith({
       headline,
-      body: [{subdued: 'From:'}, from, {subdued: '\nTo:'}, to],
+      body: [{subdued: 'From:'}, from, {subdued: '\nTo:  '}, to],
     })
   })
 })
