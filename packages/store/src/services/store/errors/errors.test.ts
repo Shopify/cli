@@ -8,7 +8,7 @@ describe('ValidationError', () => {
     expect(error).toBeInstanceOf(ValidationError)
     expect(error.code).toBe(ErrorCodes.FILE_NOT_FOUND)
     expect(error.params).toEqual({filePath: '/test/file.sqlite'})
-    expect(error.message).toBe('File not found: /test/file.sqlite')
+    expect(error.message).toBe('File "/test/file.sqlite" not found.')
   })
 
   test('should create error with code only', () => {
@@ -26,7 +26,7 @@ describe('ValidationError', () => {
     expect(error.code).toBe(ErrorCodes.SHOP_NOT_FOUND)
     expect(error.params).toEqual({shop: 'test-shop.myshopify.com'})
     expect(error.message).toBe(
-      'Shop (test-shop.myshopify.com) not found in any of the Early Access enabled organizations you have access to.',
+      'Shop "test-shop.myshopify.com" not found in any of the Early Access enabled organizations you have access to.',
     )
   })
 })
@@ -63,10 +63,10 @@ describe('Error message generation', () => {
   test('should generate correct messages for all error codes', () => {
     // Validation errors
     expect(new ValidationError(ErrorCodes.FILE_TOO_LARGE, {sizeGB: 6}).message).toBe(
-      'File is too large (6GB). Maximum size is 5GB.',
+      'File "/test.db" (6GB) exceeds maximum size of 5GB.',
     )
-    expect(new ValidationError(ErrorCodes.EMPTY_FILE, {filePath: '/test.db'}).message).toBe('File is empty: /test.db')
-    expect(new ValidationError(ErrorCodes.NOT_A_FILE, {filePath: '/test'}).message).toBe('Path is not a file: /test')
+    expect(new ValidationError(ErrorCodes.EMPTY_FILE, {filePath: '/test.db'}).message).toBe('File "/test.db" is empty.')
+    expect(new ValidationError(ErrorCodes.NOT_A_FILE, {filePath: '/test'}).message).toBe('Path "/test" is not a file.')
     expect(new ValidationError(ErrorCodes.DIFFERENT_ORG).message).toBe(
       'Source and target shops must be in the same organization.',
     )
