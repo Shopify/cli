@@ -5,7 +5,7 @@ import {describe, expect, vi, test} from 'vitest'
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('confirmCopyPrompt', () => {
-  test('true', async () => {
+  test('renders a confirmation prompt and returns the selected value', async () => {
     const fromStore = 'shop1'
     const toStore = 'shop2'
     const message = `Confirm to proceed with copying data from ${fromStore} to ${toStore}. This action can't be undone.`
