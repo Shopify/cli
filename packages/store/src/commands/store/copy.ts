@@ -8,7 +8,6 @@ import {StoreImportOperation} from '../../services/store/operations/store-import
 import {ApiClient} from '../../services/store/api/api-client.js'
 import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {Organization} from '../../apis/destinations/index.js'
-import {ensureOrgHasBulkDataAccess} from '../../services/store/utils/store-utils.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {loadHelpClass} from '@oclif/core'
@@ -33,18 +32,6 @@ export default class Copy extends BaseBDCommand {
     const bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
     const allOrgs = await apiClient.fetchOrganizations(bpSession)
 
-    const accessChecks = await Promise.all(
-      allOrgs.map(async (org) => ({
-        org,
-        hasAccess: await ensureOrgHasBulkDataAccess(org.id, bpSession, apiClient),
-      })),
-    )
-
-    const orgsWithAccess = accessChecks.filter(({hasAccess}) => hasAccess).map(({org}) => org)
-    if (orgsWithAccess.length === 0) {
-      throw new Error(`This command is only available to Early Access Program members.`)
-    }
-
     const {fromStore, toStore, fromFile, _} = this.flags
     let {toFile} = this.flags
     const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
@@ -59,7 +46,7 @@ export default class Copy extends BaseBDCommand {
       toFile = joinPath(cwd(), `${storeDomain}-export-${Date.now()}.sqlite`)
     }
 
-    const operation = this.getOperation(operationMode, bpSession, apiClient, orgsWithAccess)
+    const operation = this.getOperation(operationMode, bpSession, apiClient, allOrgs)
     const source = fromStore ?? fromFile
     const destination = toStore ?? toFile
     await operation.execute(source as string, destination as string, this.flags)

@@ -7,7 +7,6 @@ import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {ensureOrgHasBulkDataAccess} from '../../services/store/utils/store-utils.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, loadHelpClass} from '@oclif/core'
-import {renderError} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../services/store/operations/store-copy.js')
@@ -166,19 +165,6 @@ describe('Copy', () => {
         expect.stringContaining('-export-'),
         expect.any(Object),
       )
-    })
-
-    test('should throw error when no organizations have access to bulk data operations', async () => {
-      vi.mocked(ensureOrgHasBulkDataAccess).mockResolvedValue(false)
-
-      await expect(run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])).rejects.toThrow(
-        'Process exit called',
-      )
-      expect(renderError).toHaveBeenCalledWith({
-        headline: 'Operation failed',
-        body: `This command is only available to Early Access Program members.`,
-      })
-      expect(process.exit).toHaveBeenCalledWith(1)
     })
 
     test('should show help when invalid flag combination', async () => {
