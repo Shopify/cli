@@ -61,23 +61,23 @@ function generateErrorMessage(code: string, params?: ErrorParams): string {
   switch (code) {
     // Validation errors
     case ErrorCodes.SHOP_NOT_FOUND:
-      return `Shop (${params?.shop}) not found in any of the Early Access enabled organizations you have access to.`
+      return `Shop "${params?.shop}" not found in any of the Early Access enabled organizations you have access to.`
     case ErrorCodes.FILE_NOT_FOUND:
-      return `File not found: ${params?.filePath}`
+      return `File "${params?.filePath}" not found.`
     case ErrorCodes.INVALID_FILE_FORMAT:
       return params?.filePath
-        ? `File does not appear to be a valid SQLite database: ${params.filePath}`
+        ? `File "${params.filePath}" does not appear to be a valid SQLite database.`
         : 'Invalid file format'
     case ErrorCodes.SAME_SHOP:
       return 'Source and target shops must not be the same.'
     case ErrorCodes.DIFFERENT_ORG:
       return 'Source and target shops must be in the same organization.'
     case ErrorCodes.FILE_TOO_LARGE:
-      return `File is too large (${params?.sizeGB}GB). Maximum size is 5GB.`
+      return `File "${params?.filePath}" (${params?.sizeGB}GB) exceeds maximum size of 5GB.`
     case ErrorCodes.EMPTY_FILE:
-      return `File is empty: ${params?.filePath}`
+      return `File "${params?.filePath}" is empty.`
     case ErrorCodes.NOT_A_FILE:
-      return `Path is not a file: ${params?.filePath}`
+      return `Path "${params?.filePath}" is not a file.`
     case ErrorCodes.INVALID_KEY_FORMAT:
       return `Key format "${params?.key}" is invalid.\nBuilt-in fields can be specified as <object_type>:<key>\n\nID metafields can be used as key by specifying\n<object_type>:metafield:<metafield_namespace>:<metafield_key>.`
     case ErrorCodes.KEY_DOES_NOT_EXIST:
