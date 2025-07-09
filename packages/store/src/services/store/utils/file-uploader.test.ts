@@ -124,7 +124,7 @@ describe('FileUploader', () => {
       await expect(promise).rejects.toThrow(ValidationError)
       await expect(promise).rejects.toMatchObject({
         code: ErrorCodes.FILE_TOO_LARGE,
-        params: {sizeGB: 6},
+        params: {filePath: mockFilePath, sizeGB: 6},
       })
     })
 
