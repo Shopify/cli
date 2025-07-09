@@ -78,6 +78,7 @@ export class FileUploader {
 
       if (stats.size > 5 * 1024 * 1024 * 1024) {
         throw new ValidationError(ErrorCodes.FILE_TOO_LARGE, {
+          filePath,
           sizeGB: Math.round(stats.size / 1024 / 1024 / 1024),
         })
       }
