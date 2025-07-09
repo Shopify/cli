@@ -13,8 +13,9 @@ import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderImportResult} from '../../../prompts/import_result.js'
+import {confirmImportPrompt} from '../../../prompts/confirm_import.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {Task, renderTasks, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 
 export class StoreImportOperation implements StoreOperation {
@@ -48,7 +49,7 @@ export class StoreImportOperation implements StoreOperation {
     this.validateShop(targetShop)
 
     if (!flags['no-prompt']) {
-      if (!(await this.confirmImportPrompt(fromFile, targetShop.domain))) {
+      if (!(await confirmImportPrompt(fromFile, targetShop.domain))) {
         outputInfo('Exiting.')
         process.exit(0)
       }
@@ -82,14 +83,6 @@ export class StoreImportOperation implements StoreOperation {
     if (!targetShop) {
       throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.toArg ?? 'target'})
     }
-  }
-
-  private async confirmImportPrompt(fromFile: string, targetDomain: string): Promise<boolean> {
-    return renderConfirmationPrompt({
-      message: `Import data from ${fromFile} to ${targetDomain}?`,
-      confirmationMessage: 'Yes, import',
-      cancellationMessage: 'Cancel',
-    })
   }
 
   private async startImportOperation(
