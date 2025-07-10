@@ -11,7 +11,7 @@ export interface ApiClientInterface {
   fetchOrganizations(session: string): Promise<Organization[]>
 
   startBulkDataStoreCopy(
-    organizationId: string,
+    shopId: string,
     sourceShopDomain: string,
     targetShopDomain: string,
     resourceConfigs: ResourceConfigs,

@@ -49,13 +49,7 @@ export class StoreCopyOperation implements StoreOperation {
 
     renderCopyInfo('Copy Operation', sourceShop.domain, targetShop.domain)
 
-    const copyOperation = await this.copyDataWithProgress(
-      sourceShop.organizationId,
-      sourceShop,
-      targetShop,
-      this.bpSession,
-      flags,
-    )
+    const copyOperation = await this.copyDataWithProgress(sourceShop, targetShop, this.bpSession, flags)
 
     const status = copyOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
@@ -82,13 +76,13 @@ export class StoreCopyOperation implements StoreOperation {
 
   private async startCopyOperation(
     bpSession: string,
-    organizationId: string,
+    apiShopId: string,
     sourceShop: Shop,
     targetShop: Shop,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
     const copyResponse: BulkDataStoreCopyStartResponse = await this.apiClient.startBulkDataStoreCopy(
-      organizationId,
+      apiShopId,
       sourceShop.domain,
       targetShop.domain,
       parseResourceConfigFlags(flags.key as string[]),
@@ -104,11 +98,10 @@ export class StoreCopyOperation implements StoreOperation {
     }
 
     const operationId = copyResponse.bulkDataStoreCopyStart.operation.id
-    return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
+    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
   }
 
   private async copyDataWithProgress(
-    organizationId: string,
     sourceShop: Shop,
     targetShop: Shop,
     bpSession: string,
@@ -126,11 +119,11 @@ export class StoreCopyOperation implements StoreOperation {
 
     const tasks = taskGenerator.generateTasks<CopyContext>({
       startOperation: async (ctx: CopyContext) => {
-        return this.startCopyOperation(ctx.bpSession, ctx.organizationId, ctx.sourceShop, ctx.targetShop, ctx.flags)
+        return this.startCopyOperation(ctx.bpSession, ctx.apiShopId, ctx.sourceShop, ctx.targetShop, ctx.flags)
       },
       pollOperation: async (ctx: CopyContext) => {
         const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
       },
     })
 
@@ -138,7 +131,7 @@ export class StoreCopyOperation implements StoreOperation {
       {
         title: 'Initializing',
         task: async (ctx: CopyContext) => {
-          ctx.organizationId = organizationId
+          ctx.apiShopId = sourceShop.publicId
           ctx.bpSession = bpSession
           ctx.sourceShop = sourceShop
           ctx.targetShop = targetShop

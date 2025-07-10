@@ -32,6 +32,7 @@ export class StoreExportOperation implements StoreOperation {
     this.fromArg = fromStore
 
     const sourceShop = findStore(fromStore, this.orgs)
+    console.log('sourceShop', sourceShop)
     this.validateShop(sourceShop)
 
     if (!flags['no-prompt']) {
@@ -42,7 +43,7 @@ export class StoreExportOperation implements StoreOperation {
     }
 
     renderCopyInfo('Export Operation', sourceShop.domain, toFile)
-    const exportOperation = await this.exportDataWithProgress(sourceShop.organizationId, sourceShop, this.bpSession)
+    const exportOperation = await this.exportDataWithProgress(sourceShop, this.bpSession)
 
     const status = exportOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
@@ -64,11 +65,11 @@ export class StoreExportOperation implements StoreOperation {
 
   private async startExportOperation(
     bpSession: string,
-    organizationId: string,
+    apiShopId: string,
     sourceShop: Shop,
   ): Promise<BulkDataOperationByIdResponse> {
     const exportResponse: BulkDataStoreExportStartResponse = await this.apiClient.startBulkDataStoreExport(
-      organizationId,
+      apiShopId,
       sourceShop.domain,
       bpSession,
     )
@@ -82,14 +83,10 @@ export class StoreExportOperation implements StoreOperation {
     }
 
     const operationId = exportResponse.bulkDataStoreExportStart.operation.id
-    return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
+    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
   }
 
-  private async exportDataWithProgress(
-    organizationId: string,
-    sourceShop: Shop,
-    bpSession: string,
-  ): Promise<BulkDataOperationByIdResponse> {
+  private async exportDataWithProgress(sourceShop: Shop, bpSession: string): Promise<BulkDataOperationByIdResponse> {
     interface ExportContext extends BulkOperationContext {
       sourceShop: Shop
     }
@@ -100,11 +97,11 @@ export class StoreExportOperation implements StoreOperation {
 
     const tasks = taskGenerator.generateTasks<ExportContext>({
       startOperation: async (ctx: ExportContext) => {
-        return this.startExportOperation(ctx.bpSession, ctx.organizationId, ctx.sourceShop)
+        return this.startExportOperation(ctx.bpSession, ctx.apiShopId, ctx.sourceShop)
       },
       pollOperation: async (ctx: ExportContext) => {
         const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
       },
     })
 
@@ -113,7 +110,7 @@ export class StoreExportOperation implements StoreOperation {
       {
         title: 'initializing',
         task: async (ctx: ExportContext) => {
-          ctx.organizationId = organizationId
+          ctx.apiShopId = sourceShop.publicId
           ctx.bpSession = bpSession
           ctx.sourceShop = sourceShop
           ctx.isComplete = false

@@ -19,7 +19,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreCopy(
-    _organizationId: string,
+    _shopId: string,
     _sourceShopDomain: string,
     _targetShopDomain: string,
     _resourceConfigs: ResourceConfigs,

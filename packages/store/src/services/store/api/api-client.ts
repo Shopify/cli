@@ -23,14 +23,14 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreCopy(
-    organizationId: string,
+    shopId: string,
     sourceShopDomain: string,
     targetShopDomain: string,
     resourceConfigs: ResourceConfigs,
     token: string,
   ): Promise<BulkDataStoreCopyStartResponse> {
     return startBulkDataStoreCopy(
-      organizationId,
+      shopId,
       sourceShopDomain,
       targetShopDomain,
       resourceConfigs,

@@ -57,13 +57,7 @@ export class StoreImportOperation implements StoreOperation {
 
     renderCopyInfo('Import Operation', fromFile, targetShop.domain)
 
-    const importOperation = await this.importDataWithProgress(
-      targetShop.organizationId,
-      targetShop,
-      fromFile,
-      this.bpSession,
-      flags,
-    )
+    const importOperation = await this.importDataWithProgress(targetShop, fromFile, this.bpSession, flags)
 
     const status = importOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
@@ -113,7 +107,6 @@ export class StoreImportOperation implements StoreOperation {
   }
 
   private async importDataWithProgress(
-    organizationId: string,
     targetShop: Shop,
     filePath: string,
     bpSession: string,
@@ -131,11 +124,11 @@ export class StoreImportOperation implements StoreOperation {
 
     const bulkTasks = taskGenerator.generateTasks<ImportContext>({
       startOperation: async (ctx: ImportContext) => {
-        return this.startImportOperation(ctx.bpSession, ctx.organizationId, ctx.targetShop, ctx.importUrl, ctx.flags)
+        return this.startImportOperation(ctx.bpSession, ctx.apiShopId, ctx.targetShop, ctx.importUrl, ctx.flags)
       },
       pollOperation: async (ctx: ImportContext) => {
         const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
       },
     })
 
@@ -144,7 +137,7 @@ export class StoreImportOperation implements StoreOperation {
       {
         title: 'initializing',
         task: async (ctx: ImportContext) => {
-          ctx.organizationId = organizationId
+          ctx.apiShopId = targetShop.publicId
           ctx.bpSession = bpSession
           ctx.targetShop = targetShop
           ctx.flags = flags
