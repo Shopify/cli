@@ -3,7 +3,11 @@ import {BulkDataOperationByIdResponse} from '../apis/organizations/types.js'
 import {Shop} from '../apis/destinations/index.js'
 import {Token} from '@shopify/cli-kit/node/ui'
 
-export function renderImportResult(targetShop: Shop, importOperation: BulkDataOperationByIdResponse): void {
-  const msg: Token[] = [`Import operation to`, {info: targetShop.domain}]
-  renderOperationResult(msg, importOperation)
+export function renderImportResult(
+  filePath: string,
+  targetShop: Shop,
+  importOperation: BulkDataOperationByIdResponse,
+): void {
+  const msg: Token[] = [{subdued: 'From:'}, filePath, {subdued: '\nTo:  '}, targetShop.domain]
+  renderOperationResult(msg, importOperation, targetShop)
 }

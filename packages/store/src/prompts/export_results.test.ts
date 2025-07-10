@@ -26,7 +26,7 @@ describe('renderExportResult', () => {
         bulkData: {
           operation: {
             id: 'bulk-op-1',
-            operationType: 'EXPORT',
+            operationType: 'STORE_EXPORT',
             status: 'COMPLETED',
             sourceStore: {
               id: '1',
@@ -75,7 +75,7 @@ describe('renderExportResult', () => {
         bulkData: {
           operation: {
             id: 'bulk-op-1',
-            operationType: 'EXPORT',
+            operationType: 'STORE_EXPORT',
             status: 'COMPLETED',
             sourceStore: {
               id: '1',
@@ -119,7 +119,7 @@ describe('renderExportResult', () => {
         bulkData: {
           operation: {
             id: 'bulk-op-1',
-            operationType: 'EXPORT',
+            operationType: 'STORE_EXPORT',
             status: 'COMPLETED',
             sourceStore: {
               id: '1',

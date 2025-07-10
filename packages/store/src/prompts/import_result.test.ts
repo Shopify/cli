@@ -25,7 +25,7 @@ describe('renderImportResult', () => {
       bulkData: {
         operation: {
           id: 'bulk-op-1',
-          operationType: 'IMPORT',
+          operationType: 'STORE_IMPORT',
           status: 'COMPLETED',
           sourceStore: {
             id: '1',
@@ -42,11 +42,13 @@ describe('renderImportResult', () => {
   }
 
   test('calls renderOperationResult with correct base message', () => {
-    renderImportResult(targetShop, mockOperation)
+    const filePath = 'input.sqlite'
+    renderImportResult(filePath, targetShop, mockOperation)
 
     expect(renderOperationResult).toHaveBeenCalledWith(
-      ['Import operation to', {info: 'target-shop.myshopify.com'}],
+      [{subdued: 'From:'}, 'input.sqlite', {subdued: '\nTo:  '}, 'target-shop.myshopify.com'],
       mockOperation,
+      targetShop,
     )
   })
 })

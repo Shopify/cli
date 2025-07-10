@@ -70,7 +70,7 @@ export class StoreImportOperation implements StoreOperation {
       throw new OperationError('import', ErrorCodes.IMPORT_FAILED)
     }
 
-    renderImportResult(targetShop, importOperation)
+    renderImportResult(fromFile, targetShop, importOperation)
   }
 
   private async validateInputFile(filePath: string): Promise<void> {

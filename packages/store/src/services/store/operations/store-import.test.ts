@@ -78,7 +78,7 @@ describe('StoreImportOperation', () => {
       cancellationMessage: 'Cancel',
     })
     expect(renderCopyInfo).toHaveBeenCalledWith('Import Operation', 'input.sqlite', 'target.myshopify.com')
-    expect(renderImportResult).toHaveBeenCalledWith(mockTargetShop, mockCompletedOperation)
+    expect(renderImportResult).toHaveBeenCalledWith('input.sqlite', mockTargetShop, mockCompletedOperation)
   })
 
   test('should throw error when input file does not exist', async () => {
