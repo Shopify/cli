@@ -8,6 +8,6 @@ export function renderCopyResult(
   targetShop: Shop,
   copyOperation: BulkDataOperationByIdResponse,
 ): void {
-  const msg: Token[] = [`Copy operation from`, {info: sourceShop.domain}, `to`, {info: targetShop.domain}]
-  renderOperationResult(msg, copyOperation)
+  const msg: Token[] = [{subdued: 'From:'}, sourceShop.domain, {subdued: '\nTo:  '}, targetShop.domain]
+  renderOperationResult(msg, copyOperation, targetShop)
 }

@@ -42,7 +42,7 @@ export class MockApiClient implements ApiClientInterface {
         success: true,
         operation: {
           id: 'mock-export-operation-id',
-          operationType: 'EXPORT',
+          operationType: 'STORE_EXPORT',
           status: 'IN_PROGRESS',
         },
         userErrors: [],
@@ -64,7 +64,7 @@ export class MockApiClient implements ApiClientInterface {
         success: true,
         operation: {
           id: 'mock-import-operation-id',
-          operationType: 'IMPORT',
+          operationType: 'STORE_IMPORT',
           status: 'IN_PROGRESS',
         },
         userErrors: [],

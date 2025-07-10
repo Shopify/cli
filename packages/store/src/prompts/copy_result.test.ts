@@ -57,8 +57,9 @@ describe('renderCopyResult', () => {
     renderCopyResult(sourceShop, targetShop, mockOperation)
 
     expect(renderOperationResult).toHaveBeenCalledWith(
-      ['Copy operation from', {info: 'source-shop.myshopify.com'}, 'to', {info: 'target-shop.myshopify.com'}],
+      [{subdued: 'From:'}, 'source-shop.myshopify.com', {subdued: '\nTo:  '}, 'target-shop.myshopify.com'],
       mockOperation,
+      targetShop,
     )
   })
 })
