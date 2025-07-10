@@ -10,7 +10,9 @@ import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-op
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
+import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export class StoreExportOperation implements StoreOperation {
   fromArg: string | undefined
@@ -31,6 +33,13 @@ export class StoreExportOperation implements StoreOperation {
 
     const sourceShop = findStore(fromStore, this.orgs)
     this.validateShop(sourceShop)
+
+    if (!flags['no-prompt']) {
+      if (!(await confirmExportPrompt(sourceShop.domain, toFile))) {
+        outputInfo('Exiting.')
+        process.exit(0)
+      }
+    }
 
     renderCopyInfo('Export Operation', sourceShop.domain, toFile)
     const exportOperation = await this.exportDataWithProgress(sourceShop.organizationId, sourceShop, this.bpSession)
