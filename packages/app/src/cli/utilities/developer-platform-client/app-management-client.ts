@@ -170,7 +170,8 @@ import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {Variables} from 'graphql-request'
 import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
 
-const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
+const TEMPLATE_JSON_URL =
+  'https://raw.githubusercontent.com/Shopify/extensions-templates/refs/heads/njo/pos-ui/add-preact/templates.json'
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
