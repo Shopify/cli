@@ -11,7 +11,7 @@ import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
-import {Shop, Organization} from '../../../apis/destinations/index.js'
+import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
@@ -30,7 +30,7 @@ describe('StoreCopyOperation', () => {
     const mockBpSession = 'mock-bp-session-token'
     const mockSourceShop: Shop = TEST_MOCK_DATA.sourceShop
     const mockTargetShop: Shop = TEST_MOCK_DATA.targetShop
-    const mockOrganization: Organization = TEST_MOCK_DATA.organization
+    const shops = [mockSourceShop, mockTargetShop]
     const mockCopyStartResponse: BulkDataStoreCopyStartResponse = TEST_COPY_START_RESPONSE
     const mockCompletedOperation: BulkDataOperationByIdResponse = TEST_COMPLETED_OPERATION
 
@@ -44,13 +44,19 @@ describe('StoreCopyOperation', () => {
       })
 
       mockApiClient = {
+        getStoreDetails: vi.fn().mockImplementation((domain: string) => {
+          const shop = shops.find((shop) => shop.domain === domain)
+          if (shop) {
+            return {id: shop.id, name: shop.name}
+          }
+          throw new Error(`Shop not found: ${domain}`)
+        }),
         ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue(mockBpSession),
-        fetchOrganizations: vi.fn().mockResolvedValue([mockOrganization]),
         startBulkDataStoreCopy: vi.fn().mockResolvedValue(mockCopyStartResponse),
         pollBulkDataOperation: vi.fn().mockResolvedValue(mockCompletedOperation),
       }
 
-      operation = new StoreCopyOperation(mockToken, mockApiClient, [mockOrganization])
+      operation = new StoreCopyOperation(mockToken, mockApiClient)
 
       vi.mocked(confirmCopyPrompt).mockResolvedValue(true)
       vi.mocked(parseResourceConfigFlags).mockReturnValue({})
@@ -82,7 +88,11 @@ describe('StoreCopyOperation', () => {
 
       expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
       expect(renderCopyInfo).toHaveBeenCalledWith('Copy Operation', 'source.myshopify.com', 'target.myshopify.com')
-      expect(renderCopyResult).toHaveBeenCalledWith(mockSourceShop, mockTargetShop, mockCompletedOperation)
+      expect(renderCopyResult).toHaveBeenCalledWith(
+        'source.myshopify.com',
+        'target.myshopify.com',
+        mockCompletedOperation,
+      )
     })
 
     test('should skip confirmation when --no-prompt flag is provided', async () => {
@@ -104,64 +114,12 @@ describe('StoreCopyOperation', () => {
       expect(mockApiClient.startBulkDataStoreCopy).not.toHaveBeenCalled()
     })
 
-    test('should throw error when source shop is not found', async () => {
-      mockApiClient.fetchOrganizations.mockResolvedValue([
-        {
-          ...mockOrganization,
-          shops: [mockTargetShop],
-        },
-      ])
-
-      const promise = operation.execute('nonexistent.myshopify.com', 'target.myshopify.com', {})
-      await expect(promise).rejects.toThrow(ValidationError)
-      await expect(promise).rejects.toMatchObject({
-        code: ErrorCodes.SHOP_NOT_FOUND,
-        params: {shop: 'nonexistent.myshopify.com'},
-      })
-    })
-
-    test('should throw error when target shop is not found', async () => {
-      mockApiClient.fetchOrganizations.mockResolvedValue([
-        {
-          ...mockOrganization,
-          shops: [mockSourceShop],
-        },
-      ])
-
-      const promise = operation.execute('source.myshopify.com', 'nonexistent.myshopify.com', {})
-      await expect(promise).rejects.toThrow(ValidationError)
-      await expect(promise).rejects.toMatchObject({
-        code: ErrorCodes.SHOP_NOT_FOUND,
-        params: {shop: 'nonexistent.myshopify.com'},
-      })
-    })
-
     test('should throw error when source and target shops are the same', async () => {
       const promise = operation.execute('source.myshopify.com', 'source.myshopify.com', {})
       await expect(promise).rejects.toThrow(ValidationError)
       await expect(promise).rejects.toMatchObject({
         code: ErrorCodes.SAME_SHOP,
       })
-    })
-
-    test('should throw error when shops are in different organizations', async () => {
-      const differentOrgShop: Shop = TEST_MOCK_DATA.differentOrgShop
-      const differentOrg: Organization = TEST_MOCK_DATA.differentOrganization
-      operation = new StoreCopyOperation(mockToken, mockApiClient, [mockOrganization, differentOrg])
-      const promise = operation.execute('source.myshopify.com', 'other-org.myshopify.com', {})
-      await expect(promise).rejects.toThrow(ValidationError)
-      await expect(promise).rejects.toMatchObject({
-        code: ErrorCodes.DIFFERENT_ORG,
-      })
-    })
-
-    test('should filter out organizations with single shop', async () => {
-      const singleShopOrg: Organization = TEST_MOCK_DATA.singleShopOrganization
-      mockApiClient.fetchOrganizations.mockResolvedValue([mockOrganization, singleShopOrg])
-
-      await operation.execute('source.myshopify.com', 'target.myshopify.com', {})
-
-      expect(renderCopyResult).toHaveBeenCalled()
     })
 
     test('should pass resource config flags when provided', async () => {

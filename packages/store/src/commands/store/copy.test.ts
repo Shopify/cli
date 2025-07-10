@@ -4,7 +4,6 @@ import {StoreExportOperation} from '../../services/store/operations/store-export
 import {StoreImportOperation} from '../../services/store/operations/store-import.js'
 import {ApiClient} from '../../services/store/api/api-client.js'
 import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
-import {ensureOrgHasBulkDataAccess} from '../../services/store/utils/store-utils.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, loadHelpClass} from '@oclif/core'
 
@@ -14,9 +13,6 @@ vi.mock('../../services/store/operations/store-export.js')
 vi.mock('../../services/store/operations/store-import.js')
 vi.mock('../../services/store/api/api-client.js')
 vi.mock('../../services/store/mock/mock-api-client.js')
-vi.mock('../../services/store/utils/store-utils.js', () => ({
-  ensureOrgHasBulkDataAccess: vi.fn().mockResolvedValue(true),
-}))
 vi.mock('@oclif/core', async () => {
   const actual = await vi.importActual('@oclif/core')
   return {
@@ -58,7 +54,6 @@ describe('Copy', () => {
       () =>
         ({
           ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue('mock-session'),
-          fetchOrganizations: vi.fn().mockResolvedValue(mockOrganizations),
         } as any),
     )
 
@@ -66,12 +61,8 @@ describe('Copy', () => {
       () =>
         ({
           ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue('mock-session'),
-          fetchOrganizations: vi.fn().mockResolvedValue(mockOrganizations),
         } as any),
     )
-
-    // Reset the mock for ensureOrgHasBulkDataAccess to default to true
-    vi.mocked(ensureOrgHasBulkDataAccess).mockResolvedValue(true)
 
     vi.mocked(StoreCopyOperation).mockImplementation(
       () =>

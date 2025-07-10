@@ -54,12 +54,12 @@ describe('renderCopyResult', () => {
   }
 
   test('calls renderOperationResult with correct base message', () => {
-    renderCopyResult(sourceShop, targetShop, mockOperation)
+    renderCopyResult(sourceShop.domain, targetShop.domain, mockOperation)
 
     expect(renderOperationResult).toHaveBeenCalledWith(
       [{subdued: 'From:'}, 'source-shop.myshopify.com', {subdued: '\nTo:  '}, 'target-shop.myshopify.com'],
       mockOperation,
-      targetShop,
+      targetShop.domain,
     )
   })
 })

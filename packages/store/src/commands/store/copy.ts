@@ -8,7 +8,6 @@ import {StoreExportOperation} from '../../services/store/operations/store-export
 import {StoreImportOperation} from '../../services/store/operations/store-import.js'
 import {ApiClient} from '../../services/store/api/api-client.js'
 import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
-import {Organization} from '../../apis/destinations/index.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {loadHelpClass} from '@oclif/core'
@@ -35,7 +34,6 @@ export default class Copy extends BaseBDCommand {
     // Check access for all organizations first
     const apiClient = this.flags.mock ? new MockApiClient() : new ApiClient()
     const bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
-    const allOrgs = await apiClient.fetchOrganizations(bpSession)
 
     const {'from-store': fromStore, 'to-store': toStore, 'from-file': fromFile} = this.flags
     let {'to-file': toFile} = this.flags
@@ -51,25 +49,20 @@ export default class Copy extends BaseBDCommand {
       toFile = joinPath(cwd(), `${storeDomain}-export-${Date.now()}.sqlite`)
     }
 
-    const operation = this.getOperation(operationMode, bpSession, apiClient, allOrgs)
+    const operation = this.getOperation(operationMode, bpSession, apiClient)
     const source = fromStore ?? fromFile
     const destination = toStore ?? toFile
     await operation.execute(source as string, destination as string, this.flags)
   }
 
-  private getOperation(
-    mode: OperationMode,
-    bpSession: string,
-    apiClient: ApiClient | MockApiClient,
-    orgs: Organization[],
-  ) {
+  private getOperation(mode: OperationMode, bpSession: string, apiClient: ApiClient | MockApiClient) {
     switch (mode) {
       case OperationMode.StoreCopy:
-        return new StoreCopyOperation(bpSession, apiClient, orgs)
+        return new StoreCopyOperation(bpSession, apiClient)
       case OperationMode.StoreExport:
-        return new StoreExportOperation(bpSession, apiClient, orgs)
+        return new StoreExportOperation(bpSession, apiClient)
       case OperationMode.StoreImport:
-        return new StoreImportOperation(bpSession, apiClient, orgs)
+        return new StoreImportOperation(bpSession, apiClient)
       default:
         throw new Error(`Unknown operation mode: ${mode}`)
     }

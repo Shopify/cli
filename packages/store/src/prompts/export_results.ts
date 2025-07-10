@@ -1,9 +1,8 @@
-import {Shop} from '../apis/destinations/index.js'
 import {BulkDataOperationByIdResponse} from '../apis/organizations/types.js'
 import {renderSuccess, renderWarning, Token} from '@shopify/cli-kit/node/ui'
 
-export function renderExportResult(sourceShop: Shop, exportOperation: BulkDataOperationByIdResponse): void {
-  const msg: Token[] = [`Export operation from`, {info: sourceShop.domain}]
+export function renderExportResult(sourceShopDomain: string, exportOperation: BulkDataOperationByIdResponse): void {
+  const msg: Token[] = [`Export operation from`, {info: sourceShopDomain}]
 
   const storeOperations = exportOperation.organization.bulkData.operation.storeOperations
   const hasErrors = storeOperations.some((op) => op.remoteOperationStatus === 'FAILED')

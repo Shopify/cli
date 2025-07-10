@@ -238,7 +238,7 @@ describe('renderOperationResult', () => {
       },
     }
 
-    renderOperationResult([...baseMsg], operation, targetShop)
+    renderOperationResult([...baseMsg], operation, targetShop.domain)
 
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Copy completed',
@@ -298,7 +298,7 @@ describe('renderOperationResult', () => {
       },
     }
 
-    renderOperationResult([...baseMsg], operation, targetShop)
+    renderOperationResult([...baseMsg], operation, targetShop.domain)
 
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Copy completed',
@@ -358,7 +358,7 @@ describe('renderOperationResult', () => {
       },
     }
 
-    renderOperationResult([...baseMsg], operation, targetShop)
+    renderOperationResult([...baseMsg], operation, targetShop.domain)
 
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Copy completed',

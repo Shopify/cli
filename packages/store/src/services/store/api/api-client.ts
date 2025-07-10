@@ -1,5 +1,4 @@
 import {ApiClientInterface} from '../types/api-client.js'
-import {Organization, fetchOrgs} from '../../../apis/destinations/index.js'
 import {
   BulkDataStoreCopyStartResponse,
   BulkDataOperationByIdResponse,
@@ -13,24 +12,25 @@ import {
   startBulkDataStoreImport,
   pollBulkDataOperation,
 } from '../../../apis/organizations/index.js'
+import {getShopDetails} from '../../../apis/admin/index.js'
+import {Shop} from '../../../apis/admin/types.js'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 export class ApiClient implements ApiClientInterface {
-  async fetchOrganizations(session: string): Promise<Organization[]> {
-    const orgs = await fetchOrgs(session, this.createUnauthorizedHandler())
-    return orgs
+  async getStoreDetails(storeDomain: string): Promise<Shop> {
+    return getShopDetails(storeDomain)
   }
 
   async startBulkDataStoreCopy(
-    organizationId: string,
+    shopId: string,
     sourceShopDomain: string,
     targetShopDomain: string,
     resourceConfigs: ResourceConfigs,
     token: string,
   ): Promise<BulkDataStoreCopyStartResponse> {
     return startBulkDataStoreCopy(
-      organizationId,
+      shopId,
       sourceShopDomain,
       targetShopDomain,
       resourceConfigs,
@@ -40,22 +40,22 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreExport(
-    organizationId: string,
+    shopId: string,
     sourceShopDomain: string,
     token: string,
   ): Promise<BulkDataStoreExportStartResponse> {
-    return startBulkDataStoreExport(organizationId, sourceShopDomain, token, this.createUnauthorizedHandler())
+    return startBulkDataStoreExport(shopId, sourceShopDomain, token, this.createUnauthorizedHandler())
   }
 
   async startBulkDataStoreImport(
-    organizationId: string,
+    shopId: string,
     targetShopDomain: string,
     importUrl: string,
     resourceConfigs: ResourceConfigs,
     token: string,
   ): Promise<BulkDataStoreImportStartResponse> {
     return startBulkDataStoreImport(
-      organizationId,
+      shopId,
       targetShopDomain,
       importUrl,
       resourceConfigs,
@@ -65,11 +65,11 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async pollBulkDataOperation(
-    organizationId: string,
+    shopId: string,
     operationId: string,
     token: string,
   ): Promise<BulkDataOperationByIdResponse> {
-    return pollBulkDataOperation(organizationId, operationId, token, this.createUnauthorizedHandler())
+    return pollBulkDataOperation(shopId, operationId, token, this.createUnauthorizedHandler())
   }
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {
