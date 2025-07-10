@@ -1,4 +1,4 @@
-import {ExtensionTemplatesResult} from '../../models/app/template.js'
+import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {isPolarisUnifiedEnabled} from '@shopify/cli-kit/node/is-polaris-unified-enabled'
@@ -8,7 +8,14 @@ export async function fetchExtensionTemplates(
   app: MinimalAppIdentifiers,
   availableSpecifications: string[],
 ): Promise<ExtensionTemplatesResult> {
-  const {templates: remoteTemplates, groupOrder} = await developerPlatformClient.templateSpecifications(app)
+  const {groupOrder} = await developerPlatformClient.templateSpecifications(app)
+
+  const remoteTemplates = await fetch(
+    `https://raw.githubusercontent.com/Shopify/extensions-templates/refs/heads/njo/pos-ui/add-preact/templates.json?cache_bust=cachebust`,
+  )
+    .then((res) => res.json())
+    .then((data) => data as ExtensionTemplate[])
+
   const polarisUnifiedEnabled = isPolarisUnifiedEnabled()
 
   const filteredTemplates = remoteTemplates
