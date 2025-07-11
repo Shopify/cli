@@ -108,24 +108,24 @@ describe('Copy', () => {
     }
 
     test('should instantiate StoreCopyOperation for store-to-store copy', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com'])
+      await run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com'])
 
       expect(StoreCopyOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com', expect.any(Object))
     })
 
     test('should instantiate StoreExportOperation for store-to-file export', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toFile=output.sqlite'])
+      await run(['--from-store=source.myshopify.com', '--to-file=output.sqlite'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite', expect.any(Object))
     })
 
-    test('should auto-generate toFile path when exporting without toFile parameter', async () => {
+    test('should auto-generate to-file path when exporting without to-file parameter', async () => {
       const mockDate = new Date('2024-01-01T12:00:00Z')
       vi.spyOn(Date, 'now').mockReturnValue(mockDate.getTime())
 
-      await run(['--fromStore=source.myshopify.com'])
+      await run(['--from-store=source.myshopify.com'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith(
@@ -135,11 +135,11 @@ describe('Copy', () => {
       )
     })
 
-    test('should sanitize domain name when auto-generating toFile path', async () => {
+    test('should sanitize domain name when auto-generating to-file path', async () => {
       const mockDate = new Date('2024-01-01T12:00:00Z')
       vi.spyOn(Date, 'now').mockReturnValue(mockDate.getTime())
 
-      await run(['--fromStore=test@store!.myshopify.com'])
+      await run(['--from-store=test@store!.myshopify.com'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith(
@@ -150,14 +150,14 @@ describe('Copy', () => {
     })
 
     test('should instantiate StoreImportOperation for file-to-store import', async () => {
-      await run(['--fromFile=input.sqlite', '--toStore=target.myshopify.com'])
+      await run(['--from-file=input.sqlite', '--to-store=target.myshopify.com'])
 
       expect(StoreImportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith('input.sqlite', 'target.myshopify.com', expect.any(Object))
     })
 
-    test('should auto-generate toFile for export when only fromStore is provided', async () => {
-      await run(['--fromStore=source.myshopify.com'])
+    test('should auto-generate to-file for export when only from-store is provided', async () => {
+      await run(['--from-store=source.myshopify.com'])
 
       expect(StoreExportOperation).toHaveBeenCalledTimes(1)
       expect(mockExecute).toHaveBeenCalledWith(
@@ -168,7 +168,7 @@ describe('Copy', () => {
     })
 
     test('should show help when invalid flag combination', async () => {
-      await run(['--toFile=output.sqlite'])
+      await run(['--to-file=output.sqlite'])
 
       expect(loadHelpClass).toHaveBeenCalledWith(expect.any(Object))
       expect(mockShowHelp).toHaveBeenCalledWith(['store:copy'])
@@ -188,7 +188,7 @@ describe('Copy', () => {
     })
 
     test('should show help when mixing store and file flags', async () => {
-      await run(['--fromStore=source.myshopify.com', '--fromFile=input.sqlite', '--toStore=target.myshopify.com'])
+      await run(['--from-store=source.myshopify.com', '--from-file=input.sqlite', '--to-store=target.myshopify.com'])
 
       expect(loadHelpClass).toHaveBeenCalledWith(expect.any(Object))
       expect(mockShowHelp).toHaveBeenCalledWith(['store:copy'])
@@ -198,7 +198,7 @@ describe('Copy', () => {
     })
 
     test('should pass flags to the operation', async () => {
-      await run(['--fromStore=source.myshopify.com', '--toStore=target.myshopify.com', '--no-prompt', '--mock'])
+      await run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com', '--no-prompt', '--mock'])
 
       expect(mockExecute).toHaveBeenCalledWith(
         'source.myshopify.com',

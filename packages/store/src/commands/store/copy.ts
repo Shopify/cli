@@ -32,8 +32,8 @@ export default class Copy extends BaseBDCommand {
     const bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
     const allOrgs = await apiClient.fetchOrganizations(bpSession)
 
-    const {fromStore, toStore, fromFile, _} = this.flags
-    let {toFile} = this.flags
+    const {'from-store': fromStore, 'to-store': toStore, 'from-file': fromFile} = this.flags
+    let {'to-file': toFile} = this.flags
     const operationMode = this.determineOperationMode(fromStore, toStore, fromFile, toFile)
 
     if (!operationMode) {
