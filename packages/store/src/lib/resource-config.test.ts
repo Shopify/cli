@@ -1,4 +1,5 @@
 import {parseResourceConfigFlags} from './resource-config.js'
+import {ValidationError, ErrorCodes} from '../services/store/errors/errors.js'
 import {describe, expect, test} from 'vitest'
 
 describe('parseResourceConfigFlags', () => {
@@ -32,30 +33,15 @@ describe('parseResourceConfigFlags', () => {
       })
     })
 
-    test('parses multiple different resources', () => {
-      const result = parseResourceConfigFlags(['products:handle', 'customers:email'])
-      expect(result).toEqual({
-        products: {
-          identifier: {
-            field: 'HANDLE',
-            customId: undefined,
-          },
-        },
-        customers: {
-          identifier: {
-            field: 'EMAIL',
-            customId: undefined,
-          },
-        },
-      })
-    })
-
     test('overwrites identifier when same resource appears multiple times', () => {
-      const result = parseResourceConfigFlags(['products:handle', 'products:title'])
+      const result = parseResourceConfigFlags(['products:handle', 'products:metafield:custom:salesforce_id'])
       expect(result).toEqual({
         products: {
           identifier: {
-            field: 'TITLE',
+            customId: {
+              namespace: 'custom',
+              key: 'salesforce_id',
+            },
           },
         },
       })
@@ -76,34 +62,62 @@ describe('parseResourceConfigFlags', () => {
         },
       })
     })
-
-    test('throws error for non-product unique metafield', () => {
-      expect(() => parseResourceConfigFlags(['customers:metafield:custom:id'])).toThrow(
-        "Invalid resource: customers don't support unique metafields as identifiers.",
-      )
-    })
   })
 
-  describe('when parsing mixed field and metafield configs', () => {
-    test('returns mixed set of identifier inputs', () => {
-      const result = parseResourceConfigFlags(['products:metafield:custom:salesforce_id', 'customers:email'])
-      expect(result).toEqual({
-        products: {
-          identifier: {
-            field: undefined,
-            customId: {
-              namespace: 'custom',
-              key: 'salesforce_id',
-            },
-          },
-        },
-        customers: {
-          identifier: {
-            field: 'EMAIL',
-            customId: undefined,
-          },
-        },
-      })
+  describe('when validating key formats and fields', () => {
+    test('throws INVALID_KEY_FORMAT for malformed keys', () => {
+      expect(() => parseResourceConfigFlags(['invalid'])).toThrow(ValidationError)
+      expect(() => parseResourceConfigFlags(['invalid'])).toThrow(
+        expect.objectContaining({
+          code: ErrorCodes.INVALID_KEY_FORMAT,
+        }),
+      )
+
+      expect(() => parseResourceConfigFlags(['product:yes:no'])).toThrow(ValidationError)
+      expect(() => parseResourceConfigFlags(['product:yes:no'])).toThrow(
+        expect.objectContaining({
+          code: ErrorCodes.INVALID_KEY_FORMAT,
+        }),
+      )
+
+      expect(() => parseResourceConfigFlags(['product/yes'])).toThrow(ValidationError)
+      expect(() => parseResourceConfigFlags(['product/yes'])).toThrow(
+        expect.objectContaining({
+          code: ErrorCodes.INVALID_KEY_FORMAT,
+        }),
+      )
+    })
+
+    test('throws KEY_NOT_SUPPORTED for unknown resources', () => {
+      expect(() => parseResourceConfigFlags(['unknown:field'])).toThrow(ValidationError)
+      expect(() => parseResourceConfigFlags(['unknown:field'])).toThrow(
+        expect.objectContaining({
+          code: ErrorCodes.KEY_NOT_SUPPORTED,
+        }),
+      )
+    })
+
+    test('throws KEY_DOES_NOT_EXIST for invalid fields', () => {
+      expect(() => parseResourceConfigFlags(['products:title'])).toThrow(ValidationError)
+      expect(() => parseResourceConfigFlags(['products:title'])).toThrow(
+        expect.objectContaining({
+          code: ErrorCodes.KEY_DOES_NOT_EXIST,
+        }),
+      )
+    })
+
+    test('throws KEY_NOT_SUPPORTED for product typos', () => {
+      expect(() => parseResourceConfigFlags(['product:handle'])).toThrow(ValidationError)
+      expect(() => parseResourceConfigFlags(['product:handle'])).toThrow(
+        expect.objectContaining({
+          code: ErrorCodes.KEY_NOT_SUPPORTED,
+        }),
+      )
+    })
+
+    test('accepts valid resource:field combinations', () => {
+      expect(() => parseResourceConfigFlags(['products:handle'])).not.toThrow()
+      expect(() => parseResourceConfigFlags(['products:metafield:custom:salesforce_id'])).not.toThrow()
     })
   })
 })

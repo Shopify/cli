@@ -10,6 +10,9 @@ export const ErrorCodes = {
   FILE_TOO_LARGE: 'FILE_TOO_LARGE',
   EMPTY_FILE: 'EMPTY_FILE',
   NOT_A_FILE: 'NOT_A_FILE',
+  INVALID_KEY_FORMAT: 'INVALID_KEY_FORMAT',
+  KEY_DOES_NOT_EXIST: 'KEY_DOES_NOT_EXIST',
+  KEY_NOT_SUPPORTED: 'KEY_NOT_SUPPORTED',
 
   // Operation errors
   COPY_FAILED: 'COPY_FAILED',
@@ -75,6 +78,12 @@ function generateErrorMessage(code: string, params?: ErrorParams): string {
       return `File is empty: ${params?.filePath}`
     case ErrorCodes.NOT_A_FILE:
       return `Path is not a file: ${params?.filePath}`
+    case ErrorCodes.INVALID_KEY_FORMAT:
+      return `Key format "${params?.key}" is invalid.\nBuilt-in fields can be specified as <object_type>:<key>\n\nID metafields can be used as key by specifying\n<object_type>:metafield:<metafield_namespace>:<metafield_key>.`
+    case ErrorCodes.KEY_DOES_NOT_EXIST:
+      return `Key "${params?.field}" does not exist or is unsupported.\nBuilt-in fields can be specified as <object_type>:<key>\n\nID metafields can be used as key by specifying\n<object_type>:metafield:<metafield_namespace>:<metafield_key>.`
+    case ErrorCodes.KEY_NOT_SUPPORTED:
+      return `Object type "${params?.resource}" does not exist or is unsupported.`
 
     // Operation errors
     case ErrorCodes.COPY_FAILED:
