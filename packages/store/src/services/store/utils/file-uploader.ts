@@ -2,6 +2,7 @@ import {StagedUploadInput, createStagedUploadAdmin} from '../../../apis/admin/in
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {fileExistsSync, fileSize, isDirectory, readFileSync} from '@shopify/cli-kit/node/fs'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export class FileUploader {
   private readonly MAX_FILE_SIZE = 20 * 1024 * 1024
@@ -74,6 +75,8 @@ export class FileUploader {
         throw new ValidationError(ErrorCodes.NOT_A_FILE, {filePath})
       }
       const sizeOfFile = await fileSize(filePath)
+      outputDebug(`Validating SQLite file at ${filePath} with size ${sizeOfFile} bytes`)
+
       if (sizeOfFile === 0) {
         throw new ValidationError(ErrorCodes.EMPTY_FILE, {filePath})
       }
