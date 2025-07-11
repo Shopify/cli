@@ -116,6 +116,7 @@
     "@shopify/plugin-cloudflare": "3.82.0",
     "@shopify/plugin-did-you-mean": "3.82.0",
     "@shopify/theme": "3.82.0",
+    "@shopify/store": "3.82.0",
     "@shopify/cli-hydrogen": "10.0.1",
     "@types/global-agent": "3.0.0",
     "@typescript-eslint/eslint-plugin": "7.13.1",
@@ -151,6 +152,9 @@
       },
       "theme": {
         "description": "Build Liquid themes."
+      },
+      "store": {
+        "description": "Manage stores and store data."
       },
       "app": {
         "description": "Build Shopify apps."
