@@ -196,7 +196,7 @@ export const TEST_COMPLETED_EXPORT_OPERATION: BulkDataOperationByIdResponse = {
     bulkData: {
       operation: {
         id: 'export-operation-123',
-        operationType: 'EXPORT',
+        operationType: 'STORE_EXPORT',
         status: 'COMPLETED',
         sourceStore: {
           id: 'shop1',
@@ -246,7 +246,7 @@ export const TEST_COMPLETED_IMPORT_OPERATION: BulkDataOperationByIdResponse = {
     bulkData: {
       operation: {
         id: 'import-operation-123',
-        operationType: 'IMPORT',
+        operationType: 'STORE_IMPORT',
         status: 'COMPLETED',
         sourceStore: {
           id: 'shop2',
