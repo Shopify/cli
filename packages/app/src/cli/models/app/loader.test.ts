@@ -2342,7 +2342,7 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
-  test('preserves values from the previous app when reloading', async () => {
+  test('regenerates devApplicationURLs when reloading', async () => {
     // Given
     const appConfiguration = `
       name = "my-app"
@@ -2355,6 +2355,11 @@ wrong = "property"
 
       [auth]
       redirect_urls = ["https://example.com/auth"]
+
+      [app_proxy]
+      url = "https://example.com"
+      subpath = "updated"
+      prefix = "new"
     `
     await writeConfig(appConfiguration)
 
@@ -2381,11 +2386,16 @@ wrong = "property"
       userProvidedConfigName: undefined,
     })) as AppLinkedInterface
 
-    // Set some values that should be preserved
+    // Set some values that should be regenerated
     const customDevUUID = 'custom-dev-uuid'
     const customAppURLs = {
       applicationUrl: 'http://custom.dev',
       redirectUrlWhitelist: ['http://custom.dev/auth'],
+      appProxy: {
+        proxyUrl: 'https://example.com',
+        proxySubPath: 'initial',
+        proxySubPathPrefix: 'old',
+      },
     }
     app.allExtensions[0]!.devUUID = customDevUUID
     app.setDevApplicationURLs(customAppURLs)
@@ -2395,7 +2405,19 @@ wrong = "property"
 
     // Then
     expect(reloadedApp.allExtensions[0]?.devUUID).toBe(customDevUUID)
-    expect(reloadedApp.devApplicationURLs).toEqual(customAppURLs)
+    expect(reloadedApp.devApplicationURLs).toEqual({
+      applicationUrl: 'http://custom.dev',
+      redirectUrlWhitelist: [
+        'http://custom.dev/auth/callback',
+        'http://custom.dev/auth/shopify/callback',
+        'http://custom.dev/api/auth/callback',
+      ],
+      appProxy: {
+        proxyUrl: 'https://custom.dev',
+        proxySubPath: 'updated',
+        proxySubPathPrefix: 'new',
+      },
+    })
     expect(reloadedApp.name).toBe(app.name)
     expect(reloadedApp.packageManager).toBe(app.packageManager)
     expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
