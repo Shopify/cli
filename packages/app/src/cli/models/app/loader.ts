@@ -19,6 +19,7 @@ import {
   AppHiddenConfig,
   isLegacyAppSchema,
 } from './app.js'
+
 import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -34,6 +35,8 @@ import {loadLocalExtensionsSpecifications} from '../extensions/load-specificatio
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
+
+import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -389,7 +392,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       configSchema,
       remoteFlags: this.remoteFlags,
       hiddenConfig,
-      devApplicationURLs: this.previousApp?.devApplicationURLs,
+      devApplicationURLs: this.getDevApplicationURLs(configuration),
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -787,6 +790,38 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           }
         })
       })
+  }
+
+  /**
+   * Determines the appropriate dev application URLs for the current configuration.
+   * If the app proxy configuration has changed, preserves the tunnel URL but regenerates
+   * config-dependent parts. Otherwise, uses the cached URLs.
+   */
+  private getDevApplicationURLs(currentConfiguration: TConfig): ApplicationURLs | undefined {
+    const previousDevUrls = this.previousApp?.devApplicationURLs
+
+    if (!previousDevUrls) {
+      // No previous URLs to preserve, will be generated later
+      return undefined
+    }
+
+    // Only check app proxy configuration changes for current app schema
+    if (!isCurrentAppSchema(currentConfiguration) || !isCurrentAppSchema(this.previousApp?.configuration)) {
+      // For legacy apps, use cached URLs
+      return previousDevUrls
+    }
+
+    // Check if app proxy configuration has changed
+    const previousAppConfig = this.previousApp?.configuration
+    const currentAppConfig = currentConfiguration
+
+    if (hasAppProxyConfigurationChanged(previousAppConfig, currentAppConfig)) {
+      // Configuration changed, preserve tunnel URL but regenerate config-dependent parts
+      return preserveTunnelUrlAndRegenerateConfigParts(previousDevUrls, currentAppConfig)
+    }
+
+    // Configuration unchanged, use cached URLs
+    return previousDevUrls
   }
 }
 
@@ -1335,3 +1370,48 @@ const printTargets = [
   'admin.product-details.print-action.render',
   'admin.product-index.selection-print-action.render',
 ]
+
+/**
+ * Checks if the app proxy configuration has changed between the previous and current app configurations.
+ * This is used to determine if cached dev URLs should be invalidated.
+ */
+function hasAppProxyConfigurationChanged(
+  previousConfig?: CurrentAppConfiguration,
+  currentConfig?: CurrentAppConfiguration,
+): boolean {
+  // If one config has app_proxy and the other doesn't, they're different
+  if (Boolean(previousConfig?.app_proxy) !== Boolean(currentConfig?.app_proxy)) {
+    return true
+  }
+
+  // If both configs don't have app_proxy, they're the same
+  if (!previousConfig?.app_proxy && !currentConfig?.app_proxy) {
+    return false
+  }
+
+  // If both have app_proxy, compare the values
+  const prev = previousConfig?.app_proxy
+  const curr = currentConfig?.app_proxy
+
+  if (!prev || !curr) return true
+
+  return prev.url !== curr.url || prev.subpath !== curr.subpath || prev.prefix !== curr.prefix
+}
+
+/**
+ * Preserves the tunnel URL from previous dev URLs while regenerating config-dependent parts.
+ * This is used when app proxy configuration changes but we want to keep the tunnel stable.
+ */
+function preserveTunnelUrlAndRegenerateConfigParts(
+  previousDevUrls: ApplicationURLs,
+  currentAppConfig: CurrentAppConfiguration,
+): ApplicationURLs {
+  // Extract the tunnel URL from previous dev URLs
+  const baseURL = previousDevUrls.applicationUrl
+
+  // Extract app proxy config from current configuration
+  const appProxyConfig = currentAppConfig.app_proxy
+
+  // Generate new URLs with the same tunnel URL but updated config
+  return generateApplicationURLs(baseURL, undefined, appProxyConfig)
+}

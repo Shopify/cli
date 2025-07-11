@@ -2415,6 +2415,363 @@ wrong = "property"
     generateTypesSpy.mockRestore()
   })
 
+  describe('devApplicationURLs caching with app proxy configuration changes', () => {
+    test('regenerates devApplicationURLs when app proxy configuration changes', async () => {
+      // Given: Initial app with app_proxy configuration
+      const initialAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "old"
+        prefix = "a"
+      `
+      await writeConfig(initialAppConfig)
+
+      // Load the app and set initial dev URLs
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      const initialDevURLs = {
+        applicationUrl: 'https://tunnel123.trycloudflare.com',
+        redirectUrlWhitelist: ['https://tunnel123.trycloudflare.com/api/auth'],
+        proxyUrl: 'https://tunnel123.trycloudflare.com',
+        proxySubPath: 'old',
+        proxySubPathPrefix: 'a',
+      }
+      app.setDevApplicationURLs(initialDevURLs)
+
+      // When: Update app proxy configuration
+      const updatedAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "new"
+        prefix = "b"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), updatedAppConfig)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should be cleared (undefined) to force regeneration
+      expect(reloadedApp.devApplicationURLs).toBeUndefined()
+    })
+
+    test('regenerates devApplicationURLs when app proxy is removed', async () => {
+      // Given: Initial app with app_proxy configuration
+      const initialAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "test"
+        prefix = "a"
+      `
+      await writeConfig(initialAppConfig)
+
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      const initialDevURLs = {
+        applicationUrl: 'https://tunnel123.trycloudflare.com',
+        redirectUrlWhitelist: ['https://tunnel123.trycloudflare.com/api/auth'],
+        proxyUrl: 'https://tunnel123.trycloudflare.com',
+        proxySubPath: 'test',
+        proxySubPathPrefix: 'a',
+      }
+      app.setDevApplicationURLs(initialDevURLs)
+
+      // When: Remove app proxy configuration
+      const updatedAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), updatedAppConfig)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should be cleared to force regeneration
+      expect(reloadedApp.devApplicationURLs).toBeUndefined()
+    })
+
+    test('regenerates devApplicationURLs when app proxy is added', async () => {
+      // Given: Initial app without app_proxy configuration
+      const initialAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+      `
+      await writeConfig(initialAppConfig)
+
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      const initialDevURLs = {
+        applicationUrl: 'https://tunnel123.trycloudflare.com',
+        redirectUrlWhitelist: ['https://tunnel123.trycloudflare.com/api/auth'],
+      }
+      app.setDevApplicationURLs(initialDevURLs)
+
+      // When: Add app proxy configuration
+      const updatedAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "new"
+        prefix = "a"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), updatedAppConfig)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should be cleared to force regeneration
+      expect(reloadedApp.devApplicationURLs).toBeUndefined()
+    })
+
+    test('preserves devApplicationURLs when app proxy configuration is unchanged', async () => {
+      // Given: Initial app with app_proxy configuration
+      const appConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "unchanged"
+        prefix = "a"
+      `
+      await writeConfig(appConfig)
+
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      const devURLs = {
+        applicationUrl: 'https://tunnel123.trycloudflare.com',
+        redirectUrlWhitelist: ['https://tunnel123.trycloudflare.com/api/auth'],
+        proxyUrl: 'https://tunnel123.trycloudflare.com',
+        proxySubPath: 'unchanged',
+        proxySubPathPrefix: 'a',
+      }
+      app.setDevApplicationURLs(devURLs)
+
+      // When: Configuration stays the same (reload with same config)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should be preserved
+      expect(reloadedApp.devApplicationURLs).toEqual(devURLs)
+    })
+
+    test('preserves devApplicationURLs when non-app-proxy configuration changes', async () => {
+      // Given: Initial app with app_proxy configuration
+      const initialAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "unchanged"
+        prefix = "a"
+      `
+      await writeConfig(initialAppConfig)
+
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      const devURLs = {
+        applicationUrl: 'https://tunnel123.trycloudflare.com',
+        redirectUrlWhitelist: ['https://tunnel123.trycloudflare.com/api/auth'],
+        proxyUrl: 'https://tunnel123.trycloudflare.com',
+        proxySubPath: 'unchanged',
+        proxySubPathPrefix: 'a',
+      }
+      app.setDevApplicationURLs(devURLs)
+
+      // When: Change non-app-proxy configuration
+      const updatedAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2024-01"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth", "https://example.com/api/auth2"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "unchanged"
+        prefix = "a"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), updatedAppConfig)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should be preserved
+      expect(reloadedApp.devApplicationURLs).toEqual(devURLs)
+    })
+
+    test('handles edge case where app proxy changes from one configuration to another', async () => {
+      // Given: Initial app with complex app_proxy configuration
+      const initialAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "apps"
+        prefix = "a"
+      `
+      await writeConfig(initialAppConfig)
+
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      const initialDevURLs = {
+        applicationUrl: 'https://tunnel123.trycloudflare.com',
+        redirectUrlWhitelist: ['https://tunnel123.trycloudflare.com/api/auth'],
+        proxyUrl: 'https://tunnel123.trycloudflare.com',
+        proxySubPath: 'apps',
+        proxySubPathPrefix: 'a',
+      }
+      app.setDevApplicationURLs(initialDevURLs)
+
+      // When: Change multiple app proxy fields
+      const updatedAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.different.com"
+        subpath = "proxy"
+        prefix = "b"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), updatedAppConfig)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should be cleared to force regeneration
+      expect(reloadedApp.devApplicationURLs).toBeUndefined()
+    })
+
+    test('handles missing previous devApplicationURLs gracefully', async () => {
+      // Given: Initial app with app_proxy configuration but no previous devApplicationURLs
+      const initialAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "old"
+        prefix = "a"
+      `
+      await writeConfig(initialAppConfig)
+
+      const app = (await loadTestingApp()) as AppLinkedInterface
+      // Note: Not setting devApplicationURLs, so they remain undefined
+
+      // When: Update app proxy configuration
+      const updatedAppConfig = `
+        name = "test-app"
+        client_id = "1234567890"
+        application_url = "https://example.com/app"
+        embedded = true
+
+        [webhooks]
+        api_version = "2023-07"
+
+        [auth]
+        redirect_urls = ["https://example.com/api/auth"]
+
+        [app_proxy]
+        url = "https://www.google.com"
+        subpath = "new"
+        prefix = "b"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), updatedAppConfig)
+      const reloadedApp = await reloadApp(app)
+
+      // Then: devApplicationURLs should remain undefined (no change in behavior)
+      expect(reloadedApp.devApplicationURLs).toBeUndefined()
+    })
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)(
