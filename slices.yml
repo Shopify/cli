@@ -1,0 +1,47 @@
+---
+version: 2
+ignore:
+- tmp/**/*
+- node_modules/**/*
+- coverage/**/*
+- build/**/*
+- ".dev/**/*"
+- ".shadowenv.d/**/*"
+- ".git/**/*"
+- ".spin/inferred/**/*"
+- sorbet/**/*
+- ".ruby-lsp/**/*"
+slices:
+- name: cli-app
+  id: S-286d2b
+  slack_channels:
+  - "#help-cli"
+  stewards:
+  - 2493
+  paths:
+  - "**/*"
+- name: cli-theme
+  id: S-1257a0
+  slack_channels:
+  - "#help-theme-platform"
+  stewards:
+  - 13725
+  paths:
+  - "packages/theme/**/*"
+- name: cli-hydrogen
+  id: S-0669ca
+  slack_channels:
+  - "#hydrogen-team"
+  stewards:
+  - 2628
+  paths:
+  - "packages/hydrogen/**/*"
+- name: cli-store
+  id: S-0669ca
+  slack_channels:
+  - "#bulk-data-rnd"
+  stewards:
+  - 2628
+  paths:
+  - "packages/store/**/*"
+

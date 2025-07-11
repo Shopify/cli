@@ -256,10 +256,24 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
     Command: commandData,
     Environment: environmentData,
     Misc: miscData,
+    custom: {
+      ...getSliceNameAndId(allMetadata.cmd_all_plugin ?? ''),
+    },
   }
   Object.entries(bugsnagMetadata).forEach(([section, values]) => {
     event.addMetadata(section, values)
   })
+}
+
+function getSliceNameAndId(plugin: string): {slice_name: string; slice_id: string} {
+  if (plugin.includes('@shopify/theme')) {
+    return {slice_name: 'cli-theme', slice_id: 'S-1257a0'}
+  } else if (plugin.includes('@shopify/cli-hydrogen')) {
+    return {slice_name: 'cli-hydrogen', slice_id: 'S-0669ca'}
+  } else if (plugin.includes('@shopify/store')) {
+    return {slice_name: 'cli-store', slice_id: 'S-0669ca'}
+  }
+  return {slice_name: 'cli-app', slice_id: 'S-286d2b'}
 }
 
 function initializeBugsnag() {
