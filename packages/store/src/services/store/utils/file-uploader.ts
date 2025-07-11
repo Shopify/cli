@@ -11,7 +11,7 @@ export class FileUploader {
     const fileBuffer = readFileSync(filePath)
 
     const uploadInput: StagedUploadInput = {
-      resource: 'FILE',
+      resource: 'SQLITE_DATABASE',
       filename: 'database.sqlite',
       mimeType: 'application/x-sqlite3',
       httpMethod: 'POST',

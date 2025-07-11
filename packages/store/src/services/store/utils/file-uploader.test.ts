@@ -58,7 +58,7 @@ describe('FileUploader', () => {
       expect(readFileSync).toHaveBeenCalledWith(mockFilePath)
       expect(createStagedUploadAdmin).toHaveBeenCalledWith(mockStoreFqdn, [
         {
-          resource: 'FILE',
+          resource: 'SQLITE_DATABASE',
           filename: 'database.sqlite',
           mimeType: 'application/x-sqlite3',
           httpMethod: 'POST',
