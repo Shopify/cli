@@ -11,6 +11,7 @@ import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '.
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
@@ -18,6 +19,7 @@ vi.mock('../utils/result-file-handler.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/export_results.js')
+vi.mock('../../../prompts/confirm_export.js')
 
 describe('StoreExportOperation', () => {
   const mockBpSession = 'mock-bp-session-token'
@@ -55,9 +57,26 @@ describe('StoreExportOperation', () => {
     })
   })
 
+  test('should show confirm prompt before export', async () => {
+    vi.mocked(confirmExportPrompt).mockResolvedValue(true)
+    await operation.execute('source.myshopify.com', 'export.sqlite', {})
+
+    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'export.sqlite')
+    expect(renderExportResult).toHaveBeenCalled()
+  })
+
+  test('should skip confirmation when --no-prompt flag is provided', async () => {
+    await operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+
+    expect(confirmExportPrompt).not.toHaveBeenCalled()
+    expect(renderExportResult).toHaveBeenCalled()
+  })
+
   test('should successfully export data from source shop', async () => {
+    vi.mocked(confirmExportPrompt).mockResolvedValue(true)
     await operation.execute('source.myshopify.com', 'output.sqlite', {})
 
+    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite')
     expect(renderCopyInfo).toHaveBeenCalledWith('Export Operation', 'source.myshopify.com', 'output.sqlite')
     expect(renderExportResult).toHaveBeenCalledWith(mockSourceShop, mockCompletedOperation)
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
@@ -81,7 +100,7 @@ describe('StoreExportOperation', () => {
       },
     ])
 
-    const promise = operation.execute('nonexistent.myshopify.com', 'output.sqlite', {})
+    const promise = operation.execute('nonexistent.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(ValidationError)
     await expect(promise).rejects.toMatchObject({
       code: ErrorCodes.SHOP_NOT_FOUND,
@@ -103,7 +122,7 @@ describe('StoreExportOperation', () => {
     const singleShopOrg: Organization = TEST_MOCK_DATA.singleShopOrganization
     mockApiClient.fetchOrganizations.mockResolvedValue([mockOrganization, singleShopOrg])
 
-    await operation.execute('source.myshopify.com', 'output.sqlite', {})
+    await operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
 
     expect(renderExportResult).toHaveBeenCalled()
   })
@@ -121,7 +140,7 @@ describe('StoreExportOperation', () => {
       return ctx
     })
 
-    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'export',
@@ -153,7 +172,7 @@ describe('StoreExportOperation', () => {
       isComplete: true,
     })
 
-    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'export',
@@ -181,7 +200,7 @@ describe('StoreExportOperation', () => {
       isComplete: true,
     })
 
-    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'export',
@@ -218,7 +237,7 @@ describe('StoreExportOperation', () => {
       return ctx
     })
 
-    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {})
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'export',

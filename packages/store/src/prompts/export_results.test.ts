@@ -58,7 +58,12 @@ describe('renderExportResult', () => {
     renderExportResult(sourceShop, exportOperation)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      body: ['Export operation from', {info: 'source-shop.myshopify.com'}, 'complete'],
+      body: [
+        'Export operation from',
+        {info: 'source-shop.myshopify.com'},
+        'complete',
+        {link: {label: 'export file available for download', url: 'https://example.com/results'}},
+      ],
     })
     expect(renderWarning).not.toHaveBeenCalled()
   })

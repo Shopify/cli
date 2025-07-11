@@ -7,6 +7,7 @@ export function renderExportResult(sourceShop: Shop, exportOperation: BulkDataOp
 
   const storeOperations = exportOperation.organization.bulkData.operation.storeOperations
   const hasErrors = storeOperations.some((op) => op.remoteOperationStatus === 'FAILED')
+  const url = storeOperations[0]?.url
 
   if (hasErrors) {
     msg.push(`completed with`)
@@ -16,6 +17,10 @@ export function renderExportResult(sourceShop: Shop, exportOperation: BulkDataOp
     })
   } else {
     msg.push('complete')
+    if (url) {
+      const link = {link: {label: 'export file available for download', url}}
+      msg.push(link)
+    }
     renderSuccess({
       body: msg,
     })
