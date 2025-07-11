@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.82.1
+
+### Patch Changes
+
+- d9dbecf: Fix sorting of extensions in Partners
+  - @shopify/cli-kit@3.82.1
+  - @shopify/theme@3.82.1
+  - @shopify/plugin-cloudflare@3.82.1
+
 ## 3.82.0
 
 ### Minor Changes
