@@ -232,3 +232,10 @@ export type StagedUploadTargetGenerateUploadResource =
    * [fileCreate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/fileCreate).
    */
   | 'VIDEO'
+  /**
+   * A SQLite database file.
+   *
+   * For example, after uploading the database file, you can use the
+   * bulkDataImportStart mutation to import the data into a Shopify store.
+   */
+  | 'SQLITE_DATABASE'

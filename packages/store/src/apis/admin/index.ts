@@ -14,6 +14,7 @@ import type {ShopDetailsQuery, ShopDetailsQueryVariables} from '../../cli/api/gr
 export async function createStagedUploadAdmin(
   storeFqdn: string,
   input: StagedUploadInput[],
+  version?: string,
 ): Promise<StagedUploadsCreateMutation> {
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
 
@@ -23,6 +24,7 @@ export async function createStagedUploadAdmin(
     variables: {
       input,
     },
+    version,
   })
 }
 
