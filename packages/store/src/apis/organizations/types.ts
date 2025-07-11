@@ -105,7 +105,7 @@ export interface BulkDataOperationByIdResponse {
           remoteOperationStatus: string
           totalObjectCount: number
           completedObjectCount: number
-          url: string
+          url?: string
         }[]
       }
     }
