@@ -1,21 +1,23 @@
 import {StagedUploadInput, createStagedUploadAdmin} from '../../../apis/admin/index.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {readFileSync, statSync} from 'node:fs'
+import {fileExistsSync, fileSize, isDirectory, readFileSync} from '@shopify/cli-kit/node/fs'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export class FileUploader {
+  private readonly MAX_FILE_SIZE = 20 * 1024 * 1024
+
   async uploadSqliteFile(filePath: string, storeFqdn: string): Promise<string> {
-    this.validateSqliteFile(filePath)
+    await this.validateSqliteFile(filePath)
 
-    const fileStats = statSync(filePath)
     const fileBuffer = readFileSync(filePath)
-
+    const sizeOfFile = await fileSize(filePath)
     const uploadInput: StagedUploadInput = {
       resource: 'FILE',
       filename: 'database.sqlite',
       mimeType: 'application/x-sqlite3',
       httpMethod: 'POST',
-      fileSize: fileStats.size.toString(),
+      fileSize: sizeOfFile.toString(),
     }
 
     const stagedUploadResponse = await createStagedUploadAdmin(storeFqdn, [uploadInput])
@@ -64,21 +66,26 @@ export class FileUploader {
     return resourceUrl
   }
 
-  private validateSqliteFile(filePath: string): void {
+  private async validateSqliteFile(filePath: string): Promise<void> {
     try {
-      const stats = statSync(filePath)
-
-      if (!stats.isFile()) {
+      if (!fileExistsSync(filePath)) {
+        throw new ValidationError(ErrorCodes.FILE_NOT_FOUND, {filePath})
+      }
+      if (await isDirectory(filePath)) {
         throw new ValidationError(ErrorCodes.NOT_A_FILE, {filePath})
       }
+      const sizeOfFile = await fileSize(filePath)
+      outputDebug(`Validating SQLite file at ${filePath} with size ${sizeOfFile} bytes`)
 
-      if (stats.size === 0) {
+      if (sizeOfFile === 0) {
         throw new ValidationError(ErrorCodes.EMPTY_FILE, {filePath})
       }
 
-      if (stats.size > 5 * 1024 * 1024 * 1024) {
+      if (sizeOfFile > this.MAX_FILE_SIZE) {
         throw new ValidationError(ErrorCodes.FILE_TOO_LARGE, {
-          sizeGB: Math.round(stats.size / 1024 / 1024 / 1024),
+          filePath,
+          fileSize: `${Math.round(sizeOfFile / 1024 / 1024)}MB`,
+          maxSize: `${Math.round(this.MAX_FILE_SIZE / 1024 / 1024)}MB`,
         })
       }
 

@@ -3,11 +3,12 @@ import {createStagedUploadAdmin} from '../../../apis/admin/index.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
-import {readFileSync, statSync} from 'node:fs'
+import {isDirectory, readFileSync, fileSize, fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../../../apis/admin/index.js')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('node:fs')
+vi.mock('@shopify/cli-kit/node/fs')
 
 describe('FileUploader', () => {
   let fileUploader: FileUploader
@@ -20,10 +21,6 @@ describe('FileUploader', () => {
 
   describe('uploadSqliteFile', () => {
     const mockFileBuffer = Buffer.from('SQLite format 3\0test data')
-    const mockFileStats = {
-      isFile: () => true,
-      size: 1024,
-    }
     const mockStagedUploadResponse = {
       stagedUploadsCreate: {
         stagedTargets: [
@@ -41,8 +38,10 @@ describe('FileUploader', () => {
     }
 
     beforeEach(() => {
-      vi.mocked(statSync).mockReturnValue(mockFileStats as any)
       vi.mocked(readFileSync).mockReturnValue(mockFileBuffer)
+      vi.mocked(fileExistsSync).mockReturnValue(true)
+      vi.mocked(fileSize).mockResolvedValue(1024)
+      vi.mocked(isDirectory).mockResolvedValue(false)
       vi.mocked(createStagedUploadAdmin).mockResolvedValue(mockStagedUploadResponse)
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
@@ -54,7 +53,6 @@ describe('FileUploader', () => {
       const result = await fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
 
       expect(result).toBe('https://shopify.com/resource/123')
-      expect(statSync).toHaveBeenCalledWith(mockFilePath)
       expect(readFileSync).toHaveBeenCalledWith(mockFilePath)
       expect(createStagedUploadAdmin).toHaveBeenCalledWith(mockStoreFqdn, [
         {
@@ -72,9 +70,7 @@ describe('FileUploader', () => {
     })
 
     test('should throw error when file does not exist', async () => {
-      vi.mocked(statSync).mockImplementation(() => {
-        throw new Error('ENOENT: no such file or directory')
-      })
+      vi.mocked(fileExistsSync).mockReturnValue(false)
 
       const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
       await expect(promise).rejects.toThrow(ValidationError)
@@ -85,11 +81,8 @@ describe('FileUploader', () => {
     })
 
     test('should throw error when path is not a file', async () => {
-      vi.mocked(statSync).mockReturnValue({
-        isFile: () => false,
-        size: 1024,
-      } as any)
-
+      vi.mocked(fileSize).mockResolvedValue(1024)
+      vi.mocked(isDirectory).mockResolvedValue(true)
       const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
       await expect(promise).rejects.toThrow(ValidationError)
       await expect(promise).rejects.toMatchObject({
@@ -99,10 +92,7 @@ describe('FileUploader', () => {
     })
 
     test('should throw error when file is empty', async () => {
-      vi.mocked(statSync).mockReturnValue({
-        isFile: () => true,
-        size: 0,
-      } as any)
+      vi.mocked(fileSize).mockResolvedValue(0)
 
       const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
       await expect(promise).rejects.toThrow(ValidationError)
@@ -113,18 +103,14 @@ describe('FileUploader', () => {
     })
 
     test('should throw error when file is too large', async () => {
-      // 6GB
-      const largeSize = 6 * 1024 * 1024 * 1024
-      vi.mocked(statSync).mockReturnValue({
-        isFile: () => true,
-        size: largeSize,
-      } as any)
+      const largeSize = 30 * 1024 * 1024
+      vi.mocked(fileSize).mockResolvedValue(largeSize)
 
       const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
       await expect(promise).rejects.toThrow(ValidationError)
       await expect(promise).rejects.toMatchObject({
         code: ErrorCodes.FILE_TOO_LARGE,
-        params: {sizeGB: 6},
+        params: {filePath: mockFilePath, fileSize: '30MB', maxSize: '20MB'},
       })
     })
 
@@ -186,15 +172,6 @@ describe('FileUploader', () => {
         code: ErrorCodes.FILE_UPLOAD_FAILED,
         params: {details: '403 Forbidden. Access denied'},
       })
-    })
-
-    test('should handle non-Error exceptions in validateSqliteFile', async () => {
-      vi.mocked(statSync).mockImplementation(() => {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error
-        throw 'string error'
-      })
-
-      await expect(fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)).rejects.toThrow(ValidationError)
     })
   })
 })
