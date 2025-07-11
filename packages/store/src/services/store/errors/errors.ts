@@ -73,7 +73,7 @@ function generateErrorMessage(code: string, params?: ErrorParams): string {
     case ErrorCodes.DIFFERENT_ORG:
       return 'Source and target shops must be in the same organization.'
     case ErrorCodes.FILE_TOO_LARGE:
-      return `File "${params?.filePath}" (${params?.sizeGB}GB) exceeds maximum size of 5GB.`
+      return `File "${params?.filePath}" (${params?.fileSize}) exceeds maximum size of ${params?.maxSize}.`
     case ErrorCodes.EMPTY_FILE:
       return `File "${params?.filePath}" is empty.`
     case ErrorCodes.NOT_A_FILE:

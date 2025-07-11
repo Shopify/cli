@@ -103,14 +103,14 @@ describe('FileUploader', () => {
     })
 
     test('should throw error when file is too large', async () => {
-      const largeSize = 6 * 1024 * 1024 * 1024
+      const largeSize = 30 * 1024 * 1024
       vi.mocked(fileSize).mockResolvedValue(largeSize)
 
       const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
       await expect(promise).rejects.toThrow(ValidationError)
       await expect(promise).rejects.toMatchObject({
         code: ErrorCodes.FILE_TOO_LARGE,
-        params: {filePath: mockFilePath, sizeGB: 6},
+        params: {filePath: mockFilePath, fileSize: '30MB', maxSize: '20MB'},
       })
     })
 

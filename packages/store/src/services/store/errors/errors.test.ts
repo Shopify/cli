@@ -62,9 +62,9 @@ describe('OperationError', () => {
 describe('Error message generation', () => {
   test('should generate correct messages for all error codes', () => {
     // Validation errors
-    expect(new ValidationError(ErrorCodes.FILE_TOO_LARGE, {filePath: '/test.db', sizeGB: 6}).message).toBe(
-      'File "/test.db" (6GB) exceeds maximum size of 5GB.',
-    )
+    expect(
+      new ValidationError(ErrorCodes.FILE_TOO_LARGE, {filePath: '/test.db', fileSize: '5MB', maxSize: '4MB'}).message,
+    ).toBe('File "/test.db" (5MB) exceeds maximum size of 4MB.')
     expect(new ValidationError(ErrorCodes.EMPTY_FILE, {filePath: '/test.db'}).message).toBe('File "/test.db" is empty.')
     expect(new ValidationError(ErrorCodes.NOT_A_FILE, {filePath: '/test'}).message).toBe('Path "/test" is not a file.')
     expect(new ValidationError(ErrorCodes.DIFFERENT_ORG).message).toBe(
