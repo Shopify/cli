@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.83.0
+
+### Patch Changes
+
+- 478adc7: Make dev store creation link clickable
+- 4ff98f1: Bump theme-tools packages
+- Updated dependencies [521fb07]
+- Updated dependencies [b1feb1d]
+- Updated dependencies [4ff98f1]
+- Updated dependencies [e73e9a5]
+  - @shopify/cli-kit@3.83.0
+  - @shopify/theme@3.83.0
+  - @shopify/plugin-cloudflare@3.83.0
+
 ## 3.82.0
 
 ### Minor Changes

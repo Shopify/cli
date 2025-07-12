@@ -1,5 +1,19 @@
 # @shopify/theme
 
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+
+### Patch Changes
+
+- 4ff98f1: Bump theme-tools packages
+- Updated dependencies [521fb07]
+- Updated dependencies [b1feb1d]
+- Updated dependencies [e73e9a5]
+  - @shopify/cli-kit@3.83.0
+
 ## 3.82.0
 
 ### Patch Changes
