@@ -162,6 +162,10 @@
     "supports-hyperlinks": "3.1.0",
     "tempy": "3.1.0",
     "terminal-link": "3.0.0",
+    "tree-sitter": "0.21.1",
+    "tree-sitter-javascript": "0.23.1",
+    "tree-sitter-rust": "0.23.1",
+    "tree-sitter-typescript": "0.23.1",
     "ts-error": "1.0.6",
     "which": "4.0.0",
     "zod": "3.24.1"
