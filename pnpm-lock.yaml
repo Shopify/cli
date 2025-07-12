@@ -211,9 +211,9 @@ importers:
       h3:
         specifier: 0.7.21
         version: 0.7.21
-      http-proxy:
-        specifier: 1.18.1
-        version: 1.18.1
+      http-proxy-node16:
+        specifier: ^1.0.6
+        version: 1.0.6
       ignore:
         specifier: 6.0.2
         version: 6.0.2
@@ -242,9 +242,6 @@ importers:
       '@types/express':
         specifier: ^4.17.17
         version: 4.17.22
-      '@types/http-proxy':
-        specifier: ^1.17.11
-        version: 1.17.16
       '@types/proper-lockfile':
         specifier: 4.1.4
         version: 4.1.4
@@ -3729,9 +3726,6 @@ packages:
   '@types/http-errors@2.0.4':
     resolution: {integrity: sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==}
 
-  '@types/http-proxy@1.17.16':
-    resolution: {integrity: sha512-sdWoUajOB1cd0A8cRRQ1cfyWNbmFKLAqBB89Y8x5iYyG/mkJHc0YUH8pdWBy2omi9qtCpiIgGjuwO0dQST2l5w==}
-
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
 
@@ -6069,8 +6063,8 @@ packages:
     resolution: {integrity: sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==}
     engines: {node: '>= 14'}
 
-  http-proxy@1.18.1:
-    resolution: {integrity: sha512-7mz/721AbnJwIVbnaSv1Cz3Am0ZLT/UBwkC92VlxhXv/k/BBQfM2fXElQNC27BVGr0uwUpplYPQM9LnaBMR5NQ==}
+  http-proxy-node16@1.0.6:
+    resolution: {integrity: sha512-RLtYkbmbLmh+To4lmqLpiEitu0igXb/j1SOW8F6w/esXsapGT5dSShMF9vg7shtxGJSXaWiFE3wYWCoLOuiibg==}
     engines: {node: '>=8.0.0'}
 
   http2-wrapper@2.2.1:
@@ -13378,10 +13372,6 @@ snapshots:
 
   '@types/http-errors@2.0.4': {}
 
-  '@types/http-proxy@1.17.16':
-    dependencies:
-      '@types/node': 18.19.70
-
   '@types/istanbul-lib-coverage@2.0.6': {}
 
   '@types/istanbul-lib-report@3.0.3':
@@ -13938,7 +13928,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -16240,7 +16230,7 @@ snapshots:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -16251,7 +16241,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy@1.18.1:
+  http-proxy-node16@1.0.6:
     dependencies:
       eventemitter3: 4.0.7
       follow-redirects: 1.15.9
@@ -16267,7 +16257,7 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
