@@ -1,12 +1,8 @@
 import {themeFlags} from '../../flags.js'
-import {fetchThemeInfo, fetchDevInfo, formatThemeInfo} from '../../services/info.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/interfaces'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
@@ -34,21 +30,22 @@ export default class Info extends ThemeCommand {
   static multiEnvironmentsFlags = ['store', 'password']
 
   async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
-    if (flags.theme || flags.development) {
-      const output = await fetchThemeInfo(adminSession, flags)
-      if (!output) {
-        throw new AbortError('Theme not found!')
-      }
+    throw new Error('BOO-JULY-11-THEME')
+    // if (flags.theme || flags.development) {
+    //   const output = await fetchThemeInfo(adminSession, flags)
+    //   if (!output) {
+    //     throw new AbortError('Theme not found!')
+    //   }
 
-      if (flags.json) {
-        return outputResult(JSON.stringify(output, null, 2))
-      }
+    //   if (flags.json) {
+    //     return outputResult(JSON.stringify(output, null, 2))
+    //   }
 
-      const formattedInfo = await formatThemeInfo(output, flags)
-      renderInfo(formattedInfo)
-    } else {
-      const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
-      renderInfo({customSections: infoMessage})
-    }
+    //   const formattedInfo = await formatThemeInfo(output, flags)
+    //   renderInfo(formattedInfo)
+    // } else {
+    //   const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
+    //   renderInfo({customSections: infoMessage})
+    // }
   }
 }
