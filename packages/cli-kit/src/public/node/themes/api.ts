@@ -32,12 +32,7 @@ import {outputDebug} from '../output.js'
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 const SkeletonThemeCdn = 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip'
-const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
-  useNetworkLevelRetry: true,
-  useAbortSignal: true,
-  timeoutMs: 90 * 1000,
-  maxRetryTimeMs: 90 * 1000,
-}
+const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = 'slow-request'
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const gid = composeThemeGid(id)
@@ -48,6 +43,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       session,
       variables: {id: gid},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (theme) {
@@ -83,6 +79,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       session,
       variables: {after},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')
@@ -519,6 +516,7 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
     query: MetafieldDefinitionsByOwnerType,
     session,
     variables: {ownerType: type},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 
   return metafieldDefinitions.nodes.map((definition) => ({
@@ -537,6 +535,7 @@ export async function passwordProtected(session: AdminSession): Promise<boolean>
   const {onlineStore} = await adminRequestDoc({
     query: OnlineStorePasswordProtection,
     session,
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!onlineStore) {
     unexpectedGraphQLError("Unable to get details about the storefront's password protection")
@@ -577,6 +576,7 @@ export async function parseThemeFileContent(
         return {attachment: Buffer.from(arrayBuffer).toString('base64')}
       } catch (error) {
         // Raise error if we can't download the file
+        outputDebug(`Error downloading content from URL: ${body.url}`)
         throw new AbortError(`Error downloading content from URL: ${body.url}`)
       }
   }
