@@ -1,4 +1,3 @@
-import {Shop} from '../../../apis/destinations/index.js'
 import {
   BulkDataStoreCopyStartResponse,
   BulkDataStoreExportStartResponse,
@@ -33,11 +32,6 @@ export const TEST_MOCK_DATA = {
     domain: 'target.myshopify.com',
     organizationId: 'org1',
   },
-  organization: {
-    id: 'org1',
-    name: 'Test Organization',
-    shops: [] as Shop[],
-  },
   differentOrgShop: {
     id: 'shop3',
     name: 'Shop In Other Org',
@@ -48,11 +42,6 @@ export const TEST_MOCK_DATA = {
     shortName: 'other-org',
     domain: 'other-org.myshopify.com',
     organizationId: 'org2',
-  },
-  differentOrganization: {
-    id: 'org2',
-    name: 'Different Organization',
-    shops: [] as Shop[],
   },
   singleShop: {
     id: 'shop4',
@@ -65,16 +54,14 @@ export const TEST_MOCK_DATA = {
     domain: 'single.myshopify.com',
     organizationId: 'org3',
   },
-  singleShopOrganization: {
-    id: 'org3',
-    name: 'Single Shop Org',
-    shops: [] as Shop[],
-  },
 }
 
-TEST_MOCK_DATA.organization.shops = [TEST_MOCK_DATA.sourceShop, TEST_MOCK_DATA.targetShop]
-TEST_MOCK_DATA.differentOrganization.shops = [TEST_MOCK_DATA.sourceShop, TEST_MOCK_DATA.differentOrgShop]
-TEST_MOCK_DATA.singleShopOrganization.shops = [TEST_MOCK_DATA.singleShop]
+export const TEST_ALL_SHOPS = [
+  TEST_MOCK_DATA.sourceShop,
+  TEST_MOCK_DATA.targetShop,
+  TEST_MOCK_DATA.differentOrgShop,
+  TEST_MOCK_DATA.singleShop,
+]
 
 export const TEST_COPY_START_RESPONSE: BulkDataStoreCopyStartResponse = {
   bulkDataStoreCopyStart: {

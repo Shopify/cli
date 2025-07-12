@@ -1,12 +1,10 @@
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
-import {Organization, Shop} from '../../../apis/destinations/index.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
-import {findStore} from '../utils/store-utils.js'
+import {storeFullDomain} from '../utils/store-utils.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
-import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {ApiClientInterface} from '../types/api-client.js'
@@ -23,15 +21,11 @@ export class StoreImportOperation implements StoreOperation {
   toArg: string | undefined
   private readonly apiClient: ApiClientInterface
   private fileUploader: FileUploader | MockFileUploader
-  private readonly resultFileHandler: ResultFileHandler
-  private readonly orgs: Organization[]
   private readonly bpSession: string
 
-  constructor(bpSession: string, apiClient?: ApiClientInterface, orgs?: Organization[]) {
+  constructor(bpSession: string, apiClient?: ApiClientInterface) {
     this.apiClient = apiClient ?? new ApiClient()
     this.fileUploader = new FileUploader()
-    this.resultFileHandler = new ResultFileHandler()
-    this.orgs = orgs ?? []
     this.bpSession = bpSession
   }
 
@@ -45,21 +39,21 @@ export class StoreImportOperation implements StoreOperation {
 
     await this.validateInputFile(fromFile)
 
-    const targetShop = findStore(toStore, this.orgs)
-    this.validateShop(targetShop)
+    const targetShopDomain = storeFullDomain(toStore)
+    const apiShopId = await this.validateShop(targetShopDomain)
 
     if (!flags['no-prompt']) {
-      if (!(await confirmImportPrompt(fromFile, targetShop.domain))) {
+      if (!(await confirmImportPrompt(fromFile, targetShopDomain))) {
         outputInfo('Exiting.')
         process.exit(0)
       }
     }
 
-    renderCopyInfo('Import Operation', fromFile, targetShop.domain)
+    renderCopyInfo('Import Operation', fromFile, targetShopDomain)
 
     const importOperation = await this.importDataWithProgress(
-      targetShop.organizationId,
-      targetShop,
+      apiShopId,
+      targetShopDomain,
       fromFile,
       this.bpSession,
       flags,
@@ -70,7 +64,7 @@ export class StoreImportOperation implements StoreOperation {
       throw new OperationError('import', ErrorCodes.IMPORT_FAILED)
     }
 
-    renderImportResult(fromFile, targetShop, importOperation)
+    renderImportResult(fromFile, targetShopDomain, importOperation)
   }
 
   private async validateInputFile(filePath: string): Promise<void> {
@@ -79,22 +73,21 @@ export class StoreImportOperation implements StoreOperation {
     }
   }
 
-  private validateShop(targetShop: Shop | undefined): asserts targetShop is Shop {
-    if (!targetShop) {
-      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.toArg ?? 'target'})
-    }
+  private async validateShop(targetShopDomain: string): Promise<string> {
+    const targetShop = await this.apiClient.getStoreDetails(targetShopDomain)
+    return targetShop.id
   }
 
   private async startImportOperation(
     bpSession: string,
-    organizationId: string,
-    targetShop: Shop,
+    apiShopId: string,
+    targetShopDomain: string,
     importUrl: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
     const importResponse: BulkDataStoreImportStartResponse = await this.apiClient.startBulkDataStoreImport(
-      organizationId,
-      targetShop.domain,
+      apiShopId,
+      targetShopDomain,
       importUrl,
       parseResourceConfigFlags(flags.key as string[]),
       bpSession,
@@ -109,18 +102,18 @@ export class StoreImportOperation implements StoreOperation {
     }
 
     const operationId = importResponse.bulkDataStoreImportStart.operation.id
-    return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
+    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
   }
 
   private async importDataWithProgress(
-    organizationId: string,
-    targetShop: Shop,
+    apiShopId: string,
+    targetShopDomain: string,
     filePath: string,
     bpSession: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
     interface ImportContext extends BulkOperationContext {
-      targetShop: Shop
+      targetShopDomain: string
       importUrl: string
       flags: FlagOptions
     }
@@ -131,11 +124,11 @@ export class StoreImportOperation implements StoreOperation {
 
     const bulkTasks = taskGenerator.generateTasks<ImportContext>({
       startOperation: async (ctx: ImportContext) => {
-        return this.startImportOperation(ctx.bpSession, ctx.organizationId, ctx.targetShop, ctx.importUrl, ctx.flags)
+        return this.startImportOperation(ctx.bpSession, ctx.apiShopId, ctx.targetShopDomain, ctx.importUrl, ctx.flags)
       },
       pollOperation: async (ctx: ImportContext) => {
         const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
       },
     })
 
@@ -144,9 +137,9 @@ export class StoreImportOperation implements StoreOperation {
       {
         title: 'initializing',
         task: async (ctx: ImportContext) => {
-          ctx.organizationId = organizationId
+          ctx.apiShopId = apiShopId
           ctx.bpSession = bpSession
-          ctx.targetShop = targetShop
+          ctx.targetShopDomain = targetShopDomain
           ctx.flags = flags
           ctx.isComplete = false
         },
@@ -154,7 +147,7 @@ export class StoreImportOperation implements StoreOperation {
       {
         title: `uploading SQLite file`,
         task: async (ctx: ImportContext) => {
-          ctx.importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShop.domain)
+          ctx.importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShopDomain)
         },
       },
       ...bulkTasks,

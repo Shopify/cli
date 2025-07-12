@@ -1,11 +1,10 @@
 import {BulkDataOperationByIdResponse} from '../apis/organizations/types.js'
-import {Shop} from '../apis/destinations/index.js'
 import {renderSuccess, renderWarning, InlineToken, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
 export function renderOperationResult(
   baseMsg: Token[],
   operation: BulkDataOperationByIdResponse,
-  targetShop?: Shop,
+  targetShopDomain?: string,
 ): void {
   const storeOperations = operation.organization.bulkData.operation.storeOperations
   const hasErrors = storeOperations.some((op) => op.remoteOperationStatus === 'FAILED')
@@ -14,8 +13,8 @@ export function renderOperationResult(
 
   const nextSteps: TokenItem<InlineToken>[] = []
 
-  if (targetShop && (operationType === 'STORE_COPY' || operationType === 'STORE_IMPORT')) {
-    const targetStoreUrl = `https://${targetShop.domain}`
+  if (targetShopDomain && (operationType === 'STORE_COPY' || operationType === 'STORE_IMPORT')) {
+    const targetStoreUrl = `https://${targetShopDomain}`
     nextSteps.push(['View', {link: {label: 'target shop', url: targetStoreUrl}}])
   }
 

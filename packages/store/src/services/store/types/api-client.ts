@@ -1,4 +1,4 @@
-import {Organization} from '../../../apis/destinations/index.js'
+import {Shop} from '../../../apis/admin/types.js'
 import {
   BulkDataStoreCopyStartResponse,
   BulkDataOperationByIdResponse,
@@ -8,10 +8,10 @@ import {
 import {ResourceConfigs} from '../../../lib/types.js'
 
 export interface ApiClientInterface {
-  fetchOrganizations(session: string): Promise<Organization[]>
+  getStoreDetails(storeDomain: string): Promise<Shop>
 
   startBulkDataStoreCopy(
-    organizationId: string,
+    shopId: string,
     sourceShopDomain: string,
     targetShopDomain: string,
     resourceConfigs: ResourceConfigs,
@@ -19,24 +19,20 @@ export interface ApiClientInterface {
   ): Promise<BulkDataStoreCopyStartResponse>
 
   startBulkDataStoreExport(
-    organizationId: string,
+    shopId: string,
     sourceShopDomain: string,
     token: string,
   ): Promise<BulkDataStoreExportStartResponse>
 
   startBulkDataStoreImport(
-    organizationId: string,
+    shopId: string,
     targetShopDomain: string,
     importUrl: string,
     resourceConfigs: ResourceConfigs,
     token: string,
   ): Promise<BulkDataStoreImportStartResponse>
 
-  pollBulkDataOperation(
-    organizationId: string,
-    operationId: string,
-    token: string,
-  ): Promise<BulkDataOperationByIdResponse>
+  pollBulkDataOperation(shopId: string, operationId: string, token: string): Promise<BulkDataOperationByIdResponse>
 
   ensureAuthenticatedBusinessPlatform(): Promise<string>
 }

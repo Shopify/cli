@@ -55,7 +55,7 @@ describe('renderExportResult', () => {
       },
     }
 
-    renderExportResult(sourceShop, exportOperation)
+    renderExportResult(sourceShop.domain, exportOperation)
 
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
@@ -104,7 +104,7 @@ describe('renderExportResult', () => {
       },
     }
 
-    renderExportResult(sourceShop, exportOperation)
+    renderExportResult(sourceShop.domain, exportOperation)
 
     expect(renderWarning).toHaveBeenCalledWith({
       body: ['Export operation from', {info: 'source-shop.myshopify.com'}, 'completed with', {error: 'errors'}],
@@ -160,7 +160,7 @@ describe('renderExportResult', () => {
       },
     }
 
-    renderExportResult(sourceShop, exportOperation)
+    renderExportResult(sourceShop.domain, exportOperation)
 
     expect(renderWarning).toHaveBeenCalledWith({
       body: ['Export operation from', {info: 'source-shop.myshopify.com'}, 'completed with', {error: 'errors'}],

@@ -1,14 +1,14 @@
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
-import {Organization, Shop} from '../../../apis/destinations/index.js'
-import {findStore} from '../utils/store-utils.js'
+import {Organization} from '../../../apis/destinations/index.js'
+import {storeFullDomain} from '../utils/store-utils.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
-import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
@@ -31,45 +31,45 @@ export class StoreExportOperation implements StoreOperation {
   async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
 
-    const sourceShop = findStore(fromStore, this.orgs)
-    this.validateShop(sourceShop)
+    const sourceShopDomain = storeFullDomain(fromStore)
+
+    const apiShopId = await this.validateShop(sourceShopDomain)
 
     if (!flags['no-prompt']) {
-      if (!(await confirmExportPrompt(sourceShop.domain, toFile))) {
+      if (!(await confirmExportPrompt(sourceShopDomain, toFile))) {
         outputInfo('Exiting.')
         process.exit(0)
       }
     }
 
-    renderCopyInfo('Export Operation', sourceShop.domain, toFile)
-    const exportOperation = await this.exportDataWithProgress(sourceShop.organizationId, sourceShop, this.bpSession)
+    renderCopyInfo('Export Operation', sourceShopDomain, toFile)
+    const exportOperation = await this.exportDataWithProgress(apiShopId, sourceShopDomain, this.bpSession)
 
     const status = exportOperation.organization.bulkData.operation.status
     if (status === 'FAILED') {
       throw new OperationError('export', ErrorCodes.EXPORT_FAILED)
     }
 
-    renderExportResult(sourceShop, exportOperation)
+    renderExportResult(sourceShopDomain, exportOperation)
 
     if (status === 'COMPLETED') {
       await this.resultFileHandler.promptAndHandleResultFile(exportOperation, 'export', flags, toFile)
     }
   }
 
-  private validateShop(sourceShop: Shop | undefined): asserts sourceShop is Shop {
-    if (!sourceShop) {
-      throw new ValidationError(ErrorCodes.SHOP_NOT_FOUND, {shop: this.fromArg ?? 'source'})
-    }
+  private async validateShop(sourceShopDomain: string): Promise<string> {
+    const sourceShop = await this.apiClient.getStoreDetails(sourceShopDomain)
+    return sourceShop.id
   }
 
   private async startExportOperation(
     bpSession: string,
-    organizationId: string,
-    sourceShop: Shop,
+    apiShopId: string,
+    sourceShopDomain: string,
   ): Promise<BulkDataOperationByIdResponse> {
     const exportResponse: BulkDataStoreExportStartResponse = await this.apiClient.startBulkDataStoreExport(
-      organizationId,
-      sourceShop.domain,
+      apiShopId,
+      sourceShopDomain,
       bpSession,
     )
 
@@ -82,16 +82,16 @@ export class StoreExportOperation implements StoreOperation {
     }
 
     const operationId = exportResponse.bulkDataStoreExportStart.operation.id
-    return this.apiClient.pollBulkDataOperation(organizationId, operationId, bpSession)
+    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
   }
 
   private async exportDataWithProgress(
-    organizationId: string,
-    sourceShop: Shop,
+    apiShopId: string,
+    sourceShopDomain: string,
     bpSession: string,
   ): Promise<BulkDataOperationByIdResponse> {
     interface ExportContext extends BulkOperationContext {
-      sourceShop: Shop
+      sourceShopDomain: string
     }
 
     const taskGenerator = new BulkOperationTaskGenerator({
@@ -100,11 +100,11 @@ export class StoreExportOperation implements StoreOperation {
 
     const tasks = taskGenerator.generateTasks<ExportContext>({
       startOperation: async (ctx: ExportContext) => {
-        return this.startExportOperation(ctx.bpSession, ctx.organizationId, ctx.sourceShop)
+        return this.startExportOperation(ctx.bpSession, ctx.apiShopId, ctx.sourceShopDomain)
       },
       pollOperation: async (ctx: ExportContext) => {
         const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.organizationId, operationId, ctx.bpSession)
+        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
       },
     })
 
@@ -113,9 +113,9 @@ export class StoreExportOperation implements StoreOperation {
       {
         title: 'initializing',
         task: async (ctx: ExportContext) => {
-          ctx.organizationId = organizationId
+          ctx.apiShopId = apiShopId
           ctx.bpSession = bpSession
-          ctx.sourceShop = sourceShop
+          ctx.sourceShopDomain = sourceShopDomain
           ctx.isComplete = false
         },
       },

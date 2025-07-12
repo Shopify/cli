@@ -43,12 +43,12 @@ describe('renderImportResult', () => {
 
   test('calls renderOperationResult with correct base message', () => {
     const filePath = 'input.sqlite'
-    renderImportResult(filePath, targetShop, mockOperation)
+    renderImportResult(filePath, targetShop.domain, mockOperation)
 
     expect(renderOperationResult).toHaveBeenCalledWith(
       [{subdued: 'From:'}, 'input.sqlite', {subdued: '\nTo:  '}, 'target-shop.myshopify.com'],
       mockOperation,
-      targetShop,
+      targetShop.domain,
     )
   })
 })

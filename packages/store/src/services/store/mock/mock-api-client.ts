@@ -1,25 +1,31 @@
-import {TEST_MOCK_DATA, TEST_COPY_START_RESPONSE, TEST_COMPLETED_OPERATION} from './mock-data.js'
+import {TEST_COPY_START_RESPONSE, TEST_COMPLETED_OPERATION, TEST_ALL_SHOPS} from './mock-data.js'
 import {MOCK_CONFIG} from './mock-config.js'
 import {ApiClientInterface} from '../types/api-client.js'
-import {Organization} from '../../../apis/destinations/index.js'
 import {
   BulkDataStoreCopyStartResponse,
   BulkDataOperationByIdResponse,
   BulkDataStoreExportStartResponse,
   BulkDataStoreImportStartResponse,
 } from '../../../apis/organizations/types.js'
+
 import {ResourceConfigs} from '../../../lib/types.js'
+import {Shop} from '../../../apis/admin/types.js'
 
 export class MockApiClient implements ApiClientInterface {
   private pollCount = 0
 
-  async fetchOrganizations(_session: string): Promise<Organization[]> {
+  async getStoreDetails(storeDomain: string): Promise<Shop> {
     await this.delay(MOCK_CONFIG.API_DELAY)
-    return [TEST_MOCK_DATA.organization, TEST_MOCK_DATA.differentOrganization]
+
+    const shop = TEST_ALL_SHOPS.find((shop) => shop.domain === storeDomain)
+    if (!shop) {
+      throw new Error(`Shop not found: ${storeDomain}`)
+    }
+    return {id: shop.id, name: shop.name}
   }
 
   async startBulkDataStoreCopy(
-    _organizationId: string,
+    _shopId: string,
     _sourceShopDomain: string,
     _targetShopDomain: string,
     _resourceConfigs: ResourceConfigs,
@@ -31,7 +37,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreExport(
-    _organizationId: string,
+    _shopId: string,
     _sourceShopDomain: string,
     _token: string,
   ): Promise<BulkDataStoreExportStartResponse> {
@@ -51,7 +57,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreImport(
-    _organizationId: string,
+    _shopId: string,
     _targetShopDomain: string,
     _importUrl: string,
     _resourceConfigs: ResourceConfigs,
@@ -73,7 +79,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async pollBulkDataOperation(
-    _organizationId: string,
+    _shopId: string,
     _operationId: string,
     _token: string,
   ): Promise<BulkDataOperationByIdResponse> {

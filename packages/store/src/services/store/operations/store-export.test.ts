@@ -6,11 +6,11 @@ import {
   TEST_COMPLETED_EXPORT_OPERATION,
   generateTestFailedExportStartResponse,
 } from '../mock/mock-data.js'
-import {Shop, Organization} from '../../../apis/destinations/index.js'
+import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
-import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
@@ -24,7 +24,6 @@ vi.mock('../../../prompts/confirm_export.js')
 describe('StoreExportOperation', () => {
   const mockBpSession = 'mock-bp-session-token'
   const mockSourceShop: Shop = TEST_MOCK_DATA.sourceShop
-  const mockOrganization: Organization = TEST_MOCK_DATA.organization
   const mockExportStartResponse: BulkDataStoreExportStartResponse = TEST_EXPORT_START_RESPONSE
   const mockCompletedOperation: BulkDataOperationByIdResponse = TEST_COMPLETED_EXPORT_OPERATION
 
@@ -38,8 +37,8 @@ describe('StoreExportOperation', () => {
     })
 
     mockApiClient = {
+      getStoreDetails: vi.fn().mockResolvedValue({id: mockSourceShop.id, name: mockSourceShop.name}),
       ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue(mockBpSession),
-      fetchOrganizations: vi.fn().mockResolvedValue([mockOrganization]),
       startBulkDataStoreExport: vi.fn().mockResolvedValue(mockExportStartResponse),
       pollBulkDataOperation: vi.fn().mockResolvedValue(mockCompletedOperation),
     }
@@ -49,7 +48,7 @@ describe('StoreExportOperation', () => {
     }
     vi.mocked(ResultFileHandler).mockImplementation(() => mockResultFileHandler)
 
-    operation = new StoreExportOperation(mockBpSession, mockApiClient, [mockOrganization])
+    operation = new StoreExportOperation(mockBpSession, mockApiClient)
 
     vi.mocked(renderTasks).mockResolvedValue({
       operation: mockCompletedOperation,
@@ -78,53 +77,13 @@ describe('StoreExportOperation', () => {
 
     expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite')
     expect(renderCopyInfo).toHaveBeenCalledWith('Export Operation', 'source.myshopify.com', 'output.sqlite')
-    expect(renderExportResult).toHaveBeenCalledWith(mockSourceShop, mockCompletedOperation)
+    expect(renderExportResult).toHaveBeenCalledWith('source.myshopify.com', mockCompletedOperation)
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
       mockCompletedOperation,
       'export',
       {},
       'output.sqlite',
     )
-  })
-
-  test('should throw error when source shop is not found', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([
-      {
-        ...mockOrganization,
-        shops: [
-          {
-            ...mockSourceShop,
-            domain: 'other-org.myshopify.com',
-          },
-        ],
-      },
-    ])
-
-    const promise = operation.execute('nonexistent.myshopify.com', 'output.sqlite', {'no-prompt': true})
-    await expect(promise).rejects.toThrow(ValidationError)
-    await expect(promise).rejects.toMatchObject({
-      code: ErrorCodes.SHOP_NOT_FOUND,
-      params: {shop: 'nonexistent.myshopify.com'},
-    })
-  })
-
-  test('should throw error when organization has no shops', async () => {
-    operation = new StoreExportOperation(mockBpSession, mockApiClient, [
-      {
-        ...mockOrganization,
-        shops: [],
-      },
-    ])
-    await expect(operation.execute('source.myshopify.com', 'output.sqlite', {})).rejects.toThrow(ValidationError)
-  })
-
-  test('should filter out organizations with single shop', async () => {
-    const singleShopOrg: Organization = TEST_MOCK_DATA.singleShopOrganization
-    mockApiClient.fetchOrganizations.mockResolvedValue([mockOrganization, singleShopOrg])
-
-    await operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
-
-    expect(renderExportResult).toHaveBeenCalled()
   })
 
   test('should throw error when export operation fails to start', async () => {

@@ -9,7 +9,7 @@ import {
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderImportResult} from '../../../prompts/import_result.js'
-import {Shop, Organization} from '../../../apis/destinations/index.js'
+import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
@@ -29,7 +29,6 @@ vi.mock('../../../prompts/import_result.js')
 describe('StoreImportOperation', () => {
   const mockBpSession = 'mock-bp-session-token'
   const mockTargetShop: Shop = TEST_MOCK_DATA.targetShop
-  const mockOrganization: Organization = TEST_MOCK_DATA.organization
   const mockImportStartResponse: BulkDataStoreImportStartResponse = TEST_IMPORT_START_RESPONSE
   const mockCompletedOperation: BulkDataOperationByIdResponse = TEST_COMPLETED_IMPORT_OPERATION
   const mockUploadUrl = 'https://mock-staged-uploads.shopify.com/files/database-123.sqlite'
@@ -44,8 +43,8 @@ describe('StoreImportOperation', () => {
     })
 
     mockApiClient = {
+      getStoreDetails: vi.fn().mockResolvedValue({id: mockTargetShop.id, name: mockTargetShop.name}),
       ensureAuthenticatedBusinessPlatform: vi.fn().mockResolvedValue(mockBpSession),
-      fetchOrganizations: vi.fn().mockResolvedValue([mockOrganization]),
       startBulkDataStoreImport: vi.fn().mockResolvedValue(mockImportStartResponse),
       pollBulkDataOperation: vi.fn().mockResolvedValue(mockCompletedOperation),
     }
@@ -55,7 +54,7 @@ describe('StoreImportOperation', () => {
     }
     vi.mocked(FileUploader).mockImplementation(() => mockFileUploader)
 
-    operation = new StoreImportOperation(mockBpSession, mockApiClient, [mockOrganization])
+    operation = new StoreImportOperation(mockBpSession, mockApiClient)
 
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(parseResourceConfigFlags).mockReturnValue({})
@@ -78,7 +77,7 @@ describe('StoreImportOperation', () => {
       cancellationMessage: 'Cancel',
     })
     expect(renderCopyInfo).toHaveBeenCalledWith('Import Operation', 'input.sqlite', 'target.myshopify.com')
-    expect(renderImportResult).toHaveBeenCalledWith('input.sqlite', mockTargetShop, mockCompletedOperation)
+    expect(renderImportResult).toHaveBeenCalledWith('input.sqlite', 'target.myshopify.com', mockCompletedOperation)
   })
 
   test('should throw error when input file does not exist', async () => {
@@ -92,46 +91,6 @@ describe('StoreImportOperation', () => {
     })
 
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
-  })
-
-  test('should throw error when target shop is not found', async () => {
-    mockApiClient.fetchOrganizations.mockResolvedValue([
-      {
-        ...mockOrganization,
-        shops: [
-          {
-            ...mockTargetShop,
-            domain: 'other-org.myshopify.com',
-          },
-        ],
-      },
-    ])
-
-    const promise = operation.execute('input.sqlite', 'nonexistent.myshopify.com', {})
-    await expect(promise).rejects.toThrow(ValidationError)
-    await expect(promise).rejects.toMatchObject({
-      code: ErrorCodes.SHOP_NOT_FOUND,
-      params: {shop: 'nonexistent.myshopify.com'},
-    })
-  })
-
-  test('should throw error when organization has no shops', async () => {
-    operation = new StoreImportOperation(mockBpSession, mockApiClient, [
-      {
-        ...mockOrganization,
-        shops: [],
-      },
-    ])
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow(ValidationError)
-  })
-
-  test('should filter out organizations with single shop', async () => {
-    const singleShopOrg: Organization = TEST_MOCK_DATA.singleShopOrganization
-    mockApiClient.fetchOrganizations.mockResolvedValue([mockOrganization, singleShopOrg])
-
-    await operation.execute('input.sqlite', 'target.myshopify.com', {})
-
-    expect(renderImportResult).toHaveBeenCalled()
   })
 
   test('should skip confirmation when --no-prompt flag is provided', async () => {

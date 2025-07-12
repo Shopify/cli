@@ -10,7 +10,7 @@ interface BulkOperationConfig {
 
 export interface BulkOperationContext {
   operation: BulkDataOperationByIdResponse
-  organizationId: string
+  apiShopId: string
   bpSession: string
   isComplete: boolean
 }
