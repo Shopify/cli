@@ -6343,6 +6343,12 @@
       "hiddenAliases": [
       ],
       "id": "theme:publish",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme",
+        "force"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
