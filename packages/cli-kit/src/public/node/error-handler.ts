@@ -10,6 +10,7 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
+import {getCurrentSlice} from './global-context.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
@@ -222,6 +223,9 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
 
   const environment = await getEnvironmentData(config)
 
+  // Get slice information from global context
+  const sliceInfo = getCurrentSlice() || {name: 'unknown', id: 'S-unknown'}
+
   const allMetadata = {
     command: startCommand,
     ...appPublic,
@@ -243,7 +247,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
       appData[key] = value
     } else if (key.startsWith('cmd_') || commandKeys.includes(key)) {
       commandData[key] = value
-    } else if (key.startsWith('env_') || environmentKeys) {
+    } else if (key.startsWith('env_') || environmentKeys.includes(key)) {
       environmentData[key] = value
     } else {
       miscData[key] = value
@@ -259,6 +263,12 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   }
   Object.entries(bugsnagMetadata).forEach(([section, values]) => {
     event.addMetadata(section, values)
+  })
+
+  // Add slice metadata for ownership tracking
+  event.addMetadata('custom', {
+    slice_name: sliceInfo.name,
+    slice_id: sliceInfo.id,
   })
 }
 

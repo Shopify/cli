@@ -1,5 +1,9 @@
 export interface GlobalContext {
   currentCommandId: string
+  currentSlice?: {
+    name: string
+    id: string
+  }
 }
 
 let _globalContext: GlobalContext | undefined
@@ -32,4 +36,24 @@ export function getCurrentCommandId(): string {
  */
 export function setCurrentCommandId(commandId: string): void {
   getGlobalContext().currentCommandId = commandId
+}
+
+/**
+ * Get the current slice information.
+ *
+ * @returns Current slice info or undefined.
+ */
+export function getCurrentSlice(): {name: string; id: string} | undefined {
+  return getGlobalContext().currentSlice
+}
+
+/**
+ * Set the current slice information.
+ *
+ * @param slice - Slice information with name and id.
+ * @param slice.name
+ * @param slice.id
+ */
+export function setCurrentSlice(slice: {name: string; id: string}): void {
+  getGlobalContext().currentSlice = slice
 }

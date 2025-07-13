@@ -4,12 +4,12 @@ import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {renderInfo, renderWarning} from './ui.js'
-import {outputContent, outputResult, outputToken} from './output.js'
+import {outputContent, outputResult, outputToken, outputDebug} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {showNotificationsIfNeeded} from './notifications-system.js'
-import {setCurrentCommandId} from './global-context.js'
+import {setCurrentCommandId, setCurrentSlice} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Errors} from '@oclif/core'
@@ -52,6 +52,10 @@ abstract class BaseCommand extends Command {
   protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
+
+    // Detect and store slice information
+    this.detectAndStoreSlice()
+
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
@@ -59,6 +63,33 @@ abstract class BaseCommand extends Command {
     this.showNpmFlagWarning()
     await showNotificationsIfNeeded()
     return super.init()
+  }
+
+  /**
+   * Detects the slice information based on the command ID and stores it in global context
+   */
+  protected detectAndStoreSlice(): void {
+    try {
+      const commandId = this.id ?? ''
+      const prefix = commandId.split(':')[0]
+      
+      // Map command prefixes to slice information
+      const sliceMap: Record<string, {name: string; id: string}> = {
+        'app': {name: 'app', id: 'S-9988b6'},
+        'theme': {name: 'theme', id: 'S-2d23f6'},
+        'hydrogen': {name: 'hydrogen', id: 'S-156228'},
+        'store': {name: 'bulk data', id: 'S-1bc8f5'},
+        // webhook commands belong to app slice
+        'webhook': {name: 'app', id: 'S-9988b6'},
+      }
+      
+      // Default to CLI slice for all other commands (auth, config, help, version, etc.)
+      const sliceInfo = prefix && sliceMap[prefix] ? sliceMap[prefix] : {name: 'cli', id: 'S-f3a87a'}
+      setCurrentSlice(sliceInfo)
+    } catch (error) {
+      // Silently fail slice detection to not break command execution
+      outputDebug(`Failed to detect slice for command: ${error}`)
+    }
   }
 
   // NPM creates an environment variable for every flag passed to a script.
@@ -247,7 +278,7 @@ function reportEnvironmentApplication<
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
     const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
     if (!userSpecifiedThisFlag && environmentContainsFlag) {
-      const valueToReport = name === 'password' ? `********${value.substr(-4)}` : value
+      const valueToReport = name === 'password' ? `********${String(value).slice(-4)}` : value
       changes[name] = valueToReport
     }
   }

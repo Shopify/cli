@@ -7,6 +7,7 @@ import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {unstyled} from './output.js'
+import {getCurrentSlice} from './global-context.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 
@@ -559,3 +560,111 @@ const deleteDefaultEnvironment = async (tmpDir: string): Promise<void> => {
   delete clone.environments.default
   await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML({environments: clone} as any))
 }
+
+describe('slice detection', () => {
+  // Create test commands with different IDs
+  class AppDevCommand extends Command {
+    static id = 'app:dev'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  class ThemePushCommand extends Command {
+    static id = 'theme:push'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  class HydrogenDevCommand extends Command {
+    static id = 'hydrogen:dev'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  class StoreListCommand extends Command {
+    static id = 'store:list'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  class WebhookTriggerCommand extends Command {
+    static id = 'webhook:trigger'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  class AuthLogoutCommand extends Command {
+    static id = 'auth:logout'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  class HelpCommand extends Command {
+    static id = 'help'
+    async run() {
+      // Empty implementation for testing
+    }
+  }
+
+  test('detects app slice for app commands', async () => {
+    // When
+    await AppDevCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'app', id: 'S-9988b6'})
+  })
+
+  test('detects theme slice for theme commands', async () => {
+    // When
+    await ThemePushCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'theme', id: 'S-2d23f6'})
+  })
+
+  test('detects hydrogen slice for hydrogen commands', async () => {
+    // When
+    await HydrogenDevCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'hydrogen', id: 'S-156228'})
+  })
+
+  test('detects bulk data slice for store commands', async () => {
+    // When
+    await StoreListCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'bulk data', id: 'S-1bc8f5'})
+  })
+
+  test('detects app slice for webhook commands', async () => {
+    // When
+    await WebhookTriggerCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'app', id: 'S-9988b6'})
+  })
+
+  test('defaults to cli slice for auth commands', async () => {
+    // When
+    await AuthLogoutCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'cli', id: 'S-f3a87a'})
+  })
+
+  test('defaults to cli slice for top-level commands', async () => {
+    // When
+    await HelpCommand.run([])
+
+    // Then
+    expect(getCurrentSlice()).toEqual({name: 'cli', id: 'S-f3a87a'})
+  })
+})
