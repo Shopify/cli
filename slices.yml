@@ -1,0 +1,77 @@
+---
+version: 2
+ignore:
+- tmp/**/*
+- node_modules/**/*
+- coverage/**/*
+- build/**/*
+- ".dev/**/*"
+- ".shadowenv.d/**/*"
+- ".git/**/*"
+- ".spin/inferred/**/*"
+- sorbet/**/*
+- ".ruby-lsp/**/*"
+slices:
+- name: theme
+  id: S-2d23f6
+  slack_channels:
+  - "#help-theme-platform"
+  stewards:
+  - 13725
+  paths:
+  - packages/theme/**/*
+- name: hydrogen
+  id: S-156228
+  slack_channels:
+  - "#hydrogen-team"
+  stewards:
+  - 2628
+  paths:
+  - packages/cli-hydrogen/**/*
+- name: app
+  id: S-9988b6
+  slack_channels:
+  - "#help-app-inner-loop"
+  stewards:
+  - 2493
+  paths:
+  - packages/app/**/*
+  - packages/create-app/**/*
+  - packages/features/**/*
+- name: cli
+  id: S-f3a87a
+  slack_channels:
+  - "#help-cli"
+  stewards:
+  - 2493
+  paths:
+  - packages/cli/**/*
+  - packages/cli-kit/**/*
+  - packages/eslint-plugin-cli/**/*
+- name: bulk data
+  id: S-1bc8f5
+  slack_channels:
+  - "#bulk-data-rnd"
+  stewards:
+  - 16619
+  paths:
+  - packages/store/**/*
+- name: extensions
+  id: S-934689
+  slack_channels:
+  - "#help-app-ui"
+  stewards:
+  - 3013
+  paths:
+  - packages/ui-extensions-dev-console/**/*
+  - packages/ui-extensions-server-kit/**/*
+  - packages/ui-extensions-test-utils/**/*
+- name: catchall
+  id: S-c961b1
+  slack_channels:
+  - "#help-cli"
+  stewards:
+  - 2493
+  paths:
+  - packages/plugin-cloudflare/**/*
+  - packages/plugin-did-you-mean/**/*
