@@ -43,17 +43,23 @@ export function setCurrentCommandId(commandId: string): void {
  *
  * @returns Current slice info or undefined.
  */
-export function getCurrentSlice(): {name: string; id: string} | undefined {
+export function getCurrentSlice(): SliceInfo | undefined {
   return getGlobalContext().currentSlice
 }
 
 /**
- * Set the current slice information.
- *
- * @param slice - Slice information with name and id.
- * @param slice.name
- * @param slice.id
+ * Slice information interface.
  */
-export function setCurrentSlice(slice: {name: string; id: string}): void {
+interface SliceInfo {
+  name: string
+  id: string
+}
+
+/**
+ * Sets the current slice information in the global context.
+ *
+ * @param slice - The slice information containing name and id.
+ */
+export function setCurrentSlice(slice: SliceInfo): void {
   getGlobalContext().currentSlice = slice
 }

@@ -224,7 +224,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   const environment = await getEnvironmentData(config)
 
   // Get slice information from global context
-  const sliceInfo = getCurrentSlice() || {name: 'unknown', id: 'S-unknown'}
+  const sliceInfo = getCurrentSlice() ?? {name: 'unknown', id: 'S-unknown'}
 
   const allMetadata = {
     command: startCommand,
