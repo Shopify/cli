@@ -70,6 +70,13 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     extensionsToConfirm,
   )
 
+  // Update the matched local extensions with the remote UIDs
+  Object.keys(extensionsToConfirm.validMatches).forEach((handle) => {
+    const extension = options.app.allExtensions.find((ext) => ext.handle === handle)
+    if (!extension) return
+    extension.configuration.uid = extension.uid
+  })
+
   return {
     app: options.appId,
     extensions: result.extensions,

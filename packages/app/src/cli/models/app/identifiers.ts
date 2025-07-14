@@ -47,7 +47,7 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command, developerPlatformClient}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv

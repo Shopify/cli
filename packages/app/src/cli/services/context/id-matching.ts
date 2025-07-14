@@ -22,7 +22,9 @@ interface MatchResult {
  * Filter function to match a local and a remote source by type and handle
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.handle)
+  return (
+    remote.type.toLowerCase() === local.graphQLType.toLowerCase() && slugify(remote.title) === slugify(local.handle)
+  )
 }
 
 /**
@@ -76,7 +78,9 @@ function matchByUUID(
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
-  const matched: IdentifiersExtensions = {}
+  const notMigratedRemoteExtensions = remote.filter((remoteSource) => !remoteSource.id)
+
+  const {matched, toCreate, toConfirm, toManualMatch} = matchByNameAndType(local, notMigratedRemoteExtensions)
 
   local.forEach((localSource) => {
     const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
@@ -84,9 +88,9 @@ function matchByUUID(
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
   })
 
-  const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
+  toCreate.concat(local.filter((elem) => !matched[elem.localIdentifier]))
 
-  return {matched, toCreate, toConfirm: [], toManualMatch: {local: [], remote: []}}
+  return {matched, toCreate, toConfirm, toManualMatch}
 }
 
 function migrateLegacyFunctions(

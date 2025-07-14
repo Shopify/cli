@@ -732,6 +732,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             name: updatedName,
             modules: (appModules ?? []).map((mod) => ({
               uid: mod.uid ?? mod.uuid ?? mod.handle,
+              uuid: mod.uuid,
               type: mod.specificationIdentifier,
               handle: mod.handle,
               config: JSON.parse(mod.config),
