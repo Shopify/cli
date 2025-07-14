@@ -18,6 +18,7 @@ import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {PosSpecIdentifier} from '../models/extensions/specifications/app_config_point_of_sale.js'
+import {getTomls} from '../utilities/app/config/getTomls.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -44,6 +45,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
+vi.mock('../utilities/app/config/getTomls.js')
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -400,6 +402,7 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version released to users.',
+      customSections: [],
       body: [
         {
           link: {
@@ -433,6 +436,7 @@ describe('deploy', () => {
     // Then
     expect(renderInfo).toHaveBeenCalledWith({
       headline: 'New version created, but not released.',
+      customSections: [],
       body: [
         {
           link: {
@@ -466,6 +470,7 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version created.',
+      customSections: [],
       body: [
         {
           link: {
@@ -484,6 +489,45 @@ describe('deploy', () => {
       ],
     })
   })
+
+  test('shows a custom section when migrating extensions to dev dash', async () => {
+    // Given
+    const app = testAppLinked()
+
+    vi.mocked(getTomls).mockResolvedValue({
+      '111': 'shopify.app.prod.toml',
+      '222': 'shopify.app.stg.toml',
+    })
+
+    // When
+    await testDeployBundle({app, remoteApp, developerPlatformClient, didMigrateExtensionsToDevDash: true})
+
+    // Then
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'New version released to users.',
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+        '',
+      ],
+      customSections: [
+        {
+          title: 'Next steps',
+          body: [
+            '• Map extension IDs to other copies of your app by running',
+            {command: formatPackageManagerCommand(app.packageManager, 'shopify app deploy')},
+            'for: ',
+            {list: {items: ['shopify.app.prod.toml', 'shopify.app.stg.toml']}},
+            "• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.",
+          ],
+        },
+      ],
+    })
+  })
 })
 
 interface TestDeployBundleInput {
@@ -499,6 +543,7 @@ interface TestDeployBundleInput {
   commitReference?: string
   appToDeploy?: AppInterface
   developerPlatformClient: DeveloperPlatformClient
+  didMigrateExtensionsToDevDash?: boolean
 }
 
 async function testDeployBundle({
@@ -509,6 +554,7 @@ async function testDeployBundle({
   commitReference,
   appToDeploy,
   developerPlatformClient,
+  didMigrateExtensionsToDevDash = false,
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -526,7 +572,10 @@ async function testDeployBundle({
     extensionsNonUuidManaged: extensionsNonUuidPayload,
   }
 
-  vi.mocked(ensureDeployContext).mockResolvedValue(identifiers)
+  vi.mocked(ensureDeployContext).mockResolvedValue({
+    identifiers,
+    didMigrateExtensionsToDevDash,
+  })
 
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],

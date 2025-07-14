@@ -6,12 +6,13 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
+import {getTomls} from '../utilities/app/config/getTomls.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import type {Task} from '@shopify/cli-kit/node/ui'
+import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
   /** The app to be built and uploaded */
@@ -53,7 +54,7 @@ interface TasksContext {
 export async function deploy(options: DeployOptions) {
   const {app, remoteApp, developerPlatformClient, noRelease} = options
 
-  const identifiers = await ensureDeployContext({...options, developerPlatformClient})
+  const {identifiers, didMigrateExtensionsToDevDash} = await ensureDeployContext({...options, developerPlatformClient})
   const release = !noRelease
   const apiKey = remoteApp.apiKey
 
@@ -128,6 +129,7 @@ export async function deploy(options: DeployOptions) {
       app,
       release,
       uploadExtensionsBundleResult,
+      didMigrateExtensionsToDevDash,
     })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,30 +149,61 @@ async function outputCompletionMessage({
   app,
   release,
   uploadExtensionsBundleResult,
+  didMigrateExtensionsToDevDash,
 }: {
   app: AppLinkedInterface
   release: boolean
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput
+  didMigrateExtensionsToDevDash: boolean
 }) {
   const linkAndMessage = [
     {link: {label: uploadExtensionsBundleResult.versionTag ?? 'version', url: uploadExtensionsBundleResult.location}},
     uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
   ]
+
+  let customSections: AlertCustomSection[] = []
+  if (didMigrateExtensionsToDevDash) {
+    const tomls = await getTomls(app.directory)
+    const tomlsWithoutCurrent = Object.values(tomls).filter((toml) => toml !== tomls[app.configuration.client_id])
+
+    customSections = [
+      {
+        title: 'Next steps',
+        body: [
+          '• Map extension IDs to other copies of your app by running',
+          {
+            command: formatPackageManagerCommand(app.packageManager, 'shopify app deploy'),
+          },
+          'for: ',
+          {
+            list: {
+              items: tomlsWithoutCurrent,
+            },
+          },
+          "• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.",
+        ],
+      },
+    ]
+  }
+
   if (release) {
     return uploadExtensionsBundleResult.deployError
       ? renderInfo({
           headline: 'New version created, but not released.',
           body: [...linkAndMessage, `\n\n${uploadExtensionsBundleResult.deployError}`],
+          customSections,
         })
       : renderSuccess({
           headline: 'New version released to users.',
           body: linkAndMessage,
+          customSections,
         })
   }
 
   return renderSuccess({
     headline: 'New version created.',
     body: linkAndMessage,
+    customSections,
     nextSteps: [
       [
         'Run',
