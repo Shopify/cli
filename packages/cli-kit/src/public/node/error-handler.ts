@@ -10,7 +10,6 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
-import {getCurrentSlice} from './global-context.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
@@ -223,9 +222,6 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
 
   const environment = await getEnvironmentData(config)
 
-  // Get slice information from global context
-  const sliceInfo = getCurrentSlice() ?? {name: 'unknown', id: 'S-unknown'}
-
   const allMetadata = {
     command: startCommand,
     ...appPublic,
@@ -266,10 +262,21 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   })
 
   // Add slice metadata for ownership tracking
-  event.addMetadata('custom', {
-    slice_name: sliceInfo.name,
-    slice_id: sliceInfo.id,
-  })
+  const sliceInfo = getSliceNameAndId((allMetadata.cmd_all_plugin as string) ?? '')
+  event.addMetadata('custom', sliceInfo)
+}
+
+function getSliceNameAndId(plugin: string): {slice_name: string; slice_id: string} {
+  if (plugin.includes('@shopify/theme')) {
+    return {slice_name: 'theme', slice_id: 'S-2d23f6'}
+  } else if (plugin.includes('@shopify/cli-hydrogen')) {
+    return {slice_name: 'hydrogen', slice_id: 'S-156228'}
+  } else if (plugin.includes('@shopify/store')) {
+    return {slice_name: 'bulk data', slice_id: 'S-1bc8f5'}
+  } else if (plugin.includes('@shopify/app')) {
+    return {slice_name: 'app', slice_id: 'S-9988b6'}
+  }
+  return {slice_name: 'cli', slice_id: 'S-f3a87a'}
 }
 
 function initializeBugsnag() {

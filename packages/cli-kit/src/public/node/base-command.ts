@@ -9,7 +9,7 @@ import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {showNotificationsIfNeeded} from './notifications-system.js'
-import {setCurrentCommandId, setCurrentSlice} from './global-context.js'
+import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Errors} from '@oclif/core'
@@ -53,9 +53,6 @@ abstract class BaseCommand extends Command {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
 
-    // Detect and store slice information
-    this.detectAndStoreSlice()
-
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
@@ -63,28 +60,6 @@ abstract class BaseCommand extends Command {
     this.showNpmFlagWarning()
     await showNotificationsIfNeeded()
     return super.init()
-  }
-
-  /**
-   * Detects the slice information based on the command ID and stores it in global context
-   */
-  protected detectAndStoreSlice(): void {
-    const commandId = this.id ?? ''
-    const prefix = commandId.split(':')[0]
-
-    // Map command prefixes to slice information
-    const sliceMap: {[key: string]: {name: string; id: string}} = {
-      app: {name: 'app', id: 'S-9988b6'},
-      theme: {name: 'theme', id: 'S-2d23f6'},
-      hydrogen: {name: 'hydrogen', id: 'S-156228'},
-      store: {name: 'bulk data', id: 'S-1bc8f5'},
-      // webhook commands belong to app slice
-      webhook: {name: 'app', id: 'S-9988b6'},
-    }
-
-    // Default to CLI slice for all other commands (auth, config, help, version, etc.)
-    const sliceInfo = prefix && sliceMap[prefix] ? sliceMap[prefix] : {name: 'cli', id: 'S-f3a87a'}
-    setCurrentSlice(sliceInfo)
   }
 
   // NPM creates an environment variable for every flag passed to a script.
