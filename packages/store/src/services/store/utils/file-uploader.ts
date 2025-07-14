@@ -84,8 +84,8 @@ export class FileUploader {
       if (sizeOfFile > this.MAX_FILE_SIZE) {
         throw new ValidationError(ErrorCodes.FILE_TOO_LARGE, {
           filePath,
-          fileSize: `${Math.round(sizeOfFile / 1024 / 1024)}MB`,
-          maxSize: `${Math.round(this.MAX_FILE_SIZE / 1024 / 1024)}MB`,
+          fileSize: `${Math.round(sizeOfFile / 1024 / 1024)} MB`,
+          maxSize: `${Math.round(this.MAX_FILE_SIZE / 1024 / 1024)} MB`,
         })
       }
 
