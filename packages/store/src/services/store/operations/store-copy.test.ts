@@ -190,5 +190,57 @@ describe('StoreCopyOperation', () => {
         code: ErrorCodes.COPY_FAILED,
       })
     })
+
+    test('should convert GraphQL ClientError to user-friendly error with request ID', async () => {
+      const operationError = new OperationError(
+        'startBulkDataStoreCopy',
+        ErrorCodes.GRAPHQL_API_ERROR,
+        {},
+        'copy-request-abc123',
+      )
+      mockApiClient.startBulkDataStoreCopy.mockRejectedValue(operationError)
+
+      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+        const ctx: any = {}
+        for (const task of tasks) {
+          // eslint-disable-next-line no-await-in-loop
+          await task.task(ctx, task)
+        }
+        return ctx
+      })
+
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'startBulkDataStoreCopy',
+        code: ErrorCodes.GRAPHQL_API_ERROR,
+        requestId: 'copy-request-abc123',
+      })
+    })
+
+    test('should convert GraphQL ClientError to user-friendly error without request ID', async () => {
+      const operationError = new OperationError('startBulkDataStoreCopy', ErrorCodes.GRAPHQL_API_ERROR)
+      mockApiClient.startBulkDataStoreCopy.mockRejectedValue(operationError)
+
+      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+        const ctx: any = {}
+        for (const task of tasks) {
+          // eslint-disable-next-line no-await-in-loop
+          await task.task(ctx, task)
+        }
+        return ctx
+      })
+
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'startBulkDataStoreCopy',
+        code: ErrorCodes.GRAPHQL_API_ERROR,
+      })
+
+      const error = await promise.catch((err) => err)
+      expect(error.requestId).toBeUndefined()
+      expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
+    })
   })
 })

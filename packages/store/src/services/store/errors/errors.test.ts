@@ -83,4 +83,33 @@ describe('Error message generation', () => {
     )
     expect(new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED).message).toBe('Failed to create staged upload')
   })
+
+  test('should generate correct GRAPHQL_API_ERROR messages with request IDs', () => {
+    expect(new OperationError('fetchOrgs', ErrorCodes.GRAPHQL_API_ERROR, {}, 'req-123').message).toBe(
+      'Copy could not complete due to an API request failure\n\nRequest Id: req-123',
+    )
+    expect(new OperationError('fetchOrgs', ErrorCodes.GRAPHQL_API_ERROR).message).toBe(
+      'Copy could not complete due to an API request failure\n\nRequest Id: unknown',
+    )
+  })
+})
+
+describe('OperationError with Request ID', () => {
+  test('should create error with request ID', () => {
+    const error = new OperationError('api', ErrorCodes.GRAPHQL_API_ERROR, {}, 'test-request-456')
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.operation).toBe('api')
+    expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
+    expect(error.requestId).toBe('test-request-456')
+    expect(error.message).toContain('Request Id: test-request-456')
+  })
+
+  test('should create error without request ID', () => {
+    const error = new OperationError('api', ErrorCodes.GRAPHQL_API_ERROR)
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.requestId).toBeUndefined()
+    expect(error.message).toContain('Request Id: unknown')
+  })
 })
