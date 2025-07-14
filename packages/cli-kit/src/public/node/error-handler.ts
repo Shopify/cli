@@ -137,8 +137,9 @@ export async function sendErrorToBugsnag(
         // @ts-ignore
         Bugsnag.notify(reportableError, eventHandler, errorHandler)
       })
+      return {error: reportableError, reported: report, unhandled}
     }
-    return {error: reportableError, reported: report, unhandled}
+    return {error: reportableError, reported: report, unhandled: undefined}
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
     outputDebug(`Error reporting to Bugsnag: ${err}`)
@@ -266,7 +267,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   event.addMetadata('custom', sliceInfo)
 }
 
-function getSliceNameAndId(plugin: string): {slice_name: string; slice_id: string} {
+export function getSliceNameAndId(plugin: string): {slice_name: string; slice_id: string} {
   if (plugin.includes('@shopify/theme')) {
     return {slice_name: 'theme', slice_id: 'S-2d23f6'}
   } else if (plugin.includes('@shopify/cli-hydrogen')) {

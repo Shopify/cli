@@ -1,4 +1,10 @@
-import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
+import {
+  errorHandler,
+  cleanStackFrameFilePath,
+  addBugsnagMetadata,
+  sendErrorToBugsnag,
+  getSliceNameAndId,
+} from './error-handler.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/local.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
@@ -11,11 +17,12 @@ vi.mock('process')
 vi.mock('@bugsnag/js', () => {
   return {
     default: {
-      notify: (reportedError: any, args: any, callback: any) => {
+      notify: vi.fn((reportedError: any, args: any, callback: any) => {
         onNotify(reportedError)
         callback(null)
-      },
+      }),
       isStarted: () => true,
+      start: vi.fn(),
     },
   }
 })
@@ -52,8 +59,60 @@ describe('errorHandler', async () => {
     await errorHandler(new error.CancelExecution('Custom message'))
 
     // Then
-    expect(outputMock.info()).toMatch('✨  Custom message')
     expect(process.exit).toBeCalledTimes(0)
+    expect(outputMock.info()).toMatch('✨  Custom message')
+  })
+
+  test('finishes the execution without displaying output when abort silent error exception is raised', async () => {
+    // Given
+    vi.spyOn(process, 'exit').mockResolvedValue(null as never)
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    await errorHandler(new error.AbortSilentError())
+
+    // Then
+    expect(process.exit).toBeCalledTimes(0)
+    expect(outputMock.info()).toMatch('')
+  })
+})
+
+describe('cleanStackFrameFilePath', () => {
+  test("removes the node_modules/ prefix from a file's path", async () => {
+    // Given
+    const filePath = '/some/path/node_modules/@shopify/cli-kit/index.js'
+
+    // When
+    const clean = cleanStackFrameFilePath({
+      currentFilePath: filePath,
+      projectRoot: '',
+      pluginLocations: [],
+    })
+
+    // Then
+    expect(clean).toMatch('@shopify/cli-kit/index.js')
+  })
+
+  test('strips the plugin path prefix', async () => {
+    // Given
+    const filePath = '/Users/john.doe/Library/Caches/node/pkg/743047e/node_modules/@shopify/theme/dist/index.js'
+    const projectRoot = '/some/project'
+    const pluginLocations = [
+      {
+        name: '@shopify/theme',
+        pluginPath: '/Users/john.doe/Library/Caches/node/pkg/743047e/node_modules/@shopify/theme',
+      },
+    ]
+
+    // When
+    const clean = cleanStackFrameFilePath({
+      currentFilePath: filePath,
+      projectRoot,
+      pluginLocations,
+    })
+
+    // Then
+    expect(clean).toMatch('@shopify/theme/dist/index.js')
   })
 })
 
@@ -108,7 +167,67 @@ describe('bugsnag metadata', () => {
   })
 })
 
-describe('send to Bugsnag', () => {
+describe('sendErrorToBugsnag', () => {
+  test('sends an non-empty error to bugsnag', async () => {
+    // Given
+    const toThrow = new Error('some error')
+
+    // When
+    const {reported, error, unhandled} = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(reported).toEqual(true)
+    expect((error as Error).message).toEqual('some error')
+    expect(unhandled).toEqual(true)
+    expect(onNotify).toHaveBeenCalledWith(toThrow)
+  })
+
+  test('sends a non empty string error to bugsnag', async () => {
+    // Given
+    const toThrow = 'error string'
+
+    // When
+    const {reported, error, unhandled} = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(reported).toEqual(true)
+    expect((error as Error).message).toEqual('error string')
+    expect(unhandled).toEqual(true)
+  })
+
+  test('sends an empty string error to bugsnag', async () => {
+    // Given
+    const toThrow = ''
+
+    // When
+    const {reported, error, unhandled} = await sendErrorToBugsnag(toThrow, 'expected_error')
+
+    // Then
+    expect(reported).toEqual(false)
+    expect((error as Error).message).toEqual('Unknown error')
+    expect(unhandled).toEqual(undefined)
+  })
+
+  test('handles errors when sending to Bugsnag', async () => {
+    // Given
+    const Bugsnag = (await import('@bugsnag/js')).default as any
+    // eslint-disable-next-line node/handle-callback-err
+    vi.mocked(Bugsnag.notify).mockImplementationOnce((_err: any, _args: any, callback: any) => {
+      callback(new Error('Bugsnag is down'))
+    })
+
+    const toThrow = new Error('In test')
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(res.reported).toEqual(false)
+    expect(res.error).toEqual(toThrow)
+    expect(mockOutput.debug()).toMatch('Error reporting to Bugsnag: Error: Bugsnag is down')
+  })
+
   test('processes Error instances as unhandled', async () => {
     const toThrow = new Error('In test')
     const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
@@ -145,7 +264,9 @@ describe('send to Bugsnag', () => {
 
   test('do not throw an error if Bugsnag fails, but just log it', async () => {
     // Given
-    onNotify.mockImplementationOnce(() => {
+    const Bugsnag = (await import('@bugsnag/js')).default as any
+    const originalImpl = vi.mocked(Bugsnag.notify).getMockImplementation()
+    vi.mocked(Bugsnag.notify).mockImplementationOnce(() => {
       throw new Error('Bugsnag is down')
     })
     const toThrow = new Error('In test')
@@ -158,5 +279,29 @@ describe('send to Bugsnag', () => {
     expect(res.reported).toEqual(false)
     expect(res.error).toEqual(toThrow)
     expect(mockOutput.debug()).toMatch('Error reporting to Bugsnag: Error: Bugsnag is down')
+
+    // Restore original implementation
+    vi.mocked(Bugsnag.notify).mockImplementation(originalImpl)
+  })
+})
+
+describe('getSliceNameAndId', () => {
+  const sliceTestCases = [
+    // Known slices
+    ['@shopify/theme', {slice_name: 'theme', slice_id: 'S-2d23f6'}],
+    ['@shopify/cli-hydrogen', {slice_name: 'hydrogen', slice_id: 'S-156228'}],
+    ['@shopify/store', {slice_name: 'bulk data', slice_id: 'S-1bc8f5'}],
+    ['@shopify/app', {slice_name: 'app', slice_id: 'S-9988b6'}],
+    // Default to CLI slice
+    ['@shopify/unknown', {slice_name: 'cli', slice_id: 'S-f3a87a'}],
+    ['', {slice_name: 'cli', slice_id: 'S-f3a87a'}],
+    ['@other/plugin', {slice_name: 'cli', slice_id: 'S-f3a87a'}],
+    // Partial matches
+    ['@shopify/theme-check', {slice_name: 'theme', slice_id: 'S-2d23f6'}],
+    ['@shopify/cli-hydrogen-extension', {slice_name: 'hydrogen', slice_id: 'S-156228'}],
+  ] as const
+
+  test.each(sliceTestCases)('returns correct slice for %s', (plugin, expected) => {
+    expect(getSliceNameAndId(plugin)).toEqual(expected)
   })
 })
