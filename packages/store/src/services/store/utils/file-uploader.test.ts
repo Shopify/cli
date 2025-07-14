@@ -26,7 +26,7 @@ describe('FileUploader', () => {
         stagedTargets: [
           {
             url: 'https://upload.shopify.com/staged',
-            resourceUrl: 'https://shopify.com/resource/123',
+            resourceUrl: 'https://shopify.com/resource/123/',
             parameters: [
               {name: 'key', value: 'uploads/123'},
               {name: 'policy', value: 'policy123'},
@@ -52,17 +52,21 @@ describe('FileUploader', () => {
     test('should successfully upload a valid SQLite file', async () => {
       const result = await fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
 
-      expect(result).toBe('https://shopify.com/resource/123')
+      expect(result).toBe('https://shopify.com/resource/123/uploads/123')
       expect(readFileSync).toHaveBeenCalledWith(mockFilePath)
-      expect(createStagedUploadAdmin).toHaveBeenCalledWith(mockStoreFqdn, [
-        {
-          resource: 'FILE',
-          filename: 'database.sqlite',
-          mimeType: 'application/x-sqlite3',
-          httpMethod: 'POST',
-          fileSize: '1024',
-        },
-      ])
+      expect(createStagedUploadAdmin).toHaveBeenCalledWith(
+        mockStoreFqdn,
+        [
+          {
+            resource: 'SQLITE_DATABASE',
+            filename: 'database.sqlite',
+            mimeType: 'application/x-sqlite3',
+            httpMethod: 'POST',
+            fileSize: '1024',
+          },
+        ],
+        'unstable',
+      )
       expect(fetch).toHaveBeenCalledWith('https://upload.shopify.com/staged', {
         method: 'POST',
         body: expect.any(FormData),
@@ -103,14 +107,14 @@ describe('FileUploader', () => {
     })
 
     test('should throw error when file is too large', async () => {
-      const largeSize = 30 * 1024 * 1024
+      const largeSize = 400 * 1024 * 1024
       vi.mocked(fileSize).mockResolvedValue(largeSize)
 
       const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
       await expect(promise).rejects.toThrow(ValidationError)
       await expect(promise).rejects.toMatchObject({
         code: ErrorCodes.FILE_TOO_LARGE,
-        params: {filePath: mockFilePath, fileSize: '30MB', maxSize: '20MB'},
+        params: {filePath: mockFilePath, fileSize: '400MB', maxSize: '300MB'},
       })
     })
 

@@ -1,26 +1,27 @@
-import {StagedUploadInput, createStagedUploadAdmin} from '../../../apis/admin/index.js'
+import {createStagedUploadAdmin} from '../../../apis/admin/index.js'
+import {SQLiteStagedUploadInput} from '../../../apis/admin/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {fileExistsSync, fileSize, isDirectory, readFileSync} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export class FileUploader {
-  private readonly MAX_FILE_SIZE = 20 * 1024 * 1024
+  private readonly MAX_FILE_SIZE = 300 * 1024 * 1024
 
   async uploadSqliteFile(filePath: string, storeFqdn: string): Promise<string> {
     await this.validateSqliteFile(filePath)
 
     const fileBuffer = readFileSync(filePath)
     const sizeOfFile = await fileSize(filePath)
-    const uploadInput: StagedUploadInput = {
-      resource: 'FILE',
+    const uploadInput: SQLiteStagedUploadInput = {
+      resource: 'SQLITE_DATABASE',
       filename: 'database.sqlite',
       mimeType: 'application/x-sqlite3',
       httpMethod: 'POST',
       fileSize: sizeOfFile.toString(),
     }
 
-    const stagedUploadResponse = await createStagedUploadAdmin(storeFqdn, [uploadInput])
+    const stagedUploadResponse = await createStagedUploadAdmin(storeFqdn, [uploadInput], 'unstable')
 
     if (!stagedUploadResponse.stagedUploadsCreate?.stagedTargets?.length) {
       throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED, {
@@ -41,6 +42,15 @@ export class FileUploader {
         reason: 'Missing required fields in staged target',
       })
     }
+
+    const stagedUploadKeyParam = parameters.find((parameter) => parameter.name === 'key')
+    if (!stagedUploadKeyParam) {
+      throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED, {
+        reason: 'Missing key parameter in staged upload target',
+      })
+    }
+
+    const finalResourceUrl = resourceUrl + stagedUploadKeyParam.value
 
     const formData = new FormData()
 
@@ -63,7 +73,7 @@ export class FileUploader {
       })
     }
 
-    return resourceUrl
+    return finalResourceUrl
   }
 
   private async validateSqliteFile(filePath: string): Promise<void> {
