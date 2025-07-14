@@ -22,6 +22,7 @@ export const ErrorCodes = {
   FILE_UPLOAD_FAILED: 'FILE_UPLOAD_FAILED',
   FILE_DOWNLOAD_FAILED: 'FILE_DOWNLOAD_FAILED',
   STAGED_UPLOAD_FAILED: 'STAGED_UPLOAD_FAILED',
+  GRAPHQL_API_ERROR: 'GRAPHQL_API_ERROR',
 } as const
 
 interface ErrorParams {
@@ -32,14 +33,16 @@ export class OperationError extends AbortError {
   operation: string
   code: string
   params?: ErrorParams
+  requestId?: string
 
-  constructor(operation: string, code: string, params?: ErrorParams) {
+  constructor(operation: string, code: string, params?: ErrorParams, requestId?: string) {
     // Generate a message based on the code and params
-    const message = generateErrorMessage(code, params)
+    const message = generateErrorMessage(code, params, requestId)
     super(message)
     this.operation = operation
     this.code = code
     this.params = params
+    this.requestId = requestId
   }
 }
 
@@ -57,7 +60,7 @@ export class ValidationError extends AbortError {
 }
 
 // Helper function to generate error messages based on code and params
-function generateErrorMessage(code: string, params?: ErrorParams): string {
+function generateErrorMessage(code: string, params?: ErrorParams, requestId?: string): string {
   switch (code) {
     // Validation errors
     case ErrorCodes.SHOP_NOT_FOUND:
@@ -102,6 +105,10 @@ function generateErrorMessage(code: string, params?: ErrorParams): string {
       return 'No response body received'
     case ErrorCodes.STAGED_UPLOAD_FAILED:
       return typeof params?.reason === 'string' ? params.reason : 'Failed to create staged upload'
+    case ErrorCodes.GRAPHQL_API_ERROR: {
+      const finalRequestId = requestId ?? 'unknown'
+      return `Copy could not complete due to an API request failure\n\nRequest Id: ${finalRequestId}`
+    }
 
     default:
       return 'An error occurred'

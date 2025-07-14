@@ -207,4 +207,56 @@ describe('StoreExportOperation', () => {
       },
     })
   })
+
+  test('should convert GraphQL ClientError to user-friendly error with request ID', async () => {
+    const operationError = new OperationError(
+      'startBulkDataStoreExport',
+      ErrorCodes.GRAPHQL_API_ERROR,
+      {},
+      'export-request-xyz789',
+    )
+    mockApiClient.startBulkDataStoreExport.mockRejectedValue(operationError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreExport',
+      code: ErrorCodes.GRAPHQL_API_ERROR,
+      requestId: 'export-request-xyz789',
+    })
+  })
+
+  test('should convert GraphQL ClientError to user-friendly error without request ID', async () => {
+    const operationError = new OperationError('startBulkDataStoreExport', ErrorCodes.GRAPHQL_API_ERROR)
+    mockApiClient.startBulkDataStoreExport.mockRejectedValue(operationError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreExport',
+      code: ErrorCodes.GRAPHQL_API_ERROR,
+    })
+
+    const error = await promise.catch((err) => err)
+    expect(error.requestId).toBeUndefined()
+    expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
+  })
 })

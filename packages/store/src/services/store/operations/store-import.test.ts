@@ -244,4 +244,56 @@ describe('StoreImportOperation', () => {
     expect(fileExists).toHaveBeenCalled()
     expect(mockApiClient.ensureAuthenticatedBusinessPlatform).not.toHaveBeenCalled()
   })
+
+  test('should convert GraphQL ClientError to user-friendly error with request ID', async () => {
+    const operationError = new OperationError(
+      'startBulkDataStoreImport',
+      ErrorCodes.GRAPHQL_API_ERROR,
+      {},
+      'import-request-def456',
+    )
+    mockApiClient.startBulkDataStoreImport.mockRejectedValue(operationError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreImport',
+      code: ErrorCodes.GRAPHQL_API_ERROR,
+      requestId: 'import-request-def456',
+    })
+  })
+
+  test('should convert GraphQL ClientError to user-friendly error without request ID', async () => {
+    const operationError = new OperationError('startBulkDataStoreImport', ErrorCodes.GRAPHQL_API_ERROR)
+    mockApiClient.startBulkDataStoreImport.mockRejectedValue(operationError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreImport',
+      code: ErrorCodes.GRAPHQL_API_ERROR,
+    })
+
+    const error = await promise.catch((err) => err)
+    expect(error.requestId).toBeUndefined()
+    expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
+  })
 })
