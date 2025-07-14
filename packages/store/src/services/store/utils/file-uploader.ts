@@ -1,4 +1,5 @@
-import {StagedUploadInput, createStagedUploadAdmin} from '../../../apis/admin/index.js'
+import {createStagedUploadAdmin} from '../../../apis/admin/index.js'
+import {SQLiteStagedUploadInput} from '../../../apis/admin/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {fileExistsSync, fileSize, isDirectory, readFileSync} from '@shopify/cli-kit/node/fs'
@@ -12,7 +13,7 @@ export class FileUploader {
 
     const fileBuffer = readFileSync(filePath)
     const sizeOfFile = await fileSize(filePath)
-    const uploadInput: StagedUploadInput = {
+    const uploadInput: SQLiteStagedUploadInput = {
       resource: 'SQLITE_DATABASE',
       filename: 'database.sqlite',
       mimeType: 'application/x-sqlite3',
