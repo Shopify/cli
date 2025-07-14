@@ -15,12 +15,13 @@ export const storeFlags = {
 
 export const fileFlags = {
   'from-file': Flags.string({
-    description: 'The SQLite file to import data from.',
+    description: "The SQLite file to import data from. Can't be used with --to-file.",
     required: false,
     env: 'SHOPIFY_FLAG_FROM_FILE',
   }),
   'to-file': Flags.string({
-    description: 'The SQLite file path to export data to. Omit to auto-generate filename.',
+    description:
+      "The SQLite file path to export data to. Omit to auto-generate filename. Can't be used with --from-file.",
     required: false,
     env: 'SHOPIFY_FLAG_TO_FILE',
     default: undefined,
@@ -29,7 +30,8 @@ export const fileFlags = {
 
 export const resourceConfigFlags = {
   key: Flags.string({
-    description: 'The identity key to use to match resources',
+    description:
+      'The identity key to use to match resources. ID metafields can be specified as <object_type>:metafield:<metafield_namespace>:<key>',
     multiple: true,
     required: false,
     env: 'SHOPIFY_FLAG_IDENTITY_KEY',
