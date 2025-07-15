@@ -14,9 +14,11 @@ import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utils/result-file-handler.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/export_results.js')
 vi.mock('../../../prompts/confirm_export.js')
@@ -54,13 +56,16 @@ describe('StoreExportOperation', () => {
       operation: mockCompletedOperation,
       isComplete: true,
     })
+
+    vi.mocked(fileExistsSync).mockReturnValue(false)
   })
 
   test('should show confirm prompt before export', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
     vi.mocked(confirmExportPrompt).mockResolvedValue(true)
     await operation.execute('source.myshopify.com', 'export.sqlite', {})
 
-    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'export.sqlite')
+    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'export.sqlite', true)
     expect(renderExportResult).toHaveBeenCalled()
   })
 
@@ -75,7 +80,7 @@ describe('StoreExportOperation', () => {
     vi.mocked(confirmExportPrompt).mockResolvedValue(true)
     await operation.execute('source.myshopify.com', 'output.sqlite', {})
 
-    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite')
+    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite', false)
     expect(renderCopyInfo).toHaveBeenCalledWith('Export Operation', 'source.myshopify.com', 'output.sqlite')
     expect(renderExportResult).toHaveBeenCalledWith('source.myshopify.com', mockCompletedOperation)
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
