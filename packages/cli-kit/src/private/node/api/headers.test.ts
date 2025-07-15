@@ -33,6 +33,24 @@ describe('common API methods', () => {
     })
   })
 
+  test('keep-alive header is set to based on custom timeouts', () => {
+    // Given
+    const customTimeout = 45000
+
+    // When
+    const headers = buildHeaders('my-token', customTimeout)
+
+    // Then
+    expect(headers).toEqual({
+      'Content-Type': 'application/json',
+      'Keep-Alive': 'timeout=45',
+      'X-Shopify-Access-Token': 'Bearer my-token',
+      'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+      authorization: 'Bearer my-token',
+      'Sec-CH-UA-PLATFORM': process.platform,
+    })
+  })
+
   test('when user is not employee, do not include header', () => {
     // Given
     vi.mocked(randomUUID).mockReturnValue('random-uuid')

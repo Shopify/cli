@@ -48,6 +48,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       session,
       variables: {id: gid},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (theme) {
@@ -83,6 +84,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       session,
       variables: {after},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')

@@ -58,6 +58,7 @@ describe('fetchTheme', () => {
       session,
       variables: {id: 'gid://shopify/OnlineStoreTheme/123'},
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
 
     expect(theme).not.toBeNull()
@@ -83,6 +84,7 @@ describe('fetchTheme', () => {
       session,
       variables: {id: 'gid://shopify/OnlineStoreTheme/123'},
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
   })
 })
@@ -109,6 +111,7 @@ describe('fetchThemes', () => {
       session,
       variables: {after: null},
       responseOptions: {handleErrors: false},
+      requestBehaviour: expectedApiOptions,
     })
     expect(themes).toHaveLength(2)
 

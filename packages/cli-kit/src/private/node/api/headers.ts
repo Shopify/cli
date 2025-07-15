@@ -4,6 +4,8 @@ import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
 import https from 'https'
 
+export const DEFAULT_TIMEOUT_MS = 30000
+
 class RequestClientError extends ExtendableError {
   statusCode: number
   public constructor(message: string, statusCode: number) {
@@ -11,6 +13,7 @@ class RequestClientError extends ExtendableError {
     this.statusCode = statusCode
   }
 }
+
 export class GraphQLClientError extends RequestClientError {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors?: any[]
@@ -44,12 +47,12 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
     .join('\n')
 }
 
-export function buildHeaders(token?: string): {[key: string]: string} {
+export function buildHeaders(token?: string, timeout = DEFAULT_TIMEOUT_MS): {[key: string]: string} {
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
 
   const headers: {[header: string]: string} = {
     'User-Agent': userAgent,
-    'Keep-Alive': 'timeout=30',
+    'Keep-Alive': `timeout=${timeout / 1000}`,
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'Content-Type': 'application/json',

@@ -1,4 +1,4 @@
-import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
+import {buildHeaders, DEFAULT_TIMEOUT_MS, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
@@ -91,14 +91,16 @@ async function createGraphQLClient({
   url,
   addedHeaders,
   token,
+  timeoutMs,
 }: {
   url: string
   token: string | undefined
   addedHeaders?: {[header: string]: string}
+  timeoutMs?: number
 }) {
   const headers = {
     ...addedHeaders,
-    ...buildHeaders(token),
+    ...buildHeaders(token, timeoutMs),
   }
   const clientOptions = {agent: await httpsAgent(), headers}
 
@@ -117,8 +119,14 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler, cacheOptions} =
     options
   const requestBehaviour = requestMode(options.preferredBehaviour ?? 'default')
+  const timeoutMs = timeout<TResult>(options)
 
-  let {headers, client} = await createGraphQLClient({url, addedHeaders, token})
+  let {headers, client} = await createGraphQLClient({
+    url,
+    addedHeaders,
+    token,
+    timeoutMs,
+  })
   debugLogRequestInfo(api, queryAsString, url, variables, headers)
 
   const rawGraphQLRequest = async () => {
@@ -255,4 +263,14 @@ export async function graphqlRequestDoc<TResult, TVariables extends Variables>(
     ...options,
     queryAsString: resolveRequestDocument(options.query).query,
   })
+}
+
+function timeout<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
+  const requestBehaviour = options.requestBehaviour
+
+  if (typeof requestBehaviour === 'object' && 'timeoutMs' in requestBehaviour) {
+    return requestBehaviour.timeoutMs
+  }
+
+  return DEFAULT_TIMEOUT_MS
 }

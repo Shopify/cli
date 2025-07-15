@@ -30,7 +30,7 @@ beforeEach(async () => {
 const mockApi = graphql.link('https://shopify.example/graphql')
 
 const handlers = [
-  mockApi.query('QueryName', ({query}) => {
+  mockApi.query('QueryName', () => {
     return HttpResponse.json(
       {
         data: {
@@ -312,6 +312,30 @@ describe('graphqlRequest', () => {
 
     await expect(res).rejects.toThrow('bad request')
     expect(requestCount).toBe(1)
+  })
+
+  test('sets Keep-Alive header based on requestBehaviour.timeoutMs', async () => {
+    let receivedKeepAlive
+
+    // Given
+    const timeoutMs = 45000
+    const fakeHandler = graphql.query('FakeQuery', ({request}) => {
+      receivedKeepAlive = request.headers.get('keep-alive')
+      return HttpResponse.json({data: {}})
+    })
+    server.use(fakeHandler)
+
+    // When
+    await graphqlRequest({
+      query: 'query FakeQuery { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      requestBehaviour: {useNetworkLevelRetry: false, useAbortSignal: true, timeoutMs},
+    })
+
+    // Then
+    expect(receivedKeepAlive).toBe('timeout=45')
   })
 })
 
