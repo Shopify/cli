@@ -14,7 +14,18 @@ import {loadHelpClass} from '@oclif/core'
 
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy, export, or import store data'
-  static description = 'Copy data between stores, export store data to SQLite, or import data from SQLite to a store'
+  static description = `Examples:
+
+    COPY data from one store to another in your organization
+    shopify store copy --from-store source.myshopify.com --to-store target.myshopify.com
+
+    EXPORT store data to SQLite
+    shopify store copy --from-store source.myshopify.com --to-file path/to/file.sqlite
+
+    IMPORT data from SQLite to a store
+    shopify store copy --from-file path/to/file.sqlite --to-store target.myshopify.com
+`
+
   static hidden = true
   static flags = {
     ...storeFlags,
