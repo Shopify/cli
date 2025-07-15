@@ -71,7 +71,10 @@ export async function updateAppIdentifiers(
   })
 
   const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
-  const writeToFile = !contentIsEqual && (command === 'deploy' || command === 'release')
+  const writeToFile =
+    !contentIsEqual &&
+    (command === 'deploy' || command === 'release') &&
+    !developerPlatformClient.supportsAtomicDeployments
   dotenvFile.variables = updatedVariables
 
   if (writeToFile) {
@@ -108,9 +111,9 @@ export function getAppIdentifiers(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      extensionsIdentifiers[extension.localIdentifier] = extension.uid
-    }
+    // if (developerPlatformClient.supportsAtomicDeployments) {
+    //   extensionsIdentifiers[extension.localIdentifier] = extension.uid
+    // }
   }
   app.allExtensions.forEach(processExtension)
 

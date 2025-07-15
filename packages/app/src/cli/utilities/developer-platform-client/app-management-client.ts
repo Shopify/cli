@@ -1307,7 +1307,7 @@ function mapBusinessPlatformStoresToOrganizationStores(
 function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
   return {
     registrationId: mod.userIdentifier,
-    registrationUuid: mod.userIdentifier,
+    registrationUuid: mod.uuid,
     registrationTitle: mod.handle,
     type: mod.specification.externalIdentifier,
     config: mod.config,

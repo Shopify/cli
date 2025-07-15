@@ -72,25 +72,37 @@ function matchByNameAndType(
 function matchByUUID(
   local: LocalSource[],
   remote: RemoteSource[],
+  ids: IdentifiersExtensions,
 ): {
   matched: IdentifiersExtensions
   toCreate: LocalSource[]
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
-  const notMigratedRemoteExtensions = remote.filter((remoteSource) => !remoteSource.id)
+  const matched: IdentifiersExtensions = {}
+  const pendingLocal: LocalSource[] = []
 
-  const {matched, toCreate, toConfirm, toManualMatch} = matchByNameAndType(local, notMigratedRemoteExtensions)
-
+  // First, match by UID
   local.forEach((localSource) => {
-    const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
+    const possibleMatch = remote.find((remoteSource) => remoteSource.id === localSource.uid)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.id!
+    else pendingLocal.push(localSource)
+  })
+
+  // Then, match by UUID
+  pendingLocal.forEach((localSource) => {
+    const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === ids[localSource.localIdentifier])
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
   })
 
-  toCreate.concat(local.filter((elem) => !matched[elem.localIdentifier]))
+  // The rest, are either to be created or deleted.
+  // const {matched, toCreate, toConfirm, toManualMatch} = matchByNameAndType(local, notMigratedRemoteExtensions)
 
-  return {matched, toCreate, toConfirm, toManualMatch}
+  const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
+
+  return {matched, toCreate, toConfirm: [], toManualMatch: {local: [], remote: []}}
 }
 
 function migrateLegacyFunctions(
@@ -229,7 +241,7 @@ export async function automaticMatchmaking(
   const {local, remote} = pendingAfterMigratingFunctions
 
   const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
-    ? matchByUUID(local, remote)
+    ? matchByUUID(localSources, remoteSources, ids)
     : matchByNameAndType(local, remote)
 
   return {
