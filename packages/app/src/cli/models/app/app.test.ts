@@ -616,7 +616,12 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest()
+    const manifest = await app.manifest({
+      app: 'API_KEY',
+      extensions: {app_access: 'UUID_A'},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    })
 
     // Then
     expect(manifest).toEqual({
@@ -627,6 +632,7 @@ describe('manifest', () => {
           type: 'app_access_external',
           handle: 'app_access',
           uid: appAccessModule.uid,
+          uuid: 'UUID_A',
           assets: appAccessModule.uid,
           target: appAccessModule.contextValue,
           config: expect.objectContaining({
@@ -664,7 +670,7 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest()
+    const manifest = await app.manifest(undefined)
 
     // Then
     expect(manifest).toEqual({
@@ -722,7 +728,7 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest()
+    const manifest = await app.manifest(undefined)
 
     // Then
     expect(manifest).toEqual({

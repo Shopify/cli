@@ -781,7 +781,7 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_A_2],
       [REGISTRATION_A],
-      {},
+      {'extension-a': 'UUID_A'},
       testDeveloperPlatformClient({supportsAtomicDeployments: true}),
     )
 
@@ -792,6 +792,7 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
       toCreate: [EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
     }
+
     expect(got).toEqual(expected)
   })
 })
