@@ -34,6 +34,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/load-specificatio
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
+import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -389,7 +390,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       configSchema,
       remoteFlags: this.remoteFlags,
       hiddenConfig,
-      devApplicationURLs: this.previousApp?.devApplicationURLs,
+      devApplicationURLs: this.getDevApplicationURLs(configuration, webs),
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -787,6 +788,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           }
         })
       })
+  }
+
+  private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {
+    const previousDevUrls = this.previousApp?.devApplicationURLs
+    if (!previousDevUrls || !isCurrentAppSchema(currentConfiguration)) return previousDevUrls
+
+    return generateApplicationURLs(
+      previousDevUrls.applicationUrl,
+      webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+      currentConfiguration.app_proxy,
+    )
   }
 }
 
