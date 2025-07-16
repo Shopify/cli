@@ -208,74 +208,51 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
  * @returns The cleaned path.
  */
 export function cleanSingleStackTracePath(filePath: string): string {
-  let cleanedPath = normalizePath(filePath)
+  let cleanedPath = filePath
 
-  // Handle file:// protocol
+  // Handle file:// protocol FIRST
   if (cleanedPath.startsWith('file:///')) {
     cleanedPath = cleanedPath.replace('file:///', '')
+  } else if (cleanedPath.startsWith('file://')) {
+    cleanedPath = cleanedPath.replace('file://', '')
   } else if (cleanedPath.startsWith('file:/')) {
     cleanedPath = cleanedPath.replace('file:/', '/')
   }
+
+  // CRITICAL: Sanitize path traversal BEFORE normalization
+  // This prevents normalize from resolving ../ sequences
+  cleanedPath = cleanedPath.replace(/\.\.\//g, '')
+  cleanedPath = cleanedPath.replace(/\.\//g, '')
+
+  // Now normalize the path (this handles things like double slashes)
+  cleanedPath = normalizePath(cleanedPath)
 
   // CRITICAL: Add security guards
   if (cleanedPath.length > 1000) {
     cleanedPath = `${cleanedPath.substring(0, 1000)}...`
   }
 
-  // CRITICAL: Sanitize path traversal
-  cleanedPath = cleanedPath.replace(/\.\.\//g, '')
-  cleanedPath = cleanedPath.replace(/\.\//g, '')
-
-  // CRITICAL: Preserve drive letters (before slash conversion)
-  cleanedPath = cleanedPath.replace(/^([A-Z]):/, '<DRIVE_$1>')
-  cleanedPath = cleanedPath.replace(/^\/([A-Z]):/, '<DRIVE_$1>')
-
   // Convert all backslashes to forward slashes for consistency
   cleanedPath = cleanedPath.replace(/\\/g, '/')
 
-  // Add missing normalizations
-  cleanedPath = cleanedPath.replace(/^node:/, '<NODE>:')
-  cleanedPath = cleanedPath.replace(/^webpack:\/\/\//, '<WEBPACK>/')
+  // Remove drive letters (after file:// handling and slash conversion)
+  cleanedPath = cleanedPath.replace(/^[A-Z]:\//, '')
+  cleanedPath = cleanedPath.replace(/^\/[A-Z]:\//, '')
 
-  // CI/CD environment paths - process these BEFORE home directory normalization
-  cleanedPath = cleanedPath.replace(/^\/home\/runner\/work\/[^/]+\/[^/]+\//, '<CI_WORKSPACE>/')
-  cleanedPath = cleanedPath.replace(/^\/github\/workspace\//, '<CI_WORKSPACE>/')
-  cleanedPath = cleanedPath.replace(/^\/opt\/build\/repo\//, '<CI_WORKSPACE>/')
-  cleanedPath = cleanedPath.replace(/^\/builds\/[^/]+\/[^/]+\//, '<CI_WORKSPACE>/')
-  cleanedPath = cleanedPath.replace(/^\/bitbucket\/pipelines\/agent\/build\//, '<CI_WORKSPACE>/')
-  cleanedPath = cleanedPath.replace(/^\/codebuild\/output\/[^/]+\//, '<CI_WORKSPACE>/')
-
-  // Normalize user home directories to <HOME>
-  // Windows: C:/Users/username or /Users/username on WSL
-  cleanedPath = cleanedPath.replace(/^\/Users\/[^/]+/, '<HOME>')
-  cleanedPath = cleanedPath.replace(/^\/home\/[^/]+/, '<HOME>')
-  cleanedPath = cleanedPath.replace(/^\/root/, '<HOME>')
-
-  // Windows specific home paths
-  cleanedPath = cleanedPath.replace(/^\/Documents and Settings\/[^/]+/, '<HOME>')
-  cleanedPath = cleanedPath.replace(/^\/Users\/[^/]+\/AppData\/Roaming/, '<HOME>/AppData/Roaming')
-  cleanedPath = cleanedPath.replace(/^\/Users\/[^/]+\/AppData\/Local/, '<HOME>/AppData/Local')
-
-  // Normalize global npm/yarn paths BEFORE temp directories
-  // npm global paths
-  cleanedPath = cleanedPath.replace(/^<HOME>\/AppData\/Roaming\/npm\/node_modules\//, '<GLOBAL_NPM>/')
-  cleanedPath = cleanedPath.replace(/^\/usr\/local\/lib\/node_modules\//, '<GLOBAL_NPM>/')
-  cleanedPath = cleanedPath.replace(/^\/usr\/lib\/node_modules\//, '<GLOBAL_NPM>/')
-  cleanedPath = cleanedPath.replace(/^<HOME>\/\.npm-global\/lib\/node_modules\//, '<GLOBAL_NPM>/')
-
-  // yarn global paths
-  cleanedPath = cleanedPath.replace(/^<HOME>\/\.yarn\/berry\/cache\//, '<YARN_CACHE>/')
-  cleanedPath = cleanedPath.replace(/^<HOME>\/\.config\/yarn\/global\/node_modules\//, '<GLOBAL_YARN>/')
-
-  // pnpm global paths
-  cleanedPath = cleanedPath.replace(/^<HOME>\/\.pnpm-store\//, '<PNPM_STORE>/')
-  cleanedPath = cleanedPath.replace(/^<HOME>\/\.local\/share\/pnpm\/global\/[^/]+\/node_modules\//, '<GLOBAL_PNPM>/')
-
-  // Normalize temp directories to <TEMP> - AFTER global paths
-  cleanedPath = cleanedPath.replace(/^\/tmp\//, '<TEMP>/')
-  cleanedPath = cleanedPath.replace(/^\/var\/folders\/[^/]+\/[^/]+\/[^/]+\//, '<TEMP>/')
-  cleanedPath = cleanedPath.replace(/^\/Users\/[^/]+\/AppData\/Local\/Temp\//, '<TEMP>/')
-  cleanedPath = cleanedPath.replace(/^<HOME>\/AppData\/Local\/Temp\//, '<TEMP>/')
+  // AGGRESSIVE NORMALIZATION: Strip ALL path prefixes
+  // For node_modules paths: extract ONLY the part after node_modules/
+  const nodeModulesMatch = cleanedPath.match(/^.*node_modules\/(.+)$/)
+  if (nodeModulesMatch && nodeModulesMatch[1]) {
+    cleanedPath = nodeModulesMatch[1]
+  } else {
+    // For ALL other paths: strip ALL leading absolute path components
+    // This ensures identical errors produce identical stack traces regardless of:
+    // - User home directory (/home/user, /Users/john, etc.)
+    // - CI workspace (/github/workspace, /bitbucket/pipelines, etc.)
+    // - Installation location (/usr/local/lib, C:\Program Files, etc.)
+    // - Temporary directories (/tmp, /var/folders, etc.)
+    cleanedPath = cleanedPath.replace(/^\/+/, '')
+  }
 
   // Normalize webpack chunk hashes
   cleanedPath = cleanedPath.replace(/chunk-[A-Z0-9]{8}\.js/, 'chunk-<HASH>.js')
@@ -285,18 +262,13 @@ export function cleanSingleStackTracePath(filePath: string): string {
   cleanedPath = cleanedPath.replace(/\.[a-f0-9]{8}\.(js|mjs|cjs|ts)$/, '.<HASH>.$1')
   cleanedPath = cleanedPath.replace(/\.[a-f0-9]{16,}\.(js|mjs|cjs|ts)$/, '.<HASH>.$1')
 
-  // Normalize container and cloud environments
-  cleanedPath = cleanedPath.replace(/^\/app\//, '<CONTAINER>/')
-  cleanedPath = cleanedPath.replace(/^\/workspace\//, '<CONTAINER>/')
-  cleanedPath = cleanedPath.replace(/^\/usr\/src\/app\//, '<CONTAINER>/')
-
-  // CRITICAL: Fix version pattern - remove slash requirement and fix potential ReDoS
+  // Normalize version patterns
   cleanedPath = cleanedPath.replace(
     /@[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9\-._]+)?(?:\+[a-zA-Z0-9\-._]+)?/g,
     '@<VERSION>',
   )
 
-  // CRITICAL: Fix UUID pattern - remove slash requirements
+  // Normalize UUID patterns
   cleanedPath = cleanedPath.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '<UUID>')
 
   return cleanedPath
