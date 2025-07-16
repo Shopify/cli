@@ -453,54 +453,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows app info modal when i is pressed', async () => {
-    // Given - setup with a status message to verify it gets replaced
-    devSessionStatusManager.updateStatus({
-      isReady: true,
-      previewURL: 'https://shopify.com',
-      graphiqlURL: 'https://graphiql.shopify.com',
-      statusMessage: {
-        type: 'success',
-        message: 'App is ready for development',
-      },
-    })
-
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[]}
-        abortController={new AbortController()}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        appURL="https://my-app.ngrok.io"
-        appName="My Test App"
-        organizationName="My Organization"
-        configPath="/path/to/shopify.app.toml"
-        onAbort={onAbort}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-
-    // Initially should show status message
-    expect(renderInstance.lastFrame()!).toContain('App is ready for development')
-
-    // When
-    await sendInputAndWait(renderInstance, 100, 'i')
-
-    // Then - info tab should be shown with app data
-    const output = renderInstance.lastFrame()!
-    expect(output).toContain('My Test App')
-    expect(output).toContain('https://my-app.ngrok.io')
-    expect(output).toContain('shopify.app.toml')
-    expect(output).toContain('mystore.myshopify.com')
-    expect(output).toContain('My Organization')
-    // Status indicator should be replaced
-    expect(output).not.toContain('App is ready for development')
-
-    renderInstance.unmount()
-  })
-
-  test('switches between status and info tabs when s and i are pressed', async () => {
+  test('shows app info when i is pressed', async () => {
     // Given
     const renderInstance = render(
       <DevSessionUI
@@ -516,77 +469,14 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Initially should be on status tab
-    expect(renderInstance.lastFrame()!).toContain('Preview URL:')
-
-    // When - press i to switch to info tab
-    await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('My Test App')
-    expect(renderInstance.lastFrame()!).not.toContain('Preview URL:')
-
-    // When - press s to switch back to status tab
-    await sendInputAndWait(renderInstance, 100, 's')
-    expect(renderInstance.lastFrame()!).not.toContain('My Test App')
-    expect(renderInstance.lastFrame()!).toContain('Preview URL:')
-
-    renderInstance.unmount()
-  })
-
-  test('always shows app info tab regardless of app readiness', async () => {
-    // Given - app not ready
-    devSessionStatusManager.updateStatus({isReady: false})
-
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[]}
-        abortController={new AbortController()}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        appURL="https://my-app.ngrok.io"
-        appName="My Test App"
-        onAbort={onAbort}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-
-    // Then - should always show (i) App Info tab
-    expect(renderInstance.lastFrame()!).toContain('(i) App Info')
-
-    // When - app becomes ready
-    devSessionStatusManager.updateStatus({isReady: true})
-    await waitForInputsToBeReady()
-
-    // Then - should still show (i) App Info tab
-    expect(renderInstance.lastFrame()!).toContain('(i) App Info')
-
-    renderInstance.unmount()
-  })
-
-  test('shows minimal app info when only required fields are provided', async () => {
-    // Given - provide at least one optional field so modal appears
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[]}
-        abortController={new AbortController()}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        appName="Basic App"
-        onAbort={onAbort}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-
     // When
     await sendInputAndWait(renderInstance, 100, 'i')
 
-    // Then
+    // Then - info tab should be shown with app data
     const output = renderInstance.lastFrame()!
+    expect(output).toContain('My Test App')
+    expect(output).toContain('https://my-app.ngrok.io')
     expect(output).toContain('mystore.myshopify.com')
-    expect(output).toContain('Basic App')
-    expect(output).toContain('App:')
-    expect(output).toContain('Dev Store:')
 
     renderInstance.unmount()
   })
