@@ -3,7 +3,6 @@ import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
-import {storeFullDomain} from '../utils/store-utils.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
 import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
@@ -12,6 +11,7 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class StoreCopyOperation implements StoreOperation {
   fromArg: string | undefined
@@ -28,8 +28,8 @@ export class StoreCopyOperation implements StoreOperation {
     this.fromArg = fromStore
     this.toArg = toStore
 
-    const sourceShopDomain = storeFullDomain(fromStore)
-    const targetShopDomain = storeFullDomain(toStore)
+    const sourceShopDomain = await normalizeStoreFqdn(fromStore)
+    const targetShopDomain = await normalizeStoreFqdn(toStore)
 
     const apiShopId = await this.validateShops(sourceShopDomain, targetShopDomain)
 
