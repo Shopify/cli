@@ -20,7 +20,7 @@ export default class Open extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
-    password: themeFlags.password,
+    ...themeFlags,
     development: Flags.boolean({
       char: 'd',
       description: 'Open your development theme.',
@@ -41,8 +41,6 @@ export default class Open extends ThemeCommand {
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
-    store: themeFlags.store,
-    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

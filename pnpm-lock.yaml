@@ -7,7 +7,7 @@ settings:
 overrides:
   '@types/react': 17.0.2
   vite: 6.3.5
-  '@oclif/core': 3.26.5
+  '@oclif/core': 4.4.0
   whatwg-url: 14.0.0
   supports-hyperlinks: 3.1.0
   '@graphql-tools/utils': 10.7.2
@@ -119,8 +119,8 @@ importers:
         specifier: 21.1.2
         version: 21.1.2
       oclif:
-        specifier: 4.11.3
-        version: 4.11.3(@types/node@18.19.70)
+        specifier: 4.20.1
+        version: 4.20.1(@types/node@18.19.70)
       octokit-plugin-create-pull-request:
         specifier: ^3.12.2
         version: 3.13.1
@@ -161,16 +161,16 @@ importers:
         specifier: 3.8.1
         version: 3.8.1(esbuild@0.25.5)(graphql-tag@2.12.6(graphql@16.10.0))(graphql@16.10.0)
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 4.4.0
+        version: 4.4.0
       '@shopify/cli-kit':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.27.0
@@ -179,11 +179,11 @@ importers:
         specifier: 8.11.1
         version: 8.11.1(react@18.3.1)
       '@shopify/theme':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.17.0
-        version: 3.17.0
+        specifier: 3.19.0
+        version: 3.19.0
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
@@ -277,31 +277,34 @@ importers:
         version: 3.0.0
     devDependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 4.4.0
+        version: 4.4.0
       '@oclif/plugin-commands':
-        specifier: 4.1.18
-        version: 4.1.18
+        specifier: 4.1.26
+        version: 4.1.26
       '@oclif/plugin-plugins':
-        specifier: 5.4.28
-        version: 5.4.28
+        specifier: 5.4.43
+        version: 5.4.43
       '@shopify/app':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: 10.0.1
         version: 10.0.1(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@22.15.29)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@22.15.29)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(sass@1.89.1)(yaml@2.7.0))
       '@shopify/cli-kit':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../plugin-did-you-mean
+      '@shopify/store':
+        specifier: 3.82.0
+        version: link:../store
       '@shopify/theme':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../theme
       '@types/global-agent':
         specifier: 3.0.0
@@ -334,8 +337,8 @@ importers:
         specifier: 2.2.5
         version: 2.2.5
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 4.4.0
+        version: 4.4.0
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -564,10 +567,10 @@ importers:
         version: 0.25.5
     devDependencies:
       '@shopify/app':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../cli-kit
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
@@ -664,10 +667,10 @@ importers:
   packages/plugin-cloudflare:
     dependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 4.4.0
+        version: 4.4.0
       '@shopify/cli-kit':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -677,10 +680,10 @@ importers:
   packages/plugin-did-you-mean:
     dependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 4.4.0
+        version: 4.4.0
       '@shopify/cli-kit':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -690,23 +693,38 @@ importers:
         specifier: ^3.1.4
         version: 3.2.1(vitest@3.2.1(@types/node@22.15.29)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.8.7(@types/node@22.15.29)(typescript@5.8.3))(sass@1.89.1)(yaml@2.7.0))
 
+  packages/store:
+    dependencies:
+      '@graphql-typed-document-node/core':
+        specifier: 3.2.0
+        version: 3.2.0(graphql@16.10.0)
+      '@oclif/core':
+        specifier: 4.4.0
+        version: 4.4.0
+      '@shopify/cli-kit':
+        specifier: 3.82.0
+        version: link:../cli-kit
+      graphql-request:
+        specifier: 6.1.0
+        version: 6.1.0(graphql@16.10.0)
+
   packages/theme:
     dependencies:
       '@oclif/core':
-        specifier: 3.26.5
-        version: 3.26.5
+        specifier: 4.4.0
+        version: 4.4.0
       '@shopify/cli-kit':
-        specifier: 3.81.1
+        specifier: 3.82.0
         version: link:../cli-kit
       '@shopify/liquid-html-parser':
         specifier: ^2.8.2
         version: 2.8.2
       '@shopify/theme-check-node':
-        specifier: 3.17.0
-        version: 3.17.0
+        specifier: 3.19.0
+        version: 3.19.0
       '@shopify/theme-language-server-node':
-        specifier: 2.15.2
-        version: 2.15.2
+        specifier: 2.17.3
+        version: 2.17.3
       chokidar:
         specifier: 3.6.0
         version: 3.6.0
@@ -736,7 +754,7 @@ importers:
         specifier: ^6.1.0
         version: 6.4.0(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@shopify/ui-extensions-server-kit':
-        specifier: 5.2.1
+        specifier: 5.3.0
         version: link:../ui-extensions-server-kit
       copy-to-clipboard:
         specifier: ^3.3.3
@@ -2715,28 +2733,28 @@ packages:
   '@nx/workspace@21.1.2':
     resolution: {integrity: sha512-I4e/X/GN0Vx3FDZv/7bFYmXfOPmcMI3cDO/rg+TqudsuxVM7tJ7+8jtwdpU4I2IEpI6oU9FZ7Fu9R2uNqL5rrQ==}
 
-  '@oclif/core@3.26.5':
-    resolution: {integrity: sha512-uRmAujGJjLhhgpLylbiuHuPt9Ec7u6aJ72utuSPNTRw47+W5vbQSGnLGPiil1Mt5YDL+zFOyTVH6Uv3NSP2SaQ==}
+  '@oclif/core@4.4.0':
+    resolution: {integrity: sha512-wH5g3SLmbRutnr7UzQBSozRFEAZ7U9YGB/wFuBRr0ZghTgv5DE+KQaf6ZtU7iFb9pvkvoVRnT5XheNAtbjRDaQ==}
     engines: {node: '>=18.0.0'}
 
-  '@oclif/plugin-commands@4.1.18':
-    resolution: {integrity: sha512-8d62cstHbrPAkWgl5hYA7G8wIQG+uviCsJIow6FpC3beyQzSA6mJ3/o+bDN1+9xaqYzaRwPdcfROGgC1BLZdkQ==}
+  '@oclif/plugin-commands@4.1.26':
+    resolution: {integrity: sha512-KWK9d0IvaNu0bcQ/PkQuuqnTF+UqPOwAvy+s5/yGJSTJE+MY1uyF3sJaugNV9gn32XP8yGxBltfP5rOM3efnOw==}
     engines: {node: '>=18.0.0'}
 
-  '@oclif/plugin-help@6.2.28':
-    resolution: {integrity: sha512-eFLP2yjiK+xMRGcv9k9jOWV08HB+/Cgg1ND91zS4Uwgp1krMoL39Is+hIqnZOKkmiEMtiv8k5EDqCVv+DTRywg==}
+  '@oclif/plugin-help@6.2.29':
+    resolution: {integrity: sha512-90DMOngEHiQw1I7oylVE1Hco991OkeDFJMx3CNJ2M3g5F1dhXgscjbaIlYHdiuNyVs0mTkKevdiMs911suD4yA==}
     engines: {node: '>=18.0.0'}
 
-  '@oclif/plugin-not-found@3.2.55':
-    resolution: {integrity: sha512-+zgaRKoDsq431UyR/rOlJFDa6zdFkaNenQnLecrUWt9y9bwvw6Bs+mkQymAUJZCd9+JS4sZwqUilONXxU9g6DQ==}
+  '@oclif/plugin-not-found@3.2.57':
+    resolution: {integrity: sha512-HtDnLIcR7ojRgdeH4G6MMUIu1Dgub/iiFEA4srZcQVKUIPA/6nF117W7rBXZMlHcbch90OCoGkSP3ty55nGKDw==}
     engines: {node: '>=18.0.0'}
 
-  '@oclif/plugin-plugins@5.4.28':
-    resolution: {integrity: sha512-76SgC2MX3/GkTVTOdJBVTRVmUuu5gJt+ZVBwxaAWgZnvYWEOW9XGQXw4RhW35f5vKdJL/C6dIiid9Zkg3t+jDw==}
+  '@oclif/plugin-plugins@5.4.43':
+    resolution: {integrity: sha512-upn6anRXlP6hkaEdY/aMT+xhbx94xVvIXq8i9tt/mV0YVAy9NTVTW2a1AjeWfBobruKKqoNEBsotMovCO+CHRA==}
     engines: {node: '>=18.0.0'}
 
-  '@oclif/plugin-warn-if-update-available@3.1.40':
-    resolution: {integrity: sha512-k5FBGxjXsSj56075MFVx5I9MAJa082evyPqLUBOjXL9w91q3k/89U+kTCfFNTQga8DykxhMP/7UTuDFV+d/Dhg==}
+  '@oclif/plugin-warn-if-update-available@3.1.42':
+    resolution: {integrity: sha512-bcBfON81gYCx6x50HjrcL7gRiz7bEuLdQNifMsMcBtBq3IpOifyS8/l5R3REEy9kHJ1qdcSYehtopMvS4ov9lA==}
     engines: {node: '>=18.0.0'}
 
   '@oclif/table@0.4.8':
@@ -3315,7 +3333,7 @@ packages:
     os: [darwin, linux, win32]
     hasBin: true
     peerDependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       '@shopify/cli-kit': ^3.78.1
 
   '@shopify/polaris-icons@8.11.1':
@@ -3368,31 +3386,28 @@ packages:
       react: '>=16.8.0 <18.0.0'
       react-dom: '>=16.8.0 <18.0.0'
 
-  '@shopify/theme-check-common@3.17.0':
-    resolution: {integrity: sha512-8sKKT7kL3v1Ui/tNzSUMDyqAdATktsdhWrhrTNd90xuPMr9Z3ofXEidTeFgdCLpOpATtmvnUIeSGY2AyhCA8qA==}
+  '@shopify/theme-check-common@3.19.0':
+    resolution: {integrity: sha512-POIgmwy/pdNCEoAyeMt0paLh2cdYlmYu1y4/pdufCU57W5DnE9XAIOokGk8QHDGDvkkkxOua3LKAf7pjOyrLjw==}
 
-  '@shopify/theme-check-common@3.17.1':
-    resolution: {integrity: sha512-Bhxp7N1IApX47POmJvfIVRcMXpN37MHgxVYIyXkU8Y6ByAiG8S/axB8TEIEjk5HHs0YW//UQ/y6krYXWFj36WQ==}
-
-  '@shopify/theme-check-docs-updater@3.17.0':
-    resolution: {integrity: sha512-g6CIKiMR/o9D8cGZ0VbqRkeF4GRYQ8rGAn1GptH7XGHAyBtPFUs1uJJ04MenVuiIblbhoQfOz9ReHHzA3a2IfA==}
+  '@shopify/theme-check-docs-updater@3.19.0':
+    resolution: {integrity: sha512-iZrtYPccVSGO+/nfGkcmjSE/nogxwa+dDcfhMWEkvjtmXmODs2+NKH7gjkWM77XZuS5c5eL0nV7jTMaq7rZAog==}
     hasBin: true
 
-  '@shopify/theme-check-docs-updater@3.17.1':
-    resolution: {integrity: sha512-dpTad1xUtNbGpRgU/9J4ZKMEtMPxLTQzUnXAGTHxhhwpGM2v5owwHd5Ql8XlBP0ML9Tu1VPgKN3UZ4BvbTtTRA==}
-    hasBin: true
+  '@shopify/theme-check-node@3.19.0':
+    resolution: {integrity: sha512-FKdeEpD1h/Mrs9wT2X/wqaE4QLEu6BTCDB7OeAlmvDc/V44Bj+ln3m0dq9Xsudaa4lMEDimjaTduINGKiZFAtg==}
 
-  '@shopify/theme-check-node@3.17.0':
-    resolution: {integrity: sha512-Ai5NEGyD1iU96ydnqLUlFmmQhuKTlk+Fspfk/9RjBP0YiZe+wT9I7p2gN0/qfKeqlgc+xlV9AfycH0cGqFRDQg==}
+  '@shopify/theme-graph@0.1.2':
+    resolution: {integrity: sha512-DiO9MMQYHaXSTIa01uRjylZ2YiVGu+nHzjT+3dsCxydX/1GJQAzdgxFlK4l3i5XP6I9vOO6Kuzv+tNpzVtnovA==}
+    hasBin: true
 
   '@shopify/theme-hot-reload@0.0.18':
     resolution: {integrity: sha512-l+IBuk+rG5T+5PKYyPrwgh7PDCxmEMpBFJeen6PM+h6RI4CDhAGRaiwUo5eN1o1JX51HdHHCts3rTEW+KUgq+Q==}
 
-  '@shopify/theme-language-server-common@2.15.2':
-    resolution: {integrity: sha512-GEnlkc36YiOX/aG9N35WU0h9B+dferu96d9/4m0fHXgEyosq2XMYpKGSPN14l6mtUhkCAKfMUp+UTwSGbpZoZg==}
+  '@shopify/theme-language-server-common@2.17.3':
+    resolution: {integrity: sha512-8/SUXU1Kv6PyN4SNBw4pP/lAK7l4KXug/nhw28EmaHqUpXRxsYpOGy3MgN+FMhdLtXrM9Y/CZHvh9dxO2wLDNQ==}
 
-  '@shopify/theme-language-server-node@2.15.2':
-    resolution: {integrity: sha512-15e/3MGksibNxRpQkQ9JAn10suHh3ZXhza9JQrImRuGcxdbaho+XONaonL1z+sbbo63SPJTy8VdzfiND9a8YTQ==}
+  '@shopify/theme-language-server-node@2.17.3':
+    resolution: {integrity: sha512-Sl5SkJ6c2NG9wMFUGodX8FCzxgUf3CMxDDHJBnDvsA+xdiTibKWT94d8czERraDAZYPanryM3DJUhkFyIcAhvQ==}
 
   '@shopify/toml-patch@0.3.0':
     resolution: {integrity: sha512-ruv2FT17FW3CfWx8jXEyfx3xZDdo22PDaFQ9R7QYOovXQbgQCIKY+5QjGVBA7jsyLm+Wa2ngVANmt7MS0M/g+w==}
@@ -3665,9 +3680,6 @@ packages:
 
   '@types/chai@5.2.2':
     resolution: {integrity: sha512-8kB30R7Hwqf40JPiKhVzodJs2Qc1ZJ5zuT3uzw5Hq/dhNCl3G3l83jfpdI1e20BP348+fV7VIL/+FxaXkqBmWg==}
-
-  '@types/cli-progress@3.11.6':
-    resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==}
 
   '@types/commondir@1.0.2':
     resolution: {integrity: sha512-ugIRUhO6vLS6Pi5Pz/0yuMYX7Q1rsEpXNrU7ef6rVdH+cb3hTDz8HL55C0QINDqMB4ZWsrE8lLWyYUbZKPhduQ==}
@@ -4225,9 +4237,6 @@ packages:
     resolution: {integrity: sha512-bN798gFfQX+viw3R7yrGWRqnrN2oRkEkUjjl4JNn4E8GxxbjtG3FbrEIIY3l8/hrwUwIeCZvi4QuOTP4MErVug==}
     engines: {node: '>=12'}
 
-  ansicolors@0.3.2:
-    resolution: {integrity: sha512-QXu7BPrP29VllRxH8GwB7x5iX5qWKAAMLqKQGWTeLWVlNHNOpVMJ91dsxQAIWXpjuW5wqvxu3Jd/nRjrJ+0pqg==}
-
   ansis@3.17.0:
     resolution: {integrity: sha512-0qWUglt9JEqLFr3w1I1pbrChn1grhaiAR2ocX1PP/flRmxgtwTzPFFFnfIlD6aMOLQZgSuCRlidD70lvx8yhzg==}
     engines: {node: '>=14'}
@@ -4566,10 +4575,6 @@ packages:
   capital-case@1.0.4:
     resolution: {integrity: sha512-ds37W8CytHgwnhGGTi88pcPyR15qoNkOpYwmMMfnWqqWgESapLqvDx6huFjQ5vqWSn2Z06173XNA7LtMOeUh1A==}
 
-  cardinal@2.1.1:
-    resolution: {integrity: sha512-JSr5eOgoEymtYHBjNWyjrMqet9Am2miJhlfKNdqLp6zoeAh0KN5dRAcxlecj5mAJrmQomgiOBj35xHLrFjqBpw==}
-    hasBin: true
-
   chai@5.2.0:
     resolution: {integrity: sha512-mCuXncKXk5iCLhfhwTc0izo0gtEmpz5CtG2y8GiOINBlMVS6v8TMRc5TaLWKS6692m9+dVVfzgeVxR5UxWHTYw==}
     engines: {node: '>=12'}
@@ -4646,10 +4651,6 @@ packages:
   cli-cursor@4.0.0:
     resolution: {integrity: sha512-VGtlMu3x/4DOtIUwEkRezxUZ2lBacNJCHash0N0WeZDBS+7Ux1dm3XWAgWYxLJFMMdOeXMHXorshEFhbMSGelg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  cli-progress@3.12.0:
-    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
-    engines: {node: '>=4'}
 
   cli-spinners@2.6.1:
     resolution: {integrity: sha512-x/5fWmGMnbKQAaNwN+UZlV79qBLM9JFnJuJ03gIi5whrob0xV0ofNVHy9DhwGdsMJQc2OKv0oGmLzvaqvAVv+g==}
@@ -4728,13 +4729,6 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
-
-  color-string@1.9.1:
-    resolution: {integrity: sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==}
-
-  color@4.2.3:
-    resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
-    engines: {node: '>=12.5.0'}
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==}
@@ -6098,10 +6092,6 @@ packages:
     resolution: {integrity: sha512-nZXjEF2nbo7lIw3mgYjItAfgQXog3OjJogSbKa2CQIIvSGWcKgeJnQlNXip6NglNzYH45nSRiEVimMvYL8DDqQ==}
     engines: {node: '>=14.18.0'}
 
-  hyperlinker@1.0.0:
-    resolution: {integrity: sha512-Ty8UblRWFEcfSuIaajM34LdPXIhbs1ajEX/BBPv24J+enSVaEVY63xQ6lTO9VRYS5LAoghIG0IDJ+p+IPzKUQQ==}
-    engines: {node: '>=4'}
-
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
@@ -6220,9 +6210,6 @@ packages:
 
   is-arrayish@0.2.1:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==}
-
-  is-arrayish@0.3.2:
-    resolution: {integrity: sha512-eVRqCvVlZbuw3GrM63ovNSNAeA1K16kaR/LRY/92w0zxQ5/1YzwblUX652i4Xs9RwAGjW9d9y6X88t8OaAJfWQ==}
 
   is-async-function@2.1.1:
     resolution: {integrity: sha512-9dgM/cZBnNvjzaMYHVoxxfPj2QXt22Ev7SuuPrs+xav0ukGB0S6d4ydZdEiM48kLx5kDV+QBPrpVnFyefL8kkQ==}
@@ -6678,6 +6665,10 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
+  lilconfig@3.1.3:
+    resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
+    engines: {node: '>=14'}
+
   line-column@1.0.2:
     resolution: {integrity: sha512-Ktrjk5noGYlHsVnYWh62FLVs4hTb8A3e+vucNZMgPeAOITdshMSgv4cCZQeRDjm7+goqmo6+liZwTXo+U3sVww==}
 
@@ -7027,9 +7018,6 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  natural-orderby@2.0.3:
-    resolution: {integrity: sha512-p7KTHxU0CUrcOXe62Zfrb5Z13nLvPhSWR/so3kFulUQU0sgUll2Z0LwpsLN351eOOD+hRGu/F1g+6xDfPeD++Q==}
-
   natural-orderby@3.0.2:
     resolution: {integrity: sha512-x7ZdOwBxZCEm9MM7+eQCjkrNLrW3rkBKNHVr78zbtqnMGVNlnDi6C/eUEYgxHNrcbu0ymvjzcwIL/6H1iHri9g==}
     engines: {node: '>=18'}
@@ -7119,8 +7107,8 @@ packages:
     resolution: {integrity: sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  npm@10.9.2:
-    resolution: {integrity: sha512-iriPEPIkoMYUy3F6f3wwSZAU93E0Eg6cHwIR6jzzOXWSy+SD/rOODEs74cVONHKSx2obXtuUoyidVEhISrisgQ==}
+  npm@10.9.3:
+    resolution: {integrity: sha512-6Eh1u5Q+kIVXeA8e7l2c/HpnFFcwrkt37xDMujD5be1gloWa9p6j3Fsv3mByXXmqJHy+2cElRMML8opNT7xIJQ==}
     engines: {node: ^18.17.0 || >=20.5.0}
     hasBin: true
     bundledDependencies:
@@ -7227,10 +7215,6 @@ packages:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==}
     engines: {node: '>= 0.4'}
 
-  object-treeify@1.1.33:
-    resolution: {integrity: sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==}
-    engines: {node: '>= 10'}
-
   object-treeify@4.0.1:
     resolution: {integrity: sha512-Y6tg5rHfsefSkfKujv2SwHulInROy/rCL5F4w0QOWxut8AnxYxf0YmNhTh95Zfyxpsudo66uqkux0ACFnyMSgQ==}
     engines: {node: '>= 16'}
@@ -7255,8 +7239,8 @@ packages:
     resolution: {integrity: sha512-gXah6aZrcUxjWg2zR2MwouP2eHlCBzdV4pygudehaKXSGW4v2AsRQUK+lwwXhii6KFZcunEnmSUoYp5CXibxtA==}
     engines: {node: '>= 0.4'}
 
-  oclif@4.11.3:
-    resolution: {integrity: sha512-GD0m8Z8Ok3x5VfyHbVvjzrXzoKCM8s2Z3EiS5O97HzsSGTFUU1EPGiefSrYBUINOuC9auzNuFkkPbdD/40ib8g==}
+  oclif@4.20.1:
+    resolution: {integrity: sha512-XsC6MaYTEtIjkq43sXIrGiq+wtuzxCYWv43gIaFAg8KszOutojqlACwrz1dgCgUAwanwv+BNBNJLnvwQ84dpjg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -7411,9 +7395,6 @@ packages:
 
   pascal-case@3.1.2:
     resolution: {integrity: sha512-uWlGT3YSnK9x3BQJaOdcZwrnV6hPpd8jFH1/ucpiLRPh/2zCVJKS19E4GvYHvaCcACn3foXZ0cLB9Wrx1KGe5g==}
-
-  password-prompt@1.1.3:
-    resolution: {integrity: sha512-HkrjG2aJlvF0t2BMH0e2LB/EHf3Lcq3fNMzy4GYHcQblAvOl+QQji1Lx7WRBMqpVK8p+KR7bCg7oqAMXtdgqyw==}
 
   patch-console@2.0.0:
     resolution: {integrity: sha512-0YNdUceMdaQwoKce1gatDScmMo5pu/tfABfnzEqeG0gtTmd7mh/WcwgUjtAeOU7N8nFFlbQBnFK2gXW5fGvmMA==}
@@ -7780,9 +7761,6 @@ packages:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
 
-  redeyed@2.1.1:
-    resolution: {integrity: sha512-FNpGGo1DycYAdnrKFxCMmKYgo/mILAqtRYbkdQD8Ep/Hk2PQ5+aEAEx+IU713RTDmuBaH0c8P5ZozurNu5ObRQ==}
-
   reduce-flatten@2.0.0:
     resolution: {integrity: sha512-EJ4UNY/U1t2P/2k6oqotuX2Cc3T6nxJwsM0N0asT7dhrtH1ltUxDn4NalSYmPE2rCkVpcf/X6R0wDwcFpzhd4w==}
     engines: {node: '>=6'}
@@ -8103,9 +8081,6 @@ packages:
 
   simple-git@3.27.0:
     resolution: {integrity: sha512-ivHoFS9Yi9GY49ogc6/YAi3Fl9ROnF4VyubNylgCkA+RVqLaKWnDSzXOVzya8csELIaWaYNutsEuAhZrtOjozA==}
-
-  simple-swizzle@0.2.2:
-    resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
 
   slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
@@ -12157,40 +12132,30 @@ snapshots:
       - '@swc/core'
       - debug
 
-  '@oclif/core@3.26.5':
+  '@oclif/core@4.4.0':
     dependencies:
-      '@types/cli-progress': 3.11.6
       ansi-escapes: 4.3.2
-      ansi-styles: 4.3.0
-      cardinal: 2.1.1
-      chalk: 4.1.2
+      ansis: 3.17.0
       clean-stack: 3.0.1
-      cli-progress: 3.12.0
-      color: 4.2.3
+      cli-spinners: 2.9.2
       debug: 4.4.0(supports-color@8.1.1)
       ejs: 3.1.10
       get-package-type: 0.1.0
-      globby: 11.1.0
-      hyperlinker: 1.0.0
       indent-string: 4.0.0
       is-wsl: 2.2.0
-      js-yaml: 3.14.1
+      lilconfig: 3.1.3
       minimatch: 9.0.5
-      natural-orderby: 2.0.3
-      object-treeify: 1.1.33
-      password-prompt: 1.1.3
-      slice-ansi: 4.0.0
+      semver: 7.6.3
       string-width: 4.2.3
-      strip-ansi: 6.0.1
       supports-color: 8.1.1
-      supports-hyperlinks: 3.1.0
+      tinyglobby: 0.2.14
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  '@oclif/plugin-commands@4.1.18':
+  '@oclif/plugin-commands@4.1.26':
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       '@oclif/table': 0.4.8
       lodash: 4.17.21
       object-treeify: 4.0.1
@@ -12199,38 +12164,38 @@ snapshots:
       - react-devtools-core
       - utf-8-validate
 
-  '@oclif/plugin-help@6.2.28':
+  '@oclif/plugin-help@6.2.29':
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
 
-  '@oclif/plugin-not-found@3.2.55(@types/node@18.19.70)':
+  '@oclif/plugin-not-found@3.2.57(@types/node@18.19.70)':
     dependencies:
       '@inquirer/prompts': 7.5.3(@types/node@18.19.70)
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       ansis: 3.17.0
       fast-levenshtein: 3.0.0
     transitivePeerDependencies:
       - '@types/node'
 
-  '@oclif/plugin-plugins@5.4.28':
+  '@oclif/plugin-plugins@5.4.43':
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       ansis: 3.17.0
       debug: 4.4.0(supports-color@8.1.1)
-      npm: 10.9.2
+      npm: 10.9.3
       npm-package-arg: 11.0.3
       npm-run-path: 5.3.0
       object-treeify: 4.0.1
-      semver: 7.6.3
+      semver: 7.7.2
       validate-npm-package-name: 5.0.1
       which: 4.0.0
       yarn: 1.22.22
     transitivePeerDependencies:
       - supports-color
 
-  '@oclif/plugin-warn-if-update-available@3.1.40':
+  '@oclif/plugin-warn-if-update-available@3.1.42':
     dependencies:
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       ansis: 3.17.0
       debug: 4.4.1
       http-call: 5.3.0
@@ -12687,9 +12652,9 @@ snapshots:
   '@shopify/cli-hydrogen@10.0.1(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@22.15.29)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@22.15.29)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(sass@1.89.1)(yaml@2.7.0))':
     dependencies:
       '@ast-grep/napi': 0.11.0
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)
+      '@shopify/oxygen-cli': 4.6.18(@oclif/core@4.4.0)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)
       '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
       ansi-escapes: 6.2.1
       chokidar: 3.5.3
@@ -12809,12 +12774,12 @@ snapshots:
       line-column: 1.0.2
       ohm-js: 16.6.0
 
-  '@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)':
+  '@shopify/oxygen-cli@4.6.18(@oclif/core@4.4.0)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)':
     dependencies:
       '@bugsnag/core': 8.2.0
       '@bugsnag/js': 8.2.0
       '@bugsnag/node': 8.2.0
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.4.0
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
       graphql-request: 7.2.0(graphql@16.10.0)
@@ -12896,7 +12861,7 @@ snapshots:
       react-dom: 18.3.1(react@17.0.2)
       react-reconciler: 0.26.2(react@17.0.2)
 
-  '@shopify/theme-check-common@3.17.0':
+  '@shopify/theme-check-common@3.19.0':
     dependencies:
       '@shopify/liquid-html-parser': 2.8.2
       cross-fetch: 4.1.0
@@ -12909,51 +12874,41 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-check-common@3.17.1':
+  '@shopify/theme-check-docs-updater@3.19.0':
     dependencies:
-      '@shopify/liquid-html-parser': 2.8.2
-      cross-fetch: 4.1.0
-      jsonc-parser: 3.3.1
-      line-column: 1.0.2
-      lodash-es: 4.17.21
-      minimatch: 9.0.5
-      vscode-json-languageservice: 5.5.0
-      vscode-uri: 3.1.0
-    transitivePeerDependencies:
-      - encoding
-
-  '@shopify/theme-check-docs-updater@3.17.0':
-    dependencies:
-      '@shopify/theme-check-common': 3.17.0
+      '@shopify/theme-check-common': 3.19.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-check-docs-updater@3.17.1':
+  '@shopify/theme-check-node@3.19.0':
     dependencies:
-      '@shopify/theme-check-common': 3.17.1
-      env-paths: 2.2.1
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
-
-  '@shopify/theme-check-node@3.17.0':
-    dependencies:
-      '@shopify/theme-check-common': 3.17.0
-      '@shopify/theme-check-docs-updater': 3.17.0
+      '@shopify/theme-check-common': 3.19.0
+      '@shopify/theme-check-docs-updater': 3.19.0
       glob: 8.1.0
       vscode-uri: 3.1.0
       yaml: 2.7.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-hot-reload@0.0.18': {}
-
-  '@shopify/theme-language-server-common@2.15.2':
+  '@shopify/theme-graph@0.1.2':
     dependencies:
       '@shopify/liquid-html-parser': 2.8.2
-      '@shopify/theme-check-common': 3.17.0
+      '@shopify/theme-check-common': 3.19.0
+      acorn: 8.14.1
+      acorn-walk: 8.3.4
+      vscode-uri: 3.1.0
+    transitivePeerDependencies:
+      - encoding
+
+  '@shopify/theme-hot-reload@0.0.18': {}
+
+  '@shopify/theme-language-server-common@2.17.3':
+    dependencies:
+      '@shopify/liquid-html-parser': 2.8.2
+      '@shopify/theme-check-common': 3.19.0
+      '@shopify/theme-graph': 0.1.2
       '@vscode/web-custom-data': 0.4.13
       vscode-css-languageservice: 6.3.2
       vscode-json-languageservice: 5.5.0
@@ -12963,11 +12918,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-language-server-node@2.15.2':
+  '@shopify/theme-language-server-node@2.17.3':
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.17.1
-      '@shopify/theme-check-node': 3.17.0
-      '@shopify/theme-language-server-common': 2.15.2
+      '@shopify/theme-check-docs-updater': 3.19.0
+      '@shopify/theme-check-node': 3.19.0
+      '@shopify/theme-language-server-common': 2.17.3
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -13366,10 +13321,6 @@ snapshots:
   '@types/chai@5.2.2':
     dependencies:
       '@types/deep-eql': 4.0.2
-
-  '@types/cli-progress@3.11.6':
-    dependencies:
-      '@types/node': 18.19.70
 
   '@types/commondir@1.0.2': {}
 
@@ -14057,8 +14008,6 @@ snapshots:
 
   ansi-styles@6.2.1: {}
 
-  ansicolors@0.3.2: {}
-
   ansis@3.17.0: {}
 
   any-promise@1.3.0: {}
@@ -14494,11 +14443,6 @@ snapshots:
       tslib: 2.8.1
       upper-case-first: 2.0.2
 
-  cardinal@2.1.1:
-    dependencies:
-      ansicolors: 0.3.2
-      redeyed: 2.1.1
-
   chai@5.2.0:
     dependencies:
       assertion-error: 2.0.1
@@ -14617,10 +14561,6 @@ snapshots:
     dependencies:
       restore-cursor: 4.0.0
 
-  cli-progress@3.12.0:
-    dependencies:
-      string-width: 4.2.3
-
   cli-spinners@2.6.1: {}
 
   cli-spinners@2.9.2: {}
@@ -14693,16 +14633,6 @@ snapshots:
   color-name@1.1.3: {}
 
   color-name@1.1.4: {}
-
-  color-string@1.9.1:
-    dependencies:
-      color-name: 1.1.4
-      simple-swizzle: 0.2.2
-
-  color@4.2.3:
-    dependencies:
-      color-convert: 2.0.1
-      color-string: 1.9.1
 
   colorette@2.0.20: {}
 
@@ -16352,8 +16282,6 @@ snapshots:
 
   human-signals@4.3.1: {}
 
-  hyperlinker@1.0.0: {}
-
   iconv-lite@0.4.24:
     dependencies:
       safer-buffer: 2.1.2
@@ -16509,8 +16437,6 @@ snapshots:
       get-intrinsic: 1.3.0
 
   is-arrayish@0.2.1: {}
-
-  is-arrayish@0.3.2: {}
 
   is-async-function@2.1.1:
     dependencies:
@@ -16964,6 +16890,8 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
+  lilconfig@3.1.3: {}
+
   line-column@1.0.2:
     dependencies:
       isarray: 1.0.0
@@ -17300,8 +17228,6 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  natural-orderby@2.0.3: {}
-
   natural-orderby@3.0.2: {}
 
   negotiator@0.6.3: {}
@@ -17383,7 +17309,7 @@ snapshots:
     dependencies:
       path-key: 4.0.0
 
-  npm@10.9.2: {}
+  npm@10.9.3: {}
 
   nullthrows@1.1.1: {}
 
@@ -17448,8 +17374,6 @@ snapshots:
 
   object-keys@1.1.1: {}
 
-  object-treeify@1.1.33: {}
-
   object-treeify@4.0.1: {}
 
   object.assign@4.1.7:
@@ -17488,19 +17412,19 @@ snapshots:
       define-properties: 1.2.1
       es-object-atoms: 1.1.1
 
-  oclif@4.11.3(@types/node@18.19.70):
+  oclif@4.20.1(@types/node@18.19.70):
     dependencies:
       '@aws-sdk/client-cloudfront': 3.821.0
       '@aws-sdk/client-s3': 3.821.0
       '@inquirer/confirm': 3.2.0
       '@inquirer/input': 2.3.0
       '@inquirer/select': 2.5.0
-      '@oclif/core': 3.26.5
-      '@oclif/plugin-help': 6.2.28
-      '@oclif/plugin-not-found': 3.2.55(@types/node@18.19.70)
-      '@oclif/plugin-warn-if-update-available': 3.1.40
+      '@oclif/core': 4.4.0
+      '@oclif/plugin-help': 6.2.29
+      '@oclif/plugin-not-found': 3.2.57(@types/node@18.19.70)
+      '@oclif/plugin-warn-if-update-available': 3.1.42
+      ansis: 3.17.0
       async-retry: 1.3.3
-      chalk: 4.1.2
       change-case: 4.1.2
       debug: 4.4.0(supports-color@8.1.1)
       ejs: 3.1.10
@@ -17510,7 +17434,7 @@ snapshots:
       got: 13.0.0
       lodash: 4.17.21
       normalize-package-data: 6.0.2
-      semver: 7.6.3
+      semver: 7.7.2
       sort-package-json: 2.15.1
       tiny-jsonc: 1.0.2
       validate-npm-package-name: 5.0.1
@@ -17708,11 +17632,6 @@ snapshots:
     dependencies:
       no-case: 3.0.4
       tslib: 2.8.1
-
-  password-prompt@1.1.3:
-    dependencies:
-      ansi-escapes: 4.3.2
-      cross-spawn: 7.0.6
 
   patch-console@2.0.0: {}
 
@@ -18108,10 +18027,6 @@ snapshots:
       indent-string: 4.0.0
       strip-indent: 3.0.0
 
-  redeyed@2.1.1:
-    dependencies:
-      esprima: 4.0.1
-
   reduce-flatten@2.0.0: {}
 
   reflect-metadata@0.1.13: {}
@@ -18488,10 +18403,6 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
-
-  simple-swizzle@0.2.2:
-    dependencies:
-      is-arrayish: 0.3.2
 
   slash@3.0.0: {}
 

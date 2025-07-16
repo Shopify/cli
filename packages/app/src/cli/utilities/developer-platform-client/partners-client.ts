@@ -162,6 +162,7 @@ import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shop
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
@@ -645,12 +646,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     return Promise.resolve()
   }
 
-  async getCreateDevStoreLink(org: Organization): Promise<string> {
+  async getCreateDevStoreLink(org: Organization): Promise<TokenItem> {
     const url = `https://${await partnersFqdn()}/${org.id}/stores`
-    return (
-      `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard.` +
-      ` Create one now \n${url}`
-    )
+    return [
+      `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard.`,
+      {link: {url, label: 'Create one now'}},
+    ]
   }
 
   private async fetchOrgAndApps(orgId: string, title?: string): Promise<OrgAndAppsResponse> {

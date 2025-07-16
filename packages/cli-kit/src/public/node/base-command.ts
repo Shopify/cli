@@ -13,7 +13,12 @@ import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 import {Command, Errors} from '@oclif/core'
-import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ArgOutput = OutputArgs<any>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FlagOutput = OutputFlags<any>
 
 interface EnvironmentFlags {
   environment?: string[]
@@ -44,8 +49,7 @@ abstract class BaseCommand extends Command {
     return Errors.handle(error)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected async init(): Promise<any> {
+  protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
     if (!isDevelopment()) {
@@ -162,6 +166,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
     )
 
     if (!environment) return originalResult
+    if (isDefaultEnvironment && !commandSupportsFlag(options?.flags, 'environment')) return originalResult
 
     // Parse using noDefaultsOptions to derive a list of flags specified as
     // command-line arguments.
@@ -303,7 +308,7 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
 ): string[] {
   const args: string[] = []
   for (const [label, value] of Object.entries(environment)) {
-    const flagIsRelevantToCommand = options?.flags && Object.prototype.hasOwnProperty.call(options.flags, label)
+    const flagIsRelevantToCommand = commandSupportsFlag(options?.flags, label)
     const userSpecifiedThisFlag =
       noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
@@ -325,6 +330,10 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
     }
   }
   return args
+}
+
+function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): boolean {
+  return Boolean(flags) && Object.prototype.hasOwnProperty.call(flags, flagName)
 }
 
 export default BaseCommand

@@ -40,7 +40,7 @@ You can run this command only in a directory that matches the [default Shopify t
 
   static flags = {
     ...globalFlags,
-    path: themeFlags.path,
+    ...themeFlags,
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
@@ -76,7 +76,6 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
     }),
-    store: themeFlags.store,
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -106,8 +105,6 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
-    password: themeFlags.password,
-    environment: themeFlags.environment,
     notify: Flags.string({
       description:
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',

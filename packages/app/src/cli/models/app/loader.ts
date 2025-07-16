@@ -34,6 +34,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/load-specificatio
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
+import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -55,7 +56,6 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
@@ -185,18 +185,11 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
 /**
  * Returns true if we should fail if an unsupported app.toml config property is found.
  *
- * This is activated if SHOPIFY_CLI_ENABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS is set or the developer is an internal Shopify dev.
+ * This is deactivated if SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS is set
  */
 async function shouldFailIfUnsupportedConfigProperty(): Promise<boolean> {
   const env = getEnvironmentVariables()
-  const enableUnsupportedConfigPropertyChecks = env[environmentVariableNames.enableUnsupportedConfigPropertyChecks]
-
-  if (isTruthy(enableUnsupportedConfigPropertyChecks)) return true
-
-  const isInternalDeveloper = await isShopify()
-  if (!isInternalDeveloper) return false
-
-  // internal devs can also opt-out
+  // devs can also opt-out
   const disableUnsupportedConfigPropertyChecks = env[environmentVariableNames.disableUnsupportedConfigPropertyChecks]
   return !isTruthy(disableUnsupportedConfigPropertyChecks)
 }
@@ -397,7 +390,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       configSchema,
       remoteFlags: this.remoteFlags,
       hiddenConfig,
-      devApplicationURLs: this.previousApp?.devApplicationURLs,
+      devApplicationURLs: this.getDevApplicationURLs(configuration, webs),
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -795,6 +788,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           }
         })
       })
+  }
+
+  private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {
+    const previousDevUrls = this.previousApp?.devApplicationURLs
+    if (!previousDevUrls || !isCurrentAppSchema(currentConfiguration)) return previousDevUrls
+
+    return generateApplicationURLs(
+      previousDevUrls.applicationUrl,
+      webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+      currentConfiguration.app_proxy,
+    )
   }
 }
 

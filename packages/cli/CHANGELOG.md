@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.82.0
+
+### Patch Changes
+
+- 690bfa9: Fixes the `Encryption certificate fingerprint can't be blank` error when generating a credit card payments extension with the `shopify app generate extension` command.
+
 ## 3.81.1
 
 ## 3.81.0

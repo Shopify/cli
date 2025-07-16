@@ -42,3 +42,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}

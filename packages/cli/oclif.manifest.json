@@ -4879,6 +4879,109 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "store:copy": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Examples:\n\n    COPY data from one store to another in your organization\n    shopify store copy --from-store source.myshopify.com --to-store target.myshopify.com\n\n    EXPORT store data to SQLite\n    shopify store copy --from-store source.myshopify.com --to-file path/to/file.sqlite\n\n    IMPORT data from SQLite to a store\n    shopify store copy --from-file path/to/file.sqlite --to-store target.myshopify.com\n",
+      "flags": {
+        "from-file": {
+          "description": "The SQLite file to import data from. Can't be used with --to-file.",
+          "env": "SHOPIFY_FLAG_FROM_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "from-file",
+          "required": false,
+          "type": "option"
+        },
+        "from-store": {
+          "description": "The source store domain to copy/export data from (e.g., source.myshopify.com).",
+          "env": "SHOPIFY_FLAG_FROM_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "from-store",
+          "required": false,
+          "type": "option"
+        },
+        "key": {
+          "default": [
+            "products:handle"
+          ],
+          "description": "The identity key to use to match resources. ID metafields can be specified as <object_type>:metafield:<metafield_namespace>:<key>",
+          "env": "SHOPIFY_FLAG_IDENTITY_KEY",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "key",
+          "required": false,
+          "type": "option"
+        },
+        "mock": {
+          "allowNo": false,
+          "char": "m",
+          "description": "Use mock data instead of real API calls (for development).",
+          "env": "SHOPIFY_FLAG_MOCK",
+          "hidden": true,
+          "name": "mock",
+          "required": false,
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-prompt": {
+          "allowNo": false,
+          "char": "y",
+          "description": "Skip confirmation prompts.",
+          "env": "SHOPIFY_FLAG_YES",
+          "name": "no-prompt",
+          "required": false,
+          "type": "boolean"
+        },
+        "to-file": {
+          "description": "The SQLite file path to export data to. Omit to auto-generate filename. Can't be used with --from-file.",
+          "env": "SHOPIFY_FLAG_TO_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "to-file",
+          "required": false,
+          "type": "option"
+        },
+        "to-store": {
+          "description": "The target store domain to copy/import data to (e.g., target.myshopify.com).",
+          "env": "SHOPIFY_FLAG_TO_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "to-store",
+          "required": false,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "store:copy",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Copy, export, or import store data"
+    },
     "theme:check": {
       "aliases": [
       ],
@@ -4974,7 +5077,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5050,6 +5153,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
@@ -5149,6 +5261,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "show-all": {
@@ -5316,7 +5437,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5392,6 +5513,107 @@
       "strict": true,
       "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time."
     },
+    "theme:duplicate": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+      "descriptionWithMarkdown": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+      "flags": {
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "environment",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Force the duplicate operation to run without prompts or confirmations.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "name": {
+          "char": "n",
+          "description": "Name of the newly duplicated theme.",
+          "env": "SHOPIFY_FLAG_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "password",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "theme",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:duplicate",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Duplicates a theme from your theme library.",
+      "usage": [
+        "theme duplicate",
+        "theme duplicate --theme 10 --name 'New Theme'"
+      ]
+    },
     "theme:info": {
       "aliases": [
       ],
@@ -5440,6 +5662,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
@@ -5523,7 +5754,7 @@
           "type": "boolean"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5645,6 +5876,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "role": {
           "description": "Only list themes with the given role.",
           "env": "SHOPIFY_FLAG_ROLE",
@@ -5733,7 +5973,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5827,6 +6067,15 @@
           "name": "password",
           "type": "option"
         },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -5870,8 +6119,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
-      "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per \"Theme Store requirements\" (https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+      "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per [Theme Store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
       "flags": {
         "no-color": {
           "allowNo": false,
@@ -5882,7 +6131,7 @@
           "type": "boolean"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5950,6 +6199,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
@@ -6050,6 +6308,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
@@ -6175,7 +6442,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6323,7 +6590,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6453,6 +6720,15 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "password",
+          "type": "option"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
           "type": "option"
         },
         "store": {
@@ -6612,7 +6888,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6735,7 +7011,7 @@
           "type": "option"
         },
         "path": {
-          "description": "The path to your theme directory.",
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
           "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6946,5 +7222,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.81.1"
+  "version": "3.82.0"
 }

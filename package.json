@@ -72,7 +72,7 @@
     "liquidjs": "10.20.1",
     "node-fetch": "^3.3.2",
     "nx": "21.1.2",
-    "oclif": "4.11.3",
+    "oclif": "4.20.1",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^3.3.1",
@@ -102,7 +102,7 @@
   "resolutions": {
     "@types/react": "17.0.2",
     "vite": "6.3.5",
-    "@oclif/core": "3.26.5",
+    "@oclif/core": "4.4.0",
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
     "@graphql-tools/utils": "10.7.2",
@@ -240,6 +240,21 @@
           "**/src/*.ts!"
         ],
         "project": "**/*.ts!",
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
+      "packages/store": {
+        "project": "**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"

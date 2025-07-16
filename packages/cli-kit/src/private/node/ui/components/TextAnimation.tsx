@@ -36,9 +36,17 @@ const TextAnimation = memo(({text, maxWidth}: TextAnimationProps): JSX.Element =
   const {stdout} = useStdout()
   const [width, setWidth] = useState(maxWidth ?? Math.floor(stdout.columns * 0.66))
 
-  stdout.on('resize', () => {
-    setWidth(Math.floor(stdout.columns * 0.66))
-  })
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      setWidth(Math.floor(stdout.columns * 0.66))
+    }
+
+    stdout.on('resize', handleResize)
+
+    return () => {
+      stdout.off('resize', handleResize)
+    }
+  }, [stdout])
 
   const renderAnimation = useCallback(() => {
     const newFrame = frame.current + 1

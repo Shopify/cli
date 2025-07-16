@@ -52,3 +52,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
