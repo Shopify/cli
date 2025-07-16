@@ -18,6 +18,22 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/tree-kill')
 
+const mocks = vi.hoisted(() => {
+  return {
+    useStdin: vi.fn(() => {
+      return {isRawModeSupported: true}
+    }),
+  }
+})
+
+vi.mock('@shopify/cli-kit/node/ink', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/ink')
+  return {
+    ...actual,
+    useStdin: mocks.useStdin,
+  }
+})
+
 let devSessionStatusManager: DevSessionStatusManager
 
 const initialStatus: DevSessionStatus = {
@@ -573,5 +589,37 @@ describe('DevSessionUI', () => {
     expect(output).toContain('Dev Store:')
 
     renderInstance.unmount()
+  })
+
+  test('shows non-interactive fallback when raw mode is not supported', async () => {
+    // Given - mock useStdin to return false for isRawModeSupported
+    mocks.useStdin.mockReturnValue({isRawModeSupported: false})
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appName="Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - should show simple border and URLs, not tabbed interface
+    const output = renderInstance.lastFrame()!
+    expect(output).not.toContain('(s) Status')
+    expect(output).not.toContain('(i) App Info')
+    expect(output).not.toContain('(q) Quit')
+    expect(output).not.toContain('╒═══')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+
+    // Restore original mock for other tests
+    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
   })
 })
