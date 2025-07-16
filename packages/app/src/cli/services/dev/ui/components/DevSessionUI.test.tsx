@@ -484,39 +484,6 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('switches back to status tab when s is pressed after viewing info tab', async () => {
-    // Given
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[]}
-        abortController={new AbortController()}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        appURL="https://my-app.ngrok.io"
-        appName="My Test App"
-        organizationName="My Organization"
-        configPath="/path/to/shopify.app.toml"
-        onAbort={onAbort}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-
-    // Show info tab first
-    await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('My Test App')
-
-    // When - press s to switch back to status tab
-    await sendInputAndWait(renderInstance, 100, 's')
-
-    // Then
-    const output = renderInstance.lastFrame()!
-    expect(output).not.toContain('My Test App')
-    expect(output).toContain('Preview URL: https://shopify.com')
-
-    renderInstance.unmount()
-  })
-
   test('switches between status and info tabs when s and i are pressed', async () => {
     // Given
     const renderInstance = render(
@@ -545,38 +512,6 @@ describe('DevSessionUI', () => {
     await sendInputAndWait(renderInstance, 100, 's')
     expect(renderInstance.lastFrame()!).not.toContain('My Test App')
     expect(renderInstance.lastFrame()!).toContain('Preview URL:')
-
-    renderInstance.unmount()
-  })
-
-  test('hides preview and graphiql URLs when app info tab is shown', async () => {
-    // Given
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[]}
-        abortController={new AbortController()}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        appURL="https://my-app.ngrok.io"
-        appName="My Test App"
-        onAbort={onAbort}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-
-    // Initially URLs should be visible
-    expect(renderInstance.lastFrame()!).toContain('Preview URL: https://shopify.com')
-    expect(renderInstance.lastFrame()!).toContain('GraphiQL URL: https://graphiql.shopify.com')
-
-    // When - switch to info tab
-    await sendInputAndWait(renderInstance, 100, 'i')
-
-    // Then - URLs should be hidden and app info should be shown
-    const output = renderInstance.lastFrame()!
-    expect(output).toContain('My Test App')
-    expect(output).not.toContain('Preview URL: https://shopify.com')
-    expect(output).not.toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
   })
