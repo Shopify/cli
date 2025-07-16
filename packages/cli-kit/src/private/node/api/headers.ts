@@ -1,13 +1,17 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
-import {ExtendableError} from '../../../public/node/error.js'
+import {BugError} from '../../../public/node/error.js'
 import https from 'https'
 
-class RequestClientError extends ExtendableError {
+class RequestClientError extends BugError {
   statusCode: number
   public constructor(message: string, statusCode: number) {
-    super(message)
+    const tryMessage =
+      statusCode === 403
+        ? 'Ensure you are using the correct account. You can switch with `shopify auth login`'
+        : undefined
+    super(message, tryMessage)
     this.statusCode = statusCode
   }
 }
