@@ -4,7 +4,13 @@ import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {renderWarning, renderConcurrent, renderError} from '@shopify/cli-kit/node/ui'
+import {
+  renderWarning,
+  renderConcurrent,
+  renderConfirmationPrompt,
+  RenderConfirmationPromptOptions,
+  renderError,
+} from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import type {Writable} from 'stream'
 
@@ -53,6 +59,7 @@ export default abstract class ThemeCommand extends Command {
     // Parse command flags using the current command class definitions
     const klass = this.constructor as unknown as Input<TFlags, TGlobalFlags, TArgs> & {
       multiEnvironmentsFlags: string[]
+      flags: FlagOutput
     }
     const requiredFlags = klass.multiEnvironmentsFlags
     const {flags} = await this.parse(klass)
@@ -70,6 +77,13 @@ export default abstract class ThemeCommand extends Command {
     // Multiple environments
     const environmentsMap = await this.loadEnvironments(environments, flags)
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
+
+    const commandAllowsForceFlag = 'force' in klass.flags
+
+    if (commandAllowsForceFlag && !flags.force) {
+      const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags, validationResults)
+      if (!confirmed) return
+    }
 
     await this.runConcurrent(validationResults.valid)
   }
@@ -114,9 +128,6 @@ export default abstract class ThemeCommand extends Command {
     const invalid: {environment: EnvironmentName; reason: string}[] = []
 
     for (const [environmentName, environmentFlags] of environmentMap) {
-      // eslint-disable-next-line no-await-in-loop
-      const session = await this.createSession(environmentFlags)
-
       const validationResult = this.validConfig(environmentFlags, requiredFlags, environmentName)
       if (validationResult !== true) {
         const missingFlagsText = validationResult.join(', ')
@@ -124,10 +135,57 @@ export default abstract class ThemeCommand extends Command {
         continue
       }
 
+      // eslint-disable-next-line no-await-in-loop
+      const session = await this.createSession(environmentFlags)
+
       valid.push({environment: environmentName, flags: environmentFlags, session})
     }
 
     return {valid, invalid}
+  }
+
+  /**
+   * Show a confirmation prompt
+   * @param commandName - The name of the command being run
+   * @param requiredFlags - The flags required to run the command
+   * @param validationResults -  The environments split into valid and invalid
+   * @returns Whether the user confirmed the action
+   */
+  private async showConfirmation(
+    commandName: string,
+    requiredFlags: string[],
+    validationResults: {
+      valid: {environment: string; flags: FlagValues}[]
+      invalid: {environment: string; reason: string}[]
+    },
+  ) {
+    const command = commandName.toLowerCase()
+    const message = [`Run ${command} in the following environments?`]
+
+    const options: RenderConfirmationPromptOptions = {
+      message,
+      confirmationMessage: 'Yes, proceed',
+      cancellationMessage: 'Cancel',
+    }
+
+    const environmentDetails = [
+      ...validationResults.valid.map(({environment, flags}) => {
+        const flagDetails = requiredFlags
+          .map((flag) => (flag.includes('password') ? flag : `${flag}: ${String(flags[flag])}`))
+          .join(', ')
+
+        return [environment, {subdued: flagDetails || 'No flags required'}]
+      }),
+      ...validationResults.invalid.map(({environment, reason}) => [environment, {error: `Skipping | ${reason}`}]),
+    ]
+
+    options.infoTable = {Environment: environmentDetails}
+
+    if (validationResults.invalid.length > 0) {
+      options.confirmationMessage = 'Proceed anyway (will skip invalid environments)'
+    }
+
+    return renderConfirmationPrompt(options)
   }
 
   /**
@@ -161,7 +219,7 @@ export default abstract class ThemeCommand extends Command {
   }
 
   /**
-   * Create an authenticated session object from the flags
+   * Create an unauthenticated session object from store and password
    * @param flags - The environment flags containing store and password
    * @returns The unauthenticated session object
    */
