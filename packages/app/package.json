@@ -66,7 +66,7 @@
     "express": "4.21.2",
     "graphql-request": "6.1.0",
     "h3": "0.7.21",
-    "http-proxy-node16": "^1.0.6",
+    "http-proxy-node16": "1.0.6",
     "ignore": "6.0.2",
     "proper-lockfile": "4.1.2",
     "react": "^18.2.0",
