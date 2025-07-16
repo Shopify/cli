@@ -18,6 +18,7 @@ import {
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
+  bundleFunctionExtension,
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
@@ -29,7 +30,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -390,9 +391,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         await copyFile(defaultOutputPath, this.outputPath)
 
         if (buildMode === 'function') {
-          outputDebug(`Converting WASM ${this.outputPath} to base64`)
-          const base64Contents = await readFile(this.outputPath, {encoding: 'base64'})
-          await writeFile(this.outputPath, base64Contents)
+          await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
       }
 
