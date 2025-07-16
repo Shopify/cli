@@ -53,20 +53,6 @@
         "command": "pnpm eslint src --fix",
         "cwd": "packages/ui-extensions-server-kit"
       }
-    },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest run",
-        "cwd": "packages/ui-extensions-server-kit"
-      }
-    },
-    "test:watch": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest watch",
-        "cwd": "packages/ui-extensions-server-kit"
-      }
     }
   }
 }

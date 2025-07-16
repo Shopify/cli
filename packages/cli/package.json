@@ -47,9 +47,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production node ../../bin/update-bugsnag cli && cp ../../README.md README.md",
-    "test": "nx run cli:test",
-    "test:coverage": "nx test:coverage",
-    "test:watch": "nx test:watch",
+    "vitest": "vitest",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
