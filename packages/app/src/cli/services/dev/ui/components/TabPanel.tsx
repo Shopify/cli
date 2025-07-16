@@ -21,12 +21,17 @@ interface TabDisplay extends Tab {
 
 interface TabPanelProps {
   tabs: {[key: string]: Tab}
-  initialActiveTab: string
+  initialActiveTab?: string
 }
 
 export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialActiveTab}) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
-  const [activeTab, setActiveTab] = useState<string>(initialActiveTab)
+  const firstTabKey = Object.keys(tabs)[0]
+  const [activeTab, setActiveTab] = useState<string | undefined>(initialActiveTab ?? firstTabKey)
+
+  if (!activeTab) {
+    throw new Error('No tabs provided')
+  }
 
   useInput(
     (input) => {
