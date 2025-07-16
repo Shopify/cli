@@ -1,4 +1,5 @@
 import {Spinner} from './Spinner.js'
+import {TabPanel, Tab} from './TabPanel.js'
 import metadata from '../../../../metadata.js'
 import {
   DevSessionStatus,
@@ -48,7 +49,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const [error, setError] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
   const [shouldShowPersistentDevInfo, setShouldShowPersistentDevInfo] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<string>('s')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const {isAborted} = useAbortSignal(abortController.signal, async (err: any) => {
@@ -94,41 +94,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   useInput(
     (input, key) => {
       handleCtrlC(input, key, () => abortController.abort())
-
-      const onInput = async () => {
-        try {
-          setError('')
-
-          // First check if input matches any tab key
-          const matchingTab = tabs[input]
-          if (matchingTab) {
-            if (matchingTab.action) {
-              await matchingTab.action()
-            } else {
-              setActiveTab(input)
-            }
-            return
-          }
-
-          // Then check if input matches any shortcut key for the current active tab
-          const currentTab = tabs[activeTab]
-          if (currentTab?.shortcuts) {
-            const matchingShortcut = currentTab.shortcuts.find((shortcut) => shortcut.key === input)
-            if (matchingShortcut) {
-              // Check condition if it exists
-              if (!matchingShortcut.condition || matchingShortcut.condition()) {
-                await matchingShortcut.action()
-              }
-            }
-          }
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (_) {
-          setError('Failed to handle your input.')
-        }
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      onInput()
     },
     {isActive: Boolean(canUseShortcuts)},
   )
@@ -142,24 +107,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       case 'error':
         return '❌'
     }
-  }
-
-  interface TabShortcut {
-    key: string
-    condition?: () => boolean
-    action: () => Promise<void>
-  }
-
-  interface Tab {
-    label: string
-    content?: React.ReactNode
-    shortcuts?: TabShortcut[]
-    action?: () => Promise<void>
-  }
-
-  interface TabDisplay extends Tab {
-    inputKey: string
-    header: string
   }
 
   const tabs: {[key: string]: Tab} = {
@@ -263,17 +210,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
     },
   }
 
-  const tabsArray: TabDisplay[] = Object.entries(tabs).map(([key, tab]) => {
-    return {
-      ...tab,
-      inputKey: key,
-      header: ` (${key}) ${tab.label} `,
-    }
-  })
-
-  // We need to subtract the number of tabs from the total length to account for the borders between and after the tabs
-  const tabHeaderLength = tabsArray.reduce((acc, tab) => acc + (tab.header?.length ?? 0), 0) + tabsArray.length + 1
-
   return (
     <>
       <ConcurrentOutput
@@ -300,52 +236,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       {!isAborted ? (
         <Box paddingTop={1} flexDirection="column" flexGrow={1}>
           {canUseShortcuts ? (
-            <>
-              {/* Top border with connected tab boxes */}
-              <Text>
-                {tabsArray
-                  .map((tab, index) => {
-                    return `${index === 0 ? '╒' : '╤'}${'═'.repeat(tab.header?.length ?? 0)}`
-                  })
-                  .join('')}
-                {'╤'}
-                {'═'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
-                {'╕'}
-              </Text>
-              {/* Tab content row */}
-              <Text>
-                {tabsArray.map((tab) => {
-                  return (
-                    <React.Fragment key={tab.inputKey}>
-                      {'│'}
-                      <Text
-                        bold={activeTab === tab.inputKey}
-                        color={activeTab === tab.inputKey ? 'cyan' : 'white'}
-                        backgroundColor={activeTab === tab.inputKey ? 'gray' : 'transparent'}
-                      >
-                        {tab.header}
-                      </Text>
-                    </React.Fragment>
-                  )
-                })}
-                {`│${' '.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}│`}
-              </Text>
-              {/* Bottom border connecting tabs */}
-              <Text>
-                {tabsArray
-                  .map((tab, index) => {
-                    return `${index === 0 ? '└' : '┴'}${'─'.repeat(tab.header?.length ?? 0)}`
-                  })
-                  .join('')}
-                {'┴'}
-                {'─'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
-                {'┘'}
-              </Text>
-              {/* Tab Content Area */}
-              <Box flexDirection="column" marginLeft={1} marginRight={1}>
-                {tabs[activeTab]?.content}
-              </Box>
-            </>
+            <TabPanel tabs={tabs} initialActiveTab="s" />
           ) : (
             <Box
               marginY={1}
