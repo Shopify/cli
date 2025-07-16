@@ -299,52 +299,69 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
         <Box paddingTop={1} flexDirection="column" flexGrow={1}>
-          <>
-            {/* Top border with connected tab boxes */}
-            <Text>
-              {tabsArray
-                .map((tab, index) => {
-                  return `${index === 0 ? '╒' : '╤'}${'═'.repeat(tab.header?.length ?? 0)}`
-                })
-                .join('')}
-              {'╤'}
-              {'═'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
-              {'╕'}
-            </Text>
-            {/* Tab content row */}
-            <Text>
-              {tabsArray.map((tab) => {
-                return (
-                  <React.Fragment key={tab.inputKey}>
-                    {'│'}
-                    <Text
-                      bold={activeTab === tab.inputKey}
-                      color={activeTab === tab.inputKey ? 'cyan' : 'white'}
-                      backgroundColor={activeTab === tab.inputKey ? 'gray' : 'transparent'}
-                    >
-                      {tab.header}
-                    </Text>
-                  </React.Fragment>
-                )
-              })}
-              {`│${' '.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}│`}
-            </Text>
-            {/* Bottom border connecting tabs */}
-            <Text>
-              {tabsArray
-                .map((tab, index) => {
-                  return `${index === 0 ? '└' : '┴'}${'─'.repeat(tab.header?.length ?? 0)}`
-                })
-                .join('')}
-              {'┴'}
-              {'─'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
-              {'┘'}
-            </Text>
-          </>
-          {/* Tab Content Area */}
-          <Box flexDirection="column" marginLeft={1} marginRight={1}>
-            {tabs[activeTab]?.content}
-          </Box>
+          {canUseShortcuts ? (
+            <>
+              {/* Top border with connected tab boxes */}
+              <Text>
+                {tabsArray
+                  .map((tab, index) => {
+                    return `${index === 0 ? '╒' : '╤'}${'═'.repeat(tab.header?.length ?? 0)}`
+                  })
+                  .join('')}
+                {'╤'}
+                {'═'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
+                {'╕'}
+              </Text>
+              {/* Tab content row */}
+              <Text>
+                {tabsArray.map((tab) => {
+                  return (
+                    <React.Fragment key={tab.inputKey}>
+                      {'│'}
+                      <Text
+                        bold={activeTab === tab.inputKey}
+                        color={activeTab === tab.inputKey ? 'cyan' : 'white'}
+                        backgroundColor={activeTab === tab.inputKey ? 'gray' : 'transparent'}
+                      >
+                        {tab.header}
+                      </Text>
+                    </React.Fragment>
+                  )
+                })}
+                {`│${' '.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}│`}
+              </Text>
+              {/* Bottom border connecting tabs */}
+              <Text>
+                {tabsArray
+                  .map((tab, index) => {
+                    return `${index === 0 ? '└' : '┴'}${'─'.repeat(tab.header?.length ?? 0)}`
+                  })
+                  .join('')}
+                {'┴'}
+                {'─'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
+                {'┘'}
+              </Text>
+              {/* Tab Content Area */}
+              <Box flexDirection="column" marginLeft={1} marginRight={1}>
+                {tabs[activeTab]?.content}
+              </Box>
+            </>
+          ) : (
+            <Box
+              marginY={1}
+              paddingTop={0}
+              flexDirection="column"
+              flexGrow={1}
+              borderStyle="single"
+              borderBottom={false}
+              borderLeft={false}
+              borderRight={false}
+              borderTop
+            >
+              {/* Non-interactive fallback - reuse status tab content */}
+              {tabs.s?.content}
+            </Box>
+          )}
         </Box>
       ) : null}
       {error ? (
