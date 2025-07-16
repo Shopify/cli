@@ -264,4 +264,59 @@ describe('StoreExportOperation', () => {
     expect(error.requestId).toBeUndefined()
     expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
   })
+
+  test('should get export-specific unauthorized error from API client', async () => {
+    const unauthorizedError = new OperationError(
+      'startBulkDataStoreExport',
+      ErrorCodes.UNAUTHORIZED_EXPORT,
+      {storeName: 'source.myshopify.com'},
+      'export-request-unauthorized-123',
+    )
+    mockApiClient.startBulkDataStoreExport.mockRejectedValue(unauthorizedError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreExport',
+      code: ErrorCodes.UNAUTHORIZED_EXPORT,
+      params: {storeName: 'source.myshopify.com'},
+      requestId: 'export-request-unauthorized-123',
+    })
+  })
+
+  test('should get missing EA access error from API client', async () => {
+    const missingEAError = new OperationError(
+      'startBulkDataStoreExport',
+      ErrorCodes.MISSING_EA_ACCESS,
+      {},
+      'export-request-ea-123',
+    )
+    mockApiClient.startBulkDataStoreExport.mockRejectedValue(missingEAError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreExport',
+      code: ErrorCodes.MISSING_EA_ACCESS,
+      requestId: 'export-request-ea-123',
+    })
+  })
 })
