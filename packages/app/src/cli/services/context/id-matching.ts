@@ -5,6 +5,8 @@ import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import colors from '@shopify/cli-kit/node/colors'
 
 export interface LocalRemoteSource {
   local: LocalSource
@@ -79,8 +81,9 @@ function matchByUIDandUUID(
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
-  const matched: IdentifiersExtensions = {}
+  const matchedByUID: IdentifiersExtensions = {}
   const pendingLocal: LocalSource[] = []
+  const matchedByUUID: IdentifiersExtensions = {}
 
   // First, try to match by UID, then by UUID.
   local.forEach((localSource) => {
@@ -88,9 +91,9 @@ function matchByUIDandUUID(
     const matchByUUID = remote.find((remoteSource) => remoteSource.uuid === ids[localSource.localIdentifier])
 
     if (matchByUID) {
-      matched[localSource.localIdentifier] = matchByUID.id
+      matchedByUID[localSource.localIdentifier] = matchByUID.id
     } else if (matchByUUID) {
-      matched[localSource.localIdentifier] = matchByUUID.uuid
+      matchedByUUID[localSource.localIdentifier] = matchByUUID.uuid
     } else {
       pendingLocal.push(localSource)
     }
@@ -98,13 +101,33 @@ function matchByUIDandUUID(
 
   const pendingRemote = remote.filter(
     (remoteSource) =>
-      !Object.values(matched).includes(remoteSource.uuid) && !Object.values(matched).includes(remoteSource.id),
+      !Object.values(matchedByUUID).includes(remoteSource.uuid) &&
+      !Object.values(matchedByUID).includes(remoteSource.id),
   )
 
   // Then, try to match by name and type as a last resort.
   const {matched: matchedByName, toCreate, toConfirm, toManualMatch} = matchByNameAndType(pendingLocal, pendingRemote)
 
-  return {matched: {...matched, ...matchedByName}, toCreate, toConfirm, toManualMatch}
+  // List of modules that were matched using anything other than the UID, meaning that they are being migrated to dev dash
+  const totalMatchedWithoutUID = {...matchedByUUID, ...matchedByName}
+  const localMatchedWithoutUID = local.filter((localSource) => totalMatchedWithoutUID[localSource.localIdentifier])
+
+  outputAddedIDs(localMatchedWithoutUID)
+
+  return {matched: {...matchedByUID, ...totalMatchedWithoutUID}, toCreate, toConfirm, toManualMatch}
+}
+
+function outputAddedIDs(localMatchedWithoutUID: LocalSource[]) {
+  if (localMatchedWithoutUID.length === 0) return
+  const colorList = [colors.cyan, colors.magenta, colors.blue, colors.green, colors.yellow, colors.red]
+
+  const maxHandleLength = localMatchedWithoutUID.reduce((max, local) => Math.max(max, local.handle.length), 0)
+  outputInfo('Generating extension IDs\n')
+  localMatchedWithoutUID.forEach((local, index) => {
+    const color = colorList[index % colorList.length] ?? colors.white
+    outputInfo(`${color(local.handle.padStart(maxHandleLength))} | Added ID: ${local.uid}`)
+  })
+  outputInfo('\n')
 }
 
 /**
