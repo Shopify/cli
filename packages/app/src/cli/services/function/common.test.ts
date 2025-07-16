@@ -1,4 +1,4 @@
-import {getOrGenerateSchemaPath, inFunctionContext, chooseFunction} from './common.js'
+import {getOrGenerateSchemaPath, chooseFunction} from './common.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -42,54 +42,6 @@ beforeEach(async () => {
   vi.mocked(isTerminalInteractive).mockReturnValue(true)
 })
 
-describe('inFunctionContext integration', () => {
-  test('passes correct parameters to callback when function is found', async () => {
-    // Given
-    const callback = vi.fn().mockResolvedValue(app)
-
-    // When
-    await inFunctionContext({
-      path: joinPath(app.directory, 'extensions/my-function'),
-      callback,
-    })
-
-    // Then
-    expect(callback).toHaveBeenCalledWith(
-      app,
-      // developerPlatformClient
-      expect.any(Object),
-      ourFunction,
-      // orgId
-      expect.any(String),
-    )
-  })
-
-  test('calls linkedAppContext with correct parameters', async () => {
-    // Given
-    const callback = vi.fn().mockResolvedValue(app)
-    const path = 'some/path'
-    const apiKey = 'test-api-key'
-    const userProvidedConfigName = 'test-config'
-
-    // When
-    await inFunctionContext({
-      path,
-      apiKey,
-      userProvidedConfigName,
-      reset: true,
-      callback,
-    })
-
-    // Then
-    expect(linkedAppContext).toHaveBeenCalledWith({
-      directory: path,
-      clientId: apiKey,
-      forceRelink: true,
-      userProvidedConfigName,
-    })
-  })
-})
-
 describe('getOrGenerateSchemaPath', () => {
   let extension: ExtensionInstance<FunctionConfigType>
   let app: AppLinkedInterface
@@ -110,7 +62,8 @@ describe('getOrGenerateSchemaPath', () => {
     vi.mocked(fileExists).mockResolvedValue(true)
 
     // When
-    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient, '123')
+    // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
+    const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
 
     // Then
     expect(result).toBe(expectedPath)
@@ -120,12 +73,14 @@ describe('getOrGenerateSchemaPath', () => {
   test('generates the schema file if it does not exist', async () => {
     // Given
     const expectedPath = joinPath(extension.directory, 'schema.graphql')
-    vi.mocked(fileExists).mockResolvedValue(false)
-    vi.mocked(generateSchemaService).mockResolvedValueOnce()
+    vi.mocked(fileExists).mockResolvedValueOnce(false)
     vi.mocked(fileExists).mockResolvedValueOnce(true)
 
+    vi.mocked(generateSchemaService).mockResolvedValueOnce()
+
     // When
-    const result = await getOrGenerateSchemaPath(extension, app, developerPlatformClient, '123')
+    // Pass extension, app.directory, clientId, forceRelink, userProvidedConfigName
+    const result = await getOrGenerateSchemaPath(extension, app.directory, '123', false, undefined)
 
     // Then
     expect(result).toBe(expectedPath)

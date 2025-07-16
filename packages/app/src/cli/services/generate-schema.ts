@@ -13,7 +13,6 @@ interface GenerateSchemaOptions {
   app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
   stdout: boolean
-  path: string
   developerPlatformClient: DeveloperPlatformClient
   orgId: string
 }
