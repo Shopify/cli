@@ -3,7 +3,7 @@ import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -29,10 +29,19 @@ class TestThemeCommand extends ThemeCommand {
 
   static multiEnvironmentsFlags = ['store']
 
-  commandCalls: {flags: any; session: AdminSession; context?: any}[] = []
+  commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; context?: any}[] = []
 
-  async command(flags: any, session: AdminSession, context?: {stdout?: Writable; stderr?: Writable}): Promise<void> {
-    this.commandCalls.push({flags, session, context})
+  async command(
+    flags: any,
+    session: AdminSession,
+    multiEnvironment?: boolean,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {
+    this.commandCalls.push({flags, session, multiEnvironment, context})
+
+    if (flags.environment && flags.environment[0] === 'command-error') {
+      throw new Error('Mocking a command error')
+    }
   }
 }
 
@@ -121,6 +130,94 @@ describe('ThemeCommand', () => {
             expect.objectContaining({prefix: 'staging'}),
           ]),
           showTimestamps: true,
+        }),
+      )
+    })
+  })
+
+  describe('multi environment', () => {
+    test('should not execute commands in environments that are missing required flags', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'development', '--environment', 'env-missing-store', '--environment', 'production'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(renderConcurrentProcesses).toHaveLength(2)
+      expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['development', 'production'])
+    })
+
+    test('commands error gracefully and continue with other environments', async () => {
+      // Given
+      vi.mocked(loadEnvironment).mockResolvedValue({store: 'store.myshopify.com'})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'command-error', '--environment', 'development', '--environment', 'production'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(renderConcurrentProcesses).toHaveLength(3)
+      expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual([
+        'command-error',
+        'development',
+        'production',
+      ])
+    })
+
+    test('error messages contain the environment name', async () => {
+      // Given
+      const environmentConfig = {store: 'store.myshopify.com'}
+      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'command-error', '--environment', 'development'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: ['Environment command-error failed: \n\nMocking a command error'],
         }),
       )
     })
