@@ -48,7 +48,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const [error, setError] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
   const [shouldShowPersistentDevInfo, setShouldShowPersistentDevInfo] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<'status' | 'info'>('status')
+  const [activeTab, setActiveTab] = useState<string>('s')
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const {isAborted} = useAbortSignal(abortController.signal, async (err: any) => {
@@ -99,32 +99,32 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         try {
           setError('')
 
-          if (input === 'p' && status.previewURL && status.isReady && activeTab === 'status') {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_preview_url_opened: true,
-            }))
-            await openURL(status.previewURL)
-          } else if (input === 'g' && status.graphiqlURL && status.isReady && activeTab === 'status') {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_graphiql_opened: true,
-            }))
-            await openURL(status.graphiqlURL)
-          } else if (input === 'i' && status.isReady) {
-            setActiveTab('info')
-          } else if (input === 's') {
-            setActiveTab('status')
-          } else if (input === 'q') {
-            abortController.abort()
+          // First check if input matches any tab key
+          const matchingTab = tabs[input]
+          if (matchingTab) {
+            if (matchingTab.action) {
+              await matchingTab.action()
+            } else {
+              setActiveTab(input)
+            }
+            return
+          }
+
+          // Then check if input matches any shortcut key for the current active tab
+          const currentTab = tabs[activeTab]
+          if (currentTab?.shortcuts) {
+            const matchingShortcut = currentTab.shortcuts.find((shortcut) => shortcut.key === input)
+            if (matchingShortcut) {
+              // Check condition if it exists
+              if (!matchingShortcut.condition || matchingShortcut.condition()) {
+                await matchingShortcut.action()
+              }
+            }
           }
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch (_) {
           setError('Failed to handle your input.')
         }
-      }
-
-      // Handle escape key to return to status tab
-      if (key.escape) {
-        setActiveTab('status')
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -143,6 +143,136 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         return '❌'
     }
   }
+
+  interface TabShortcut {
+    key: string
+    condition?: () => boolean
+    action: () => Promise<void>
+  }
+
+  interface Tab {
+    label: string
+    content?: React.ReactNode
+    shortcuts?: TabShortcut[]
+    action?: () => Promise<void>
+  }
+
+  interface TabDisplay extends Tab {
+    inputKey: string
+    header: string
+  }
+
+  const tabs: {[key: string]: Tab} = {
+    // eslint-disable-next-line id-length
+    s: {
+      label: 'Status',
+      shortcuts: [
+        {
+          key: 'p',
+          condition: () => Boolean(status.previewURL && status.isReady),
+          action: async () => {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_preview_url_opened: true,
+            }))
+            if (status.previewURL) {
+              await openURL(status.previewURL)
+            }
+          },
+        },
+        {
+          key: 'g',
+          condition: () => Boolean(status.graphiqlURL && status.isReady),
+          action: async () => {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_graphiql_opened: true,
+            }))
+            if (status.graphiqlURL) {
+              await openURL(status.graphiqlURL)
+            }
+          },
+        },
+      ],
+      content: (
+        <>
+          {status.statusMessage && (
+            <Text>
+              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
+            </Text>
+          )}
+          {canUseShortcuts && (
+            <Box marginTop={1} flexDirection="column">
+              {status.graphiqlURL && status.isReady ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
+                  your browser
+                </Text>
+              ) : null}
+              {status.isReady ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                </Text>
+              ) : null}
+            </Box>
+          )}
+          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+            {isShuttingDownMessage ? (
+              <Text>{isShuttingDownMessage}</Text>
+            ) : (
+              <>
+                {status.isReady && (
+                  <>
+                    {status.previewURL ? (
+                      <Text>
+                        Preview URL: <Link url={status.previewURL} />
+                      </Text>
+                    ) : null}
+                    {status.graphiqlURL ? (
+                      <Text>
+                        GraphiQL URL: <Link url={status.graphiqlURL} />
+                      </Text>
+                    ) : null}
+                  </>
+                )}
+              </>
+            )}
+          </Box>
+        </>
+      ),
+    },
+    i: {
+      label: 'App Info',
+      content: (
+        <Box flexDirection="column">
+          <TabularData
+            tabularData={[
+              ['App:', appName ?? ''],
+              ['App URL:', appURL ?? ''],
+              ['Config:', configPath?.split('/').pop() ?? ''],
+              ['Dev Store:', shopFqdn],
+              ['Org:', organizationName ?? ''],
+            ]}
+          />
+        </Box>
+      ),
+    },
+    q: {
+      label: 'Quit',
+      action: async () => {
+        abortController.abort()
+      },
+    },
+  }
+
+  const tabsArray: TabDisplay[] = Object.entries(tabs).map(([key, tab]) => {
+    return {
+      ...tab,
+      inputKey: key,
+      header: ` (${key}) ${tab.label} `,
+    }
+  })
+
+  // We need to subtract the number of tabs from the total length to account for the borders between and after the tabs
+  const tabHeaderLength = tabsArray.reduce((acc, tab) => acc + (tab.header?.length ?? 0), 0) + tabsArray.length + 1
 
   return (
     <>
@@ -168,97 +298,53 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       )}
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
-        <Box
-          paddingTop={0}
-          flexDirection="column"
-          flexGrow={1}
-          borderStyle="double"
-          borderBottom={false}
-          borderLeft={false}
-          borderRight={false}
-          borderTop
-        >
-          {status.isReady && (
-            <Box
-              flexDirection="row"
-              justifyContent="flex-start"
-              borderStyle="single"
-              borderTop={false}
-              borderLeft={false}
-              borderRight={false}
-            >
-              <Text>| </Text>
-              <Text color={activeTab === 'status' ? 'cyan' : 'white'} bold>
-                (s) Status
-              </Text>
-              <Text> | </Text>
-              <Text color={activeTab === 'info' ? 'cyan' : 'white'} bold>
-                (i) App Info
-              </Text>
-              <Text> | </Text>
-              <Text color="white">(q) Quit</Text>
-              <Text> |</Text>
-            </Box>
-          )}
+        <Box paddingTop={1} flexDirection="column" flexGrow={1}>
+          <>
+            {/* Top border with connected tab boxes */}
+            <Text>
+              {tabsArray
+                .map((tab, index) => {
+                  return `${index === 0 ? '╒' : '╤'}${'═'.repeat(tab.header?.length ?? 0)}`
+                })
+                .join('')}
+              {'╤'}
+              {'═'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
+              {'╕'}
+            </Text>
+            {/* Tab content row */}
+            <Text>
+              {tabsArray.map((tab) => {
+                return (
+                  <React.Fragment key={tab.inputKey}>
+                    {'│'}
+                    <Text
+                      bold={activeTab === tab.inputKey}
+                      color={activeTab === tab.inputKey ? 'cyan' : 'white'}
+                      backgroundColor={activeTab === tab.inputKey ? 'gray' : 'transparent'}
+                    >
+                      {tab.header}
+                    </Text>
+                  </React.Fragment>
+                )
+              })}
+              {`│${' '.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}│`}
+            </Text>
+            {/* Bottom border connecting tabs */}
+            <Text>
+              {tabsArray
+                .map((tab, index) => {
+                  return `${index === 0 ? '└' : '┴'}${'─'.repeat(tab.header?.length ?? 0)}`
+                })
+                .join('')}
+              {'┴'}
+              {'─'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
+              {'┘'}
+            </Text>
+          </>
           {/* Tab Content Area */}
-          {activeTab === 'status' ? (
-            <>
-              {status.statusMessage && (
-                <Text>
-                  {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
-                </Text>
-              )}
-              {canUseShortcuts && (
-                <Box marginTop={1} flexDirection="column">
-                  {status.graphiqlURL && status.isReady ? (
-                    <Text>
-                      {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API)
-                      in your browser
-                    </Text>
-                  ) : null}
-                  {status.isReady ? (
-                    <Text>
-                      {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-                    </Text>
-                  ) : null}
-                </Box>
-              )}
-              <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
-                {isShuttingDownMessage ? (
-                  <Text>{isShuttingDownMessage}</Text>
-                ) : (
-                  <>
-                    {status.isReady && (
-                      <>
-                        {status.previewURL ? (
-                          <Text>
-                            Preview URL: <Link url={status.previewURL} />
-                          </Text>
-                        ) : null}
-                        {status.graphiqlURL ? (
-                          <Text>
-                            GraphiQL URL: <Link url={status.graphiqlURL} />
-                          </Text>
-                        ) : null}
-                      </>
-                    )}
-                  </>
-                )}
-              </Box>
-            </>
-          ) : (
-            <Box flexDirection="column">
-              <TabularData
-                tabularData={[
-                  ['App:', appName ?? ''],
-                  ['App URL:', appURL ?? ''],
-                  ['Config Path:', configPath?.split('/').pop() ?? ''],
-                  ['Dev Store:', shopFqdn],
-                  ['Org:', organizationName ?? ''],
-                ]}
-              />
-            </Box>
-          )}
+          <Box flexDirection="column" marginLeft={1} marginRight={1}>
+            {tabs[activeTab]?.content}
+          </Box>
         </Box>
       ) : null}
       {error ? (

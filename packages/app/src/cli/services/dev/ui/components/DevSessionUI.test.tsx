@@ -94,22 +94,15 @@ describe('DevSessionUI', () => {
       00:00:00 │                  frontend │ second frontend message
       00:00:00 │                  frontend │ third frontend message
 
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-
+      ╒════════════╤══════════════╤══════════╤══════════════════════════════════════════════════════════╕
+      │ (s) Status │ (i) App Info │ (q) Quit │                                                          │
+      └────────────┴──────────────┴──────────┴──────────────────────────────────────────────────────────┘
 
        › Press g │ open GraphiQL (Admin API) in your browser
        › Press p │ preview in your browser
-       › Press q │ quit
 
        Preview URL: https://shopify.com
-       GraphiQL URL: https://graphiql.shopify.com
-
-       ┌────────────┐  ┌──────────────┐
-       │ (s) Status │  │ (i) App Info │
-       └────────────┘  └──────────────┘
-
-      "
+       GraphiQL URL: https://graphiql.shopify.com"
     `)
 
     renderInstance.unmount()
@@ -303,22 +296,15 @@ describe('DevSessionUI', () => {
       [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
 
 
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-
+      ╒════════════╤══════════════╤══════════╤══════════════════════════════════════════════════════════╕
+      │ (s) Status │ (i) App Info │ (q) Quit │                                                          │
+      └────────────┴──────────────┴──────────┴──────────────────────────────────────────────────────────┘
 
        › Press g │ open GraphiQL (Admin API) in your browser
        › Press p │ preview in your browser
-       › Press q │ quit
 
        Preview URL: https://shopify.com
        GraphiQL URL: https://graphiql.shopify.com
-
-       ┌────────────┐  ┌──────────────┐
-       │ (s) Status │  │ (i) App Info │
-       └────────────┘  └──────────────┘
-
-
 
       something went wrong"
     `)
@@ -485,22 +471,20 @@ describe('DevSessionUI', () => {
     // When
     await sendInputAndWait(renderInstance, 100, 'i')
 
-    // Then - modal should be shown and replace status indicator
+    // Then - info tab should be shown with app data
     const output = renderInstance.lastFrame()!
-    expect(output).toContain('App Information')
     expect(output).toContain('My Test App')
     expect(output).toContain('https://my-app.ngrok.io')
     expect(output).toContain('shopify.app.toml')
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('My Organization')
-    expect(output).toContain('to close')
     // Status indicator should be replaced
     expect(output).not.toContain('App is ready for development')
 
     renderInstance.unmount()
   })
 
-  test('hides app info modal when escape is pressed', async () => {
+  test('switches back to status tab when s is pressed after viewing info tab', async () => {
     // Given
     const renderInstance = render(
       <DevSessionUI
@@ -518,17 +502,16 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Show modal first
+    // Show info tab first
     await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('App Information')
+    expect(renderInstance.lastFrame()!).toContain('My Test App')
 
-    // When - send escape key
-    renderInstance.stdin.write('\u001b')
-    await waitForInputsToBeReady()
+    // When - press s to switch back to status tab
+    await sendInputAndWait(renderInstance, 100, 's')
 
     // Then
     const output = renderInstance.lastFrame()!
-    expect(output).not.toContain('App Information')
+    expect(output).not.toContain('My Test App')
     expect(output).toContain('Preview URL: https://shopify.com')
 
     renderInstance.unmount()
@@ -555,18 +538,18 @@ describe('DevSessionUI', () => {
 
     // When - press i to switch to info tab
     await sendInputAndWait(renderInstance, 100, 'i')
-    expect(renderInstance.lastFrame()!).toContain('App Information')
+    expect(renderInstance.lastFrame()!).toContain('My Test App')
     expect(renderInstance.lastFrame()!).not.toContain('Preview URL:')
 
     // When - press s to switch back to status tab
     await sendInputAndWait(renderInstance, 100, 's')
-    expect(renderInstance.lastFrame()!).not.toContain('App Information')
+    expect(renderInstance.lastFrame()!).not.toContain('My Test App')
     expect(renderInstance.lastFrame()!).toContain('Preview URL:')
 
     renderInstance.unmount()
   })
 
-  test('hides preview and graphiql URLs when app info modal is shown', async () => {
+  test('hides preview and graphiql URLs when app info tab is shown', async () => {
     // Given
     const renderInstance = render(
       <DevSessionUI
@@ -586,19 +569,19 @@ describe('DevSessionUI', () => {
     expect(renderInstance.lastFrame()!).toContain('Preview URL: https://shopify.com')
     expect(renderInstance.lastFrame()!).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
-    // When - show modal
+    // When - switch to info tab
     await sendInputAndWait(renderInstance, 100, 'i')
 
-    // Then - URLs should be hidden
+    // Then - URLs should be hidden and app info should be shown
     const output = renderInstance.lastFrame()!
-    expect(output).toContain('App Information')
+    expect(output).toContain('My Test App')
     expect(output).not.toContain('Preview URL: https://shopify.com')
     expect(output).not.toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
   })
 
-  test('only shows app info option when app is ready', async () => {
+  test('always shows app info tab regardless of app readiness', async () => {
     // Given - app not ready
     devSessionStatusManager.updateStatus({isReady: false})
 
@@ -616,14 +599,14 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Then - should not show (i) App Info tab
-    expect(renderInstance.lastFrame()!).not.toContain('(i) App Info')
+    // Then - should always show (i) App Info tab
+    expect(renderInstance.lastFrame()!).toContain('(i) App Info')
 
     // When - app becomes ready
     devSessionStatusManager.updateStatus({isReady: true})
     await waitForInputsToBeReady()
 
-    // Then - should show (i) App Info tab
+    // Then - should still show (i) App Info tab
     expect(renderInstance.lastFrame()!).toContain('(i) App Info')
 
     renderInstance.unmount()
@@ -649,10 +632,10 @@ describe('DevSessionUI', () => {
 
     // Then
     const output = renderInstance.lastFrame()!
-    expect(output).toContain('App Information')
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('Basic App')
-    expect(output).toContain('to close')
+    expect(output).toContain('App:')
+    expect(output).toContain('Dev Store:')
 
     renderInstance.unmount()
   })
