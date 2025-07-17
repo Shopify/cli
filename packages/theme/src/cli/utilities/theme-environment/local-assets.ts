@@ -1,10 +1,9 @@
 import {injectCdnProxy} from './proxy.js'
 import {parseServerEvent} from './server-utils.js'
+import {getLiquidTagContent} from './liquid-tag-content.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {toLiquidHtmlAST, walk, NodeTypes} from '@shopify/liquid-html-parser'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {Theme, ThemeAsset, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -221,22 +220,9 @@ function getTagContent(file: ThemeAsset, tag: 'javascript' | 'stylesheet') {
 
   const contents = [`/* ${file.key} */`]
 
-  try {
-    walk(toLiquidHtmlAST(file.value), (node) => {
-      if (node.type === NodeTypes.LiquidRawTag && node.name === tag) {
-        contents.push(node.body.value)
-      }
-    })
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err: unknown) {
-    const error = err as Error
-    outputDebug(`Error parsing Liquid file "${file.key}" to extract ${tag} tag. ${error.stack ?? error.message}`)
-
-    const tagRE = new RegExp(`{%\\s*${tag}\\s*%}([^%]*){%\\s*end${tag}\\s*%}`)
-    const tagContent = file.value?.match(tagRE)?.[1]
-    if (tagContent) {
-      contents.push(tagContent)
-    }
+  const tagContent = getLiquidTagContent(file.value ?? '', tag)
+  if (tagContent) {
+    contents.push(tagContent)
   }
 
   if (contents.length > 1) {

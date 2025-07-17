@@ -713,9 +713,6 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.82.0
         version: link:../cli-kit
-      '@shopify/liquid-html-parser':
-        specifier: ^2.8.2
-        version: 2.8.2
       '@shopify/theme-check-node':
         specifier: 3.19.0
         version: 3.19.0
