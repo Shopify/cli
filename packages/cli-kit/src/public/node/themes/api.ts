@@ -34,8 +34,7 @@ export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'va
 const SkeletonThemeCdn = 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip'
 const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useNetworkLevelRetry: true,
-  useAbortSignal: true,
-  timeoutMs: 90 * 1000,
+  useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
 }
 
@@ -48,6 +47,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       session,
       variables: {id: gid},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (theme) {
@@ -83,6 +83,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       session,
       variables: {after},
       responseOptions: {handleErrors: false},
+      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')
