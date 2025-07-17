@@ -26,10 +26,29 @@
  * @param tag - The Liquid tag to extract content from.
  *
  * @returns The tag content, or undefined if not found.
- *
  */
 export function getLiquidTagContent(liquid: string, tag: 'javascript' | 'stylesheet' | 'schema'): string | undefined {
-  const tagRE = new RegExp(`{%-?\\s*${tag}\\s*-?%}([^%]*){%-?\\s*end${tag}\\s*-?%}`)
-  const match = liquid.match(tagRE)?.[1]
-  return match
+  const openTagRE = new RegExp(`{%-?\\s*${tag}\\s*-?%}`)
+  const closeTagRE = new RegExp(`{%-?\\s*end${tag}\\s*-?%}`)
+
+  const openMatch = openTagRE.exec(liquid)
+
+  if (!openMatch) {
+    return
+  }
+
+  const startIndex = openMatch.index + openMatch[0].length
+  const closeMatch = closeTagRE.exec(liquid)
+
+  if (!closeMatch) {
+    return
+  }
+
+  const endIndex = closeMatch.index
+
+  if (startIndex > endIndex) {
+    return
+  }
+
+  return liquid.slice(startIndex, endIndex)
 }
