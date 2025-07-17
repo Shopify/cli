@@ -79,6 +79,7 @@ function buildExtensionsBreakdown() {
       toCreate: [],
       toUpdate: [],
       fromDashboard: [],
+      unchanged: [],
     },
     extensionsToConfirm: {
       validMatches: {},

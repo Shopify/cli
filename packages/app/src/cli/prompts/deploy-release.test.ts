@@ -126,7 +126,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Extensions:',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
-                'to update extension',
+                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
+                'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
             },
@@ -186,7 +187,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                   item: ['to create dashboard', {subdued: '(new, from Partner Dashboard)'}],
                   color: 'green',
                 },
-                'to update extension',
+                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
+                'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
                 {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
                 {bullet: '-', item: ['remote dashboard', {subdued: '(removed, from Partner Dashboard)'}], color: 'red'},
@@ -238,7 +240,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Extensions:',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
-                'to update extension',
+                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
+                'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
                 {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -282,7 +285,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Extensions:',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
-                'to update extension',
+                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
+                'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
                 {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -334,7 +338,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               helperText: 'Removing extensions can permanently delete app user data',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
-                'to update extension',
+                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
+                'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
                 {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -389,7 +394,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Extensions:',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
-                'to update extension',
+                {item: ['to update extension', {subdued: '(updated)'}], color: '#FF8800'},
+                'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
             },
@@ -429,10 +435,12 @@ function buildCompleteBreakdownInfo() {
 
   emptyBreakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildExtensionBreakdownInfo('remote extension'))
   emptyBreakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildExtensionBreakdownInfo('to create extension'))
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.toUpdate.push(
-    buildExtensionBreakdownInfo('to update extension'),
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.unchanged.push(
+    buildExtensionBreakdownInfo('unchanged extension'),
     buildDashboardBreakdownInfo('from dashboard extension'),
   )
+
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.toUpdate.push(buildExtensionBreakdownInfo('to update extension'))
 
   emptyBreakdownInfo.configExtensionIdentifiersBreakdown!.existingFieldNames.push('existing field name1')
   emptyBreakdownInfo.configExtensionIdentifiersBreakdown!.existingUpdatedFieldNames.push('updating field name1')
@@ -457,6 +465,7 @@ function buildEmptyExtensionsBreakdownInfo(): ExtensionIdentifiersBreakdown {
     onlyRemote: [],
     toCreate: [],
     toUpdate: [],
+    unchanged: [],
   }
 }
 
