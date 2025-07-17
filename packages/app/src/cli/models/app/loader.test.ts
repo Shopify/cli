@@ -438,6 +438,41 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type "invalid_type"/)
   })
 
+  test('loads only known extension types when mode is local', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // Create two extensions: one known and one unknown
+    const knownBlockConfiguration = `
+      name = "my_extension"
+      type = "theme"
+      `
+    await writeBlockConfig({
+      blockConfiguration: knownBlockConfiguration,
+      name: 'my-known-extension',
+    })
+    await writeFile(joinPath(blockPath('my-known-extension'), 'index.js'), '')
+
+    const unknownBlockConfiguration = `
+      name = "unknown_extension"
+      type = "unknown_type"
+      `
+    await writeBlockConfig({
+      blockConfiguration: unknownBlockConfiguration,
+      name: 'my-unknown-extension',
+    })
+    await writeFile(joinPath(blockPath('my-unknown-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp({mode: 'local'})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
+    expect(app.allExtensions[0]!.configuration.type).toBe('theme')
+    expect(app.errors).toBeUndefined()
+  })
+
   test('throws if 2 or more extensions have the same handle', async () => {
     // Given
     await writeConfig(appConfiguration)
