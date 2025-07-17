@@ -239,19 +239,79 @@ export function cleanSingleStackTracePath(filePath: string): string {
   cleanedPath = cleanedPath.replace(/^[A-Z]:\//, '')
   cleanedPath = cleanedPath.replace(/^\/[A-Z]:\//, '')
 
+  // Remove leading slashes early so our patterns work consistently
+  cleanedPath = cleanedPath.replace(/^\/+/, '')
+
   // AGGRESSIVE NORMALIZATION: Strip ALL path prefixes
   // For node_modules paths: extract ONLY the part after node_modules/
   const nodeModulesMatch = cleanedPath.match(/^.*node_modules\/(.+)$/)
   if (nodeModulesMatch && nodeModulesMatch[1]) {
     cleanedPath = nodeModulesMatch[1]
   } else {
-    // For ALL other paths: strip ALL leading absolute path components
-    // This ensures identical errors produce identical stack traces regardless of:
-    // - User home directory (/home/user, /Users/john, etc.)
-    // - CI workspace (/github/workspace, /bitbucket/pipelines, etc.)
-    // - Installation location (/usr/local/lib, C:\Program Files, etc.)
-    // - Temporary directories (/tmp, /var/folders, etc.)
-    cleanedPath = cleanedPath.replace(/^\/+/, '')
+    // Check for package manager cache paths
+    // Yarn cache: .yarn/berry/cache/, .yarn/cache/, etc.
+    const yarnCacheMatch = cleanedPath.match(/^.*\.yarn\/(?:berry\/)?cache\/(.+)$/)
+    if (yarnCacheMatch && yarnCacheMatch[1]) {
+      // Keep the actual file path from the cache, just remove the cache prefix
+      cleanedPath = yarnCacheMatch[1]
+    } else {
+      // pnpm store: .pnpm-store/, .pnpm/, .local/share/pnpm/store/, etc.
+      const pnpmStoreMatch = cleanedPath.match(/^.*\.(pnpm-store|pnpm)\/(.+)$/)
+      if (pnpmStoreMatch && pnpmStoreMatch[2]) {
+        // Keep the actual file path from the store, just remove the store prefix
+        cleanedPath = pnpmStoreMatch[2]
+      } else {
+        // For ALL other paths: strip well-known user-specific path prefixes
+        // This ensures identical errors produce identical stack traces regardless of:
+        // - User home directory (/home/user, /Users/john, etc.)
+        // - CI workspace (/github/workspace, /bitbucket/pipelines, etc.)
+        // - Installation location (/usr/local/lib, C:\Program Files, etc.)
+        // - Temporary directories (/tmp, /var/folders, etc.)
+
+        // Strip common user-specific prefixes while preserving project structure
+        cleanedPath = cleanedPath
+          // macOS home: Users/john/...
+          .replace(/^Users\/[^/]+\//, '')
+          // Linux home: home/jane/...
+          .replace(/^home\/[^/]+\//, '')
+          // Root home: root/...
+          .replace(/^root\//, '')
+          // Old Windows
+          .replace(/^Documents and Settings\/[^/]+\//, '')
+          // Windows program files
+          .replace(/^AppData\/Local\/Programs\//, '')
+          // Windows roaming data
+          .replace(/^AppData\/Roaming\//, '')
+          // Windows temp
+          .replace(/^AppData\/Local\/Temp\//, '')
+          // Windows local data
+          .replace(/^AppData\/Local\//, '')
+          // macOS temp: var/folders/xx/yyy/zzz/...
+          .replace(/^var\/folders\/[^/]+\/[^/]+\/[^/]+\//, '')
+          // Unix temp
+          .replace(/^tmp\//, '')
+          // Unix /opt
+          .replace(/^opt\//, '')
+          // Unix /usr/local
+          .replace(/^usr\/local\//, '')
+          // Unix /usr
+          .replace(/^usr\//, '')
+          // GitHub Actions
+          .replace(/^home\/runner\//, '')
+          // GitHub workspace
+          .replace(/^github\/workspace\//, '')
+          // Bitbucket
+          .replace(/^bitbucket\/pipelines\/agent\//, '')
+          // GitLab CI
+          .replace(/^builds\//, '')
+          // AWS CodeBuild
+          .replace(/^codebuild\/output\/[^/]+\//, '')
+          // Docker /app
+          .replace(/^app\//, '')
+          // Docker /workspace
+          .replace(/^workspace\//, '')
+      }
+    }
   }
 
   // Normalize webpack chunk hashes
