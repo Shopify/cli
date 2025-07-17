@@ -29,10 +29,30 @@ class TestThemeCommand extends ThemeCommand {
 
   static multiEnvironmentsFlags = ['store']
 
-  commandCalls: {flags: any; session: AdminSession; context?: any}[] = []
+  commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; context?: any}[] = []
 
-  async command(flags: any, session: AdminSession, context?: {stdout?: Writable; stderr?: Writable}): Promise<void> {
-    this.commandCalls.push({flags, session, context})
+  async command(
+    flags: any,
+    session: AdminSession,
+    multiEnvironment?: boolean,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {
+    this.commandCalls.push({flags, session, multiEnvironment, context})
+
+    if (flags.environment && flags.environment[0] === 'command-error') {
+      throw new Error('Mocking a command error')
+    }
+  }
+}
+
+class TestThemeCommandWithForce extends TestThemeCommand {
+  static flags = {
+    ...TestThemeCommand.flags,
+    force: Flags.boolean({
+      char: 'f',
+      description: 'Skip confirmation',
+      env: 'SHOPIFY_FLAG_FORCE',
+    }),
   }
 }
 

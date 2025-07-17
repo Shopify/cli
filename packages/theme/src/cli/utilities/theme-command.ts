@@ -41,6 +41,7 @@ export default abstract class ThemeCommand extends Command {
   async command(
     _flags: FlagValues,
     _session: AdminSession,
+    _multiEnvironment?: boolean,
     _context?: {stdout?: Writable; stderr?: Writable},
   ): Promise<void> {}
 
@@ -60,7 +61,7 @@ export default abstract class ThemeCommand extends Command {
 
     // Single environment or no environment
     if (environments.length <= 1) {
-      const session = await this.ensureAuthenticated(flags)
+      const session = await this.createSession(flags)
       await this.command(flags, session)
       return
     }
@@ -77,7 +78,7 @@ export default abstract class ThemeCommand extends Command {
         silent: true,
       })
       // eslint-disable-next-line no-await-in-loop
-      sessions[environmentName] = await this.ensureAuthenticated(environmentConfig as FlagValues)
+      sessions[environmentName] = await this.createSession(environmentConfig as FlagValues)
     }
 
     // Use renderConcurrent for multi-environment execution
@@ -105,7 +106,7 @@ export default abstract class ThemeCommand extends Command {
             throw new AbortError(`No session found for environment ${environment}`)
           }
 
-          await this.command(environmentFlags, session, {stdout, stderr})
+          await this.command(environmentFlags, session, false, {stdout, stderr})
         },
       })),
       abortSignal: abortController.signal,
@@ -113,7 +114,7 @@ export default abstract class ThemeCommand extends Command {
     })
   }
 
-  private async ensureAuthenticated(flags: FlagValues) {
+  private async createSession(flags: FlagValues) {
     const store = flags.store as string
     const password = flags.password as string
     return ensureAuthenticatedThemes(ensureThemeStore({store}), password)
