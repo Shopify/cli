@@ -32,23 +32,19 @@ export function getLiquidTagContent(liquid: string, tag: 'javascript' | 'stylesh
   const closeTagRE = new RegExp(`{%-?\\s*end${tag}\\s*-?%}`)
 
   const openMatch = openTagRE.exec(liquid)
-
   if (!openMatch) {
     return
   }
 
   const startIndex = openMatch.index + openMatch[0].length
-  const closeMatch = closeTagRE.exec(liquid)
+  closeTagRE.lastIndex = startIndex
 
+  const closeMatch = closeTagRE.exec(liquid)
   if (!closeMatch) {
     return
   }
 
   const endIndex = closeMatch.index
-
-  if (startIndex > endIndex) {
-    return
-  }
 
   return liquid.slice(startIndex, endIndex)
 }
