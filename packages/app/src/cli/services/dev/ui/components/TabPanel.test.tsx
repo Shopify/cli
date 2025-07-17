@@ -1,7 +1,7 @@
 import {TabPanel, Tab} from './TabPanel.js'
 import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
 import React from 'react'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {Text} from '@shopify/cli-kit/node/ink'
 
@@ -24,12 +24,6 @@ vi.mock('@shopify/cli-kit/node/ink', async () => {
 describe('TabPanel', () => {
   const mockAction = vi.fn()
   const mockShortcutAction = vi.fn()
-
-  beforeEach(() => {
-    // Reset mocks before each test
-    mockAction.mockReset()
-    mockShortcutAction.mockReset()
-  })
 
   const sampleTabs: {[key: string]: Tab} = {
     // eslint-disable-next-line id-length
