@@ -13,6 +13,7 @@ import {renderExportResult} from '../../../prompts/export_results.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 export class StoreExportOperation implements StoreOperation {
   fromArg: string | undefined
@@ -36,7 +37,8 @@ export class StoreExportOperation implements StoreOperation {
     const apiShopId = await this.validateShop(sourceShopDomain)
 
     if (!flags['no-prompt']) {
-      if (!(await confirmExportPrompt(sourceShopDomain, toFile))) {
+      const fileExists = fileExistsSync(toFile)
+      if (!(await confirmExportPrompt(sourceShopDomain, toFile, fileExists))) {
         outputInfo('Exiting.')
         process.exit(0)
       }
