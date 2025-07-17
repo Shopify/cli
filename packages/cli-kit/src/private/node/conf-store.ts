@@ -1,6 +1,6 @@
 import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
-import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug} from '../../public/node/output.js'
 
 interface CacheValue<T> {
   value: T

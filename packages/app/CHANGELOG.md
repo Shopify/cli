@@ -1,5 +1,68 @@
 # @shopify/app
 
+## 3.82.0
+
+### Minor Changes
+
+- 386bf0e: Add support for displaying UI Extension dev logs
+- d691457: Unsupported sections in your app.toml file will present a validation error. Opt-out with SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS.
+
+### Patch Changes
+
+- c487f84: Fixes the `Encryption certificate fingerprint can't be blank` error when generating a custom credit card payments extension with the `shopify app generate extension` command.
+- b9683e0: Adds a validation to prevent app-specific webhooks and legacy install flow
+- Updated dependencies [02b417b]
+- Updated dependencies [0edf793]
+- Updated dependencies [9b52391]
+- Updated dependencies [5188073]
+- Updated dependencies [4176bf5]
+- Updated dependencies [c9c07b5]
+- Updated dependencies [eee4978]
+  - @shopify/theme@3.82.0
+  - @shopify/cli-kit@3.82.0
+  - @shopify/plugin-cloudflare@3.82.0
+
+## 3.81.1
+
+### Patch Changes
+
+- Updated dependencies [b838f21]
+  - @shopify/theme@3.81.1
+  - @shopify/cli-kit@3.81.1
+  - @shopify/plugin-cloudflare@3.81.1
+
+## 3.81.0
+
+### Minor Changes
+
+- 4aab034: Use @shopify/toml-patch for TOML updates; Opt out via SHOPIFY_CLI_DISABLE_WASM_TOML_PATCH
+- eb19684: Removed overrides for SHOPIFY_CLI_NO_THEME_BUNDLING and SHOPIFY_CLI_BUNDLED_THEME_CLI
+- 24aa2dd: Drop support for Node 18
+- ce3dfdc: Print all log messages to stderr instead of stdout
+
+### Patch Changes
+
+- 0c2911e: Adjust phrasing in CLI for the Remix templates from Early Access to Release Candidate
+- d192947: Minify JS extensions by default on app dev. To opt-out: SHOPIFY_CLI_DISABLE_MINIFICATION_ON_DEV=1
+- c20381f: Update error message when types for the target cannot be found in the installed @shopify/ui-extensions version
+- 933a2f8: Fix type definition generation for POLARIS_UNIFIED extensions
+- Updated dependencies [c39ba5e]
+- Updated dependencies [e18c9f6]
+- Updated dependencies [dc78463]
+- Updated dependencies [23d4b0b]
+- Updated dependencies [451a3a8]
+- Updated dependencies [16406ae]
+- Updated dependencies [eb19684]
+- Updated dependencies [24aa2dd]
+- Updated dependencies [53c2a92]
+- Updated dependencies [642bb3e]
+- Updated dependencies [ce3dfdc]
+- Updated dependencies [219e6d1]
+- Updated dependencies [9a9e51e]
+  - @shopify/theme@3.81.0
+  - @shopify/cli-kit@3.81.0
+  - @shopify/plugin-cloudflare@3.81.0
+
 ## 3.80.0
 
 ### Minor Changes

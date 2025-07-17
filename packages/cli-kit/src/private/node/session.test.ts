@@ -24,8 +24,8 @@ import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {getPartnersToken} from '../../public/node/environment.js'
+import {nonRandomUUID} from '../../public/node/crypto.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
-import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 const futureDate = new Date(2022, 1, 1, 11)
 

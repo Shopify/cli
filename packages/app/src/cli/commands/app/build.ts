@@ -1,13 +1,13 @@
 import {appFlags} from '../../flags.js'
 import build from '../../services/build.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
+import {localAppContext} from '../../services/app-context.js'
+import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../utilities/app-unlinked-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
-export default class Build extends AppCommand {
+export default class Build extends AppUnlinkedCommand {
   static summary = 'Build the app, including extensions.'
 
   static descriptionWithMarkdown = `This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).
@@ -33,7 +33,7 @@ export default class Build extends AppCommand {
     }),
   }
 
-  async run(): Promise<AppCommandOutput> {
+  async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(Build)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
@@ -44,10 +44,8 @@ export default class Build extends AppCommand {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const {app} = await linkedAppContext({
+    const app = await localAppContext({
       directory: flags.path,
-      clientId: apiKey,
-      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 

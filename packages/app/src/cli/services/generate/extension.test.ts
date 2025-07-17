@@ -42,6 +42,14 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   }
 })
 
+vi.mock('@shopify/cli-kit/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+  return {
+    ...actual,
+    exec: vi.fn().mockResolvedValue({stdout: '', stderr: ''}),
+  }
+})
+
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
   return {
@@ -465,32 +473,35 @@ describe('initialize a extension', async () => {
         specifications,
         developerPlatformClient: testDeveloperPlatformClient({
           templateSpecifications: () =>
-            Promise.resolve([
-              {
-                identifier: 'ui_extension',
-                name: 'UI Extension',
-                defaultName: 'ui-extension',
-                group: 'Merchant Admin',
-                supportLinks: [],
-                type: 'ui_extension',
-                url: 'https://github.com/Shopify/extensions-templates',
-                extensionPoints: [],
-                supportedFlavors: [
-                  {
-                    name: 'JavaScript',
-                    value: 'vanilla-js',
-                  },
-                  {
-                    name: 'TypeScript',
-                    value: 'typescript',
-                  },
-                  {
-                    name: 'React',
-                    value: 'react',
-                  },
-                ],
-              },
-            ]),
+            Promise.resolve({
+              templates: [
+                {
+                  identifier: 'ui_extension',
+                  name: 'UI Extension',
+                  defaultName: 'ui-extension',
+                  group: 'Merchant Admin',
+                  supportLinks: [],
+                  type: 'ui_extension',
+                  url: 'https://github.com/Shopify/extensions-templates',
+                  extensionPoints: [],
+                  supportedFlavors: [
+                    {
+                      name: 'JavaScript',
+                      value: 'vanilla-js',
+                    },
+                    {
+                      name: 'TypeScript',
+                      value: 'typescript',
+                    },
+                    {
+                      name: 'React',
+                      value: 'react',
+                    },
+                  ],
+                },
+              ],
+              groupOrder: [],
+            }),
         }),
       })
 

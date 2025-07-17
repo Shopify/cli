@@ -5,9 +5,6 @@ export const environmentVariableNames = {
   enableAppLogPolling: 'SHOPIFY_CLI_ENABLE_APP_LOG_POLLING',
   templatesJsonPath: 'SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH',
   mkcertBinaryPath: 'SHOPIFY_CLI_MKCERT_BINARY',
-  useWasmTomlPatch: 'SHOPIFY_CLI_USE_WASM_TOML_PATCH',
-  enableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_ENABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
-  disableUnsupportedConfigPropertyChecks: 'SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS',
   disableMinificationOnDev: 'SHOPIFY_CLI_DISABLE_MINIFICATION_ON_DEV',
 }
 

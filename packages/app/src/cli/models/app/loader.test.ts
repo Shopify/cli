@@ -2342,7 +2342,7 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
-  test('preserves values from the previous app when reloading', async () => {
+  test('regenerates devApplicationURLs when reloading', async () => {
     // Given
     const appConfiguration = `
       name = "my-app"
@@ -2355,6 +2355,11 @@ wrong = "property"
 
       [auth]
       redirect_urls = ["https://example.com/auth"]
+
+      [app_proxy]
+      url = "https://example.com"
+      subpath = "updated"
+      prefix = "new"
     `
     await writeConfig(appConfiguration)
 
@@ -2381,11 +2386,16 @@ wrong = "property"
       userProvidedConfigName: undefined,
     })) as AppLinkedInterface
 
-    // Set some values that should be preserved
+    // Set some values that should be regenerated
     const customDevUUID = 'custom-dev-uuid'
     const customAppURLs = {
       applicationUrl: 'http://custom.dev',
       redirectUrlWhitelist: ['http://custom.dev/auth'],
+      appProxy: {
+        proxyUrl: 'https://example.com',
+        proxySubPath: 'initial',
+        proxySubPathPrefix: 'old',
+      },
     }
     app.allExtensions[0]!.devUUID = customDevUUID
     app.setDevApplicationURLs(customAppURLs)
@@ -2395,7 +2405,19 @@ wrong = "property"
 
     // Then
     expect(reloadedApp.allExtensions[0]?.devUUID).toBe(customDevUUID)
-    expect(reloadedApp.devApplicationURLs).toEqual(customAppURLs)
+    expect(reloadedApp.devApplicationURLs).toEqual({
+      applicationUrl: 'http://custom.dev',
+      redirectUrlWhitelist: [
+        'http://custom.dev/auth/callback',
+        'http://custom.dev/auth/shopify/callback',
+        'http://custom.dev/api/auth/callback',
+      ],
+      appProxy: {
+        proxyUrl: 'https://custom.dev',
+        proxySubPath: 'updated',
+        proxySubPathPrefix: 'new',
+      },
+    })
     expect(reloadedApp.name).toBe(app.name)
     expect(reloadedApp.packageManager).toBe(app.packageManager)
     expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
@@ -2547,8 +2569,7 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(AbortError)
   })
 
-  test('loads the app with an unsupported config property, under failure mode', async () => {
-    vi.stubEnv('SHOPIFY_CLI_ENABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS', '1')
+  test('loads the app with an unsupported config property', async () => {
     const linkedAppConfigurationWithExtraConfig = `
     name = "for-testing"
     client_id = "1234567890"
@@ -2575,43 +2596,6 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(
       'Unsupported section(s) in app configuration: and_another, something_else',
     )
-    vi.unstubAllEnvs()
-  })
-
-  test('loads the app with an unsupported config property, under passthrough mode', async () => {
-    vi.stubEnv('SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS', '1')
-    const linkedAppConfigurationWithExtraConfig = `
-    name = "for-testing"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [build]
-    include_config_on_deploy = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [something_else]
-    not_valid = true
-
-    [and_another]
-    bad = true
-    `
-    await writeConfig(linkedAppConfigurationWithExtraConfig)
-
-    const app = await loadTestingApp()
-    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
-      'app_access',
-      'app_home',
-      'branding',
-      'webhooks',
-    ])
-
-    vi.unstubAllEnvs()
   })
 })
 

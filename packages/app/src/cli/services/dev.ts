@@ -38,7 +38,6 @@ import {RemoteAwareExtensionSpecification} from '../models/extensions/specificat
 import {ports} from '../constants.js'
 import {generateCertificate} from '../utilities/mkcert.js'
 import {Config} from '@oclif/core'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -46,7 +45,7 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -114,7 +113,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain, app.configSchema)
+    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain)
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
@@ -445,52 +444,24 @@ async function launchDevProcesses({
   })
 }
 
-export function developerPreviewController(
+function developerPreviewController(
   apiKey: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): DeveloperPreviewController {
   if (developerPlatformClient.supportsDevSessions) {
     return {
       fetchMode: () => Promise.resolve(false),
-      enable: () => Promise.resolve(),
+      enable: () => Promise.resolve(false),
       disable: () => Promise.resolve(),
       update: () => Promise.resolve(false),
     }
   }
 
-  const refreshToken = async () => {
-    await developerPlatformClient.refreshToken()
-  }
-
-  const withRefreshToken = async <T>(
-    fn: (developerPlatformClient: DeveloperPlatformClient) => Promise<T>,
-  ): Promise<T> => {
-    try {
-      const result = await performActionWithRetryAfterRecovery(async () => fn(developerPlatformClient), refreshToken)
-      return result
-    } catch (err) {
-      outputDebug('Failed to refresh token')
-      throw err
-    }
-  }
-
   return {
-    fetchMode: async () =>
-      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
-        Boolean(await fetchAppPreviewMode(apiKey, developerPlatformClient)),
-      ),
-    enable: async () =>
-      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) => {
-        await enableDeveloperPreview({apiKey, developerPlatformClient})
-      }),
-    disable: async () =>
-      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) => {
-        await disableDeveloperPreview({apiKey, developerPlatformClient})
-      }),
-    update: async (state: boolean) =>
-      withRefreshToken(async (developerPlatformClient: DeveloperPlatformClient) =>
-        developerPreviewUpdate({apiKey, developerPlatformClient, enabled: state}),
-      ),
+    fetchMode: async () => Boolean(await fetchAppPreviewMode(apiKey, developerPlatformClient)),
+    enable: async () => enableDeveloperPreview({apiKey, developerPlatformClient}),
+    disable: async () => disableDeveloperPreview({apiKey, developerPlatformClient}),
+    update: async (state: boolean) => developerPreviewUpdate({apiKey, developerPlatformClient, enabled: state}),
   }
 }
 

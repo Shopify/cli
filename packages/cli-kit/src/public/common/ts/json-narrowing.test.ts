@@ -1,5 +1,5 @@
 import {assertStringMap} from './json-narrowing.js'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {BugError} from '../../node/error.js'
 import {describe, expect, test} from 'vitest'
 
 describe('json-narrowing', () => {

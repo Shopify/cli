@@ -1,6 +1,9 @@
 import {composeThemeGid, parseGid, DEVELOPMENT_THEME_ROLE} from './utils.js'
+import {buildTheme} from './factories.js'
+import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {ThemeCreate} from '../../../cli/api/graphql/admin/generated/theme_create.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
@@ -21,12 +24,10 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {RequestModeInput} from '../http.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {adminRequestDoc} from '../api/admin.js'
+import {AdminSession} from '../session.js'
+import {AbortError} from '../error.js'
+import {outputDebug} from '../output.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
@@ -444,6 +445,73 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
   }
 
   return true
+}
+
+export interface ThemeDuplicateResult {
+  theme?: Theme
+  userErrors: {field?: string[] | null; message: string}[]
+  requestId?: string
+}
+
+export async function themeDuplicate(
+  id: number,
+  name: string | undefined,
+  session: AdminSession,
+): Promise<ThemeDuplicateResult> {
+  let requestId: string | undefined
+
+  const {themeDuplicate} = await adminRequestDoc({
+    query: ThemeDuplicate,
+    session,
+    variables: {id: composeThemeGid(id), name},
+    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    version: '2025-10',
+    responseOptions: {
+      onResponse: (response) => {
+        requestId = response.headers.get('x-request-id') ?? undefined
+      },
+    },
+  })
+
+  if (!themeDuplicate) {
+    // An unexpected error occurred during the GraphQL request execution
+    return {
+      theme: undefined,
+      userErrors: [{message: 'Failed to duplicate theme'}],
+      requestId,
+    }
+  }
+
+  const {newTheme, userErrors} = themeDuplicate
+
+  if (userErrors.length > 0) {
+    return {
+      theme: undefined,
+      userErrors,
+      requestId,
+    }
+  }
+
+  if (!newTheme) {
+    // An unexpected error if neither theme nor userErrors are returned
+    return {
+      theme: undefined,
+      userErrors: [{message: 'Failed to duplicate theme'}],
+      requestId,
+    }
+  }
+
+  const theme = buildTheme({
+    id: parseGid(newTheme.id),
+    name: newTheme.name,
+    role: newTheme.role.toLowerCase(),
+  })
+
+  return {
+    theme,
+    userErrors: [],
+    requestId,
+  }
 }
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {

@@ -1,4 +1,4 @@
-import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upload.js'
+import {uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
@@ -10,7 +10,6 @@ import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {Task} from '@shopify/cli-kit/node/ui'
 
@@ -44,6 +43,9 @@ export interface DeployOptions {
 
   /** The git reference url of the app version */
   commitReference?: string
+
+  /** If true, skip building any elements of the app that require building */
+  skipBuild: boolean
 }
 
 interface TasksContext {
@@ -77,7 +79,7 @@ export async function deploy(options: DeployOptions) {
       bundlePath = joinPath(options.app.directory, '.shopify', `deploy-bundle.${developerPlatformClient.bundleFormat}`)
       await mkdir(dirname(bundlePath))
     }
-    await bundleAndBuildExtensions({app, bundlePath, identifiers})
+    await bundleAndBuildExtensions({app, bundlePath, identifiers, skipBuild: options.skipBuild})
 
     let uploadTaskTitle
 
@@ -117,11 +119,6 @@ export async function deploy(options: DeployOptions) {
             version: options.version,
             commitReference: options.commitReference,
           })
-
-          if (!useThemebundling()) {
-            const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
-            await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
-          }
 
           await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
         },

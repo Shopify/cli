@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax  */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax, @nx/enforce-module-boundaries  */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type Maybe<T> = T | null
@@ -150,8 +150,6 @@ export type MetafieldOwnerType =
   | 'DRAFTORDER'
   /** The Fulfillment Constraint Rule metafield owner type. */
   | 'FULFILLMENT_CONSTRAINT_RULE'
-  /** The Gate Configuration metafield owner type. */
-  | 'GATE_CONFIGURATION'
   /** The GiftCardTransaction metafield owner type. */
   | 'GIFT_CARD_TRANSACTION'
   /** The Location metafield owner type. */

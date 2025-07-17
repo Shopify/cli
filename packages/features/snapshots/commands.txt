@@ -82,6 +82,7 @@
 │  ├─ console
 │  ├─ delete
 │  ├─ dev
+│  ├─ duplicate
 │  ├─ info
 │  ├─ init
 │  ├─ language-server

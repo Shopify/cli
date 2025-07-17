@@ -48,6 +48,7 @@ const STORE1: OrganizationStore = {
   shopName: 'store1',
   transferDisabled: false,
   convertableToPartnerTest: false,
+  provisionable: true,
 }
 const STORE2: OrganizationStore = {
   shopId: '2',
@@ -56,6 +57,7 @@ const STORE2: OrganizationStore = {
   shopName: 'store2',
   transferDisabled: false,
   convertableToPartnerTest: false,
+  provisionable: true,
 }
 const STORE3: OrganizationStore = {
   shopId: '3',
@@ -64,6 +66,7 @@ const STORE3: OrganizationStore = {
   shopName: 'store3',
   transferDisabled: false,
   convertableToPartnerTest: false,
+  provisionable: true,
 }
 
 beforeEach(() => {

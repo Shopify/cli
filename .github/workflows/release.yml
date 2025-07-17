@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PNPM_VERSION: '8.15.7'
+  PNPM_VERSION: '10.11.1'
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.20.3
+          node-version: 24.1.0
       - name: Create Release Pull Request
         uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a #  pin@v1
         with:
@@ -42,3 +42,4 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}

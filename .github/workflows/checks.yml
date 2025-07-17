@@ -9,7 +9,7 @@ env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  PNPM_VERSION: '8.15.7'
+  PNPM_VERSION: '10.11.1'
 
 jobs:
   type-diff:
@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         os: [ 'ubuntu-latest' ]
-        node: [ '18.20.3' ]
+        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         name: Checkout [main]

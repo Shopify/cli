@@ -4,6 +4,7 @@ import {
   allowedTemplates,
   diffAppModules,
   encodedGidFromOrganizationId,
+  encodedGidFromShopId,
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -12,6 +13,7 @@ import {
   testRemoteExtensionTemplates,
   testOrganizationApp,
   testOrganization,
+  testOrganizationStore,
 } from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
@@ -29,11 +31,14 @@ import {SourceExtension} from '../../api/graphql/app-management/generated/types.
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
+} from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {webhooksRequest} from '@shopify/cli-kit/node/api/webhooks'
+import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
@@ -152,7 +157,7 @@ describe('templateSpecifications', () => {
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const got = await client.templateSpecifications(orgApp)
+    const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
     const gotSortPriorities = got.map((template) => template.sortPriority)
 
@@ -180,12 +185,12 @@ describe('templateSpecifications', () => {
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const got = await client.templateSpecifications(orgApp)
+    const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
 
     // Then
-    expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalledWith(
-      `
+    expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalledWith({
+      query: `
     query OrganizationBetaFlags($organizationId: OrganizationID!) {
       organization(organizationId: $organizationId) {
         id
@@ -193,12 +198,45 @@ describe('templateSpecifications', () => {
         flag_notAllowedFlag: hasFeatureFlag(handle: "notAllowedFlag")
       }
     }`,
-      'business-platform-token',
-      orgApp.organizationId,
-      {organizationId: encodedGidFromOrganizationId(orgApp.organizationId)},
-    )
+      token: 'business-platform-token',
+      organizationId: orgApp.organizationId,
+      variables: {organizationId: encodedGidFromOrganizationId(orgApp.organizationId)},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
     const expectedAllowedTemplates = [templateWithoutRules, allowedTemplate]
     expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
+  })
+
+  test('extracts groupOrder correctly from template order', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templates: GatedExtensionTemplate[] = [
+      {...templateWithoutRules, group: 'GroupA'},
+      {...allowedTemplate, group: 'GroupB'},
+      // Same group as first
+      {...templateWithoutRules, identifier: 'template3', group: 'GroupA'},
+      {...allowedTemplate, identifier: 'template4', group: 'GroupC'},
+    ]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        flag_allowedFlag: true,
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
+
+    // When
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const {groupOrder} = await client.templateSpecifications(orgApp)
+
+    // Then
+    expect(groupOrder).toEqual(['GroupA', 'GroupB', 'GroupC'])
   })
 
   test('fails with an error message when fetching the specifications list fails', async () => {
@@ -308,7 +346,16 @@ describe('searching for apps', () => {
     const got = await client.appsForOrg(orgId, query)
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(orgId, ListApps, 'token', {query: queryVariable})
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: orgId,
+      query: ListApps,
+      token: 'token',
+      variables: {query: queryVariable},
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
     expect(got).toEqual({
       apps: apps.map((app, index) => ({
         apiKey: `key-${index}`,
@@ -342,7 +389,7 @@ describe('createApp', () => {
     const mockedApiVersionResult: PublicApiVersionsQuery = {
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
     }
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedApiVersionResult)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedApiVersionResult)
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
       appCreate: {
         app: {id: '1', key: 'key', activeRoot: {clientCredentials: {secrets: [{key: 'secret'}]}}},
@@ -355,20 +402,35 @@ describe('createApp', () => {
     await client.createApp(org, {name: 'app-name'})
 
     // Then
-    expect(webhooksRequest).toHaveBeenCalledWith(org.id, expect.anything(), 'token', expect.any(Object))
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
-      initialVersion: {
-        source: {
-          name: 'app-name',
-          modules: expect.arrayContaining([
-            {
-              config: {
-                api_version: '2025-01',
+    expect(webhooksRequestDoc).toHaveBeenCalledWith({
+      organizationId: org.id,
+      query: expect.anything(),
+      token: 'token',
+      unauthorizedHandler: expect.any(Object),
+      variables: {},
+    })
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: org.id,
+      query: CreateApp,
+      token: 'token',
+      variables: {
+        initialVersion: {
+          source: {
+            name: 'app-name',
+            modules: expect.arrayContaining([
+              {
+                config: {
+                  api_version: '2025-01',
+                },
+                type: 'webhooks',
               },
-              type: 'webhooks',
-            },
-          ]),
+            ]),
+          },
         },
+      },
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
       },
     })
   })
@@ -391,7 +453,7 @@ describe('createApp', () => {
       developerPlatformClient: expect.any(AppManagementClient),
     }
 
-    vi.mocked(webhooksRequest).mockResolvedValueOnce({
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
     })
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
@@ -421,7 +483,7 @@ describe('createApp', () => {
     // Given
     const client = new AppManagementClient()
     const org = testOrganization()
-    vi.mocked(webhooksRequest).mockResolvedValueOnce({
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
     })
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
@@ -436,20 +498,29 @@ describe('createApp', () => {
     await client.createApp(org, {name: 'app-name'})
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(org.id, CreateApp, 'token', {
-      initialVersion: {
-        source: {
-          name: 'app-name',
-          modules: expect.arrayContaining([
-            {
-              type: 'app_home',
-              config: {
-                app_url: expect.any(String),
-                embedded: true,
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: org.id,
+      query: CreateApp,
+      token: 'token',
+      variables: {
+        initialVersion: {
+          source: {
+            name: 'app-name',
+            modules: expect.arrayContaining([
+              {
+                type: 'app_home',
+                config: {
+                  app_url: expect.any(String),
+                  embedded: true,
+                },
               },
-            },
-          ]),
+            ]),
+          },
         },
+      },
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
       },
     })
   })
@@ -462,7 +533,7 @@ describe('apiVersions', () => {
     const mockedResponse: PublicApiVersionsQuery = {
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
     }
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
@@ -480,7 +551,7 @@ describe('topics', () => {
     // Given
     const orgId = '1'
     const mockedResponse: AvailableTopicsQuery = {availableTopics: ['app/uninstalled', 'products/created']}
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
@@ -496,7 +567,7 @@ describe('topics', () => {
     // Given
     const orgId = '1'
     const mockedResponse: AvailableTopicsQuery = {availableTopics: null}
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
@@ -537,7 +608,7 @@ describe('sendSampleWebhook', () => {
       topic: input.topic,
     }
     const token = 'token'
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
@@ -545,7 +616,13 @@ describe('sendSampleWebhook', () => {
     const result = await client.sendSampleWebhook(input, orgId)
 
     // Then
-    expect(webhooksRequest).toHaveBeenCalledWith(orgId, CliTesting, token, expectedVariables)
+    expect(webhooksRequestDoc).toHaveBeenCalledWith({
+      organizationId: orgId,
+      query: CliTesting,
+      token,
+      variables: expectedVariables,
+      unauthorizedHandler: expect.any(Object),
+    })
     expect(result.sendSampleWebhook.samplePayload).toEqual(mockedResponse.cliTesting?.samplePayload)
     expect(result.sendSampleWebhook.headers).toEqual(mockedResponse.cliTesting?.headers)
     expect(result.sendSampleWebhook.success).toEqual(true)
@@ -580,7 +657,7 @@ describe('sendSampleWebhook', () => {
       topic: input.topic,
     }
     const token = 'token'
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
@@ -588,7 +665,13 @@ describe('sendSampleWebhook', () => {
     const result = await client.sendSampleWebhook(input, orgId)
 
     // Then
-    expect(webhooksRequest).toHaveBeenCalledWith(orgId, CliTesting, token, expectedVariables)
+    expect(webhooksRequestDoc).toHaveBeenCalledWith({
+      organizationId: orgId,
+      query: CliTesting,
+      token,
+      variables: expectedVariables,
+      unauthorizedHandler: expect.any(Object),
+    })
     expect(result.sendSampleWebhook.samplePayload).toEqual('{}')
     expect(result.sendSampleWebhook.headers).toEqual('{}')
     expect(result.sendSampleWebhook.success).toEqual(true)
@@ -614,7 +697,7 @@ describe('sendSampleWebhook', () => {
         errors: ['Invalid api_version'],
       },
     }
-    vi.mocked(webhooksRequest).mockResolvedValueOnce(mockedResponse)
+    vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
     const client = new AppManagementClient()
@@ -683,11 +766,11 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      'gid://shopify/Organization/123',
-      expect.anything(),
-      'token',
-      {
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: 'gid://shopify/Organization/123',
+      query: expect.anything(),
+      token: 'token',
+      variables: {
         appId: 'gid://shopify/App/123',
         version: {
           source: {
@@ -709,9 +792,12 @@ describe('deploy', () => {
           sourceControlUrl: commitReference,
         },
       },
-      undefined,
-      {requestMode: 'slow-request'},
-    )
+      requestOptions: {requestMode: 'slow-request'},
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
   })
 
   test('includes the target property when context is provided', async () => {
@@ -763,11 +849,11 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      'gid://shopify/Organization/123',
-      expect.anything(),
-      'token',
-      {
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: 'gid://shopify/Organization/123',
+      query: expect.anything(),
+      token: 'token',
+      variables: {
         appId: 'gid://shopify/App/123',
         version: {
           source: {
@@ -789,9 +875,12 @@ describe('deploy', () => {
           sourceControlUrl: commitReference,
         },
       },
-      undefined,
-      {requestMode: 'slow-request'},
-    )
+      requestOptions: {requestMode: 'slow-request'},
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
   })
 
   test('does not include target property when context is empty', async () => {
@@ -843,11 +932,11 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      'gid://shopify/Organization/123',
-      expect.anything(),
-      'token',
-      {
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: 'gid://shopify/Organization/123',
+      query: expect.anything(),
+      token: 'token',
+      variables: {
         appId: 'gid://shopify/App/123',
         version: {
           source: {
@@ -869,9 +958,12 @@ describe('deploy', () => {
           sourceControlUrl: commitReference,
         },
       },
-      undefined,
-      {requestMode: 'slow-request'},
-    )
+      requestOptions: {requestMode: 'slow-request'},
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
   })
 
   test('uses bundleUrl when provided instead of modules', async () => {
@@ -901,20 +993,23 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      'gid://shopify/Organization/123',
-      expect.anything(),
-      'token',
-      {
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: 'gid://shopify/Organization/123',
+      query: expect.anything(),
+      token: 'token',
+      variables: {
         appId: 'gid://shopify/App/123',
         version: {
           sourceUrl: bundleUrl,
         },
         metadata: expect.any(Object),
       },
-      undefined,
-      {requestMode: 'slow-request'},
-    )
+      requestOptions: {requestMode: 'slow-request'},
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
   })
 
   test('updates name from branding module if present', async () => {
@@ -952,11 +1047,11 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      'gid://shopify/Organization/123',
-      expect.anything(),
-      'token',
-      expect.objectContaining({
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: 'gid://shopify/Organization/123',
+      query: expect.anything(),
+      token: 'token',
+      variables: expect.objectContaining({
         version: {
           source: {
             name: 'Updated App Name',
@@ -964,9 +1059,12 @@ describe('deploy', () => {
           },
         },
       }),
-      undefined,
-      {requestMode: 'slow-request'},
-    )
+      requestOptions: {requestMode: 'slow-request'},
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
   })
 
   test('handles version creation errors', async () => {
@@ -1094,12 +1192,16 @@ describe('deploy', () => {
     })
 
     // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith(
-      'gid://shopify/Organization/123',
-      AppVersions,
-      'token',
-      expect.objectContaining({appId}),
-    )
+    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
+      organizationId: 'gid://shopify/Organization/123',
+      query: AppVersions,
+      token: 'token',
+      variables: expect.objectContaining({appId}),
+      unauthorizedHandler: {
+        handler: expect.any(Function),
+        type: 'token_refresh',
+      },
+    })
     expect(result).toEqual({
       app: {
         id: appId,
@@ -1165,17 +1267,21 @@ describe('AppManagementClient', () => {
       await client.generateSignedUploadUrl(app)
 
       // Then
-      expect(appManagementRequestDoc).toHaveBeenCalledWith(
-        app.organizationId,
-        CreateAssetUrl,
-        'token',
-        {
+      expect(appManagementRequestDoc).toHaveBeenCalledWith({
+        organizationId: app.organizationId,
+        query: CreateAssetUrl,
+        token: 'token',
+        variables: expect.objectContaining({
           sourceExtension: 'BR' as SourceExtension,
-        },
-        expect.objectContaining({
-          cacheTTL: expect.anything(),
         }),
-      )
+        unauthorizedHandler: {
+          handler: expect.any(Function),
+          type: 'token_refresh',
+        },
+        cacheOptions: {
+          cacheTTL: {minutes: 59},
+        },
+      })
     })
   })
 
@@ -1187,5 +1293,73 @@ describe('AppManagementClient', () => {
       // Then
       expect(client.bundleFormat).toBe('br')
     })
+  })
+})
+
+describe('ensureUserAccessToStore', () => {
+  test('ensures user access to store', async () => {
+    // Given
+    const orgId = '123'
+    const store = testOrganizationStore({shopId: '456'})
+    const token = 'business-platform-token'
+
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve(token)
+
+    const mockResponse = {
+      organizationUserProvisionShopAccess: {
+        success: true,
+        userErrors: [],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await client.ensureUserAccessToStore(orgId, store)
+
+    // Then
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith({
+      query: expect.anything(),
+      token,
+      organizationId: orgId,
+      variables: {
+        input: {shopifyShopId: encodedGidFromShopId(store.shopId)},
+      },
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+  })
+
+  test('skips provisioniong when not available', async () => {
+    // Given
+    const store = testOrganizationStore({})
+    store.provisionable = false
+    const client = new AppManagementClient()
+
+    // When
+    await client.ensureUserAccessToStore('123', store)
+
+    // Then
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(0)
+  })
+
+  test('handles failure', async () => {
+    const store = testOrganizationStore({})
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    const mockResponse = {
+      organizationUserProvisionShopAccess: {
+        success: false,
+        userErrors: [{message: 'error1'}, {message: 'error2'}],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    await expect(client.ensureUserAccessToStore('123', store)).rejects.toThrowError(
+      'Failed to provision user access to store: error1, error2',
+    )
   })
 })

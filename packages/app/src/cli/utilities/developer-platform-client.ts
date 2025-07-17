@@ -18,7 +18,6 @@ import {
   ConvertDevToTransferDisabledSchema,
   ConvertDevToTransferDisabledStoreVariables,
 } from '../api/graphql/convert_dev_to_transfer_disabled_store.js'
-import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -36,7 +35,7 @@ import {
 } from '../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../api/graphql/update_urls.js'
 import {CurrentAccountInfoSchema} from '../api/graphql/current_account_info.js'
-import {ExtensionTemplate} from '../models/app/template.js'
+import {ExtensionTemplatesResult} from '../models/app/template.js'
 import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {
@@ -60,7 +59,9 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -262,7 +263,12 @@ export interface DeveloperPlatformClient {
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
   session: () => Promise<PartnersSession>
-  refreshToken: () => Promise<string>
+  /**
+   * This is an unsafe method that should only be used when the session is expired.
+   * It is not safe to use this method in other contexts as it may lead to race conditions.
+   * Use only if you know what you are doing.
+   */
+  unsafeRefreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromIdentifiers: (app: AppApiKeyAndOrgId) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
@@ -270,10 +276,11 @@ export interface DeveloperPlatformClient {
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
   specifications: (app: MinimalAppIdentifiers) => Promise<RemoteSpecification[]>
-  templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplate[]>
+  templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplatesResult>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
-  storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
+  storeByDomain: (orgId: string, shopDomain: string) => Promise<OrganizationStore | undefined>
+  ensureUserAccessToStore: (orgId: string, store: OrganizationStore) => Promise<void>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
     activeAppVersion?: AppVersion,
@@ -320,5 +327,29 @@ export interface DeveloperPlatformClient {
   devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
-  getCreateDevStoreLink: (org: Organization) => Promise<string>
+  getCreateDevStoreLink: (org: Organization) => Promise<TokenItem>
+}
+
+const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
+
+export function createUnauthorizedHandler(client: DeveloperPlatformClient): UnauthorizedHandler {
+  return {
+    type: 'token_refresh',
+    handler: async () => {
+      let tokenRefresher = inProgressRefreshes.get(client)
+      if (tokenRefresher) {
+        const token = await tokenRefresher
+        return {token}
+      } else {
+        try {
+          tokenRefresher = client.unsafeRefreshToken()
+          inProgressRefreshes.set(client, tokenRefresher)
+          const token = await tokenRefresher
+          return {token}
+        } finally {
+          inProgressRefreshes.delete(client)
+        }
+      }
+    },
+  }
 }

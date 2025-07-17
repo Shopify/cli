@@ -139,7 +139,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       const file = files.get(fileKey)
 
       if (!file) {
-        return ''
+        return
       }
 
       if (file.checksum !== previousChecksum) {
@@ -147,13 +147,20 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         unsyncedFileKeys.add(fileKey)
       }
 
-      // file.value has a fallback value of '', so we want to ignore this eslint rule
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      return file.value || file.attachment || ''
+      return {
+        // file.value has a fallback value of '', so we want to ignore this eslint rule
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        value: file.value || undefined,
+        attachment: file.attachment,
+      }
     })
 
     const syncPromise = contentPromise
-      .then(handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession))
+      .then((content) => {
+        if (!content) return
+
+        return handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)(content)
+      })
       .catch(createSyncingCatchError(fileKey, 'upload'))
 
     emitEvent(eventName, {
@@ -162,7 +169,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         contentPromise
           .then((content) => {
             // Run only if content has changed
-            if (unsyncedFileKeys.has(fileKey)) fn(content)
+            if (unsyncedFileKeys.has(fileKey)) fn(content?.value ?? content?.attachment ?? '')
           })
           .catch(() => {})
       },
@@ -275,13 +282,13 @@ export function handleSyncUpdate(
   fileKey: string,
   themeId: string,
   adminSession: AdminSession,
-): ((value: string) => boolean | PromiseLike<boolean>) | null | undefined {
+): (content: {value?: string; attachment?: string}) => PromiseLike<boolean> {
   return async (content) => {
     if (!unsyncedFileKeys.has(fileKey)) {
       return false
     }
 
-    const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, value: content}], adminSession)
+    const [result] = await bulkUploadThemeAssets(Number(themeId), [{key: fileKey, ...content}], adminSession)
 
     if (!result?.success) {
       const errors = result?.errors?.asset ?? ['Response was not successful.']

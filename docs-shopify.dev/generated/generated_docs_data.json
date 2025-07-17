@@ -325,6 +325,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--no-build",
+                "value": "\"\"",
+                "description": "Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_BUILD"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -404,7 +413,7 @@
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
               }
             ],
-            "value": "export interface appdeploy {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Deploy without asking for confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Optional message that will be associated with this version. This is for internal use only and won't be available externally.\n   * @environment SHOPIFY_FLAG_MESSAGE\n   */\n  '--message <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Creates a version but doesn't release it - it's not made available to merchants.\n   * @environment SHOPIFY_FLAG_NO_RELEASE\n   */\n  '--no-release'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * URL associated with the new app version.\n   * @environment SHOPIFY_FLAG_SOURCE_CONTROL_URL\n   */\n  '--source-control-url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+            "value": "export interface appdeploy {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Deploy without asking for confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Optional message that will be associated with this version. This is for internal use only and won't be available externally.\n   * @environment SHOPIFY_FLAG_MESSAGE\n   */\n  '--message <value>'?: string\n\n  /**\n   * Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.\n   * @environment SHOPIFY_FLAG_NO_BUILD\n   */\n  '--no-build'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Creates a version but doesn't release it - it's not made available to merchants.\n   * @environment SHOPIFY_FLAG_NO_RELEASE\n   */\n  '--no-release'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * URL associated with the new app version.\n   * @environment SHOPIFY_FLAG_SOURCE_CONTROL_URL\n   */\n  '--source-control-url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
           }
         }
       }
@@ -4801,7 +4810,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -4869,7 +4878,7 @@
                 "environmentValue": "SHOPIFY_FLAG_VERSION"
               }
             ],
-            "value": "export interface themecheck {\n  /**\n   * Automatically fix offenses\n   * @environment SHOPIFY_FLAG_AUTO_CORRECT\n   */\n  '-a, --auto-correct'?: ''\n\n  /**\n   * Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported \n   * @environment SHOPIFY_FLAG_CONFIG\n   */\n  '-C, --config <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Minimum severity for exit with error code\n   * @environment SHOPIFY_FLAG_FAIL_LEVEL\n   */\n  '--fail-level <value>'?: string\n\n  /**\n   * Generate a .theme-check.yml file\n   * @environment SHOPIFY_FLAG_INIT\n   */\n  '--init'?: ''\n\n  /**\n   * List enabled checks\n   * @environment SHOPIFY_FLAG_LIST\n   */\n  '--list'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The output format to use\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output active config to STDOUT\n   * @environment SHOPIFY_FLAG_PRINT\n   */\n  '--print'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Print Theme Check version\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '-v, --version'?: ''\n}"
+            "value": "export interface themecheck {\n  /**\n   * Automatically fix offenses\n   * @environment SHOPIFY_FLAG_AUTO_CORRECT\n   */\n  '-a, --auto-correct'?: ''\n\n  /**\n   * Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported \n   * @environment SHOPIFY_FLAG_CONFIG\n   */\n  '-C, --config <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Minimum severity for exit with error code\n   * @environment SHOPIFY_FLAG_FAIL_LEVEL\n   */\n  '--fail-level <value>'?: string\n\n  /**\n   * Generate a .theme-check.yml file\n   * @environment SHOPIFY_FLAG_INIT\n   */\n  '--init'?: ''\n\n  /**\n   * List enabled checks\n   * @environment SHOPIFY_FLAG_LIST\n   */\n  '--list'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The output format to use\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output active config to STDOUT\n   * @environment SHOPIFY_FLAG_PRINT\n   */\n  '--print'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Print Theme Check version\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '-v, --version'?: ''\n}"
           }
         }
       }
@@ -4927,6 +4936,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--store-password <value>",
                 "value": "string",
                 "description": "The password for storefronts with password protection.",
@@ -4970,7 +4988,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE"
               }
             ],
-            "value": "export interface themeconsole {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeconsole {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5024,6 +5042,15 @@
                 "description": "Password generated from the Theme Access app.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
@@ -5089,7 +5116,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themedelete {\n  /**\n   * Delete your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Include others development themes in theme list.\n   * @environment SHOPIFY_FLAG_SHOW_ALL\n   */\n  '-a, --show-all'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themedelete {\n  /**\n   * Delete your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Include others development themes in theme list.\n   * @environment SHOPIFY_FLAG_SHOW_ALL\n   */\n  '-a, --show-all'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5194,7 +5221,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -5289,7 +5316,126 @@
                 "environmentValue": "SHOPIFY_FLAG_IGNORE"
               }
             ],
-            "value": "export interface themedev {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      \n   * @environment SHOPIFY_FLAG_ERROR_OVERLAY\n   */\n  '--error-overlay <value>'?: string\n\n  /**\n   * Set which network interface the web server listens on. The default value is 127.0.0.1.\n   * @environment SHOPIFY_FLAG_HOST\n   */\n  '--host <value>'?: string\n\n  /**\n   * Skip hot reloading any files that match the specified pattern.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload\n   * @environment SHOPIFY_FLAG_LIVE_RELOAD\n   */\n  '--live-reload <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.\n   * @environment SHOPIFY_FLAG_NOTIFY\n   */\n  '--notify <value>'?: string\n\n  /**\n   * Hot reload only files that match the specified pattern.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Local port to serve theme preview from.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Synchronize Theme Editor updates in the local theme files.\n   * @environment SHOPIFY_FLAG_THEME_EDITOR_SYNC\n   */\n  '--theme-editor-sync'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themedev {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      \n   * @environment SHOPIFY_FLAG_ERROR_OVERLAY\n   */\n  '--error-overlay <value>'?: string\n\n  /**\n   * Set which network interface the web server listens on. The default value is 127.0.0.1.\n   * @environment SHOPIFY_FLAG_HOST\n   */\n  '--host <value>'?: string\n\n  /**\n   * Skip hot reloading any files that match the specified pattern.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload\n   * @environment SHOPIFY_FLAG_LIVE_RELOAD\n   */\n  '--live-reload <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.\n   * @environment SHOPIFY_FLAG_NOTIFY\n   */\n  '--notify <value>'?: string\n\n  /**\n   * Hot reload only files that match the specified pattern.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Local port to serve theme preview from.\n   * @environment SHOPIFY_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Synchronize Theme Editor updates in the local theme files.\n   * @environment SHOPIFY_FLAG_THEME_EDITOR_SYNC\n   */\n  '--theme-editor-sync'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
+    "name": "theme duplicate",
+    "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+    "overviewPreviewDescription": "Duplicates a theme from your theme library.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme duplicate",
+            "code": "shopify theme duplicate\n\nshopify theme duplicate --theme 10 --name 'New Theme'",
+            "language": "bash"
+          }
+        ],
+        "title": "theme duplicate"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme duplicate` command:",
+        "type": "themeduplicate",
+        "typeDefinitions": {
+          "themeduplicate": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+            "name": "themeduplicate",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_ENVIRONMENT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-f, --force",
+                "value": "\"\"",
+                "description": "Force the duplicate operation to run without prompts or confirmations.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_FORCE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Output the result as JSON.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "Name of the newly duplicated theme.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NAME"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_THEME_ID"
+              }
+            ],
+            "value": "export interface themeduplicate {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Force the duplicate operation to run without prompts or confirmations.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Name of the newly duplicated theme.\n   * @environment SHOPIFY_FLAG_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5347,6 +5493,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the output.",
@@ -5399,7 +5554,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themeinfo {\n  /**\n   * Retrieve info from your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeinfo {\n  /**\n   * Retrieve info from your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5409,7 +5564,7 @@
   },
   {
     "name": "theme init",
-    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
     "overviewPreviewDescription": "Clones a Git repository to use as a starting point for building a new theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -5450,7 +5605,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -5477,12 +5632,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-u, --clone-url <value>",
                 "value": "string",
-                "description": "The Git URL to clone from. Defaults to Shopify's example theme.",
+                "description": "The Git URL to clone from. Defaults to Shopify's Skeleton theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_CLONE_URL"
               }
             ],
-            "value": "export interface themeinit {\n  /**\n   * The Git URL to clone from. Defaults to Shopify's example theme.\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeinit {\n  /**\n   * The Git URL to clone from. Defaults to Shopify's Skeleton theme.\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5614,6 +5769,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--role <value>",
                 "value": "string",
                 "description": "Only list themes with the given role.",
@@ -5657,7 +5821,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE"
               }
             ],
-            "value": "export interface themelist {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Only list theme with the given ID.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Only list themes that contain the given name.\n   * @environment SHOPIFY_FLAG_NAME\n   */\n  '--name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Only list themes with the given role.\n   * @environment SHOPIFY_FLAG_ROLE\n   */\n  '--role <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themelist {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Only list theme with the given ID.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Only list themes that contain the given name.\n   * @environment SHOPIFY_FLAG_NAME\n   */\n  '--name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Only list themes with the given role.\n   * @environment SHOPIFY_FLAG_ROLE\n   */\n  '--role <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5717,7 +5881,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -5749,7 +5913,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE"
               }
             ],
-            "value": "export interface thememetafieldspull {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface thememetafieldspull {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5803,6 +5967,15 @@
                 "description": "Password generated from the Theme Access app.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
@@ -5868,7 +6041,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themeopen {\n  /**\n   * Open your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Open the theme editor for the specified theme in the browser.\n   * @environment SHOPIFY_FLAG_EDITOR\n   */\n  '-E, --editor'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Open your live (published) theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeopen {\n  /**\n   * Open your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * Open the theme editor for the specified theme in the browser.\n   * @environment SHOPIFY_FLAG_EDITOR\n   */\n  '-E, --editor'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Open your live (published) theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5878,7 +6051,7 @@
   },
   {
     "name": "theme package",
-    "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](/docs/themes/architecture/config/settings-schema-json) file.",
+    "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per [Theme Store requirements](/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
     "overviewPreviewDescription": "Package your theme into a .zip file, ready to upload to the Online Store.",
     "type": "command",
     "isVisualComponent": false,
@@ -5919,7 +6092,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -5933,7 +6106,7 @@
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
               }
             ],
-            "value": "export interface themepackage {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepackage {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -5987,6 +6160,15 @@
                 "description": "Password generated from the Theme Access app.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
@@ -6052,7 +6234,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themeprofile {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeprofile {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -6110,6 +6292,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Increase the verbosity of the output.",
@@ -6153,7 +6344,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themepublish {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepublish {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip confirmation.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -6213,7 +6404,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -6299,7 +6490,7 @@
                 "environmentValue": "SHOPIFY_FLAG_IGNORE"
               }
             ],
-            "value": "export interface themepull {\n  /**\n   * Pull theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Pull theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting local files that don't exist remotely.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepull {\n  /**\n   * Pull theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Pull theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting local files that don't exist remotely.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -6359,7 +6550,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -6490,7 +6681,7 @@
                 "environmentValue": "SHOPIFY_FLAG_IGNORE"
               }
             ],
-            "value": "export interface themepush {\n  /**\n   * Allow push to a live theme.\n   * @environment SHOPIFY_FLAG_ALLOW_LIVE\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Push theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip uploading the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Push theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting remote files that don't exist locally.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Push only the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Publish as the live theme after uploading.\n   * @environment SHOPIFY_FLAG_PUBLISH\n   */\n  '-p, --publish'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Require theme check to pass without errors before pushing. Warnings are allowed.\n   * @environment SHOPIFY_FLAG_STRICT_PUSH\n   */\n  '--strict'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Create a new unpublished theme and push to it.\n   * @environment SHOPIFY_FLAG_UNPUBLISHED\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepush {\n  /**\n   * Allow push to a live theme.\n   * @environment SHOPIFY_FLAG_ALLOW_LIVE\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Push theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip uploading the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Push theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting remote files that don't exist locally.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Push only the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Publish as the live theme after uploading.\n   * @environment SHOPIFY_FLAG_PUBLISH\n   */\n  '-p, --publish'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Require theme check to pass without errors before pushing. Warnings are allowed.\n   * @environment SHOPIFY_FLAG_STRICT_PUSH\n   */\n  '--strict'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Create a new unpublished theme and push to it.\n   * @environment SHOPIFY_FLAG_UNPUBLISHED\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -6544,6 +6735,15 @@
                 "description": "Password generated from the Theme Access app.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
@@ -6609,7 +6809,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themerename {\n  /**\n   * Rename your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Rename your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * The new name for the theme.\n   * @environment SHOPIFY_FLAG_NEW_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themerename {\n  /**\n   * Rename your development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Rename your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * The new name for the theme.\n   * @environment SHOPIFY_FLAG_NEW_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -6669,7 +6869,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
-                "description": "The path to your theme directory.",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PATH"
               },
@@ -6701,7 +6901,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE"
               }
             ],
-            "value": "export interface themeshare {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path to your theme directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themeshare {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

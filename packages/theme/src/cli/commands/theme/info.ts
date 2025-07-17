@@ -7,7 +7,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags} from '@oclif/core/interfaces'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
 
@@ -18,9 +18,7 @@ export default class Info extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    store: themeFlags.store,
-    password: themeFlags.password,
-    environment: themeFlags.environment,
+    ...themeFlags,
     development: Flags.boolean({
       char: 'd',
       description: 'Retrieve info from your development theme.',

@@ -1,10 +1,10 @@
 import {Banner} from './Banner.js'
 import {List} from './List.js'
 import {render} from '../../testing/ui.js'
+import {unstyled} from '../../../../public/node/output.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
 import {Text} from 'ink'
-import {unstyled} from '@shopify/cli-kit/node/output'
 
 describe('Banner', async () => {
   test('renders with a border for success with proper wrapping', async () => {

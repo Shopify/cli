@@ -457,6 +457,8 @@ export class App<
   }
 
   async preDeployValidation() {
+    this.validateWebhookLegacyFlowCompatibility()
+
     const functionExtensionsWithUiHandle = this.allExtensions.filter(
       (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
     ) as ExtensionInstance<FunctionConfigType>[]
@@ -538,7 +540,7 @@ export class App<
       const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
       // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
       // This is needed to enable file-specific global type declarations.
-      const typeContent = [`import '@shopify/ui-extension';\n`, ...Array.from(types)].join('\n')
+      const typeContent = [`import '@shopify/ui-extensions';\n`, ...Array.from(types)].join('\n')
       if (originalContent === typeContent) {
         return
       }
@@ -566,6 +568,32 @@ export class App<
     }
     if (this.configuration.auth?.redirect_urls) {
       this.configuration.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
+    }
+  }
+
+  /**
+   * Validates that app-specific webhooks are not used with legacy install flow.
+   * This incompatibility exists because app-specific webhooks require declarative
+   * scopes in the Partner Dashboard, which aren't synced when using legacy flow.
+   * @throws When app-specific webhooks are used with legacy install flow
+   */
+  private validateWebhookLegacyFlowCompatibility(): void {
+    if (!isCurrentAppSchema(this.configuration)) return
+
+    const hasAppSpecificWebhooks = (this.configuration.webhooks?.subscriptions?.length ?? 0) > 0
+    const usesLegacyInstallFlow = this.configuration.access_scopes?.use_legacy_install_flow === true
+
+    if (hasAppSpecificWebhooks && usesLegacyInstallFlow) {
+      throw new AbortError(
+        'App-specific webhook subscriptions are not supported when use_legacy_install_flow is enabled.',
+        `To use app-specific webhooks, you need to:
+1. Remove 'use_legacy_install_flow = true' from your configuration
+2. Run 'shopify app deploy' to sync your scopes with the Partner Dashboard
+
+Alternatively, continue using shop-specific webhooks with the legacy install flow.
+
+Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
+      )
     }
   }
 }

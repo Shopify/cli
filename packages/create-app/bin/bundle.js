@@ -20,6 +20,8 @@ const external = [
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
 const yogafile = glob.sync('../../node_modules/.pnpm/**/yoga.wasm')[0]
 
+const wasmTomlPatchFile = glob.sync('../../node_modules/.pnpm/**/toml_patch_bg.wasm')[0]
+
 esBuild({
   bundle: true,
   entryPoints: ['./src/**/*.ts'],
@@ -48,6 +50,10 @@ esBuild({
       assets: [
         {
           from: [yogafile],
+          to: ['./dist/'],
+        },
+        {
+          from: [wasmTomlPatchFile],
           to: ['./dist/'],
         },
       ],

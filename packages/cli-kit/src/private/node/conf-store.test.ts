@@ -15,8 +15,8 @@ import {
   runWithRateLimit,
 } from './conf-store.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
+import {inTemporaryDirectory} from '../../public/node/fs.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 describe('getSession', () => {
   test('returns the content of the SessionStore key', async () => {

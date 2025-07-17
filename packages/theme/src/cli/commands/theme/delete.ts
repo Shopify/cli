@@ -22,7 +22,7 @@ export default class Delete extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
-    password: themeFlags.password,
+    ...themeFlags,
     development: Flags.boolean({
       char: 'd',
       description: 'Delete your development theme.',
@@ -44,8 +44,6 @@ export default class Delete extends ThemeCommand {
       env: 'SHOPIFY_FLAG_THEME_ID',
       multiple: true,
     }),
-    store: themeFlags.store,
-    environment: themeFlags.environment,
   }
 
   async run(): Promise<void> {

@@ -1,7 +1,7 @@
 {
   "name": "@shopify/theme",
-  "version": "3.80.0",
-  "packageManager": "pnpm@8.15.7",
+  "version": "3.82.0",
+  "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -32,8 +32,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "nx run theme:test",
-    "test:watch": "nx test:watch",
+    "vitest": "vitest",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -42,24 +41,24 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.80.0",
-    "@shopify/theme-check-node": "3.17.0",
-    "@shopify/theme-language-server-node": "2.15.2",
+    "@oclif/core": "4.4.0",
+    "@shopify/cli-kit": "3.82.0",
+    "@shopify/theme-check-node": "3.19.0",
+    "@shopify/theme-language-server-node": "2.17.3",
     "chokidar": "3.6.0",
     "h3": "1.13.0",
     "yaml": "2.7.0"
   },
   "devDependencies": {
     "@shopify/theme-hot-reload": "^0.0.18",
-    "@vitest/coverage-istanbul": "^1.6.0",
+    "@vitest/coverage-istanbul": "^3.1.4",
     "node-stream-zip": "^1.15.0"
   },
   "peerDependencies": {
     "@shopify/liquid-html-parser": "^2.8.2"
   },
   "engines": {
-    "node": "^18.20.0 || >=20.10.0"
+    "node": ">=20.10.0"
   },
   "os": [
     "darwin",

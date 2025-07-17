@@ -14,7 +14,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
               {
                 add: {
                   content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
             ],
@@ -35,7 +35,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
               {
                 add: {
                   content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-duplicate-type-constituents */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
               {
@@ -83,5 +83,8 @@ export default {
     admin: projectFactory('admin', 'admin_schema.graphql', 'cli-kit'),
     webhooks: projectFactory('webhooks', 'webhooks_schema.graphql'),
     functions: projectFactory('functions', 'functions_cli_schema.graphql', 'app'),
+    // Store package projects
+    storeAdmin: projectFactory('admin', 'admin_schema.graphql', 'store'),
+    storeBusinessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql', 'store'),
   },
 }

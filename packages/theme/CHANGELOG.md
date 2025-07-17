@@ -1,5 +1,60 @@
 # @shopify/theme
 
+## 3.82.0
+
+### Patch Changes
+
+- 02b417b: Ensure all theme commands accept the --path flag
+- 9b52391: Add /listings folder to theme package command
+- 5188073: Improvement and fixes when handling multi-environment commands
+
+  - Fixes a bug where passing a single environment to multi-env commands would cause it to fail if the environment didn't have all of the required attributes for multi-env
+  - Updates output when running multi-env commands to ensure the results from each command don't overlap one another
+
+- 4176bf5: Add clarity to helper text when a store is missing
+- c9c07b5: Fix `_shopify_essential` issues related to data replication and unstable connections
+- Updated dependencies [0edf793]
+- Updated dependencies [eee4978]
+  - @shopify/cli-kit@3.82.0
+
+## 3.81.1
+
+### Patch Changes
+
+- b838f21: Remove git remote after cloning theme in `theme init` command to prevent accidental pushes to the skeleton theme repository
+- Updated dependencies [b838f21]
+  - @shopify/cli-kit@3.81.1
+
+## 3.81.0
+
+### Minor Changes
+
+- c39ba5e: Add default environment functionality
+
+  You may now optionally define a default environment in your environment config
+  file (e.g. `shopify.theme.toml`) that will be automatically injected into the
+  running command without needing to specify it. The name of the environment must
+  be `[environments.default]`.
+
+- eb19684: Removed overrides for SHOPIFY_CLI_NO_THEME_BUNDLING and SHOPIFY_CLI_BUNDLED_THEME_CLI
+- 24aa2dd: Drop support for Node 18
+- ce3dfdc: Print all log messages to stderr instead of stdout
+- 219e6d1: Prompt users who run `shopify theme init` to create their AI file
+
+### Patch Changes
+
+- e18c9f6: Shopify/skeleton-theme is the default theme for `theme init`
+- dc78463: Make local compiled assets more resilient to Liquid syntax errors.
+- 451a3a8: Update links to shopify dev docs
+- 53c2a92: Make hot reload events more resilient to Liquid syntax errors.
+- 642bb3e: Change `theme download` progress bar to render percentage
+- Updated dependencies [23d4b0b]
+- Updated dependencies [16406ae]
+- Updated dependencies [eb19684]
+- Updated dependencies [24aa2dd]
+- Updated dependencies [9a9e51e]
+  - @shopify/cli-kit@3.81.0
+
 ## 3.80.0
 
 ### Minor Changes

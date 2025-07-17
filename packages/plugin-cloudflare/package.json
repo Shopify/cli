@@ -1,7 +1,7 @@
 {
   "name": "@shopify/plugin-cloudflare",
-  "version": "3.80.0",
-  "packageManager": "pnpm@8.15.7",
+  "version": "3.82.0",
+  "packageManager": "pnpm@10.11.1",
   "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
@@ -37,8 +37,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "nx run plugin-cloudflare:test",
-    "test:watch": "nx test:watch",
+    "vitest": "vitest",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -47,14 +46,14 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.26.5",
-    "@shopify/cli-kit": "3.80.0"
+    "@oclif/core": "4.4.0",
+    "@shopify/cli-kit": "3.82.0"
   },
   "devDependencies": {
-    "@vitest/coverage-istanbul": "^1.6.0"
+    "@vitest/coverage-istanbul": "^3.1.4"
   },
   "engines": {
-    "node": "^18.20.0 || >=20.10.0"
+    "node": ">=20.10.0"
   },
   "os": [
     "darwin",

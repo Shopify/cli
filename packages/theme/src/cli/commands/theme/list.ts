@@ -4,7 +4,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {list} from '../../services/list.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {OutputFlags} from '@oclif/core/lib/interfaces/parser.js'
+import {OutputFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 type ListFlags = OutputFlags<typeof List.flags>
@@ -15,8 +15,7 @@ export default class List extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-    password: themeFlags.password,
-    store: themeFlags.store,
+    ...themeFlags,
     role: Flags.custom<Role>({
       description: 'Only list themes with the given role.',
       options: ALLOWED_ROLES,
@@ -30,7 +29,6 @@ export default class List extends ThemeCommand {
       description: 'Only list theme with the given ID.',
       env: 'SHOPIFY_FLAG_ID',
     }),
-    environment: themeFlags.environment,
   }
 
   static multiEnvironmentsFlags = ['store', 'password']

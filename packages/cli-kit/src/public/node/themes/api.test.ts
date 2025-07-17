@@ -1,6 +1,7 @@
 import {
   themeCreate,
   themeDelete,
+  themeDuplicate,
   fetchTheme,
   fetchThemes,
   ThemeParams,
@@ -14,6 +15,7 @@ import {
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {ThemeCreate} from '../../../cli/api/graphql/admin/generated/theme_create.js'
@@ -22,9 +24,9 @@ import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_f
 import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
+import {AbortError} from '../error.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
-import {adminRequestDoc, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {ClientError} from 'graphql-request'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
@@ -440,6 +442,42 @@ describe('themeDelete', () => {
         requestBehaviour: expectedApiOptions,
       })
       expect(response).toBe(true)
+    })
+  }
+})
+
+describe('themeDuplicate', () => {
+  for (const [sessionType, session] of Object.entries(sessions)) {
+    test(`duplicates a theme with graphql with a ${sessionType} session`, async () => {
+      // Given
+      const id = 123
+      const name = 'duplicate theme'
+
+      vi.mocked(adminRequestDoc).mockResolvedValue({
+        themeDuplicate: {
+          newTheme: {id: `gid://shopify/OnlineStoreTheme/${id}`, name, role: 'UNPUBLISHED'},
+          userErrors: [],
+        },
+      })
+      // When
+      const response = await themeDuplicate(id, name, session)
+
+      // Then
+      expect(adminRequestDoc).toHaveBeenCalledWith({
+        query: ThemeDuplicate,
+        session,
+        variables: {id: `gid://shopify/OnlineStoreTheme/${id}`, name},
+        requestBehaviour: expectedApiOptions,
+        version: '2025-10',
+        responseOptions: {
+          onResponse: expect.any(Function),
+        },
+      })
+      expect(response).toMatchObject({
+        theme: {id, name, role: 'unpublished'},
+        userErrors: [],
+        requestId: undefined,
+      })
     })
   }
 })

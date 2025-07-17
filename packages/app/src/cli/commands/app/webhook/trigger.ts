@@ -2,12 +2,12 @@ import {DELIVERY_METHOD} from '../../../services/webhook/trigger-flags.js'
 import {WebhookTriggerInput, webhookTriggerService} from '../../../services/webhook/trigger.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
-import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
-export default class WebhookTrigger extends AppCommand {
+export default class WebhookTrigger extends AppLinkedCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
 
   static descriptionWithMarkdown = `
@@ -80,7 +80,7 @@ export default class WebhookTrigger extends AppCommand {
     }),
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(WebhookTrigger)
 
     if (flags['shared-secret']) {

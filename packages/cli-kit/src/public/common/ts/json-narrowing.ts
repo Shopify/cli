@@ -1,4 +1,4 @@
-import {BugError} from '@shopify/cli-kit/node/error'
+import {BugError} from '../../node/error.js'
 
 /**
  * Asserts that the unknownBlob is a string map. Used to validate JSON objects received over the wire.

@@ -186,9 +186,7 @@ export async function buildFunctionExtension(
     }
 
     if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
-      const base64Contents = await readFile(extension.outputPath, {encoding: 'base64'})
-      await touchFile(bundlePath)
-      await writeFile(bundlePath, base64Contents)
+      await bundleFunctionExtension(extension.outputPath, bundlePath)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -208,6 +206,13 @@ export async function buildFunctionExtension(
   } finally {
     await releaseLock()
   }
+}
+
+export async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
+  outputDebug(`Converting WASM from ${wasmPath} to base64 in ${bundlePath}`)
+  const base64Contents = await readFile(wasmPath, {encoding: 'base64'})
+  await touchFile(bundlePath)
+  await writeFile(bundlePath, base64Contents)
 }
 
 async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {

@@ -2,14 +2,14 @@ import Dev from './dev.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {logs, Format} from '../../services/logs.js'
 import {appFlags} from '../../flags.js'
-import AppCommand, {AppCommandOutput} from '../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
-export default class Logs extends AppCommand {
+export default class Logs extends AppLinkedCommand {
   static summary = 'Stream detailed logs for your Shopify app.'
 
   static descriptionWithMarkdown = `
@@ -47,7 +47,7 @@ export default class Logs extends AppCommand {
     }),
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Logs)
 
     const apiKey = flags['client-id'] ?? flags['api-key']

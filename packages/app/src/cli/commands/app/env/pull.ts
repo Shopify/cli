@@ -1,14 +1,14 @@
 import {appFlags} from '../../../flags.js'
 import {getDotEnvFileName} from '../../../models/app/loader.js'
 import {pullEnv} from '../../../services/app/env/pull.js'
-import AppCommand, {AppCommandOutput} from '../../../utilities/app-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-export default class EnvPull extends AppCommand {
+export default class EnvPull extends AppLinkedCommand {
   static summary = 'Pull app and extensions environment variables.'
 
   static descriptionWithMarkdown = `Creates or updates an \`.env\` files that contains app and app extension environment variables.
@@ -27,7 +27,7 @@ export default class EnvPull extends AppCommand {
     }),
   }
 
-  public async run(): Promise<AppCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(EnvPull)
 
     const {app, remoteApp, organization} = await linkedAppContext({

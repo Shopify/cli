@@ -1,7 +1,7 @@
 {
   "name": "@shopify/cli",
-  "version": "3.80.0",
-  "packageManager": "pnpm@8.15.7",
+  "version": "3.82.0",
+  "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
   "keywords": [
@@ -47,9 +47,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production node ../../bin/update-bugsnag cli && cp ../../README.md README.md",
-    "test": "nx run cli:test",
-    "test:coverage": "nx test:coverage",
-    "test:watch": "nx test:watch",
+    "vitest": "vitest",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -104,27 +102,28 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
-    "esbuild": "0.25.4",
+    "esbuild": "0.25.5",
     "global-agent": "3.0.0"
   },
   "devDependencies": {
-    "@oclif/core": "3.26.5",
-    "@oclif/plugin-commands": "4.1.18",
-    "@oclif/plugin-plugins": "5.4.28",
-    "@shopify/app": "3.80.0",
-    "@shopify/cli-kit": "3.80.0",
-    "@shopify/plugin-cloudflare": "3.80.0",
-    "@shopify/plugin-did-you-mean": "3.80.0",
-    "@shopify/theme": "3.80.0",
+    "@oclif/core": "4.4.0",
+    "@oclif/plugin-commands": "4.1.26",
+    "@oclif/plugin-plugins": "5.4.43",
+    "@shopify/app": "3.82.0",
+    "@shopify/cli-kit": "3.82.0",
+    "@shopify/plugin-cloudflare": "3.82.0",
+    "@shopify/plugin-did-you-mean": "3.82.0",
+    "@shopify/theme": "3.82.0",
+    "@shopify/store": "3.82.0",
     "@shopify/cli-hydrogen": "10.0.1",
     "@types/global-agent": "3.0.0",
     "@typescript-eslint/eslint-plugin": "7.13.1",
-    "@vitest/coverage-istanbul": "^1.6.0",
+    "@vitest/coverage-istanbul": "^3.1.4",
     "esbuild-plugin-copy": "^2.1.1",
     "espree": "9.6.1"
   },
   "engines": {
-    "node": "^18.20.0 || >=20.10.0"
+    "node": ">=20.10.0"
   },
   "os": [
     "darwin",
@@ -151,6 +150,9 @@
       },
       "theme": {
         "description": "Build Liquid themes."
+      },
+      "store": {
+        "description": "Manage stores and store data."
       },
       "app": {
         "description": "Build Shopify apps."
