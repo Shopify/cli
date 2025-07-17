@@ -34,8 +34,31 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
   }
 
   useInput(
-    (input) => {
+    (input, key) => {
       const onInput = async () => {
+        // Handle arrow key navigation for tabs with content
+        if (key?.leftArrow || key?.rightArrow) {
+          const contentTabs = Object.entries(tabs).filter(([_, tab]) => tab.content)
+          if (contentTabs.length > 1) {
+            const currentIndex = contentTabs.findIndex(([tabKey]) => tabKey === activeTab)
+            if (currentIndex !== -1) {
+              let newIndex
+              // Right arrow
+              if (key?.rightArrow) {
+                newIndex = currentIndex + 1 < contentTabs.length ? currentIndex + 1 : currentIndex
+              } else {
+                // Left arrow
+                newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex
+              }
+              const newTabEntry = contentTabs[newIndex]
+              if (newTabEntry) {
+                setActiveTab(newTabEntry[0])
+              }
+            }
+          }
+          return
+        }
+
         // First check if input matches any tab key
         const matchingTab = tabs[input]
         if (matchingTab) {
@@ -98,8 +121,8 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
               {'│'}
               <Text
                 bold={activeTab === tab.inputKey}
-                color={activeTab === tab.inputKey ? 'cyan' : 'white'}
-                backgroundColor={activeTab === tab.inputKey ? 'gray' : 'transparent'}
+                inverse={activeTab === tab.inputKey}
+                color={tab.action ? 'dim' : undefined}
               >
                 {tab.header}
               </Text>

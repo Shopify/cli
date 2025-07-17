@@ -195,15 +195,16 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               ['App:', appName ?? ''],
               ['App URL:', appURL ?? ''],
               ['Config:', configPath?.split('/').pop() ?? ''],
-              ['Dev Store:', shopFqdn],
+              ['Dev Store:', {link: {url: `https://${shopFqdn}`}}],
+              ['Dev Store Admin:', {link: {url: `https://${shopFqdn}/admin`}}],
               ['Org:', organizationName ?? ''],
-            ]}
+            ].filter(([, value]) => value)}
           />
         </Box>
       ),
     },
     q: {
-      label: 'Quit',
+      label: 'to quit',
       action: async () => {
         abortController.abort()
       },

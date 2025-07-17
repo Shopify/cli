@@ -243,4 +243,88 @@ describe('TabPanel', () => {
 
     renderInstance.unmount()
   })
+
+  test('supports arrow key navigation for content tabs', async () => {
+    const tabsWithContent: {[key: string]: Tab} = {
+      // eslint-disable-next-line id-length
+      a: {
+        label: 'First Tab',
+        content: <Text>First tab content</Text>,
+      },
+      // eslint-disable-next-line id-length
+      b: {
+        label: 'Action Tab',
+        // No content - should be skipped in navigation
+        action: mockAction,
+      },
+      // eslint-disable-next-line id-length
+      c: {
+        label: 'Second Tab',
+        content: <Text>Second tab content</Text>,
+      },
+    }
+
+    const renderInstance = render(<TabPanel tabs={tabsWithContent} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+
+    // Initially shows first tab content
+    expect(renderInstance.lastFrame()!).toContain('First tab content')
+    expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
+
+    // Press right arrow to navigate to next content tab (skipping action tab)
+    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+
+    // Should now show second tab content
+    expect(renderInstance.lastFrame()!).toContain('Second tab content')
+    expect(renderInstance.lastFrame()!).not.toContain('First tab content')
+
+    // Press left arrow to navigate back to first tab
+    await sendInputAndWait(renderInstance, 100, '\u001B[D')
+
+    // Should be back to first tab content
+    expect(renderInstance.lastFrame()!).toContain('First tab content')
+    expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
+
+    renderInstance.unmount()
+  })
+
+  test('arrow key navigation does not loop beyond boundaries', async () => {
+    const tabsWithContent: {[key: string]: Tab} = {
+      // eslint-disable-next-line id-length
+      a: {
+        label: 'First Tab',
+        content: <Text>First tab content</Text>,
+      },
+      // eslint-disable-next-line id-length
+      b: {
+        label: 'Second Tab',
+        content: <Text>Second tab content</Text>,
+      },
+    }
+
+    const renderInstance = render(<TabPanel tabs={tabsWithContent} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+
+    // Start at first tab
+    expect(renderInstance.lastFrame()!).toContain('First tab content')
+
+    // Press left arrow on leftmost tab - should stay at first tab
+    await sendInputAndWait(renderInstance, 100, '\u001B[D')
+    expect(renderInstance.lastFrame()!).toContain('First tab content')
+    expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
+
+    // Navigate to second tab
+    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+    expect(renderInstance.lastFrame()!).toContain('Second tab content')
+    expect(renderInstance.lastFrame()!).not.toContain('First tab content')
+
+    // Press right arrow on rightmost tab - should stay at second tab
+    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+    expect(renderInstance.lastFrame()!).toContain('Second tab content')
+    expect(renderInstance.lastFrame()!).not.toContain('First tab content')
+
+    renderInstance.unmount()
+  })
 })
