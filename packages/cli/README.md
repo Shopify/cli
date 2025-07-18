@@ -22,6 +22,7 @@
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
+* [`shopify auth login`](#shopify-auth-login)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
@@ -785,6 +786,21 @@ DESCRIPTION
   - Trigger requests are rate-limited using the "Partner API rate limit"
   (https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
+```
+
+## `shopify auth login`
+
+Logs you in to your Shopify account.
+
+```
+USAGE
+  $ shopify auth login [--alias <value>]
+
+FLAGS
+  --alias=<value>  An alias to identify the session.
+
+DESCRIPTION
+  Logs you in to your Shopify account.
 ```
 
 ## `shopify auth logout`
