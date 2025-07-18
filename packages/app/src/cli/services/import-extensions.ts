@@ -6,14 +6,14 @@ import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrati
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../models/extensions/schemas.js'
 import {OrganizationApp} from '../models/organization.js'
-import {getMigrationChoices} from '../prompts/import-extensions.js'
+import {allMigrationChoices} from '../prompts/import-extensions.js'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
 
-const allExtensionTypes = getMigrationChoices().map((choice) => choice.value)
+const allExtensionTypes = allMigrationChoices.flatMap((choice) => choice.extensionTypes)
 
 export async function pendingExtensions(
   remoteApp: OrganizationApp,
@@ -40,6 +40,8 @@ interface ImportOptions {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   extensionTypes: string[]
+  extensions: ExtensionRegistration[]
+  extensionRegistrations: ExtensionRegistration[]
   buildTomlObject: (
     ext: ExtensionRegistration,
     allExtensions: ExtensionRegistration[],
@@ -48,36 +50,29 @@ interface ImportOptions {
 }
 
 export async function importExtensions(options: ImportOptions) {
-  const {remoteApp, developerPlatformClient} = options
+  const {app, remoteApp, developerPlatformClient, extensionTypes, extensions, extensionRegistrations, buildTomlObject} =
+    options
 
-  const {extensions, extensionRegistrations} = await pendingExtensions(
-    remoteApp,
-    developerPlatformClient,
-    options.extensionTypes,
-  )
+  let extensionsToMigrate = extensions.filter((ext) => extensionTypes.includes(ext.type.toLowerCase()))
 
-  if (extensions.length === 0) {
-    renderSuccess({headline: ['No extensions to migrate.']})
-    return
-  }
-
-  const choices = extensions.map((ext) => {
+  const choices = extensionsToMigrate.map((ext) => {
     return {label: ext.title, value: ext.uuid}
   })
 
-  if (extensions.length > 1) {
+  if (extensionsToMigrate.length > 1) {
     choices.push({label: 'All', value: 'All'})
   }
   const promptAnswer = await renderSelectPrompt({message: 'Extensions to migrate', choices})
 
-  const extensionsToMigrate =
+  if (promptAnswer !== 'All') {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    promptAnswer === 'All' ? extensions : [extensions.find((ext) => ext?.uuid === promptAnswer)!]
+    extensionsToMigrate = [extensionsToMigrate.find((ext) => ext?.uuid === promptAnswer)!]
+  }
 
   const extensionUuids: IdentifiersExtensions = {}
   const importPromises = extensionsToMigrate.map(async (ext) => {
-    const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
-    const tomlObject = options.buildTomlObject(ext, extensionRegistrations, options.app.configuration)
+    const directory = await ensureExtensionDirectoryExists({app, name: ext.title})
+    const tomlObject = buildTomlObject(ext, extensionRegistrations, app.configuration)
     const path = joinPath(directory, 'shopify.extension.toml')
     await writeFile(path, tomlObject)
     const handle = slugify(ext.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH))
@@ -88,7 +83,7 @@ export async function importExtensions(options: ImportOptions) {
   const generatedExtensions = await Promise.all(importPromises)
   renderSuccessMessages(generatedExtensions)
   await updateAppIdentifiers({
-    app: options.app,
+    app,
     identifiers: {
       extensions: extensionUuids,
       app: remoteApp.apiKey,

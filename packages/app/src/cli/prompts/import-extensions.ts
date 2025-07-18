@@ -19,7 +19,7 @@ export interface MigrationChoice {
   ) => string
 }
 
-export const getMigrationChoices = (): MigrationChoice[] => [
+export const allMigrationChoices: MigrationChoice[] = [
   {
     label: 'Payments Extensions',
     value: 'payments',
@@ -59,8 +59,18 @@ export const getMigrationChoices = (): MigrationChoice[] => [
   },
 ]
 
-export async function selectMigrationChoice(): Promise<MigrationChoice> {
-  const migrationChoices = getMigrationChoices()
+export function getMigrationChoices(extensions: ExtensionRegistration[]): MigrationChoice[] {
+  return allMigrationChoices.filter((choice) =>
+    choice.extensionTypes.some((type) => extensions.some((ext) => ext.type.toLowerCase() === type.toLowerCase())),
+  )
+}
+
+export async function selectMigrationChoice(extensions: ExtensionRegistration[]): Promise<MigrationChoice> {
+  const migrationChoices = getMigrationChoices(extensions)
+  if (migrationChoices.length === 1 && migrationChoices[0]) {
+    return migrationChoices[0]
+  }
+
   const choices = migrationChoices.map((choice) => {
     return {label: choice.label, value: choice.value}
   })
