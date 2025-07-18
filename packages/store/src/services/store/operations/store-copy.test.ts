@@ -242,5 +242,60 @@ describe('StoreCopyOperation', () => {
       expect(error.requestId).toBeUndefined()
       expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
     })
+
+    test('should get copy-specific unauthorized error from API client', async () => {
+      const unauthorizedError = new OperationError(
+        'startBulkDataStoreCopy',
+        ErrorCodes.UNAUTHORIZED_COPY,
+        {sourceStoreName: 'source.myshopify.com', targetStoreName: 'target.myshopify.com'},
+        'copy-request-unauthorized-789',
+      )
+      mockApiClient.startBulkDataStoreCopy.mockRejectedValue(unauthorizedError)
+
+      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+        const ctx: any = {}
+        for (const task of tasks) {
+          // eslint-disable-next-line no-await-in-loop
+          await task.task(ctx, task)
+        }
+        return ctx
+      })
+
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {'no-prompt': true})
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'startBulkDataStoreCopy',
+        code: ErrorCodes.UNAUTHORIZED_COPY,
+        params: {sourceStoreName: 'source.myshopify.com', targetStoreName: 'target.myshopify.com'},
+        requestId: 'copy-request-unauthorized-789',
+      })
+    })
+
+    test('should get missing EA access error from API client', async () => {
+      const missingEAError = new OperationError(
+        'startBulkDataStoreCopy',
+        ErrorCodes.MISSING_EA_ACCESS,
+        {},
+        'copy-request-ea-789',
+      )
+      mockApiClient.startBulkDataStoreCopy.mockRejectedValue(missingEAError)
+
+      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+        const ctx: any = {}
+        for (const task of tasks) {
+          // eslint-disable-next-line no-await-in-loop
+          await task.task(ctx, task)
+        }
+        return ctx
+      })
+
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {'no-prompt': true})
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'startBulkDataStoreCopy',
+        code: ErrorCodes.MISSING_EA_ACCESS,
+        requestId: 'copy-request-ea-789',
+      })
+    })
   })
 })
