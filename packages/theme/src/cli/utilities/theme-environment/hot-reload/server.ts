@@ -4,6 +4,7 @@ import {patchRenderingResponse} from '../proxy.js'
 import {createFetchError, extractFetchErrorInfo} from '../../errors.js'
 import {inferLocalHotReloadScriptPath} from '../../theme-fs.js'
 import {parseServerEvent} from '../server-utils.js'
+import {getLiquidTagContent} from '../liquid-tag-content.js'
 import {
   createError,
   createEventStream,
@@ -17,8 +18,6 @@ import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {NodeTypes, toLiquidHtmlAST, walk} from '@shopify/liquid-html-parser'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import EventEmitter from 'node:events'
 import type {
   HotReloadEvent,
@@ -453,25 +452,9 @@ export function getUpdatedFileParts(file: ThemeAsset) {
     cacheEntry[tagName] = content
   }
 
-  try {
-    walk(toLiquidHtmlAST(file.value), (node) => {
-      if (node.type !== NodeTypes.LiquidRawTag) return
-
-      const nodeName = node.name as LiquidTag
-      if (liquidTags.includes(nodeName)) {
-        handleTagMatch(nodeName, node.body.value)
-      }
-    })
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err: unknown) {
-    const error = err as Error
-    outputDebug(`Error parsing Liquid file "${file.key}" to detect updated file parts. ${error.stack ?? error.message}`)
-
-    for (const tag of liquidTags) {
-      const tagRE = new RegExp(`{%\\s*${tag}\\s*%}([^%]*){%\\s*end${tag}\\s*%}`)
-      const match = otherContent.match(tagRE)?.[1]
-      if (match) handleTagMatch(tag, match)
-    }
+  for (const tag of liquidTags) {
+    const match = getLiquidTagContent(file.value ?? '', tag)
+    if (match) handleTagMatch(tag, match)
   }
 
   otherContent = normalizeContent(
