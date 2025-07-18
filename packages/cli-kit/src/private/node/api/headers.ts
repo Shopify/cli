@@ -1,10 +1,10 @@
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
-import {BugError} from '../../../public/node/error.js'
+import {AbortError} from '../../../public/node/error.js'
 import https from 'https'
 
-class RequestClientError extends BugError {
+class RequestClientError extends AbortError {
   statusCode: number
   public constructor(message: string, statusCode: number) {
     const tryMessage =
