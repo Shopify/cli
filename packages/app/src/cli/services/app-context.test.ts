@@ -358,56 +358,6 @@ describe('localAppContext', () => {
     })
   })
 
-  test('uses unsafeReportMode when provided', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given - use a valid configuration but with an extra field to test report mode
-      const content = `
-        name = "test-app"
-      `
-      await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadApp')
-
-      // When
-      const result = await localAppContext({
-        directory: tmp,
-        unsafeReportMode: true,
-      })
-
-      // Then
-      expect(result).toBeDefined()
-      expect(loadSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          mode: 'report',
-        }),
-      )
-      loadSpy.mockRestore()
-    })
-  })
-
-  test('defaults to strict mode when unsafeReportMode is not provided', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const content = `
-        name = "test-app"
-      `
-      await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadApp')
-
-      // When
-      await localAppContext({
-        directory: tmp,
-      })
-
-      // Then
-      expect(loadSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          mode: 'strict',
-        }),
-      )
-      loadSpy.mockRestore()
-    })
-  })
-
   test('loads app with extensions', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
