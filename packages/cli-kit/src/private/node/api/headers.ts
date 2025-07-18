@@ -74,7 +74,6 @@ export function buildHeaders(token?: string): {[key: string]: string} {
 export async function httpsAgent(): Promise<https.Agent> {
   return new https.Agent({
     rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
-    keepAlive: true,
   })
 }
 

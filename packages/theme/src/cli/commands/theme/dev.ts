@@ -143,6 +143,23 @@ You can run this command only in a directory that matches the [default Shopify t
       flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
     }
 
+    // eslint-disable-next-line no-console
+    console.log('[SHOPIFY_#6062_DEBUG]', {
+      node: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      openssl: process.versions.openssl,
+
+      env: {
+        HTTP_PROXY: process.env.HTTP_PROXY ? 'set' : 'not set',
+        HTTPS_PROXY: process.env.HTTPS_PROXY ? 'set' : 'not set',
+        NO_PROXY: process.env.NO_PROXY ? 'set' : 'not set',
+        NODE_TLS_REJECT_UNAUTHORIZED: process.env.NODE_TLS_REJECT_UNAUTHORIZED ?? 'not set',
+        NODE_OPTIONS: process.env.NODE_OPTIONS ?? 'not set',
+        NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS ? 'set' : 'not set',
+      },
+    })
+
     await dev({
       adminSession,
       directory: flags.path,

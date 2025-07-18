@@ -32,7 +32,7 @@ import {outputDebug} from '../output.js'
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 const SkeletonThemeCdn = 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip'
-const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
+export const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useNetworkLevelRetry: true,
   useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
