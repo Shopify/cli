@@ -18,6 +18,8 @@ import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {normalizeStoreFqdn} from '../context/fqdn.js'
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
+import {serviceEnvironment} from '../../../private/node/context/service.js'
+import {DevServerCore} from '../vendor/dev_server/index.js'
 import {ClientError, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
@@ -34,9 +36,15 @@ const LatestApiVersionByFQDN = new Map<string, string>()
 export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
   const api = 'Admin'
   const version = await fetchLatestSupportedApiVersion(session)
-  const store = await normalizeStoreFqdn(session.storeFqdn)
-  const url = adminUrl(store, version, session)
+  let storeDomain = await normalizeStoreFqdn(session.storeFqdn)
   const addedHeaders = themeAccessHeaders(session)
+
+  if (serviceEnvironment() === 'local') {
+    addedHeaders['x-forwarded-host'] = storeDomain
+    storeDomain = new DevServerCore().host('app')
+  }
+
+  const url = adminUrl(storeDomain, version, session)
   return graphqlRequest({query, api, addedHeaders, url, token: session.token, variables})
 }
 
@@ -70,10 +78,16 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
   if (!apiVersion) {
     apiVersion = await fetchLatestSupportedApiVersion(session)
   }
-  const store = await normalizeStoreFqdn(session.storeFqdn)
+  let storeDomain = await normalizeStoreFqdn(session.storeFqdn)
   const addedHeaders = themeAccessHeaders(session)
+
+  if (serviceEnvironment() === 'local') {
+    addedHeaders['x-forwarded-host'] = storeDomain
+    storeDomain = new DevServerCore().host('app')
+  }
+
   const opts = {
-    url: adminUrl(store, apiVersion, session),
+    url: adminUrl(storeDomain, apiVersion, session),
     api: 'Admin',
     token: session.token,
     addedHeaders,
