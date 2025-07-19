@@ -52,6 +52,7 @@ abstract class BaseCommand extends Command {
   protected async init(): Promise<unknown> {
     this.exitWithTimestampWhenEnvVariablePresent()
     setCurrentCommandId(this.id ?? '')
+
     if (!isDevelopment()) {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
@@ -247,7 +248,7 @@ function reportEnvironmentApplication<
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
     const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
     if (!userSpecifiedThisFlag && environmentContainsFlag) {
-      const valueToReport = name === 'password' ? `********${value.substr(-4)}` : value
+      const valueToReport = name === 'password' ? `********${String(value).slice(-4)}` : value
       changes[name] = valueToReport
     }
   }

@@ -137,8 +137,9 @@ export async function sendErrorToBugsnag(
         // @ts-ignore
         Bugsnag.notify(reportableError, eventHandler, errorHandler)
       })
+      return {error: reportableError, reported: report, unhandled}
     }
-    return {error: reportableError, reported: report, unhandled}
+    return {error: reportableError, reported: report, unhandled: undefined}
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
     outputDebug(`Error reporting to Bugsnag: ${err}`)
@@ -243,7 +244,7 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
       appData[key] = value
     } else if (key.startsWith('cmd_') || commandKeys.includes(key)) {
       commandData[key] = value
-    } else if (key.startsWith('env_') || environmentKeys) {
+    } else if (key.startsWith('env_') || environmentKeys.includes(key)) {
       environmentData[key] = value
     } else {
       miscData[key] = value
@@ -260,6 +261,23 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
   Object.entries(bugsnagMetadata).forEach(([section, values]) => {
     event.addMetadata(section, values)
   })
+
+  // Add slice metadata for ownership tracking
+  const sliceInfo = getSliceNameAndId((allMetadata.cmd_all_plugin as string) ?? '')
+  event.addMetadata('custom', sliceInfo)
+}
+
+export function getSliceNameAndId(plugin: string): {slice_name: string; slice_id: string} {
+  if (plugin.includes('@shopify/theme')) {
+    return {slice_name: 'theme', slice_id: 'S-2d23f6'}
+  } else if (plugin.includes('@shopify/cli-hydrogen')) {
+    return {slice_name: 'hydrogen', slice_id: 'S-156228'}
+  } else if (plugin.includes('@shopify/store')) {
+    return {slice_name: 'bulk data', slice_id: 'S-1bc8f5'}
+  } else if (plugin.includes('@shopify/app')) {
+    return {slice_name: 'app', slice_id: 'S-9988b6'}
+  }
+  return {slice_name: 'cli', slice_id: 'S-f3a87a'}
 }
 
 function initializeBugsnag() {
