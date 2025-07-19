@@ -732,6 +732,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             name: updatedName,
             modules: (appModules ?? []).map((mod) => ({
               uid: mod.uid ?? mod.uuid ?? mod.handle,
+              uuid: mod.uuid,
               type: mod.specificationIdentifier,
               handle: mod.handle,
               config: JSON.parse(mod.config),
@@ -1306,7 +1307,7 @@ function mapBusinessPlatformStoresToOrganizationStores(
 function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVersion> {
   return {
     registrationId: mod.userIdentifier,
-    registrationUuid: mod.userIdentifier,
+    registrationUuid: mod.uuid,
     registrationTitle: mod.handle,
     type: mod.specification.externalIdentifier,
     config: mod.config,
