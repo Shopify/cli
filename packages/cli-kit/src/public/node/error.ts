@@ -208,9 +208,130 @@ export function shouldReportErrorAsUnexpected(error: unknown): boolean {
  * @returns The cleaned path.
  */
 export function cleanSingleStackTracePath(filePath: string): string {
-  return normalizePath(filePath)
-    .replace('file:/', '/')
-    .replace(/^\/?[A-Z]:/, '')
+  let cleanedPath = filePath
+
+  // Handle file:// protocol FIRST
+  if (cleanedPath.startsWith('file:///')) {
+    cleanedPath = cleanedPath.replace('file:///', '')
+  } else if (cleanedPath.startsWith('file://')) {
+    cleanedPath = cleanedPath.replace('file://', '')
+  } else if (cleanedPath.startsWith('file:/')) {
+    cleanedPath = cleanedPath.replace('file:/', '/')
+  }
+
+  // CRITICAL: Sanitize path traversal BEFORE normalization
+  // This prevents normalize from resolving ../ sequences
+  cleanedPath = cleanedPath.replace(/\.\.\//g, '')
+  cleanedPath = cleanedPath.replace(/\.\//g, '')
+
+  // Now normalize the path (this handles things like double slashes)
+  cleanedPath = normalizePath(cleanedPath)
+
+  // CRITICAL: Add security guards
+  if (cleanedPath.length > 1000) {
+    cleanedPath = `${cleanedPath.substring(0, 1000)}...`
+  }
+
+  // Convert all backslashes to forward slashes for consistency
+  cleanedPath = cleanedPath.replace(/\\/g, '/')
+
+  // Remove drive letters (after file:// handling and slash conversion)
+  cleanedPath = cleanedPath.replace(/^[A-Z]:\//, '')
+  cleanedPath = cleanedPath.replace(/^\/[A-Z]:\//, '')
+
+  // Remove leading slashes early so our patterns work consistently
+  cleanedPath = cleanedPath.replace(/^\/+/, '')
+
+  // AGGRESSIVE NORMALIZATION: Strip ALL path prefixes
+  // For node_modules paths: extract ONLY the part after node_modules/
+  const nodeModulesMatch = cleanedPath.match(/^.*node_modules\/(.+)$/)
+  if (nodeModulesMatch && nodeModulesMatch[1]) {
+    cleanedPath = nodeModulesMatch[1]
+  } else {
+    // Check for package manager cache paths
+    // Yarn cache: .yarn/berry/cache/, .yarn/cache/, etc.
+    const yarnCacheMatch = cleanedPath.match(/^.*\.yarn\/(?:berry\/)?cache\/(.+)$/)
+    if (yarnCacheMatch && yarnCacheMatch[1]) {
+      // Keep the actual file path from the cache, just remove the cache prefix
+      cleanedPath = yarnCacheMatch[1]
+    } else {
+      // pnpm store: .pnpm-store/, .pnpm/, .local/share/pnpm/store/, etc.
+      const pnpmStoreMatch = cleanedPath.match(/^.*\.(pnpm-store|pnpm)\/(.+)$/)
+      if (pnpmStoreMatch && pnpmStoreMatch[2]) {
+        // Keep the actual file path from the store, just remove the store prefix
+        cleanedPath = pnpmStoreMatch[2]
+      } else {
+        // For ALL other paths: strip well-known user-specific path prefixes
+        // This ensures identical errors produce identical stack traces regardless of:
+        // - User home directory (/home/user, /Users/john, etc.)
+        // - CI workspace (/github/workspace, /bitbucket/pipelines, etc.)
+        // - Installation location (/usr/local/lib, C:\Program Files, etc.)
+        // - Temporary directories (/tmp, /var/folders, etc.)
+
+        // Strip common user-specific prefixes while preserving project structure
+        cleanedPath = cleanedPath
+          // macOS home: Users/john/...
+          .replace(/^Users\/[^/]+\//, '')
+          // Linux home: home/jane/...
+          .replace(/^home\/[^/]+\//, '')
+          // Root home: root/...
+          .replace(/^root\//, '')
+          // Old Windows
+          .replace(/^Documents and Settings\/[^/]+\//, '')
+          // Windows program files
+          .replace(/^AppData\/Local\/Programs\//, '')
+          // Windows roaming data
+          .replace(/^AppData\/Roaming\//, '')
+          // Windows temp
+          .replace(/^AppData\/Local\/Temp\//, '')
+          // Windows local data
+          .replace(/^AppData\/Local\//, '')
+          // macOS temp: var/folders/xx/yyy/zzz/...
+          .replace(/^var\/folders\/[^/]+\/[^/]+\/[^/]+\//, '')
+          // Unix temp
+          .replace(/^tmp\//, '')
+          // Unix /opt
+          .replace(/^opt\//, '')
+          // Unix /usr/local
+          .replace(/^usr\/local\//, '')
+          // Unix /usr
+          .replace(/^usr\//, '')
+          // GitHub Actions
+          .replace(/^home\/runner\//, '')
+          // GitHub workspace
+          .replace(/^github\/workspace\//, '')
+          // Bitbucket
+          .replace(/^bitbucket\/pipelines\/agent\//, '')
+          // GitLab CI
+          .replace(/^builds\//, '')
+          // AWS CodeBuild
+          .replace(/^codebuild\/output\/[^/]+\//, '')
+          // Docker /app
+          .replace(/^app\//, '')
+          // Docker /workspace
+          .replace(/^workspace\//, '')
+      }
+    }
+  }
+
+  // Normalize webpack chunk hashes
+  cleanedPath = cleanedPath.replace(/chunk-[A-Z0-9]{8}\.js/, 'chunk-<HASH>.js')
+  cleanedPath = cleanedPath.replace(/chunk\.[a-f0-9]{8,}\.js/, 'chunk.<HASH>.js')
+
+  // Normalize other common hash patterns in filenames
+  cleanedPath = cleanedPath.replace(/\.[a-f0-9]{8}\.(js|mjs|cjs|ts)$/, '.<HASH>.$1')
+  cleanedPath = cleanedPath.replace(/\.[a-f0-9]{16,}\.(js|mjs|cjs|ts)$/, '.<HASH>.$1')
+
+  // Normalize version patterns
+  cleanedPath = cleanedPath.replace(
+    /@[0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9\-._]+)?(?:\+[a-zA-Z0-9\-._]+)?/g,
+    '@<VERSION>',
+  )
+
+  // Normalize UUID patterns
+  cleanedPath = cleanedPath.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '<UUID>')
+
+  return cleanedPath
 }
 
 /**
