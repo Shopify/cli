@@ -6,6 +6,7 @@ import {
   DevSessionStatusMessageType,
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
+import {formatAppInfoBody} from '../../../format-app-info-body.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {Alert, ConcurrentOutput, Link} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -24,6 +25,10 @@ interface DevSesionUIProps {
   abortController: AbortController
   devSessionStatusManager: DevSessionStatusManager
   shopFqdn: string
+  appURL?: string
+  appName?: string
+  organizationName?: string
+  configPath?: string
   onAbort: () => Promise<void>
 }
 
@@ -32,6 +37,10 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   processes,
   devSessionStatusManager,
   shopFqdn,
+  appURL,
+  appName,
+  organizationName,
+  configPath,
   onAbort,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -40,6 +49,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const [error, setError] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<DevSessionStatus>(devSessionStatusManager.status)
   const [shouldShowPersistentDevInfo, setShouldShowPersistentDevInfo] = useState<boolean>(false)
+  const [showInfoModal, setShowInfoModal] = useState<boolean>(false)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const {isAborted} = useAbortSignal(abortController.signal, async (err: any) => {
@@ -100,6 +110,8 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               cmd_dev_graphiql_opened: true,
             }))
             await openURL(status.graphiqlURL)
+          } else if (input === 'i') {
+            setShowInfoModal(!showInfoModal)
           } else if (input === 'q') {
             abortController.abort()
           }
@@ -107,6 +119,11 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         } catch (_) {
           setError('Failed to handle your input.')
         }
+      }
+
+      // Handle escape key separately
+      if (key.escape) {
+        setShowInfoModal(false)
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -161,52 +178,74 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           borderRight={false}
           borderTop
         >
-          {status.statusMessage ? (
-            <Text>
-              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
-            </Text>
-          ) : null}
-          {canUseShortcuts ? (
+          {showInfoModal ? (
             <Box marginTop={1} flexDirection="column">
-              {status.graphiqlURL && status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
-                  your browser
-                </Text>
-              ) : null}
-              {status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-                </Text>
-              ) : null}
-              <Text>
-                {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
-              </Text>
+              <Alert
+                type="info"
+                headline="App Information"
+                body={formatAppInfoBody({
+                  appName,
+                  appURL,
+                  configPath,
+                  shopFqdn,
+                  organizationName,
+                })}
+              />
             </Box>
-          ) : null}
-
-          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
-            {isShuttingDownMessage ? (
-              <Text>{isShuttingDownMessage}</Text>
-            ) : (
-              <>
-                {status.isReady && (
+          ) : (
+            <>
+              {status.statusMessage && (
+                <Text>
+                  {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
+                </Text>
+              )}
+              {canUseShortcuts && (
+                <Box marginTop={1} flexDirection="column">
+                  {status.graphiqlURL && status.isReady ? (
+                    <Text>
+                      {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API)
+                      in your browser
+                    </Text>
+                  ) : null}
+                  {status.isReady ? (
+                    <Text>
+                      {figures.pointerSmall} Press <Text bold>i</Text> {figures.lineVertical} display app information
+                    </Text>
+                  ) : null}
+                  {status.isReady ? (
+                    <Text>
+                      {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                    </Text>
+                  ) : null}
+                  <Text>
+                    {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
+                  </Text>
+                </Box>
+              )}
+              <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+                {isShuttingDownMessage ? (
+                  <Text>{isShuttingDownMessage}</Text>
+                ) : (
                   <>
-                    {status.previewURL ? (
-                      <Text>
-                        Preview URL: <Link url={status.previewURL} />
-                      </Text>
-                    ) : null}
-                    {status.graphiqlURL ? (
-                      <Text>
-                        GraphiQL URL: <Link url={status.graphiqlURL} />
-                      </Text>
-                    ) : null}
+                    {status.isReady && (
+                      <>
+                        {status.previewURL ? (
+                          <Text>
+                            Preview URL: <Link url={status.previewURL} />
+                          </Text>
+                        ) : null}
+                        {status.graphiqlURL ? (
+                          <Text>
+                            GraphiQL URL: <Link url={status.graphiqlURL} />
+                          </Text>
+                        ) : null}
+                      </>
+                    )}
                   </>
                 )}
-              </>
-            )}
-          </Box>
+              </Box>
+            </>
+          )}
         </Box>
       ) : null}
       {error ? (
