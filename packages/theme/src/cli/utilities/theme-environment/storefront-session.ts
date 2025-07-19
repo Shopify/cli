@@ -4,7 +4,7 @@ import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
-import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
+import {passwordProtected, THEME_API_NETWORK_BEHAVIOUR} from '@shopify/cli-kit/node/themes/api'
 import {sleep} from '@shopify/cli-kit/node/system'
 
 export class ShopifyEssentialError extends Error {}
@@ -145,16 +145,20 @@ async function enrichSessionWithStorefrontPassword(
 ) {
   const params = new URLSearchParams({password})
 
-  const response = await shopifyFetch(`${storeUrl}/password`, {
-    method: 'POST',
-    redirect: 'manual',
-    body: params,
-    headers: {
-      ...headers,
-      ...defaultHeaders(),
-      Cookie: serializeCookies({_shopify_essential: shopifyEssential}),
+  const response = await shopifyFetch(
+    `${storeUrl}/password`,
+    {
+      method: 'POST',
+      redirect: 'manual',
+      body: params,
+      headers: {
+        ...headers,
+        ...defaultHeaders(),
+        Cookie: serializeCookies({_shopify_essential: shopifyEssential}),
+      },
     },
-  })
+    THEME_API_NETWORK_BEHAVIOUR,
+  )
 
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')

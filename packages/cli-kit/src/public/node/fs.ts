@@ -106,7 +106,17 @@ export async function readFile(path: string, options?: ReadOptions): Promise<Buf
  * @returns A promise that resolves with the content of the file.
  */
 export async function readFile(path: string, options: ReadOptions = {encoding: 'utf8'}): Promise<string | Buffer> {
-  outputDebug(outputContent`Reading the content of file at ${outputToken.path(path)}...`)
+  let fileSize = 'unset'
+
+  try {
+    const {size} = await fsStat(path)
+    fileSize = size.toString()
+    // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
+  } catch {}
+
+  // eslint-disable-next-line no-console
+  console.log(`Reading the content of file at ${path} (size: ${fileSize} bytes)...`)
+
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   return fsReadFile(path, options)
