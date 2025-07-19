@@ -3,7 +3,7 @@ import {InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
-import {debounce} from '../../../../public/common/function.js'
+import {throttle} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
@@ -84,40 +84,40 @@ function AutocompletePrompt<T>({
   const searchTermRef = useRef('')
   searchTermRef.current = searchTerm
 
-  // disable exhaustive-deps because we want to memoize the debounce function itself
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debounceSearch = useCallback(
-    debounce(
-      (term: string) => {
-        setLoadingWhenSlow.current = setTimeout(() => {
-          setPromptState(PromptState.Loading)
-        }, 100)
-        paginatedSearch(term)
-          .then((result) => {
-            // while we were waiting for the promise to resolve, the user
-            // has emptied the search term, so we want to show the default
-            // choices instead
-            if (searchTermRef.current.length === 0) {
-              setSearchResults(choices)
-              setHasMorePages(initialHasMorePages)
-            } else {
-              setSearchResults(result.data)
-              setHasMorePages(result.meta?.hasNextPage ?? false)
-            }
+  // useMemo ensures debounceSearch is not recreated on every render
+  const debounceSearch = React.useMemo(
+    () =>
+      throttle(
+        (term: string) => {
+          setLoadingWhenSlow.current = setTimeout(() => {
+            setPromptState(PromptState.Loading)
+          }, 100)
+          paginatedSearch(term)
+            .then((result) => {
+              // while we were waiting for the promise to resolve, the user
+              // has emptied the search term, so we want to show the default
+              // choices instead
+              if (searchTermRef.current.length === 0) {
+                setSearchResults(choices)
+                setHasMorePages(initialHasMorePages)
+              } else {
+                setSearchResults(result.data)
+                setHasMorePages(result.meta?.hasNextPage ?? false)
+              }
 
-            setPromptState(PromptState.Idle)
-          })
-          .catch(() => {
-            setPromptState(PromptState.Error)
-          })
-          .finally(() => {
-            clearTimeout(setLoadingWhenSlow.current)
-          })
-      },
-      300,
-      {leading: true},
-    ),
-    [initialHasMorePages, choices, paginatedSearch, searchResults],
+              setPromptState(PromptState.Idle)
+            })
+            .catch(() => {
+              setPromptState(PromptState.Error)
+            })
+            .finally(() => {
+              clearTimeout(setLoadingWhenSlow.current)
+            })
+        },
+        400,
+        {leading: true, trailing: true},
+      ),
+    [paginatedSearch],
   )
 
   return (
