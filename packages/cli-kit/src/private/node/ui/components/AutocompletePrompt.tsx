@@ -84,6 +84,12 @@ function AutocompletePrompt<T>({
   const searchTermRef = useRef('')
   searchTermRef.current = searchTerm
 
+  // Keep current values in refs to avoid stale closures
+  const choicesRef = useRef(choices)
+  choicesRef.current = choices
+  const initialHasPagesRef = useRef(initialHasMorePages)
+  initialHasPagesRef.current = initialHasMorePages
+
   // useMemo ensures debounceSearch is not recreated on every render
   const debounceSearch = React.useMemo(
     () =>
@@ -98,8 +104,8 @@ function AutocompletePrompt<T>({
               // has emptied the search term, so we want to show the default
               // choices instead
               if (searchTermRef.current.length === 0) {
-                setSearchResults(choices)
-                setHasMorePages(initialHasMorePages)
+                setSearchResults(choicesRef.current)
+                setHasMorePages(initialHasPagesRef.current)
               } else {
                 setSearchResults(result.data)
                 setHasMorePages(result.meta?.hasNextPage ?? false)
@@ -117,7 +123,7 @@ function AutocompletePrompt<T>({
         400,
         {leading: true, trailing: true},
       ),
-    [paginatedSearch],
+    [paginatedSearch, setPromptState],
   )
 
   return (
