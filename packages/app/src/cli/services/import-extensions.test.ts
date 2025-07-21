@@ -1,5 +1,4 @@
 import {importExtensions} from './import-extensions.js'
-import {getExtensions} from './fetch-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
 import {testAppLinked, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -82,13 +81,15 @@ describe('import-extensions', () => {
 
   test('importing an extension creates a folder and toml file', async () => {
     // Given
-    vi.mocked(getExtensions).mockResolvedValue([
+    const extensions = [
       flowExtensionA,
       flowExtensionB,
       marketingActivityExtension,
       subscriptionLinkExtension,
       legacySubscriptionLinkExtension,
-    ])
+    ]
+    const extensionRegistrations = [...extensions]
+
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
 
     // When
@@ -106,6 +107,7 @@ describe('import-extensions', () => {
           'subscription_link',
           'subscription_link_extension',
         ],
+        extensions,
         buildTomlObject,
       })
 
@@ -134,13 +136,15 @@ describe('import-extensions', () => {
 
   test('selecting All imports all extensions', async () => {
     // Given
-    vi.mocked(getExtensions).mockResolvedValue([
+    const extensions = [
       flowExtensionA,
       flowExtensionB,
       marketingActivityExtension,
       subscriptionLinkExtension,
       legacySubscriptionLinkExtension,
-    ])
+    ]
+    const extensionRegistrations = [...extensions]
+
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
 
     // When
@@ -158,6 +162,7 @@ describe('import-extensions', () => {
           'subscription_link',
           'subscription_link_extension',
         ],
+        extensions,
         buildTomlObject,
       })
 
@@ -186,31 +191,33 @@ describe('import-extensions', () => {
 
   test('Show message if there are not extensions to migrate', async () => {
     // Given
-    vi.mocked(getExtensions).mockResolvedValue([])
+    const extensions: ExtensionRegistration[] = []
+    const extensionRegistrations: ExtensionRegistration[] = []
 
-    // When
+    // When/Then
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testAppLinked({directory: tmpDir})
-      await importExtensions({
-        app,
-        remoteApp: organizationApp,
-        developerPlatformClient: testDeveloperPlatformClient(),
-        extensionTypes: [
-          'flow_action_definition',
-          'flow_trigger_definition',
-          'marketing_activity_extension',
-          'subscription_link',
-          'subscription_link_extension',
-        ],
-        buildTomlObject,
-      })
 
-      // Then
+      // The function should throw an error when there are no extensions to migrate
+      await expect(
+        importExtensions({
+          app,
+          remoteApp: organizationApp,
+          developerPlatformClient: testDeveloperPlatformClient(),
+          extensionTypes: [
+            'flow_action_definition',
+            'flow_trigger_definition',
+            'marketing_activity_extension',
+            'subscription_link',
+            'subscription_link_extension',
+          ],
+          extensions,
+          buildTomlObject,
+        }),
+      ).rejects.toThrow('No extensions to migrate')
+
+      // renderSelectPrompt should not be called when there are no extensions
       expect(renderSelectPrompt).not.toHaveBeenCalled()
-
-      expect(renderSuccess).toHaveBeenCalledWith({
-        headline: ['No extensions to migrate.'],
-      })
 
       const tomlPathA = joinPath(tmpDir, 'extensions', 'title-a', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathA)).toBe(false)

@@ -65,8 +65,7 @@ export function getMigrationChoices(extensions: ExtensionRegistration[]): Migrat
   )
 }
 
-export async function selectMigrationChoice(extensions: ExtensionRegistration[]): Promise<MigrationChoice> {
-  const migrationChoices = getMigrationChoices(extensions)
+export async function selectMigrationChoice(migrationChoices: MigrationChoice[]): Promise<MigrationChoice> {
   if (migrationChoices.length === 1 && migrationChoices[0]) {
     return migrationChoices[0]
   }

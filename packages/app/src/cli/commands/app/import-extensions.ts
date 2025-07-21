@@ -1,8 +1,9 @@
 import {appFlags} from '../../flags.js'
-import {importExtensions, pendingExtensions} from '../../services/import-extensions.js'
+import {allExtensionTypes, importExtensions} from '../../services/import-extensions.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
-import {selectMigrationChoice} from '../../prompts/import-extensions.js'
+import {getMigrationChoices, selectMigrationChoice} from '../../prompts/import-extensions.js'
+import {getExtensions} from '../../services/fetch-extensions.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -30,18 +31,22 @@ export default class ImportExtensions extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    const {extensions, extensionRegistrations} = await pendingExtensions(
-      appContext.remoteApp,
-      appContext.developerPlatformClient,
-    )
-    if (extensions.length === 0) {
+    const extensions = await getExtensions({
+      developerPlatformClient: appContext.developerPlatformClient,
+      apiKey: appContext.remoteApp.apiKey,
+      organizationId: appContext.remoteApp.organizationId,
+      extensionTypes: allExtensionTypes,
+    })
+
+    const migrationChoices = getMigrationChoices(extensions)
+
+    if (migrationChoices.length === 0) {
       renderSuccess({headline: ['No extensions to migrate.']})
     } else {
-      const migrationChoice = await selectMigrationChoice(extensions)
+      const migrationChoice = await selectMigrationChoice(migrationChoices)
       await importExtensions({
         ...appContext,
         extensions,
-        extensionRegistrations,
         extensionTypes: migrationChoice.extensionTypes,
         buildTomlObject: migrationChoice.buildTomlObject,
       })
