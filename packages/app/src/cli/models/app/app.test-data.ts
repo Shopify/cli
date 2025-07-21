@@ -1423,6 +1423,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     supportsStoreSearch: false,
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
+    supportsDashboardManagedExtensions: true,
     session: () => Promise.resolve(testPartnersUserSession),
     unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
@@ -1511,6 +1512,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
           | 'supportsStoreSearch'
           | 'organizationSource'
           | 'bundleFormat'
+          | 'supportsDashboardManagedExtensions'
         >
       ] = vi.fn().mockImplementation(value)
     }

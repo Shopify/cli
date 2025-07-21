@@ -2,15 +2,20 @@ import {uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upl
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
+import {allExtensionTypes, importAllExtensions} from './import-extensions.js'
+import {getExtensions} from './fetch-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
-import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {reloadApp} from '../models/app/loader.js'
+import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
+import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {Task} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
@@ -53,10 +58,126 @@ interface TasksContext {
   bundle?: boolean
 }
 
-export async function deploy(options: DeployOptions) {
-  const {app, remoteApp, developerPlatformClient, noRelease} = options
+interface ImportExtensionsIfNeededOptions {
+  app: AppLinkedInterface
+  remoteApp: OrganizationApp
+  developerPlatformClient: DeveloperPlatformClient
+  force: boolean
+}
 
-  const identifiers = await ensureDeployContext({...options, developerPlatformClient})
+async function handleSupportedDashboardExtensions(
+  options: ImportExtensionsIfNeededOptions & {
+    extensions: ExtensionRegistration[]
+  },
+): Promise<AppLinkedInterface> {
+  const {app, remoteApp, developerPlatformClient, force, extensions} = options
+
+  if (force || !isTTY()) {
+    return app
+  }
+
+  const message = [
+    `App includes legacy extensions that will be deprecated soon:\n`,
+    extensions.map((ext) => `  - ${ext.title}`).join('\n'),
+    '\n\nRun ',
+    {command: 'shopify app import-extensions'},
+    'to add legacy extensions now?',
+  ]
+  const shouldImportExtensions = await renderConfirmationPrompt({
+    message,
+    confirmationMessage: 'Yes, add legacy extensions and deploy',
+    cancellationMessage: 'No, skip for now',
+  })
+
+  if (shouldImportExtensions) {
+    await importAllExtensions({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      extensions,
+    })
+    return reloadApp(app)
+  }
+
+  return app
+}
+
+async function handleUnsupportedDashboardExtensions(
+  options: ImportExtensionsIfNeededOptions & {
+    extensions: ExtensionRegistration[]
+  },
+): Promise<AppLinkedInterface> {
+  const {app, remoteApp, developerPlatformClient, force, extensions} = options
+
+  const message = [
+    `App can't be deployed until legacy extensions are added to your version or removed from your app:\n`,
+    extensions.map((ext) => `  - ${ext.title}`).join('\n'),
+  ]
+  const nextSteps = ['\n\nRun ', {command: 'shopify app import-extensions'}, 'to add legacy extensions.']
+
+  if (force || !isTTY()) {
+    throw new AbortError(message, nextSteps)
+  }
+
+  const question = ['\n\nRun ', {command: 'shopify app import-extensions'}, ' to add legacy extensions now?']
+  const shouldImportExtensions = await renderConfirmationPrompt({
+    message: [...message, ...question],
+    confirmationMessage: 'Yes, add legacy extensions and deploy',
+    cancellationMessage: `No, don't add legacy extensions`,
+  })
+
+  if (shouldImportExtensions) {
+    await importAllExtensions({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      extensions,
+    })
+    return reloadApp(app)
+  } else {
+    throw new AbortSilentError()
+  }
+}
+
+export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeededOptions): Promise<AppLinkedInterface> {
+  const {app, remoteApp, developerPlatformClient} = options
+
+  const extensions = await getExtensions({
+    developerPlatformClient,
+    apiKey: remoteApp.apiKey,
+    organizationId: remoteApp.organizationId,
+    extensionTypes: allExtensionTypes,
+    onlyDashboardManaged: true,
+  })
+
+  if (extensions.length === 0) {
+    return app
+  }
+
+  if (developerPlatformClient.supportsDashboardManagedExtensions) {
+    return handleSupportedDashboardExtensions({
+      ...options,
+      extensions,
+    })
+  } else {
+    return handleUnsupportedDashboardExtensions({
+      ...options,
+      extensions,
+    })
+  }
+}
+
+export async function deploy(options: DeployOptions) {
+  const {remoteApp, developerPlatformClient, noRelease, force} = options
+
+  const app = await importExtensionsIfNeeded({
+    app: options.app,
+    remoteApp,
+    developerPlatformClient,
+    force,
+  })
+
+  const identifiers = await ensureDeployContext({...options, app, developerPlatformClient})
   const release = !noRelease
   const apiKey = remoteApp.apiKey
 

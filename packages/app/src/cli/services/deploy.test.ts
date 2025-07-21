@@ -1,7 +1,10 @@
 import {ensureDeployContext} from './context.js'
-import {deploy} from './deploy.js'
+import {deploy, importExtensionsIfNeeded} from './deploy.js'
 import {uploadExtensionsBundle} from './deploy/upload.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
+import {importAllExtensions, allExtensionTypes} from './import-extensions.js'
+import {getExtensions} from './fetch-extensions.js'
+import {reloadApp} from '../models/app/loader.js'
 import {
   testFunctionExtension,
   testThemeExtensions,
@@ -19,9 +22,18 @@ import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {PosSpecIdentifier} from '../models/extensions/specifications/app_config_point_of_sale.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
+import {
+  renderInfo,
+  renderSuccess,
+  renderTasks,
+  renderTextPrompt,
+  Task,
+  renderConfirmationPrompt,
+  isTTY,
+} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 const versionTag = 'unique-version-tag'
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -44,6 +56,9 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
+vi.mock('./import-extensions.js')
+vi.mock('./fetch-extensions.js')
+vi.mock('../models/app/loader.js')
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -55,6 +70,9 @@ beforeEach(() => {
       await task.task({}, task)
     }
   })
+
+  // Mock getExtensions to return empty arrays by default
+  vi.mocked(getExtensions).mockResolvedValue([])
 })
 
 describe('deploy', () => {
@@ -551,3 +569,369 @@ async function testDeployBundle({
     skipBuild: false,
   })
 }
+
+describe('ImportExtensionsIfNeeded', () => {
+  test('skips extension import when force flag is true', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+
+    vi.mocked(getExtensions).mockResolvedValue([])
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: true,
+    })
+
+    // Then
+    expect(result).toBe(app)
+    expect(getExtensions).toHaveBeenCalledWith({
+      developerPlatformClient,
+      apiKey: remoteApp.apiKey,
+      organizationId: remoteApp.organizationId,
+      extensionTypes: allExtensionTypes,
+      onlyDashboardManaged: true,
+    })
+  })
+
+  test('skips extension import when not in TTY environment', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+    vi.mocked(isTTY).mockReturnValue(false)
+
+    vi.mocked(getExtensions).mockResolvedValue([])
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: false,
+    })
+
+    // Then
+    expect(result).toBe(app)
+    expect(getExtensions).toHaveBeenCalledWith({
+      developerPlatformClient,
+      apiKey: remoteApp.apiKey,
+      organizationId: remoteApp.organizationId,
+      extensionTypes: allExtensionTypes,
+      onlyDashboardManaged: true,
+    })
+  })
+
+  test('prompts for extension import when in TTY environment and force is false', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const mockExtensions = [{title: 'Extension 1'}, {title: 'Extension 2'}]
+    const mockExtensionRegistrations = [{id: '1'}, {id: '2'}]
+    const reloadedApp = {...app, name: 'reloaded'}
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(reloadApp).mockResolvedValue(reloadedApp as any)
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: false,
+    })
+
+    // Then
+    expect(getExtensions).toHaveBeenCalledWith({
+      developerPlatformClient,
+      apiKey: remoteApp.apiKey,
+      organizationId: remoteApp.organizationId,
+      extensionTypes: allExtensionTypes,
+      onlyDashboardManaged: true,
+    })
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message: [
+        'App includes legacy extensions that will be deprecated soon:\n',
+        '  - Extension 1\n  - Extension 2',
+        '\n\nRun ',
+        {command: 'shopify app import-extensions'},
+        'to add legacy extensions now?',
+      ],
+      confirmationMessage: 'Yes, add legacy extensions and deploy',
+      cancellationMessage: 'No, skip for now',
+    })
+    expect(importAllExtensions).toHaveBeenCalledWith({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      extensions: mockExtensions,
+    })
+    expect(result).toBe(reloadedApp)
+  })
+
+  test('returns original app when no extensions are pending', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue([])
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: false,
+    })
+
+    // Then
+    expect(result).toBe(app)
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+  })
+
+  test('returns original app when user declines import', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: false,
+    })
+
+    // Then
+    expect(result).toBe(app)
+    expect(importAllExtensions).not.toHaveBeenCalled()
+    expect(reloadApp).not.toHaveBeenCalled()
+  })
+
+  test('throws error when platform does not support dashboard managed extensions and force is true', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+    })
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+
+    // When/Then
+    await expect(
+      importExtensionsIfNeeded({
+        app,
+        remoteApp,
+        developerPlatformClient,
+        force: true,
+      }),
+    ).rejects.toThrow(
+      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+    )
+  })
+
+  test('throws error when platform does not support dashboard managed extensions and not in TTY', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+    })
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+
+    // When/Then
+    await expect(
+      importExtensionsIfNeeded({
+        app,
+        remoteApp,
+        developerPlatformClient,
+        force: false,
+      }),
+    ).rejects.toThrow(
+      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+    )
+  })
+
+  test('imports extensions when platform does not support dashboard managed extensions', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+    })
+    const mockExtensions = [{title: 'Extension 1'}]
+    const reloadedApp = {...app, name: 'reloaded'}
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(reloadApp).mockResolvedValue(reloadedApp as any)
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: false,
+    })
+
+    // Then
+    expect(getExtensions).toHaveBeenCalledWith({
+      developerPlatformClient,
+      apiKey: remoteApp.apiKey,
+      organizationId: remoteApp.organizationId,
+      extensionTypes: allExtensionTypes,
+      onlyDashboardManaged: true,
+    })
+    expect(importAllExtensions).toHaveBeenCalledWith({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      extensions: mockExtensions,
+    })
+    expect(result).toBe(reloadedApp)
+  })
+
+  test('throws error when platform does not support dashboard managed extensions and force is true', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+    })
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+
+    // When/Then
+    await expect(
+      importExtensionsIfNeeded({
+        app,
+        remoteApp,
+        developerPlatformClient,
+        force: true,
+      }),
+    ).rejects.toThrow(
+      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+    )
+  })
+
+  test('throws error when platform does not support dashboard managed extensions and not TTY', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+    })
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+
+    // When/Then
+    await expect(
+      importExtensionsIfNeeded({
+        app,
+        remoteApp,
+        developerPlatformClient,
+        force: false,
+      }),
+    ).rejects.toThrow(
+      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+    )
+  })
+
+  test('throws silent error when platform does not support dashboard managed extensions and user cancels', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+    })
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+
+    // When/Then
+    await expect(
+      importExtensionsIfNeeded({
+        app,
+        remoteApp,
+        developerPlatformClient,
+        force: false,
+      }),
+    ).rejects.toThrowError(AbortSilentError)
+  })
+
+  test('returns app without prompting when platform supports dashboard managed extensions and force is true', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: true,
+    })
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(importAllExtensions).not.toHaveBeenCalled()
+    expect(result).toBe(app)
+  })
+
+  test('returns app without prompting when platform supports dashboard managed extensions and not TTY', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const mockExtensions = [{title: 'Extension 1'}]
+
+    vi.mocked(isTTY).mockReturnValue(false)
+    vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
+
+    // When
+    const result = await importExtensionsIfNeeded({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force: false,
+    })
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(importAllExtensions).not.toHaveBeenCalled()
+    expect(result).toBe(app)
+  })
+})

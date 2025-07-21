@@ -262,6 +262,7 @@ export interface DeveloperPlatformClient {
   readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
+  readonly supportsDashboardManagedExtensions: boolean
   session: () => Promise<PartnersSession>
   /**
    * This is an unsafe method that should only be used when the session is expired.
