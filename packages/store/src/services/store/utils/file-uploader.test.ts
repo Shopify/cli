@@ -177,5 +177,26 @@ describe('FileUploader', () => {
         params: {details: '403 Forbidden. Access denied'},
       })
     })
+
+    test('should throw staged upload access denied error when GraphQL returns ACCESS_DENIED', async () => {
+      const accessDeniedError = {
+        errors: [
+          {
+            message: 'Access denied for stagedUploadsCreate field.',
+            extensions: {
+              code: 'ACCESS_DENIED',
+            },
+          },
+        ],
+      }
+      vi.mocked(createStagedUploadAdmin).mockRejectedValue(accessDeniedError)
+
+      const promise = fileUploader.uploadSqliteFile(mockFilePath, mockStoreFqdn)
+      await expect(promise).rejects.toThrow(OperationError)
+      await expect(promise).rejects.toMatchObject({
+        operation: 'upload',
+        code: ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED,
+      })
+    })
   })
 })

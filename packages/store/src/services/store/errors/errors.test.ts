@@ -225,4 +225,15 @@ describe('Unauthorized Error Codes', () => {
       "You are not authorized to copy data between these stores\n\nTo export data from \"source.myshopify.com\"\n• You'll need the 'bulk data > export' permission\n\nTo import data to \"target.myshopify.com\"\n• You'll need the 'bulk data > import' permission",
     )
   })
+
+  test('should create STAGED_UPLOAD_ACCESS_DENIED error', () => {
+    const error = new OperationError('upload', ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED)
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.operation).toBe('upload')
+    expect(error.code).toBe(ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED)
+    expect(error.message).toBe(
+      "You don't have permission to upload files to this store.\n\nYou'll need the 'bulk data > import' permission to upload files.",
+    )
+  })
 })
