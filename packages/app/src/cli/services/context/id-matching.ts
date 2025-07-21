@@ -107,57 +107,6 @@ function matchByUIDandUUID(
   return {matched: {...matched, ...matchedByName}, toCreate, toConfirm, toManualMatch}
 }
 
-function migrateLegacyFunctions(
-  ids: IdentifiersExtensions,
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-): {
-  migrated: IdentifiersExtensions
-  pending: {local: LocalSource[]; remote: RemoteSource[]}
-} {
-  const migrated: IdentifiersExtensions = {}
-  const pendingMigrations: IdentifiersExtensions = {}
-
-  remoteSources
-    .filter((extension) => extension.type === 'FUNCTION')
-    .forEach((functionExtension) => {
-      const config = functionExtension.draftVersion?.config
-      if (config === undefined) return
-
-      const parsedConfig = JSON.parse(config)
-      const legacyId = parsedConfig.legacy_function_id
-      if (legacyId) pendingMigrations[legacyId] = functionExtension.uuid
-
-      const legacyUuid = parsedConfig.legacy_function_uuid
-      if (legacyUuid) pendingMigrations[legacyUuid] = functionExtension.uuid
-    })
-
-  localSources
-    .filter((extension) => extension.type === 'function')
-    .forEach((functionExtension) => {
-      const localId = ids[functionExtension.localIdentifier]
-      if (localId === undefined) return
-
-      const remoteId = pendingMigrations[localId]
-      if (remoteId) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete pendingMigrations[functionExtension.localIdentifier]
-        migrated[functionExtension.localIdentifier] = remoteId
-      }
-    })
-
-  const pendingLocal = localSources.filter((elem) => !migrated[elem.localIdentifier])
-  const pendingRemote = remoteSources.filter((registration) => !Object.values(migrated).includes(registration.uuid))
-
-  return {
-    migrated,
-    pending: {
-      local: pendingLocal,
-      remote: pendingRemote,
-    },
-  }
-}
-
 /**
  * Ask the user to confirm the relationship between a local source and a remote source if they
  * the only ones of their types.
@@ -235,19 +184,15 @@ export async function automaticMatchmaking(
       return ids[local.localIdentifier] === remote.uuid
     })
 
-  const {migrated: migratedFunctions, pending: pendingAfterMigratingFunctions} = migrateLegacyFunctions(
-    ids,
-    localSources.filter((local) => !existsRemotely(local)),
-    remoteSources.filter((remote) => !localIds.includes(remote.uuid)),
-  )
-  const {local, remote} = pendingAfterMigratingFunctions
+  const local = localSources.filter((local) => !existsRemotely(local))
+  const remote = remoteSources.filter((remote) => !localIds.includes(remote.uuid))
 
   const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
     ? matchByUIDandUUID(localSources, remoteSources, ids)
     : matchByNameAndType(local, remote)
 
   return {
-    identifiers: {...ids, ...matched, ...migratedFunctions},
+    identifiers: {...ids, ...matched},
     toConfirm,
     toCreate,
     toManualMatch,
