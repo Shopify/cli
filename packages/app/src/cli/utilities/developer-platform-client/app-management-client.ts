@@ -404,6 +404,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .filter((word) => word)
         .map((word) => `title:${word}`)
         .join(' '),
+      organizationId,
     }
     const result = await this.appManagementRequest({query, variables})
     if (!result.appsConnection) {
@@ -424,9 +425,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications(_identifiers: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+  async specifications(identifiers: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await this.appManagementRequest({query})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const variables: any = {organizationId: identifiers.organizationId}
+    const result = await this.appManagementRequest({query, variables})
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -500,7 +503,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .sort()
         .at(-1) ?? 'unstable'
 
-    const variables = createAppVars(options, apiVersion)
+    const variables = createAppVars(options, org.id, apiVersion)
 
     const mutation = CreateApp
     const result = await this.appManagementRequest({
@@ -683,8 +686,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async generateSignedUploadUrl(_identifiers: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const variables = {sourceExtension: 'BR' as SourceExtension}
+  async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
+    const variables = {sourceExtension: 'BR' as SourceExtension, organizationId}
     const result = await this.appManagementRequest({
       query: CreateAssetUrl,
       variables,
@@ -1158,7 +1161,11 @@ interface AppVersionSourceUrl {
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
+function createAppVars(
+  options: CreateAppOptions,
+  organizationId: string,
+  apiVersion?: string,
+): CreateAppMutationVariables & {organizationId: string} {
   const {isLaunchable, scopesArray, name} = options
   const source: AppVersionSource = {
     source: {
@@ -1193,7 +1200,7 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
     },
   }
 
-  return {initialVersion: {source: source.source as unknown as JsonMapType}}
+  return {initialVersion: {source: source.source as unknown as JsonMapType}, organizationId}
 }
 
 // Business platform uses base64-encoded GIDs, while App Management uses

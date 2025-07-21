@@ -349,7 +349,7 @@ describe('searching for apps', () => {
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
       query: ListApps,
       token: 'token',
-      variables: {query: queryVariable},
+      variables: {query: queryVariable, organizationId: orgId},
       unauthorizedHandler: {
         type: 'token_refresh',
         handler: expect.any(Function),
@@ -412,6 +412,7 @@ describe('createApp', () => {
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: org.id,
         initialVersion: {
           source: {
             name: 'app-name',
@@ -500,6 +501,7 @@ describe('createApp', () => {
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: org.id,
         initialVersion: {
           source: {
             name: 'app-name',
@@ -1261,9 +1263,10 @@ describe('AppManagementClient', () => {
       expect(appManagementRequestDoc).toHaveBeenCalledWith({
         query: CreateAssetUrl,
         token: 'token',
-        variables: expect.objectContaining({
+        variables: {
           sourceExtension: 'BR' as SourceExtension,
-        }),
+          organizationId: app.organizationId,
+        },
         unauthorizedHandler: {
           handler: expect.any(Function),
           type: 'token_refresh',
