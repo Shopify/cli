@@ -155,14 +155,21 @@ class TunnelClientInstance implements TunnelClient {
 
 function whatToTry() {
   return [
-    'Run the command again or',
+    'You can run the command again, or try networking with Shopify via',
+    {
+      command: '--use-localhost',
+    },
+    'or',
+    {
+      command: '--tunnel-url <custom tunnel>',
+    },
+    '.',
     {
       link: {
-        label: 'see Shopify CLI documentation',
+        label: 'See documentation for details.',
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options',
       },
     },
-    'for more options.',
   ]
 }
 
