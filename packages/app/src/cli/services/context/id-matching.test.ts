@@ -4,9 +4,11 @@ import {RemoteSource} from './identifiers.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testDeveloperPlatformClient, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, beforeAll} from 'vitest'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 vi.mock('../dev/fetch')
 vi.mock('../dev/create-extension')
+vi.mock('@shopify/cli-kit/node/output')
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
@@ -794,5 +796,37 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
     }
 
     expect(got).toEqual(expected)
+  })
+})
+
+describe('outputAddedIDs', () => {
+  test('prints extension IDs when extensions are matched without UID', async () => {
+    // Clear any previous mock calls
+    vi.mocked(outputInfo).mockClear()
+
+    // Extension B has a valid UID
+    REGISTRATION_B.id = EXTENSION_B.uid
+
+    // When: Extensions are matched by UUID (not by UID)
+    await automaticMatchmaking(
+      [EXTENSION_A, EXTENSION_B, EXTENSION_C],
+      [REGISTRATION_A, REGISTRATION_B, REGISTRATION_C],
+      {
+        'extension-a': 'UUID_A',
+        'extension-b': 'UUID_B',
+        'extension-c': 'UUID_C',
+      },
+      testDeveloperPlatformClient({supportsAtomicDeployments: true}),
+    )
+
+    // Then: outputInfo should be called with the expected messages
+    expect(outputInfo).toHaveBeenCalledWith('Generating extension IDs\n')
+    expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('\x1B[36mextension-a\x1B[39m | Added ID: UUID_A'))
+    expect(outputInfo).not.toHaveBeenCalledWith(expect.stringContaining('Added ID: UUID_B'))
+    expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('\x1B[35mextension-c\x1B[39m | Added ID: UUID_C'))
+    expect(outputInfo).toHaveBeenCalledWith('\n')
+
+    // Verify it was called 4 times total (header + 2 extensions + footer)
+    expect(outputInfo).toHaveBeenCalledTimes(4)
   })
 })
