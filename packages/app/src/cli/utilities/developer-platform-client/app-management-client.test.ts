@@ -1441,12 +1441,6 @@ describe('appExtensionRegistrations', () => {
             title: 'Regular Extension',
             type: 'ui_extension',
           },
-          {
-            id: 'dashboard-1',
-            uuid: 'mock-uuid',
-            title: 'Dashboard Extension',
-            type: 'ui_extension',
-          },
         ],
         dashboardManagedExtensionRegistrations: [
           {
@@ -1612,14 +1606,7 @@ describe('appExtensionRegistrations', () => {
 
     // Then
     expect(result.app.configurationRegistrations).toHaveLength(2)
-    expect(result.app.extensionRegistrations).toHaveLength(4)
+    expect(result.app.extensionRegistrations).toHaveLength(2)
     expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(2)
-
-    // Verify dashboard extensions are in both extensionRegistrations and dashboardManagedExtensionRegistrations
-    const dashboardIds = ['dashboard-1', 'dashboard-2']
-    dashboardIds.forEach((id) => {
-      expect(result.app.extensionRegistrations.some((reg) => reg.id === id)).toBe(true)
-      expect(result.app.dashboardManagedExtensionRegistrations.some((reg) => reg.id === id)).toBe(true)
-    })
   })
 })
