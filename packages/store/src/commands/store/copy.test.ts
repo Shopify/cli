@@ -6,6 +6,7 @@ import {ApiClient} from '../../services/store/api/api-client.js'
 import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, loadHelpClass} from '@oclif/core'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../services/store/operations/store-copy.js')
@@ -38,6 +39,7 @@ describe('Copy', () => {
   ]
 
   beforeEach(() => {
+    vi.spyOn(process.versions, 'node', 'get').mockReturnValue('20.0.1')
     vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('Process exit called')
     })
@@ -97,6 +99,20 @@ describe('Copy', () => {
       const copy = new Copy(argv, CommandConfig)
       await copy.run()
     }
+
+    test('should display an error message when node version is below 20', async () => {
+      vi.spyOn(process.versions, 'node', 'get').mockReturnValue('18.0.0')
+
+      // we don't want to _actually_ process.exit during the test, so mock it out
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+
+      await run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com'])
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Update to Node 20 or higher to run `shopify store copy`.',
+        body: [`The \`store copy\` command requires Node 20 or higher. Current Node version: 18.`],
+      })
+      expect(exitSpy).toHaveBeenCalledWith(1)
+    })
 
     test('should instantiate StoreCopyOperation for store-to-store copy', async () => {
       await run(['--from-store=source.myshopify.com', '--to-store=target.myshopify.com'])
