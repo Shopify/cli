@@ -49,17 +49,16 @@ describe('TabPanel', () => {
     },
   }
 
-  test('renders tab headers with box drawing characters', async () => {
+  test('renders tab headers with line separators', async () => {
     const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
 
     await waitForInputsToBeReady()
 
     const output = unstyled(renderInstance.lastFrame()!)
-    expect(output).toContain('╒═══════════════')
+    expect(output).toContain('────────────────')
     expect(output).toContain('(a) First Tab')
     expect(output).toContain('(b) Second Tab')
-    expect(output).toContain('(c) Action Tab')
-    expect(output).toContain('└───────────────')
+    expect(output).toContain('c Action Tab')
 
     renderInstance.unmount()
   })
