@@ -7,12 +7,11 @@ import {MockFileUploader} from '../utils/mock-file-uploader.js'
 import {ApiClient} from '../api/api-client.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {ApiClientInterface} from '../types/api-client.js'
-import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderImportResult} from '../../../prompts/import_result.js'
 import {confirmImportPrompt} from '../../../prompts/confirm_import.js'
+import {renderBulkOperationProgress} from '../utils/bulk-operation-progress.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -112,48 +111,22 @@ export class StoreImportOperation implements StoreOperation {
     bpSession: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
-    interface ImportContext extends BulkOperationContext {
-      targetShopDomain: string
-      importUrl: string
-      flags: FlagOptions
-    }
-
-    const taskGenerator = new BulkOperationTaskGenerator({
-      operationName: 'import',
-    })
-
-    const bulkTasks = taskGenerator.generateTasks<ImportContext>({
-      startOperation: async (ctx: ImportContext) => {
-        return this.startImportOperation(ctx.bpSession, ctx.apiShopId, ctx.targetShopDomain, ctx.importUrl, ctx.flags)
-      },
-      pollOperation: async (ctx: ImportContext) => {
-        const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
-      },
-    })
-
-    // Create all tasks including upload
-    const allTasks: Task<ImportContext>[] = [
-      {
-        title: 'initializing',
-        task: async (ctx: ImportContext) => {
-          ctx.apiShopId = apiShopId
-          ctx.bpSession = bpSession
-          ctx.targetShopDomain = targetShopDomain
-          ctx.flags = flags
-          ctx.isComplete = false
+    // First upload the file
+    outputInfo('Uploading SQLite file...')
+    const importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShopDomain)
+    
+    // Then start the import operation with progress display
+    return renderBulkOperationProgress({
+      type: 'import',
+      storeName: targetShopDomain,
+      callbacks: {
+        startOperation: async () => {
+          return this.startImportOperation(bpSession, apiShopId, targetShopDomain, importUrl, flags)
         },
-      },
-      {
-        title: `uploading SQLite file`,
-        task: async (ctx: ImportContext) => {
-          ctx.importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShopDomain)
+        pollOperation: async (operationId: string) => {
+          return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
         },
-      },
-      ...bulkTasks,
-    ]
-
-    const ctx: ImportContext = await renderTasks(allTasks)
-    return ctx.operation
+      }
+    })
   }
 }
