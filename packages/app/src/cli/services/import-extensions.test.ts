@@ -22,6 +22,7 @@ const organizationApp: OrganizationApp = {
   apiSecretKeys: [],
   grantedScopes: [],
   flags: [],
+  developerPlatformClient: testDeveloperPlatformClient(),
 }
 
 const flowExtensionA: ExtensionRegistration = {

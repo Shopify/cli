@@ -6,7 +6,7 @@ import {fetchOrgFromId} from './dev/fetch.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {getAppConfigurationState, loadAppUsingConfigurationState, loadApp} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
@@ -87,13 +87,11 @@ export async function linkedAppContext({
   }
 
   // Fetch the remote app, using a different clientID if provided via flag.
-  // Then update the current developerPlatformClient with the one from the remoteApp
-  let developerPlatformClient = selectDeveloperPlatformClient()
   if (!remoteApp) {
     const apiKey = configState.basicConfiguration.client_id
     remoteApp = await appFromIdentifiers({apiKey})
   }
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const developerPlatformClient = remoteApp.developerPlatformClient
 
   const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)
 

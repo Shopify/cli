@@ -61,7 +61,9 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
     const storeFqdn = 'test.myshopify.com'
     const theme = '123'
     // Regular Partners API app
-    const remoteApp = testOrganizationApp()
+    const remoteApp = testOrganizationApp({
+      developerPlatformClient: testDeveloperPlatformClient({clientName: ClientName.Partners}),
+    })
     const localApp = testApp({allExtensions: [await testThemeExtensions()]})
 
     // When
