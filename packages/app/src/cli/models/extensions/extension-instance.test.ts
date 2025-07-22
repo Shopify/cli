@@ -17,7 +17,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -230,6 +230,39 @@ describe('build', async () => {
       // Then
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
+    })
+  })
+
+  test('does not copy shopify.extension.toml file when bundling theme extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = await testThemeExtensions(tmpDir)
+
+      const blocksDir = joinPath(tmpDir, 'blocks')
+      await mkdir(blocksDir)
+
+      await writeFile(joinPath(blocksDir, 'product.liquid'), '<div>Product block</div>')
+      await writeFile(joinPath(tmpDir, 'shopify.extension.toml'), '[extensions]')
+
+      const bundleDirectory = joinPath(tmpDir, 'bundle')
+      await mkdir(bundleDirectory)
+
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: vi.fn()}),
+        stderr: new Writable({write: vi.fn()}),
+        app: testApp(),
+        environment: 'production',
+      }
+
+      // When
+      await extension.copyIntoBundle(options, bundleDirectory)
+
+      // Then
+      const outputTomlPath = joinPath(extension.outputPath, 'shopify.extension.toml')
+      expect(fileExistsSync(outputTomlPath)).toBe(false)
+
+      const outputProductPath = joinPath(extension.outputPath, 'blocks', 'product.liquid')
+      expect(fileExistsSync(outputProductPath)).toBe(true)
     })
   })
 })
