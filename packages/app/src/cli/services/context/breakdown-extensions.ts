@@ -328,8 +328,8 @@ function loadLocalExtensionsIdentifiersBreakdown({
   return {
     onlyRemote: [] as ExtensionIdentifierBreakdownInfo[],
     toCreate: [] as ExtensionIdentifierBreakdownInfo[],
-    unchanged: [] as ExtensionIdentifierBreakdownInfo[],
-    toUpdate: [...identifiersToUpdate, ...identifiersToCreate, ...dashboardToUpdate],
+    toUpdate: [] as ExtensionIdentifierBreakdownInfo[],
+    unchanged: [...identifiersToUpdate, ...identifiersToCreate, ...dashboardToUpdate],
   }
 }
 
