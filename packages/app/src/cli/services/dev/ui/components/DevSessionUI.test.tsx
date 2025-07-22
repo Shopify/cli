@@ -111,7 +111,7 @@ describe('DevSessionUI', () => {
       00:00:00 │                  frontend │ third frontend message
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
-      │ (s) Status │ (i) App Info │                                                              q to quit
+      │ (s) Status │ (i) App info │                                                              q to quit
 
 
        › Press g │ open GraphiQL (Admin API) in your browser
@@ -313,7 +313,7 @@ describe('DevSessionUI', () => {
 
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
-      │ (s) Status │ (i) App Info │                                                              q to quit
+      │ (s) Status │ (i) App info │                                                              q to quit
 
 
        › Press g │ open GraphiQL (Admin API) in your browser
