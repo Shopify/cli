@@ -684,7 +684,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path']
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path', 'organization_id']
         return !configKeysThatAreNeverModules.includes(key)
       })
 

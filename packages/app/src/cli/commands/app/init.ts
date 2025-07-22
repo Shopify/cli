@@ -88,7 +88,7 @@ export default class Init extends AppLinkedCommand {
     let appName: string
     if (flags['client-id']) {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
-      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id'], developerPlatformClient})
+      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id']})
       appName = selectedApp.title
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}

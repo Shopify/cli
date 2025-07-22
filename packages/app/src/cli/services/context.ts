@@ -21,6 +21,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {
+  allDeveloperPlatformClients,
   CreateAppOptions,
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
@@ -66,24 +67,29 @@ const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
 
 interface AppFromIdOptions {
   apiKey: string
-  organizationId?: string
-  developerPlatformClient: DeveloperPlatformClient
 }
 
 export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
-  let organizationId = options.organizationId
-  let developerPlatformClient = options.developerPlatformClient
-  if (!organizationId) {
-    organizationId = '0'
-    if (developerPlatformClient.requiresOrganization) {
-      const org = await selectOrg()
-      developerPlatformClient = selectDeveloperPlatformClient({organization: org})
-      organizationId = org.id
+  const allClients = allDeveloperPlatformClients()
+
+  let app: OrganizationApp | undefined
+  for (const client of allClients) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      app = await client.appFromIdentifiers(options.apiKey)
+      if (app) break
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if ('statusCode' in error && error.statusCode === 404) {
+        // We don't want to throw an error if the first client can't find the app. Try the next client.
+        continue
+      }
+      throw error
     }
   }
-  const app = await developerPlatformClient.appFromIdentifiers(options.apiKey)
+
   if (!app) {
-    const accountInfo = await developerPlatformClient.accountInfo()
+    const accountInfo = (await allClients[0]?.accountInfo()) ?? {type: 'UnknownAccount'}
     let identifier = 'Unknown account'
     let isOrg = false
 
