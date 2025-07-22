@@ -3,7 +3,6 @@ import {AppEvent} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
 
 export class DevSessionLogger {
@@ -77,16 +76,19 @@ export class DevSessionLogger {
   async logExtensionUpdateMessages(event?: AppEvent) {
     if (!event) return
     const extensionEvents = event.extensionEvents ?? []
-    const messages = getArrayRejectingUndefined(
-      await Promise.all(
-        extensionEvents.map(async (eve) => {
-          const message = await eve.extension.getDevSessionUpdateMessage()
-          return message ? message : undefined
-        }),
-      ),
+    const messageArrays = await Promise.all(
+      extensionEvents.map(async (eve) => {
+        const messages = await eve.extension.getDevSessionUpdateMessage(eve.type)
+        return messages ?? []
+      }),
     )
+    const messages = messageArrays.flat()
 
-    const logPromises = messages.map((message) => this.log(`└  ${message}`, 'app-preview'))
+    const logPromises = messages.map((message, index) => {
+      const messageContent = outputContent`${outputToken.gray(index === messages.length - 1 ? '└ ' : '│ ')}${message}`
+        .value
+      return this.log(messageContent, 'app-preview')
+    })
     await Promise.all(logPromises)
   }
 

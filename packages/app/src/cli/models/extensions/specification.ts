@@ -7,6 +7,7 @@ import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {EventType} from '../../services/dev/app-events/app-event-watcher.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {ParseConfigurationResult, zod} from '@shopify/cli-kit/node/schema'
@@ -74,7 +75,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
+  getDevSessionUpdateMessage?: (config: TConfiguration, eventType: EventType) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -231,7 +232,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
-  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
+  getDevSessionUpdateMessage?: (config: TConfiguration, eventType: EventType) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])

@@ -1,6 +1,7 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {ExtensionSpecification, TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
+import {EventType} from '../../../services/dev/app-events/app-event-watcher.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppProxySchema = BaseSchema.extend({
@@ -33,6 +34,16 @@ const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification(
         prefix: urls.appProxy.proxySubPathPrefix,
       }
     }
+  },
+  getDevSessionUpdateMessage: async (config, eventType) => {
+    if (eventType === EventType.Deleted) {
+      return []
+    }
+    const messages = [`Using app proxy URL: ${config.app_proxy?.url}`]
+    if (eventType === EventType.Updated) {
+      messages.push(`Note: Changes to app proxy prefix and subpath won't affect existing installations.`)
+    }
+    return messages
   },
 })
 
