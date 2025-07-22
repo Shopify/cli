@@ -58,7 +58,13 @@ import ignore from 'ignore'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-export type AppLoaderMode = 'strict' | 'report'
+/**
+ * The mode in which the app is loaded, this affects how errors are handled:
+ * - strict: If there is any kind of error, the app won't be loaded.
+ * - report: The app will be loaded as much as possible, errors will be reported afterwards.
+ * - local: Errors for unknown extensions will be ignored. Other errors will prevent the app from loading.
+ */
+export type AppLoaderMode = 'strict' | 'report' | 'local'
 
 type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
 
@@ -466,6 +472,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     if (specification) {
       usedKnownSpecification = true
+    } else if (this.mode === 'local') {
+      return undefined
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
