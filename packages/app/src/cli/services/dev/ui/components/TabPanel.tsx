@@ -97,53 +97,51 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
     }
   })
 
-  // We need to subtract the number of tabs from the total length to account for the borders between and after the tabs
-  const tabHeaderLength = tabsArray.reduce((acc, tab) => acc + (tab.header?.length ?? 0), 0) + tabsArray.length + 1
+  const contentTabs = tabsArray.filter((tab) => !tab.action)
+  const actionTabs = tabsArray.filter((tab) => tab.action)
 
   return (
     <>
-      {/* Top border with connected tab boxes */}
-      <Text>
-        {tabsArray
-          .map((tab, index) => {
-            return `${index === 0 ? '╒' : '╤'}${'═'.repeat(tab.header?.length ?? 0)}`
-          })
-          .join('')}
-        {'╤'}
-        {'═'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
-        {'╕'}
-      </Text>
-      {/* Tab content row */}
-      <Text>
-        {tabsArray.map((tab) => {
-          return (
-            <React.Fragment key={tab.inputKey}>
-              {'│'}
-              <Text
-                bold={activeTab === tab.inputKey}
-                inverse={activeTab === tab.inputKey}
-                color={tab.action ? 'dim' : undefined}
-              >
-                {tab.header}
-              </Text>
-            </React.Fragment>
-          )
-        })}
-        {`│${' '.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}│`}
-      </Text>
-      {/* Bottom border connecting tabs */}
-      <Text>
-        {tabsArray
-          .map((tab, index) => {
-            return `${index === 0 ? '└' : '┴'}${'─'.repeat(tab.header?.length ?? 0)}`
-          })
-          .join('')}
-        {'┴'}
-        {'─'.repeat(Math.max(0, (process.stdout.columns || 100) - tabHeaderLength - 2))}
-        {'┘'}
-      </Text>
+      <Box
+        paddingTop={0}
+        flexDirection="row"
+        flexGrow={1}
+        borderStyle="single"
+        borderBottom={false}
+        borderLeft={false}
+        borderRight={false}
+        borderTop
+      >
+        <Box flexDirection="row" flexGrow={1}>
+          <Text>
+            {'│'}
+            {contentTabs.map((tab) => {
+              return (
+                <React.Fragment key={tab.inputKey}>
+                  <Text bold={activeTab === tab.inputKey} inverse={activeTab === tab.inputKey}>
+                    {tab.header}
+                  </Text>
+                  {'│'}
+                </React.Fragment>
+              )
+            })}
+          </Text>
+        </Box>
+        <Box flexGrow={0} alignItems="flex-end">
+          <Text>
+            {actionTabs.map((tab, index) => (
+              <React.Fragment key={tab.inputKey}>
+                <Text color="dim">
+                  {tab.inputKey} {tab.label}
+                </Text>
+                {index < actionTabs.length - 1 && <Text color="dim"> │ </Text>}
+              </React.Fragment>
+            ))}
+          </Text>
+        </Box>
+      </Box>
       {/* Tab Content Area */}
-      <Box flexDirection="column" marginLeft={1} marginRight={1}>
+      <Box flexDirection="column" marginLeft={1} marginRight={1} marginTop={1}>
         {tabs[activeTab]?.content}
       </Box>
     </>

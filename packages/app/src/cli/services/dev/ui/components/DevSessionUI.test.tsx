@@ -110,9 +110,9 @@ describe('DevSessionUI', () => {
       00:00:00 │                  frontend │ second frontend message
       00:00:00 │                  frontend │ third frontend message
 
-      ╒════════════╤══════════════╤═════════════╤═══════════════════════════════════════════════════════╕
-      │ (s) Status │ (i) App Info │ (q) to quit │                                                       │
-      └────────────┴──────────────┴─────────────┴───────────────────────────────────────────────────────┘
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+      │ (s) Status │ (i) App Info │                                                              q to quit
+
 
        › Press g │ open GraphiQL (Admin API) in your browser
        › Press p │ preview in your browser
@@ -312,9 +312,9 @@ describe('DevSessionUI', () => {
       [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
 
 
-      ╒════════════╤══════════════╤═════════════╤═══════════════════════════════════════════════════════╕
-      │ (s) Status │ (i) App Info │ (q) to quit │                                                       │
-      └────────────┴──────────────┴─────────────┴───────────────────────────────────────────────────────┘
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+      │ (s) Status │ (i) App Info │                                                              q to quit
+
 
        › Press g │ open GraphiQL (Admin API) in your browser
        › Press p │ preview in your browser
