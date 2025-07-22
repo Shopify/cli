@@ -7,6 +7,13 @@ interface RenderBulkOperationProgressOptions {
   storeName?: string
 }
 
+interface RenderCopyOperationProgressOptions {
+  type: 'copy'
+  callbacks: BulkOperationProgressCallbacks
+  sourceStoreName: string
+  targetStoreName: string
+}
+
 function extractStoreProgress(operation: BulkDataOperationByIdResponse): {totalObjectCount: number, completedObjectCount: number} {
   const storeOperations = operation.organization.bulkData.operation.storeOperations
 
@@ -41,15 +48,23 @@ function extractStoreProgress(operation: BulkDataOperationByIdResponse): {totalO
   return {totalObjectCount: 0, completedObjectCount: 0}
 }
 
-export async function renderBulkOperationProgress({
-  type,
-  callbacks,
-  storeName,
-}: RenderBulkOperationProgressOptions): Promise<BulkDataOperationByIdResponse> {
-  return renderProgress({
-    type,
-    callbacks,
-    storeName,
-    extractProgress: extractStoreProgress,
-  }) as Promise<BulkDataOperationByIdResponse>
+export async function renderBulkOperationProgress(
+  options: RenderBulkOperationProgressOptions | RenderCopyOperationProgressOptions
+): Promise<BulkDataOperationByIdResponse> {
+  if (options.type === 'copy') {
+    return renderProgress({
+      type: 'copy',
+      callbacks: options.callbacks,
+      sourceStoreName: options.sourceStoreName,
+      targetStoreName: options.targetStoreName,
+      extractProgress: extractStoreProgress,
+    }) as Promise<BulkDataOperationByIdResponse>
+  } else {
+    return renderProgress({
+      type: options.type,
+      callbacks: options.callbacks,
+      storeName: options.storeName,
+      extractProgress: extractStoreProgress,
+    }) as Promise<BulkDataOperationByIdResponse>
+  }
 }

@@ -5,12 +5,11 @@ import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
-import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
+import {renderBulkOperationProgress} from '../utils/bulk-operation-progress.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class StoreCopyOperation implements StoreOperation {
@@ -103,48 +102,18 @@ export class StoreCopyOperation implements StoreOperation {
     bpSession: string,
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
-    interface CopyContext extends BulkOperationContext {
-      sourceShopDomain: string
-      targetShopDomain: string
-      flags: FlagOptions
-    }
-
-    const taskGenerator = new BulkOperationTaskGenerator({
-      operationName: 'copy',
-    })
-
-    const tasks = taskGenerator.generateTasks<CopyContext>({
-      startOperation: async (ctx: CopyContext) => {
-        return this.startCopyOperation(
-          ctx.bpSession,
-          ctx.apiShopId,
-          ctx.sourceShopDomain,
-          ctx.targetShopDomain,
-          ctx.flags,
-        )
-      },
-      pollOperation: async (ctx: CopyContext) => {
-        const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
-      },
-    })
-
-    const allTasks: Task<CopyContext>[] = [
-      {
-        title: 'Initializing',
-        task: async (ctx: CopyContext) => {
-          ctx.apiShopId = apiShopId
-          ctx.bpSession = bpSession
-          ctx.sourceShopDomain = sourceShopDomain
-          ctx.targetShopDomain = targetShopDomain
-          ctx.flags = flags
-          ctx.isComplete = false
+    return renderBulkOperationProgress({
+      type: 'copy',
+      sourceStoreName: sourceShopDomain,
+      targetStoreName: targetShopDomain,
+      callbacks: {
+        startOperation: async () => {
+          return this.startCopyOperation(bpSession, apiShopId, sourceShopDomain, targetShopDomain, flags)
         },
-      },
-      ...tasks,
-    ]
-
-    const ctx: CopyContext = await renderTasks(allTasks)
-    return ctx.operation
+        pollOperation: async (operationId: string) => {
+          return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
+        },
+      }
+    })
   }
 }

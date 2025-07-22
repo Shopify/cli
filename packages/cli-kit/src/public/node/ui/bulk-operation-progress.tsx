@@ -1,6 +1,7 @@
 import React from 'react'
 import {render} from '../ui.js'
 import {BulkOperationProgress} from '../../../private/node/ui/components/BulkOperationProgress.js'
+import {CopyOperationProgress} from '../../../private/node/ui/components/CopyOperationProgress.js'
 
 export interface BulkOperationProgressCallbacks {
   startOperation: () => Promise<any>
@@ -15,33 +16,52 @@ interface RenderBulkOperationProgressOptions {
   extractProgress?: (operation: any) => {totalObjectCount: number, completedObjectCount: number}
 }
 
-export async function renderBulkOperationProgress({
-  type,
-  callbacks,
-  storeName,
-  extractProgress,
-}: RenderBulkOperationProgressOptions): Promise<any> {
+interface RenderCopyOperationProgressOptions {
+  type: 'copy'
+  callbacks: BulkOperationProgressCallbacks
+  sourceStoreName: string
+  targetStoreName: string
+  extractProgress?: (operation: any) => {totalObjectCount: number, completedObjectCount: number}
+}
+
+export async function renderBulkOperationProgress(
+  options: RenderBulkOperationProgressOptions | RenderCopyOperationProgressOptions
+): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     const enhancedCallbacks = {
-      ...callbacks,
+      ...options.callbacks,
       onComplete: async (operation: any) => {
-        if (callbacks.onComplete) {
-          await callbacks.onComplete(operation)
+        if (options.callbacks.onComplete) {
+          await options.callbacks.onComplete(operation)
         }
         resolve(operation)
       },
     }
 
-    render(
-      <BulkOperationProgress
-        callbacks={enhancedCallbacks}
-        storeName={storeName}
-        operationType={type}
-        extractProgress={extractProgress}
-      />,
-      {
-        exitOnCtrlC: false,
-      }
-    ).catch(reject)
+    if (options.type === 'copy') {
+      render(
+        <CopyOperationProgress
+          callbacks={enhancedCallbacks}
+          sourceStoreName={options.sourceStoreName}
+          targetStoreName={options.targetStoreName}
+          extractProgress={options.extractProgress}
+        />,
+        {
+          exitOnCtrlC: false,
+        }
+      ).catch(reject)
+    } else {
+      render(
+        <BulkOperationProgress
+          callbacks={enhancedCallbacks}
+          storeName={options.storeName}
+          operationType={options.type}
+          extractProgress={options.extractProgress}
+        />,
+        {
+          exitOnCtrlC: false,
+        }
+      ).catch(reject)
+    }
   })
 }
