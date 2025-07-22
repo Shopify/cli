@@ -177,6 +177,97 @@ describe('Storefront API', () => {
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==RETRYCOOKIE:'})
       expect(shopifyFetch).toHaveBeenCalledTimes(3)
     })
+
+    test('handles storefront_digest migration to _shopify_essential cookie', async () => {
+      const originalEssential = ':AABBCCDDEEFFGGHH==123:'
+      const authenticatedEssential = ':NEWESSENTIAL==456:'
+
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${originalEssential}; path=/; HttpOnly`},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': `_shopify_essential=${authenticatedEssential}; path=/; HttpOnly`,
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+
+      // Then
+      expect(cookies).toEqual({
+        _shopify_essential: originalEssential,
+      })
+    })
+
+    test('handles case when storefront_digest is present (non-migrated case)', async () => {
+      // Given: storefront_digest is still being used
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+
+      // Then
+      expect(cookies).toEqual({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        storefront_digest: 'digest-value',
+      })
+    })
+
+    test('throws error when password is correct but _shopify_essential does not change (invalid state)', async () => {
+      // Given: password redirects correctly but _shopify_essential doesn't change (shouldn't happen)
+      const sameEssential = ':AABBCCDDEEFFGGHH==123:'
+
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${sameEssential}; path=/; HttpOnly`},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': `_shopify_essential=${sameEssential}; path=/; HttpOnly`,
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+
+      // Then
+      await expect(cookies).rejects.toThrow(
+        new AbortError(
+          'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+        ),
+      )
+    })
   })
 
   // Tests rely on this function because the 'packages/theme' package cannot
