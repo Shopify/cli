@@ -689,28 +689,6 @@ describe('allExtensions', () => {
 
     expect(app.allExtensions).toHaveLength(0)
   })
-
-  test('includes configuration extensions when using App Management API, ignoring include_config_on_deploy', async () => {
-    const configuration = {
-      ...CORRECT_CURRENT_APP_SCHEMA,
-      organization_id: '12345',
-      build: {
-        automatically_update_urls_on_dev: true,
-        dev_store_url: 'https://google.com',
-        include_config_on_deploy: false,
-      },
-    }
-    const configExtension = await testAppAccessConfigExtension()
-    const app = testApp(
-      {
-        configuration,
-        allExtensions: [configExtension],
-      },
-      'current',
-    )
-
-    expect(app.allExtensions).toContain(configExtension)
-  })
 })
 
 describe('manifest', () => {

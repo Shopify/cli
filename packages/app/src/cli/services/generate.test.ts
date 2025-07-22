@@ -12,8 +12,6 @@ import {
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
-import * as developerPlatformClient from '../utilities/developer-platform-client.js'
-import {PartnersClient} from '../utilities/developer-platform-client/partners-client.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
@@ -40,13 +38,6 @@ vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
 vi.mock('./local-storage.js')
-
-beforeEach(() => {
-  // Never bother loading the app just to get a platform client
-  vi.spyOn(developerPlatformClient, 'sniffServiceOptionsAndAppConfigToSelectPlatformClient').mockResolvedValue(
-    new PartnersClient(),
-  )
-})
 
 afterEach(() => {
   mockAndCaptureOutput().clear()

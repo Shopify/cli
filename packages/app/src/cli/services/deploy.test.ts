@@ -378,7 +378,11 @@ describe('deploy', () => {
   test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
-    const app = testAppLinked({allExtensions: [extensionNonUuidManaged]})
+    const localApp = {
+      allExtensions: [extensionNonUuidManaged],
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: false}},
+    }
+    const app = testAppLinked(localApp)
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
