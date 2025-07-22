@@ -187,7 +187,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       ),
     },
     i: {
-      label: 'App Info',
+      label: 'App info',
       content: (
         <Box flexDirection="column">
           <TabularData
@@ -195,8 +195,8 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               ['App:', appName ?? ''],
               ['App URL:', appURL ?? ''],
               ['Config:', configPath?.split('/').pop() ?? ''],
-              ['Dev Store:', {link: {url: `https://${shopFqdn}`}}],
-              ['Dev Store Admin:', {link: {url: `https://${shopFqdn}/admin`}}],
+              ['Dev store:', {link: {url: `https://${shopFqdn}`}}],
+              ['Dev store admin:', {link: {url: `https://${shopFqdn}/admin`}}],
               ['Org:', organizationName ?? ''],
             ].filter(([, value]) => value)}
           />
