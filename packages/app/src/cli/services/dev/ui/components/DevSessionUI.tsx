@@ -111,8 +111,8 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
 
   const tabs: {[key: string]: Tab} = {
     // eslint-disable-next-line id-length
-    s: {
-      label: 'Status',
+    d: {
+      label: 'Dev status',
       shortcuts: [
         {
           key: 'p',
@@ -186,7 +186,8 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </>
       ),
     },
-    i: {
+    // eslint-disable-next-line id-length
+    a: {
       label: 'App info',
       content: (
         <Box flexDirection="column">
@@ -195,6 +196,19 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               ['App:', appName ?? ''],
               ['App URL:', appURL ?? ''],
               ['Config:', configPath?.split('/').pop() ?? ''],
+              ['Org:', organizationName ?? ''],
+            ].filter(([, value]) => value)}
+          />
+        </Box>
+      ),
+    },
+    // eslint-disable-next-line id-length
+    s: {
+      label: 'Store info',
+      content: (
+        <Box flexDirection="column">
+          <TabularData
+            tabularData={[
               ['Dev store:', {link: {url: `https://${shopFqdn}`}}],
               ['Dev store admin:', {link: {url: `https://${shopFqdn}/admin`}}],
               ['Org:', organizationName ?? ''],
@@ -237,7 +251,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       {!isAborted ? (
         <Box paddingTop={1} flexDirection="column" flexGrow={1}>
           {canUseShortcuts ? (
-            <TabPanel tabs={tabs} initialActiveTab="s" />
+            <TabPanel tabs={tabs} initialActiveTab="d" />
           ) : (
             <Box
               marginY={1}
@@ -251,7 +265,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               borderTop
             >
               {/* Non-interactive fallback - reuse status tab content */}
-              {tabs.s?.content}
+              {tabs.d?.content}
             </Box>
           )}
         </Box>

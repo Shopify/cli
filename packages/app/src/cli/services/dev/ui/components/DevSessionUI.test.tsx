@@ -111,7 +111,7 @@ describe('DevSessionUI', () => {
       00:00:00 │                  frontend │ third frontend message
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
-      │ (s) Status │ (i) App info │                                                              q to quit
+      │ (d) Dev status │ (a) App info │ (s) Store info │                                         q to quit
 
 
        › Press g │ open GraphiQL (Admin API) in your browser
@@ -313,7 +313,7 @@ describe('DevSessionUI', () => {
 
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
-      │ (s) Status │ (i) App info │                                                              q to quit
+      │ (d) Dev status │ (a) App info │ (s) Store info │                                         q to quit
 
 
        › Press g │ open GraphiQL (Admin API) in your browser
@@ -453,7 +453,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows app info when i is pressed', async () => {
+  test('shows app info when a is pressed', async () => {
     // Given
     const renderInstance = render(
       <DevSessionUI
@@ -470,13 +470,13 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // When
-    await sendInputAndWait(renderInstance, 100, 'i')
+    await sendInputAndWait(renderInstance, 100, 'a')
 
     // Then - info tab should be shown with app data
     const output = renderInstance.lastFrame()!
     expect(output).toContain('My Test App')
     expect(output).toContain('https://my-app.ngrok.io')
-    expect(output).toContain('mystore.myshopify.com')
+    expect(output).not.toContain('mystore.myshopify.com')
 
     renderInstance.unmount()
   })
@@ -498,10 +498,10 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Then - should show simple border and URLs, not tabbed interface
+    // Then - should show Dev status tab content without interactive tabs
     const output = renderInstance.lastFrame()!
-    expect(output).not.toContain('(s) Status')
-    expect(output).not.toContain('(i) App Info')
+    expect(output).not.toContain('(d) Dev status')
+    expect(output).not.toContain('(a) App info')
     expect(output).not.toContain('(q) Quit')
     expect(output).not.toContain('╒═══')
     expect(output).toContain('Preview URL: https://shopify.com')
