@@ -427,8 +427,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
-          unchanged: [],
+          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
+          toUpdate: [],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,

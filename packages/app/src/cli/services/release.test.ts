@@ -28,6 +28,7 @@ const APP: OrganizationApp = {
   redirectUrlWhitelist: [],
   apiSecretKeys: [],
   flags: [],
+  developerPlatformClient: testDeveloperPlatformClient(),
 }
 
 beforeEach(() => {
