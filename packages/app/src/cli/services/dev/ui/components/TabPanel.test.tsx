@@ -194,17 +194,6 @@ describe('TabPanel', () => {
     renderInstance.unmount()
   })
 
-  test('defaults to first tab when no initialActiveTab provided', async () => {
-    const renderInstance = render(<TabPanel tabs={sampleTabs} />)
-
-    await waitForInputsToBeReady()
-
-    // Should show first tab content by default (falls back to first key)
-    expect(renderInstance.lastFrame()!).toContain('First tab content')
-
-    renderInstance.unmount()
-  })
-
   test('highlights active tab in the UI', async () => {
     const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
 
