@@ -5,12 +5,11 @@ import {Organization} from '../../../apis/destinations/index.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
-import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderBulkOperationProgress} from '../utils/bulk-operation-progress.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -92,39 +91,17 @@ export class StoreExportOperation implements StoreOperation {
     sourceShopDomain: string,
     bpSession: string,
   ): Promise<BulkDataOperationByIdResponse> {
-    interface ExportContext extends BulkOperationContext {
-      sourceShopDomain: string
-    }
-
-    const taskGenerator = new BulkOperationTaskGenerator({
-      operationName: 'export',
-    })
-
-    const tasks = taskGenerator.generateTasks<ExportContext>({
-      startOperation: async (ctx: ExportContext) => {
-        return this.startExportOperation(ctx.bpSession, ctx.apiShopId, ctx.sourceShopDomain)
-      },
-      pollOperation: async (ctx: ExportContext) => {
-        const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
-      },
-    })
-
-    // Add initial context setup task
-    const allTasks: Task<ExportContext>[] = [
-      {
-        title: 'initializing',
-        task: async (ctx: ExportContext) => {
-          ctx.apiShopId = apiShopId
-          ctx.bpSession = bpSession
-          ctx.sourceShopDomain = sourceShopDomain
-          ctx.isComplete = false
+    return renderBulkOperationProgress({
+      type: 'export',
+      storeName: sourceShopDomain,
+      callbacks: {
+        startOperation: async () => {
+          return this.startExportOperation(bpSession, apiShopId, sourceShopDomain)
         },
-      },
-      ...tasks,
-    ]
-
-    const ctx: ExportContext = await renderTasks(allTasks)
-    return ctx.operation
+        pollOperation: async (operationId: string) => {
+          return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
+        },
+      }
+    })
   }
 }
