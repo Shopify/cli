@@ -1,5 +1,5 @@
-import React, {useState} from 'react'
-import {Box, Text, useInput, useStdin} from '@shopify/cli-kit/node/ink'
+import React, {useState, useRef, useLayoutEffect} from 'react'
+import {Box, Text, useInput, useStdin, useStdout, measureElement} from '@shopify/cli-kit/node/ink'
 
 export interface Tab {
   label: string
@@ -24,9 +24,16 @@ interface TabPanelProps {
   initialActiveTab: string
 }
 
+// Using a width less than 100% reduces (but doesn't eliminate) screen artifacts when resizing the terminal
+const TAB_WIDTH_PERCENTAGE = 0.9
+
 export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialActiveTab}) => {
+  const {stdout} = useStdout()
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const [activeTab, setActiveTab] = useState<string>(initialActiveTab)
+  const [tabWidth, setTabWidth] = useState<number>(Math.floor(stdout.columns * TAB_WIDTH_PERCENTAGE))
+  const [displayActions, setDisplayActions] = useState<boolean>(true)
+  const contentTabsRef = useRef(null)
 
   if (!activeTab) {
     throw new Error('No tabs provided')
@@ -78,6 +85,22 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
     {isActive: Boolean(canUseShortcuts)},
   )
 
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      setTabWidth(Math.floor(stdout.columns * TAB_WIDTH_PERCENTAGE))
+      if (!contentTabsRef.current) {
+        return
+      }
+      const contentTabsWidth = measureElement(contentTabsRef.current)
+      setDisplayActions(contentTabsWidth.width < stdout.columns)
+    }
+
+    stdout.on('resize', handleResize)
+    return () => {
+      stdout.off('resize', handleResize)
+    }
+  }, [stdout])
+
   const tabsArray: TabDisplay[] = Object.entries(tabs).map(([key, tab]) => {
     return {
       ...tab,
@@ -93,6 +116,7 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
     <>
       <Box
         paddingTop={0}
+        width={tabWidth}
         flexDirection="row"
         flexGrow={1}
         borderStyle="single"
@@ -101,13 +125,13 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
         borderRight={false}
         borderTop
       >
-        <Box flexDirection="row" flexGrow={1}>
-          <Text>
+        <Box ref={contentTabsRef} flexDirection="row" flexWrap="nowrap" flexShrink={0} marginRight={3}>
+          <Text wrap="truncate-end">
             {'│'}
             {contentTabs.map((tab) => {
               return (
                 <React.Fragment key={tab.inputKey}>
-                  <Text bold={activeTab === tab.inputKey} inverse={activeTab === tab.inputKey}>
+                  <Text bold={activeTab === tab.inputKey} inverse={activeTab === tab.inputKey} wrap="truncate">
                     {tab.header}
                   </Text>
                   {'│'}
@@ -116,18 +140,16 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
             })}
           </Text>
         </Box>
-        <Box flexGrow={0} alignItems="flex-end">
-          <Text>
+        {displayActions && (
+          <Box flexGrow={1} justifyContent="flex-end">
             {actionTabs.map((tab, index) => (
-              <React.Fragment key={tab.inputKey}>
-                <Text color="dim">
-                  {tab.inputKey} {tab.label}
-                </Text>
-                {index < actionTabs.length - 1 && <Text color="dim"> │ </Text>}
-              </React.Fragment>
+              <Text wrap="truncate" key={tab.inputKey}>
+                {tab.inputKey} {tab.label}
+                {index < actionTabs.length - 1 && ' │ '}
+              </Text>
             ))}
-          </Text>
-        </Box>
+          </Box>
+        )}
       </Box>
       {/* Tab Content Area */}
       <Box flexDirection="column" marginLeft={1} marginRight={1} marginTop={1}>
