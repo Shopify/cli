@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.14.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+
 ## 0.13.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+- 39dbde0: Add `--no-build` flag to `shopify app deploy`. When provided, the deploy command will assume you have already run `shopify app build` or otherwise put build files in place.
+
 ## 3.82.0
 
 ### Patch Changes
