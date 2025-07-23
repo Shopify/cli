@@ -168,7 +168,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
   // if the current active app version is missing user_identifiers in some app module, then we are migrating to dev dash
   let didMigrateExtensionsToDevDash = false
   if (developerPlatformClient.supportsAtomicDeployments && activeAppVersion) {
-    const missingUids = activeAppVersion.appModuleVersions.some((version) => !version.registrationUuid)
+    const missingUids = activeAppVersion.appModuleVersions.some((version) => !version.registrationId)
     didMigrateExtensionsToDevDash = missingUids
   }
 
