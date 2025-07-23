@@ -385,7 +385,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     const buildMode = this.buildMode(options)
 
-    if (buildMode !== 'none') {
+    if (this.isThemeExtension) {
+      await bundleThemeExtension(this, options)
+    } else if (buildMode !== 'none') {
       outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
       if (await fileExists(defaultOutputPath)) {
         await copyFile(defaultOutputPath, this.outputPath)
@@ -393,10 +395,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         if (buildMode === 'function') {
           await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
-      }
-
-      if (this.isThemeExtension) {
-        await bundleThemeExtension(this, options)
       }
     }
   }
