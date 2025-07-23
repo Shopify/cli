@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+
+### Patch Changes
+
+- b1feb1d: Add CLI theme login auth error next steps
+- ee353e9: No longer abort theme GraphQL requests on the client side
+- e73e9a5: Fix an issue with running `theme package` with a default environment present
+
 ## 3.82.0
 
 ### Patch Changes
