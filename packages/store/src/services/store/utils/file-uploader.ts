@@ -21,7 +21,15 @@ export class FileUploader {
       fileSize: sizeOfFile.toString(),
     }
 
-    const stagedUploadResponse = await createStagedUploadAdmin(storeFqdn, [uploadInput], 'unstable')
+    let stagedUploadResponse
+    try {
+      stagedUploadResponse = await createStagedUploadAdmin(storeFqdn, [uploadInput], 'unstable')
+    } catch (error) {
+      if (this.isAccessDeniedError(error)) {
+        throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED)
+      }
+      throw error
+    }
 
     if (!stagedUploadResponse.stagedUploadsCreate?.stagedTargets?.length) {
       throw new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED, {
@@ -74,6 +82,11 @@ export class FileUploader {
     }
 
     return finalResourceUrl
+  }
+
+  private isAccessDeniedError(error: unknown): boolean {
+    const errors = (error as {errors?: {extensions?: {code?: string}}[]})?.errors
+    return errors?.some((err) => err.extensions?.code === 'ACCESS_DENIED') ?? false
   }
 
   private async validateSqliteFile(filePath: string): Promise<void> {
