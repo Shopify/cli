@@ -25,6 +25,8 @@ import {CreateApp} from '../../api/graphql/app-management/generated/create-app.j
 import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
+import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
@@ -84,6 +86,7 @@ function moduleFromExtension(extension: ExtensionInstance) {
       identifier: extension.specification.identifier,
       externalIdentifier: extension.specification.externalIdentifier,
       name: extension.specification.externalName,
+      managementExperience: 'cli',
     },
   }
 }
@@ -1361,5 +1364,262 @@ describe('ensureUserAccessToStore', () => {
     await expect(client.ensureUserAccessToStore('123', store)).rejects.toThrowError(
       'Failed to provision user access to store: error1, error2',
     )
+  })
+})
+
+describe('appExtensionRegistrations', () => {
+  const client = new AppManagementClient()
+  const organizationId = 'org123'
+  const apiKey = 'api-key-123'
+  const appId = 'app-id-123'
+  const appIdentifiers: MinimalAppIdentifiers = {organizationId, apiKey, id: appId}
+
+  const createMockAppModuleVersion = (overrides: Partial<any> = {}) => ({
+    registrationId: 'mock-registration-id',
+    registrationUuid: 'mock-uuid',
+    registrationTitle: 'Mock Extension',
+    type: 'ui_extension',
+    specification: {
+      identifier: 'ui_extension',
+      name: 'UI Extension',
+      experience: 'extension' as const,
+      options: {
+        managementExperience: 'cli' as const,
+      },
+    },
+    ...overrides,
+  })
+
+  test('returns categorized registrations when activeAppVersion is provided', async () => {
+    // Given
+    const configModule = createMockAppModuleVersion({
+      registrationId: BrandingSpecIdentifier,
+      registrationTitle: 'Config Extension',
+      type: 'config_extension',
+    })
+
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-1',
+      registrationTitle: 'Regular Extension',
+    })
+
+    const dashboardManagedModule = createMockAppModuleVersion({
+      registrationId: 'dashboard-1',
+      registrationTitle: 'Dashboard Extension',
+      specification: {
+        identifier: 'dashboard_extension',
+        name: 'Dashboard Extension',
+        experience: 'extension' as const,
+        options: {
+          managementExperience: 'dashboard' as const,
+        },
+      },
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [configModule, extensionModule, dashboardManagedModule],
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result).toEqual({
+      app: {
+        configurationRegistrations: [
+          {
+            id: BrandingSpecIdentifier,
+            uuid: 'mock-uuid',
+            title: 'Config Extension',
+            type: 'config_extension',
+          },
+        ],
+        extensionRegistrations: [
+          {
+            id: 'extension-1',
+            uuid: 'mock-uuid',
+            title: 'Regular Extension',
+            type: 'ui_extension',
+          },
+          {
+            id: 'dashboard-1',
+            uuid: 'mock-uuid',
+            title: 'Dashboard Extension',
+            type: 'ui_extension',
+          },
+        ],
+        dashboardManagedExtensionRegistrations: [
+          {
+            id: 'dashboard-1',
+            uuid: 'mock-uuid',
+            title: 'Dashboard Extension',
+            type: 'ui_extension',
+          },
+        ],
+      },
+    })
+  })
+
+  test('fetches activeAppVersion when not provided', async () => {
+    // Given
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-1',
+      registrationTitle: 'Extension from API',
+    })
+
+    // Mock the activeAppVersion method
+    const activeAppVersionSpy = vi.spyOn(client, 'activeAppVersion').mockResolvedValueOnce({
+      appModuleVersions: [extensionModule],
+    })
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers)
+
+    // Then
+    expect(activeAppVersionSpy).toHaveBeenCalledWith(appIdentifiers)
+    expect(result).toEqual({
+      app: {
+        configurationRegistrations: [],
+        extensionRegistrations: [
+          {
+            id: 'extension-1',
+            uuid: 'mock-uuid',
+            title: 'Extension from API',
+            type: 'ui_extension',
+          },
+        ],
+        dashboardManagedExtensionRegistrations: [],
+      },
+    })
+  })
+
+  test('correctly categorizes multiple config extensions', async () => {
+    // Given
+    const configExtensionIds = [BrandingSpecIdentifier, AppHomeSpecIdentifier, AppAccessSpecIdentifier]
+    const configModules = configExtensionIds.map((id: string, index: number) =>
+      createMockAppModuleVersion({
+        registrationId: id,
+        registrationTitle: `Config Extension ${index}`,
+        type: 'config_extension',
+      }),
+    )
+
+    const activeAppVersion = {
+      appModuleVersions: configModules,
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result.app.configurationRegistrations).toHaveLength(3)
+    expect(result.app.extensionRegistrations).toHaveLength(0)
+    expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(0)
+  })
+
+  test('handles empty appModuleVersions', async () => {
+    // Given
+    const activeAppVersion = {
+      appModuleVersions: [],
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result).toEqual({
+      app: {
+        configurationRegistrations: [],
+        extensionRegistrations: [],
+        dashboardManagedExtensionRegistrations: [],
+      },
+    })
+  })
+
+  test('handles modules without specification', async () => {
+    // Given
+    const moduleWithoutSpec = createMockAppModuleVersion({
+      registrationId: 'no-spec-1',
+      registrationTitle: 'No Spec Extension',
+      specification: undefined,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [moduleWithoutSpec],
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(0)
+  })
+
+  test('correctly handles mixed extension types', async () => {
+    // Given
+    const modules = [
+      // Config extensions
+      ...[BrandingSpecIdentifier, AppHomeSpecIdentifier].map((id: string) =>
+        createMockAppModuleVersion({
+          registrationId: id,
+          registrationTitle: `Config ${id}`,
+          type: 'config',
+        }),
+      ),
+      // Regular CLI-managed extensions
+      createMockAppModuleVersion({
+        registrationId: 'cli-1',
+        registrationTitle: 'CLI Extension 1',
+      }),
+      createMockAppModuleVersion({
+        registrationId: 'cli-2',
+        registrationTitle: 'CLI Extension 2',
+      }),
+      // Dashboard-managed extensions
+      createMockAppModuleVersion({
+        registrationId: 'dashboard-1',
+        registrationTitle: 'Dashboard Extension 1',
+        specification: {
+          identifier: 'dashboard_ext',
+          name: 'Dashboard Extension',
+          experience: 'extension' as const,
+          options: {
+            managementExperience: 'dashboard' as const,
+          },
+        },
+      }),
+      createMockAppModuleVersion({
+        registrationId: 'dashboard-2',
+        registrationTitle: 'Dashboard Extension 2',
+        specification: {
+          identifier: 'dashboard_ext',
+          name: 'Dashboard Extension',
+          experience: 'extension' as const,
+          options: {
+            managementExperience: 'dashboard' as const,
+          },
+        },
+      }),
+    ]
+
+    const activeAppVersion = {
+      appModuleVersions: modules,
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result.app.configurationRegistrations).toHaveLength(2)
+    expect(result.app.extensionRegistrations).toHaveLength(4)
+    expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(2)
+
+    // Verify dashboard extensions are in both extensionRegistrations and dashboardManagedExtensionRegistrations
+    const dashboardIds = ['dashboard-1', 'dashboard-2']
+    dashboardIds.forEach((id) => {
+      expect(result.app.extensionRegistrations.some((reg) => reg.id === id)).toBe(true)
+      expect(result.app.dashboardManagedExtensionRegistrations.some((reg) => reg.id === id)).toBe(true)
+    })
   })
 })
