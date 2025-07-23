@@ -10,6 +10,16 @@ const mocks = vi.hoisted(() => {
     useStdin: vi.fn(() => {
       return {isRawModeSupported: true}
     }),
+    useStdout: vi.fn(() => {
+      return {
+        stdout: {
+          columns: 120,
+          on: vi.fn(),
+          off: vi.fn(),
+        },
+      }
+    }),
+    measureElement: vi.fn(() => ({width: 50})),
   }
 })
 
@@ -18,6 +28,8 @@ vi.mock('@shopify/cli-kit/node/ink', async () => {
   return {
     ...actual,
     useStdin: mocks.useStdin,
+    useStdout: mocks.useStdout,
+    measureElement: mocks.measureElement,
   }
 })
 
@@ -361,6 +373,90 @@ describe('TabPanel', () => {
     await sendInputAndWait(renderInstance, 100, '\t')
     expect(renderInstance.lastFrame()!).toContain('First tab content')
     expect(renderInstance.lastFrame()!).not.toContain('Third tab content')
+
+    renderInstance.unmount()
+  })
+
+  test('hides action tabs when content tabs are too wide', async () => {
+    // Given - narrow terminal and mock measureElement to return width > columns
+    let resizeHandler: (() => void) | undefined
+    const mockOn = vi.fn((event, handler) => {
+      if (event === 'resize') {
+        resizeHandler = handler
+      }
+    })
+
+    mocks.useStdout.mockReturnValue({
+      stdout: {
+        columns: 60,
+        on: mockOn,
+        off: vi.fn(),
+      },
+    })
+    // Wider than terminal
+    mocks.measureElement.mockReturnValue({width: 70})
+
+    const tabsWithActions: {[key: string]: Tab} = {
+      // eslint-disable-next-line id-length
+      a: {
+        label: 'Content Tab',
+        content: <Text>Content</Text>,
+      },
+
+      q: {
+        label: 'Quit',
+        action: mockAction,
+      },
+    }
+
+    const renderInstance = render(<TabPanel tabs={tabsWithActions} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+
+    // Trigger resize to update displayActions state
+    if (resizeHandler) {
+      resizeHandler()
+    }
+
+    const output = unstyled(renderInstance.lastFrame()!)
+    // Action tabs should be hidden when content width >= terminal columns
+    expect(output).not.toContain('q Quit')
+
+    renderInstance.unmount()
+  })
+
+  test('shows action tabs when content tabs fit', async () => {
+    // Given - wide terminal and mock measureElement to return width < columns
+    mocks.useStdout.mockReturnValue({
+      stdout: {
+        columns: 120,
+        on: vi.fn(),
+        off: vi.fn(),
+      },
+    })
+    // Narrower than terminal
+    mocks.measureElement.mockReturnValue({width: 50})
+
+    const tabsWithActions: {[key: string]: Tab} = {
+      // eslint-disable-next-line id-length
+      a: {
+        label: 'Content Tab',
+        content: <Text>Content</Text>,
+      },
+
+      q: {
+        label: 'Quit',
+        action: mockAction,
+      },
+    }
+
+    const renderInstance = render(<TabPanel tabs={tabsWithActions} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+
+    const output = unstyled(renderInstance.lastFrame()!)
+    // Action tabs should be visible when content fits
+    expect(output).toContain('q Quit')
 
     renderInstance.unmount()
   })
