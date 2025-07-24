@@ -635,5 +635,3 @@ This usually happens when running a command non-interactively, for example in a 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
 export {Token, Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}
-export {renderBulkOperationProgress} from './ui/bulk-operation-progress.js'
-export type {BulkOperationProgressCallbacks} from './ui/bulk-operation-progress.js'

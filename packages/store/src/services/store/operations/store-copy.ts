@@ -113,7 +113,7 @@ export class StoreCopyOperation implements StoreOperation {
         pollOperation: async (operationId: string) => {
           return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
         },
-      }
+      },
     })
   }
 }

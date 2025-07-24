@@ -12,12 +12,12 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
 import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
+import {renderBulkOperationProgress} from '../utils/bulk-operation-progress.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utils/result-file-handler.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('../utils/bulk-operation-progress.js')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/export_results.js')
@@ -50,12 +50,9 @@ describe('StoreExportOperation', () => {
     }
     vi.mocked(ResultFileHandler).mockImplementation(() => mockResultFileHandler)
 
-    operation = new StoreExportOperation(mockBpSession, mockApiClient)
+    vi.mocked(renderBulkOperationProgress).mockResolvedValue(mockCompletedOperation)
 
-    vi.mocked(renderTasks).mockResolvedValue({
-      operation: mockCompletedOperation,
-      isComplete: true,
-    })
+    operation = new StoreExportOperation(mockBpSession, mockApiClient)
 
     vi.mocked(fileExistsSync).mockReturnValue(false)
   })
@@ -95,14 +92,11 @@ describe('StoreExportOperation', () => {
     const failedResponse: BulkDataStoreExportStartResponse = generateTestFailedExportStartResponse()
     mockApiClient.startBulkDataStoreExport.mockResolvedValue(failedResponse)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
+    const expectedError = new OperationError('export', ErrorCodes.BULK_OPERATION_FAILED, {
+      errors: 'Invalid export configuration, Export not allowed',
+      operationType: 'export',
     })
+    vi.mocked(renderBulkOperationProgress).mockRejectedValueOnce(expectedError)
 
     const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -131,10 +125,7 @@ describe('StoreExportOperation', () => {
       },
     }
 
-    vi.mocked(renderTasks).mockResolvedValue({
-      operation: failedOperation,
-      isComplete: true,
-    })
+    vi.mocked(renderBulkOperationProgress).mockResolvedValueOnce(failedOperation)
 
     const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -159,10 +150,7 @@ describe('StoreExportOperation', () => {
       },
     }
 
-    vi.mocked(renderTasks).mockResolvedValue({
-      operation: failedOperation,
-      isComplete: true,
-    })
+    vi.mocked(renderBulkOperationProgress).mockResolvedValueOnce(failedOperation)
 
     const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -192,14 +180,11 @@ describe('StoreExportOperation', () => {
     }
     mockApiClient.startBulkDataStoreExport.mockResolvedValue(failedResponse)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
+    const expectedError = new OperationError('export', ErrorCodes.BULK_OPERATION_FAILED, {
+      errors: 'Error 1, Error 2, Error 3',
+      operationType: 'export',
     })
+    vi.mocked(renderBulkOperationProgress).mockRejectedValueOnce(expectedError)
 
     const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -222,14 +207,7 @@ describe('StoreExportOperation', () => {
     )
     mockApiClient.startBulkDataStoreExport.mockRejectedValue(operationError)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
+    vi.mocked(renderBulkOperationProgress).mockRejectedValueOnce(operationError)
 
     const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -244,14 +222,7 @@ describe('StoreExportOperation', () => {
     const operationError = new OperationError('startBulkDataStoreExport', ErrorCodes.GRAPHQL_API_ERROR)
     mockApiClient.startBulkDataStoreExport.mockRejectedValue(operationError)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
+    vi.mocked(renderBulkOperationProgress).mockRejectedValueOnce(operationError)
 
     const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -274,14 +245,7 @@ describe('StoreExportOperation', () => {
     )
     mockApiClient.startBulkDataStoreExport.mockRejectedValue(unauthorizedError)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
+    vi.mocked(renderBulkOperationProgress).mockRejectedValueOnce(unauthorizedError)
 
     const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -302,14 +266,7 @@ describe('StoreExportOperation', () => {
     )
     mockApiClient.startBulkDataStoreExport.mockRejectedValue(missingEAError)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
+    vi.mocked(renderBulkOperationProgress).mockRejectedValueOnce(missingEAError)
 
     const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)

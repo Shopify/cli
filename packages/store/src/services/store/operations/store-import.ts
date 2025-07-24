@@ -114,7 +114,7 @@ export class StoreImportOperation implements StoreOperation {
     // First upload the file
     outputInfo('Uploading SQLite file...')
     const importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShopDomain)
-    
+
     // Then start the import operation with progress display
     return renderBulkOperationProgress({
       type: 'import',
@@ -126,7 +126,7 @@ export class StoreImportOperation implements StoreOperation {
         pollOperation: async (operationId: string) => {
           return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
         },
-      }
+      },
     })
   }
 }
