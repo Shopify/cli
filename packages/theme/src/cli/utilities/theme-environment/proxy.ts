@@ -173,8 +173,14 @@ export async function patchRenderingResponse(
 ): Promise<Response> {
   const response = patchProxiedResponseHeaders(ctx, rawResponse)
 
-  // Ensure the content type indicates UTF-8 charset:
-  response.headers.set('content-type', 'text/html; charset=utf-8')
+  // Only set HTML content-type for actual HTML responses, preserve JSON content-type:
+  const originalContentType = rawResponse.headers.get('content-type')
+  const isJsonResponse = originalContentType?.includes('application/json')
+
+  if (!isJsonResponse) {
+    // Ensure the content type indicates UTF-8 charset for HTML responses:
+    response.headers.set('content-type', 'text/html; charset=utf-8')
+  }
 
   let html = await response.text()
   html = injectCdnProxy(html, ctx)
