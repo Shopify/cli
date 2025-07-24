@@ -92,7 +92,7 @@ const uiExtensionSpec = createExtensionSpecification({
     return needsCart ? [...basic, 'cart_url'] : basic
   },
   validate: async (config, path, directory) => {
-    return validateUIExtensionPointConfig(directory, config.extension_points, path)
+    return validateUIExtensionPointConfig(directory, config.extension_points, path, config)
   },
   deployConfig: async (config, directory) => {
     const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
@@ -108,7 +108,7 @@ const uiExtensionSpec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
-    const shouldIncludeShopifyExtend = isRemoteDomExtension(config)
+    const shouldIncludeShopifyExtend = isRemoteDomExtension(config.api_version)
     const main = config.extension_points
       .map(({target, module}, index) => {
         if (shouldIncludeShopifyExtend) {
@@ -152,7 +152,7 @@ const uiExtensionSpec = createExtensionSpecification({
     )
   },
   contributeToSharedTypeFile: async (extension, typeDefinitionsByFile) => {
-    if (!isRemoteDomExtension(extension.configuration)) {
+    if (!isRemoteDomExtension(extension.configuration.api_version)) {
       return
     }
 
@@ -170,7 +170,7 @@ const uiExtensionSpec = createExtensionSpecification({
         fullPath,
         mainTypeFilePath,
         extensionPoint.target,
-        configuration.api_version,
+        configuration.api_version ?? '',
       )
       if (mainTypes) {
         const currentTypes = typeDefinitionsByFile.get(mainTypeFilePath) ?? new Set<string>()
@@ -190,7 +190,7 @@ const uiExtensionSpec = createExtensionSpecification({
           joinPath(extension.directory, extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module),
           shouldRenderTypeFilePath,
           getShouldRenderTarget(extensionPoint.target),
-          configuration.api_version,
+          configuration.api_version ?? '',
         )
         if (shouldRenderTypes) {
           const currentTypes = typeDefinitionsByFile.get(shouldRenderTypeFilePath) ?? new Set<string>()
@@ -224,10 +224,13 @@ async function validateUIExtensionPointConfig(
   directory: string,
   extensionPoints: NewExtensionPointSchemaType[],
   configPath: string,
+  config: ExtensionInstance['configuration'],
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
   const uniqueTargets: string[] = []
   const duplicateTargets: string[] = []
+  const uniqueModules: string[] = []
+  const duplicateModules: string[] = []
 
   if (!extensionPoints || extensionPoints.length === 0) {
     return err(missingExtensionPointsMessage)
@@ -251,10 +254,25 @@ Please check the module path for ${target}`.value,
     } else {
       uniqueTargets.push(target)
     }
+
+    if (uniqueModules.includes(module)) {
+      duplicateModules.push(module)
+    } else {
+      uniqueModules.push(module)
+    }
   }
 
   if (duplicateTargets.length) {
     errors.push(`Duplicate targets found: ${duplicateTargets.join(', ')}\nExtension point targets must be unique`)
+  }
+
+  if (isRemoteDomExtension(config.api_version)) {
+    if (duplicateModules.length) {
+      errors.push(
+        `As of API version 2025-10, exporting multiple extensions per module is no longer supported. ` +
+          `Module ${duplicateModules.join(', ')} has multiple targets`,
+      )
+    }
   }
 
   if (errors.length) {
@@ -264,10 +282,7 @@ Please check the module path for ${target}`.value,
   return ok({})
 }
 
-function isRemoteDomExtension(
-  config: ExtensionInstance['configuration'],
-): config is ExtensionInstance<{api_version: string}>['configuration'] {
-  const apiVersion = config.api_version
+function isRemoteDomExtension(apiVersion: ExtensionInstance['configuration']['api_version']): boolean {
   const [year, month] = apiVersion?.split('-').map((part: string) => parseInt(part, 10)) ?? []
   if (!year || !month) {
     return false
