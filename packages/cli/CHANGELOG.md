@@ -1,5 +1,12 @@
 # @shopify/cli
 
+## 3.84.0
+
+### Minor Changes
+
+- 1f4fd78: Allow multi-environment theme commands to accept flags from CLI
+- b382a89: Prompt for confirmation before running multi-environment theme commands that allow `--force` flag
+
 ## 3.83.0
 
 ### Minor Changes
