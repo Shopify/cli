@@ -23,7 +23,7 @@ const developmentTheme = {
 
 const options: RenameOptions = {
   development: false,
-  newName: 'Renamed Theme',
+  name: 'Renamed Theme',
   live: false,
 }
 
@@ -33,10 +33,10 @@ describe('renameTheme', () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
 
     // When
-    await renameTheme(adminSession, {...options, development: true})
+    await renameTheme({...options, development: true}, adminSession)
 
     // Then
-    expect(themeUpdate).toBeCalledWith(developmentTheme.id, {name: options.newName}, adminSession)
+    expect(themeUpdate).toBeCalledWith(developmentTheme.id, {name: options.name}, adminSession)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', "'my development theme'", {subdued: '(#1)'}, 'was renamed to', "'Renamed Theme'"],
     })
@@ -52,10 +52,10 @@ describe('renameTheme', () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
 
     // When
-    await renameTheme(adminSession, {...options, theme: '2'})
+    await renameTheme({...options, theme: '2'}, adminSession)
 
     // Then
-    expect(themeUpdate).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
+    expect(themeUpdate).toBeCalledWith(theme1.id, {name: options.name}, adminSession)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', "'my theme'", {subdued: '(#2)'}, 'was renamed to', "'Renamed Theme'"],
     })
@@ -71,10 +71,10 @@ describe('renameTheme', () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
 
     // When
-    await renameTheme(adminSession, {...options, live: true})
+    await renameTheme({...options, live: true}, adminSession)
 
     // Then
-    expect(themeUpdate).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
+    expect(themeUpdate).toBeCalledWith(theme1.id, {name: options.name}, adminSession)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', "'live theme'", {subdued: '(#2)'}, 'was renamed to', "'Renamed Theme'"],
     })
