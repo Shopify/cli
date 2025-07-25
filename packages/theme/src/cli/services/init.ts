@@ -1,7 +1,7 @@
 import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {mkdir, writeFile, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 
 export async function cloneRepo(repoUrl: string, destination: string) {
@@ -24,9 +24,18 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           shallow: true,
         })
         await removeGitRemote(destination)
+        await removeSkeletonGitHubFolder(destination)
       },
     },
   ])
+}
+
+async function removeSkeletonGitHubFolder(destination: string) {
+  const githubDir = joinPath(destination, '.github')
+
+  if (await fileExists(githubDir)) {
+    await rmdir(githubDir)
+  }
 }
 
 export async function promptAndCreateAIFile(destination: string) {

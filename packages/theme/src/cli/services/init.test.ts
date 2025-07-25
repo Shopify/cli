@@ -1,8 +1,8 @@
 import {cloneRepoAndCheckoutLatestTag, cloneRepo, promptAndCreateAIFile} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {downloadGitRepository} from '@shopify/cli-kit/node/git'
+import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {writeFile, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -19,7 +19,12 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
 })
 
 describe('cloneRepoAndCheckoutLatestTag()', async () => {
-  test('calls downloadRepository function from git service to clone a repo without branch', async () => {
+  beforeEach(() => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
+  })
+
+  test('calls downloadRepository function from git service to clone a repo with latest tag', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
@@ -32,9 +37,40 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     // Then
     expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, latestTag, shallow})
   })
+
+  test('removes git remote after cloning', async () => {
+    // Given
+    const repoUrl = 'https://github.com/Shopify/dawn.git'
+    const destination = 'destination'
+
+    // When
+    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
+
+    // Then
+    expect(removeGitRemote).toHaveBeenCalledWith(destination)
+  })
+
+  test('removes .github directory from skeleton theme after cloning when it exists', async () => {
+    // Given
+    const repoUrl = 'https://github.com/Shopify/skeleton-theme.git'
+    const destination = 'destination'
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
+
+    // Then
+    expect(fileExists).toHaveBeenCalledWith('destination/.github')
+    expect(rmdir).toHaveBeenCalledWith('destination/.github')
+  })
 })
 
 describe('cloneRepo()', async () => {
+  beforeEach(() => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
+  })
+
   test('calls downloadRepository function from git service to clone a repo without branch', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/dawn.git'
@@ -45,6 +81,32 @@ describe('cloneRepo()', async () => {
 
     // Then
     expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, shallow})
+  })
+
+  test('removes git remote after cloning', async () => {
+    // Given
+    const repoUrl = 'https://github.com/Shopify/dawn.git'
+    const destination = 'destination'
+
+    // When
+    await cloneRepo(repoUrl, destination)
+
+    // Then
+    expect(removeGitRemote).toHaveBeenCalledWith(destination)
+  })
+
+  test('removes .github directory from skeleton theme after cloning when it exists', async () => {
+    // Given
+    const repoUrl = 'https://github.com/Shopify/skeleton-theme.git'
+    const destination = 'destination'
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await cloneRepo(repoUrl, destination)
+
+    // Then
+    expect(fileExists).toHaveBeenCalledWith('destination/.github')
+    expect(rmdir).toHaveBeenCalledWith('destination/.github')
   })
 })
 
