@@ -1,5 +1,7 @@
 # @shopify/cli-kit
 
+## 3.84.0
+
 ## 3.83.0
 
 ### Minor Changes
