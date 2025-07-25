@@ -75,7 +75,7 @@ describe('app_config_app_access', () => {
     })
   })
 
-  describe('getDevSessionUpdateMessage', () => {
+  describe('getDevSessionUpdateMessages', () => {
     test('should return message with scopes when scopes are provided', async () => {
       // Given
       const config = {
@@ -88,10 +88,10 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessage!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config)
 
       // Then
-      expect(result).toBe('Access scopes auto-granted: read_products, write_products')
+      expect(result).toEqual(['Access scopes auto-granted: read_products, write_products'])
     })
 
     test('should return message with required_scopes when only required_scopes are provided', async () => {
@@ -106,10 +106,10 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessage!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config)
 
       // Then
-      expect(result).toBe('Access scopes auto-granted: write_orders, read_inventory')
+      expect(result).toEqual(['Access scopes auto-granted: write_orders, read_inventory'])
     })
 
     test('should return default message when no scopes are provided', async () => {
@@ -121,10 +121,10 @@ describe('app_config_app_access', () => {
       }
 
       // When
-      const result = await spec.getDevSessionUpdateMessage!(config)
+      const result = await spec.getDevSessionUpdateMessages!(config)
 
       // Then
-      expect(result).toBe('App has been installed')
+      expect(result).toEqual(['App has been installed'])
     })
   })
 })

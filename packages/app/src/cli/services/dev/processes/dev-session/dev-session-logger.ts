@@ -1,5 +1,5 @@
 import {UserError} from './dev-session.js'
-import {AppEvent} from '../../app-events/app-event-watcher.js'
+import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
@@ -78,7 +78,8 @@ export class DevSessionLogger {
     const extensionEvents = event.extensionEvents ?? []
     const messageArrays = await Promise.all(
       extensionEvents.map(async (eve) => {
-        const messages = await eve.extension.getDevSessionUpdateMessage(eve.type)
+        if (eve.type === EventType.Deleted) return []
+        const messages = await eve.extension.getDevSessionUpdateMessages()
         return messages ?? []
       }),
     )

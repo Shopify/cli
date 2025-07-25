@@ -25,7 +25,6 @@ import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import {EventType} from '../../services/dev/app-events/app-event-watcher.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -450,9 +449,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async getDevSessionUpdateMessage(eventType: EventType): Promise<string[] | undefined> {
-    if (!this.specification.getDevSessionUpdateMessage) return undefined
-    return this.specification.getDevSessionUpdateMessage(this.configuration, eventType)
+  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
+    if (!this.specification.getDevSessionUpdateMessages) return undefined
+    return this.specification.getDevSessionUpdateMessages(this.configuration)
   }
 
   /**
