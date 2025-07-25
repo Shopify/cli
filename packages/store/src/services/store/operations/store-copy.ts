@@ -40,7 +40,7 @@ export class StoreCopyOperation implements StoreOperation {
       }
     }
 
-    renderCopyInfo('Copy Operation', sourceShopDomain, targetShopDomain)
+    renderCopyInfo('Copy operation', sourceShopDomain, targetShopDomain)
 
     const copyOperation = await this.copyDataWithProgress(
       apiShopId,
