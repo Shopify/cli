@@ -368,20 +368,24 @@ function loadExtensionsIdentifiersBreakdown(
     (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
   )
 
+  function moduleHasUUIDorUID(module: AppModuleVersion, identifier: string) {
+    return module.registrationUuid === identifier || module.registrationId === identifier
+  }
+
   const extensionsToUpdate = Object.entries(localRegistration)
-    .filter(([_identifier, uuid]) => extensionModules.map((module) => module.registrationUuid!).includes(uuid))
+    .filter(([_identifier, uuid]) => extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
     .map(([identifier, _uuid]) => identifier)
 
   let extensionsToCreate = Object.entries(localRegistration)
-    .filter(([_identifier, uuid]) => !extensionModules.map((module) => module.registrationUuid!).includes(uuid))
+    .filter(([_identifier, uuid]) => !extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
     .map(([identifier, _uuid]) => identifier)
   extensionsToCreate = Array.from(new Set(extensionsToCreate.concat(toCreate.map((source) => source.localIdentifier))))
 
   const extensionsOnlyRemote = extensionModules
     .filter(
       (module) =>
-        !Object.values(localRegistration).includes(module.registrationUuid!) &&
-        !toCreate.map((source) => source.localIdentifier).includes(module.registrationUuid!),
+        !Object.values(localRegistration).some((uuid) => moduleHasUUIDorUID(module, uuid)) &&
+        !toCreate.map((source) => source.localIdentifier).some((identifier) => moduleHasUUIDorUID(module, identifier)),
     )
     .map((module) => module.registrationTitle)
 

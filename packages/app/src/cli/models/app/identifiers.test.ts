@@ -208,12 +208,9 @@ describe('getAppIdentifiers', () => {
       })
 
       // When
-      const got = getAppIdentifiers(
-        {
-          app,
-        },
-        testDeveloperPlatformClient(),
-      )
+      const got = getAppIdentifiers({
+        app,
+      })
 
       // Then
       expect(got.app).toEqual('FOO')
@@ -238,43 +235,12 @@ describe('getAppIdentifiers', () => {
         {
           app,
         },
-        testDeveloperPlatformClient(),
         {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
       )
 
       // Then
       expect(got.app).toEqual('FOO')
       expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
-    })
-  })
-
-  test('returns the UIDs when Atomic Deployments is enabled', async () => {
-    await inTemporaryDirectory(async (tmpDir: string) => {
-      // Given
-      const uiExtension = await testUIExtension({
-        directory: '/tmp/project/extensions/my-extension',
-        idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
-      })
-      const app = testApp({
-        directory: tmpDir,
-        dotenv: {
-          path: joinPath(tmpDir, '.env'),
-          variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
-        },
-        allExtensions: [uiExtension],
-      })
-
-      // When
-      const got = getAppIdentifiers(
-        {
-          app,
-        },
-        testDeveloperPlatformClient({supportsAtomicDeployments: true}),
-      )
-
-      // Then
-      expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['test-ui-extension']).toEqual(uiExtension.uid)
     })
   })
 })

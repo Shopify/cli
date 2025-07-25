@@ -153,7 +153,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ident
     force,
     release: !noRelease,
     developerPlatformClient,
-    envIdentifiers: getAppIdentifiers({app}, developerPlatformClient),
+    envIdentifiers: getAppIdentifiers({app}),
     remoteApp,
     activeAppVersion,
   })
