@@ -584,6 +584,155 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
     })
+
+    test('returns err(message) when extension has multiple extension targets', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointB.js'))
+
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2025-10',
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+            },
+            {
+              target: 'EXTENSION::POINT::B',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        })
+
+        // When
+        const result = await uiExtension.validate()
+
+        // Then
+        expect(result).toEqual(
+          err(`Remote DOM extensions must have exactly one extension target. Found 2 targets: EXTENSION::POINT::A, EXTENSION::POINT::B
+
+Please check the configuration in ${uiExtension.configurationPath}`),
+        )
+      })
+    })
+
+    test('returns ok({}) when remote DOM extension has exactly one extension target', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2025-10',
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+            },
+          ],
+        })
+
+        // When
+        const result = await uiExtension.validate()
+
+        // Then
+        expect(result).toStrictEqual(ok({}))
+      })
+    })
+
+    test('allows multiple extension targets for non-remote DOM extensions (api_version < 2025-10)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointB.js'))
+
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2025-07',
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+            },
+            {
+              target: 'EXTENSION::POINT::B',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        })
+
+        // When
+        const result = await uiExtension.validate()
+
+        // Then
+        expect(result).toStrictEqual(ok({}))
+      })
+    })
+
+    test('handles invalid api_version format gracefully', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointB.js'))
+
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: 'invalid-version',
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+            },
+            {
+              target: 'EXTENSION::POINT::B',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        })
+
+        // When
+        const result = await uiExtension.validate()
+
+        // Then
+        expect(result).toStrictEqual(ok({}))
+      })
+    })
+
+    test('handles undefined api_version gracefully', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointB.js'))
+
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: undefined,
+          extensionPoints: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+            },
+            {
+              target: 'EXTENSION::POINT::B',
+              module: './src/ExtensionPointB.js',
+            },
+          ],
+        })
+
+        // When
+        const result = await uiExtension.validate()
+
+        // Then
+        expect(result).toStrictEqual(ok({}))
+      })
+    })
   })
 
   describe('deployConfig()', () => {
