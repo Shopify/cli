@@ -11,6 +11,7 @@ import {MockApiClient} from '../../services/store/mock/mock-api-client.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {loadHelpClass} from '@oclif/core'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 export default class Copy extends BaseBDCommand {
   static summary = 'Copy, export, or import store data'
@@ -36,6 +37,7 @@ export default class Copy extends BaseBDCommand {
   }
 
   async runCommand(): Promise<void> {
+    await this.validateNodeVersion()
     this.flags = (await this.parse(Copy)).flags as FlagOptions
 
     if (this.flags.key) {
@@ -76,6 +78,19 @@ export default class Copy extends BaseBDCommand {
         return new StoreImportOperation(bpSession, apiClient)
       default:
         throw new Error(`Unknown operation mode: ${mode}`)
+    }
+  }
+
+  private async validateNodeVersion(): Promise<void> {
+    const nodeVersion = process.versions.node
+    const nodeMajorVersion = Number(nodeVersion.split('.')[0])
+
+    if (nodeMajorVersion < 20) {
+      renderError({
+        headline: 'Update to Node 20 or higher to run `shopify store copy`.',
+        body: [`The \`store copy\` command requires Node 20 or higher. Current Node version: ${nodeMajorVersion}.`],
+      })
+      process.exit(1)
     }
   }
 
