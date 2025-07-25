@@ -36,12 +36,12 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
 }
 
 /**
- * Prompts the user to select from existing sessions or log in with a new account.
+ * Prompts the user to select from existing sessions or log in with a different account.
  *
  * This function:
  * 1. Fetches existing sessions from storage using `store.fetch()`
  * 2. Shows a prompt with all available sessions by their display labels
- * 3. Includes an option to "Log in with a new account"
+ * 3. Includes an option to "Log in with a different account"
  * 4. If an existing session is chosen, calls `setCurrentSessionId(userId)`
  * 5. If new login is chosen, calls `ensureAuthenticatedUser()`.
  *
@@ -72,7 +72,7 @@ export async function promptSessionSelect(alias?: string): Promise<{userId: stri
 
   if (choices.length > 0) {
     choices.push({
-      label: 'Log in with a new account',
+      label: 'Log in with a different account',
       value: NEW_LOGIN_VALUE,
     })
 

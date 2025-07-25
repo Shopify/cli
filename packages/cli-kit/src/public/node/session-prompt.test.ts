@@ -88,7 +88,7 @@ describe('promptSessionSelect', () => {
       choices: [
         {label: 'Work Account', value: 'user1'},
         {label: 'user2', value: 'user2'},
-        {label: 'Log in with a new account', value: 'NEW_LOGIN'},
+        {label: 'Log in with a different account', value: 'NEW_LOGIN'},
       ],
     })
     expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
@@ -125,14 +125,14 @@ describe('promptSessionSelect', () => {
       choices: [
         // Falls back to userId when alias is missing
         {label: 'user3', value: 'user3'},
-        {label: 'Log in with a new account', value: 'NEW_LOGIN'},
+        {label: 'Log in with a different account', value: 'NEW_LOGIN'},
       ],
     })
     expect(setCurrentSessionId).toHaveBeenCalledWith('user3')
     expect(result).toEqual({userId: 'user3'})
   })
 
-  test('creates new session when user selects "Log in with a new account"', async () => {
+  test('creates new session when user selects "Log in with a different account"', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
     vi.mocked(renderSelectPrompt).mockResolvedValue('NEW_LOGIN')
@@ -145,7 +145,7 @@ describe('promptSessionSelect', () => {
     expect(result).toEqual({userId: 'new-user-id'})
   })
 
-  test('creates new session with alias when user selects "Log in with a new account"', async () => {
+  test('creates new session with alias when user selects "Log in with a different account"', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
     vi.mocked(renderSelectPrompt).mockResolvedValue('NEW_LOGIN')
