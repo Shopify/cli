@@ -58,7 +58,7 @@ export default abstract class ThemeCommand extends Command {
   >(_opts?: Input<TFlags, TGlobalFlags, TArgs>): Promise<void> {
     // Parse command flags using the current command class definitions
     const klass = this.constructor as unknown as Input<TFlags, TGlobalFlags, TArgs> & {
-      multiEnvironmentsFlags: string[]
+      multiEnvironmentsFlags: string[] | null
       flags: FlagOutput
     }
     const requiredFlags = klass.multiEnvironmentsFlags
@@ -75,6 +75,11 @@ export default abstract class ThemeCommand extends Command {
     }
 
     // Multiple environments
+    if (requiredFlags === null) {
+      renderWarning({body: 'This command does not support multiple environments.'})
+      return
+    }
+
     const environmentsMap = await this.loadEnvironments(environments, flags)
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
 
