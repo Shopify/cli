@@ -236,6 +236,17 @@ describe('dev proxy', () => {
       expect(canProxyRequest(event)).toBeTruthy()
     })
 
+    test('should proxy cart.json and other cart-related JSON endpoints', () => {
+      const cartJsonEvent = createH3Event('GET', '/cart.json')
+      expect(canProxyRequest(cartJsonEvent)).toBeTruthy()
+
+      const collectionsJsonEvent = createH3Event('GET', '/collections.json')
+      expect(canProxyRequest(collectionsJsonEvent)).toBeTruthy()
+
+      const productsJsonEvent = createH3Event('GET', '/products/handle.json')
+      expect(canProxyRequest(productsJsonEvent)).toBeTruthy()
+    })
+
     test('should proxy Checkout requests as they are not supported by the SFR client', () => {
       const event = createH3Event('GET', '/checkouts/xyz')
       expect(canProxyRequest(event)).toBeTruthy()
