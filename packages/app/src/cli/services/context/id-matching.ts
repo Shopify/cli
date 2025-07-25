@@ -114,7 +114,12 @@ function matchByUIDandUUID(
 
   outputAddedIDs(localMatchedWithoutUID)
 
-  return {matched: {...matchedByUID, ...totalMatchedWithoutUID}, toCreate, toConfirm, toManualMatch}
+  return {
+    matched: {...matchedByUID, ...totalMatchedWithoutUID},
+    toCreate,
+    toConfirm,
+    toManualMatch,
+  }
 }
 
 function outputAddedIDs(localMatchedWithoutUID: LocalSource[]) {

@@ -48,6 +48,7 @@ export interface ExtensionIdentifiersBreakdown {
   onlyRemote: ExtensionIdentifierBreakdownInfo[]
   toCreate: ExtensionIdentifierBreakdownInfo[]
   toUpdate: ExtensionIdentifierBreakdownInfo[]
+  unchanged: ExtensionIdentifierBreakdownInfo[]
 }
 
 export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploymentIdsPresenceOptions): Promise<{
@@ -116,7 +117,8 @@ export async function extensionsIdentifiersReleaseBreakdown(
   const extensionIdentifiersBreakdown = {
     onlyRemote: [...mapIsExtension(versionsDiff.removed), ...mapIsDashboard(versionsDiff.removed)],
     toCreate: [...mapIsExtension(versionsDiff.added), ...mapIsDashboard(versionsDiff.added)],
-    toUpdate: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
+    toUpdate: [],
+    unchanged: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
   }
 
   return {extensionIdentifiersBreakdown, versionDetails}
@@ -326,6 +328,7 @@ function loadLocalExtensionsIdentifiersBreakdown({
   return {
     onlyRemote: [] as ExtensionIdentifierBreakdownInfo[],
     toCreate: [] as ExtensionIdentifierBreakdownInfo[],
+    unchanged: [] as ExtensionIdentifierBreakdownInfo[],
     toUpdate: [...identifiersToUpdate, ...identifiersToCreate, ...dashboardToUpdate],
   }
 }
@@ -355,6 +358,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
     onlyRemote: [...extensionIdentifiersBreakdown.onlyRemote, ...dashboardIdentifiersBreakdown.onlyRemote],
     toCreate: [...extensionIdentifiersBreakdown.toCreate, ...dashboardIdentifiersBreakdown.toCreate],
     toUpdate: [...extensionIdentifiersBreakdown.toUpdate, ...dashboardIdentifiersBreakdown.toUpdate],
+    unchanged: [...extensionIdentifiersBreakdown.unchanged, ...dashboardIdentifiersBreakdown.unchanged],
   }
 }
 
@@ -372,9 +376,20 @@ function loadExtensionsIdentifiersBreakdown(
     return module.registrationUuid === identifier || module.registrationId === identifier
   }
 
-  const extensionsToUpdate = Object.entries(localRegistration)
+  const allExistingExtensions = Object.entries(localRegistration)
     .filter(([_identifier, uuid]) => extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
     .map(([identifier, _uuid]) => identifier)
+
+  // If registationId is empty, it means the extension doesn't have a UID yet, so this deploy will create one.
+  const extensionsBeingMigratedToDevDash = extensionModules.filter((module) => module.registrationId === '')
+  const extensionsToUpdate = allExistingExtensions.filter((identifier) =>
+    extensionsBeingMigratedToDevDash.some((module) => module.registrationUuid === localRegistration[identifier]),
+  )
+
+  const unchangedExtensions = allExistingExtensions.filter(
+    (identifier) =>
+      !extensionsBeingMigratedToDevDash.some((module) => module.registrationUuid === localRegistration[identifier]),
+  )
 
   let extensionsToCreate = Object.entries(localRegistration)
     .filter(([_identifier, uuid]) => !extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
@@ -393,6 +408,7 @@ function loadExtensionsIdentifiersBreakdown(
     onlyRemote: extensionsOnlyRemote.map(buildExtensionBreakdownInfo),
     toCreate: extensionsToCreate.map(buildExtensionBreakdownInfo),
     toUpdate: extensionsToUpdate.map(buildExtensionBreakdownInfo),
+    unchanged: unchangedExtensions.map(buildExtensionBreakdownInfo),
   }
 }
 
@@ -421,6 +437,7 @@ function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[],
   return {
     onlyRemote,
     toCreate,
-    toUpdate,
+    toUpdate: [],
+    unchanged: toUpdate,
   }
 }

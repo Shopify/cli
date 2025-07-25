@@ -75,6 +75,21 @@ const MODULE_CLI_A: AppModuleVersion = {
   },
 }
 
+const MODULE_CLI_A_NO_UID: AppModuleVersion = {
+  registrationId: '',
+  registrationUuid: 'UUID_A',
+  registrationTitle: 'Checkout post purchase',
+  type: 'checkout_post_purchase',
+  specification: {
+    identifier: 'checkout_post_purchase',
+    name: 'Post purchase UI extension',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
 const MODULE_DASHBOARD_MIGRATED_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
@@ -413,6 +428,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
           onlyRemote: [],
           toCreate: [],
           toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
+          unchanged: [],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -453,6 +469,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
             buildDashboardBreakdownInfo('Dashboard A'),
           ],
           toUpdate: [],
+          unchanged: [],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -489,13 +506,14 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
-          toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
+          toUpdate: [],
+          unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
       })
     })
-    test('and there is an active version with matching cli app modules then cli extension should be updated, and no dashboard extension should be migrated', async () => {
+    test('and there is an active version with matching cli app modules then cli extension should be updated as "unchanged", and no dashboard extension should be migrated', async () => {
       // Given
       const extensionsToConfirm = {
         validMatches: {EXTENSION_A: 'UUID_A'},
@@ -534,7 +552,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [buildExtensionBreakdownInfo('extension-a-2')],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          toUpdate: [],
+          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -582,7 +601,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
             buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
             buildExtensionBreakdownInfo('extension-a-2'),
           ],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          toUpdate: [],
+          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -638,7 +658,55 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
             buildExtensionBreakdownInfo('extension-a-2'),
             buildDashboardBreakdownInfo('Dashboard New'),
           ],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          toUpdate: [],
+          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+        },
+        extensionsToConfirm,
+        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
+      })
+    })
+
+    test('and there is an active version with modules without UID, those should be returned as toUpdate, the rest, unchanged', async () => {
+      // Given
+      const extensionsToConfirm = {
+        validMatches: {EXTENSION_A: 'UUID_A'},
+        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
+        extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
+      }
+      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
+      const remoteExtensionRegistrations = {
+        app: {
+          extensionRegistrations: [REGISTRATION_A],
+          configurationRegistrations: [],
+          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
+        },
+      }
+      const activeAppVersion = {
+        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A_NO_UID],
+      }
+      let fetchActiveAppVersionCalled = false
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => {
+          fetchActiveAppVersionCalled = true
+          return Promise.resolve(activeAppVersion)
+        },
+      })
+
+      // When
+      const result = await extensionsIdentifiersDeployBreakdown(
+        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
+      )
+
+      // Then
+      expect(fetchActiveAppVersionCalled).toBe(false)
+      expect(result).toEqual({
+        extensionIdentifiersBreakdown: {
+          onlyRemote: [],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2')],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A')],
+          unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -676,6 +744,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         onlyRemote: [],
         toCreate: [],
         toUpdate: [],
+        unchanged: [],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -708,7 +777,8 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
       extensionIdentifiersBreakdown: {
         onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
         toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
-        toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
+        toUpdate: [],
+        unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -742,6 +812,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         toCreate: [],
         toUpdate: [],
         onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
+        unchanged: [],
       },
       versionDetails: versionDiff.versionDetails,
     })
