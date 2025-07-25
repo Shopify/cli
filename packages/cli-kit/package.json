@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.82.0",
+  "version": "3.83.0",
   "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
@@ -52,9 +52,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "nx test",
-    "test:coverage": "nx test:coverage",
-    "test:watch": "nx test:watch",
+    "vitest": "vitest",
     "type-check": "nx type-check",
     "refresh-code-documentation": "nx refresh-code-documentation"
   },
@@ -172,7 +170,7 @@
     "@types/diff": "^5.2.3",
     "@types/fs-extra": "9.0.13",
     "@types/gradient-string": "^1.1.2",
-    "@types/lodash": "4.17.14",
+    "@types/lodash": "4.17.19",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
     "@types/which": "3.0.4",

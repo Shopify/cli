@@ -365,9 +365,22 @@ export class PartnersClient implements DeveloperPlatformClient {
       }
     })
 
+    let counter = 0
+    const templatesWithPriority = templates.map((template) => ({
+      ...template,
+      sortPriority: template.sortPriority ?? counter++,
+    }))
+
+    const groupOrder: string[] = []
+    for (const template of templatesWithPriority) {
+      if (template.group && !groupOrder.includes(template.group)) {
+        groupOrder.push(template.group)
+      }
+    }
+
     return {
-      templates,
-      groupOrder: [],
+      templates: templatesWithPriority,
+      groupOrder,
     }
   }
 

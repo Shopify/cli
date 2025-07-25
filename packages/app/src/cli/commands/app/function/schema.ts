@@ -1,8 +1,9 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
-import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
+import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -41,22 +42,21 @@ export default class FetchSchema extends AppLinkedCommand {
     }
     const apiKey = flags['client-id'] ?? flags['api-key']
 
-    const app = await inFunctionContext({
-      path: flags.path,
-      apiKey,
-      reset: flags.reset,
+    const {app, developerPlatformClient, organization} = await linkedAppContext({
+      directory: flags.path,
+      clientId: apiKey,
+      forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
-      callback: async (app, developerPlatformClient, ourFunction, orgId) => {
-        await generateSchemaService({
-          app,
-          extension: ourFunction,
-          developerPlatformClient,
-          stdout: flags.stdout,
-          path: flags.path,
-          orgId,
-        })
-        return app
-      },
+    })
+
+    const ourFunction = await chooseFunction(app, flags.path)
+
+    await generateSchemaService({
+      app,
+      extension: ourFunction,
+      stdout: flags.stdout,
+      developerPlatformClient,
+      orgId: organization.id,
     })
 
     return {app}

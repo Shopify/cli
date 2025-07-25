@@ -19,7 +19,7 @@ import {
   AppHiddenConfig,
   isLegacyAppSchema,
 } from './app.js'
-import {configurationFileNames, dotEnvFileNames, environmentVariableNames} from '../../constants.js'
+import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
@@ -34,6 +34,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/load-specificatio
 import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
+import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -54,12 +55,16 @@ import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-export type AppLoaderMode = 'strict' | 'report'
+/**
+ * The mode in which the app is loaded, this affects how errors are handled:
+ * - strict: If there is any kind of error, the app won't be loaded.
+ * - report: The app will be loaded as much as possible, errors will be reported afterwards.
+ * - local: Errors for unknown extensions will be ignored. Other errors will prevent the app from loading.
+ */
+export type AppLoaderMode = 'strict' | 'report' | 'local'
 
 type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
 
@@ -179,18 +184,6 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
       )
     }
   }
-}
-
-/**
- * Returns true if we should fail if an unsupported app.toml config property is found.
- *
- * This is deactivated if SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS is set
- */
-async function shouldFailIfUnsupportedConfigProperty(): Promise<boolean> {
-  const env = getEnvironmentVariables()
-  // devs can also opt-out
-  const disableUnsupportedConfigPropertyChecks = env[environmentVariableNames.disableUnsupportedConfigPropertyChecks]
-  return !isTruthy(disableUnsupportedConfigPropertyChecks)
 }
 
 export class AppErrors {
@@ -389,7 +382,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       configSchema,
       remoteFlags: this.remoteFlags,
       hiddenConfig,
-      devApplicationURLs: this.previousApp?.devApplicationURLs,
+      devApplicationURLs: this.getDevApplicationURLs(configuration, webs),
     })
 
     // Show CLI notifications that are targetted for when your app has specific extension types
@@ -479,6 +472,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     if (specification) {
       usedKnownSpecification = true
+    } else if (this.mode === 'local') {
+      return undefined
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -655,8 +650,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
-    const failIfUnsupportedConfigProperty = await shouldFailIfUnsupportedConfigProperty()
-
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
@@ -696,15 +689,11 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       })
 
     if (unusedKeys.length > 0) {
-      if (failIfUnsupportedConfigProperty) {
-        this.abortOrReport(
-          outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
-          undefined,
-          appConfiguration.path,
-        )
-      } else {
-        outputDebug(outputContent`Unused keys in app configuration: ${outputToken.json(unusedKeys)}`)
-      }
+      this.abortOrReport(
+        outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
+        undefined,
+        appConfiguration.path,
+      )
     }
     return extensionInstancesWithKeys
       .filter(([instance]) => instance)
@@ -787,6 +776,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           }
         })
       })
+  }
+
+  private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {
+    const previousDevUrls = this.previousApp?.devApplicationURLs
+    if (!previousDevUrls || !isCurrentAppSchema(currentConfiguration)) return previousDevUrls
+
+    return generateApplicationURLs(
+      previousDevUrls.applicationUrl,
+      webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+      currentConfiguration.app_proxy,
+    )
   }
 }
 

@@ -29,7 +29,6 @@
     "post-release": "./bin/post-release",
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
-    "test:affected": "nx affected --target=test",
     "test:features": "pnpm nx run features:test",
     "test:regenerate-snapshots": "nx build cli && packages/features/snapshots/regenerate.sh",
     "test:unit": "pnpm vitest run",
@@ -240,6 +239,21 @@
           "**/src/*.ts!"
         ],
         "project": "**/*.ts!",
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
+      "packages/store": {
+        "project": "**/*.ts!",
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/index.ts!"
+        ],
+        "ignore": [
+          "**/graphql/**/generated/*.ts"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"

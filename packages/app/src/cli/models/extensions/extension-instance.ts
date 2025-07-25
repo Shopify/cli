@@ -18,6 +18,7 @@ import {
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
+  bundleFunctionExtension,
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
@@ -29,7 +30,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -43,6 +44,8 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
 ]
+
+type BuildMode = 'theme' | 'function' | 'ui' | 'flow' | 'tax_calculation' | 'none'
 
 /**
  * Class that represents an instance of a local extension
@@ -335,20 +338,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    if (this.isThemeExtension) {
-      return buildThemeExtension(this, options)
-    } else if (this.isFunctionExtension) {
-      return buildFunctionExtension(this, options)
-    } else if (this.features.includes('esbuild')) {
-      return buildUIExtension(this, options)
-    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
-      return buildFlowTemplateExtension(this, options)
-    }
+    const mode = this.buildMode(options)
 
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    if (this.type === 'tax_calculation') {
-      await touchFile(this.outputPath)
-      await writeFile(this.outputPath, '(()=>{})();')
+    switch (mode) {
+      case 'theme':
+        return buildThemeExtension(this, options)
+      case 'function':
+        return buildFunctionExtension(this, options)
+      case 'ui':
+        return buildUIExtension(this, options)
+      case 'flow':
+        return buildFlowTemplateExtension(this, options)
+      case 'tax_calculation':
+        await touchFile(this.outputPath)
+        await writeFile(this.outputPath, '(()=>{})();')
+        break
+      case 'none':
+        break
     }
   }
 
@@ -366,6 +372,31 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId)
+  }
+
+  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
+    const extensionId = this.getOutputFolderId(identifiers?.extensions[this.localIdentifier])
+
+    const defaultOutputPath = this.outputPath
+
+    if (this.features.includes('bundling')) {
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionId)
+    }
+
+    const buildMode = this.buildMode(options)
+
+    if (this.isThemeExtension) {
+      await bundleThemeExtension(this, options)
+    } else if (buildMode !== 'none') {
+      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
+      if (await fileExists(defaultOutputPath)) {
+        await copyFile(defaultOutputPath, this.outputPath)
+
+        if (buildMode === 'function') {
+          await bundleFunctionExtension(this.outputPath, this.outputPath)
+        }
+      }
+    }
   }
 
   getOutputFolderId(extensionId?: string) {
@@ -435,6 +466,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
+  }
+
+  private buildMode(options: ExtensionBuildOptions): BuildMode {
+    if (this.isThemeExtension) {
+      return 'theme'
+    } else if (this.isFunctionExtension) {
+      return 'function'
+    } else if (this.features.includes('esbuild')) {
+      return 'ui'
+    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
+      return 'flow'
+    }
+
+    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
+    if (this.type === 'tax_calculation') {
+      return 'tax_calculation'
+    }
+
+    return 'none'
   }
 
   private buildHandle() {

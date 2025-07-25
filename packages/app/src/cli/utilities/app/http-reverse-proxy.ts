@@ -1,10 +1,10 @@
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
-import Server from 'http-proxy'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import * as http from 'http'
 import * as https from 'https'
 import {Writable} from 'stream'
+import type Server from 'http-proxy-node16'
 
 export interface LocalhostCert {
   key: string
@@ -20,8 +20,8 @@ export async function getProxyingWebServer(
 ) {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
-  const {default: httpProxy} = await import('http-proxy')
-  const proxy = httpProxy.createProxy()
+  const httpProxy = await import('http-proxy-node16')
+  const proxy = httpProxy.default.createProxyServer()
 
   const requestListener = getProxyServerRequestListener(rules, proxy, stdout)
 

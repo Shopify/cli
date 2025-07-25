@@ -36,27 +36,6 @@
         "cwd": "packages/app"
       }
     },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest run",
-        "cwd": "packages/app"
-      }
-    },
-    "test:coverage": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest run --reporter json --coverage --outputFile ./coverage/report.json",
-        "cwd": "packages/app"
-      }
-    },
-    "test:watch": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest watch",
-        "cwd": "packages/app"
-      }
-    },
     "type-check": {
       "executor": "nx:run-commands",
       "options": {

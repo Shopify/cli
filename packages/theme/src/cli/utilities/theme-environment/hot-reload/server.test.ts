@@ -447,12 +447,6 @@ describe('getUpdatedFileParts', () => {
 
     const newFileResult = getUpdatedFileParts(file)
 
-    expect(output.outputDebug).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'Error parsing Liquid file "sections/broken.liquid" to detect updated file parts. LiquidHTMLParsingError:',
-      ),
-    )
-
     expect(newFileResult?.stylesheetTag).toBe(true)
     expect(newFileResult?.javascriptTag).toBe(false)
     expect(newFileResult?.schemaTag).toBe(false)

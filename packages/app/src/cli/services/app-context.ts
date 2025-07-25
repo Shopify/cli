@@ -152,7 +152,6 @@ async function logMetadata(app: {apiKey: string}, organization: Organization, re
 export async function localAppContext({
   directory,
   userProvidedConfigName,
-  unsafeReportMode = false,
 }: LocalAppContextOptions): Promise<AppInterface> {
   // Load local specifications only
   const specifications = await loadLocalExtensionsSpecifications()
@@ -162,6 +161,6 @@ export async function localAppContext({
     directory,
     userProvidedConfigName,
     specifications,
-    mode: unsafeReportMode ? 'report' : 'strict',
+    mode: 'local',
   })
 }

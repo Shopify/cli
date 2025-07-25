@@ -1,5 +1,23 @@
 # @shopify/theme
 
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+
+### Patch Changes
+
+- bb061b9: Fix performance issue on `shopify theme dev` command
+- ee353e9: No longer abort theme GraphQL requests on the client side
+- f4f29ec: Clean up theme command to run either single/no environment or multiple environments
+- 4ff98f1: Bump theme-tools packages
+- Updated dependencies [521fb07]
+- Updated dependencies [b1feb1d]
+- Updated dependencies [ee353e9]
+- Updated dependencies [e73e9a5]
+  - @shopify/cli-kit@3.83.0
+
 ## 3.82.0
 
 ### Patch Changes
