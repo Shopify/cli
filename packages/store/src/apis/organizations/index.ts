@@ -156,7 +156,9 @@ export async function pollBulkDataOperation(
     {
       id: operationId,
     },
-    undefined,
+    {
+      cacheTTL: {seconds: 0},
+    },
     unauthorizedHandler,
   )
 }
