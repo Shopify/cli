@@ -1,10 +1,12 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {publish, renderArgumentsWarning} from '../../services/publish.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {OutputFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+
+type PublishFlags = OutputFlags<typeof Publish.flags>
 
 export default class Publish extends ThemeCommand {
   static summary = 'Set a remote theme as the live theme.'
@@ -37,16 +39,18 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags, argv} = await this.parse(Publish)
-    const store = await ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-    const themeId = flags.theme || argv[0]
+  static multiEnvironmentsFlags = ['store', 'password', 'theme']
 
-    if (argv.length > 0 && typeof argv[0] === 'string') {
-      renderArgumentsWarning(argv[0])
+  async command(flags: PublishFlags, adminSession: AdminSession) {
+    // Deprecated use of passing the theme id as an argument
+    // ex: `shopify theme publish <themeid>`
+    const positionalArgValue =
+      this.argv && this.argv.length > 0 && typeof this.argv[0] === 'string' ? this.argv[0] : undefined
+
+    if (!flags.theme && positionalArgValue) {
+      flags.theme = positionalArgValue
+      renderArgumentsWarning(positionalArgValue)
     }
-
-    await publish(adminSession, themeId, flags)
+    await publish(adminSession, flags)
   }
 }
