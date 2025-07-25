@@ -191,6 +191,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsStoreSearch = true
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
+  public readonly supportsDashboardManagedExtensions = false
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -574,11 +575,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       }
       if (CONFIG_EXTENSION_IDS.includes(registration.id)) {
         configurationRegistrations.push(registration)
+      } else if (mod.specification?.options?.managementExperience === 'dashboard') {
+        dashboardManagedExtensionRegistrations.push(registration)
       } else {
         extensionRegistrations.push(registration)
-        if (mod.specification?.options?.managementExperience === 'dashboard') {
-          dashboardManagedExtensionRegistrations.push(registration)
-        }
       }
     })
     return {

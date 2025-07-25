@@ -220,6 +220,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
+  public readonly supportsDashboardManagedExtensions = true
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
