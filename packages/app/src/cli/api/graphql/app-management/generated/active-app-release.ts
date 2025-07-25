@@ -22,7 +22,7 @@ export type ActiveAppReleaseQuery = {
           userIdentifier: string
           handle: string
           config: JsonMapType
-          specification: {identifier: string; externalIdentifier: string; name: string}
+          specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
         }[]
       }
     }
@@ -42,7 +42,7 @@ export type AppVersionInfoFragment = {
         userIdentifier: string
         handle: string
         config: JsonMapType
-        specification: {identifier: string; externalIdentifier: string; name: string}
+        specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
       }[]
     }
   }
@@ -53,7 +53,7 @@ export type ReleasedAppModuleFragment = {
   userIdentifier: string
   handle: string
   config: JsonMapType
-  specification: {identifier: string; externalIdentifier: string; name: string}
+  specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
 }
 
 export const ReleasedAppModuleFragmentDoc = {
@@ -79,6 +79,7 @@ export const ReleasedAppModuleFragmentDoc = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
@@ -176,6 +177,7 @@ export const AppVersionInfoFragmentDoc = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
@@ -242,6 +244,7 @@ export const ActiveAppRelease = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
