@@ -594,7 +594,7 @@ FLAGS
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
       --template=<value>          The app template. Accepts one of the following:
-                                  - <remix|none>
+                                  - <reactRouter|remix|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   Increase the verbosity of the output.
