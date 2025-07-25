@@ -87,7 +87,7 @@ describe('StoreCopyOperation', () => {
       await operation.execute('source.myshopify.com', 'target.myshopify.com', {})
 
       expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
-      expect(renderCopyInfo).toHaveBeenCalledWith('Copy Operation', 'source.myshopify.com', 'target.myshopify.com')
+      expect(renderCopyInfo).toHaveBeenCalledWith('Copy operation', 'source.myshopify.com', 'target.myshopify.com')
       expect(renderCopyResult).toHaveBeenCalledWith(
         'source.myshopify.com',
         'target.myshopify.com',
