@@ -6,6 +6,10 @@ export function validateUrl(zodType: zod.ZodString, {httpsOnly = false, message 
     .refine((value) => !value.includes('\n'), {message})
 }
 
+export function validateRelativeUrl(zodType: zod.ZodString, {message = 'URL must be HTTPS URL or start with /'} = {}) {
+  return zodType.refine((value) => value.startsWith('/') || isValidUrl(value, true), {message})
+}
+
 function isValidUrl(input: string, httpsOnly: boolean) {
   try {
     const url = new URL(input)
