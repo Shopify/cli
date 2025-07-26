@@ -96,6 +96,9 @@ export async function sendErrorToBugsnag(
       reportableError = new Error('Unknown error')
     }
 
+    // Preserve the original stack trace before cleaning
+    const originalStackTrace = stacktrace ?? ''
+
     const formattedStacktrace = new StackTracey(stacktrace ?? '')
       .clean()
       .items.map((item) => {
@@ -125,6 +128,10 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+          // Add original stack trace to metadata for debugging
+          event.addMetadata('original_stacktrace', {
+            originalStackTrace,
+          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {

@@ -6,12 +6,20 @@ import {hashString} from '../../public/node/crypto.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
+const eventHandlers: any[] = []
 
 vi.mock('process')
 vi.mock('@bugsnag/js', () => {
   return {
     default: {
-      notify: (reportedError: any, args: any, callback: any) => {
+      notify: (reportedError: any, eventHandler: any, callback: any) => {
+        const event = {
+          severity: '',
+          unhandled: false,
+          addMetadata: vi.fn(),
+        }
+        eventHandler(event)
+        eventHandlers.push({event, reportedError})
         onNotify(reportedError)
         callback(null)
       },
@@ -29,6 +37,8 @@ beforeEach(() => {
   vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
   vi.mocked(isUnitTest).mockReturnValue(true)
+  eventHandlers.length = 0
+  onNotify.mockClear()
 })
 
 describe('errorHandler', async () => {
@@ -158,5 +168,32 @@ describe('send to Bugsnag', () => {
     expect(res.reported).toEqual(false)
     expect(res.error).toEqual(toThrow)
     expect(mockOutput.debug()).toMatch('Error reporting to Bugsnag: Error: Bugsnag is down')
+  })
+
+  test('preserves original stack trace in Bugsnag metadata', async () => {
+    // Given
+    const toThrow = new Error('Test error with stack')
+    toThrow.stack = `Error: Test error with stack
+    at someFunction (/Users/john/project/node_modules/@shopify/cli/dist/index.js:10:5)
+    at anotherFunction (C:\\Users\\jane\\AppData\\Roaming\\npm\\node_modules\\@shopify\\cli\\dist\\index.js:20:10)`
+
+    // When
+    const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(res.reported).toEqual(true)
+
+    // Check that the original stack trace is preserved in metadata
+    const lastEventHandler = eventHandlers[eventHandlers.length - 1]
+    expect(lastEventHandler.event.addMetadata).toHaveBeenCalledWith('original_stacktrace', {
+      originalStackTrace: toThrow.stack,
+    })
+
+    // Check that the stack trace was cleaned in the reported error
+    const {error} = res as any
+    expect(error.stack).toContain('@shopify/cli/dist/index.js:10:5')
+    expect(error.stack).toContain('@shopify/cli/dist/index.js:20:10')
+    expect(error.stack).not.toContain('/Users/john/project/node_modules/')
+    expect(error.stack).not.toContain('C:\\Users\\jane\\AppData\\Roaming\\npm\\node_modules\\')
   })
 })
