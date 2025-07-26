@@ -6,6 +6,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {Response} from 'node-fetch'
 
 export class ShopifyEssentialError extends Error {}
 
@@ -41,21 +42,7 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
     )
   }
 
-  const locationHeader = response.headers.get('location') ?? ''
-  let redirectUrl: URL
-
-  try {
-    redirectUrl = new URL(locationHeader, storeUrl)
-  } catch (error) {
-    if (error instanceof TypeError) {
-      return false
-    }
-    throw error
-  }
-
-  const storeOrigin = new URL(storeUrl).origin
-
-  return response.status === 302 && redirectUrl.origin === storeOrigin
+  return redirectsToStorefront(response, storeUrl)
 }
 
 export async function getStorefrontSessionCookies(
@@ -79,7 +66,9 @@ export async function getStorefrontSessionCookies(
 
   const storefrontDigest = await enrichSessionWithStorefrontPassword(shopifyEssential, storeUrl, password, headers)
 
-  cookieRecord.storefront_digest = storefrontDigest
+  if (storefrontDigest != null) {
+    cookieRecord.storefront_digest = storefrontDigest
+  }
 
   return cookieRecord
 }
@@ -159,18 +148,39 @@ async function enrichSessionWithStorefrontPassword(
   const setCookies = response.headers.raw()['set-cookie'] ?? []
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
 
-  if (!storefrontDigest) {
-    outputDebug(
-      `Failed to obtain storefront_digest cookie.\n
-       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
-       -Body: ${await response.text()}`,
-    )
-    throw new AbortError(
-      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
-    )
+  if (storefrontDigest) {
+    return storefrontDigest
   }
 
-  return storefrontDigest
+  const newShopifyEssential = getCookie(setCookies, '_shopify_essential')
+
+  // If storefront digest is not set, but the password is correct, it means the storefront_digest
+  // has migrated to using the _shopify_essential cookie.
+  if (redirectsToStorefront(response, storeUrl) && newShopifyEssential !== shopifyEssential) {
+    return null
+  }
+
+  throw new AbortError(
+    'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+  )
+}
+
+function redirectsToStorefront(response: Response, storeUrl: string) {
+  const locationHeader = response.headers.get('location') ?? ''
+  let redirectUrl: URL
+
+  try {
+    redirectUrl = new URL(locationHeader, storeUrl)
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
+  }
+
+  const storeOrigin = new URL(storeUrl).origin
+
+  return response.status === 302 && redirectUrl.origin === storeOrigin
 }
 
 function getCookie(setCookieArray: string[], cookieName: string) {
