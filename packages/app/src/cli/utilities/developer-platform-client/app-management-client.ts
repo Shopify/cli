@@ -28,7 +28,6 @@ import {
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
-  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -199,10 +198,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async subscribeToAppLogs(
     input: AppLogsSubscribeMutationVariables,
-    organizationId: string,
+    _organizationId: string,
   ): Promise<AppLogsSubscribeMutation> {
     return this.appManagementRequest<AppLogsSubscribeMutation, AppLogsSubscribeMutationVariables>({
-      organizationId,
       query: AppLogsSubscribe,
       variables: {
         shopIds: input.shopIds,
@@ -340,8 +338,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromIdentifiers(appIdentifiers: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
-    const {app} = await this.activeAppVersionRawResult(appIdentifiers)
+  async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
+    const {app} = await this.activeAppVersionRawResult(apiKey)
     const {name, appModules} = app.activeRelease.version
     const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
@@ -351,7 +349,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       title: name,
       apiKey: app.key,
       apiSecretKeys,
-      organizationId: appIdentifiers.organizationId,
+      organizationId: app.organizationId,
       grantedScopes: (appAccessModule?.config?.scopes as string[] | undefined) ?? [],
       applicationUrl: appHomeModule?.config?.app_url as string | undefined,
       flags: [],
@@ -406,8 +404,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .filter((word) => word)
         .map((word) => `title:${word}`)
         .join(' '),
+      organizationId,
     }
-    const result = await this.appManagementRequest({organizationId, query, variables})
+    const result = await this.appManagementRequest({query, variables})
     if (!result.appsConnection) {
       throw new BugError('Server failed to retrieve apps')
     }
@@ -426,9 +425,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async specifications({organizationId}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
+  async specifications(identifiers: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const query = FetchSpecifications
-    const result = await this.appManagementRequest({organizationId, query})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const variables: any = {organizationId: identifiers.organizationId}
+    const result = await this.appManagementRequest({query, variables})
     return result.specifications.map(
       (spec): RemoteSpecification => ({
         name: spec.name,
@@ -502,11 +503,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
         .sort()
         .at(-1) ?? 'unstable'
 
-    const variables = createAppVars(options, apiVersion)
+    const variables = createAppVars(options, org.id, apiVersion)
 
     const mutation = CreateApp
     const result = await this.appManagementRequest({
-      organizationId: org.id,
       query: mutation,
       variables,
     })
@@ -589,7 +589,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
     const variables = {appId: id}
-    const result = await this.appManagementRequest({organizationId, query, variables})
+    const result = await this.appManagementRequest({query, variables})
     return {
       app: {
         id: result.app.id,
@@ -624,7 +624,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
     const variables = {versionTag}
-    const result = await this.appManagementRequest({organizationId, query, variables})
+    const result = await this.appManagementRequest({query, variables})
     const version = result.versionByTag
     if (!version) {
       throw new AbortError(`Version not found for tag: ${versionTag}`)
@@ -646,8 +646,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<AppVersionsDiffSchema> {
     const variables = {versionId}
     const [currentVersion, selectedVersion] = await Promise.all([
-      this.activeAppVersionRawResult(app),
-      this.appManagementRequest({organizationId: app.organizationId, query: AppVersionById, variables}),
+      this.activeAppVersionRawResult(app.apiKey),
+      this.appManagementRequest({query: AppVersionById, variables}),
     ])
     const currentModules = currentVersion.app.activeRelease.version.appModules
     const selectedVersionModules = selectedVersion.version.appModules
@@ -679,7 +679,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async activeAppVersion(app: MinimalAppIdentifiers): Promise<AppVersion> {
-    const result = await this.activeAppVersionRawResult(app)
+    const result = await this.activeAppVersionRawResult(app.apiKey)
     return {
       appModuleVersions: result.app.activeRelease.version.appModules.map(appModuleVersion),
       ...result.app.activeRelease,
@@ -687,9 +687,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async generateSignedUploadUrl({organizationId}: MinimalAppIdentifiers): Promise<AssetUrlSchema> {
-    const variables = {sourceExtension: 'BR' as SourceExtension}
+    const variables = {sourceExtension: 'BR' as SourceExtension, organizationId}
     const result = await this.appManagementRequest({
-      organizationId,
       query: CreateAssetUrl,
       variables,
       cacheOptions: {cacheTTL: {minutes: 59}},
@@ -746,7 +745,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
 
     const result = await this.appManagementRequest({
-      organizationId,
       query: CreateAppVersion,
       variables,
       requestOptions: {requestMode: 'slow-request'},
@@ -779,7 +777,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const releaseVariables = {appId, versionId: version.id}
     const releaseResult = await this.appManagementRequest({
-      organizationId,
       query: ReleaseVersion,
       variables: releaseVariables,
     })
@@ -801,7 +798,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }): Promise<AppReleaseSchema> {
     const releaseVariables = {appId, versionId}
     const releaseResult = await this.appManagementRequest({
-      organizationId,
       query: ReleaseVersion,
       variables: releaseVariables,
     })
@@ -964,7 +960,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     organizationId: string,
   ): Promise<string | null> {
     try {
-      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const {app} = await this.activeAppVersionRawResult(apiKey)
       const appIdNumber = String(numberFromGid(app.id))
       const result = await this.functionsRequest({
         organizationId,
@@ -988,7 +984,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     organizationId: string,
   ): Promise<string | null> {
     try {
-      const {app} = await this.activeAppVersionRawResult({apiKey, organizationId})
+      const {app} = await this.activeAppVersionRawResult(apiKey)
       const appIdNumber = String(numberFromGid(app.id))
       const result = await this.functionsRequest({
         organizationId,
@@ -1054,8 +1050,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     ]
   }
 
-  private async activeAppVersionRawResult({organizationId, apiKey}: AppApiKeyAndOrgId): Promise<ActiveAppReleaseQuery> {
-    return this.appManagementRequest({organizationId, query: ActiveAppReleaseFromApiKey, variables: {apiKey}})
+  private async activeAppVersionRawResult(apiKey: string): Promise<ActiveAppReleaseQuery> {
+    return this.appManagementRequest({query: ActiveAppReleaseFromApiKey, variables: {apiKey}})
   }
 
   private async organizationBetaFlags(
@@ -1165,7 +1161,11 @@ interface AppVersionSourceUrl {
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAppMutationVariables {
+function createAppVars(
+  options: CreateAppOptions,
+  organizationId: string,
+  apiVersion?: string,
+): CreateAppMutationVariables & {organizationId: string} {
   const {isLaunchable, scopesArray, name} = options
   const source: AppVersionSource = {
     source: {
@@ -1200,7 +1200,7 @@ function createAppVars(options: CreateAppOptions, apiVersion?: string): CreateAp
     },
   }
 
-  return {initialVersion: {source: source.source as unknown as JsonMapType}}
+  return {initialVersion: {source: source.source as unknown as JsonMapType}, organizationId}
 }
 
 // Business platform uses base64-encoded GIDs, while App Management uses

@@ -12,6 +12,7 @@ export type ActiveAppReleaseQuery = {
   app: {
     id: string
     key: string
+    organizationId: string
     activeRoot: {clientCredentials: {secrets: {key: string}[]}}
     activeRelease: {
       id: string
@@ -32,6 +33,7 @@ export type ActiveAppReleaseQuery = {
 export type AppVersionInfoFragment = {
   id: string
   key: string
+  organizationId: string
   activeRoot: {clientCredentials: {secrets: {key: string}[]}}
   activeRelease: {
     id: string
@@ -99,6 +101,7 @@ export const AppVersionInfoFragmentDoc = {
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'organizationId'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'activeRoot'},
@@ -257,6 +260,7 @@ export const ActiveAppRelease = {
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'organizationId'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'activeRoot'},

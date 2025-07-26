@@ -1,6 +1,6 @@
 import {InfoOptions, info} from './info.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
-import {AppApiKeyAndOrgId, OrganizationApp, OrganizationSource} from '../models/organization.js'
+import {OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testDeveloperPlatformClient,
@@ -34,7 +34,7 @@ const ORG1 = {
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp> {
+    async appFromIdentifiers(apiKey: string): Promise<OrganizationApp> {
       switch (apiKey) {
         case '123':
           return APP1

@@ -347,10 +347,9 @@ describe('searching for apps', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: orgId,
       query: ListApps,
       token: 'token',
-      variables: {query: queryVariable},
+      variables: {query: queryVariable, organizationId: orgId},
       unauthorizedHandler: {
         type: 'token_refresh',
         handler: expect.any(Function),
@@ -410,10 +409,10 @@ describe('createApp', () => {
       variables: {},
     })
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: org.id,
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: org.id,
         initialVersion: {
           source: {
             name: 'app-name',
@@ -499,10 +498,10 @@ describe('createApp', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: org.id,
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: org.id,
         initialVersion: {
           source: {
             name: 'app-name',
@@ -767,7 +766,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: {
@@ -850,7 +848,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: {
@@ -933,7 +930,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: {
@@ -994,7 +990,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: {
@@ -1048,7 +1043,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: expect.objectContaining({
@@ -1193,7 +1187,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: AppVersions,
       token: 'token',
       variables: expect.objectContaining({appId}),
@@ -1268,12 +1261,12 @@ describe('AppManagementClient', () => {
 
       // Then
       expect(appManagementRequestDoc).toHaveBeenCalledWith({
-        organizationId: app.organizationId,
         query: CreateAssetUrl,
         token: 'token',
-        variables: expect.objectContaining({
+        variables: {
           sourceExtension: 'BR' as SourceExtension,
-        }),
+          organizationId: app.organizationId,
+        },
         unauthorizedHandler: {
           handler: expect.any(Function),
           type: 'token_refresh',
