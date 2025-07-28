@@ -47,7 +47,7 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command, developerPlatformClient}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
@@ -71,7 +71,10 @@ export async function updateAppIdentifiers(
   })
 
   const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
-  const writeToFile = !contentIsEqual && (command === 'deploy' || command === 'release')
+  const writeToFile =
+    !contentIsEqual &&
+    (command === 'deploy' || command === 'release') &&
+    !developerPlatformClient.supportsAtomicDeployments
   dotenvFile.variables = updatedVariables
 
   if (writeToFile) {
@@ -95,7 +98,6 @@ interface GetAppIdentifiersOptions {
  */
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
-  developerPlatformClient: DeveloperPlatformClient,
   systemEnvironment = process.env,
 ): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
@@ -107,9 +109,6 @@ export function getAppIdentifiers(
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
-    }
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      extensionsIdentifiers[extension.localIdentifier] = extension.uid
     }
   }
   app.allExtensions.forEach(processExtension)

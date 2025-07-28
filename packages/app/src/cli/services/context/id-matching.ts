@@ -22,7 +22,9 @@ interface MatchResult {
  * Filter function to match a local and a remote source by type and handle
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.handle)
+  return (
+    remote.type.toLowerCase() === local.graphQLType.toLowerCase() && slugify(remote.title) === slugify(local.handle)
+  )
 }
 
 /**
@@ -67,9 +69,10 @@ function matchByNameAndType(
 /**
  * Automatically match local and remote sources if they have the same UID
  */
-function matchByUUID(
+function matchByUIDandUUID(
   local: LocalSource[],
   remote: RemoteSource[],
+  ids: IdentifiersExtensions,
 ): {
   matched: IdentifiersExtensions
   toCreate: LocalSource[]
@@ -77,16 +80,31 @@ function matchByUUID(
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
   const matched: IdentifiersExtensions = {}
+  const pendingLocal: LocalSource[] = []
 
+  // First, try to match by UID, then by UUID.
   local.forEach((localSource) => {
-    const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
+    const matchByUID = remote.find((remoteSource) => remoteSource.id === localSource.uid)
+    const matchByUUID = remote.find((remoteSource) => remoteSource.uuid === ids[localSource.localIdentifier])
+
+    if (matchByUID) {
+      matched[localSource.localIdentifier] = matchByUID.id
+    } else if (matchByUUID) {
+      matched[localSource.localIdentifier] = matchByUUID.uuid
+    } else {
+      pendingLocal.push(localSource)
+    }
   })
 
-  const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
+  const pendingRemote = remote.filter(
+    (remoteSource) =>
+      !Object.values(matched).includes(remoteSource.uuid) && !Object.values(matched).includes(remoteSource.id),
+  )
 
-  return {matched, toCreate, toConfirm: [], toManualMatch: {local: [], remote: []}}
+  // Then, try to match by name and type as a last resort.
+  const {matched: matchedByName, toCreate, toConfirm, toManualMatch} = matchByNameAndType(pendingLocal, pendingRemote)
+
+  return {matched: {...matched, ...matchedByName}, toCreate, toConfirm, toManualMatch}
 }
 
 function migrateLegacyFunctions(
@@ -225,7 +243,7 @@ export async function automaticMatchmaking(
   const {local, remote} = pendingAfterMigratingFunctions
 
   const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
-    ? matchByUUID(local, remote)
+    ? matchByUIDandUUID(localSources, remoteSources, ids)
     : matchByNameAndType(local, remote)
 
   return {

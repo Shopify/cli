@@ -68,7 +68,7 @@ describe('bundleAndBuildExtensions', () => {
 
       // Then
       expect(extensionBundleMock).toHaveBeenCalledTimes(2)
-      expect(bundle.writeManifestToBundle).toHaveBeenCalledWith(app, bundleDirectory)
+      expect(bundle.writeManifestToBundle).toHaveBeenCalledWith(app, bundleDirectory, identifiers)
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
