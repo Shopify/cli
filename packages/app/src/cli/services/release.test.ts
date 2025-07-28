@@ -165,6 +165,7 @@ function buildExtensionsBreakdown() {
       toCreate: [],
       toUpdate: [],
       fromDashboard: [],
+      unchanged: [],
     },
     versionDetails: {
       id: 1,
