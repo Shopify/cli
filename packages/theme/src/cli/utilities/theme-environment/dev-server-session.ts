@@ -84,14 +84,15 @@ export async function fetchDevServerSession(
 }
 
 export async function getStorefrontSessionCookiesWithVerification(
-  storeUrl: string,
+  baseUrl: string,
   themeId: string,
   adminSession: AdminSession,
   storefrontToken: string,
   storefrontPassword?: string,
 ): Promise<{[key: string]: string}> {
   try {
-    return await getStorefrontSessionCookies(storeUrl, themeId, storefrontPassword, {
+    const storeUrl = `https://${adminSession.storeFqdn}`
+    return await getStorefrontSessionCookies(baseUrl, storeUrl, themeId, storefrontPassword, {
       'X-Shopify-Shop': adminSession.storeFqdn,
       'X-Shopify-Access-Token': adminSession.token,
       Authorization: `Bearer ${storefrontToken}`,
