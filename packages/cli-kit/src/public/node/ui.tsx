@@ -635,3 +635,5 @@ This usually happens when running a command non-interactively, for example in a 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
 export {Token, Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}
+export {createRightAlignedText, clearLines} from './terminal-layout.js'
+export {createColoredProgressBar, createIndeterminateProgressBar, createAnimatedDots} from './progress-indicators.js'
