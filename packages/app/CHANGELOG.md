@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.83.1
+
+### Patch Changes
+
+- 4fb444a: Fix validation to allow compliance webhooks with legacy install flow
+  - @shopify/cli-kit@3.83.1
+  - @shopify/theme@3.83.1
+  - @shopify/plugin-cloudflare@3.83.1
+
 ## 3.83.0
 
 ### Minor Changes
