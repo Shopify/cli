@@ -359,6 +359,118 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
     // When/Then
     await expect(app.preDeployValidation()).resolves.not.toThrow()
   })
+
+  test('does not throw an error when only compliance webhooks are used with legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            compliance_topics: ['customers/data_request', 'customers/redact', 'shop/redact'],
+            uri: '/webhooks',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('throws an error when both app-specific and compliance webhooks are used with legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            topics: ['orders/create'],
+            uri: '/webhooks/orders',
+          },
+          {
+            compliance_topics: ['customers/redact'],
+            uri: '/webhooks/compliance',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).rejects.toThrow(
+      new AbortError(
+        'App-specific webhook subscriptions are not supported when use_legacy_install_flow is enabled.',
+        `To use app-specific webhooks, you need to:
+1. Remove 'use_legacy_install_flow = true' from your configuration
+2. Run 'shopify app deploy' to sync your scopes with the Partner Dashboard
+
+Alternatively, continue using shop-specific webhooks with the legacy install flow.
+
+Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
+      ),
+    )
+  })
+
+  test('does not throw an error for subscription with empty topics array and legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            topics: [],
+            uri: '/webhooks',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('does not throw an error for subscription with only compliance_topics and no topics field', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            // Only compliance_topics, no topics field at all
+            compliance_topics: ['customers/data_request'],
+            uri: '/webhooks/gdpr',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
 })
 
 describe('validateFunctionExtensionsWithUiHandle', () => {

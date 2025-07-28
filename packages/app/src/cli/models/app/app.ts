@@ -582,7 +582,10 @@ export class App<
   private validateWebhookLegacyFlowCompatibility(): void {
     if (!isCurrentAppSchema(this.configuration)) return
 
-    const hasAppSpecificWebhooks = (this.configuration.webhooks?.subscriptions?.length ?? 0) > 0
+    const hasAppSpecificWebhooks =
+      this.configuration.webhooks?.subscriptions?.some(
+        (subscription) => subscription.topics && subscription.topics.length > 0,
+      ) ?? false
     const usesLegacyInstallFlow = this.configuration.access_scopes?.use_legacy_install_flow === true
 
     if (hasAppSpecificWebhooks && usesLegacyInstallFlow) {
