@@ -564,6 +564,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
     const configurationRegistrations: ExtensionRegistration[] = []
     const extensionRegistrations: ExtensionRegistration[] = []
+    const dashboardManagedExtensionRegistrations: ExtensionRegistration[] = []
     app.appModuleVersions.forEach((mod) => {
       const registration = {
         id: mod.registrationId,
@@ -575,11 +576,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
         configurationRegistrations.push(registration)
       } else {
         extensionRegistrations.push(registration)
+        if (mod.specification?.options?.managementExperience === 'dashboard') {
+          dashboardManagedExtensionRegistrations.push(registration)
+        }
       }
     })
     return {
       app: {
-        dashboardManagedExtensionRegistrations: [],
+        dashboardManagedExtensionRegistrations,
         configurationRegistrations,
         extensionRegistrations,
       },
@@ -1314,7 +1318,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
     specification: {
       ...mod.specification,
       identifier: mod.specification.identifier,
-      options: {managementExperience: 'cli'},
+      options: {managementExperience: mod.specification.managementExperience as 'cli' | 'custom' | 'dashboard'},
       experience: experience(mod.specification.identifier),
     },
   }

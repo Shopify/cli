@@ -22,7 +22,7 @@ export type ActiveAppReleaseFromApiKeyQuery = {
           userIdentifier: string
           handle: string
           config: JsonMapType
-          specification: {identifier: string; externalIdentifier: string; name: string}
+          specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
         }[]
       }
     }
@@ -88,6 +88,7 @@ export const ActiveAppReleaseFromApiKey = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
