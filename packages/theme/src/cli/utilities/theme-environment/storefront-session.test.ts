@@ -62,8 +62,11 @@ describe('Storefront API', () => {
         )
         .mockResolvedValueOnce(
           response({
-            status: 200,
-            headers: {'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly'},
+            status: 302,
+            headers: {
+              'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
+              location: 'https://example-store.myshopify.com/',
+            },
           }),
         )
 
@@ -204,7 +207,7 @@ describe('Storefront API', () => {
 
       // Then
       expect(cookies).toEqual({
-        _shopify_essential: originalEssential,
+        _shopify_essential: authenticatedEssential,
       })
     })
 
@@ -237,7 +240,7 @@ describe('Storefront API', () => {
       })
     })
 
-    test('throws error when password is correct but _shopify_essential does not change (invalid state)', async () => {
+    test('throws error when pasword page does not return a 302', async () => {
       // Given: password redirects correctly but _shopify_essential doesn't change (shouldn't happen)
       const sameEssential = ':AABBCCDDEEFFGGHH==123:'
 
@@ -250,11 +253,7 @@ describe('Storefront API', () => {
         )
         .mockResolvedValueOnce(
           response({
-            status: 302,
-            headers: {
-              'set-cookie': `_shopify_essential=${sameEssential}; path=/; HttpOnly`,
-              location: 'https://example-store.myshopify.com/',
-            },
+            status: 200,
           }),
         )
 
