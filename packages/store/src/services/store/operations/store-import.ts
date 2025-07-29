@@ -1,32 +1,28 @@
+import {BaseStoreOperation} from './base-store-operation.js'
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
-import {ApiClient} from '../api/api-client.js'
-import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {ValidationError, ErrorCodes} from '../errors/errors.js'
 import {ApiClientInterface} from '../types/api-client.js'
-import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderImportResult} from '../../../prompts/import_result.js'
 import {confirmImportPrompt} from '../../../prompts/confirm_import.js'
+import {renderImportProgress} from '../utils/bulk-operation-progress.js'
+import {clearLines} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-export class StoreImportOperation implements StoreOperation {
+export class StoreImportOperation extends BaseStoreOperation implements StoreOperation {
   fromArg: string | undefined
   toArg: string | undefined
-  private readonly apiClient: ApiClientInterface
   private fileUploader: FileUploader | MockFileUploader
-  private readonly bpSession: string
 
   constructor(bpSession: string, apiClient?: ApiClientInterface) {
-    this.apiClient = apiClient ?? new ApiClient()
+    super(bpSession, apiClient)
     this.fileUploader = new FileUploader()
-    this.bpSession = bpSession
   }
 
   async execute(fromFile: string, toStore: string, flags: FlagOptions): Promise<void> {
@@ -39,32 +35,46 @@ export class StoreImportOperation implements StoreOperation {
 
     await this.validateInputFile(fromFile)
 
-    const targetShopDomain = await normalizeStoreFqdn(toStore)
-    const apiShopId = await this.validateShop(targetShopDomain)
+    const {domain: targetShopDomain, id: apiShopId} = await this.normalizeAndValidateShop(toStore)
 
     if (!flags['no-prompt']) {
       if (!(await confirmImportPrompt(fromFile, targetShopDomain))) {
         outputInfo('Exiting.')
-        process.exit(0)
+        return
       }
     }
 
     renderCopyInfo('Import Operation', fromFile, targetShopDomain)
 
-    const importOperation = await this.importDataWithProgress(
+    outputInfo('Uploading SQLite file...')
+    const importUrl = await this.fileUploader.uploadSqliteFile(fromFile, targetShopDomain)
+    clearLines(1)
+
+    const importOperation = await this.executeWithProgress(
+      () => this.startImportOperation(apiShopId, targetShopDomain, importUrl, flags),
       apiShopId,
-      targetShopDomain,
+      'import',
+      (_source, target) => `Starting import operation to ${target}...`,
+      (status, completedCount) => {
+        if (status === 'failed') return 'Import operation failed.'
+        return `Import completed successfully! ${completedCount} items processed.`
+      },
+      this.renderProgress,
       fromFile,
-      this.bpSession,
-      flags,
+      targetShopDomain,
     )
 
-    const status = importOperation.organization.bulkData.operation.status
-    if (status === 'FAILED') {
-      throw new OperationError('import', ErrorCodes.IMPORT_FAILED)
-    }
-
     renderImportResult(fromFile, targetShopDomain, importOperation)
+  }
+
+  protected getFailureErrorCode() {
+    return ErrorCodes.IMPORT_FAILED
+  }
+
+  private readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
+    const storeOps = operation.organization.bulkData.operation.storeOperations
+    const firstOp = storeOps?.[0]
+    return renderImportProgress(firstOp?.completedObjectCount ?? 0, firstOp?.totalObjectCount ?? 0, dotCount)
   }
 
   private async validateInputFile(filePath: string): Promise<void> {
@@ -73,13 +83,7 @@ export class StoreImportOperation implements StoreOperation {
     }
   }
 
-  private async validateShop(targetShopDomain: string): Promise<string> {
-    const targetShop = await this.apiClient.getStoreDetails(targetShopDomain)
-    return targetShop.id
-  }
-
   private async startImportOperation(
-    bpSession: string,
     apiShopId: string,
     targetShopDomain: string,
     importUrl: string,
@@ -90,70 +94,15 @@ export class StoreImportOperation implements StoreOperation {
       targetShopDomain,
       importUrl,
       parseResourceConfigFlags(flags.key as string[]),
-      bpSession,
+      this.bpSession,
     )
 
     if (!importResponse.bulkDataStoreImportStart.success) {
-      const errors = importResponse.bulkDataStoreImportStart.userErrors.map((error) => error.message).join(', ')
-      throw new OperationError('import', ErrorCodes.BULK_OPERATION_FAILED, {
-        errors,
-        operationType: 'import',
-      })
+      const errors = importResponse.bulkDataStoreImportStart.userErrors.map((error) => error.message)
+      this.handleOperationError('import', errors)
     }
 
     const operationId = importResponse.bulkDataStoreImportStart.operation.id
-    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
-  }
-
-  private async importDataWithProgress(
-    apiShopId: string,
-    targetShopDomain: string,
-    filePath: string,
-    bpSession: string,
-    flags: FlagOptions,
-  ): Promise<BulkDataOperationByIdResponse> {
-    interface ImportContext extends BulkOperationContext {
-      targetShopDomain: string
-      importUrl: string
-      flags: FlagOptions
-    }
-
-    const taskGenerator = new BulkOperationTaskGenerator({
-      operationName: 'import',
-    })
-
-    const bulkTasks = taskGenerator.generateTasks<ImportContext>({
-      startOperation: async (ctx: ImportContext) => {
-        return this.startImportOperation(ctx.bpSession, ctx.apiShopId, ctx.targetShopDomain, ctx.importUrl, ctx.flags)
-      },
-      pollOperation: async (ctx: ImportContext) => {
-        const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
-      },
-    })
-
-    // Create all tasks including upload
-    const allTasks: Task<ImportContext>[] = [
-      {
-        title: 'initializing',
-        task: async (ctx: ImportContext) => {
-          ctx.apiShopId = apiShopId
-          ctx.bpSession = bpSession
-          ctx.targetShopDomain = targetShopDomain
-          ctx.flags = flags
-          ctx.isComplete = false
-        },
-      },
-      {
-        title: `uploading SQLite file`,
-        task: async (ctx: ImportContext) => {
-          ctx.importUrl = await this.fileUploader.uploadSqliteFile(filePath, targetShopDomain)
-        },
-      },
-      ...bulkTasks,
-    ]
-
-    const ctx: ImportContext = await renderTasks(allTasks)
-    return ctx.operation
+    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, this.bpSession)
   }
 }
