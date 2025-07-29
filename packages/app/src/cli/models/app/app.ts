@@ -169,7 +169,7 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   const {path, ...rest} = item
-  return isType(AppSchema.nonstrict(), rest)
+  return isType(AppSchema.passthrough(), rest)
 }
 
 /**

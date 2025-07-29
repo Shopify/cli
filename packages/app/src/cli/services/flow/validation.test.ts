@@ -68,17 +68,9 @@ describe('validateFieldShape', () => {
 
     // then
     expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['key'],
-          message: `'key' property must be a string for 'field[0]' ${JSON.stringify(
-            invalidField,
-          )} of flow extension 'handle'`,
-        },
-      ]),
+      `'key' property must be a string for 'field[0]' ${JSON.stringify(
+        invalidField,
+      )} of flow extension 'handle'`
     )
   })
 
@@ -94,17 +86,9 @@ describe('validateFieldShape', () => {
 
     // then
     expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['name'],
-          message: `'name' property must be a string for 'field[0]' ${JSON.stringify(
-            invalidField,
-          )} of flow extension 'handle'`,
-        },
-      ]),
+      `'name' property must be a string for 'field[0]' ${JSON.stringify(
+        invalidField,
+      )} of flow extension 'handle'`
     )
   })
 
@@ -119,14 +103,7 @@ describe('validateFieldShape', () => {
 
     // then
     expect(() => validateFieldShape(invalidField, 'flow_trigger', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          validation: 'regex',
-          code: 'invalid_string',
-          message: 'String must contain only alphabetic characters and spaces',
-          path: ['key'],
-        },
-      ]),
+      'String must contain only alphabetic characters and spaces'
     )
   })
 
@@ -140,14 +117,7 @@ describe('validateFieldShape', () => {
 
     // then
     expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.unrecognized_keys,
-          keys: ['key'],
-          path: [],
-          message: "Unrecognized key(s) in object: 'key'",
-        },
-      ]),
+      "Unrecognized key(s) in object: 'key'"
     )
   })
 
@@ -162,14 +132,7 @@ describe('validateFieldShape', () => {
 
     // then
     expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.unrecognized_keys,
-          keys: ['name'],
-          path: [],
-          message: "Unrecognized key(s) in object: 'name'",
-        },
-      ]),
+      "Unrecognized key(s) in object: 'name'"
     )
   })
 })
@@ -193,13 +156,7 @@ describe('validateCustomConfigurationPageConfig', () => {
     expect(() =>
       validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
     ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].config_page_url'],
-          message: 'To set a custom configuration page a `config_page_url` must be specified.',
-        },
-      ]),
+      'To set a custom configuration page a `config_page_url` must be specified.'
     )
   })
 
@@ -213,13 +170,7 @@ describe('validateCustomConfigurationPageConfig', () => {
     expect(() =>
       validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
     ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].config_page_preview_url'],
-          message: 'To set a custom configuration page a `config_page_preview_url` must be specified.',
-        },
-      ]),
+      'To set a custom configuration page a `config_page_preview_url` must be specified.'
     )
   })
 
@@ -233,13 +184,7 @@ describe('validateCustomConfigurationPageConfig', () => {
     expect(() =>
       validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl),
     ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].validation_url'],
-          message: 'To set a custom configuration page a `validation_url` must be specified.',
-        },
-      ]),
+      'To set a custom configuration page a `validation_url` must be specified.'
     )
   })
 
@@ -266,28 +211,16 @@ describe('validateReturnTypeConfig', () => {
   test('should throw ZodError when returnTypeRef is missing', () => {
     expect(() => {
       validateReturnTypeConfig(undefined, 'schemaValue')
-    }).toThrow(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].return_type_ref'],
-          message: 'When uploading a schema a `return_type_ref` must be specified.',
-        },
-      ]),
+    }).toThrowError(
+      'When uploading a schema a `return_type_ref` must be specified.'
     )
   })
 
   test('should throw ZodError when schema is missing', () => {
     expect(() => {
       validateReturnTypeConfig('returnTypeRefValue', undefined)
-    }).toThrow(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].schema'],
-          message: 'To set a return type a `schema` must be specified.',
-        },
-      ]),
+    }).toThrowError(
+      'To set a return type a `schema` must be specified.'
     )
   })
 

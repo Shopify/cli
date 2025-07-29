@@ -191,7 +191,7 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
 
     return {
       path,
-      message: error.message,
+      message: error.message || 'Validation error',
     }
   })
 }

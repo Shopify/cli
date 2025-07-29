@@ -256,7 +256,7 @@ describe('jsonSchemaValidate', () => {
       return
     }
 
-    const zodErrors = zodParsed.error.errors.map((error) => ({path: error.path, message: error.message}))
+    const zodErrors = zodParsed.error.issues.map((error) => ({path: error.path, message: error.message}))
 
     const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
     expect(schemaParsed.state).toBe('error')

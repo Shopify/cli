@@ -4,11 +4,9 @@ import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/
 import {zod} from '@shopify/cli-kit/node/schema'
 
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
-  const errorMessage = `'${property}' property must be a string for 'field[${index}]' ${JSON.stringify(
+  return `'${property}' property must be a string for 'field[${index}]' ${JSON.stringify(
     configField,
   )} of flow extension '${handle}'`
-
-  return {required_error: errorMessage, invalid_type_error: errorMessage}
 }
 
 const baseFieldSchema = zod
@@ -28,29 +26,69 @@ export const validateFieldShape = (
 
   if (!isCommerceObjectField) {
     if (type === 'flow_action') {
-      return baseFieldSchema
-        .extend({
-          key: zod.string(fieldValidationErrorMessage('key', configField, extensionHandle, index)),
-          name: zod.string(fieldValidationErrorMessage('name', configField, extensionHandle, index)),
-          required: zod.boolean().optional(),
-        })
-        .parse(configField)
+      try {
+        return baseFieldSchema
+          .extend({
+            key: zod.string(),
+            name: zod.string(),
+            required: zod.boolean().optional(),
+          })
+          .parse(configField)
+      } catch (error) {
+        if (error instanceof zod.ZodError) {
+          const issue = error.issues[0]
+          if (issue.path[0] === 'key' && issue.code === 'invalid_type') {
+            throw new Error(fieldValidationErrorMessage('key', configField, extensionHandle, index))
+          }
+          if (issue.path[0] === 'name' && issue.code === 'invalid_type') {
+            throw new Error(fieldValidationErrorMessage('name', configField, extensionHandle, index))
+          }
+          throw new Error(issue.message)
+        }
+        throw error
+      }
     } else {
-      return FlowTriggerSettingsSchema.parse(configField)
+      try {
+        return FlowTriggerSettingsSchema.parse(configField)
+      } catch (error) {
+        if (error instanceof zod.ZodError) {
+          throw new Error(error.issues[0].message)
+        }
+        throw error
+      }
     }
   }
 
   if (isCommerceObjectField) {
-    return baseFieldSchema
-      .extend({
-        required: zod.boolean().optional(),
-        marketingActivityCreateUrl: zod.string().optional(),
-        marketingActivityDeleteUrl: zod.string().optional(),
-      })
-      .parse(configField)
+    try {
+      return baseFieldSchema
+        .extend({
+          required: zod.boolean().optional(),
+          marketingActivityCreateUrl: zod.string().optional(),
+          marketingActivityDeleteUrl: zod.string().optional(),
+        })
+        .parse(configField)
+    } catch (error) {
+      if (error instanceof zod.ZodError) {
+        const issue = error.issues[0]
+        if (issue.code === 'unrecognized_keys') {
+          const keys = (issue as any).keys || []
+          throw new Error(`Unrecognized key(s) in object: '${keys.join("', '")}'`)
+        }
+        throw new Error(issue.message)
+      }
+      throw error
+    }
   }
 
-  return baseFieldSchema.parse(configField)
+  try {
+    return baseFieldSchema.parse(configField)
+  } catch (error) {
+    if (error instanceof zod.ZodError) {
+      throw new Error(error.issues[0].message)
+    }
+    throw error
+  }
 }
 
 export const startsWithHttps = (url: string) => url.startsWith('https://')
@@ -64,33 +102,15 @@ export const validateCustomConfigurationPageConfig = (
 ) => {
   if (configPageUrl || configPagePreviewUrl) {
     if (!configPageUrl) {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].config_page_url'],
-          message: 'To set a custom configuration page a `config_page_url` must be specified.',
-        },
-      ])
+      throw new Error('To set a custom configuration page a `config_page_url` must be specified.')
     }
 
     if (!configPagePreviewUrl) {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].config_page_preview_url'],
-          message: 'To set a custom configuration page a `config_page_preview_url` must be specified.',
-        },
-      ])
+      throw new Error('To set a custom configuration page a `config_page_preview_url` must be specified.')
     }
 
     if (!validationUrl) {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].validation_url'],
-          message: 'To set a custom configuration page a `validation_url` must be specified.',
-        },
-      ])
+      throw new Error('To set a custom configuration page a `validation_url` must be specified.')
     }
   }
 
@@ -99,13 +119,7 @@ export const validateCustomConfigurationPageConfig = (
 
 export const validateTriggerSchemaPresence = (fields: ConfigField[], schema?: string) => {
   if (fields.some((field) => isSchemaTypeReference(field.type)) && !schema) {
-    throw new zod.ZodError([
-      {
-        code: zod.ZodIssueCode.custom,
-        path: ['extensions[0].schema'],
-        message: 'To reference schema types a `schema` must be specified.',
-      },
-    ])
+    throw new Error('To reference schema types a `schema` must be specified.')
   }
 
   return true
@@ -114,23 +128,11 @@ export const validateTriggerSchemaPresence = (fields: ConfigField[], schema?: st
 export const validateReturnTypeConfig = (returnTypeRef?: string, schema?: string) => {
   if (returnTypeRef || schema) {
     if (!returnTypeRef) {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].return_type_ref'],
-          message: 'When uploading a schema a `return_type_ref` must be specified.',
-        },
-      ])
+      throw new Error('When uploading a schema a `return_type_ref` must be specified.')
     }
 
     if (!schema) {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['extensions[0].schema'],
-          message: 'To set a return type a `schema` must be specified.',
-        },
-      ])
+      throw new Error('To set a return type a `schema` must be specified.')
     }
   }
 
