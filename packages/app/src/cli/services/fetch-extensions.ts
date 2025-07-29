@@ -26,9 +26,7 @@ export async function getExtensions({
 
   return extensionsToFilter.filter((ext) => {
     const isNeededExtensionType = extensionTypes.includes(ext.type.toLowerCase())
-    const hasActiveVersion = developerPlatformClient.supportsDashboardManagedExtensions
-      ? ext.activeVersion && ext.activeVersion.config
-      : true
+    const hasActiveVersion = ext.activeVersion && ext.activeVersion.config
     const hasDraftVersion = ext.draftVersion && ext.draftVersion.config
     return isNeededExtensionType && (hasActiveVersion ?? hasDraftVersion)
   })
