@@ -46,16 +46,17 @@ const flowActionSpecification = createExtensionSpecification({
   // Should be removed after unified deployment is 100% rolled out
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, extensionPath) => {
+    const typedConfig = config as zod.infer<typeof FlowActionExtensionSchema>
     return {
-      title: config.name,
-      description: config.description,
-      url: config.runtime_url,
-      fields: serializeFields('flow_action', config.settings?.fields),
-      validation_url: config.validation_url,
-      custom_configuration_page_url: config.config_page_url,
-      custom_configuration_page_preview_url: config.config_page_preview_url,
-      schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
-      return_type_ref: config.return_type_ref,
+      title: typedConfig.name,
+      description: typedConfig.description,
+      url: typedConfig.runtime_url,
+      fields: serializeFields('flow_action', typedConfig.settings?.fields),
+      validation_url: typedConfig.validation_url,
+      custom_configuration_page_url: typedConfig.config_page_url,
+      custom_configuration_page_preview_url: typedConfig.config_page_preview_url,
+      schema_patch: await loadSchemaFromPath(extensionPath, typedConfig.schema),
+      return_type_ref: typedConfig.return_type_ref,
     }
   },
 })

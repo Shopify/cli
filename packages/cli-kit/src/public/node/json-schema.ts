@@ -2,7 +2,6 @@
 import {ParseConfigurationResult} from './schema.js'
 import {randomUUID} from './crypto.js'
 import {getPathValue} from '../common/object.js'
-import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject, ValidateFunction} from 'ajv'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
 import cloneDeep from 'lodash/cloneDeep.js'
@@ -105,6 +104,26 @@ export function jsonSchemaValidate(
 }
 
 /**
+ * Get the schema definition at a specific path.
+ *
+ * @param schema - The root schema.
+ * @param path - The path to traverse.
+ * @returns The schema at that path or undefined.
+ */
+function getSchemaAtPath(schema: SchemaObject, path: string[]): SchemaObject | undefined {
+  let current: SchemaObject | undefined = schema
+
+  for (const segment of path) {
+    if (!current || !current.properties) {
+      return undefined
+    }
+    current = current.properties[segment] as SchemaObject | undefined
+  }
+
+  return current
+}
+
+/**
  * Converts errors from Ajv into a zod-like format.
  *
  * @param rawErrors - JSON Schema errors taken directly from Ajv.
@@ -121,15 +140,29 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
     const path: string[] = error.instancePath.split('/').slice(1)
     if (error.params.missingProperty) {
       const missingProperty = error.params.missingProperty as string
-      return {path: [...path, missingProperty], message: 'Required'}
+      // Get the expected type from the schema
+      const propertySchema = getSchemaAtPath(schema, [...path, missingProperty])
+      const expectedType = propertySchema?.type || 'unknown'
+
+      // Zod 4 uses "Invalid input: expected X, received undefined" for required fields
+      return {path: [...path, missingProperty], message: `Invalid input: expected ${expectedType}, received undefined`}
     }
 
     if (error.params.type) {
       const expectedType = Array.isArray(error.params.type)
         ? error.params.type.join(', ')
         : (error.params.type as string)
-      const actualType = getPathValue(subject, path.join('.'))
-      return {path, message: `Expected ${expectedType}, received ${typeof actualType}`}
+      const actualValue = getPathValue(subject, path.join('.'))
+      let actualType: string
+      if (actualValue === null) {
+        actualType = 'null'
+      } else if (Array.isArray(actualValue)) {
+        actualType = 'array'
+      } else {
+        actualType = typeof actualValue
+      }
+      // Zod 4 uses "Invalid input: expected X, received Y" for type mismatches
+      return {path, message: `Invalid input: expected ${expectedType}, received ${actualType}`}
     }
 
     if (error.keyword === 'anyOf' || error.keyword === 'oneOf') {
@@ -138,39 +171,50 @@ function convertJsonSchemaErrors(rawErrors: AjvError[], subject: object, schema:
 
     if (error.params.allowedValues) {
       const allowedValues = error.params.allowedValues as string[]
-      const actualValue = getPathValue(subject, path.join('.'))
+      // Zod 4 uses different format for enum errors
       return {
         path,
-        message: `Invalid enum value. Expected ${allowedValues
-          .map((value) => JSON.stringify(value))
-          .join(' | ')}, received ${JSON.stringify(actualValue)}`.replace(/"/g, "'"),
+        message: `Invalid option: expected one of ${allowedValues.map((value) => `"${value}"`).join('|')}`,
+      }
+    }
+
+    if (error.keyword === 'maximum') {
+      const limit = error.params.limit
+      // Zod 4 uses "Too big: expected number to be <=X" format
+      return {
+        path,
+        message: `Too big: expected number to be <=${limit}`,
+      }
+    }
+
+    if (error.keyword === 'minimum') {
+      const limit = error.params.limit
+      return {
+        path,
+        message: `Number must be greater than or equal to ${limit}`,
       }
     }
 
     if (error.params.comparison) {
       const comparison = error.params.comparison as string
       const limit = error.params.limit
-      const actualValue = getPathValue(subject, path.join('.'))
 
+      // Zod 4 uses these exact comparison texts
       let comparisonText = comparison
-      switch (comparison) {
-        case '<=':
-          comparisonText = 'less than or equal to'
-          break
-        case '<':
-          comparisonText = 'less than'
-          break
-        case '>=':
-          comparisonText = 'greater than or equal to'
-          break
-        case '>':
-          comparisonText = 'greater than'
-          break
+      if (comparison === '<=') {
+        comparisonText = 'less than or equal to'
+      } else if (comparison === '<') {
+        comparisonText = 'less than'
+      } else if (comparison === '>=') {
+        comparisonText = 'greater than or equal to'
+      } else if (comparison === '>') {
+        comparisonText = 'greater than'
       }
 
+      // Zod 4 always uses "Number must be" for number comparisons
       return {
         path,
-        message: capitalize(`${typeof actualValue} must be ${comparisonText} ${limit}`),
+        message: `Number must be ${comparisonText} ${limit}`,
       }
     }
 

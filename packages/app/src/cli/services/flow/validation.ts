@@ -37,13 +37,13 @@ export const validateFieldShape = (
       } catch (error) {
         if (error instanceof zod.ZodError) {
           const issue = error.issues[0]
-          if (issue.path[0] === 'key' && issue.code === 'invalid_type') {
+          if (issue && issue.path[0] === 'key' && issue.code === 'invalid_type') {
             throw new Error(fieldValidationErrorMessage('key', configField, extensionHandle, index))
           }
-          if (issue.path[0] === 'name' && issue.code === 'invalid_type') {
+          if (issue && issue.path[0] === 'name' && issue.code === 'invalid_type') {
             throw new Error(fieldValidationErrorMessage('name', configField, extensionHandle, index))
           }
-          throw new Error(issue.message)
+          throw new Error(issue?.message || 'Unknown validation error')
         }
         throw error
       }
@@ -52,7 +52,7 @@ export const validateFieldShape = (
         return FlowTriggerSettingsSchema.parse(configField)
       } catch (error) {
         if (error instanceof zod.ZodError) {
-          throw new Error(error.issues[0].message)
+          throw new Error(error.issues[0]?.message || 'Unknown validation error')
         }
         throw error
       }
@@ -71,11 +71,17 @@ export const validateFieldShape = (
     } catch (error) {
       if (error instanceof zod.ZodError) {
         const issue = error.issues[0]
-        if (issue.code === 'unrecognized_keys') {
-          const keys = (issue as any).keys || []
-          throw new Error(`Unrecognized key(s) in object: '${keys.join("', '")}'`)
+        if (issue && issue.code === 'unrecognized_keys') {
+          // In Zod v4, unrecognized_keys issues have a 'keys' property
+          interface UnrecognizedKeysIssue extends zod.ZodIssue {
+            keys: string[]
+          }
+          const unrecognizedIssue = issue as UnrecognizedKeysIssue
+          if (unrecognizedIssue.keys && unrecognizedIssue.keys.length > 0) {
+            throw new Error(`Unrecognized key(s) in object: '${unrecognizedIssue.keys.join("', '")}'`)
+          }
         }
-        throw new Error(issue.message)
+        throw new Error(issue?.message || 'Unknown validation error')
       }
       throw error
     }
@@ -85,7 +91,7 @@ export const validateFieldShape = (
     return baseFieldSchema.parse(configField)
   } catch (error) {
     if (error instanceof zod.ZodError) {
-      throw new Error(error.issues[0].message)
+      throw new Error(error.issues[0]?.message || 'Unknown validation error')
     }
     throw error
   }

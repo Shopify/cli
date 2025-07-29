@@ -30,8 +30,15 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
     verification_session_url: zod.string().url().optional(),
     ui_extension_handle: zod.string().optional(),
     supports_moto: zod.boolean({
-      required_error: 'supports_moto is required',
-      invalid_type_error: 'Value must be Boolean',
+      error: (issue) => {
+        if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+          return 'supports_moto is required'
+        }
+        if (issue.code === 'invalid_type') {
+          return 'Value must be Boolean'
+        }
+        return issue.message
+      },
     }),
     encryption_certificate_fingerprint: zod.string(),
     checkout_payment_method_fields: zod

@@ -15,7 +15,8 @@ const checkoutPostPurchaseSpec = createExtensionSpecification({
   schema: CheckoutPostPurchaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, _) => {
-    return {metafields: config.metafields ?? []}
+    const typedConfig = config as zod.infer<typeof CheckoutPostPurchaseSchema>
+    return {metafields: typedConfig.metafields ?? []}
   },
 })
 

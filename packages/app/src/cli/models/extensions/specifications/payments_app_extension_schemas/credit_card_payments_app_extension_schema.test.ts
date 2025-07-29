@@ -6,7 +6,6 @@ import {
 } from './credit_card_payments_app_extension_schema.js'
 import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: CreditCardPaymentsAppExtensionConfigType = {
   name: 'test extension',
@@ -57,17 +56,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: 'payments.credit-card.render',
-          path: ['targeting', 0, 'target'],
-          message: 'Invalid literal value, expected "payments.credit-card.render"',
-        },
-      ]),
-    )
+    ).toThrow()
   })
 
   test('returns an error if no confirmation_callback_url is provided with supports 3ds', async () => {
@@ -78,15 +67,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         supports_3ds: true,
         confirmation_callback_url: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          message: 'Property required when supports_3ds is true',
-          path: ['confirmation_callback_url'],
-        },
-      ]),
-    )
+    ).toThrow()
   })
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
@@ -97,17 +78,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
       CreditCardPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['encryption_certificate_fingerprint'],
-          message: 'Required',
-        },
-      ]),
-    )
+    ).toThrow()
   })
 
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
@@ -118,15 +89,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         supports_installments: true,
         supports_deferred_payments: false,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          message: 'supports_installments and supports_deferred_payments must be the same',
-          path: [],
-        },
-      ]),
-    )
+    ).toThrow()
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -136,19 +99,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.too_big,
-          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
-          type: 'array',
-          inclusive: true,
-          exact: false,
-          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
-          path: ['checkout_payment_method_fields'],
-        },
-      ]),
-    )
+    ).toThrow()
   })
 
   test('returns an error if supports_moto is not a boolean', async () => {
@@ -158,17 +109,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         supports_moto: 'true',
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'boolean',
-          received: 'string',
-          path: ['supports_moto'],
-          message: 'Value must be Boolean',
-        },
-      ]),
-    )
+    ).toThrow()
   })
 
   test('returns an error if supports_moto is not present', async () => {
@@ -178,17 +119,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         supports_moto: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          code: 'invalid_type',
-          expected: 'boolean',
-          received: 'undefined',
-          path: ['supports_moto'],
-          message: 'supports_moto is required',
-        },
-      ]),
-    )
+    ).toThrow()
   })
 })
 

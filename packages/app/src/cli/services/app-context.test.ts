@@ -98,7 +98,11 @@ describe('linkedAppContext', () => {
           configurationPath: `${tmp}/shopify.app.stg.toml`,
           configSource: 'cached',
           configurationFileName: 'shopify.app.stg.toml',
-          basicConfiguration: {client_id: 'test-api-key', path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml'))},
+          basicConfiguration: {
+            client_id: 'test-api-key',
+            path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
+            extension_directories: undefined,
+          },
         },
         configuration: {
           client_id: 'test-api-key',
@@ -106,6 +110,7 @@ describe('linkedAppContext', () => {
           application_url: 'https://test-app.com',
           path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
           embedded: false,
+          extension_directories: undefined,
         },
       })
 
@@ -202,7 +207,11 @@ describe('linkedAppContext', () => {
           configurationPath: `${tmp}/shopify.app.toml`,
           configSource: 'cached',
           configurationFileName: 'shopify.app.toml',
-          basicConfiguration: {client_id: 'test-api-key', path: normalizePath(joinPath(tmp, 'shopify.app.toml'))},
+          basicConfiguration: {
+            client_id: 'test-api-key',
+            path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+            extension_directories: undefined,
+          },
         },
         configuration: {
           client_id: 'test-api-key',
@@ -210,6 +219,7 @@ describe('linkedAppContext', () => {
           application_url: 'https://test-app.com',
           path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
           embedded: false,
+          extension_directories: undefined,
         },
       })
 

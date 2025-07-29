@@ -116,7 +116,7 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     errorMessage: OutputMessage,
     _fallbackOutput?: unknown,
     _path?: string,
-    rawErrors?: zod.ZodIssueBase[],
+    rawErrors?: zod.ZodIssue[],
   ) => {
     let message = typeof errorMessage === 'string' ? errorMessage : errorMessage.value
     if (rawErrors) message = zodErrorsToString(rawErrors)
@@ -151,7 +151,7 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
   )
 
   const previousConfig = extension.configuration
-  extension.configuration = newConfig
+  extension.configuration = newConfig as unknown
 
   return {
     previousConfig,

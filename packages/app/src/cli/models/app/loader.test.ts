@@ -2761,14 +2761,14 @@ describe('parseConfigurationObject', () => {
         expected: 'object',
         received: 'undefined',
         path: ['auth'],
-        message: 'Required',
+        message: 'Invalid input: expected object, received undefined',
       },
       {
         code: 'invalid_type',
         expected: 'boolean',
         received: 'undefined',
         path: ['embedded'],
-        message: 'Boolean is required',
+        message: 'Invalid input: expected boolean, received undefined',
       },
     ]
     const expectedFormatted = outputContent`\n${outputToken.errorText(
@@ -2795,7 +2795,7 @@ describe('parseConfigurationObject', () => {
         expected: 'string',
         received: 'array',
         path: ['scopes'],
-        message: 'Expected string, received array',
+        message: 'Invalid input: expected string, received array',
       },
     ]
     const expectedFormatted = outputContent`\n${outputToken.errorText(
@@ -2869,7 +2869,7 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message:
         "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
@@ -2897,7 +2897,7 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
     }
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message:
         "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
@@ -3006,7 +3006,7 @@ describe('WebhooksSchema', () => {
     }
     const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3026,7 +3026,7 @@ describe('WebhooksSchema', () => {
     }
     const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3064,7 +3064,7 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message:
         "URI format isn't correct. Valid formats include: relative path starting with a slash, HTTPS URL, pubsub://{project-id}:{topic-id} or Eventbridge ARN",
       path: ['webhooks', 'subscriptions', 0, 'uri'],
@@ -3106,7 +3106,7 @@ describe('WebhooksSchema', () => {
     }
     const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3132,7 +3132,7 @@ describe('WebhooksSchema', () => {
     }
     const webhookFields = colors.dim(`\n\ntopic: products/create\nuri: pubsub://my-project-123:my-topic`)
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3160,7 +3160,7 @@ describe('WebhooksSchema', () => {
       `\n\ntopic: products/create\nuri: arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path`,
     )
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3188,7 +3188,7 @@ describe('WebhooksSchema', () => {
     }
     const webhookFields = colors.dim(`\n\ntopic: products/update\nuri: https://example.com\nfilter: title:shoes`)
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3226,7 +3226,7 @@ describe('WebhooksSchema', () => {
       colors.dim(`\n\ntopic: products/update\nuri: https://example.com\nfilter: title:shoes`) +
       colors.dim(`\n\ntopic: products/create\nuri: https://example.com`)
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `Multiple subscriptions with the exact same topic, uri, and filter. To resolve, remove or edit the duplicates ${webhookFields}`,
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3272,7 +3272,7 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: `The privacy_compliance section can't be used if there are subscriptions including compliance_topics`,
       path: ['webhooks'],
     }
@@ -3291,7 +3291,7 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: 'Either topics or compliance_topics must be added to the webhook subscription',
       path: ['webhooks', 'subscriptions', 0],
     }
@@ -3315,7 +3315,7 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      code: zod.ZodIssueCode.custom,
+      code: 'custom',
       message: 'You can’t have multiple subscriptions with the same compliance topic',
       fatal: true,
       path: ['webhooks', 'subscriptions'],
@@ -3560,6 +3560,7 @@ describe('loadHiddenConfig', () => {
       const configuration = {
         path: joinPath(tmpDir, 'shopify.app.toml'),
         scopes: 'write_products',
+        extension_directories: undefined,
       }
 
       // When
@@ -3576,6 +3577,7 @@ describe('loadHiddenConfig', () => {
       const configuration = {
         path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: '12345',
+        extension_directories: undefined,
       }
       await writeFile(joinPath(tmpDir, '.gitignore'), '')
 
@@ -3598,6 +3600,7 @@ describe('loadHiddenConfig', () => {
       const configuration = {
         path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: '12345',
+        extension_directories: undefined,
       }
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
@@ -3623,6 +3626,7 @@ describe('loadHiddenConfig', () => {
       const configuration = {
         path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: 'not-found',
+        extension_directories: undefined,
       }
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
@@ -3647,6 +3651,7 @@ describe('loadHiddenConfig', () => {
       const configuration = {
         path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: 'not-found',
+        extension_directories: undefined,
       }
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
@@ -3671,6 +3676,7 @@ describe('loadHiddenConfig', () => {
       const configuration = {
         path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: '12345',
+        extension_directories: undefined,
       }
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))

@@ -6,9 +6,32 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const AppProxySchema = BaseSchema.extend({
   app_proxy: zod
     .object({
-      url: validateUrl(zod.string({invalid_type_error: 'Value must be a valid URL'})),
-      subpath: zod.string({invalid_type_error: 'Value must be a string'}),
-      prefix: zod.string({invalid_type_error: 'Value must be a string'}),
+      url: validateUrl(
+        zod.string({
+          error: (issue) => {
+            if (issue.code === 'invalid_type') {
+              return 'Value must be a valid URL'
+            }
+            return issue.message
+          },
+        }),
+      ),
+      subpath: zod.string({
+        error: (issue) => {
+          if (issue.code === 'invalid_type') {
+            return 'Value must be a string'
+          }
+          return issue.message
+        },
+      }),
+      prefix: zod.string({
+        error: (issue) => {
+          if (issue.code === 'invalid_type') {
+            return 'Value must be a string'
+          }
+          return issue.message
+        },
+      }),
     })
     .optional(),
 })
@@ -26,8 +49,9 @@ const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification(
   schema: AppProxySchema,
   transformConfig: AppProxyTransformConfig,
   patchWithAppDevURLs: (config, urls) => {
+    const typedConfig = config as zod.infer<typeof AppProxySchema>
     if (urls.appProxy) {
-      config.app_proxy = {
+      typedConfig.app_proxy = {
         url: urls.appProxy.proxyUrl,
         subpath: urls.appProxy.proxySubPath,
         prefix: urls.appProxy.proxySubPathPrefix,

@@ -33,8 +33,8 @@ const webPixelSpec = createExtensionSpecification({
   appModuleFeatures: (_) => ['bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, _) => {
     return {
-      runtime_context: config.runtime_context,
-      customer_privacy: config.customer_privacy,
+      runtime_context: (config as unknown).runtime_context,
+      customer_privacy: (config as unknown).customer_privacy,
       runtime_configuration_definition: config.settings,
     }
   },
@@ -49,7 +49,7 @@ const webPixelSpec = createExtensionSpecification({
     }
   },
   preDeployValidation: async (extension) => {
-    if (extension.configuration.configuration) {
+    if ((extension.configuration as unknown).configuration) {
       throw new AbortError(
         `The property configuration is deprecated and no longer supported.`,
         `It has been replaced by settings.`,

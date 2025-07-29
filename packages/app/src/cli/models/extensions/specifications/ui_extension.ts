@@ -86,7 +86,7 @@ const uiExtensionSpec = createExtensionSpecification({
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild', 'generates_source_maps']
     const needsCart =
-      config?.extension_points?.find((extensionPoint) => {
+      config?.extension_points?.find((extensionPoint: unknown) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
@@ -104,13 +104,13 @@ const uiExtensionSpec = createExtensionSpecification({
       name: config.name,
       description: config.description,
       settings: config.settings,
-      localization: await loadLocalesConfig(directory, config.type),
+      localization: await loadLocalesConfig(directory, 'ui_extension'),
     }
   },
   getBundleExtensionStdinContent: (config) => {
     const shouldIncludeShopifyExtend = isRemoteDomExtension(config)
     const main = config.extension_points
-      .map(({target, module}, index) => {
+      .map(({target, module}: unknown, index: number) => {
         if (shouldIncludeShopifyExtend) {
           return `import Target_${index} from '${module}';shopify.extend('${target}', (...args) => Target_${index}(...args));`
         }
@@ -119,7 +119,7 @@ const uiExtensionSpec = createExtensionSpecification({
       .join('\n')
 
     const assets: {[key: string]: Asset} = {}
-    config.extension_points.forEach((extensionPoint) => {
+    config.extension_points.forEach((extensionPoint: unknown) => {
       // Start of Selection
       Object.entries(extensionPoint.build_manifest.assets).forEach(([identifier, asset]) => {
         if (identifier === AssetIdentifier.Main) {
@@ -146,7 +146,7 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
-      config.extension_points.find((extensionPoint) => {
+      config.extension_points.find((extensionPoint: unknown) => {
         return extensionPoint.target === requestedTarget
       }) !== undefined
     )
@@ -157,7 +157,7 @@ const uiExtensionSpec = createExtensionSpecification({
     }
 
     const {configuration} = extension
-    for await (const extensionPoint of configuration.extension_points) {
+    for await (const extensionPoint of (configuration as unknown).extension_points || []) {
       const fullPath = joinPath(extension.directory, extensionPoint.module)
       const exists = await fileExists(fullPath)
       if (!exists) continue

@@ -47,18 +47,20 @@ const appAccessSpec = createConfigExtensionSpecification({
   schema: AppAccessSchema,
   transformConfig: AppAccessTransformConfig,
   getDevSessionUpdateMessage: async (config) => {
-    const scopesString = config.access_scopes?.scopes
-      ? config.access_scopes.scopes
+    const typedConfig = config as zod.infer<typeof AppAccessSchema>
+    const scopesString = typedConfig.access_scopes?.scopes
+      ? typedConfig.access_scopes.scopes
           .split(',')
-          .map((scope) => scope.trim())
+          .map((scope: string) => scope.trim())
           .join(', ')
-      : config.access_scopes?.required_scopes?.join(', ')
+      : typedConfig.access_scopes?.required_scopes?.join(', ')
 
     return scopesString ? `Access scopes auto-granted: ${scopesString}` : `App has been installed`
   },
   patchWithAppDevURLs: (config, urls) => {
+    const typedConfig = config as zod.infer<typeof AppAccessSchema>
     if (urls.redirectUrlWhitelist) {
-      config.auth = {redirect_urls: urls.redirectUrlWhitelist}
+      typedConfig.auth = {redirect_urls: urls.redirectUrlWhitelist}
     }
   },
 })

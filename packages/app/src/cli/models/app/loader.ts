@@ -116,17 +116,17 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   decode: (input: string) => JsonMapType = decodeToml,
   preloadedContent?: JsonMapType,
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
-  const fallbackOutput = {} as zod.TypeOf<TSchema>
+  const fallbackOutput = {path: filepath} as zod.TypeOf<TSchema> & {path: string}
 
   const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport, decode))
 
   if (!configurationObject) return fallbackOutput
 
   const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
-  return {...configuration, path: filepath}
+  return {...configuration, path: filepath} as zod.TypeOf<TSchema> & {path: string}
 }
 
-export function parseHumanReadableError(issues: Pick<zod.ZodIssueBase, 'path' | 'message'>[]) {
+export function parseHumanReadableError(issues: Pick<zod.ZodIssue, 'path' | 'message'>[]) {
   let humanReadableError = ''
   issues.forEach((issue) => {
     const path = issue.path ? issue?.path.join('.') : 'n/a'
@@ -162,19 +162,19 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
 /**
  * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
  */
-export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
+export function parseConfigurationObjectAgainstSpecification(
   spec: ExtensionSpecification,
   filepath: string,
   configurationObject: object,
   abortOrReport: AbortOrReport,
-): zod.TypeOf<TSchema> {
+) {
   const parsed = spec.parseConfigurationObject(configurationObject)
   switch (parsed.state) {
     case 'ok': {
       return parsed.data
     }
     case 'error': {
-      const fallbackOutput = {} as zod.TypeOf<TSchema>
+      const fallbackOutput = {}
       return abortOrReport(
         outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
           filepath,
@@ -494,7 +494,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     }
 
     const previousExtension = this.previousApp?.allExtensions.find((extension) => {
-      return extension.handle === configuration.handle
+      return 'handle' in configuration && extension.handle === configuration.handle
     })
 
     const extensionInstance = new ExtensionInstance({
@@ -965,13 +965,15 @@ async function loadAppConfigurationFromState<
     schemaForConfigurationFile = appSchema
   }
 
-  const configuration = (await parseConfigurationFile(
+  const parsedConfiguration = await parseConfigurationFile(
     schemaForConfigurationFile,
     configState.configurationPath,
     abort,
     decodeToml,
     file,
-  )) as LoadedAppConfigFromConfigState<TConfig>
+  )
+  // TypeScript cannot infer the type through the complex schema transformations
+  const configuration = parsedConfiguration as unknown as LoadedAppConfigFromConfigState<TConfig>
   const allClientIdsByConfigName = await getAllLinkedConfigClientIds(configState.appDirectory, {
     [configState.configurationFileName]: configuration.client_id,
   })

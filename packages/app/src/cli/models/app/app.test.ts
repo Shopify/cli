@@ -211,7 +211,7 @@ describe('getUIExtensionRendererVersion', () => {
 
 describe('getAppScopes', () => {
   test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes,read_products'}
+    const config = {path: '', scopes: 'read_themes,read_products', extension_directories: []}
     expect(getAppScopes(config)).toEqual('read_themes,read_products')
   })
 
@@ -223,7 +223,7 @@ describe('getAppScopes', () => {
 
 describe('getAppScopesArray', () => {
   test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes, read_order ,write_products'}
+    const config = {path: '', scopes: 'read_themes, read_order ,write_products', extension_directories: []}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
   })
 

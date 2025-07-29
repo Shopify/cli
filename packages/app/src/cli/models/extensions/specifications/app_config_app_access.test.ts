@@ -85,7 +85,7 @@ describe('app_config_app_access', () => {
         auth: {
           redirect_urls: ['https://example.com/auth/callback'],
         },
-      }
+      } as Parameters<NonNullable<typeof spec.getDevSessionUpdateMessage>>[0]
 
       // When
       const result = await spec.getDevSessionUpdateMessage!(config)
@@ -103,7 +103,7 @@ describe('app_config_app_access', () => {
         auth: {
           redirect_urls: ['https://example.com/auth/callback'],
         },
-      }
+      } as Parameters<NonNullable<typeof spec.getDevSessionUpdateMessage>>[0]
 
       // When
       const result = await spec.getDevSessionUpdateMessage!(config)
@@ -118,7 +118,7 @@ describe('app_config_app_access', () => {
         auth: {
           redirect_urls: ['https://example.com/auth/callback'],
         },
-      }
+      } as Parameters<NonNullable<typeof spec.getDevSessionUpdateMessage>>[0]
 
       // When
       const result = await spec.getDevSessionUpdateMessage!(config)

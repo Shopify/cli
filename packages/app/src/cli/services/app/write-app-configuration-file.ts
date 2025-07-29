@@ -27,15 +27,17 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
   writeFileSync(configuration.path, file)
 }
 
-export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
+export const rewriteConfiguration = (schema: zod.ZodTypeAny, config: unknown): unknown => {
   if (schema === null || schema === undefined) return null
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
-    return rewriteConfiguration(schema.unwrap(), config)
+    return rewriteConfiguration(schema.unwrap() as zod.ZodTypeAny, config)
   if (schema instanceof zod.ZodArray) {
-    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
+    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element as zod.ZodTypeAny, item))
   }
-  if (schema instanceof zod.ZodEffects) {
-    return rewriteConfiguration(schema._def.schema, config)
+  // Handle ZodEffects (transforms, refinements, etc.)
+  if ('_def' in schema && schema._def && 'typeName' in schema._def && schema._def.typeName === 'ZodEffects') {
+    // In Zod v4, use innerType() to access the wrapped schema
+    return rewriteConfiguration((schema as unknown).innerType(), config)
   }
   if (schema instanceof zod.ZodObject) {
     const entries = Object.entries(schema.shape)
@@ -43,7 +45,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
     let result: {[key: string]: unknown} = {}
     entries.forEach(([key, subSchema]) => {
       if (confObj !== undefined && confObj[key] !== undefined) {
-        let value = rewriteConfiguration(subSchema as T, confObj[key])
+        let value = rewriteConfiguration(subSchema as zod.ZodTypeAny, confObj[key])
         if (!(value instanceof Array) && value instanceof Object && Object.keys(value as object).length === 0) {
           value = undefined
         }
@@ -96,7 +98,8 @@ function condenseComplianceAndNonComplianceWebhooks(config: CurrentAppConfigurat
   if (webhooksConfig?.subscriptions?.length) {
     const appUrl = removeTrailingSlash(config?.application_url) as string | undefined
     webhooksConfig.subscriptions = reduceWebhooks(webhooksConfig.subscriptions)
-    webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, ...subscription}) => ({
+    webhooksConfig.subscriptions = webhooksConfig.subscriptions.map(({uri, topics, ...subscription}) => ({
+      topics,
       uri: appUrl && uri.includes(appUrl) ? uri.replace(appUrl, '') : uri,
       ...subscription,
     }))

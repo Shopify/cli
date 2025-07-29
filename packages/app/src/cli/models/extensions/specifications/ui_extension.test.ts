@@ -7,7 +7,6 @@ import {AssetIdentifier} from '../specification.js'
 import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
-import {zod} from '@shopify/cli-kit/node/schema'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -517,7 +516,7 @@ describe('ui_extension', async () => {
       expect(parsed.state).toBe('error')
       expect(parsed.errors).toEqual([
         {
-          code: zod.ZodIssueCode.custom,
+          code: 'custom',
           message: 'No extension targets defined, add a `targeting` field to your configuration',
           path: [],
         },

@@ -4,8 +4,27 @@ import {TransformationConfig, createConfigExtensionSpecification} from '../speci
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppHomeSchema = BaseSchema.extend({
-  application_url: validateUrl(zod.string({required_error: 'Valid URL is required'})),
-  embedded: zod.boolean({required_error: 'Boolean is required', invalid_type_error: 'Value must be Boolean'}),
+  application_url: validateUrl(
+    zod.string({
+      error: (issue) => {
+        if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+          return 'Valid URL is required'
+        }
+        return issue.message
+      },
+    }),
+  ),
+  embedded: zod.boolean({
+    error: (issue) => {
+      if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+        return 'Boolean is required'
+      }
+      if (issue.code === 'invalid_type') {
+        return 'Value must be Boolean'
+      }
+      return issue.message
+    },
+  }),
   app_preferences: zod
     .object({
       url: validateUrl(zod.string().max(255, {message: 'String must be less than 255 characters'})),
@@ -26,7 +45,8 @@ const appHomeSpec = createConfigExtensionSpecification({
   schema: AppHomeSchema,
   transformConfig: AppHomeTransformConfig,
   patchWithAppDevURLs: (config, urls) => {
-    config.application_url = urls.applicationUrl
+    const typedConfig = config as zod.infer<typeof AppHomeSchema>
+    typedConfig.application_url = urls.applicationUrl
   },
 })
 

@@ -7,7 +7,7 @@ import {updateTomlValues} from '@shopify/toml-patch'
 export interface PatchTomlOptions {
   path: string
   patch: {[key: string]: unknown}
-  schema?: zod.AnyZodObject
+  schema?: zod.ZodObject<unknown>
 }
 
 type TomlPatchValue = string | number | boolean | undefined | string[]

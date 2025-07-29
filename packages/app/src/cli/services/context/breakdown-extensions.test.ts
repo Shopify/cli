@@ -261,6 +261,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
   path: 'shopify.app.development.toml',
   name: 'my app',
   client_id: '12345',
+  extension_directories: undefined,
   webhooks: {
     api_version: '2023-04',
   },
@@ -827,6 +828,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         pos: {
@@ -873,6 +876,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -963,6 +968,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -1052,6 +1059,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         pos: {
@@ -1109,6 +1118,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -1672,6 +1683,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -1713,6 +1726,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         client_id: '12345',
         application_url: 'https://myapp.com',
         embedded: true,
+        scopes: '',
+        extension_directories: undefined,
         pos: {
           embedded: false,
         },

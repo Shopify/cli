@@ -454,6 +454,7 @@ url = "https://api-client-config.com/preferences"
           path: 'shopify.app.development.toml',
           name: 'my app',
           client_id: '12345',
+          extension_directories: undefined,
           webhooks: {api_version: '2023-04'},
           application_url: 'https://myapp.com',
           build: {
@@ -575,6 +576,7 @@ embedded = false
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
+          extension_directories: undefined,
           webhooks: {api_version: '2023-04'},
           application_url: 'https://myapp.com',
           embedded: false,
@@ -877,6 +879,7 @@ embedded = false
           path: 'shopify.app.foo.toml',
           name: 'my app',
           client_id: '12345',
+          extension_directories: undefined,
           webhooks: {api_version: '2023-04'},
           application_url: 'https://myapp.com',
           access_scopes: {
@@ -1346,6 +1349,7 @@ embedded = false
           },
           application_url: 'https://myapp.com',
           embedded: true,
+          extension_directories: undefined,
         },
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))

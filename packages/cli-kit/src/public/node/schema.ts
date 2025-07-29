@@ -5,8 +5,9 @@ export {z as zod} from 'zod'
 /**
  * Type alias for a zod object schema that produces a given shape once parsed.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ZodObjectOf<T> = ZodObject<any>
+export type ZodObjectOf<T> = ZodObject<{
+  [K in keyof T]: z.ZodType<T[K]>
+}>
 
 /**
  * Returns a new schema that is the same as the input schema, but with all nested schemas set to strict.
@@ -41,7 +42,7 @@ export function errorsToString(errors: z.ZodIssue[]): string {
       error.path
         .join('.')
         .concat(': ')
-        .concat(error.message ?? 'Unknow error'),
+        .concat(error.message || 'Unknown error'),
     )
     .join('\n')
 }

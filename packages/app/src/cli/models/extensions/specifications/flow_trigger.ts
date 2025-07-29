@@ -45,11 +45,12 @@ const flowTriggerSpecification = createExtensionSpecification({
   // Should be removed after unified deployment is 100% rolled out
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, extensionPath) => {
+    const typedConfig = config as zod.infer<typeof FlowTriggerExtensionSchema>
     return {
-      title: config.name,
-      description: config.description,
-      fields: serializeFields('flow_trigger', config.settings?.fields),
-      schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
+      title: typedConfig.name,
+      description: typedConfig.description,
+      fields: serializeFields('flow_trigger', typedConfig.settings?.fields),
+      schema_patch: await loadSchemaFromPath(extensionPath, typedConfig.schema),
     }
   },
 })

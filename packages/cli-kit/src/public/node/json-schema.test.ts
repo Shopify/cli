@@ -356,7 +356,7 @@ describe('jsonSchemaValidate', () => {
       },
       {
         path: ['root', 'nested', 'supplemental'],
-        message: 'Expected string, received number',
+        message: 'Invalid input: expected string, received number',
       },
     ])
   })
@@ -489,7 +489,7 @@ validations.min = false`)
           ],
         },
         {
-          "message": "Expected number, string, object, array, received boolean",
+          "message": "Invalid input: expected number, string, object, array, received boolean",
           "path": [
             "product",
             "metafields",

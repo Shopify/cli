@@ -95,6 +95,7 @@ export const DEFAULT_CONFIG = {
   access_scopes: {
     scopes: 'read_products',
   },
+  extension_directories: [],
 }
 
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
@@ -206,7 +207,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: '', extension_directories: []}
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {

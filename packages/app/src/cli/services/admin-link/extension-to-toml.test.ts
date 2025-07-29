@@ -11,6 +11,7 @@ describe('extension-to-toml', () => {
       client_id: '12345',
       application_url: 'http://example.com',
       embedded: false,
+      extension_directories: undefined,
     }
 
     const extension1: ExtensionRegistration = {
@@ -47,6 +48,7 @@ handle = "admin-link-title"
       client_id: '12345',
       application_url: 'http://example.com',
       embedded: true,
+      extension_directories: undefined,
     }
     const extension1: ExtensionRegistration = {
       id: '26237698049',
@@ -81,6 +83,7 @@ handle = "bulk-action-title"
       client_id: '12345',
       application_url: 'http://example.com',
       embedded: true,
+      extension_directories: undefined,
     }
     const extension1: ExtensionRegistration = {
       id: '26237698049',
@@ -115,6 +118,7 @@ handle = "bulk-action-title"
       client_id: '12345',
       application_url: 'http://example.com',
       embedded: true,
+      extension_directories: undefined,
     }
     const extension1: ExtensionRegistration = {
       id: '26237698049',
