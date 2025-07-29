@@ -1020,9 +1020,9 @@ Builds and deploys a Hydrogen storefront to Oxygen.
 ```
 USAGE
   $ shopify hydrogen deploy [--auth-bypass-token-duration <value> --auth-bypass-token] [--build-command <value>]
-    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--json-output]
-    [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path <value>]
-    [--preview] [-s <value>] [-t <value>]
+    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--force-client-sourcemap]
+    [--json-output] [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path
+    <value>] [--preview] [-s <value>] [-t <value>]
 
 FLAGS
   -f, --force                               Forces a deployment to proceed if there are uncommited changes in its Git
@@ -1045,6 +1045,8 @@ FLAGS
                                             name.
       --env-file=<value>                    Path to an environment file to override existing environment variables for
                                             the deployment.
+      --force-client-sourcemap              Client sourcemapping is avoided by default because it makes backend code
+                                            visible in the browser. Use this flag to force enabling it.
       --[no-]json-output                    Create a JSON file containing the deployment details in CI environments.
                                             Defaults to true, use `--no-json-output` to disable.
       --[no-]lockfile-check                 Checks that there is exactly one valid lockfile in the project. Defaults to
@@ -1070,8 +1072,7 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
     [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
-    [--env-file <value>] [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
-    [--sourcemap] [--verbose]
+    [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>] [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
@@ -1090,12 +1091,9 @@ FLAGS
                                  Defaults to the '.env' located in your project path `--path`.
   --host                         Expose the server to the local network
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
-  --[no-]sourcemap               [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to
-                                 `true`. Deactivate `--no-sourcemaps`.
   --verbose                      Outputs more information about the command's execution.
 
 DESCRIPTION
@@ -1170,8 +1168,9 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
-             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
+             route to generate. One of
+             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
 
 FLAGS
   -f, --force                 Overwrites the destination directory and files if they already exist.
@@ -1314,8 +1313,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>]
-    [--port <value>] [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--path <value>] [--port <value>]
+    [--verbose] [--watch ]
 
 FLAGS
   --build                        Builds the app before starting the preview server.
@@ -1331,7 +1330,6 @@ FLAGS
   --env-file=<value>             [default: .env] Path to an environment file to override existing environment variables.
                                  Defaults to the '.env' located in your project path `--path`.
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.

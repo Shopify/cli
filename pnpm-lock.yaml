@@ -286,8 +286,8 @@ importers:
         specifier: 3.83.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 10.0.1
-        version: 10.0.1(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@22.15.29)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@22.15.29)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(sass@1.89.1)(yaml@2.7.0))
+        specifier: 11.1.1
+        version: 11.1.1(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@22.15.29)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@22.15.29)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(sass@1.89.1)(yaml@2.7.0))
       '@shopify/cli-kit':
         specifier: 3.83.0
         version: link:../cli-kit
@@ -898,26 +898,26 @@ packages:
     peerDependencies:
       graphql: '*'
 
-  '@ast-grep/napi-darwin-arm64@0.11.0':
-    resolution: {integrity: sha512-IxY3b102tNNm+cYLngZvUKzM1fNKCpDDWz69Yt+QnKCZNx10Hvd7mqrYE2aXTtkaNalmg/p1n6kMA8KmshGgCA==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
-
   '@ast-grep/napi-darwin-arm64@0.33.0':
     resolution: {integrity: sha512-FsBQiBNGbqeU6z2sjFgnV6MXuBa0wYUb4PViMnqsKLeWiO7kRii5crmXLCtdTD2hufXTG6Rll8X46AkYOAwGGQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@ast-grep/napi-darwin-x64@0.11.0':
-    resolution: {integrity: sha512-6afu1fNUwTkyE7tknVx8+d+BPKVL3623QLI9uJbJ0SZQShzSb1+dRegT4NpzPaPtFdPkflh6KfvOQ4chTw8hUg==}
+  '@ast-grep/napi-darwin-arm64@0.34.1':
+    resolution: {integrity: sha512-SzXXx2ya6xDKBaHZv20P9Qza5FaWE6lMBu00yegJVYRs7+0feBJ+10dvbv9fm+7RJ91Tw0V0G92Sgdg9lysBwA==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [arm64]
     os: [darwin]
 
   '@ast-grep/napi-darwin-x64@0.33.0':
     resolution: {integrity: sha512-rWo1wG7fc7K20z9ExIeN6U4QqjHhoQSpBDDnmxKTR0nIwPfyMq338sS4sWZomutxprcZDtWrekxH1lXjNvfuiA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@ast-grep/napi-darwin-x64@0.34.1':
+    resolution: {integrity: sha512-LIeTaB0IgNGyyU5sMW2cUHjWWW/sNjEqseMmpHLft7+LEXK7ojr4NDUN33cKtrRgEfwpvVXjXh5sgLqm343ecg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
@@ -928,20 +928,32 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@ast-grep/napi-linux-arm64-gnu@0.34.1':
+    resolution: {integrity: sha512-zi/JKIYDsucSfMHhb2W33AVw8Q6bF9MBV6FrYF98UWpJJoWXUPzPqVM09NANyWM0lypGiWuHk//JCwHndeCiSA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
   '@ast-grep/napi-linux-arm64-musl@0.33.0':
     resolution: {integrity: sha512-oUGZgCaVCijFgvC+X52ttgoWUqgrIsSVJZgn+1VBY3n4mpzcoYAghFomSUbRTBUL2ebvZweA33Klqks4okY61w==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@ast-grep/napi-linux-x64-gnu@0.11.0':
-    resolution: {integrity: sha512-Rm0biBfIxg14tL9yAMxW6RngAEA2vYLIq1guff6Uc9Vb7yQ3HE8dnW8WAysyieIqXdVkraTTV2ZwfoUqeKfc1Q==}
+  '@ast-grep/napi-linux-arm64-musl@0.34.1':
+    resolution: {integrity: sha512-IXdqwTbkdqHrcuQb448Qzd82QdTqVFe/f0sSkFYQTic8P2qNzmiHsVnxgEFsQPPbe09BVAoZ885j3OnaNfcDYA==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [arm64]
     os: [linux]
 
   '@ast-grep/napi-linux-x64-gnu@0.33.0':
     resolution: {integrity: sha512-QTAkfxQSsOGRza0hnkeAgJDQqR00iDerRNq42dOGIzgF+Kse491By3UmBEMG4oCbv17yYcBBlknQkzKSKtigjw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@ast-grep/napi-linux-x64-gnu@0.34.1':
+    resolution: {integrity: sha512-on4LyIeN/zN7SIh8zr5v+NTzVu3kXm2mG28ib1Qe9GVcf35dz52ckf7bilulayKSa2MHZWAXMjuc6NYMiNEw+w==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -952,11 +964,11 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@ast-grep/napi-win32-arm64-msvc@0.11.0':
-    resolution: {integrity: sha512-TfX6KXxtXGQS/sWzJ1wWwWbpm3OJWpqiWGttpifSGs6DJmzfwuK0b63yX5JlhNXeUVqXkZyfYqIh5RPIPOtXSA==}
+  '@ast-grep/napi-linux-x64-musl@0.34.1':
+    resolution: {integrity: sha512-l1R5L9LOp0jTPjs8C+LUndZOA8cRw7PFlvoVxVbi2jCfcns00dqatSYc4yA/ke6ng2K0LSxjoV/jS8tefve0sA==}
     engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [win32]
+    cpu: [x64]
+    os: [linux]
 
   '@ast-grep/napi-win32-arm64-msvc@0.33.0':
     resolution: {integrity: sha512-ijmFQcFc32JOIQlSfnhDJpb3qFb2RhrRqfeY0EHHN1xRSGwZHfsHTSS66nKR2sREmxTIMgxXOtylKicbyyMVKA==}
@@ -964,10 +976,10 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@ast-grep/napi-win32-ia32-msvc@0.11.0':
-    resolution: {integrity: sha512-oQGbxYYfQn6LPbMKQ1T2cjQ+DelYDO06w/gFPmdWrE6M/YUIv+KfKdEscBkr3ehJyvXZW5h3vmxuApiMuCyfAQ==}
+  '@ast-grep/napi-win32-arm64-msvc@0.34.1':
+    resolution: {integrity: sha512-eVsdMtnY7jmN2xQjYY9gaqIxRHA44+QYivlP1uLbg8w3P4YlZWTFgOJ7aa357Hg/257mjeQCpodCkr0lGRsSYQ==}
     engines: {node: '>= 10'}
-    cpu: [ia32]
+    cpu: [arm64]
     os: [win32]
 
   '@ast-grep/napi-win32-ia32-msvc@0.33.0':
@@ -976,10 +988,10 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@ast-grep/napi-win32-x64-msvc@0.11.0':
-    resolution: {integrity: sha512-qrXI4+S8W7IF6e1nlDYX2KfdzxGHyAOj5kGvWk+TqBuAnA0rWQ513hJzdviiGpbB5VPnJkEhOVsDets8acKd6w==}
+  '@ast-grep/napi-win32-ia32-msvc@0.34.1':
+    resolution: {integrity: sha512-jDW6jfoxEeYMM8hrPSiOz4iUIN+O7VTTlqU5TWDdlFX8HJYLF4SrNFEZl+Gz5B0Ph5LTjKPZFk6sd+DC1zt9+A==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [ia32]
     os: [win32]
 
   '@ast-grep/napi-win32-x64-msvc@0.33.0':
@@ -988,12 +1000,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@ast-grep/napi@0.11.0':
-    resolution: {integrity: sha512-b+R8h20+ClsYZBJqcyguLy4THfGmg2a54HgfZ0a1vdCkfe9ftjblALiZf2DsOc0+Si8BDWd09TMNn2psUuibJA==}
+  '@ast-grep/napi-win32-x64-msvc@0.34.1':
+    resolution: {integrity: sha512-ttBFcTugjzEbYRPBo400NfPU+3ukBxeOxpeYLBZ1yIYqbgekPnD4WItiowsX5/hd0wHcX3T50FdthlJRmOXubQ==}
     engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
 
   '@ast-grep/napi@0.33.0':
     resolution: {integrity: sha512-6heRMmomhSD0dkummRQ+R4xWXXmc41OaDPoPI49mKJXPyvwJPdPZUcQjXdIitOVL4uJV+qM2ZBucDPENDBSixw==}
+    engines: {node: '>= 10'}
+
+  '@ast-grep/napi@0.34.1':
+    resolution: {integrity: sha512-SZAXFjgSqr7TfdW+ZJZ5LMkC226vJCAHAU5VvaluG2maT/LdkaUN3RwV+emdcEXIrUOqKB98+WSobhqOsKYuNw==}
     engines: {node: '>= 10'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -3254,13 +3272,13 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
-  '@shopify/cli-hydrogen@10.0.1':
-    resolution: {integrity: sha512-wqkuQ37Ymslpowzqh8jWJRU8bKa5Ln0JB2Kaut3PbjwmuCa++vnMxvwpmir6Cnp8Y5SwpfYd1w5ANPqYyO2L0g==}
+  '@shopify/cli-hydrogen@11.1.1':
+    resolution: {integrity: sha512-g7uHuP1rRGuz9Ls7zyYyzgkO6yHs7k9pgvQ1EoYctVr3KDPL7bIaAy2EbkRg9OeCT0YWx1Gme4BXBX3algesbQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
-      '@remix-run/dev': ^2.16.1
+      '@react-router/dev': 7.6.0
       '@shopify/hydrogen-codegen': ^0.3.3
       '@shopify/mini-oxygen': ^3.2.1
       graphql-config: ^5.0.3
@@ -3268,7 +3286,7 @@ packages:
     peerDependenciesMeta:
       '@graphql-codegen/cli':
         optional: true
-      '@remix-run/dev':
+      '@react-router/dev':
         optional: true
       '@shopify/hydrogen-codegen':
         optional: true
@@ -9178,59 +9196,59 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@ast-grep/napi-darwin-arm64@0.11.0':
-    optional: true
-
   '@ast-grep/napi-darwin-arm64@0.33.0':
     optional: true
 
-  '@ast-grep/napi-darwin-x64@0.11.0':
+  '@ast-grep/napi-darwin-arm64@0.34.1':
     optional: true
 
   '@ast-grep/napi-darwin-x64@0.33.0':
     optional: true
 
+  '@ast-grep/napi-darwin-x64@0.34.1':
+    optional: true
+
   '@ast-grep/napi-linux-arm64-gnu@0.33.0':
+    optional: true
+
+  '@ast-grep/napi-linux-arm64-gnu@0.34.1':
     optional: true
 
   '@ast-grep/napi-linux-arm64-musl@0.33.0':
     optional: true
 
-  '@ast-grep/napi-linux-x64-gnu@0.11.0':
+  '@ast-grep/napi-linux-arm64-musl@0.34.1':
     optional: true
 
   '@ast-grep/napi-linux-x64-gnu@0.33.0':
     optional: true
 
+  '@ast-grep/napi-linux-x64-gnu@0.34.1':
+    optional: true
+
   '@ast-grep/napi-linux-x64-musl@0.33.0':
     optional: true
 
-  '@ast-grep/napi-win32-arm64-msvc@0.11.0':
+  '@ast-grep/napi-linux-x64-musl@0.34.1':
     optional: true
 
   '@ast-grep/napi-win32-arm64-msvc@0.33.0':
     optional: true
 
-  '@ast-grep/napi-win32-ia32-msvc@0.11.0':
+  '@ast-grep/napi-win32-arm64-msvc@0.34.1':
     optional: true
 
   '@ast-grep/napi-win32-ia32-msvc@0.33.0':
     optional: true
 
-  '@ast-grep/napi-win32-x64-msvc@0.11.0':
+  '@ast-grep/napi-win32-ia32-msvc@0.34.1':
     optional: true
 
   '@ast-grep/napi-win32-x64-msvc@0.33.0':
     optional: true
 
-  '@ast-grep/napi@0.11.0':
-    optionalDependencies:
-      '@ast-grep/napi-darwin-arm64': 0.11.0
-      '@ast-grep/napi-darwin-x64': 0.11.0
-      '@ast-grep/napi-linux-x64-gnu': 0.11.0
-      '@ast-grep/napi-win32-arm64-msvc': 0.11.0
-      '@ast-grep/napi-win32-ia32-msvc': 0.11.0
-      '@ast-grep/napi-win32-x64-msvc': 0.11.0
+  '@ast-grep/napi-win32-x64-msvc@0.34.1':
+    optional: true
 
   '@ast-grep/napi@0.33.0':
     optionalDependencies:
@@ -9243,6 +9261,18 @@ snapshots:
       '@ast-grep/napi-win32-arm64-msvc': 0.33.0
       '@ast-grep/napi-win32-ia32-msvc': 0.33.0
       '@ast-grep/napi-win32-x64-msvc': 0.33.0
+
+  '@ast-grep/napi@0.34.1':
+    optionalDependencies:
+      '@ast-grep/napi-darwin-arm64': 0.34.1
+      '@ast-grep/napi-darwin-x64': 0.34.1
+      '@ast-grep/napi-linux-arm64-gnu': 0.34.1
+      '@ast-grep/napi-linux-arm64-musl': 0.34.1
+      '@ast-grep/napi-linux-x64-gnu': 0.34.1
+      '@ast-grep/napi-linux-x64-musl': 0.34.1
+      '@ast-grep/napi-win32-arm64-msvc': 0.34.1
+      '@ast-grep/napi-win32-ia32-msvc': 0.34.1
+      '@ast-grep/napi-win32-x64-msvc': 0.34.1
 
   '@aws-crypto/crc32@5.2.0':
     dependencies:
@@ -12640,9 +12670,9 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/cli-hydrogen@10.0.1(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@22.15.29)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@22.15.29)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(sass@1.89.1)(yaml@2.7.0))':
+  '@shopify/cli-hydrogen@11.1.1(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@22.15.29)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@22.15.29)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.5(@types/node@22.15.29)(jiti@2.4.2)(sass@1.89.1)(yaml@2.7.0))':
     dependencies:
-      '@ast-grep/napi': 0.11.0
+      '@ast-grep/napi': 0.34.1
       '@oclif/core': 4.4.0
       '@shopify/cli-kit': link:packages/cli-kit
       '@shopify/oxygen-cli': 4.6.18(@oclif/core@4.4.0)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)
