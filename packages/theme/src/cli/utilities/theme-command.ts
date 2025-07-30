@@ -16,7 +16,7 @@ import {
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import type {Writable} from 'stream'
 
-export interface FlagValues {
+interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
 }
 interface PassThroughFlagsOptions {
