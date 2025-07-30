@@ -1,7 +1,7 @@
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
-import {themesDelete, renderDeprecatedArgsWarning} from '../../services/delete.js'
+import {themesDelete} from '../../services/delete.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -16,9 +16,6 @@ export default class Delete extends ThemeCommand {
   You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the \`--force\` flag.`
 
   static description = this.descriptionWithoutMarkdown()
-
-  // Accept any number of args without naming them
-  static strict = false
 
   static flags = {
     ...globalFlags,
@@ -47,17 +44,12 @@ export default class Delete extends ThemeCommand {
   }
 
   async run(): Promise<void> {
-    const {flags, argv} = await this.parse(Delete)
+    const {flags} = await this.parse(Delete)
     const {development, force, password, theme} = flags
-    const themes = [...argv, ...(theme ?? [])]
+    const themes = [...(theme ?? [])]
 
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, password)
-
-    const hasDeprecatedArgs = argv.length > 0
-    if (hasDeprecatedArgs) {
-      renderDeprecatedArgsWarning(argv)
-    }
 
     await themesDelete(adminSession, {
       selectTheme: flags['show-all'],
