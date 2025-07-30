@@ -1,11 +1,12 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {themesDelete} from '../../services/delete.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {OutputFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
+type DeleteFlags = OutputFlags<typeof Delete.flags>
 export default class Delete extends ThemeCommand {
   static summary = "Delete remote themes from the connected store. This command can't be undone."
 
@@ -43,19 +44,22 @@ export default class Delete extends ThemeCommand {
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Delete)
-    const {development, force, password, theme} = flags
-    const themes = [...(theme ?? [])]
+  static multiEnvironmentsFlags = ['store', 'password', ['development', 'theme']]
 
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, password)
+  async command(flags: DeleteFlags, adminSession: AdminSession, multiEnvironment: boolean) {
+    const {environment, development, force, theme} = flags
+    const themes = theme ?? []
 
-    await themesDelete(adminSession, {
-      selectTheme: flags['show-all'],
-      development,
-      themes,
-      force,
-    })
+    await themesDelete(
+      adminSession,
+      {
+        selectTheme: flags['show-all'],
+        environment,
+        development,
+        themes,
+        force,
+      },
+      multiEnvironment,
+    )
   }
 }
