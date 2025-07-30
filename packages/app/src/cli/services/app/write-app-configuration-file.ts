@@ -6,6 +6,11 @@ import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+interface ZodEffectsDef {
+  typeName: 'ZodEffects'
+  schema: zod.ZodTypeAny
+}
+
 // toml does not support comments and there aren't currently any good/maintained libs for this,
 // so for now, we manually add comments
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
@@ -35,9 +40,11 @@ export const rewriteConfiguration = (schema: zod.ZodTypeAny, config: unknown): u
     return (config as unknown[]).map((item) => rewriteConfiguration(schema.element as zod.ZodTypeAny, item))
   }
   // Handle ZodEffects (transforms, refinements, etc.)
+  // In Zod v4, effects are handled differently - check for the _def property
   if ('_def' in schema && schema._def && 'typeName' in schema._def && schema._def.typeName === 'ZodEffects') {
-    // In Zod v4, use innerType() to access the wrapped schema
-    return rewriteConfiguration((schema as unknown).innerType(), config)
+    // Access the inner type through _def.schema
+    const effectsDef = schema._def as unknown as ZodEffectsDef
+    return rewriteConfiguration(effectsDef.schema, config)
   }
   if (schema instanceof zod.ZodObject) {
     const entries = Object.entries(schema.shape)

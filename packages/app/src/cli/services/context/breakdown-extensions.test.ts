@@ -862,7 +862,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -955,7 +955,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'application_url', 'embedded', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -1047,7 +1047,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'webhooks'],
         existingUpdatedFieldNames: ['application_url', 'embedded'],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -1106,7 +1106,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded'],
+        existingFieldNames: ['scopes', 'application_url', 'embedded'],
         existingUpdatedFieldNames: [],
         newFieldNames: ['name', 'webhooks', 'pos'],
         deletedFieldNames: [],
@@ -1213,7 +1213,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'application_url', 'embedded', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: ['pos'],
@@ -1710,7 +1710,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: [],
+        existingFieldNames: ['scopes'],
         existingUpdatedFieldNames: [],
         newFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
         deletedFieldNames: [],

@@ -36,6 +36,11 @@ export interface BuildManifest {
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
+type TransformedExtensionPoint = NewExtensionPointSchemaType & {
+  build_manifest: BuildManifest
+  default_placement_reference?: string
+}
+
 export type UIExtensionSchemaType = zod.infer<typeof UIExtensionSchema>
 
 export const UIExtensionSchema = BaseSchema.extend({
@@ -83,19 +88,19 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
-  appModuleFeatures: (config) => {
+  appModuleFeatures: (config?: UIExtensionSchemaType) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild', 'generates_source_maps']
     const needsCart =
-      config?.extension_points?.find((extensionPoint: unknown) => {
+      config?.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
-  validate: async (config, path, directory) => {
+  validate: async (config: UIExtensionSchemaType, path, directory) => {
     return validateUIExtensionPointConfig(directory, config.extension_points, path)
   },
-  deployConfig: async (config, directory) => {
-    const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
+  deployConfig: async (config: UIExtensionSchemaType, directory) => {
+    const transformedExtensionPoints = (config.extension_points || []).map(addDistPathToAssets)
 
     return {
       api_version: config.api_version,
@@ -107,10 +112,10 @@ const uiExtensionSpec = createExtensionSpecification({
       localization: await loadLocalesConfig(directory, 'ui_extension'),
     }
   },
-  getBundleExtensionStdinContent: (config) => {
+  getBundleExtensionStdinContent: (config: UIExtensionSchemaType) => {
     const shouldIncludeShopifyExtend = isRemoteDomExtension(config)
-    const main = config.extension_points
-      .map(({target, module}: unknown, index: number) => {
+    const main = (config.extension_points || [])
+      .map(({target, module}, index) => {
         if (shouldIncludeShopifyExtend) {
           return `import Target_${index} from '${module}';shopify.extend('${target}', (...args) => Target_${index}(...args));`
         }
@@ -119,21 +124,23 @@ const uiExtensionSpec = createExtensionSpecification({
       .join('\n')
 
     const assets: {[key: string]: Asset} = {}
-    config.extension_points.forEach((extensionPoint: unknown) => {
+    const extensionPoints = config.extension_points as TransformedExtensionPoint[]
+    ;(extensionPoints || []).forEach((extensionPoint) => {
       // Start of Selection
       Object.entries(extensionPoint.build_manifest.assets).forEach(([identifier, asset]) => {
         if (identifier === AssetIdentifier.Main) {
           return
         }
 
+        const assetData = asset as {filepath: string; module?: string}
         assets[identifier] = {
           identifier: identifier as AssetIdentifier,
-          outputFileName: asset.filepath,
+          outputFileName: assetData.filepath,
           content: shouldIncludeShopifyExtend
-            ? `import shouldRender from '${asset.module}';shopify.extend('${getShouldRenderTarget(
+            ? `import shouldRender from '${assetData.module}';shopify.extend('${getShouldRenderTarget(
                 extensionPoint.target,
               )}', (...args) => shouldRender(...args));`
-            : `import '${asset.module}'`,
+            : `import '${assetData.module}'`,
         }
       })
     })
@@ -146,7 +153,7 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
-      config.extension_points.find((extensionPoint: unknown) => {
+      config.extension_points.find((extensionPoint) => {
         return extensionPoint.target === requestedTarget
       }) !== undefined
     )
@@ -157,7 +164,8 @@ const uiExtensionSpec = createExtensionSpecification({
     }
 
     const {configuration} = extension
-    for await (const extensionPoint of (configuration as unknown).extension_points || []) {
+    const extensionPoints = (configuration as UIExtensionSchemaType).extension_points || []
+    for await (const extensionPoint of extensionPoints) {
       const fullPath = joinPath(extension.directory, extensionPoint.module)
       const exists = await fileExists(fullPath)
       if (!exists) continue

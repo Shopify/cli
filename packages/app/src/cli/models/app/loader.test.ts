@@ -2768,7 +2768,7 @@ describe('parseConfigurationObject', () => {
         expected: 'boolean',
         received: 'undefined',
         path: ['embedded'],
-        message: 'Invalid input: expected boolean, received undefined',
+        message: 'Value must be Boolean',
       },
     ]
     const expectedFormatted = outputContent`\n${outputToken.errorText(

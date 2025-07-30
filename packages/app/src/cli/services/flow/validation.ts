@@ -3,6 +3,13 @@ import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
 import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/flow_trigger.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
+interface UnrecognizedKeysIssue {
+  code: string
+  path: (string | number)[]
+  message: string
+  keys: string[]
+}
+
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
   return `'${property}' property must be a string for 'field[${index}]' ${JSON.stringify(
     configField,
@@ -73,9 +80,6 @@ export const validateFieldShape = (
         const issue = error.issues[0]
         if (issue && issue.code === 'unrecognized_keys') {
           // In Zod v4, unrecognized_keys issues have a 'keys' property
-          interface UnrecognizedKeysIssue extends zod.ZodIssue {
-            keys: string[]
-          }
           const unrecognizedIssue = issue as UnrecognizedKeysIssue
           if (unrecognizedIssue.keys && unrecognizedIssue.keys.length > 0) {
             throw new Error(`Unrecognized key(s) in object: '${unrecognizedIssue.keys.join("', '")}'`)

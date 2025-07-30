@@ -18,13 +18,13 @@ export function zodString(options?: {required?: string; invalid?: string}) {
 /**
  * Helper to create a boolean schema with custom error messages
  */
-export function zodBoolean(options?: {required?: string; invalid?: string}) {
+export function zodBoolean(_options?: {required?: string; invalid?: string}) {
   return z.boolean()
 }
 
 /**
  * Helper to create an array schema with custom error messages
  */
-export function zodArray<T>(itemSchema: z.ZodType<T>, options?: {required?: string; invalid?: string}) {
+export function zodArray<T>(itemSchema: z.ZodType<T>, _options?: {required?: string; invalid?: string}) {
   return z.array(itemSchema)
 }

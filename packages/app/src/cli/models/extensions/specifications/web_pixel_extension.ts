@@ -25,6 +25,8 @@ const WebPixelSchema = BaseSchema.extend({
   settings: zod.any(),
 })
 
+export type WebPixelSchemaType = zod.infer<typeof WebPixelSchema>
+
 const webPixelSpec = createExtensionSpecification({
   identifier: 'web_pixel_extension',
   dependency,
@@ -32,10 +34,11 @@ const webPixelSpec = createExtensionSpecification({
   schema: WebPixelSchema,
   appModuleFeatures: (_) => ['bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, _) => {
+    const webPixelConfig = config as WebPixelSchemaType
     return {
-      runtime_context: (config as unknown).runtime_context,
-      customer_privacy: (config as unknown).customer_privacy,
-      runtime_configuration_definition: config.settings,
+      runtime_context: webPixelConfig.runtime_context,
+      customer_privacy: webPixelConfig.customer_privacy,
+      runtime_configuration_definition: webPixelConfig.settings,
     }
   },
   buildValidation: async (extension) => {
@@ -49,7 +52,8 @@ const webPixelSpec = createExtensionSpecification({
     }
   },
   preDeployValidation: async (extension) => {
-    if ((extension.configuration as unknown).configuration) {
+    const config = extension.configuration as WebPixelSchemaType
+    if ('configuration' in config) {
       throw new AbortError(
         `The property configuration is deprecated and no longer supported.`,
         `It has been replaced by settings.`,

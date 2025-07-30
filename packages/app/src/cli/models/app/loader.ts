@@ -123,7 +123,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   if (!configurationObject) return fallbackOutput
 
   const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
-  return {...configuration, path: filepath} as zod.TypeOf<TSchema> & {path: string}
+  return {...(configuration as object), path: filepath} as zod.TypeOf<TSchema> & {path: string}
 }
 
 export function parseHumanReadableError(issues: Pick<zod.ZodIssue, 'path' | 'message'>[]) {
