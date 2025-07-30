@@ -16,7 +16,7 @@ interface MetafieldsPullOptions {
   silent: boolean
 }
 
-export interface MetafieldsPullFlags {
+interface MetafieldsPullFlags {
   /**
    * The directory path of the theme to download the metafield definitions.
    */
