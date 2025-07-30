@@ -55,4 +55,18 @@ export const commonFlags = {
     hidden: true,
     env: 'SHOPIFY_FLAG_MOCK',
   }),
+  watch: Flags.boolean({
+    description: 'Watch progress of the operation',
+    char: 'w',
+    required: false,
+    default: false,
+    env: 'SHOPIFY_FLAG_WATCH',
+  }),
+  json: Flags.boolean({
+    description: 'Output the operation details in JSON format.',
+    char: 'j',
+    required: false,
+    default: false,
+    env: 'SHOPIFY_FLAG_JSON',
+  }),
 }

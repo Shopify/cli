@@ -14,6 +14,8 @@ import {renderCopyResult} from '../../../prompts/copy_result.js'
 import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -22,6 +24,8 @@ vi.mock('../../../lib/resource-config.js')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/copy_result.js')
+vi.mock('../../../prompts/async_operation_json.js')
+vi.mock('../../../prompts/async_operation_started.js')
 
 describe('StoreCopyOperation', () => {
   describe('Full integration tests', () => {
@@ -76,7 +80,7 @@ describe('StoreCopyOperation', () => {
     })
 
     test('should successfully copy data from source to target shop', async () => {
-      await operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      await operation.execute('source.myshopify.com', 'target.myshopify.com', {watch: true})
 
       expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
       expect(renderCopyInfo).toHaveBeenCalledWith('Copy operation', 'source.myshopify.com', 'target.myshopify.com')
@@ -91,7 +95,17 @@ describe('StoreCopyOperation', () => {
       await operation.execute('source.myshopify.com', 'target.myshopify.com', {'no-prompt': true})
 
       expect(confirmCopyPrompt).not.toHaveBeenCalled()
+      expect(renderAsyncOperationStarted).toHaveBeenCalled()
+    })
+
+    test('renders copy result when --watch flag is provided', async () => {
+      await operation.execute('source.myshopify.com', 'target.myshopify.com', {watch: true})
       expect(renderCopyResult).toHaveBeenCalled()
+    })
+
+    test('renders result in json format when --json flag is provided', async () => {
+      await operation.execute('source.myshopify.com', 'target.myshopify.com', {json: true})
+      expect(renderAsyncOperationJson).toHaveBeenCalled()
     })
 
     test('should exit when user cancels confirmation', async () => {
@@ -148,7 +162,7 @@ describe('StoreCopyOperation', () => {
 
       mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {watch: true})
       await expect(promise).rejects.toThrow(OperationError)
       await expect(promise).rejects.toMatchObject({
         operation: 'copy',
