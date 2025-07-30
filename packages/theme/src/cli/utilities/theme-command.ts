@@ -22,6 +22,21 @@ interface PassThroughFlagsOptions {
   allowedFlags?: string[]
 }
 type EnvironmentName = string
+/**
+ * Flags required to run a command in multiple environments
+ *
+ * If the command does not support multiple environments, set to null
+ *
+ * Otherwise, each element can be:
+ * - string: A required flag
+ * - string[]: Multiple flags where at least one is required,
+ *             ordered by precedence
+ *
+ *  @example
+ * // store, password, and one of: live, development, or theme
+ * ['store', 'password', ['live', 'development', 'theme']]
+ */
+export type RequiredFlags = (string | string[])[] | null
 
 export default abstract class ThemeCommand extends Command {
   passThroughFlags(flags: FlagValues, {allowedFlags}: PassThroughFlagsOptions): string[] {
@@ -58,7 +73,7 @@ export default abstract class ThemeCommand extends Command {
   >(_opts?: Input<TFlags, TGlobalFlags, TArgs>): Promise<void> {
     // Parse command flags using the current command class definitions
     const klass = this.constructor as unknown as Input<TFlags, TGlobalFlags, TArgs> & {
-      multiEnvironmentsFlags: string[] | null
+      multiEnvironmentsFlags: RequiredFlags
       flags: FlagOutput
     }
     const requiredFlags = klass.multiEnvironmentsFlags
@@ -128,7 +143,10 @@ export default abstract class ThemeCommand extends Command {
    * @param requiredFlags - The required flags to check for
    * @returns An object containing valid and invalid environment arrays
    */
-  private async validateEnvironments(environmentMap: Map<EnvironmentName, FlagValues>, requiredFlags: string[]) {
+  private async validateEnvironments(
+    environmentMap: Map<EnvironmentName, FlagValues>,
+    requiredFlags: Exclude<RequiredFlags, null>,
+  ) {
     const valid: {environment: EnvironmentName; flags: FlagValues; session: AdminSession}[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
 
@@ -158,7 +176,7 @@ export default abstract class ThemeCommand extends Command {
    */
   private async showConfirmation(
     commandName: string,
-    requiredFlags: string[],
+    requiredFlags: Exclude<RequiredFlags, null>,
     validationResults: {
       valid: {environment: string; flags: FlagValues}[]
       invalid: {environment: string; reason: string}[]
@@ -176,7 +194,10 @@ export default abstract class ThemeCommand extends Command {
     const environmentDetails = [
       ...validationResults.valid.map(({environment, flags}) => {
         const flagDetails = requiredFlags
-          .map((flag) => (flag.includes('password') ? flag : `${flag}: ${String(flags[flag])}`))
+          .map((flag) => {
+            const usedFlag = Array.isArray(flag) ? flag.find((flag) => flags[flag]) : flag
+            return usedFlag && [usedFlag.includes('password') ? usedFlag : `${usedFlag}: ${flags[usedFlag]}`]
+          })
           .join(', ')
 
         return [environment, {subdued: flagDetails || 'No flags required'}]
@@ -241,8 +262,14 @@ export default abstract class ThemeCommand extends Command {
    * @param environmentName - The name of the environment
    * @returns The missing flags or true if the environment has all required flags
    */
-  private validConfig(environmentFlags: FlagValues, requiredFlags: string[], environmentName: string): string[] | true {
-    const missingFlags = requiredFlags.filter((flag) => !environmentFlags[flag])
+  private validConfig(
+    environmentFlags: FlagValues,
+    requiredFlags: Exclude<RequiredFlags, null>,
+    environmentName: string,
+  ): string[] | true {
+    const missingFlags = requiredFlags
+      .filter((flag) => (Array.isArray(flag) ? !flag.some((flag) => environmentFlags[flag]) : !environmentFlags[flag]))
+      .map((flag) => (Array.isArray(flag) ? flag.join(' or ') : flag))
 
     if (missingFlags.length > 0) {
       renderWarning({

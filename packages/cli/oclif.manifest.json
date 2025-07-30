@@ -6762,6 +6762,16 @@
       "hiddenAliases": [
       ],
       "id": "theme:rename",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "name",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",

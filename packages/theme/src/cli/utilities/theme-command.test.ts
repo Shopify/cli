@@ -1,4 +1,4 @@
-import ThemeCommand from './theme-command.js'
+import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
@@ -29,7 +29,7 @@ class TestThemeCommand extends ThemeCommand {
     }),
   }
 
-  static multiEnvironmentsFlags = ['store']
+  static multiEnvironmentsFlags: RequiredFlags = ['store']
 
   commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; context?: any}[] = []
 
@@ -54,6 +54,23 @@ class TestThemeCommandWithForce extends TestThemeCommand {
       char: 'f',
       description: 'Skip confirmation',
       env: 'SHOPIFY_FLAG_FORCE',
+    }),
+  }
+}
+
+class TestThemeCommandWithUnionFlags extends TestThemeCommand {
+  static multiEnvironmentsFlags: RequiredFlags = ['store', ['live', 'development', 'theme']]
+
+  static flags = {
+    ...TestThemeCommand.flags,
+    development: Flags.boolean({
+      env: 'SHOPIFY_FLAG_DEVELOPMENT',
+    }),
+    theme: Flags.string({
+      env: 'SHOPIFY_FLAG_THEME_ID',
+    }),
+    live: Flags.boolean({
+      env: 'SHOPIFY_FLAG_LIVE',
     }),
   }
 }
@@ -246,6 +263,31 @@ describe('ThemeCommand', () => {
       expect(renderConcurrent).not.toHaveBeenCalled()
     })
 
+    test('should execute commands in environments with all required flags', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: 'theme1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com', live: true})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithUnionFlags(
+        ['--environment', 'theme', '--environment', 'development', '--environment', 'live'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(renderConcurrentProcesses).toHaveLength(3)
+      expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['theme', 'development', 'live'])
+    })
+
     test('should not execute commands in environments that are missing required flags', async () => {
       // Given
       vi.mocked(loadEnvironment)
@@ -269,6 +311,31 @@ describe('ThemeCommand', () => {
       const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
       expect(renderConcurrentProcesses).toHaveLength(2)
       expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['development', 'production'])
+    })
+
+    test('should not execute commands in environments that are missing required "one of" flags', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: 'theme1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com', live: true})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithUnionFlags(
+        ['--environment', 'theme', '--environment', 'missing-theme-live-or-development', '--environment', 'live'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(renderConcurrentProcesses).toHaveLength(2)
+      expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['theme', 'live'])
     })
 
     test('commands error gracefully and continue with other environments', async () => {
