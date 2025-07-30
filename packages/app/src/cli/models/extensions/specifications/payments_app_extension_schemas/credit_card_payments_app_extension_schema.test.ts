@@ -56,7 +56,22 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_value",
+          "values": [
+            "payments.credit-card.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.credit-card.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if no confirmation_callback_url is provided with supports 3ds', async () => {
@@ -67,7 +82,17 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         supports_3ds: true,
         confirmation_callback_url: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "custom",
+          "path": [
+            "confirmation_callback_url"
+          ],
+          "message": "Property required when supports_3ds is true"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
@@ -78,7 +103,18 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
       CreditCardPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "encryption_certificate_fingerprint"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
@@ -89,7 +125,15 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         supports_installments: true,
         supports_deferred_payments: false,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "custom",
+          "path": [],
+          "message": "supports_installments and supports_deferred_payments must be the same"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -99,7 +143,20 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "origin": "array",
+          "code": "too_big",
+          "maximum": 7,
+          "inclusive": true,
+          "path": [
+            "checkout_payment_method_fields"
+          ],
+          "message": "The extension can't have more than 7 checkout_payment_method_fields"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if supports_moto is not a boolean', async () => {
@@ -109,7 +166,18 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         supports_moto: 'true',
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_moto"
+          ],
+          "message": "Value must be Boolean"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if supports_moto is not present', async () => {
@@ -119,7 +187,18 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         supports_moto: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_moto"
+          ],
+          "message": "Value must be Boolean"
+        }
+      ]]
+    `)
   })
 })
 

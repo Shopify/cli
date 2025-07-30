@@ -50,7 +50,18 @@ describe('BasePaymentsAppExtensionSchema', () => {
         ...config,
         payment_session_url: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "payment_session_url"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -75,7 +86,18 @@ describe('BuyerLabelSchema', () => {
         ...config,
         buyer_label: 1,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label"
+          ],
+          "message": "Invalid input: expected string, received number"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if buyer_label is too long', async () => {
@@ -85,7 +107,20 @@ describe('BuyerLabelSchema', () => {
         ...config,
         buyer_label: 'a'.repeat(60),
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "origin": "string",
+          "code": "too_big",
+          "maximum": 50,
+          "inclusive": true,
+          "path": [
+            "buyer_label"
+          ],
+          "message": "Too big: expected string to have <=50 characters"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if buyer_label_translations has an invalid format', async () => {
@@ -95,7 +130,20 @@ describe('BuyerLabelSchema', () => {
         ...config,
         buyer_label_translations: [{locale: 'en', text: 'invalid key'}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "label"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -120,7 +168,18 @@ describe('DeferredPaymentsSchema', () => {
         ...config,
         supports_installments: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_installments"
+          ],
+          "message": "Invalid input: expected boolean, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if no supports_deferred_payments is provided', async () => {
@@ -130,7 +189,18 @@ describe('DeferredPaymentsSchema', () => {
         ...config,
         supports_deferred_payments: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_deferred_payments"
+          ],
+          "message": "Invalid input: expected boolean, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -155,7 +225,18 @@ describe('ConfirmationSchema', () => {
         ...config,
         confirmation_callback_url: 'not-a-url',
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_format",
+          "format": "url",
+          "path": [
+            "confirmation_callback_url"
+          ],
+          "message": "Invalid URL"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if supports_3ds is not provided', async () => {
@@ -165,7 +246,18 @@ describe('ConfirmationSchema', () => {
         ...config,
         supports_3ds: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_3ds"
+          ],
+          "message": "Invalid input: expected boolean, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -175,7 +267,20 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{countries: ['US']}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "supported_buyer_contexts",
+            0,
+            "currency"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if countries key provided but its an empty array', async () => {
@@ -183,7 +288,22 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{currency: 'USD', countries: []}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "origin": "array",
+          "code": "too_small",
+          "minimum": 1,
+          "inclusive": true,
+          "path": [
+            "supported_buyer_contexts",
+            0,
+            "countries"
+          ],
+          "message": "Too small: expected array to have >=1 items"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if an unexpected key is present', async () => {
@@ -191,7 +311,21 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{currency: 'USD', random: 123}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "unrecognized_keys",
+          "keys": [
+            "random"
+          ],
+          "path": [
+            "supported_buyer_contexts",
+            0
+          ],
+          "message": "Unrecognized key: \\"random\\""
+        }
+      ]]
+    `)
   })
 
   test('throws an error if a mixture of currency and currency plus countries provided', async () => {
@@ -199,7 +333,17 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{currency: 'USD'}, {currency: 'EUR', countries: ['DE']}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "custom",
+          "path": [
+            "supported_buyer_contexts"
+          ],
+          "message": "Must all be defined with only a currency, or must all be defined with a currency plus countries -- a mixture of the two is not allowed"
+        }
+      ]]
+    `)
   })
 
   test('is valid if countries are not provided', async () => {

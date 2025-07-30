@@ -49,7 +49,22 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_value",
+          "values": [
+            "payments.offsite.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.offsite.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if no confirmation_callback_url is provided with supports oversell protection', async () => {
@@ -60,7 +75,17 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         supports_oversell_protection: true,
         confirmation_callback_url: undefined,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "custom",
+          "path": [
+            "confirmation_callback_url"
+          ],
+          "message": "Property required when supports_oversell_protection is true"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -70,7 +95,20 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         ...config,
         buyer_label_translations: [{label: 'Translation without locale key'}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "locale"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
@@ -81,7 +119,15 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         supports_installments: true,
         supports_deferred_payments: false,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "custom",
+          "path": [],
+          "message": "supports_installments and supports_deferred_payments must be the same"
+        }
+      ]]
+    `)
   })
 })
 

@@ -46,7 +46,22 @@ describe('RedeemablePaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_value",
+          "values": [
+            "payments.redeemable.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.redeemable.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -56,7 +71,20 @@ describe('RedeemablePaymentsAppExtensionSchema', () => {
         ...config,
         buyer_label_translations: [{label: 'Translation without locale key'}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "locale"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 })
 

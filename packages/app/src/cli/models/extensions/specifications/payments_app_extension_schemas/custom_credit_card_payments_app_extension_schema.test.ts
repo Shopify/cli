@@ -56,7 +56,22 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_value",
+          "values": [
+            "payments.custom-credit-card.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.custom-credit-card.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -66,7 +81,20 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         buyer_label_translations: [{label: 'Translation without locale key'}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "locale"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
@@ -77,7 +105,18 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
       CustomCreditCardPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "encryption_certificate_fingerprint"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -87,7 +126,20 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "origin": "array",
+          "code": "too_big",
+          "maximum": 7,
+          "inclusive": true,
+          "path": [
+            "checkout_payment_method_fields"
+          ],
+          "message": "The extension can't have more than 7 checkout_payment_method_fields"
+        }
+      ]]
+    `)
   })
 })
 

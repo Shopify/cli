@@ -52,7 +52,18 @@ describe('MarketingActivityExtensionSchema', () => {
           ...config,
           fields: ['not an object'],
         }),
-      ).toThrow()
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
+          {
+            "message": "Field must be an object",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
 
     test('throws an error if no fields are defined', async () => {
@@ -62,7 +73,20 @@ describe('MarketingActivityExtensionSchema', () => {
           ...config,
           fields: [],
         }),
-      ).toThrow()
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
+          {
+            "origin": "array",
+            "code": "too_small",
+            "minimum": 1,
+            "inclusive": true,
+            "path": [
+              "fields"
+            ],
+            "message": "Too small: expected array to have >=1 items"
+          }
+        ]]
+      `)
     })
 
     test('throws an error if field does not have ui_type', async () => {
@@ -77,7 +101,18 @@ describe('MarketingActivityExtensionSchema', () => {
             },
           ],
         }),
-      ).toThrow()
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
+          {
+            "message": "Field must have a ui_type",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
 
     test('throws an error if ui_type is not supported', async () => {
@@ -92,7 +127,18 @@ describe('MarketingActivityExtensionSchema', () => {
             },
           ],
         }),
-      ).toThrow()
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
+          {
+            "message": "Unknown ui_type for Field: not_a_ui_type",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
 
     test('throws an error if the schema for the ui_type is invalid', async () => {
@@ -107,7 +153,18 @@ describe('MarketingActivityExtensionSchema', () => {
             },
           ],
         }),
-      ).toThrow()
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
+          {
+            "message": "Error found on Field \\"test_field\\": [\\n  {\\n    \\"expected\\": \\"number\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"min_length\\"\\n    ],\\n    \\"message\\": \\"Invalid input: expected number, received boolean\\"\\n  }\\n]",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
   })
 })

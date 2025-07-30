@@ -35,7 +35,22 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_value",
+          "values": [
+            "payments.card-present.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.card-present.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if payment_session_url is not provided', async () => {
@@ -45,7 +60,18 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "payment_session_url"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if refund_session_url is not provided', async () => {
@@ -55,7 +81,18 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_type",
+          "expected": "nonoptional",
+          "path": [
+            "refund_session_url"
+          ],
+          "message": "Invalid input: expected nonoptional, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if capture_session_url is not provided', async () => {
@@ -65,7 +102,18 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_type",
+          "expected": "nonoptional",
+          "path": [
+            "capture_session_url"
+          ],
+          "message": "Invalid input: expected nonoptional, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if void_session_url is not provided', async () => {
@@ -75,7 +123,18 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       CardPresentPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_type",
+          "expected": "nonoptional",
+          "path": [
+            "void_session_url"
+          ],
+          "message": "Invalid input: expected nonoptional, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('validates with optional sync_terminal_transaction_result_url', async () => {
@@ -94,7 +153,18 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
         ...config,
         sync_terminal_transaction_result_url: 'not-a-url',
       }),
-    ).toThrow()
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_format",
+          "format": "url",
+          "path": [
+            "sync_terminal_transaction_result_url"
+          ],
+          "message": "Invalid URL"
+        }
+      ]]
+    `)
   })
 })
 
