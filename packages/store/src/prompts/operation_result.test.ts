@@ -11,6 +11,7 @@ describe('renderOperationResult', () => {
   test('renders success when no errors and no url', () => {
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -56,6 +57,7 @@ describe('renderOperationResult', () => {
   test('renders success with download link when no errors and url provided', () => {
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -102,6 +104,7 @@ describe('renderOperationResult', () => {
   test('renders warning when errors exist and no url', () => {
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -147,6 +150,7 @@ describe('renderOperationResult', () => {
   test('renders warning with download link when errors exist and url provided', () => {
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -205,6 +209,7 @@ describe('renderOperationResult', () => {
 
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -265,6 +270,7 @@ describe('renderOperationResult', () => {
 
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -325,6 +331,7 @@ describe('renderOperationResult', () => {
 
     const operation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {

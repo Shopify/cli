@@ -33,6 +33,7 @@ describe('renderCopyResult', () => {
 
   const mockOperation: BulkDataOperationByIdResponse = {
     organization: {
+      id: 'org-1',
       name: 'Test Organization',
       bulkData: {
         operation: {

@@ -101,6 +101,7 @@ export const TEST_IMPORT_START_RESPONSE: BulkDataStoreImportStartResponse = {
 
 export const TEST_COMPLETED_OPERATION: BulkDataOperationByIdResponse = {
   organization: {
+    id: 'org-1',
     name: 'Test Organization',
     bulkData: {
       operation: {
@@ -179,6 +180,7 @@ export function generateTestFailedExportStartResponse(): BulkDataStoreExportStar
 
 export const TEST_COMPLETED_EXPORT_OPERATION: BulkDataOperationByIdResponse = {
   organization: {
+    id: 'org-1',
     name: 'Test Organization',
     bulkData: {
       operation: {
@@ -229,6 +231,7 @@ export function generateTestFailedImportStartResponse(): BulkDataStoreImportStar
 
 export const TEST_COMPLETED_IMPORT_OPERATION: BulkDataOperationByIdResponse = {
   organization: {
+    id: 'org-1',
     name: 'Test Organization',
     bulkData: {
       operation: {

@@ -22,6 +22,7 @@ describe('renderExportResult', () => {
   test('renders success when no errors', () => {
     const exportOperation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -71,6 +72,7 @@ describe('renderExportResult', () => {
   test('renders warning when errors exist', () => {
     const exportOperation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {
@@ -115,6 +117,7 @@ describe('renderExportResult', () => {
   test('renders warning when some operations fail', () => {
     const exportOperation: BulkDataOperationByIdResponse = {
       organization: {
+        id: 'org-1',
         name: 'Test Organization',
         bulkData: {
           operation: {

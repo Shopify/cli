@@ -8,6 +8,8 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
 import {renderExportProgress, renderImportProgress, isOperationComplete} from '../utils/bulk-operation-progress.js'
 import {ValidationError, ErrorCodes} from '../errors/errors.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import colors from '@shopify/cli-kit/node/colors'
 
@@ -29,6 +31,19 @@ export class StoreCopyOperation extends BaseStoreOperation implements StoreOpera
         outputInfo('Exiting.')
         return
       }
+    }
+    if (!flags.watch) {
+      const copyOperation = await this.startCopyOperation(sourceShopId, sourceShopDomain, targetShopDomain, flags)
+      const operationId = copyOperation.organization.bulkData.operation.id
+      const organizationId = copyOperation.organization.id
+
+      if (!flags.json) {
+        renderAsyncOperationStarted('Copy', organizationId, sourceShopDomain, targetShopDomain, operationId)
+        return
+      }
+
+      renderAsyncOperationJson('Copy', copyOperation, targetShopDomain, sourceShopDomain)
+      return
     }
 
     renderCopyInfo('Copy operation', sourceShopDomain, targetShopDomain)
@@ -54,7 +69,7 @@ export class StoreCopyOperation extends BaseStoreOperation implements StoreOpera
     return ErrorCodes.COPY_FAILED
   }
 
-  private readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
+  readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
     const storeOps = operation.organization.bulkData.operation.storeOperations
     if (!storeOps || storeOps.length === 0) {
       return ''

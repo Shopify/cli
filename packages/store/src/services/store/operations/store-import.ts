@@ -11,6 +11,8 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderImportResult} from '../../../prompts/import_result.js'
 import {confirmImportPrompt} from '../../../prompts/confirm_import.js'
 import {renderImportProgress} from '../utils/bulk-operation-progress.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {clearLines} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -44,6 +46,19 @@ export class StoreImportOperation extends BaseStoreOperation implements StoreOpe
       }
     }
 
+    if (!flags.watch) {
+      const importUrl = await this.fileUploader.uploadSqliteFile(fromFile, targetShopDomain)
+      const importOperation = await this.startImportOperation(apiShopId, targetShopDomain, importUrl, flags)
+      const operationId = importOperation.organization.bulkData.operation.id
+      const organizationId = importOperation.organization.id
+      if (!flags.json) {
+        renderAsyncOperationStarted('Import', organizationId, fromFile, targetShopDomain, operationId)
+        return
+      }
+      renderAsyncOperationJson('Import', importOperation, fromFile, targetShopDomain)
+      return
+    }
+
     renderCopyInfo('Import Operation', fromFile, targetShopDomain)
 
     outputInfo('Uploading SQLite file...')
@@ -71,7 +86,7 @@ export class StoreImportOperation extends BaseStoreOperation implements StoreOpe
     return ErrorCodes.IMPORT_FAILED
   }
 
-  private readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
+  readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
     const storeOps = operation.organization.bulkData.operation.storeOperations
     const firstOp = storeOps?.[0]
     return renderImportProgress(firstOp?.completedObjectCount ?? 0, firstOp?.totalObjectCount ?? 0, dotCount)
