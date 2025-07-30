@@ -1,11 +1,12 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {open} from '../../services/open.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {InferredFlags} from '@oclif/core/interfaces'
 
+type OpenFlags = InferredFlags<typeof Open.flags>
 export default class Open extends ThemeCommand {
   static summary = 'Opens the preview of your remote theme.'
 
@@ -43,11 +44,9 @@ export default class Open extends ThemeCommand {
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Open)
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  static multiEnvironmentsFlags: RequiredFlags = null
 
+  async command(flags: OpenFlags, adminSession: AdminSession) {
     await open(adminSession, flags)
   }
 }
