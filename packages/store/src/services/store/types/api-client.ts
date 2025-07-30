@@ -6,6 +6,7 @@ import {
   BulkDataStoreImportStartResponse,
 } from '../../../apis/organizations/types.js'
 import {ResourceConfigs} from '../../../lib/types.js'
+import {Organization} from '../../../apis/destinations/index.js'
 
 export interface ApiClientInterface {
   getStoreDetails(storeDomain: string): Promise<Shop>
@@ -33,6 +34,8 @@ export interface ApiClientInterface {
   ): Promise<BulkDataStoreImportStartResponse>
 
   pollBulkDataOperation(shopId: string, operationId: string, token: string): Promise<BulkDataOperationByIdResponse>
+
+  fetchOrgs(token: string): Promise<Organization[]>
 
   ensureAuthenticatedBusinessPlatform(): Promise<string>
 }

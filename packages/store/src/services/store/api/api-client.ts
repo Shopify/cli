@@ -18,6 +18,7 @@ import {OperationError, ValidationError, ErrorCodes} from '../errors/errors.js'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ClientError} from 'graphql-request'
+import { fetchOrgs, Organization } from '../../../apis/destinations/index.js'
 
 export class ApiClient implements ApiClientInterface {
   async getStoreDetails(storeDomain: string): Promise<Shop> {
@@ -99,6 +100,10 @@ export class ApiClient implements ApiClientInterface {
     } catch (error) {
       throw this.handleError(error, 'pollBulkDataOperation')
     }
+  }
+
+  async fetchOrgs(token: string): Promise<Organization[]> {
+    return fetchOrgs(token, this.createUnauthorizedHandler())
   }
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {

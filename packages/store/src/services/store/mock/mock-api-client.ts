@@ -10,6 +10,7 @@ import {
 
 import {ResourceConfigs} from '../../../lib/types.js'
 import {Shop} from '../../../apis/admin/types.js'
+import { Organization } from '../../../apis/destinations/index.js'
 
 export class MockApiClient implements ApiClientInterface {
   private pollCount = 0
@@ -110,6 +111,17 @@ export class MockApiClient implements ApiClientInterface {
         },
       },
     }
+  }
+
+  async fetchOrgs(_token: string): Promise<Organization[]> {
+    await this.delay(MOCK_CONFIG.API_DELAY)
+    return [
+      {
+        id: 'org-1',
+        name: 'Org 1',
+        shops: TEST_ALL_SHOPS,
+      },
+    ]
   }
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {
