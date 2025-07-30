@@ -1,4 +1,4 @@
-import Copy from './commands/store/copy.js'
+import Copy from './commands/store/copy/index.js'
 
 const COMMANDS = {
   'store:copy': Copy,
