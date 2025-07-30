@@ -3,7 +3,7 @@ import {
   GatedExtensionTemplate,
   allowedTemplates,
   diffAppModules,
-  encodedGidFromOrganizationId,
+  encodedGidFromOrganizationIdForBP,
   encodedGidFromShopId,
   versionDeepLink,
 } from './app-management-client.js'
@@ -151,7 +151,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
       },
     }
@@ -178,7 +178,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
         flag_notAllowedFlag: false,
       },
@@ -203,7 +203,7 @@ describe('templateSpecifications', () => {
     }`,
       token: 'business-platform-token',
       organizationId: orgApp.organizationId,
-      variables: {organizationId: encodedGidFromOrganizationId(orgApp.organizationId)},
+      variables: {organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId)},
       unauthorizedHandler: {
         type: 'token_refresh',
         handler: expect.any(Function),
@@ -227,7 +227,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
       },
     }
@@ -417,6 +417,7 @@ describe('createApp', () => {
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: 'gid://shopify/Organization/1',
         initialVersion: {
           source: {
             name: 'app-name',
@@ -506,6 +507,7 @@ describe('createApp', () => {
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: 'gid://shopify/Organization/1',
         initialVersion: {
           source: {
             name: 'app-name',
