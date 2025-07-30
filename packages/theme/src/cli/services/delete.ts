@@ -8,7 +8,6 @@ import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderSuccess,
-  renderWarning,
   InlineToken,
   LinkToken,
 } from '@shopify/cli-kit/node/ui'
@@ -87,18 +86,4 @@ async function isConfirmed(themes: Theme[], store: string) {
   }
 
   return renderConfirmationPrompt(options)
-}
-
-export function renderDeprecatedArgsWarning(argv: string[]) {
-  const ids = argv.join(' ')
-
-  renderWarning({
-    body: [
-      'Positional arguments are deprecated. Use the',
-      {command: '--theme'},
-      'flag instead:\n\n',
-      {command: `$ shopify theme delete --theme ${ids}`},
-      {char: '.'},
-    ],
-  })
 }
