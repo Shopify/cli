@@ -4,7 +4,7 @@ import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/themes/analytics'
-import {compileData} from '@shopify/cli-kit/node/themes/analytics/store'
+import {compileData} from '@shopify/cli-kit/node/themes/analytics/storage'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
