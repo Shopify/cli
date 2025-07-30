@@ -12,7 +12,6 @@ import {DeployOptions} from './deploy.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
-  AppApiKeyAndOrgId,
   Organization,
   OrganizationApp,
   OrganizationSource,
@@ -102,7 +101,7 @@ const deployOptions = (app: AppLinkedInterface, reset = false, force = false): D
 function buildDeveloperPlatformClient(extras?: Partial<DeveloperPlatformClient>): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
     ...extras,
-    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId) {
+    async appFromIdentifiers(apiKey: string) {
       for (const app of [APP1, APP2]) {
         if (apiKey === app.apiKey) return app
       }

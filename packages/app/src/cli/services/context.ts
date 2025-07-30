@@ -81,10 +81,7 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
       organizationId = org.id
     }
   }
-  const app = await developerPlatformClient.appFromIdentifiers({
-    apiKey: options.apiKey,
-    organizationId,
-  })
+  const app = await developerPlatformClient.appFromIdentifiers(options.apiKey)
   if (!app) {
     const accountInfo = await developerPlatformClient.accountInfo()
     let identifier = 'Unknown account'
