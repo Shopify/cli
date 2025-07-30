@@ -129,9 +129,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
           type: 'ui_extension',
           handle: 'scriptToMove',
           directory: outputPath,
+          uid: 'uid1',
         })
-        const someDirPath = joinPath(bundleDirectory, 'some_dir')
-        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+        const someDirPath = joinPath(bundleDirectory, 'uid1')
+        const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
         await mkdir(someDirPath)
         await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
@@ -141,7 +142,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'some_dir')
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(true)
@@ -158,9 +159,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
           type: 'ui_extension',
           handle: 'scriptToMove',
           directory: outputPath,
+          uid: 'uid1',
         })
-        const someDirPath = joinPath(bundleDirectory, 'some_dir')
-        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+        const someDirPath = joinPath(bundleDirectory, 'wrongUID')
+        const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
         await mkdir(someDirPath)
         await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
@@ -170,7 +172,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'other_dir')
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
@@ -187,9 +189,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
           type: 'web_pixel_extension',
           handle: 'scriptToMove',
           directory: outputPath,
+          uid: 'uid1',
         })
-        const someDirPath = joinPath(bundleDirectory, 'some_dir')
-        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+        const someDirPath = joinPath(bundleDirectory, 'uid1')
+        const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
         await mkdir(someDirPath)
         await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
@@ -199,7 +202,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'some_dir')
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)

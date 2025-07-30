@@ -220,7 +220,7 @@ export class AppEventWatcher extends EventEmitter {
       .filter((extEvent) => extEvent.type === EventType.Deleted)
       .map((extEvent) => extEvent.extension)
     const promises = extensions.map(async (ext) => {
-      const outputPath = joinPath(this.buildOutputPath, ext.getOutputFolderId())
+      const outputPath = joinPath(this.buildOutputPath, ext.outputFolderId)
       return rmdir(outputPath, {force: true})
     })
     await Promise.all(promises)

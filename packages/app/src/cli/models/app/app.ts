@@ -428,7 +428,7 @@ export class App<
           handle: module.handle,
           uid: module.uid,
           uuid: identifiers?.extensions[module.localIdentifier],
-          assets: module.uid,
+          assets: module.outputFolderId,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
         }
