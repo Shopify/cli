@@ -43,15 +43,16 @@ class TestThemeCommand extends ThemeCommand {
 
   static multiEnvironmentsFlags: RequiredFlags = ['store']
 
-  commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; context?: any}[] = []
+  commandCalls: {flags: any; session: AdminSession; multiEnvironment: boolean; args: any; context?: any}[] = []
 
   async command(
     flags: any,
     session: AdminSession,
-    multiEnvironment?: boolean,
+    multiEnvironment = false,
+    args?: any,
     context?: {stdout?: Writable; stderr?: Writable},
   ): Promise<void> {
-    this.commandCalls.push({flags, session, multiEnvironment, context})
+    this.commandCalls.push({flags, session, multiEnvironment, args, context})
 
     if (flags.environment && flags.environment[0] === 'command-error') {
       throw new Error('Mocking a command error')
@@ -108,15 +109,16 @@ class TestUnauthenticatedThemeCommand extends ThemeCommand {
 
   static multiEnvironmentsFlags: RequiredFlags = ['store']
 
-  commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; context?: any}[] = []
+  commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; args?: any; context?: any}[] = []
 
   async command(
     flags: any,
     session: AdminSession,
     multiEnvironment?: boolean,
+    args?: any,
     context?: {stdout?: Writable; stderr?: Writable},
   ): Promise<void> {
-    this.commandCalls.push({flags, session, multiEnvironment, context})
+    this.commandCalls.push({flags, session, multiEnvironment, args, context})
   }
 }
 
@@ -153,6 +155,8 @@ describe('ThemeCommand', () => {
       expect(command.commandCalls[0]).toMatchObject({
         flags: {environment: []},
         session: mockSession,
+        multiEnvironment: false,
+        args: {},
         context: undefined,
       })
     })
@@ -181,6 +185,8 @@ describe('ThemeCommand', () => {
           store: 'env-store.myshopify.com',
         },
         session: mockSession,
+        multiEnvironment: false,
+        args: {},
         context: undefined,
       })
     })

@@ -6,6 +6,7 @@ import {Flags} from '@oclif/core'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {ArgOutput} from '@shopify/cli-kit/node/base-command'
 import {Writable} from 'stream'
 
 type PullFlags = InferredFlags<typeof Pull.flags>
@@ -56,6 +57,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     flags: PullFlags,
     adminSession?: AdminSession,
     multiEnvironment?: boolean,
+    _args?: ArgOutput,
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     recordTiming('theme-command:pull')
