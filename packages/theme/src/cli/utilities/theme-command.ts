@@ -22,7 +22,7 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import type {Writable} from 'stream'
 
-export interface FlagValues {
+interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
 }
 interface ValidEnvironment {
