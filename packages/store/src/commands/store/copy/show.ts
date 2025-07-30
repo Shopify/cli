@@ -26,10 +26,10 @@ export default class Show extends BaseBDCommand {
 
   async runCommand(): Promise<void> {
     this.flags = (await this.parse(Show)).flags as FlagOptions
-    const {args: _args} = await this.parse(Show)
+    const {args} = await this.parse(Show)
 
     const apiClient = this.flags.mock ? new MockApiClient() : new ApiClient()
-    const _bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
+    const bpSession = await apiClient.ensureAuthenticatedBusinessPlatform()
 
     const orgs = await apiClient.fetchOrgs(bpSession);
 
