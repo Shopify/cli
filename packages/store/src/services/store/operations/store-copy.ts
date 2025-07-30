@@ -83,7 +83,7 @@ export class StoreCopyOperation extends BaseStoreOperation implements StoreOpera
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
     const copyResponse: BulkDataStoreCopyStartResponse = await this.apiClient.startBulkDataStoreCopy(
-      apiShopId,
+      {type: 'shop', id: apiShopId},
       sourceShopDomain,
       targetShopDomain,
       parseResourceConfigFlags(flags.key as string[]),
@@ -96,7 +96,7 @@ export class StoreCopyOperation extends BaseStoreOperation implements StoreOpera
     }
 
     const operationId = copyResponse.bulkDataStoreCopyStart.operation.id
-    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, this.bpSession)
+    return this.apiClient.pollBulkDataOperation({type: 'shop', id: apiShopId}, operationId, this.bpSession)
   }
 
   private async validateShopsNotSame(sourceId: string, targetId: string): Promise<void> {
