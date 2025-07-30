@@ -73,12 +73,6 @@ export interface hydrogendev {
   '--inspector-port <value>'?: string
 
   /**
-   * [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
-   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME
-   */
-  '--legacy-runtime'?: ''
-
-  /**
    * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.
    * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
@@ -89,12 +83,6 @@ export interface hydrogendev {
    * @environment SHOPIFY_HYDROGEN_FLAG_PORT
    */
   '--port <value>'?: string
-
-  /**
-   * [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP
-   */
-  '--sourcemap'?: ''
 
   /**
    * Outputs more information about the command's execution.
