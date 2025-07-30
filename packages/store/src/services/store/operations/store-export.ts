@@ -9,6 +9,8 @@ import {renderExportResult} from '../../../prompts/export_results.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {renderExportProgress} from '../utils/bulk-operation-progress.js'
 import {ErrorCodes} from '../errors/errors.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -33,7 +35,16 @@ export class StoreExportOperation extends BaseStoreOperation implements StoreOpe
         return
       }
     }
-
+    if (!flags.watch) {
+      const exportOperation = await this.startExportOperation(apiShopId, sourceShopDomain)
+      const operationId = exportOperation.organization.bulkData.operation.id
+      if (!flags.json) {
+        renderAsyncOperationStarted('Export', sourceShopDomain, toFile, operationId)
+        return
+      }
+      renderAsyncOperationJson('Export', exportOperation, toFile, sourceShopDomain)
+      return
+    }
     renderCopyInfo('Export Operation', sourceShopDomain, toFile)
 
     const exportOperation = await this.executeWithProgress(

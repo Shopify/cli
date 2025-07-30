@@ -12,6 +12,8 @@ import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderExportResult} from '../../../prompts/export_results.js'
 import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 
@@ -19,6 +21,8 @@ vi.mock('../utils/result-file-handler.js')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/export_results.js')
+vi.mock('../../../prompts/async_operation_json.js')
+vi.mock('../../../prompts/async_operation_started.js')
 vi.mock('../../../prompts/confirm_export.js')
 
 describe('StoreExportOperation', () => {
@@ -59,19 +63,35 @@ describe('StoreExportOperation', () => {
     await operation.execute('source.myshopify.com', 'export.sqlite', {})
 
     expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'export.sqlite', true)
-    expect(renderExportResult).toHaveBeenCalled()
+    expect(renderAsyncOperationStarted).toHaveBeenCalled()
   })
 
   test('should skip confirmation when --no-prompt flag is provided', async () => {
     await operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
 
     expect(confirmExportPrompt).not.toHaveBeenCalled()
+    expect(renderAsyncOperationStarted).toHaveBeenCalled()
+  })
+
+  test('renders export result when --watch flag is provided', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(confirmExportPrompt).mockResolvedValue(true)
+
+    await operation.execute('source.myshopify.com', 'export.sqlite', {watch: true})
     expect(renderExportResult).toHaveBeenCalled()
+  })
+
+  test('renders result in json format when --json flag is provided', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(confirmExportPrompt).mockResolvedValue(true)
+
+    await operation.execute('source.myshopify.com', 'export.sqlite', {json: true})
+    expect(renderAsyncOperationJson).toHaveBeenCalled()
   })
 
   test('should successfully export data from source shop', async () => {
     vi.mocked(confirmExportPrompt).mockResolvedValue(true)
-    await operation.execute('source.myshopify.com', 'output.sqlite', {})
+    await operation.execute('source.myshopify.com', 'output.sqlite', {watch: true})
 
     expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite', false)
     expect(renderCopyInfo).toHaveBeenCalledWith('Export Operation', 'source.myshopify.com', 'output.sqlite')
@@ -79,7 +99,7 @@ describe('StoreExportOperation', () => {
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
       mockCompletedOperation,
       'export',
-      {},
+      {watch: true},
       'output.sqlite',
     )
   })
@@ -117,7 +137,7 @@ describe('StoreExportOperation', () => {
 
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true, watch: true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'export',
@@ -142,7 +162,7 @@ describe('StoreExportOperation', () => {
 
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true})
+    const promise = operation.execute('source.myshopify.com', 'output.sqlite', {'no-prompt': true, watch: true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'export',

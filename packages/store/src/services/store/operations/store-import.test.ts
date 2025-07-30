@@ -12,6 +12,8 @@ import {renderImportResult} from '../../../prompts/import_result.js'
 import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -25,6 +27,8 @@ vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/import_result.js')
+vi.mock('../../../prompts/async_operation_json.js')
+vi.mock('../../../prompts/async_operation_started.js')
 
 describe('StoreImportOperation', () => {
   const mockBpSession = 'mock-bp-session-token'
@@ -62,7 +66,7 @@ describe('StoreImportOperation', () => {
   })
 
   test('should successfully import data to target shop', async () => {
-    await operation.execute('input.sqlite', 'target.myshopify.com', {})
+    await operation.execute('input.sqlite', 'target.myshopify.com', {watch: true})
 
     expect(fileExists).toHaveBeenCalledWith('input.sqlite')
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
@@ -91,7 +95,17 @@ describe('StoreImportOperation', () => {
     await operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(renderAsyncOperationStarted).toHaveBeenCalled()
+  })
+
+  test('renders import result when --watch flag is provided', async () => {
+    await operation.execute('input.sqlite', 'target.myshopify.com', {watch: true})
     expect(renderImportResult).toHaveBeenCalled()
+  })
+
+  test('renders result in json format when --json flag is provided', async () => {
+    await operation.execute('input.sqlite', 'target.myshopify.com', {json: true})
+    expect(renderAsyncOperationJson).toHaveBeenCalled()
   })
 
   test('should exit when user cancels confirmation', async () => {
@@ -138,7 +152,7 @@ describe('StoreImportOperation', () => {
 
     mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {watch: true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'import',
