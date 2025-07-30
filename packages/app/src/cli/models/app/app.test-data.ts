@@ -17,7 +17,6 @@ import {
   MinimalAppIdentifiers,
   OrganizationApp,
   MinimalOrganizationApp,
-  AppApiKeyAndOrgId,
   OrganizationSource,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
@@ -1428,7 +1427,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     session: () => Promise.resolve(testPartnersUserSession),
     unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
+    appFromIdentifiers: (_apiKey: string) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
