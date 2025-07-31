@@ -34,13 +34,16 @@ export default class Show extends BaseBDCommand {
     const orgs = await apiClient.fetchOrgs(bpSession);
 
     const organizationIdentifier: StoreIdentifier = this.getOrgIdentifier(orgs)
+    if (!this.flags.watch) {
+      const operation = await apiClient.pollBulkDataOperation(organizationIdentifier, args.id, bpSession)
 
-    const operation = await apiClient.pollBulkDataOperation(organizationIdentifier, args.id, bpSession)
-
-    renderInfo({
-      headline: `Bulk Data Operation ID: ${operation.organization.bulkData.operation.id}`,
-      body: `Status: ${operation.organization.bulkData.operation.status}`,
-    })
+      renderInfo({
+        headline: `Bulk Data Operation ID: ${operation.organization.bulkData.operation.id}`,
+        body: `Status: ${operation.organization.bulkData.operation.status}`,
+      })
+    } else {
+      renderInfo({body: "Watching..."})
+    }
   }
 
   private getOrgIdentifier(orgs: Organization[]): StoreIdentifier {
