@@ -3,13 +3,15 @@ import {commonFlags} from '../../../lib/flags.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {ApiClient} from '../../../services/store/api/api-client.js'
 import {MockApiClient} from '../../../services/store/mock/mock-api-client.js'
-import {StoreCopyOperation} from '../../../services/store/operations/store-copy.js'
+import {StoreExportOperation} from '../../../services/store/operations/store-export.js'
 import {renderProgressWithPolling} from '../../../services/store/utils/bulk-operation-progress.js'
 import {StoreIdentifier} from '../../../apis/organizations/index.js'
 import {Organization} from '../../../apis/destinations/index.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args} from '@oclif/core'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import { StoreOperation } from '../../../services/store/types/operations.js'
+import { BulkDataOperationByIdResponse } from '../../../apis/organizations/types.js'
 
 export default class Show extends BaseBDCommand {
   static summary = 'Show information about a store copy operation'
@@ -37,10 +39,10 @@ export default class Show extends BaseBDCommand {
 
     const organizationIdentifier: StoreIdentifier = this.getOrgIdentifier(orgs)
     const operationResponse = await apiClient.pollBulkDataOperation(organizationIdentifier, args.id, bpSession)
-    if (this.flags.watch) {
-      // this needs to be a copy, import, or export depending on the real type
-      const operation = new StoreCopyOperation(bpSession, apiClient)
 
+    const operation = buildOperationFromResponse(operationResponse, bpSession, apiClient)
+
+    if (this.flags.watch) {
       await renderProgressWithPolling(
         () => Promise.resolve(operationResponse),
         (operationId: string) => apiClient.pollBulkDataOperation(organizationIdentifier, operationId, bpSession),
@@ -69,4 +71,9 @@ export default class Show extends BaseBDCommand {
       )
     }
   }
+}
+
+function buildOperationFromResponse(operationResponse: BulkDataOperationByIdResponse, bpSession: string, apiClient: ApiClient | MockApiClient): StoreOperation {
+  // TODO: actually do this properly
+  return new StoreExportOperation(bpSession, apiClient)
 }

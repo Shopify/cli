@@ -71,7 +71,7 @@ export class StoreExportOperation extends BaseStoreOperation implements StoreOpe
     return ErrorCodes.EXPORT_FAILED
   }
 
-  private readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
+  readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
     const storeOps = operation.organization.bulkData.operation.storeOperations
     const exportCount = storeOps?.[0]?.completedObjectCount ?? 0
     return renderExportProgress(exportCount, dotCount)
