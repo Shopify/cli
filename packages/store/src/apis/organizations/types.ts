@@ -81,6 +81,7 @@ export interface BulkDataStoreImportStartResponse {
 
 export interface BulkDataOperationByIdResponse {
   organization: {
+    id: string
     name: string
     bulkData: {
       operation: {

@@ -35,9 +35,10 @@ export class StoreCopyOperation extends BaseStoreOperation implements StoreOpera
     if (!flags.watch) {
       const copyOperation = await this.startCopyOperation(sourceShopId, sourceShopDomain, targetShopDomain, flags)
       const operationId = copyOperation.organization.bulkData.operation.id
+      const organizationId = copyOperation.organization.id
 
       if (!flags.json) {
-        renderAsyncOperationStarted('Copy', sourceShopDomain, targetShopDomain, operationId)
+        renderAsyncOperationStarted('Copy', organizationId, sourceShopDomain, targetShopDomain, operationId)
         return
       }
 
