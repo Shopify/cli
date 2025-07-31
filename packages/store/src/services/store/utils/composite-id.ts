@@ -1,13 +1,10 @@
-export type OperationType = 'import' | 'export' | 'copy'
-
 export interface CompositeIdComponents {
-  operationType: OperationType
   organizationId: number
-  bulkOperationId: string
+  bulkDataOperationId: string
 }
 
 export function serialize(components: CompositeIdComponents): string {
-  const payload = `${components.operationType}:${components.organizationId}:${components.bulkOperationId}`
+  const payload = `${components.organizationId}:${components.bulkDataOperationId}`
   return Buffer.from(payload).toString('base64')
 }
 
@@ -15,15 +12,11 @@ export function deserialize(compositeId: string): CompositeIdComponents {
   const payload = Buffer.from(compositeId, 'base64').toString('utf-8')
   const parts = payload.split(':')
 
-  if (parts.length !== 3) {
+  if (parts.length !== 2) {
     throw new Error('Invalid composite ID format')
   }
 
-  const [operationType, organizationIdStr, bulkOperationId] = parts
-
-  if (!operationType || !['import', 'export', 'copy'].includes(operationType)) {
-    throw new Error(`Invalid operation type: ${operationType}`)
-  }
+  const [organizationIdStr, bulkDataOperationId] = parts
 
   if (!organizationIdStr) {
     throw new Error('Organization ID is missing')
@@ -34,13 +27,12 @@ export function deserialize(compositeId: string): CompositeIdComponents {
     throw new Error(`Invalid organization ID: ${organizationIdStr}`)
   }
 
-  if (!bulkOperationId) {
+  if (!bulkDataOperationId) {
     throw new Error("Bulk operation ID can't be empty")
   }
 
   return {
-    operationType: operationType as OperationType,
     organizationId,
-    bulkOperationId,
+    bulkDataOperationId,
   }
 }
