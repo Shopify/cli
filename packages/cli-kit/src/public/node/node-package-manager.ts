@@ -190,6 +190,71 @@ export async function installNPMDependenciesRecursively(
   }
 }
 
+const yarnVersionCache = new Map<string, string[]>()
+
+export async function getYarnInstallCommand(directory: string): Promise<string[]> {
+  if (yarnVersionCache.has(directory)) {
+    return yarnVersionCache.get(directory)!
+  }
+
+  let result: string[] = ['install']
+
+  try {
+    const packageJsonPath = joinPath(directory, 'package.json')
+    if (await fileExists(packageJsonPath)) {
+      try {
+        const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+        if (packageJsonContent.packageManager && typeof packageJsonContent.packageManager === 'string') {
+          const packageManagerField = packageJsonContent.packageManager
+          if (packageManagerField.startsWith('yarn@')) {
+            const versionMatch = packageManagerField.match(/yarn@(\d+)\./)
+            if (versionMatch) {
+              const majorVersion = parseInt(versionMatch[1], 10)
+              if (majorVersion >= 2) {
+                result = ['add']
+                yarnVersionCache.set(directory, result)
+                return result
+              } else {
+                result = ['install']
+                yarnVersionCache.set(directory, result)
+                return result
+              }
+            }
+          }
+        }
+      } catch (error) {
+      }
+    }
+
+    try {
+      const versionOutput = await captureOutput('yarn', ['--version'], {cwd: directory})
+      const version = versionOutput.trim()
+      const versionMatch = version.match(/^(\d+)\./)
+      if (versionMatch) {
+        const majorVersion = parseInt(versionMatch[1], 10)
+        if (majorVersion >= 2) {
+          result = ['add']
+        } else {
+          result = ['install']
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('ENOENT')) {
+        result = ['install']
+      } else {
+        const yarnrcPath = joinPath(directory, '.yarnrc.yml')
+        if (await fileExists(yarnrcPath)) {
+          result = ['add']
+        }
+      }
+    }
+  } catch (error) {
+  }
+
+  yarnVersionCache.set(directory, result)
+  return result
+}
+
 interface InstallNodeModulesOptions {
   directory: string
   args?: string[]
@@ -207,10 +272,18 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
     stderr: options.stderr,
     signal: options.signal,
   }
-  let args = ['install']
+  
+  let args: string[]
+  if (options.packageManager === 'yarn') {
+    args = await getYarnInstallCommand(options.directory)
+  } else {
+    args = ['install']
+  }
+  
   if (options.args) {
     args = args.concat(options.args)
   }
+  
   await runWithTimer('cmd_all_timing_network_ms')(async () => {
     await exec(options.packageManager, args, execOptions)
   })
