@@ -2,7 +2,7 @@ import {ports} from '../../constants.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
-export type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
+export type TunnelMode = NoTunnel | AutoTunnel | NgrokTunnel | CustomTunnel
 
 export interface NoTunnel {
   mode: 'use-localhost'
@@ -12,6 +12,10 @@ export interface NoTunnel {
 
 export interface AutoTunnel {
   mode: 'auto'
+}
+
+export interface NgrokTunnel {
+  mode: 'ngrok'
 }
 
 export interface CustomTunnel {
@@ -28,10 +32,12 @@ export async function getTunnelMode({
   useLocalhost,
   localhostPort,
   tunnelUrl,
+  useNgrok,
 }: {
   tunnelUrl?: string
   useLocalhost?: boolean
   localhostPort?: number
+  useNgrok?: boolean
 }): Promise<TunnelMode> {
   // Developer brought their own tunnel
   if (tunnelUrl) {
@@ -40,6 +46,11 @@ export async function getTunnelMode({
 
   // CLI should create a tunnel
   if (!useLocalhost && !localhostPort) {
+    if (useNgrok) {
+      return {
+        mode: 'ngrok',
+      }
+    }
     return {
       mode: 'auto',
     }
