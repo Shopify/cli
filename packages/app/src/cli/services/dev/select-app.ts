@@ -40,7 +40,7 @@ export async function selectOrCreateApp(
 
     if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
-    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app.apiKey)
 
     if (!fullSelectedApp) {
       // This is unlikely, and a bug. But we still want a nice user facing message plus appropriate context logged.

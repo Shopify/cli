@@ -3,7 +3,6 @@ import {AppManagementClient} from './developer-platform-client/app-management-cl
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
-  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -271,7 +270,7 @@ export interface DeveloperPlatformClient {
    */
   unsafeRefreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromIdentifiers: (app: AppApiKeyAndOrgId) => Promise<OrganizationApp | undefined>
+  appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
