@@ -3,6 +3,8 @@ import {commonFlags} from '../../../lib/flags.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {ApiClient} from '../../../services/store/api/api-client.js'
 import {MockApiClient} from '../../../services/store/mock/mock-api-client.js'
+import {StoreImportOperation} from '../../../services/store/operations/store-import.js'
+import {StoreCopyOperation} from '../../../services/store/operations/store-copy.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args} from '@oclif/core'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -34,15 +36,17 @@ export default class Show extends BaseBDCommand {
     const orgs = await apiClient.fetchOrgs(bpSession);
 
     const organizationIdentifier: StoreIdentifier = this.getOrgIdentifier(orgs)
+    const operationResponse = await apiClient.pollBulkDataOperation(organizationIdentifier, args.id, bpSession)
     if (!this.flags.watch) {
-      const operation = await apiClient.pollBulkDataOperation(organizationIdentifier, args.id, bpSession)
 
       renderInfo({
-        headline: `Bulk Data Operation ID: ${operation.organization.bulkData.operation.id}`,
-        body: `Status: ${operation.organization.bulkData.operation.status}`,
+        headline: `Bulk Data Operation ID: ${operationResponse.organization.bulkData.operation.id}`,
+        body: `Status: ${operationResponse.organization.bulkData.operation.status}`,
       })
     } else {
-      renderInfo({body: "Watching..."})
+      const operation = new StoreCopyOperation(bpSession, apiClient)
+      renderInfo({body: JSON.stringify(operationResponse, null, 2)})
+      operation.renderProgress(operationResponse, 0)
     }
   }
 

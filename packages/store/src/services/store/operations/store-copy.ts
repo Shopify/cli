@@ -68,7 +68,7 @@ export class StoreCopyOperation extends BaseStoreOperation implements StoreOpera
     return ErrorCodes.COPY_FAILED
   }
 
-  private readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
+  readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
     const storeOps = operation.organization.bulkData.operation.storeOperations
     if (!storeOps || storeOps.length === 0) {
       return ''
