@@ -27,10 +27,10 @@ import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputDebug} from './output.js'
+import {AbortController} from './abort.js'
 import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
-import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('./version.js')
 vi.mock('./system.js')
